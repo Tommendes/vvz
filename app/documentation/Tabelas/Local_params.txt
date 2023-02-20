@@ -1,0 +1,14 @@
+Field                 Type              Null    Key     Default  Extra           Comment                                     
+--------------------  ----------------  ------  ------  -------  --------------  --------------------------------------------
+id                    int(10) unsigned  NO      PRI     (NULL)   auto_increment  Chave primária da tabela
+evento                int(10) unsigned  NO              (NULL)                   Chave estrangeira com a tabela API.sis_events
+created_at            varchar(255)      NO              (NULL)                   Date time da criação do registro
+updated_at            varchar(255)      YES             (NULL)                   Date time da última edição do registro
+status                varchar(255)      NO              0                        Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
+grupo       		  varchar(255)      YES             (NULL)                   Grupo do parâmetro
+parametro   		  text              YES             (NULL)                   Parâmetro
+label       		  text              YES             (NULL)                   Label
+
+ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_general_ci

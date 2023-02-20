@@ -1,0 +1,21 @@
+Field                 Type              Null    Key     Default  Extra           Comment                                     
+--------------------  ----------------  ------  ------  -------  --------------  --------------------------------------------
+id                    int(10) unsigned  NO      PRI     (NULL)   auto_increment  Chave primária da tabela
+evento                int(10) unsigned           NO              (NULL)                   Chave estrangeira com a tabela API.sis_events
+created_at            varchar(255)      NO              (NULL)                   Date time da criação do registro
+updated_at            varchar(255)      YES             (NULL)                   Date time da última edição do registro
+status                varchar(255)      NO              0                        Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
+prospect          	  int(1)        	NO              1		                 Prospecto (Não: 0; Sim: 1)
+tipo              	  varchar(255)  	NO              (NULL)                   Tipo de cliente (Arquiteto, Cliente, Fornecedor)
+id_atuacao		  	  int(10) unsigned 	NO              (NULL)                   Área de atuação (Chave estrangeira com a tabela CLI_DOM.local_params)
+cpf_cnpj          	  varchar(255)  	NO      UNI     (NULL)                   CPF ou CNPJ
+rg_ie             	  varchar(255)  	YES             (NULL)                   RG(PF) ou Inscrição Estadual(PJ)
+nome	        	  varchar(255)  	NO              (NULL)                   Nome ou razão social
+sexo              	  varchar(255)  	YES             (NULL)                   Sexo(apenas PF) (Masc: 0; Fem: 1; Outro: 2)
+aniversario       	  varchar(255)     	YES             (NULL)                   Nascimento(PF) | Fundação(PJ)
+nacionalidade     	  varchar(255)  	YES             (NULL)                   Nacionalidade
+obs               	  text          	YES             (NULL)                   Observações do cliente
+
+ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_general_ci
