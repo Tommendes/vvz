@@ -6,8 +6,8 @@ created_at            varchar(255)      NO              (NULL)                  
 updated_at            varchar(255)      YES             (NULL)                   Date time da última edição do registro
 status                varchar(255)      NO              0                        Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
 grupo       		  varchar(255)      YES             (NULL)                   Grupo do parâmetro
-parametro   		  text              YES             (NULL)                   Parâmetro
-label       		  text              YES             (NULL)                   Label
+parametro   		  varchar(1000)     YES             (NULL)                   Parâmetro
+label       		  varchar(1000)     YES             (NULL)                   Label
 
 ENGINE=InnoDB 
 DEFAULT CHARSET=utf8mb4 
