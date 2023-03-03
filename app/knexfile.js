@@ -1,4 +1,4 @@
-const { db, client } = require('./.env.js')
+const { db, client } = require('./.env')
 
 module.exports = {
 	client: client,

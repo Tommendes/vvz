@@ -1,6 +1,0 @@
-API.Users: Armazenamento dos dados básicos de usuários
-
-Cliente_Dominio
-	local_params	Parametros individuais da aplicação e do schema do cliente
-	cadastros		Cadastros dos leads do cliente
-	

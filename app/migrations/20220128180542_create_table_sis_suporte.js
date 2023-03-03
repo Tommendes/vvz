@@ -1,5 +1,5 @@
 exports.up = function(knex) {
-    return knex.schema.createTable('vivazul_cso_jp.sis_suporte', table => {
+    return knex.schema.createTable('sis_suporte', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -15,5 +15,5 @@ exports.up = function(knex) {
 };
 
 exports.down = function(knex) {
-    return knex.schema.dropTable('vivazul_cso_jp.sis_suporte')
+    return knex.schema.dropTable('sis_suporte')
 };

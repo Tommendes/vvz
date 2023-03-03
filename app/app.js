@@ -45,11 +45,11 @@ consign()
     .include('./config/passport.js')
     .then('./config/middlewares.js')
     .then('./api/validation.js')
-    .then('./api')
+    .then('./api') 
     .then('./config/routes.js')
     .into(app)
 
-apapp.listen(port, async() => {
+app.listen(port, async() => {
     if (!fs.existsSync(logsDir)) {
         fs.mkdirSync(path.join(__dirname, logsDir), (err) => {
             if (err) {
