@@ -21,18 +21,7 @@ module.exports = app => {
         .put(app.api.user.save)
         .get(app.api.user.getById)
         .delete(gestor(app.api.user.remove))
-    /**
-     * Rotas de sis-reviews
-     */
-    app.route('/sis-reviews')
-        .all(app.config.passport.authenticate())
-        .post(app.api.sis_reviews.save)
-        .get(app.api.sis_reviews.get)
-    app.route('/sis-reviews/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.sis_reviews.save)
-        .get(app.api.sis_reviews.getById)
-        .delete(app.api.sis_reviews.remove)
+        
     /**
      * Rotas de mensagens-sistema
      */
@@ -45,18 +34,7 @@ module.exports = app => {
         .put(app.api.mensagens_sistema.save)
         .get(app.api.mensagens_sistema.getById)
         .delete(app.api.mensagens_sistema.remove)
-    /**
-     * Rotas de sis-suporte
-     */
-    app.route('/sis-suportes')
-        .all(app.config.passport.authenticate())
-        .post(app.api.sis_suporte.save)
-        .get(app.api.sis_suporte.get)
-    app.route('/sis-suportes/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.sis_suporte.save)
-        .get(app.api.sis_suporte.getById)
-        .delete(app.api.sis_suporte.remove)
+        
     /**
     * Rotas de uploads
     */

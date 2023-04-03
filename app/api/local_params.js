@@ -13,14 +13,13 @@ module.exports = app => {
         try {
             // Alçada para edição
             if (body.id)
-                isMatchOrError(uParams && uParams.local_params >= 3, `${noAccessMsg} "Edição de ${tabela}"`)
+                isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.local_params >= 2, `${noAccessMsg} "Inclusão de ${tabela}"`)
+            else isMatchOrError(uParams , `${noAccessMsg} "Inclusão de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
-
 
         try {
 
@@ -30,7 +29,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-
+        delete body.hash; delete body.tblName
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
