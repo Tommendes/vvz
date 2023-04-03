@@ -4,7 +4,8 @@ const { baseFrontendUrl, emailRobot, emailAdmin, appName, daysBeforeLeave } = re
 const { dbPrefix, jasperServerUrl, jasperServerU, jasperServerK } = require("../.env")
 
 module.exports = app => {
-    const { existsOrError, notExistsOrError, equalsOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const { existsOrError, notExistsOrError, equalsOrError, emailOrError, isMatchOrError,
+        noAccessMsg, cpfOrError } = app.api.validation
     const { transporter } = app.api.mailer
     const tabela = `users`
     const STATUS_INACTIVE = 0
@@ -38,7 +39,9 @@ module.exports = app => {
             }
             existsOrError(body.name, 'Nome não informado')
             existsOrError(body.email, 'E-mail não informado')
+            emailOrError(body.email, 'E-mail inválido')
             existsOrError(body.telefone, 'Telefone não informado')
+            existsOrError(body.cpf, 'CPF não informado')
             if (body.password) {
                 existsOrError(body.password, 'Senha não informada')
             } else if (!body.password) {
@@ -287,8 +290,8 @@ module.exports = app => {
         // if (req.user.id != req.params.id && uParams.gestor < 1) return res.status(401).send('Unauthorized')
         app.db(tabela)
             .select("id", "status", "name", "cpf", "email", "telefone", "cliente", "dominio", "admin", "gestor",
-            "multiCliente", "cadastros", "ged", "pv", "comercial", "fiscal", "financeiro", "comissoes", "agente_v",
-            "agente_arq", "agente_at")
+                "multiCliente", "cadastros", "ged", "pv", "comercial", "fiscal", "financeiro", "comissoes", "agente_v",
+                "agente_arq", "agente_at")
             .where(app.db.raw(`users.id = ${req.params.id}`))
             .first()
             .then(users => {
@@ -302,7 +305,7 @@ module.exports = app => {
                 return res.status(500).send(error)
             })
     }
-    
+
     const getUnique = async (req, res) => {
         const toDoE = req.query.todoe || ''
         const toDoN = req.query.todon || ''

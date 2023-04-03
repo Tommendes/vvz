@@ -96,22 +96,29 @@ module.exports = app => {
     /**
      * Rotas de cadastros
      */
-    app.route('/cadastros-count')
-        .all(app.config.passport.authenticate())
-        .get(app.api.cadastros.getCount)
     app.route('/cadastros')
         .all(app.config.passport.authenticate())
         .post(app.api.cadastros.save)
         .get(app.api.cadastros.get)
-        .patch(app.api.cadastros.getListaCadastros)
     app.route('/cadastros/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.cadastros.save)
         .get(app.api.cadastros.getById)
         .delete(app.api.cadastros.remove)
-        .patch(app.api.cadastros.getListaCadastros)
     app.route('/cadastros/f-a/:func')
         .all(app.config.passport.authenticate())
     // .post(app.api.cadastros.getByFunction)*/
 
+    /**
+     * Rota de local_params
+     */
+    app.route('/local-params')
+        .all(app.config.passport.authenticate())
+        .post(app.api.local_params.save)
+        .get(app.api.local_params.get)
+    app.route('/local-params/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.local_params.save)
+        .get(app.api.local_params.getById)
+        .delete(app.api.local_params.remove)
 }

@@ -1,8 +1,4 @@
-const moment = require('moment')
-const randomstring = require("randomstring")
 const { dbPrefix } = require("../.env")
-const fs = require('fs')
-const { zip } = require('zip-a-folder')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'cadastros'
@@ -34,12 +30,11 @@ module.exports = app => {
                 existsOrError(body.rg_ie, 'Rg não informado')
             }
             delete body.rg_isento
-            existsOrError(body.cadas_nome, 'Nome não informado')
-            existsOrError(body.telefone1, 'Telefone 1 não informado')
-            // existsOrError(body.telefone2, 'Telefone 2 não informado')
-            existsOrError(body.email, 'email não informado')
-            existsOrError(body.pessoa_contato, 'Pessoa contato não informada')
-            existsOrError(body.nascimento, 'Data de Fundação/Nascimento não informado')
+            existsOrError(body.nome, 'Nome não informado')
+            existsOrError(body.aniversario, 'Data de Fundação/Nascimento não informado')
+            existsOrError(body.tipo, 'Tipo de registro não informado')
+            existsOrError(body.prospect, 'Registro de Prospecto?')
+            existsOrError(body.id_atuacao, 'Área de atuação não informada')
             // existsOrError(body.qualificacao, 'Qualificação não informada')
 
             if (body.cpf_cnpj) {
@@ -52,6 +47,7 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
+
 
         delete body.hash; delete body.tblName
         // body.nascimento = moment(body.nascimento).format("DD/MM/YYYY")
@@ -125,7 +121,6 @@ module.exports = app => {
         let user = req.user
         let keyCnpj = undefined
         let key = req.query.key
-        const tipoCadastro = req.query.ft || 0
         if (key) {
             key = key.trim()
             keyCnpj = (key.replace(/([^\d])+/gim, "").length <= 14) ? key.replace(/([^\d])+/gim, "") : undefined
@@ -140,14 +135,14 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const page = req.query.page || 1
         let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE, tipo_cadastro: tipoCadastro })
+            .where({ status: STATUS_ACTIVE })
 
         if (key)
             if (keyCnpj) count.where(function () {
                 this.where(app.db.raw(`tbl1.cpf_cnpj like '%${keyCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.cadas_nome regexp('${key.toString().replace(' ', '.+')}')`))
+                    .orWhere(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
             })
-            else count.where(app.db.raw(`tbl1.cadas_nome regexp('${key.toString().replace(' ', '.+')}')`))
+            else count.where(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
 
         count = await app.db.raw(count.toString())
         count = count[0][0].count
@@ -157,13 +152,13 @@ module.exports = app => {
         if (key)
             if (keyCnpj) ret.where(function () {
                 this.where(app.db.raw(`tbl1.cpf_cnpj like '%${keyCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.cadas_nome regexp('${key.toString().replace(' ', '.+')}')`))
+                    .orWhere(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
             })
-            else ret.where(app.db.raw(`tbl1.cadas_nome regexp('${key.toString().replace(' ', '.+')}')`))
+            else ret.where(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
 
-        ret.where({ status: STATUS_ACTIVE, tipo_cadastro: tipoCadastro })
+        ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .orderBy('cadas_nome', 'cpf_cnpj')
+            .orderBy('nome', 'cpf_cnpj')
             .limit(limit).offset(page * limit - limit)
 
         ret.then(body => {
@@ -174,17 +169,6 @@ module.exports = app => {
             })
     }
 
-    const getCount = async (req, res) => {
-        let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        let count = app.db({ tbl1: tabelaDomain })
-            .where({ status: STATUS_ACTIVE })
-            .then(body => res.json({ count: body.length }))
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-            })
-    }
 
     const getById = async (req, res) => {
         let user = req.user
@@ -219,72 +203,6 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        try {
-            const tabelaAdjGruposDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.adj_grupos`
-            const tabelaAdjPropItensDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.adj_prop_itens`
-            const tabelaAdjProponentesDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.adj_proponentes`
-            const tabelaAdjRegistrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.adj_registros`
-            const tabelaExecContratosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.exec_contratos`
-            const tabelaConveniosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.conv_convenios`
-            const tabelaObrasDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.obras`
-            const tabelaObrasAcompansDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.obras_acompans`
-            const tabelaObrasDrtsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.obras_drts`
-            const tabelaObrasMedicoesDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.obras_medicoes`
-            const tabelaObrasOSDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.obras_os`
-            const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.cad_enderecos`
-            const tabelaCadOfc = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.cad_ofc`
-            // Antes da exclusão, verifica se existe em tabelas filhas relacionadas
-            const baseMessage = 'Item não pode ser excluído pois foi registrado em '
-            let adicionalMessages = ''
-
-            const isInAdjGrupos = await app.db(tabelaAdjGruposDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInAdjGrupos) adicionalMessages += 'Grupos Adjudicados(Adjudicação) '
-
-            const isInAdjProponentes = await app.db(tabelaAdjProponentesDomain).where({ id_cad: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInAdjProponentes) adicionalMessages += 'Proponentes(Adjudicação) '
-
-            const isInAdjRegistros = await app.db(tabelaAdjRegistrosDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInAdjRegistros) adicionalMessages += 'Ata Registro de Preço(Adjudicação) '
-
-            const isInExecContratos = await app.db(tabelaExecContratosDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInExecContratos) adicionalMessages += 'Contratos(Execução) '
-            
-            const isInConvenios = await app.db(tabelaConveniosDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInConvenios) adicionalMessages += 'Convênios '
-
-            const isInObras = await app.db(tabelaObrasDomain).where({ id_cadas_executor: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInObras) adicionalMessages += 'Obras '
-
-            const isInObras2 = await app.db(tabelaObrasDomain).where({ id_cadas_crea: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInObras2) adicionalMessages += 'Obras '
-
-            const isInObrasAcompans = await app.db(tabelaObrasAcompansDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInObrasAcompans) adicionalMessages += 'Acompanhamentos(Obras) '
-
-            const isInObrasDrts = await app.db(tabelaObrasDrtsDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInObrasDrts) adicionalMessages += 'DRTs(Obras) '
-
-            const isInObrasMedicoes = await app.db(tabelaObrasMedicoesDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInObrasMedicoes) adicionalMessages += 'Medições(Obras) '
-
-            const isInObrasOS = await app.db(tabelaObrasOSDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInObrasOS) adicionalMessages += 'Ordem de Serviço(Obras) '
-
-            const isInCadEnderecos = await app.db(tabelaCadEnderecosDomain).where({ id_cadastros: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInCadEnderecos) adicionalMessages += 'Cadastro Endereços '
-
-            const isInCadOfc = await app.db(tabelaCadOfc).where({ id_cadastros: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInCadOfc) adicionalMessages += 'Cadastro Ofc '
-
-            const isInAdjPropItens = await app.db(tabelaAdjPropItensDomain).where({ id_cadastro: req.params.id, status: STATUS_ACTIVE }).first()
-            if (isInAdjPropItens) adicionalMessages += (adicionalMessages.length > 0 ? 'e ' : '') + 'Proponentes Itens(Adjudicação) '
-
-            if (adicionalMessages.length > 0) throw baseMessage + adicionalMessages
-        } catch (error) {
-            return res.status(400).send(error)
-        }
-
-
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const registro = { status: STATUS_DELETE }
         try {
@@ -317,26 +235,6 @@ module.exports = app => {
         }
     }
 
-    const getListaCadastros = async (req, res) => {
-        let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
-        let ft
-        if (req.params.id) ft = req.params.id
-        else delete ft
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        let sql = app.db(tabelaDomain)
-            .select('id', 'cpf_cnpj', 'cadas_nome').orderBy('cadas_nome')
-            .where({ status: STATUS_ACTIVE }) //, patrimonio: 1
-        if (ft) sql.where({ 'tipo_cadastro': ft })
-        //console.log(sql.toString());
-        sql.then(body => {
-            return res.json({ data: body })
-        })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-            })
-    }
-
-    return { save, get, getCount, getById, remove, getListaCadastros }
+    return { save, get, getById, remove }
 }

@@ -1,7 +1,7 @@
 Field                 Type              Null    Key     Default  Extra           Comment                                     
 --------------------  ----------------  ------  ------  -------  --------------  --------------------------------------------
 id                    int(10) unsigned  NO      PRI     (NULL)   auto_increment  Chave primária da tabela
-evento                int(10) unsigned           NO              (NULL)                   Chave estrangeira com a tabela API.sis_events
+evento                int(10) unsigned  NO              (NULL)                   Chave estrangeira com a tabela API.sis_events
 created_at            varchar(255)      NO              (NULL)                   Date time da criação do registro
 updated_at            varchar(255)      YES             (NULL)                   Date time da última edição do registro
 status                varchar(255)      NO              0                        Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
@@ -14,7 +14,7 @@ nome	        	  varchar(255)  	NO              (NULL)                   Nome ou 
 sexo              	  varchar(255)  	YES             (NULL)                   Sexo(apenas PF) (Masc: 0; Fem: 1; Outro: 2)
 aniversario       	  varchar(255)     	YES             (NULL)                   Nascimento(PF) | Fundação(PJ)
 nacionalidade     	  varchar(255)  	YES             (NULL)                   Nacionalidade
-obs               	  text          	YES             (NULL)                   Observações do cliente
+obs               	  varchar(2500)     YES             (NULL)                   Observações do cliente
 
 ENGINE=InnoDB 
 DEFAULT CHARSET=utf8mb4 

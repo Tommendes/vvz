@@ -1,15 +1,10 @@
-const moment = require('moment')
-const randomstring = require("randomstring")
 const { dbPrefix } = require("../.env")
-const fs = require('fs')
-const { zip } = require('zip-a-folder')
 module.exports = app => {
-    //const { removeAccents } = app.api.facilities
-    const { existsOrError, notExistsOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'sis_reviews'
+    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const tabela = 'local_params'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
-    
+
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
@@ -18,28 +13,23 @@ module.exports = app => {
         try {
             // Alçada para edição
             if (body.id)
-                isMatchOrError(uParams && uParams.patrimonio >= 1, `${noAccessMsg} "Edição de ${tabela}"`)
+                isMatchOrError(uParams && uParams.local_params >= 3, `${noAccessMsg} "Edição de ${tabela}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.patrimonio >= 1, `${noAccessMsg} "Inclusão de ${tabela}"`)
+            else isMatchOrError(uParams && uParams.local_params >= 2, `${noAccessMsg} "Inclusão de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
+
         try {
-            existsOrError(body.versao, 'Versão não informada')
-            existsOrError(body.lancamento, 'Lançamento não informado')
-            existsOrError(body.revisao, 'Revisão não informada')
-            existsOrError(body.titulo, 'Título não informado')
-            existsOrError(body.descricao, 'Descrição não informada')
+
+            if (!body.grupo && !body.parametro && !body.label)
+                throw new Exception("Necessário informar ao menos um dos campos: grupo, parâmeto ou label");
         } catch (error) {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
-        const { changeUpperCase, removeAccentsObj } = app.api.facilities
-        body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
-        body = (JSON.parse(JSON.stringify(body), changeUpperCase));
 
         if (body.id) {
             // Variáveis da edição de um registro
@@ -63,7 +53,7 @@ module.exports = app => {
                 .where({ id: body.id })
             rowsUpdated.then((ret) => {
                 if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Sistema Review não foi encontrado')
+                else res.status(200).send('Parametro não encontrado')
             })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -105,16 +95,14 @@ module.exports = app => {
     const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        let keyCnpj = undefined
         let key = req.query.key
         if (key) {
             key = key.trim()
-            keyCnpj = (key.replace(/([^\d])+/gim, "").length <= 14) ? key.replace(/([^\d])+/gim, "") : undefined
         }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.patrimonio >= 1, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -122,53 +110,38 @@ module.exports = app => {
         const page = req.query.page || 1
         let count = app.db({ tbl1: tabelaDomain }).count('* as count')
             .where({ status: STATUS_ACTIVE })
-
-        if (key)
-            if (keyCnpj) count.where(function () {
-                this.where(app.db.raw(`tbl1.titulo like '%${keyCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.versao regexp('${key.toString().replace(' ', '.+')}')`))
-            })
-            else count.where(app.db.raw(`tbl1.versao regexp('${key.toString().replace(' ', '.+')}')`))
-
         count = await app.db.raw(count.toString())
         count = count[0][0].count
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-        if (key)
-            if (keyCnpj) ret.where(function () {
-                this.where(app.db.raw(`tbl1.titulo like '%${keyCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.versao regexp('${key.toString().replace(' ', '.+')}')`))
-            })
-            else ret.where(app.db.raw(`tbl1.versao regexp('${key.toString().replace(' ', '.+')}')`))
 
         ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .orderBy('versao', 'titulo')
             .limit(limit).offset(page * limit - limit)
-
-        ret.then(body => {
-            return res.json({ data: body, count: count, limit })
-        })
+            .then(body => {
+                return res.json({ data: body, count: count, limit })
+            })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
     }
+
 
     const getById = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.patrimonio >= 1, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de parametros locais de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-            .where({ id: req.params.id, status: STATUS_ACTIVE }).first()
+            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 return res.json(body)
             })
@@ -183,10 +156,11 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError((uParams && uParams.patrimonio >= 1), `${noAccessMsg} "Exclusão de cadastro de ${tabela}"`)
+            isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de parametro local de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
+
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const registro = { status: STATUS_DELETE }
         try {
@@ -218,6 +192,7 @@ module.exports = app => {
             res.status(400).send(error)
         }
     }
+
 
     return { save, get, getById, remove }
 }
