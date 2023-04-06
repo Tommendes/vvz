@@ -99,4 +99,18 @@ module.exports = app => {
         .put(app.api.local_params.save)
         .get(app.api.local_params.getById)
         .delete(app.api.local_params.remove)
+
+    /**
+     * Rota de endereços
+     */
+    app.route('/enderecos')
+    .all(app.config.passport.authenticate())
+    .post(app.api.enderecos.save)
+    .get(app.api.enderecos.get)
+    app.route('/enderecos/:id')
+    .all(app.config.passport.authenticate())
+    .put(app.api.enderecos.save)
+    .get(app.api.enderecos.getById)
+    .delete(app.api.enderecos.remove)
+
 }
