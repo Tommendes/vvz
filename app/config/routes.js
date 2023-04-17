@@ -101,16 +101,42 @@ module.exports = app => {
         .delete(app.api.local_params.remove)
 
     /**
-     * Rota de endereços
+     * Rota de cad_endereços
      */
-    app.route('/enderecos')
-    .all(app.config.passport.authenticate())
-    .post(app.api.enderecos.save)
-    .get(app.api.enderecos.get)
-    app.route('/enderecos/:id')
-    .all(app.config.passport.authenticate())
-    .put(app.api.enderecos.save)
-    .get(app.api.enderecos.getById)
-    .delete(app.api.enderecos.remove)
+    app.route('/cad-enderecos/:id_cadastros')
+        .all(app.config.passport.authenticate())
+        .post(app.api.cad_enderecos.save)
+        .get(app.api.cad_enderecos.get)
+    app.route('/cad-enderecos/:id_cadastros/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.cad_enderecos.save)
+        .get(app.api.cad_enderecos.getById)
+        .delete(app.api.cad_enderecos.remove)
+
+    /**
+     * Rota de cad_contatos
+     */
+    app.route('/cad-contatos/:id_cadastros')
+        .all(app.config.passport.authenticate())
+        .post(app.api.cad_contatos.save)
+        .get(app.api.cad_contatos.get)
+    app.route('/cad-contatos/:id_cadastros/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.cad_contatos.save)
+        .get(app.api.cad_contatos.getById)
+        .delete(app.api.cad_contatos.remove)
+
+    /**
+     * Rota de cad_documentos
+     */
+    app.route('/cad-documentos/:id_cadastros')
+        .all(app.config.passport.authenticate())
+        .post(app.api.cad_documentos.save)
+        .get(app.api.cad_documentos.get)
+    app.route('/cad-documentos/:id_cadastros/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.cad_documentos.save)
+        .get(app.api.cad_documentos.getById)
+        .delete(app.api.cad_documentos.remove)
 
 }
