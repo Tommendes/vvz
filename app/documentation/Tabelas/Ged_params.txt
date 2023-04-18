@@ -1,0 +1,22 @@
+Field             Type              Null    Key     Default  Extra             Comment                                               
+----------------  ------------      ------  ------  -------  ----------------  ------------------------------------------------------
+id                int(10)           NO      PRI     (NULL)   auto_increment    Chave primária da tabela
+evento            int(10) unsigned  NO              (NULL)                     Chave estrangeira com a tabela API.sis_events
+created_at        varchar(255)      NO              (NULL)                     Date time da criação do registro
+updated_at        varchar(255)      YES             (NULL)                     Date time da última edição do registro
+status            varchar(255)      NO              0                          Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
+descricao         varchar(50)       YES             (NULL)                     select,insert,update,references  Descrição abreviada do parâmetro                   
+bi_index          boolean           YES             0                          select,insert,update,references  Apresentação em BI                                  
+doc_venda         boolean           YES             0                          select,insert,update,references  É documento de venda                                 
+autom_nr          boolean           YES             0                          select,insert,update,references  Numeracao automatica                                  
+gera_baixa        boolean           YES             0                          select,insert,update,references  Pode ser convertido em pedido                         
+tipo_secundario   boolean           YES             0                          select,insert,update,references  Tipo secundário                                      
+obrig_valor       boolean           YES             0                          select,insert,update,references  Obrigatorio declarar valor                            
+reg_agente        boolean           YES             0                          select,insert,update,references  Obrigatório agente                                   
+id_logo           varchar(255)      YES             0                          select,insert,update,references  URL logomarca representada                            
+gera_pasta        tinyint(1)        YES             0                          select,insert,update,references  Gera pasta(0=Não, 1=Documento, 2=documento_baixa)    
+proposta_interna  tinyint(1)        YES             0                          select,insert,update,references  Utiliza o sistema de proposta interna                 
+
+ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_general_ci
