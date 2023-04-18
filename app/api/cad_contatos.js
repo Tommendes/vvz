@@ -24,6 +24,7 @@ module.exports = app => {
         try {
             existsOrError(body.pessoa, 'Pessoa não informado')
             existsOrError(body.meio, 'Meio não informada')
+            existsOrError(body.id_tipo, 'Tipo do contato não informado')
 
         } catch (error) {
             return res.status(400).send(error)
