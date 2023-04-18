@@ -21,7 +21,7 @@ module.exports = app => {
         .put(app.api.user.save)
         .get(app.api.user.getById)
         .delete(gestor(app.api.user.remove))
-        
+
     /**
      * Rotas de mensagens-sistema
      */
@@ -34,7 +34,7 @@ module.exports = app => {
         .put(app.api.mensagens_sistema.save)
         .get(app.api.mensagens_sistema.getById)
         .delete(app.api.mensagens_sistema.remove)
-        
+
     /**
     * Rotas de uploads
     */
@@ -138,5 +138,31 @@ module.exports = app => {
         .put(app.api.cad_documentos.save)
         .get(app.api.cad_documentos.getById)
         .delete(app.api.cad_documentos.remove)
+
+    /**
+     * Rota de ged
+     */
+    // app.route('/ged/:id_cadastros/:id_ged_params')
+    //     .all(app.config.passport.authenticate())
+    //     .post(app.api.ged.save)
+    //     .get(app.api.ged.get)
+    // app.route('/ged/:id_cadastros/:id_ged_params/:id')
+    //     .all(app.config.passport.authenticate())
+    //     .put(app.api.ged.save)
+    //     .get(app.api.ged.getById)
+    //     .delete(app.api.ged.remove)
+
+    /**
+     * Rota de ged_status
+     */
+    // app.route('/ged-status/:id_ged')
+    //     .all(app.config.passport.authenticate())
+    //     .post(app.api.ged_status.save)
+    //     .get(app.api.ged_status.get)
+    // app.route('/ged-status/:id_ged/:id')
+    //     .all(app.config.passport.authenticate())
+    //     .put(app.api.ged_status.save)
+    //     .get(app.api.ged_status.getById)
+    //     .delete(app.api.ged_status.remove)
 
 }
