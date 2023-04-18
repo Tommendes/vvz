@@ -15,5 +15,5 @@ Cliente_Dominio
 		ged_protolo		Protocolos de Documentos
 
 	#Etapa 3: Comissionamento
-		Com_agentes		Agentes de vendas
-		Com_terceiros	Comissionamento dos agentes
+		com_agentes		Agentes de vendas
+		com_terceiros	Comissionamento dos agentes
