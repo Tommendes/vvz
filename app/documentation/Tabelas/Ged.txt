@@ -27,6 +27,9 @@ valor_agente              decimal(10,2)     YES             0.00                
 FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
  >>> Knex: table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
  
+FOREIGN KEY (`id_ged_params`) REFERENCES `ged_params` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+ >>> Knex: table.foreign('id_ged_params').references('id').inTable('ged_params').onUpdate('Cascade').onDelete('NO ACTION')
+ 
 FOREIGN KEY (`id_com_agentes`) REFERENCES `com_agentes` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
  >>> Knex: table.foreign('id_com_agentes').references('id').inTable('com_agentes').onUpdate('Cascade').onDelete('NO ACTION')
 

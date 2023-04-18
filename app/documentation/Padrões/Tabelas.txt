@@ -8,12 +8,10 @@ Cliente_Dominio
 	cad_contatos	Contatos dos cadastros
 	cad_documentos	Documentos dos cadastros
 
-	#Etapa 2: Ged
+	#Etapa 2: Ged e Comissionamento
 		ged_params		Parametros do Ged
+		com_agentes		Agentes de vendas
 		ged				Registros do Ged
 		ged_status		Status dos registros
 		ged_protolo		Protocolos de Documentos
-
-	#Etapa 3: Comissionamento
-		com_agentes		Agentes de vendas
 		com_terceiros	Comissionamento dos agentes
