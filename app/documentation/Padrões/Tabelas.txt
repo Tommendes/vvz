@@ -1,8 +1,19 @@
 API.Users: Armazenamento dos dados básicos de usuários
 
 Cliente_Dominio
+	#Etapa 1: Cadastros
 	local_params	Parametros individuais da aplicação e do schema do cliente
 	cadastros		Cadastros dos leads do cliente
 	cad_enderecos	Endereços dos cadastros
 	cad_contatos	Contatos dos cadastros
 	cad_documentos	Documentos dos cadastros
+
+	#Etapa 2: Ged
+		ged_params		Parametros do Ged
+		ged				Registros do Ged
+		ged_status		Status dos registros
+		ged_protolo		Protocolos de Documentos
+
+	#Etapa 3: Comissionamento
+		com_agentes		Agentes de vendas
+		com_terceiros	Comissionamento dos agentes
