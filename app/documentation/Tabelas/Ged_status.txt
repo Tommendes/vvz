@@ -6,7 +6,7 @@ created_at                varchar(255)      NO              (NULL)              
 updated_at                varchar(255)      YES             (NULL)                     Date time da última edição do registro
 status                    varchar(255)      NO              0                          Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
 id_ged                    int(10) unsigned  YES             (NULL)                     Documento pai                                     
-status_params             int(10) unsigned  NO      MUL     (NULL)                     Status do documento-+
+status_params             int(10) unsigned  NO              (NULL)                     Status do documento-+
 
 +,+++++++++
 
