@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('vivazul_cso_jp.cad_contatos', table => {
+    return knex.schema.createTable('vivazul_cso_jp.ged_params', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -18,7 +18,7 @@ exports.up = function(knex, Promise) {
         table.boolean('reg_agente').default(0).comment('select,insert,update,references  Obrigatório agente ')
         table.string('id_logo',255).default(0).comment('select,insert,update,references  URL logomarca representada')
         table.tinyint('gera_pasta',1).default(0).comment('select,insert,update,references  Gera pasta(0=Não, 1=Documento, 2=documento_baixa)')
-        table.tinyint('proposta_interna',1).default(0).comment('select,insert,update,references  Utiliza o sistema de proposta interna')
+        table.tinyint('gera_pasta',1).default(0).comment('select,insert,update,references  Utiliza o sistema de proposta interna')
 
     })
 };
