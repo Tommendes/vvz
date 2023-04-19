@@ -24,5 +24,5 @@ exports.up = function(knex, Promise) {
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('vivazul_cso_jp.cad_contatos')
+    return knex.schema.dropTable('vivazul_cso_jp.ged_params')
 };
