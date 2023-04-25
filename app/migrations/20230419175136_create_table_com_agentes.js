@@ -9,9 +9,10 @@ exports.up = function(knex, Promise) {
         table.string('updated_at')
         table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.string('ordem',3).comment('Número identificador próprio')
-        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+        table.integer('id_cadastros',10).unsigned().notNull().comment('Registro no cadastro')
         table.tinyint('dsr',1).notNull().default(0).comment('Recebe DSR')
         table.decimal('observacao',10,2).comment('Observação do registro')
+        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
 
