@@ -8,8 +8,9 @@ exports.up = function(knex, Promise) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
-        table.foreign('id_ged').references('id').inTable('ged').onUpdate('Cascade').onDelete('NO ACTION')
+        table.integer('id_ged',10).unsigned().comment('Documento pai')
         table.integer('status_params',10).unsigned().notNull().comment('Status do documento-+')
+        table.foreign('id_ged').references('id').inTable('ged').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
 
