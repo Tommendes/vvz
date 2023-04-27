@@ -142,11 +142,11 @@ module.exports = app => {
     /**
      * Rota de ged_params
      */
-     app.route('/ged/:id_cadastros/:id_ged_params')
+     app.route('/ged-params')
          .all(app.config.passport.authenticate())
          .post(app.api.ged_params.save)
          .get(app.api.ged_params.get)
-     app.route('/ged/:id_cadastros/:id_ged_params/:id')
+     app.route('/ged-params/:id')
          .all(app.config.passport.authenticate())
          .put(app.api.ged_params.save)
          .get(app.api.ged_params.getById)

@@ -15,16 +15,16 @@ module.exports = app => {
             if (body.id)
                 isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams , `${noAccessMsg} "Inclusão de ${tabela}"`)
+            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-            if (!id_logo && !body.obrig_valor && !body.reg_agente)
-                throw new Exception("Necessário informar ao menos um dos campos: id_logo, obrig_valor e reg_agente");
-        } catch(error){
+            if (!body.id_logo && !body.obrig_valor && !body.reg_agente)
+                throw "Necessário informar ao menos um dos campos: id_logo, obrig_valor e reg_agente";
+        } catch (error) {
             return res.status(400).send(error)
         }
 
@@ -124,7 +124,7 @@ module.exports = app => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
     }
-    
+
 
     const getById = async (req, res) => {
         let user = req.user
