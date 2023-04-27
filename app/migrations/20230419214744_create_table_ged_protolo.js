@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('vivazul_cso_jp.com_agentes', table => {
+    return knex.schema.createTable('vivazul_cso_jp.ged_protolo', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -8,14 +8,16 @@ exports.up = function(knex, Promise) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
-        table.string('ordem',3).comment('Número identificador próprio')
-        table.integer('id_cadastros',10).unsigned().notNull().comment('Registro no cadastro')
-        table.tinyint('dsr',1).notNull().default(0).comment('Recebe DSR')
-        table.decimal('observacao',10,2).comment('Observação do registro')
+        table.integer('id_cadastros',10).unsigned().notNull().comment('Registro do Destinatário no cadastro')
+        table.string('email_destinatario',255).comment('Destinatário(email)')
+        table.string('registro',255).comment('Número do protocolo')
+        table.string('titulo',255).comment('Port')
+        table.string('e_s',255).comment('Movimento')
+        table.string('descricao',255).comment('Descrição do documento')
         table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('vivazul_cso_jp.com_agentes')
+    return knex.schema.dropTable('vivazul_cso_jp.ged_protolo')
 };

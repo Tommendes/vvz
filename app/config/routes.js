@@ -140,17 +140,28 @@ module.exports = app => {
         .delete(app.api.cad_documentos.remove)
 
     /**
-     * Rota de ged
+     * Rota de ged_params
      */
-    // app.route('/ged/:id_cadastros/:id_ged_params')
-    //     .all(app.config.passport.authenticate())
-    //     .post(app.api.ged.save)
-    //     .get(app.api.ged.get)
-    // app.route('/ged/:id_cadastros/:id_ged_params/:id')
-    //     .all(app.config.passport.authenticate())
-    //     .put(app.api.ged.save)
-    //     .get(app.api.ged.getById)
-    //     .delete(app.api.ged.remove)
+     app.route('/ged/:id_cadastros/:id_ged_params')
+         .all(app.config.passport.authenticate())
+         .post(app.api.ged_params.save)
+         .get(app.api.ged_params.get)
+     app.route('/ged/:id_cadastros/:id_ged_params/:id')
+         .all(app.config.passport.authenticate())
+         .put(app.api.ged_params.save)
+         .get(app.api.ged_params.getById)
+         .delete(app.api.ged_params.remove)
+
+
+    /*app.route('/ged/:id_cadastros/:id_ged_params')
+         .all(app.config.passport.authenticate())
+         .post(app.api.ged.save)
+         .get(app.api.ged.get)
+     app.route('/ged/:id_cadastros/:id_ged_params/:id')
+         .all(app.config.passport.authenticate())
+         .put(app.api.ged.save)
+         .get(app.api.ged.getById)
+         .delete(app.api.ged.remove) */
 
     /**
      * Rota de ged_status

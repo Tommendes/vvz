@@ -5,7 +5,7 @@ evento              int(10) unsigned  NO              (NULL)                    
 created_at          varchar(255)      NO              (NULL)                     Date time da criação do registro
 updated_at          varchar(255)      YES             (NULL)                     Date time da última edição do registro
 status              varchar(255)      NO              0                          Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
-id_cadastros         int(10) unsigned  NO      MUL     (NULL)                     Registro do Ddestinatário no cadastro
+id_cadastros        int(10) unsigned  NO      MUL     (NULL)                     Registro do Destinatário no cadastro
 email_destinatario  varchar(255)      YES             (NULL)                     Destinatário(email)       
 registro            varchar(255)      YES             (NULL)                     Número do protocolo       
 titulo              varchar(255)      YES             (NULL)                     Port                       
