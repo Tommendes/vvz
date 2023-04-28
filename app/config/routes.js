@@ -152,16 +152,19 @@ module.exports = app => {
          .get(app.api.ged_params.getById)
          .delete(app.api.ged_params.remove)
 
-
-    /*app.route('/ged/:id_cadastros/:id_ged_params')
-         .all(app.config.passport.authenticate())
-         .post(app.api.ged.save)
-         .get(app.api.ged.get)
-     app.route('/ged/:id_cadastros/:id_ged_params/:id')
-         .all(app.config.passport.authenticate())
-         .put(app.api.ged.save)
-         .get(app.api.ged.getById)
-         .delete(app.api.ged.remove) */
+        /**
+         * Rota de com_agentes
+         */
+     app.route('/com_agentes')
+        .all(app.config.passport.authenticate())
+        .post(app.api.com_agentes.save)
+        .get(app.api.com_agentes.get)
+     app.route('/com_agentes/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.com_agentes.save)
+        .get(app.api.com_agentes.getById)
+        .delete(app.api.com_agentes.remove)
+   
 
     /**
      * Rota de ged_status
