@@ -155,11 +155,11 @@ module.exports = app => {
         /**
          * Rota de com_agentes
          */
-     app.route('/com_agentes')
+     app.route('/com-agentes')
         .all(app.config.passport.authenticate())
         .post(app.api.com_agentes.save)
         .get(app.api.com_agentes.get)
-     app.route('/com_agentes/:id')
+     app.route('/com-agentes/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.com_agentes.save)
         .get(app.api.com_agentes.getById)
