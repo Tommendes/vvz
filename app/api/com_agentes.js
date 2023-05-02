@@ -15,7 +15,7 @@ module.exports = app => {
             if (body.id)
                 isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams , `${noAccessMsg} "Inclusão de ${tabela}"`)
+            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -24,9 +24,9 @@ module.exports = app => {
         try {
 
             existsOrError(body.id_cadastros, 'Id_cadastros não encontrada ')
-            if(body.id_cadastros < 0) throw "Id_cadastros inválido"
+            if (body.id_cadastros < 0) throw "Id_cadastros inválido"
             existsOrError(body.dsr, '  DSR não encontrado')
-            if(body.dsr.length > 1) throw 'DSR inválido'
+            if (body.dsr.length > 1) throw 'DSR inválido'
 
         } catch (error) {
             return res.status(400).send(error)
@@ -65,7 +65,6 @@ module.exports = app => {
             // Criação de um novo registro
             const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
 
-            body.id_cadastros = req.params.id_cadastros
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
@@ -109,18 +108,18 @@ module.exports = app => {
         } catch (error) {
             return res.status(401).send(error)
         }
-        const id_cadastros = req.params.id_cadastros
+
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const page = req.query.page || 1
         let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE, id_cadastros: id_cadastros })
+            .where({ status: STATUS_ACTIVE })
         count = await app.db.raw(count.toString())
         count = count[0][0].count
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
 
-        ret.where({ status: STATUS_ACTIVE, id_cadastros: id_cadastros })
+        ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
             .limit(limit).offset(page * limit - limit)
             .then(body => {
