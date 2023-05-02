@@ -132,7 +132,7 @@ module.exports = app => {
         }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
+        let count = app.db({ tbl1: tabelaDomain }).select(app.db.raw('id, count(*) as count'))
             .where({ status: STATUS_ACTIVE })
 
         if (key)
