@@ -164,6 +164,19 @@ module.exports = app => {
         .put(app.api.com_agentes.save)
         .get(app.api.com_agentes.getById)
         .delete(app.api.com_agentes.remove)
+
+        /**
+         * Rota de ged
+         */
+     app.route('/ged')
+        .all(app.config.passport.authenticate())
+        .post(app.api.ged.save)
+        .get(app.api.ged.get)
+     app.route('/ged/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.ged.save)
+        .get(app.api.ged.getById)
+        .delete(app.api.ged.remove)
    
 
     /**
