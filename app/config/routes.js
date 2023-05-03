@@ -191,4 +191,18 @@ module.exports = app => {
         .get(app.api.ged_status.getById)
         .delete(app.api.ged_status.remove)
 
+
+         /**
+         * Rota de ged_protolo
+         */
+     app.route('/ged-protolo')
+        .all(app.config.passport.authenticate())
+        .post(app.api.ged_protolo.save)
+        .get(app.api.ged_protolo.get)
+     app.route('/ged-protolo/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.ged_protolo.save)
+        .get(app.api.ged_protolo.getById)
+        .delete(app.api.ged_protolo.remove)
+
 }
