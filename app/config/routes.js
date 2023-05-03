@@ -178,18 +178,17 @@ module.exports = app => {
         .get(app.api.ged.getById)
         .delete(app.api.ged.remove)
    
-
-    /**
-     * Rota de ged_status
-     */
-    // app.route('/ged-status/:id_ged')
-    //     .all(app.config.passport.authenticate())
-    //     .post(app.api.ged_status.save)
-    //     .get(app.api.ged_status.get)
-    // app.route('/ged-status/:id_ged/:id')
-    //     .all(app.config.passport.authenticate())
-    //     .put(app.api.ged_status.save)
-    //     .get(app.api.ged_status.getById)
-    //     .delete(app.api.ged_status.remove)
+        /**
+         * Rota de ged_status
+         */
+     app.route('/ged-status')
+        .all(app.config.passport.authenticate())
+        .post(app.api.ged_status.save)
+        .get(app.api.ged_status.get)
+     app.route('/ged-status/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.ged_status.save)
+        .get(app.api.ged_status.getById)
+        .delete(app.api.ged_status.remove)
 
 }
