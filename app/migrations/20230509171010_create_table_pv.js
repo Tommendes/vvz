@@ -14,7 +14,8 @@ exports.up = function(knex, Promise) {
         table.string('pv_nr',255).comment('Número do PV')
         table.text('obs').comment('Observação')
         table.char('situacao',2).notNull().comment('Situação do pós atendimento')
-
+        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_ged').references('id').inTable('ged').onUpdate('Cascade').onDelete('NO ACTION')
 
     })
 };
