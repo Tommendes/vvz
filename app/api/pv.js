@@ -28,7 +28,7 @@ module.exports = app => {
             existsOrError(body.tipo, 'Tipo não encontrado')
             if(body.tipo.length != 1) throw 'Tipo inválido'
             existsOrError(body.situacao, 'Situação não encontrada')
-            if(body.situacao.length < 2) throw 'Situação inválida'
+            if(body.situacao.length > 2) throw 'Situação inválida'
 
         
         } catch (error) {
