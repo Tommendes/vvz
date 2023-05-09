@@ -1,0 +1,26 @@
+Field          Type              Null    Key     Default  Extra           Comment                    
+-------------  ------------      ------  ------  -------  --------------  ---------------------------
+id             int(10)           NO      PRI     (NULL)   auto_increment  Chave primária da tabela
+evento         int(10) unsigned  NO              (NULL)                   Chave estrangeira com a tabela API.sis_events
+created_at     varchar(255)      NO              (NULL)                   Date time da criação do registro
+updated_at     varchar(255)      YES             (NULL)                   Date time da última edição do registro
+status         varchar(255)      NO              0                        Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
+id_cadastros   int(10) unsigned  NO      MUL     (NULL)                   Cliente                    
+id_ged         int(10) unsigned  YES             (NULL)                   Ged                        
+tipo           int(1)            NO              0                        Tipo de pv (SUPORTE:0; MONTAGEM:1)                     
+pv_nr          varchar(255)      YES             (NULL)                   Número do PV              
+obs            text              YES             (NULL)                   Observação               
+situacao       char(2)           NO              (NULL)                   Situação do pós atendimento
+
+
+!!! IMPORTANTE !!!
+
+FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+ >>> Knex: table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+ 
+FOREIGN KEY (`id_ged`) REFERENCES `ged` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+ >>> Knex: table.foreign('id_ged').references('id').inTable('ged').onUpdate('Cascade').onDelete('NO ACTION')
+
+ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_general_ci

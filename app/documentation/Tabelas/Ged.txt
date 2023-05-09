@@ -1,5 +1,5 @@
-Field                     Type              Null    Key     Default  Extra           Privileges                       Comment                                           
-------------------------  ----------------  ------  ------  -------  --------------  -------------------------------  --------------------------------------------------
+Field                     Type              Null    Key     Default  Extra             Comment                                           
+------------------------  ----------------  ------  ------  -------  ----------------  --------------------------------------------------
 id                        int(10)           NO      PRI     (NULL)   auto_increment    Chave primária da tabela
 evento                    int(10) unsigned  NO              (NULL)                     Chave estrangeira com a tabela API.sis_events
 created_at                varchar(255)      NO              (NULL)                     Date time da criação do registro

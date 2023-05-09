@@ -1,0 +1,36 @@
+Field                     Type              Null    Key     Default  Extra             Comment                                           
+------------------------  ----------------  ------  ------  -------  ----------------  --------------------------------------------------
+id                        int(10)           NO      PRI     (NULL)   auto_increment    Chave primária da tabela
+evento                    int(10) unsigned  NO              (NULL)                     Chave estrangeira com a tabela API.sis_events
+created_at                varchar(255)      NO              (NULL)                     Date time da criação do registro
+updated_at                varchar(255)      YES             (NULL)                     Date time da última edição do registro
+status                    varchar(255)      NO              0                          Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
+id_pv                     int(10) unsigned  NO      MUL     (NULL)                     ID do pv                   
+id_cadastro_endereco      int(10) unsigned  NO              (NULL)                     Endereço do atendimento   
+id_tecnico                int(10) unsigned  YES             (NULL)                     Técnico responsável      
+nr_oat                    int(3)            NO              (NULL)                     OAT                        
+int_ext                   int(10)           NO              (NULL)                     Interno/Externo            
+garantia                  int(1)            NO              (NULL)                     Garantia                   
+nf_garantia               varchar(255)      YES             (NULL)                     Nota fiscal do produto     
+pessoa_contato            varchar(255)      NO              (NULL)                     Contato no cliente         
+telefone_contato          varchar(255)      NO              (NULL)                     Telefone do contato        
+email_contato             varchar(255)      YES             (NULL)                     Email do contato           
+descricao                 text              YES             (NULL)                     Descrição dos serviços  
+valor_total               decimal(10,2)     YES             (NULL)                     Valor dos serviços        
+aceite_do_cliente         varchar(255)      YES             (NULL)                     Data do aceite            
+
+
+!!! IMPORTANTE !!!
+
+FOREIGN KEY (`id_pv`) REFERENCES `pv` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+ >>> Knex: table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('NO ACTION')
+ 
+FOREIGN KEY (`id_cadastro_endereco`) REFERENCES `cad_enderecos` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+ >>> Knex: table.foreign('id_cadastro_endereco').references('id').inTable('ged_params').onUpdate('Cascade').onDelete('NO ACTION')
+ 
+FOREIGN KEY (`id_tecnico`) REFERENCES `pv_tecnicos` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+ >>> Knex: table.foreign('id_tecnico').references('id').inTable('pv_tecnicos').onUpdate('Cascade').onDelete('NO ACTION')
+
+ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_general_ci

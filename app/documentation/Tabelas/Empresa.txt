@@ -1,0 +1,42 @@
+Field                     Type              Null    Key     Default  Extra             Comment                                           
+------------------------  ----------------  ------  ------  -------  ----------------  --------------------------------------------------
+id                        int(10)           NO      PRI     (NULL)   auto_increment    Chave primária da tabela
+evento                    int(10) unsigned  NO              (NULL)                     Chave estrangeira com a tabela API.sis_events
+created_at                varchar(255)      NO              (NULL)                     Date time da criação do registro
+updated_at                varchar(255)      YES             (NULL)                     Date time da última edição do registro
+status                    varchar(255)      NO              0                          Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
+dominio                   varchar(255)      NO      UNI     (NULL)                     Domínio do cliente                                                                                                       
+razaosocial               varchar(255)      YES             (NULL)                     Razão social do cadastro                                                                                                 
+fantasia                  varchar(255)      YES             (NULL)                     Nome fantasia da empresa                                                                                                  
+cpf_cnpj_empresa          varchar(255)      YES             (NULL)                     CNPJ do cadastro                                                                                                          
+ie                        varchar(255)      YES             (NULL)                     Inscrição estadual                                                                                                      
+ie_st                     varchar(255)      YES             (NULL)                     Inscrição estadual do substituto tributário                                                                            
+im                        varchar(255)      YES             (NULL)                     Inscrição municipal                                                                                                     
+cnae                      varchar(255)      YES             (NULL)                     CNAE                                                                                                                      
+cep            		      varchar(8)   		NO              (NULL)                     Cep
+logradouro     		      varchar(255)      NO              (NULL)                     Logradouro
+nr             		      varchar(255)      NO              (NULL)                     Número
+complnr        		      varchar(255)      YES             (NULL)                     Complemento
+bairro         		      varchar(255)      YES             (NULL)                     Bairro
+cidade         		      varchar(255)      NO              (NULL)                     Cidade
+uf             		      varchar(2)        NO              (NULL)                     Estado
+ibge           		      varchar(8)        YES             (NULL)                     IBGE
+geo_ltd        		      varchar(255)      YES             (NULL)                     Geo. latd
+geo_lng        		      varchar(255)      YES             (NULL)                     Geo. lng
+contato                   text              YES             (NULL)                     Contato da empresa                                                                                                        
+tel1                      text              YES             (NULL)                     Telefone 1                                                                                                                
+tel2                      varchar(255)      YES             (NULL)                     Telefone 2                                                                                                                
+email                     varchar(255)      YES             (NULL)                     Email geral                                                                                                               
+emailAt                   varchar(255)      YES             (NULL)                     Email da At                                                                                                               
+emailComercial            varchar(255)      YES             (NULL)                     Email comercial                                                                                                           
+emailFinanceiro           varchar(255)      YES             (NULL)                     Email do financeiro                                                                                                       
+emailRH                   varchar(255)      YES             (NULL)                     Email do RH                                                                                                               
+id_cadas_resplegal        int(10) unsigned  YES             (NULL)                     Responsável legal perante a Receita Federal                                                                              
+url_logo                  text              YES             (NULL)                     Logomarca da empresa                                                                                                      
+
+
+!!! IMPORTANTE !!!
+
+FOREIGN KEY (`id_cadas_resplegal`) REFERENCES `cadastros` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+ >>> Knex: table.foreign('id_cadas_resplegal').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+ 

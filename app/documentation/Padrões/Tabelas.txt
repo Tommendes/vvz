@@ -15,3 +15,11 @@ Cliente_Dominio
 		ged_status		Status dos registros
 		ged_protolo		Protocolos de Documentos
 		com_terceiros	Comissionamento dos agentes
+
+	#Etapa 3: Pos vendas
+		pv				Pós vendas
+		pv_tecnicos		Técnicos de atendimento
+		pv_oat			Ordens de atendimento técnico dos pós vendas
+	
+	#Etapa 4: Financeiro
+		empresa			Dados da empresa cliente
