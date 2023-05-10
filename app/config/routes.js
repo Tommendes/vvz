@@ -232,7 +232,7 @@ module.exports = app => {
         .delete(app.api.pv.remove)
 
          /**
-         * Rota de pv
+         * Rota de pv_tecnicos
          */
        app.route('/pv-tecnicos')
          .all(app.config.passport.authenticate())
@@ -243,6 +243,19 @@ module.exports = app => {
          .put(app.api.pv_tecnicos.save)
          .get(app.api.pv_tecnicos.getById)
          .delete(app.api.pv_tecnicos.remove)
+
+         /**
+         * Rota de pv_oat
+         */
+       app.route('/pv-oat')
+        .all(app.config.passport.authenticate())
+        .post(app.api.pv_oat.save)
+        .get(app.api.pv_oat.get)
+      app.route('/pv-oat/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.pv_oat.save)
+        .get(app.api.pv_oat.getById)
+        .delete(app.api.pv_oat.remove)
  
 
 }
