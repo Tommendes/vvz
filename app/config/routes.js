@@ -231,4 +231,18 @@ module.exports = app => {
         .get(app.api.pv.getById)
         .delete(app.api.pv.remove)
 
+         /**
+         * Rota de pv
+         */
+       app.route('/pv-tecnicos')
+         .all(app.config.passport.authenticate())
+         .post(app.api.pv_tecnicos.save)
+         .get(app.api.pv_tecnicos.get)
+       app.route('/pv-tecnicos/:id')
+         .all(app.config.passport.authenticate())
+         .put(app.api.pv_tecnicos.save)
+         .get(app.api.pv_tecnicos.getById)
+         .delete(app.api.pv_tecnicos.remove)
+ 
+
 }
