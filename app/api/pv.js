@@ -26,7 +26,7 @@ module.exports = app => {
             existsOrError(body.id_cadastros, 'Id_cadastros não encontrado ')
             if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
             existsOrError(body.tipo, 'Tipo não encontrado')
-            if(body.tipo.length != 1) throw 'Tipo inválido'
+            if(body.tipo =! 1 || 0) throw 'Tipo inválido'
             existsOrError(body.situacao, 'Situação não encontrada')
             if(body.situacao.length > 2) throw 'Situação inválida'
 
