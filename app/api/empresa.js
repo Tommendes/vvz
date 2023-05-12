@@ -1,7 +1,7 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'pv_oat'
+    const tabela = 'empresa'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -25,12 +25,12 @@ module.exports = app => {
 
             existsOrError(body.dominio, 'Dominio não encontrado')
             existsOrError(body.cep, 'CEP não encontrado')
-            if (body.cep.length > 8) throw "CEP inválido"
+            if (body.cep.length =! 8) throw "CEP inválido"
             existsOrError(body.logradouro, 'Logradouro não encontrado')
             existsOrError(body.nr, 'Número não encontrado')
             existsOrError(body.cidade, 'Cidade não encontrada')
             existsOrError(body.uf, 'UF não encontrada')
-            if (body.uf.length > 8) throw "UF inválido"
+            if (body.uf.length =! 2) throw "UF inválido"
         
         } catch (error) {
             return res.status(400).send(error)
