@@ -256,6 +256,19 @@ module.exports = app => {
         .put(app.api.pv_oat.save)
         .get(app.api.pv_oat.getById)
         .delete(app.api.pv_oat.remove)
- 
+
+
+        /**
+         * Rota de empresa
+        */
+        app.route('/empresa')
+            .all(app.config.passport.authenticate())
+            .post(app.api.empresa.save)
+            .get(app.api.empresa.get)
+        app.route('/empresa/:id')
+            .all(app.config.passport.authenticate())
+            .put(app.api.empresa.save)
+            .get(app.api.empresa.getById)
+            .delete(app.api.empresa.remove)
 
 }
