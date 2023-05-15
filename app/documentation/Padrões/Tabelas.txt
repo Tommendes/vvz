@@ -23,3 +23,5 @@ Cliente_Dominio
 	
 	#Etapa 4: Financeiro
 		empresa			Dados da empresa cliente
+		fin_cc			Centros de custo
+		fin_lancamentos	Registros financeiros
