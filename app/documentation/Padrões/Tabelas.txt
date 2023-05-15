@@ -25,3 +25,4 @@ Cliente_Dominio
 		empresa			Dados da empresa cliente
 		fin_cc			Centros de custo
 		fin_lancamentos	Registros financeiros
+		fin_retencoes	Retenções financeiras

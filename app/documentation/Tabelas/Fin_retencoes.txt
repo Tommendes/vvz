@@ -1,0 +1,20 @@
+Field                     Type              Null    Key     Default  Extra           Comment                                                                                                                       
+------------------------  ----------------  ------  ------  -------  --------------  ------------------------------------------------------------------------------------------------------------------------------
+id                        int(10)           NO      PRI     (NULL)   auto_increment  Chave primária da tabela
+evento                    int(10) unsigned  NO              (NULL)                   Chave estrangeira com a tabela API.sis_events
+created_at                varchar(255)      NO              (NULL)                   Date time da criação do registro
+updated_at                varchar(255)      YES             (NULL)                   Date time da última edição do registro
+status                    varchar(255)      NO              0                        Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
+id_fin_lanc               int(10) unsigned  NO              (NULL)                   Chave estrangeira com a tabela fin_lancamentos
+valor                     double(11,2)      YES             0.00                     Valor da retenção                                                                                                        
+descricao                 varchar(250)      YES             0.00                     Descrição da retenção
+
+
+!!! IMPORTANTE !!!
+
+FOREIGN KEY (`id_fin_lanc`) REFERENCES `fin_lancamentos` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+ >>> Knex: table.foreign('id_fin_lanc').references('id').inTable('fin_lancamentos').onUpdate('Cascade').onDelete('NO ACTION')
+
+ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_general_ci
