@@ -1,0 +1,32 @@
+Field                     Type              Null    Key     Default  Extra           Comment                                                                                                                       
+------------------------  ----------------  ------  ------  -------  --------------  ------------------------------------------------------------------------------------------------------------------------------
+id                        int(10)           NO      PRI     (NULL)   auto_increment  Chave primária da tabela
+evento                    int(10) unsigned  NO              (NULL)                   Chave estrangeira com a tabela API.sis_events
+created_at                varchar(255)      NO              (NULL)                   Date time da criação do registro
+updated_at                varchar(255)      YES             (NULL)                   Date time da última edição do registro
+status                    varchar(255)      NO              0                        Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
+tp_cta                    char(1)           YES             (NULL)                   +=Receber;-=Pagar                                                                                                             
+id_empresa                int(10) unsigned  NO              0                        Codigo relacional com a tabela sis_demp                                                                                       
+id_cadastros              int(10) unsigned  NO              0                        Codigo relacional com a tabela de cadastros                                                                                   
+id_centro_custo           int(10) unsigned  YES             0                        Codigo relacional com a tabela fin_centro_custo                                                                               
+tipoDocumento             varchar(255)      YES             (NULL)                   Documento gerado: CF, NF-e, NFS-e                                                                                             
+doc_fiscal                varchar(255)      YES             0                        Nota fiscal do lancamento                                                                                                     
+data_lanc                 char(10)          YES             (NULL)                   Data do lancamento da conta no sistema                                                                                        
+data_vencimento           char(10)          YES             (NULL)                   Data de vencimento programado para a conta                                                                                    
+data_pagto                char(10)          YES             (NULL)                   Data real que aconteceu o pagamento                                                                                           
+valor_bruto               double(11,2)      YES             0.00                     Valor bruto da conta                                                                                                          
+valor_bruto_nf            double(11,2)      YES             0.00                     Valor bruto da nota fiscal                                                                                                    
+valor_retencao            double(11,2)      YES             0.00                     Valor da retenção. Este campo será impresso na duplicata.                                                                  
+valor_liquido             double(11,2)      YES             0.00                     Valor liquido da conta                                                                                                        
+descricao_retencao        varchar(250)      YES             (NULL)                   Descrição abreviada do motivo da retencao. Este campo será impresso na duplicata.                                          
+valor_vencimentos         double(11,2)      YES             0.00                     Valor bruto da conta                                                                                                          
+valor_nota_fiscal         double(11,2)      YES             0.00                     Valor total da nota fiscal para impressão na duplicata                                                                       
+duplicata                 varchar(255)      YES             (NULL)                   Duplicata da conta gerada no faturamento                                                                                      
+duplicata_impr            int(1)            YES             0                        Quantidade de vezes que a duplicata foi impress                                                                               
+descricao_conta           varchar(100)      YES                                      Descrição da conta                                                                                                          
+obs_da_conta              varchar(2500)     YES                                      Observacao da conta                                                                                                           
+vencimento                varchar(3)        YES                                      Parcela da conta. Ex.                                                                                                         
+forma_pagto               varchar(255)      YES                                      Forma de pagamento utilizada                                                                                                  
+doc_pagto                 varchar(255)      YES                                      Documento que quitou o pagamento                                                                                              
+situacao                  char(1)           YES             -1                       Situacao:-1-Ainda não é considerado duplicata pois não foi impresso;0-Todos;1-Pendente;2-Cancelado;3-Quitado;4-Conciliado  
+motiv_cancel              varchar(255)      YES                                      Caso situacao=2 descrever o motivo do cancelamento                                                                            
