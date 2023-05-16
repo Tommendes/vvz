@@ -271,4 +271,18 @@ module.exports = app => {
             .get(app.api.empresa.getById)
             .delete(app.api.empresa.remove)
 
+
+         /**
+         * Rota de fin_cc
+        */
+        app.route('/fin-cc')
+            .all(app.config.passport.authenticate())
+            .post(app.api.fin_cc.save)
+            .get(app.api.fin_cc.get)
+        app.route('/fin-cc/:id')
+            .all(app.config.passport.authenticate())
+            .put(app.api.fin_cc.save)
+            .get(app.api.fin_cc.getById)
+            .delete(app.api.fin_cc.remove)
+
 }
