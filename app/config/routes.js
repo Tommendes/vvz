@@ -285,4 +285,18 @@ module.exports = app => {
             .get(app.api.fin_cc.getById)
             .delete(app.api.fin_cc.remove)
 
+
+         /**
+         * Rota de fin_lancamentos
+        */
+         app.route('/fin-lancamentos')
+            .all(app.config.passport.authenticate())
+            .post(app.api.fin_lancamentos.save)
+            .get(app.api.fin_lancamentos.get)
+         app.route('/fin-lancamentos/:id')
+            .all(app.config.passport.authenticate())
+            .put(app.api.fin_lancamentos.save)
+            .get(app.api.fin_lancamentos.getById)
+            .delete(app.api.fin_lancamentos.remove)
+
 }
