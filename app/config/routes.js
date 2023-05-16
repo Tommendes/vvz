@@ -299,4 +299,19 @@ module.exports = app => {
             .get(app.api.fin_lancamentos.getById)
             .delete(app.api.fin_lancamentos.remove)
 
+
+         /**
+         * Rota de fin_retencoes
+        */
+         app.route('/fin-retencoes')
+            .all(app.config.passport.authenticate())
+            .post(app.api.fin_retencoes.save)
+            .get(app.api.fin_retencoes.get)
+         app.route('/fin-retencoes/:id')
+            .all(app.config.passport.authenticate())
+            .put(app.api.fin_retencoes.save)
+            .get(app.api.fin_retencoes.getById)
+            .delete(app.api.fin_retencoes.remove)
+
+
 }
