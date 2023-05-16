@@ -31,7 +31,7 @@ exports.up = function(knex, Promise) {
         table.string('vencimento',3).comment('Parcela da conta. Ex.')
         table.string('forma_pagto',255).comment('Forma de pagamento utilizada')
         table.string('doc_pagto',255).comment('Documento que quitou o pagamento')
-        table.specificType('situacao','char(1)').default(-1).comment('Situacao:-1-Ainda não é considerado duplicata pois não foi impresso;0-Todos;1-Pendente;2-Cancelado;3-Quitado;4-Conciliado')
+        table.specificType('situacao','char(1)').defaultTo(-1).comment('Situacao:-1-Ainda não é considerado duplicata pois não foi impresso;0-Todos;1-Pendente;2-Cancelado;3-Quitado;4-Conciliado')
         table.string('motiv_cancel',255).comment('Caso situacao=2 descrever o motivo do cancelamento')
         table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
         table.foreign('id_empresa').references('id').inTable('empresa').onUpdate('Cascade').onDelete('NO ACTION')
