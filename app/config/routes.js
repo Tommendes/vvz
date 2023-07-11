@@ -1,17 +1,38 @@
 const gestor = require('./gestor')
 
 module.exports = app => {
+    app.post('/signup', app.api.user.signup)
+    app.post('/signin', app.api.auth.signin)
+    app.post('/validateToken', app.api.auth.validateToken)
+
+    /**
+     * Exibição ou captura de ativos do sistema
+     */
+    app.route('/asset')
+        .all(app.config.passport.authenticate())
+        .post(app.api.assets.getAsset)
+
+    /**
+     * Rota de validação genérica de documentos
+     */
+    app.route('/validator/:func/:tk')
+        .get(app.api.validator.getByFunction)
+
     /**
      * Rotas de usuários
      */
-    app.post('/signup', app.api.user.save)
-    app.post('/signin', app.api.auth.signin)
-    app.post('/validateToken', app.api.auth.validateToken)
+    // Solocitação de tokens de reset
     app.route('/request-password-reset').post(app.api.user.requestPasswordReset)
-    app.route('/password-reset/:token').put(app.api.user.passwordReset)
-    app.route('/user-token/:token').get(app.api.user.getByToken)
-    app.get('/user-unlock/:id/:token', app.api.user.unlock)
-    app.route('/users-unique').get(app.api.user.getUnique)
+    // Entrega do token de reset e desbloqueio
+    app.route('/password-reset/:id').put(app.api.user.passwordReset)
+    // Desbloqueio de usuário por token 
+    app.route('/user-unlock/:id')
+        .get(app.api.user.unlock)
+        .post(app.api.user.unlock)
+    // Rotas utilizadas para envio do token por SMS e email
+    app.route('/user-sms-unlock').patch(app.api.user.smsToken)
+    app.route('/user-mail-unlock').patch(app.api.user.mailyToken)
+
     app.route('/users')
         .all(app.config.passport.authenticate())
         .post(gestor(app.api.user.save))
@@ -21,31 +42,18 @@ module.exports = app => {
         .put(app.api.user.save)
         .get(app.api.user.getById)
         .delete(gestor(app.api.user.remove))
+    app.route('/user-token/:token').get(app.api.user.getByToken)
+    app.route('/users/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.user.getByFunction)
+    app.route('/users/f/:func').get(app.api.user.getByFunction)
+    app.route('/users-cpf/:cpf')
+        .all(app.config.passport.authenticate())
+        .get(app.api.user.getByCpf)
+    app.route('/users/locate-servidor-on-client')
+        .all(app.config.passport.authenticate())
+        .post(app.api.user.locateServidorOnClient)
 
-    /**
-     * Rotas de mensagens-sistema
-     */
-    app.route('/mensagens-sistema')
-        .all(app.config.passport.authenticate())
-        .post(app.api.mensagens_sistema.save)
-        .get(app.api.mensagens_sistema.get)
-    app.route('/mensagens-sistema/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.mensagens_sistema.save)
-        .get(app.api.mensagens_sistema.getById)
-        .delete(app.api.mensagens_sistema.remove)
-
-    /**
-    * Rotas de uploads
-    */
-    app.route('/uploads')
-        .all(app.config.passport.authenticate())
-        .post(app.api.uploads.save)
-        .get(app.api.uploads.get)
-    app.route('/uploads/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.uploads.save)
-        .get(app.api.uploads.getById)
     /**
      * Rotas administrativas
      */
@@ -53,265 +61,305 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .post(app.api.sisEvents.createEventUpd)
         .get(app.api.sisEvents.get)
-    app.route('/sis-events/f-a/:field')
+    app.route('/sis-events/:field')
         .all(app.config.passport.authenticate())
         .get(app.api.sisEvents.getByField)
-    app.route('/sis-events/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.sisEvents.getById)
     app.route('/params')
         .all(app.config.passport.authenticate())
-        .post(app.api.params.get)
+        .post(app.api.params.save)
+        .get(app.api.params.get)
     app.route('/params/:id')
         .all(app.config.passport.authenticate())
+        .put(app.api.params.save)
         .get(app.api.params.getById)
-    app.route('/params/f-a/:field')
+        .delete(app.api.params.remove)
+    app.route('/mailer-cli')
         .all(app.config.passport.authenticate())
-        .post(app.api.params.getByField)
-    app.route('/params/f/:func')
-        .post(app.api.params.getByFunction)
+        .post(app.api.mailerCli.mailyCliSender)
+    app.route('/mailer-noncli')
+        // .all(app.config.passport.authenticate())
+        .post(app.api.mailerCli.mailyCliSender)
 
     /**
-     * Rotas de cadastros
+     * Rotas para o MGFolha Desktop
      */
-    app.route('/cadastros')
-        .all(app.config.passport.authenticate())
-        .post(app.api.cadastros.save)
-        .get(app.api.cadastros.get)
-    app.route('/cadastros/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.cadastros.save)
-        .get(app.api.cadastros.getById)
-        .delete(app.api.cadastros.remove)
-    app.route('/cadastros/f-a/:func')
-        .all(app.config.passport.authenticate())
-    // .post(app.api.cadastros.getByFunction)*/
+    app.route('/desk-users').get(app.api.user.getDeskUser)
+    app.route('/ponte-id').post(app.api.params.getPonteId)
+    app.route('/siap-id').post(app.api.params.getSiapId)
+    app.route('/esocial-id').post(app.api.params.getESocialId)
+    app.route('/esocialjar-id').post(app.api.params.getESocialJarId)
 
     /**
-     * Rota de local_params
-     */
+    * Novas Rotas /////////////////////////////////////////////////////
+    * 
+    */
+    app.route('/empresa')
+        .all(app.config.passport.authenticate())
+        .post(app.api.empresa.save)
+        .get(app.api.empresa.get)
+    app.route('/empresa/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.empresa.save)
+        .get(app.api.empresa.getById)
+        .delete(app.api.empresa.remove)
+
+    app.route('/es-params/:id_emp')
+        .all(app.config.passport.authenticate())
+        .post(app.api.esParams.save)
+        .get(app.api.esParams.get)
+    app.route('/es-params/:id_emp/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.esParams.save)
+        .get(app.api.esParams.getById)
+        .delete(app.api.esParams.remove)
+
+    app.route('/es-envios/:id_es_param')
+        .all(app.config.passport.authenticate())
+        .post(app.api.esEnvios.save)
+        .get(app.api.esEnvios.get)
+    app.route('/es-envios/:id_es_param/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.esEnvios.save)
+        .get(app.api.esEnvios.getById)
+        .delete(app.api.esEnvios.remove)
+
+    app.route('/es-rejeicoes/:id_es_envio')
+        .all(app.config.passport.authenticate())
+        .post(app.api.esRejeicoes.save)
+        .get(app.api.esRejeicoes.get)
+    app.route('/es-rejeicoes/:id_es_envio/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.esRejeicoes.save)
+        .get(app.api.esRejeicoes.getById)
+        .delete(app.api.esRejeicoes.remove)
+
+    app.route('/emp-resp/:id_emp')
+        .all(app.config.passport.authenticate())
+        .post(app.api.empResp.save)
+        .get(app.api.empResp.get)
+    app.route('/emp-resp/:id_emp/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.empResp.save)
+        .get(app.api.empResp.getById)
+        .delete(app.api.empResp.remove)
+
+    app.route('/emp-resp-contato/:id_emp_resp')
+        .all(app.config.passport.authenticate())
+        .post(app.api.empRespContato.save)
+        .get(app.api.empRespContato.get)
+    app.route('/emp-resp-contato/:id_emp_resp/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.empRespContato.save)
+        .get(app.api.empRespContato.getById)
+        .delete(app.api.empRespContato.remove)
+
+    app.route('/emp-ua/:id_emp')
+        .all(app.config.passport.authenticate())
+        .post(app.api.empUA.save)
+        .get(app.api.empUA.get)
+    app.route('/emp-ua/:id_emp/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.empUA.save)
+        .get(app.api.empUA.getById)
+        .delete(app.api.empUA.remove)
+
+    app.route('/aux-cargos')
+        .all(app.config.passport.authenticate())
+        .post(app.api.auxCargos.save)
+        .get(app.api.auxCargos.get)
+    app.route('/aux-cargos/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.auxCargos.save)
+        .get(app.api.auxCargos.getById)
+        .delete(app.api.auxCargos.remove)
+
+    app.route('/fin-rubricas/:id_emp')
+        .all(app.config.passport.authenticate())
+        .post(app.api.finRubricas.save)
+        .get(app.api.finRubricas.get)
+    app.route('/fin-rubricas/:id_emp/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.finRubricas.save)
+        .get(app.api.finRubricas.getById)
+        .delete(app.api.finRubricas.remove)
+
+    app.route('/servidores/:id_emp')
+        .all(app.config.passport.authenticate())
+        .post(app.api.servidores.save)
+        .get(app.api.servidores.get)
+    app.route('/servidores/:id_emp/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.servidores.save)
+        .get(app.api.servidores.getById)
+        .delete(app.api.servidores.remove)
+
+    app.route('/serv-dependentes/:id_serv')
+        .all(app.config.passport.authenticate())
+        .post(app.api.servDependentes.save)
+        .get(app.api.servDependentes.get)
+    app.route('/serv-dependentes/:id_serv/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.servDependentes.save)
+        .get(app.api.servDependentes.getById)
+        .delete(app.api.servDependentes.remove)
+
+    app.route('/serv-vinculos/:id_serv')
+        .all(app.config.passport.authenticate())
+        .post(app.api.servVinculos.save)
+        .get(app.api.servVinculos.get)
+    app.route('/serv-vinculos/:id_serv/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.servVinculos.save)
+        .get(app.api.servVinculos.getById)
+        .delete(app.api.servVinculos.remove)
+
     app.route('/local-params')
         .all(app.config.passport.authenticate())
-        .post(app.api.local_params.save)
-        .get(app.api.local_params.get)
+        .post(app.api.localParams.save)
+        .get(app.api.localParams.get)
     app.route('/local-params/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.local_params.save)
-        .get(app.api.local_params.getById)
-        .delete(app.api.local_params.remove)
+        .put(app.api.localParams.save)
+        .get(app.api.localParams.getById)
+        .delete(app.api.localParams.remove)
 
-    /**
-     * Rota de cad_endereços
-     */
-    app.route('/cad-enderecos/:id_cadastros')
+    app.route('/siap-publicacoes')
         .all(app.config.passport.authenticate())
-        .post(app.api.cad_enderecos.save)
-        .get(app.api.cad_enderecos.get)
-    app.route('/cad-enderecos/:id_cadastros/:id')
+        .post(app.api.siapPublicacoes.save)
+        .get(app.api.siapPublicacoes.get)
+    app.route('/siap-publicacoes/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.cad_enderecos.save)
-        .get(app.api.cad_enderecos.getById)
-        .delete(app.api.cad_enderecos.remove)
+        .put(app.api.siapPublicacoes.save)
+        .get(app.api.siapPublicacoes.getById)
+        .delete(app.api.siapPublicacoes.remove)
 
-    /**
-     * Rota de cad_contatos
-     */
-    app.route('/cad-contatos/:id_cadastros')
+    app.route('/remun-adfg')
         .all(app.config.passport.authenticate())
-        .post(app.api.cad_contatos.save)
-        .get(app.api.cad_contatos.get)
-    app.route('/cad-contatos/:id_cadastros/:id')
+        .post(app.api.remunADFG.save)
+        .get(app.api.remunADFG.get)
+    app.route('/remun-adfg/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.cad_contatos.save)
-        .get(app.api.cad_contatos.getById)
-        .delete(app.api.cad_contatos.remove)
+        .put(app.api.remunADFG.save)
+        .get(app.api.remunADFG.getById)
+        .delete(app.api.remunADFG.remove)
 
-    /**
-     * Rota de cad_documentos
-     */
-    app.route('/cad-documentos/:id_cadastros')
+    app.route('/remun-oe/:id_serv_vinc')
         .all(app.config.passport.authenticate())
-        .post(app.api.cad_documentos.save)
-        .get(app.api.cad_documentos.get)
-    app.route('/cad-documentos/:id_cadastros/:id')
+        .post(app.api.remunOE.save)
+        .get(app.api.remunOE.get)
+    app.route('/remun-oe/:id_serv_vinc/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.cad_documentos.save)
-        .get(app.api.cad_documentos.getById)
-        .delete(app.api.cad_documentos.remove)
+        .put(app.api.remunOE.save)
+        .get(app.api.remunOE.getById)
+        .delete(app.api.remunOE.remove)
 
-    /**
-     * Rota de ged_params
-     */
-     app.route('/ged-params')
-         .all(app.config.passport.authenticate())
-         .post(app.api.ged_params.save)
-         .get(app.api.ged_params.get)
-     app.route('/ged-params/:id')
-         .all(app.config.passport.authenticate())
-         .put(app.api.ged_params.save)
-         .get(app.api.ged_params.getById)
-         .delete(app.api.ged_params.remove)
-
-        /**
-         * Rota de com_agentes
-         */
-     app.route('/com-agentes')
+    app.route('/remun-params')
         .all(app.config.passport.authenticate())
-        .post(app.api.com_agentes.save)
-        .get(app.api.com_agentes.get)
-     app.route('/com-agentes/:id')
+        .post(app.api.remunParams.save)
+        .get(app.api.remunParams.get)
+    app.route('/remun-params/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.com_agentes.save)
-        .get(app.api.com_agentes.getById)
-        .delete(app.api.com_agentes.remove)
+        .put(app.api.remunParams.save)
+        .get(app.api.remunParams.getById)
+        .delete(app.api.remunParams.remove)
 
-        /**
-         * Rota de ged
-         */
-     app.route('/ged')
+    app.route('/remuneracao/:id_serv_vinc')
         .all(app.config.passport.authenticate())
-        .post(app.api.ged.save)
-        .get(app.api.ged.get)
-     app.route('/ged/:id')
+        .post(app.api.remuneracao.save)
+        .get(app.api.remuneracao.get)
+    app.route('/remuneracao/:id_serv_vinc/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.ged.save)
-        .get(app.api.ged.getById)
-        .delete(app.api.ged.remove)
-   
-        /**
-         * Rota de ged_status
-         */
-     app.route('/ged-status')
+        .put(app.api.remuneracao.save)
+        .get(app.api.remuneracao.getById)
+        .delete(app.api.remuneracao.remove)
+
+    app.route('/serv-afastamentos/:id_serv_vinc')
         .all(app.config.passport.authenticate())
-        .post(app.api.ged_status.save)
-        .get(app.api.ged_status.get)
-     app.route('/ged-status/:id')
+        .post(app.api.servAfastamento.save)
+        .get(app.api.servAfastamento.get)
+    app.route('/serv-afastamentos/:id_serv_vinc/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.ged_status.save)
-        .get(app.api.ged_status.getById)
-        .delete(app.api.ged_status.remove)
+        .put(app.api.servAfastamento.save)
+        .get(app.api.servAfastamento.getById)
+        .delete(app.api.servAfastamento.remove)
 
-
-         /**
-         * Rota de ged_protolo
-         */
-     app.route('/ged-protolo')
+    app.route('/serv-desligamento/:id_serv_vinc')
         .all(app.config.passport.authenticate())
-        .post(app.api.ged_protolo.save)
-        .get(app.api.ged_protolo.get)
-     app.route('/ged-protolo/:id')
+        .post(app.api.servDesligamento.save)
+        .get(app.api.servDesligamento.get)
+    app.route('/serv-desligamento/:id_serv_vinc/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.ged_protolo.save)
-        .get(app.api.ged_protolo.getById)
-        .delete(app.api.ged_protolo.remove)
+        .put(app.api.servDesligamento.save)
+        .get(app.api.servDesligamento.getById)
+        .delete(app.api.servDesligamento.remove)
 
-         /**
-         * Rota de ged_protolo
-         */
-      app.route('/com-terceiros')
-         .all(app.config.passport.authenticate())
-         .post(app.api.com_terceiros.save)
-         .get(app.api.com_terceiros.get)
-      app.route('/com-terceiros/:id')
-         .all(app.config.passport.authenticate())
-         .put(app.api.com_terceiros.save)
-         .get(app.api.com_terceiros.getById)
-         .delete(app.api.com_terceiros.remove)
-
-         /**
-         * Rota de pv
-         */
-      app.route('/pv')
+    app.route('/serv-ferias/:id_serv_vinc')
         .all(app.config.passport.authenticate())
-        .post(app.api.pv.save)
-        .get(app.api.pv.get)
-      app.route('/pv/:id')
+        .post(app.api.servFerias.save)
+        .get(app.api.servFerias.get)
+    app.route('/serv-ferias/:id_serv_vinc/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.pv.save)
-        .get(app.api.pv.getById)
-        .delete(app.api.pv.remove)
+        .put(app.api.servFerias.save)
+        .get(app.api.servFerias.getById)
+        .delete(app.api.servFerias.remove)
 
-         /**
-         * Rota de pv_tecnicos
-         */
-       app.route('/pv-tecnicos')
-         .all(app.config.passport.authenticate())
-         .post(app.api.pv_tecnicos.save)
-         .get(app.api.pv_tecnicos.get)
-       app.route('/pv-tecnicos/:id')
-         .all(app.config.passport.authenticate())
-         .put(app.api.pv_tecnicos.save)
-         .get(app.api.pv_tecnicos.getById)
-         .delete(app.api.pv_tecnicos.remove)
-
-         /**
-         * Rota de pv_oat
-         */
-       app.route('/pv-oat')
+    app.route('/serv-reintegracao/:id_serv_vinc')
         .all(app.config.passport.authenticate())
-        .post(app.api.pv_oat.save)
-        .get(app.api.pv_oat.get)
-      app.route('/pv-oat/:id')
+        .post(app.api.servReintegracao.save)
+        .get(app.api.servReintegracao.get)
+    app.route('/serv-reintegracao/:id_serv_vinc/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.pv_oat.save)
-        .get(app.api.pv_oat.getById)
-        .delete(app.api.pv_oat.remove)
+        .put(app.api.servReintegracao.save)
+        .get(app.api.servReintegracao.getById)
+        .delete(app.api.servReintegracao.remove)
 
+    app.route('/serv-cessao/:id_serv_vinc')
+        .all(app.config.passport.authenticate())
+        .post(app.api.servCessao.save)
+        .get(app.api.servCessao.get)
+    app.route('/serv-cessao/:id_serv_vinc/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.servCessao.save)
+        .get(app.api.servCessao.getById)
+        .delete(app.api.servCessao.remove)
 
-        /**
-         * Rota de empresa
-        */
-        app.route('/empresa')
-            .all(app.config.passport.authenticate())
-            .post(app.api.empresa.save)
-            .get(app.api.empresa.get)
-        app.route('/empresa/:id')
-            .all(app.config.passport.authenticate())
-            .put(app.api.empresa.save)
-            .get(app.api.empresa.getById)
-            .delete(app.api.empresa.remove)
+    app.route('/beneficiarios')
+        .all(app.config.passport.authenticate())
+        .post(app.api.beneficiarios.save)
+        .get(app.api.beneficiarios.get)
+    app.route('/beneficiarios/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.beneficiarios.save)
+        .get(app.api.beneficiarios.getById)
+        .delete(app.api.beneficiarios.remove)
 
+    app.route('/ben-dependentes/:id_benef')
+        .all(app.config.passport.authenticate())
+        .post(app.api.benDependentes.save)
+        .get(app.api.benDependentes.get)
+    app.route('/ben-dependentes/:id_benef/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.benDependentes.save)
+        .get(app.api.benDependentes.getById)
+        .delete(app.api.benDependentes.remove)
 
-         /**
-         * Rota de fin_cc
-        */
-        app.route('/fin-cc')
-            .all(app.config.passport.authenticate())
-            .post(app.api.fin_cc.save)
-            .get(app.api.fin_cc.get)
-        app.route('/fin-cc/:id')
-            .all(app.config.passport.authenticate())
-            .put(app.api.fin_cc.save)
-            .get(app.api.fin_cc.getById)
-            .delete(app.api.fin_cc.remove)
+    app.route('/ben-vinculos/:id_benef')
+        .all(app.config.passport.authenticate())
+        .post(app.api.benVinculos.save)
+        .get(app.api.benVinculos.get)
+    app.route('/ben-vinculos/:id_benef/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.benVinculos.save)
+        .get(app.api.benVinculos.getById)
+        .delete(app.api.benVinculos.remove)
 
-
-         /**
-         * Rota de fin_lancamentos
-        */
-         app.route('/fin-lancamentos')
-            .all(app.config.passport.authenticate())
-            .post(app.api.fin_lancamentos.save)
-            .get(app.api.fin_lancamentos.get)
-         app.route('/fin-lancamentos/:id')
-            .all(app.config.passport.authenticate())
-            .put(app.api.fin_lancamentos.save)
-            .get(app.api.fin_lancamentos.getById)
-            .delete(app.api.fin_lancamentos.remove)
-
-
-         /**
-         * Rota de fin_retencoes
-        */
-         app.route('/fin-retencoes')
-            .all(app.config.passport.authenticate())
-            .post(app.api.fin_retencoes.save)
-            .get(app.api.fin_retencoes.get)
-         app.route('/fin-retencoes/:id')
-            .all(app.config.passport.authenticate())
-            .put(app.api.fin_retencoes.save)
-            .get(app.api.fin_retencoes.getById)
-            .delete(app.api.fin_retencoes.remove)
-
-
+    app.route('/ben-beneficios/:id_ben_vinc')
+        .all(app.config.passport.authenticate())
+        .post(app.api.benBeneficios.save)
+        .get(app.api.benBeneficios.get)
+    app.route('/ben-beneficios/:id_ben_vinc/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.benBeneficios.save)
+        .get(app.api.benBeneficios.getById)
+        .delete(app.api.benBeneficios.remove)
 }
