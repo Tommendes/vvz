@@ -7,7 +7,7 @@ A aplicação é composta de dois tipos de SCHEMAS
 Respeitar o padrão dos nomes de SCHEMAS de acordo com o nome do cliente e domínio parametrizados em DB.Params
 	DBPREFIX_CLIENTE_DOMINIO
 	 >>> P.Ex.: 
-			vivazul_cso_jp (Cliente: Casa Ofício; Domínio: JP Comércio...)
+			vivazul_cliente_dominio (Cliente: Casa Ofício; Domínio: JP Comércio...)
 			vivazul_cso_trs (Cliente: Casa Ofício; Domínio: Trèsor Comércio...)
 			vivazul_cso_trp (Cliente: Casa Ofício; Domínio: Trèsor Participações...)
 			

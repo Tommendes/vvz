@@ -6,6 +6,93 @@ module.exports = app => {
     const STATUS_ACTIVE = 10
     const STATUS_TRASH = 20
 
+    const save = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        const body = { ...req.body }
+        if (req.params.id) body.id = req.params.id
+        try {
+            // Alçada para edição
+            if (body.id)
+                isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Edição de ${tabela}"`)
+            // Alçada para inclusão
+            else isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Inclusão de ${tabela}"`)
+        } catch (error) {
+            return res.status(401).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_app.${tabela}`
+
+        try {
+            existsOrError(body.dominio, 'Domínio não informado')
+            existsOrError(body.meta, 'Meta não informado')
+            existsOrError(body.value, 'Valor não informado')
+            //existsOrError(body.label, 'Label não informado')
+        }
+        catch (error) {
+            return res.status(400).send(error)
+        }
+
+        if (body.id) {
+            // Variáveis da edição de um registro
+            // registrar o evento na tabela de eventos
+            const { createEventUpd } = app.api.sisEvents
+            const evento = await createEventUpd({
+                "notTo": ['created_at', 'evento',],
+                "last": await app.db(tabelaDomain).where({ id: body.id }).first(),
+                "next": body,
+                "request": req,
+                "evento": {
+                    "evento": `Alteração de cadastro de ${tabela}`,
+                    "tabela_bd": tabela,
+                }
+            })
+
+            body.evento = evento
+            body.updated_at = new Date()
+            let rowsUpdated = app.db(tabelaDomain)
+                .update(body)
+                .where({ id: body.id })
+            rowsUpdated.then((ret) => {
+                if (ret > 0) res.status(200).send(body)
+                else res.status(200).send('Parâmetro não foi encontrado')
+            })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename}.${__function} ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
+        } else {
+            // Criação de um novo registro
+            const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+
+            body.evento = nextEventID.count + 1
+            // Variáveis da criação de um novo registro
+            body.status = STATUS_ACTIVE
+            body.created_at = new Date()
+
+            app.db(tabelaDomain)
+                .insert(body)
+                .then(ret => {
+                    body.id = ret[0]
+                    // registrar o evento na tabela de eventos
+                    const { createEventIns } = app.api.sisEvents
+                    createEventIns({
+                        "notTo": ['created_at', 'evento'],
+                        "next": body,
+                        "request": req,
+                        "evento": {
+                            "evento": `Novo registro`,
+                            "tabela_bd": tabela,
+                        }
+                    })
+                    return res.json(body)
+                })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename}.${__function} ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
+        }
+    }
+
     const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
@@ -87,5 +174,46 @@ module.exports = app => {
             })
     }
 
-    return { get, getById, getByField, getByFunction }
+    const remove = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de cadastro de ${tabela}"`)
+        } catch (error) {
+            return res.status(401).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_app.${tabela}`
+        const registro = { status: STATUS_DELETE }
+        try {
+            // registrar o evento na tabela de eventos
+            const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
+            const { createEventUpd } = app.api.sisEvents
+            const evento = await createEventUpd({
+                "notTo": ['created_at', 'evento'],
+                "last": last,
+                "next": registro,
+                "request": req,
+                "evento": {
+                    "classevento": "Remove",
+                    "evento": `Exclusão de cadastro de ${tabela}`,
+                    "tabela_bd": tabela,
+                }
+            })
+            const rowsUpdated = await app.db(tabelaDomain)
+                .update({
+                    status: registro.status,
+                    updated_at: new Date(),
+                    evento: evento
+                })
+                .where({ id: req.params.id })
+            existsOrError(rowsUpdated, 'Registro não foi encontrado')
+
+            res.status(204).send()
+        } catch (error) {
+            res.status(400).send(error)
+        }
+    }
+
+    return { save, get, getById, getByField, getByFunction, remove }
 }

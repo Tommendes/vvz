@@ -45,12 +45,17 @@ Object.defineProperty(global, '__function', {
 consign()
     .include('./config/passport.js')
     .then('./config/middlewares.js')
+    .then('./api/facilities.js')
     .then('./api/validation.js')
-    .then('./api') 
+    .then('./api/mailer.js')
+    .then('./api/mailerCli.js')
+    .then('./api/user.js')
+    .then('./api/sisEvents.js')
+    .then('./api')
     .then('./config/routes.js')
     .into(app)
 
-app.listen(port, async() => {
+app.listen(port, async () => {
     if (!fs.existsSync(logsDir)) {
         fs.mkdirSync(path.join(__dirname, logsDir), (err) => {
             if (err) {
@@ -70,7 +75,7 @@ app.listen(port, async() => {
             .where({ meta: 'domainName', dominio: elementClient.value }).then()
         dominios.forEach(elementDomain => {
             const photosDir = `./assets/images/${elementClient.value}/${elementDomain.value}`
-                // const photosDir = `../frontend/src/assets/images/${elementClient.value}/${elementDomain.value}`
+            // const photosDir = `../frontend/src/assets/images/${elementClient.value}/${elementDomain.value}`
             if (!fs.existsSync(photosDir)) {
                 fs.mkdirSync(path.join(__dirname, photosDir), { recursive: true }, (err) => {
                     if (err) {

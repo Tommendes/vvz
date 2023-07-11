@@ -1,18 +1,23 @@
+
+const { dbPrefix } = require("../.env")
+
 module.exports = app => {
+    const bcrypt = require('bcrypt')
+
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
     function titleCase(str) {
         let splitStr = str.toLowerCase().split(' ');
-        const pular = ['de', 'da', 'dos']
+        const pular = ['de', 'da', 'do', '']
         for (var i = 0; i < splitStr.length; i++) {
             if (!(pular.includes(splitStr[i])))
                 splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
         }
         return splitStr.join(' ');
     }
-    
+
     function numbersOrZero(value) {
         let ret = value || "0"
         ret = ret.toString().replace(/([^\d])+/gim, "")
@@ -46,12 +51,70 @@ module.exports = app => {
             ? String.fromCharCode(objeto.charCodeAt() - 32)
             : objeto
     }
-    
+
     function changeUpperCase(key, value) {
         return key != 'email' && typeof value === 'string'
             ? Array.from(value, uc).join('')
             : value
     }
 
-    return { capitalizeFirstLetter, titleCase, removeAccents, removeAccentsObj, numbersOrZero, changeUpperCase }
+    function diffInDays(dateStr, days) {
+        // Converte a string em uma instância de Date
+        const date = new Date(dateStr);
+
+        // Obtem a diferença de tempo em milissegundos entre as duas datas
+        const diffTime = Math.abs(Date.now() - date.getTime());
+
+        // Converte a diferença de tempo em dias
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // Retorna `true` se a diferença em dias for maior ou igual a `days` ou apenas a diferença se days não for declarado
+        if (!days) return diffDays;
+        else return diffDays >= days;
+    }
+
+    function encryptPassword(password) {
+        const salt = bcrypt.genSaltSync(10)
+        return bcrypt.hashSync(password, salt)
+    }
+
+    function comparePassword(password, comparePassword) {
+        return bcrypt.compareSync(password, comparePassword)
+    }
+
+    function convertESocialTextToJson(body) {
+        const querystring = require('querystring');
+        const jsonData = querystring.parse(body, '\r\n', '=');
+        return JSON.parse(JSON.stringify(jsonData))
+    }
+
+    const getIdParam = async (meta, value) => {
+        const tabelaDomain = `${dbPrefix}_app.params`
+        let body = { id: 0 }
+        const param = await app.db(tabelaDomain).select('id').where({ 'meta': meta, 'value': value }).first()
+        if (param) return param.id
+        else undefined
+    }
+
+    const getIdCidade = async (ibge) => {
+        const tabelaDomain = `${dbPrefix}_app.cad_cidades`
+        const param = await app.db(tabelaDomain).select('id').where({ 'municipio_id': ibge }).first()
+        if (param) return param.id
+        else undefined
+    }
+
+    const getIdCargos = async (nome) => {
+        const tabelaDomain = `${dbPrefix}_cliente_ativos.aux_cargos`
+        const param = await app.db(tabelaDomain).select('id').where({ 'nome': nome }).first()
+        if (param) return param.id
+        else undefined
+    }
+
+    function countOccurrences(str, term) { return str.split(term).length - 1 }
+
+    return {
+        capitalizeFirstLetter, titleCase, removeAccents, removeAccentsObj,
+        numbersOrZero, changeUpperCase, diffInDays, encryptPassword, comparePassword,
+        convertESocialTextToJson, getIdParam, getIdCidade, getIdCargos, countOccurrences
+    }
 }

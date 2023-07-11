@@ -1,8 +1,4 @@
-const moment = require('moment')
-const randomstring = require("randomstring")
 const { dbPrefix } = require("../.env")
-const fs = require('fs')
-const { zip } = require('zip-a-folder')
 module.exports = app => {
     //const { removeAccents } = app.api.facilities
     const { existsOrError, notExistsOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
