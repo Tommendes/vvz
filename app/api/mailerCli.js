@@ -3,7 +3,7 @@ const { appName } = require("../config/params")
 module.exports = app => {
     const { existsOrError, isValidEmail, isMatchOrError, noAccessMsg } = app.api.validation
     const { transporter } = app.api.mailer
-    const mailyCliSender = async(req, res) => {
+    const mailyCliSender = async (req, res) => {
         let mailBody = req.mail
         const batch = req.batch || false
         if (!mailBody) mailBody = req.body
