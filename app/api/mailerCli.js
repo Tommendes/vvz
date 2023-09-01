@@ -39,7 +39,7 @@ module.exports = app => {
         }
         try {
             const mailWork = transporter.sendMail({
-                from: `"${mailBody.from}" <contato@mgcash.app.br>`, // sender address
+                from: `"${mailBody.from}" <contato@vivazul.com.br>`, // sender address
                 to: `${mailBody.to}`, // list of receivers
                 cc: `${mailBody.ccSender ? mailBody.from : ''}`, // list of copied receivers
                 subject: `${mailBody.subject}`, // Subject line

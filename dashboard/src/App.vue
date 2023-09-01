@@ -41,7 +41,7 @@ const close = () => {
             <p class="line-height-3 m-0">
                 <strong>Atenção!</strong>
                 <br />
-                Nós cuidamos de sua segurança. Por isso, desse ponto em diante, algumas funcionalidades como <strong>averbar contratos e acessar contracheques</strong> dependem de sua localização.
+                Nós cuidamos de sua segurança. Por isso, desse ponto em diante, algumas funcionalidades dependem de sua localização. Não se preocupe, não compartilharemos seus dados!
                 <br />
                 Se deseja acesso total, permita o acesso à sua localização.
             </p>
@@ -58,11 +58,11 @@ const close = () => {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background-color: var(--orange-700);
+    /* background-color: var(--orange-700); */
 }
 
 .desktopBgn {
-    background-image: url('/assets/images/wallpaper.jpg');
+    background-image: url('/assets/images/wallpaper.png');
     /* Center and scale the image nicely */
     background-attachment: fixed;
     background-position: center;
@@ -71,6 +71,6 @@ const close = () => {
 }
 
 .mobileBgn {
-    background-image: url('/assets/images/wallpaperMbl.jpg');
+    background-image: url('/assets/images/wallpaper.png');
 }
 </style>
