@@ -597,9 +597,9 @@ module.exports = app => {
             const url = "https://sms.comtele.com.br/api/v2/send"
             moment().locale('pt-br')
             const data = {
-                "Sender": "MGCash.app.br",
+                "Sender": "Vivazul.com.br",
                 "Receivers": userFromDB.telefone,
-                "Content": `Para liberar seu acesso ao mgcash.app.br, utilize o código: ${token}${userFromDB.email ? ' ou o link que também foi enviado para o email de registro' : ''}`
+                "Content": `Para liberar seu acesso ao vivazul.com.br, utilize o código: ${token}${userFromDB.email ? ' ou o link que também foi enviado para o email de registro' : ''}`
             }
             const config = {
                 headers: {
@@ -666,7 +666,7 @@ module.exports = app => {
             if (userFromDB.email) {
                 let expirationTimOk = userFromDB.password_reset_token ? Number(userFromDB.password_reset_token.split('_')[1]) > now : false
                 await transporter.sendMail({
-                    from: `"${appName}" <contato@mgcash.app.br>`, // sender address
+                    from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                     to: `${userFromDB.email}`, // list of receivers
                     subject: `Bem-vindo ao ${appName}`, // Subject line
                     text: `Olá ${userFromDB.name}!\n
@@ -688,7 +688,7 @@ module.exports = app => {
                 })
             }
             transporter.sendMail({
-                from: `"${appName}" <contato@mgcash.app.br>`, // sender address
+                from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                 to: `${emailAdmin}`, // list of receivers
                 subject: `Novo usuário ${appName}`, // Subject line
                 text: `Estamos confirmando a inscrição de um novo usuário\n
@@ -720,7 +720,7 @@ module.exports = app => {
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
             await transporter.sendMail({
-                from: `"${appName}" <contato@mgcash.app.br>`, // sender address
+                from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                 to: `${user.email}`, // list of receivers
                 subject: `Alteração de senha ${appName}`, // Subject line
                 text: `Olá ${user.name}!\n
@@ -754,7 +754,7 @@ module.exports = app => {
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
             await transporter.sendMail({
-                from: `"${appName}" <contato@mgcash.app.br>`, // sender address
+                from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                 to: `${user.email}`, // list of receivers
                 subject: `Usuário liberado`, // Subject line
                 text: `Olá ${user.name}!\n

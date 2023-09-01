@@ -87,7 +87,7 @@ const changeToPortuguese = () => {
     primevue.config.locale.clear = 'Limpar';
     primevue.config.locale.apply = 'Aplicar';
     primevue.config.locale.addRule = 'Nova regra';
-    primevue.config.locale.removeRule = 'Aplicar';
+    primevue.config.locale.removeRule = 'Limpar regras';
 };
 onMounted(() => {
     applyScale();

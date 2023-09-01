@@ -27,8 +27,8 @@ const logout = () => {
                     <span class="block text-6xl font-bold mb-1">
                         Bem vindo ao {{ appName }}<small><sup>&copy;</sup></small>
                     </span>
-                    <div class="text-6xl text-primary font-bold mb-3">Folhas de Pagamento e Consignados</div>
-                    <div class="mt-0 mb-4 text-800 line-height-2">Mega Assessoria e Tecnologia &copy; 2001 - {{ getYear() }}</div>
+                    <div class="text-6xl text-primary font-bold mb-3">Gestão Inteligente para Representações Comerciais</div>
+                    <div class="mt-0 mb-4 text-800 line-height-2">Vivazul &copy; 2012 - {{ getYear() }}</div>
 
                     <Button @click="router.push('/signin')" v-if="!store.userStore.id" class="p-button-text p-button-rounded border-none font-light line-height-2 text-blue-500"> Acessar plataforma&nbsp;<i class="pi pi-sign-in"></i> </Button>
                     <Button label="Sign Out" @click="logout" v-else class="p-button-rounded border-none ml-5 font-light text-white line-height-2 bg-blue-500"> <i class="pi pi-sign-out"></i>&nbsp;Sair </Button>
@@ -38,7 +38,7 @@ const logout = () => {
                 </section>
             </div>
             <div class="col-12 md:col-6 flex-grow-1 flex overflow-hidden justify-content-center">
-                <img src="/assets/images/logo-app.svg" alt="Image" class="max-w-10rem mb-5 md:max-w-20rem md:mb-0 md:imgApp" />
+                <img src="/assets/images/logo-app.png" alt="Image" class=" mb-5 md:max-w-20rem md:mb-0 md:imgApp" />
             </div>
         </div>
     </div>
