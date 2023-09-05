@@ -73,6 +73,7 @@ module.exports = app => {
         .put(app.api.params.save)
         .get(app.api.params.getById)
         .delete(app.api.params.remove)
+    app.route('/params/f-a/:func').all(app.config.passport.authenticate()).get(app.api.params.getByFunction)
     app.route('/mailer-cli')
         .all(app.config.passport.authenticate())
         .post(app.api.mailerCli.mailyCliSender)
@@ -99,6 +100,7 @@ module.exports = app => {
     /**
      * Rota de local_params
      */
+    app.route('/local-params/f-a/:func').all(app.config.passport.authenticate()).get(app.api.local_params.getByFunction)
     app.route('/local-params')
         .all(app.config.passport.authenticate())
         .post(app.api.local_params.save)

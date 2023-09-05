@@ -17,7 +17,7 @@ uf             		  varchar(2)        NO              (NULL)                   Es
 ibge           		  varchar(8)        YES             (NULL)                   IBGE
 geo_ltd        		  varchar(255)      YES             (NULL)                   Geo. latd
 geo_lng        		  varchar(255)      YES             (NULL)                   Geo. lng
-obs					  varchar(255)		YES				(NULL)                   Observações do endereço
+observacao					  varchar(255)		YES				(NULL)                   Observações do endereço
 
 
 !!! IMPORTANTE !!!

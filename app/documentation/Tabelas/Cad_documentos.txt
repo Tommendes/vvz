@@ -10,7 +10,7 @@ id_tipo               int(10) unsigned 	NO              (NULL)                  
 documento		  	  varchar(255)  	NO              (NULL)                   Número do documento
 emissao          	  varchar(255)  	YES     	    (NULL)                   Data de emissão
 validade          	  varchar(255)  	YES             (NULL)                   Data de validade
-obs					  varchar(255)		YES				(NULL)                   Observações do documento
+observacao					  varchar(255)		YES				(NULL)                   Observações do documento
 
 
 !!! IMPORTANTE !!!

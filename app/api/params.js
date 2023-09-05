@@ -99,10 +99,42 @@ module.exports = app => {
             case 'gcl':
                 getClientes(req, res)
                 break;
+            case 'gbf':
+                getByField(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
         }
+    }    
+
+    const getByField = async (req, res) => {
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.params.first == true
+        const ret = app.db(tabela)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} = '${value}'`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+
+        ret.then(body => {
+            return res.json({ data: body })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
     }
 
     const get = (req, res) => {
@@ -158,22 +190,6 @@ module.exports = app => {
             })
     }
 
-    const getByField = async (req, res) => {
-        const body = { ...req.body }
-        const field = req.params.field
-        const dominio = body.dominio
-        const meta = body.meta
-        const value = body.value
-        const ret = app.db({ tabela })
-            .select(app.db.raw(`${field} as field`))
-            .where({ dominio: dominio, meta: meta, value: value })
-            .then(fields => res.json({ data: fields }))
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
-            })
-    }
-
     const remove = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
@@ -215,5 +231,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getByField, getByFunction, remove }
+    return { save, get, getById, getByFunction, remove }
 }

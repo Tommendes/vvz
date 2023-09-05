@@ -1,0 +1,38 @@
+Comandos básicos bash
+
+# comandos de navegação de diretórios
+pwd = saber em que pasta está
+cd [caminho] = acessar uma pasta
+cd .. = voltar um nível
+cd = vai para a pasta /home
+ls (list files) = lista os arquivos do diretório indicado ou do diretório atual
+ls -la = o mesmo que ls mas inclue os ocultos
+tab = durante a escrita do caminho, pode ajudar. P.ex: cd pro+[tab] = "cd projetos"
+. = executar comandos na pasta atual
+../ = executar comandos na pasta de nível anterior
+
+# tratamento de diretórios e arquivos
+rm [caminho] = excluir arquivo
+rm -rf (recursive force) [caminho] = excluir pasta
+mkdir [caminho] = criar diretório
+code . = abre o vscode na pasta atual
+explorer . = abre o vscode na pasta atual
+
+# criação e tratamento de arquivos
+nano(editor de texto) [caminho e nome] = abre o editor de texto no caminho indicado
+echo [conteúdo] > [caminho] = Executa um comando de escrita do conteúdo no caminho
+cat [caminho] = executa leitura em tela
+
+# comandos adm do wsl
+wsl --shutdown
+alt + shift + d = dividir tela do terminal
+ctrl + shift + w = fechar tela do terminal
+
+# github ( Executar comandos no root da aplicação )
+git add . = Adiciona todos os arquivos alterados ou criados e as exclusões 
+git commit -m "Api e Dashboard" -m "Foram alteradas....." [Cado deseje editar um commit adicione --amend] = Prepara as alterações
+git push = Envia as alterações
+	É possível que recebe um erro de sincronização exigindo que primeiro execute um pull
+git pull = Recebe as alterações do repositório web ( Sincronizar )
+	É possível que seja exigido uma avaliação das versões do arquivo conflitante
+git stash = Desiste das alterações e traz de volta a última versão dos arquivos

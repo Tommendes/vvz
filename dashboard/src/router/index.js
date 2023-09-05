@@ -13,37 +13,37 @@ const routes = [
                 component: () => import('@/views/Dashboard.vue')
             },
             {
-                path: '/:client/:domain/servidores',
-                name: 'servidores',
-                component: () => import('@/views/servidores/ServidoresGrid.vue')
+                path: '/:client/:domain/cadastros',
+                name: 'cadastros',
+                component: () => import('@/views/cadastros/CadastrosGrid.vue')
             },
             {
-                path: '/:client/:domain/servidores/:id',
-                name: 'servidor',
-                component: () => import('@/views/servidores/ServidorPanel.vue')
+                path: '/:client/:domain/cadastro/:id',
+                name: 'cadastro',
+                component: () => import('@/views/cadastros/CadastroPanel.vue')
             },
             {
-                path: '/uikit/formlayout',
+                path: '/:client/:domain/uikit/formlayout',
                 name: 'formlayout',
                 component: () => import('@/views/uikit/FormLayout.vue')
             },
             {
-                path: '/uikit/input',
+                path: '/:client/:domain/uikit/input',
                 name: 'input',
                 component: () => import('@/views/uikit/Input.vue')
             },
             {
-                path: '/uikit/floatlabel',
+                path: '/:client/:domain/uikit/floatlabel',
                 name: 'floatlabel',
                 component: () => import('@/views/uikit/FloatLabel.vue')
             },
             {
-                path: '/uikit/invalidstate',
+                path: '/:client/:domain/uikit/invalidstate',
                 name: 'invalidstate',
                 component: () => import('@/views/uikit/InvalidState.vue')
             },
             {
-                path: '/uikit/button',
+                path: '/:client/:domain/uikit/button',
                 name: 'button',
                 component: () => import('@/views/uikit/Button.vue')
             },

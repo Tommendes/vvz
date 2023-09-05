@@ -10,7 +10,7 @@ id_tipo               int(10) unsigned 	NO              (NULL)                  
 pessoa            	  varchar(255)   	NO              (NULL)                   Pessoa de contato
 departamento     	  varchar(255)      YES             (NULL)                   Departamento
 meio        		  varchar(255)      NO              (NULL)                   Meio de contato (P.Ex.: nr do telefone ou email)
-obs					  varchar(255)		YES				(NULL)                   Observações do endereço
+observacao					  varchar(255)		YES				(NULL)                   Observações do endereço
 
 
 !!! IMPORTANTE !!!

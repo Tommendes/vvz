@@ -20,7 +20,7 @@ exports.up = function(knex, Promise) {
         table.string('ibge',8).comment('IBGE')
         table.string('geo_ltd').comment('Geo. latd')
         table.string('geo_lng').comment('Geo. lng')
-        table.string('obs').comment('Observações do endereço')
+        table.string('observacao').comment('Observações do endereço')
         table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
         table.foreign('id_tipo').references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION')
     })

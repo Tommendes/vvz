@@ -1,18 +1,19 @@
 <script setup>
 import { ref } from 'vue';
-import AppMenuItem from './AppMenuItem.vue';
+import AppMenuItem from '.\/AppMenuItem.vue';
 import { useUserStore } from '@/stores/user';
-
-const store = useUserStore();
+import { userKey } from '../global';
+const json = localStorage.getItem(userKey);
+const user = JSON.parse(json);
 
 const model = ref([
     {
         // label: 'Home',
-        items: [{ label: 'Início', icon: 'pi pi-fw pi-home', to: `/${store.userStore.cliente}/${store.userStore.dominio}` }]
+        items: [{ label: 'Início', icon: 'pi pi-fw pi-home', to: `/${user.cliente}/${user.dominio}` }]
     },
     {
         label: 'Cadastros',
-        items: [{ label: 'Gestão de Empregados', icon: 'pi pi-fw pi-id-card', to: `/${store.userStore.cliente}/${store.userStore.dominio}/servidores` }]
+        items: [{ label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros` }]
     },
     {
         label: 'Outros órgãos (link externo)',
@@ -25,12 +26,12 @@ const model = ref([
     {
         label: 'UI Components',
         items: [
-            { label: 'Form Layout', icon: 'pi pi-fw pi-id-card', to: '/uikit/formlayout' },
-            { label: 'Input', icon: 'pi pi-fw pi-check-square', to: '/uikit/input' },
-            { label: 'Float Label', icon: 'pi pi-fw pi-bookmark', to: '/uikit/floatlabel' },
-            { label: 'Invalid State', icon: 'pi pi-fw pi-exclamation-circle', to: '/uikit/invalidstate' },
-            { label: 'Button', icon: 'pi pi-fw pi-mobile', to: '/uikit/button', class: 'rotated-icon' },
-            { label: 'Servidores', icon: 'pi pi-fw pi-table', to: '/uikit/table' },
+            { label: 'Form Layout', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/uikit/formlayout` },
+            { label: 'Input', icon: 'pi pi-fw pi-check-square', to: `/${user.cliente}/${user.dominio}/uikit/input` },
+            { label: 'Float Label', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/uikit/floatlabel` },
+            { label: 'Invalid State', icon: 'pi pi-fw pi-exclamation-circle', to: `/${user.cliente}/${user.dominio}/uikit/invalidstate` },
+            { label: 'Button', icon: 'pi pi-fw pi-mobile', to: `/${user.cliente}/${user.dominio}/uikit/button`, class: 'rotated-icon' },
+            { label: 'Cadastros', icon: 'pi pi-fw pi-table', to: '/uikit/table' },
             { label: 'List', icon: 'pi pi-fw pi-list', to: '/uikit/list' },
             { label: 'Tree', icon: 'pi pi-fw pi-share-alt', to: '/uikit/tree' },
             { label: 'Panel', icon: 'pi pi-fw pi-tablet', to: '/uikit/panel' },

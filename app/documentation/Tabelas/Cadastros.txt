@@ -13,8 +13,8 @@ rg_ie             	  varchar(255)  	YES             (NULL)                   RG(
 nome	        	  varchar(255)  	NO              (NULL)                   Nome ou razão social
 sexo              	  varchar(255)  	YES             (NULL)                   Sexo(apenas PF) (Masc: 0; Fem: 1; Outro: 2)
 aniversario       	  varchar(255)     	YES             (NULL)                   Nascimento(PF) | Fundação(PJ)
-nacionalidade     	  varchar(255)  	YES             (NULL)                   Nacionalidade
-obs               	  varchar(2500)     YES             (NULL)                   Observações do cliente
+id_params_p_nascto     	  varchar(255)  	YES             (NULL)                   Nacionalidade
+observacao               	  varchar(2500)     YES             (NULL)                   Observações do cliente
 
 ENGINE=InnoDB 
 DEFAULT CHARSET=utf8mb4 

@@ -13,7 +13,7 @@ exports.up = function(knex, Promise) {
         table.string('pessoa').notNull().comment('Pessoa de contato')
         table.string('departamento').comment('Departamento')
         table.string('meio').notNull().comment('Meio de contato (P.Ex.: nr do telefone ou email)')
-        table.string('obs').comment('Observações do endereço')
+        table.string('observacao').comment('Observações do endereço')
         table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
         table.foreign('id_tipo').references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION')
     })

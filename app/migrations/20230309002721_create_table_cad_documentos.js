@@ -13,7 +13,7 @@ exports.up = function(knex, Promise) {
         table.string('documento').notNull().comment('Número do documento')
         table.string('emissao').comment('Data de emissão')
         table.string('validade').comment('Data de validade')
-        table.string('obs').comment('Observações do documento')
+        table.string('observacao').comment('Observações do documento')
         table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
         table.foreign('id_tipo').references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION')
     })

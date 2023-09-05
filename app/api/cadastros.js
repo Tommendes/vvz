@@ -2,6 +2,7 @@ const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'cadastros'
+    const tabelaLocalParams = 'local_params'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -32,9 +33,8 @@ module.exports = app => {
             delete body.rg_isento
             existsOrError(body.nome, 'Nome não informado')
             existsOrError(body.aniversario, 'Data de Fundação/Nascimento não informado')
-            existsOrError(body.tipo, 'Tipo de registro não informado')
-            existsOrError(body.prospect, 'Registro de Prospecto?')
-            existsOrError(body.id_atuacao, 'Área de atuação não informada')
+            existsOrError(body.id_params_tipo, 'Tipo de registro não informado')
+            existsOrError(body.id_params_atuacao, 'Área de atuação não informada')
             // existsOrError(body.qualificacao, 'Qualificação não informada')
 
             if (body.cpf_cnpj) {
@@ -114,7 +114,6 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         let keyCnpj = undefined
@@ -131,22 +130,10 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).select(app.db.raw('id, count(*) as count'))
-            .where({ status: STATUS_ACTIVE })
-
-        if (key)
-            if (keyCnpj) count.where(function () {
-                this.where(app.db.raw(`tbl1.cpf_cnpj like '%${keyCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
-            })
-            else count.where(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
-
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
+        const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
         if (key)
             if (keyCnpj) ret.where(function () {
                 this.where(app.db.raw(`tbl1.cpf_cnpj like '%${keyCnpj}%'`))
@@ -154,13 +141,14 @@ module.exports = app => {
             })
             else ret.where(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
 
-        ret.where({ status: STATUS_ACTIVE })
+        ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
+        ret.join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .orderBy('nome', 'cpf_cnpj')
-            .limit(limit).offset(page * limit - limit)
+            .orderBy('tbl1.nome', 'tbl1.cpf_cnpj')
 
         ret.then(body => {
-            return res.json({ data: body, count: count, limit })
+            return res.json({ data: body })
         })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })

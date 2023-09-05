@@ -9,7 +9,7 @@ id_cadastros   int(10) unsigned  NO      MUL     (NULL)                   Client
 id_ged         int(10) unsigned  YES             (NULL)                   Ged                        
 tipo           int(1)            NO              0                        Tipo de pv (SUPORTE:0; MONTAGEM:1)                     
 pv_nr          varchar(255)      YES             (NULL)                   Número do PV              
-obs            text              YES             (NULL)                   Observação               
+observacao            text              YES             (NULL)                   Observação               
 situacao       char(2)           NO              (NULL)                   Situação do pós atendimento
 
 
