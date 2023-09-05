@@ -1,18 +1,21 @@
 <script setup>
-import { onBeforeMount, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { UFS, isValidEmail, validarDataPTBR } from '@/global';
 import moment from 'moment';
 
-import { Mask } from 'maska';
+import { Mask, MaskInput } from 'maska';
 const masks = ref({
     cpf_cnpj: new Mask({
-        mask: '###.###.###-##'
+        mask: ['###.###.###-##', '##.###.###/####-##']
     }),
     aniversario: new Mask({
         mask: '##/##/####'
+    }),
+    telefone: new Mask({
+        mask: ['(##) ####-####', '(##) #####-####']
     })
 });
 
@@ -24,15 +27,19 @@ const router = useRouter();
 
 // Cookies de usuário
 import { useUserStore } from '@/stores/user';
-
 const store = useUserStore();
+
+// Validar o cpf_cnpj
+import { cpf, cnpj } from 'cpf-cnpj-validator';
 
 // Campos de formulário
 const itemData = ref({});
 const labels = ref({
     pfpj: 'pf',
     nome: 'Nome',
-    aniversario: 'Nascimento'
+    aniversario: 'Nascimento',
+    cpf_cnpj: 'CPF',
+    rg_ie: 'RG',
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -55,28 +62,62 @@ const loading = ref({
     email: null,
     telefone: null
 });
+// Props do template
+const props = defineProps({
+    mode: String
+})
+// Emit do template
+const emit = defineEmits(['changed'])
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/cadastros`);
 // Carragamento de dados do form
 const loadData = async () => {
-    itemData.value.id = route.params.id;
-    const url = `${urlBase.value}/${itemData.value.id}`;
-    await axios.get(url).then((res) => {
-        const body = res.data;
-        if (body && body.id) {
-            body.id = String(body.id);
-            body.prospect = isTrue(body.prospect);
+    if (route.params.id || itemData.value.id) {
+        if (route.params.id) itemData.value.id = route.params.id;
+        const url = `${urlBase.value}/${itemData.value.id}`;
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                body.prospect = isTrue(body.prospect);
 
-            itemData.value = body;
-            itemDataComparision.value = { ...body };
-            if (itemData.value.cpf_cnpj) itemDataMasked.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj);
-            if (itemData.value.aniversario) itemDataMasked.value.aniversario = masks.value.aniversario.masked(moment(itemData.value.aniversario).format('DD/MM/YYYY'));
-            loading.value.form = false;
-        } else {
-            defaultWarn('Registro não localizado');
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastros` });
-        }
-    });
+                itemData.value = body;
+                itemDataComparision.value = { ...body };
+                if (itemData.value.cpf_cnpj) itemDataMasked.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj);
+                if (itemData.value.aniversario) itemDataMasked.value.aniversario = masks.value.aniversario.masked(moment(itemData.value.aniversario).format('DD/MM/YYYY'));
+                if (itemData.value.telefone) itemDataMasked.value.telefone = masks.value.telefone.masked(itemData.value.telefone);
+
+                loading.value.form = false;
+            } else {
+                defaultWarn('Registro não localizado');
+                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastros` });
+            }
+        });
+    }
+};
+// Salvar dados do formulário
+const saveData = async () => {
+    if (formIsValid()) {
+        const method = itemData.value.id ? 'put' : 'post';
+        const id = itemData.value.id ? `/${itemData.value.id}` : '';
+        const url = `${urlBase.value}${id}`;
+        axios[method](url, itemData.value)
+            .then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    defaultSuccess('Registro salvo com sucesso');
+                    itemData.value = body;                    
+                    emit('changed');
+                    if (mode.value != 'new') reload();
+                    mode.value = 'view';
+                } else {
+                    defaultWarn('Erro ao salvar registro');
+                }
+            })
+            .catch((err) => {
+                defaultWarn(err.response.data);
+            });
+    }
 };
 // Converte 1 ou 0 para boolean
 const isTrue = (value) => value === 1;
@@ -97,9 +138,8 @@ const formAccepted = () => {
 };
 // Validar CPF
 const validateCPF = () => {
-    if (itemDataMasked.value.cpf_cnpj && itemDataMasked.value.cpf_cnpj.length > 0 && !masks.value.cpf_cnpj.completed(itemDataMasked.value.cpf_cnpj)) {
-        errorMessages.value.cpf_cnpj = 'Formato de CPF inválido';
-    } else errorMessages.value.cpf_cnpj = null;
+    if (cpf.isValid(itemDataMasked.value.cpf_cnpj) || cnpj.isValid(itemDataMasked.value.cpf_cnpj)) errorMessages.value.cpf_cnpj = null;
+    else errorMessages.value.cpf_cnpj = 'CPF/CNPJ informado é inválido';
     return !errorMessages.value.cpf_cnpj;
 };
 // Validar data de nascimento
@@ -109,9 +149,23 @@ const validateDtNascto = () => {
     } else errorMessages.value.aniversario = null;
     return !errorMessages.value.aniversario;
 };
+// Validar email
+const validateEmail = () => {
+    if (itemData.value.email && !isValidEmail(itemData.value.email)) {
+        errorMessages.value.email = 'Formato de email inválido';
+    } else errorMessages.value.email = null;
+    return !errorMessages.value.email;
+};
+// Validar telefone
+const validateTelefone = () => {
+    if (itemDataMasked.value.telefone && itemDataMasked.value.telefone.length > 0 && ![10, 11].includes(itemDataMasked.value.telefone.replace(/([^\d])+/gim, "").length)) {
+        errorMessages.value.telefone = 'Formato de telefone inválido';
+    } else errorMessages.value.telefone = null;
+    return !errorMessages.value.telefone;
+};
 // Validar formulário
 const formIsValid = () => {
-    return formAccepted() && validateDtNascto() && validateCPF();
+    return formAccepted() && validateDtNascto() && validateCPF(), validateEmail(), validateTelefone();
 };
 // Setar campos não mascarados
 const setUnMasked = (field) => {
@@ -130,30 +184,16 @@ const setUnMasked = (field) => {
                 itemDataMasked.value.aniversario = moment(itemDataComparision.value.aniversario).format('DD/MM/YYYY');
             }
             break;
+        case 'telefone':
+            if (validateTelefone()) itemData.value.telefone = itemDataMasked.value.telefone.replace(/([^\d])+/gim, "");
+            else {
+                itemData.value.telefone = itemDataComparision.value.telefone;
+                itemDataMasked.value.telefone = masks.value.telefone.masked(itemDataComparision.value.telefone);
+            }
+            break;
         default:
             true;
             break;
-    }
-};
-// Salvar dados do formulário
-const saveData = async () => {
-    if (formIsValid()) {
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        axios
-            .put(url, itemData.value)
-            .then((res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    defaultSuccess('Registro salvo com sucesso');
-                    mode.value = 'view';
-                } else {
-                    defaultWarn('Erro ao salvar registro');
-                }
-                reload();
-            })
-            .catch((err) => {
-                defaultWarn(err.response.data);
-            });
     }
 };
 // Recarregar dados do formulário
@@ -210,18 +250,26 @@ onBeforeMount(() => {
     loadData();
     loadOptions();
 });
+onMounted(() => {
+    if (props.mode && props.mode != mode.value) mode.value = props.mode;
+})
 // Observar alterações nos dados do formulário
 watchEffect(() => {
     isItemDataChanged();
-    if (itemData.value.cpf_cnpj && itemData.value.cpf_cnpj.length == 14) {
+    validateCPF();
+    if (itemData.value.cpf_cnpj && itemData.value.cpf_cnpj.replace(/([^\d])+/gim, "").length == 14) {
         labels.value.pfpj = 'pj';
         labels.value.nome = 'Razão Social';
         labels.value.aniversario = 'Fundação';
+        labels.value.rg_ie = 'I.E.';
+        labels.value.cpf_cnpj = 'CNPJ';
     }
     else {
         labels.value.pfpj = 'pf';
         labels.value.nome = 'Nome';
         labels.value.aniversario = 'Nascimento';
+        labels.value.rg_ie = 'RG';
+        labels.value.cpf_cnpj = 'CPF';
     }
 });
 </script>
@@ -237,17 +285,22 @@ watchEffect(() => {
                             v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione...">
                         </Dropdown>
                     </div>
+                    <div class="field col-12 md:col-2">
+                        <label for="cpf_cnpj">{{ labels.cpf_cnpj }}</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemDataMasked.cpf_cnpj"
+                            id="cpf_cnpj" type="text" @input="validateCPF()" @blur="setUnMasked('cpf_cnpj')" v-maska
+                            data-maska="['##.###.###/####-##','###.###.###-##']" />
+                        <small id="text-error" class="p-error">{{ errorMessages.cpf_cnpj || '&nbsp;' }}</small>
+                    </div>
                     <div class="field col-12 md:col-6">
                         <label for="nome">{{ labels.nome }}</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome"
-                            type="text" />
+                        <InputText autocomplete="no" :disabled="!validateCPF() || mode == 'view'" v-model="itemData.nome"
+                            id="nome" type="text" />
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="cpf_cnpj">CPF</label>
-                        <!-- v-maska :data-maska="itemData.cpf_cnpj.length == 14 ? '##.###.###/####-##' : '###.###.###-##'" -->
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj"
-                            type="text" @input="validateCPF()" @blur="setUnMasked('cpf_cnpj')" />
-                        <small id="text-error" class="p-error">{{ errorMessages.cpf_cnpj || '&nbsp;' }}</small>
+                        <label for="rg_ie">{{ labels.rg_ie }}</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie"
+                            type="text" />
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pf'">
                         <label for="id_params_sexo">Sexo</label>
@@ -261,17 +314,30 @@ watchEffect(() => {
                             @blur="setUnMasked('aniversario')" />
                         <small id="text-error" class="p-error">{{ errorMessages.aniversario || '&nbsp;' }}</small>
                     </div>
-                    <div class="field col-12 md:col-2">
+                    <div class="field col-12 md:col-3">
                         <label for="id_params_p_nascto">País de Origem</label>
                         <Dropdown id="id_params_p_nascto" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
                             v-model="itemData.id_params_p_nascto" :options="dropdownPaisNascim" placeholder="Selecione...">
                         </Dropdown>
                     </div>
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-5">
                         <label for="id_params_atuacao">Área de Atuação</label>
                         <Dropdown id="id_params_atuacao" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
                             v-model="itemData.id_params_atuacao" :options="dropdownAtuacao" placeholder="Selecione...">
                         </Dropdown>
+                    </div>
+                    <div class="field col-12 md:col-2">
+                        <label for="telefone">Telefone</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska
+                            data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemDataMasked.telefone"
+                            id="telefone" type="text" @input="validateTelefone()" @blur="setUnMasked('telefone')" />
+                        <small id="text-error" class="p-error">{{ errorMessages.telefone || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-3">
+                        <label for="email">E-mail</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email"
+                            type="text" @input="validateEmail()" />
+                        <small id="text-error" class="p-error">{{ errorMessages.email || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="prospect">Prospecto</label>

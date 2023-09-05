@@ -7,6 +7,7 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import moment from 'moment';
+import CadastroForm from './CadastroForm.vue';
 
 const store = useUserStore();
 
@@ -18,6 +19,8 @@ const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/cadastros`);
+const mode = ref('grid')
+const visible = ref(false)
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -87,6 +90,10 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
+        <Dialog v-model:visible="visible" modal header="Header" :style="{ width: '50vw' }">
+            <CadastroForm :mode="mode" @changed="loadData" />
+        </Dialog>
+
         <DataTable :value="gridData" v-if="loading">
             <Column field="tipo_cadas" header="Tipo" style="min-width: 14rem">
                 <template #body>
@@ -119,25 +126,14 @@ onBeforeMount(() => {
                 </template>
             </Column>
         </DataTable>
-        <DataTable
-            v-else
-            :value="gridData"
-            :paginator="true"
-            class="p-datatable-gridlines"
-            :rows="10"
-            dataKey="id"
-            :rowHover="true"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :loading="loading"
-            :filters="filters"
+        <DataTable v-else :value="gridData" :paginator="true" class="p-datatable-gridlines" :rows="10" dataKey="id"
+            :rowHover="true" v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['tipo_cadas', 'cpf_cnpj', 'nome', 'id_params_atuacao', 'aniversario']"
-        >
+            :globalFilterFields="['tipo_cadas', 'cpf_cnpj', 'nome', 'id_params_atuacao', 'aniversario']">
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined />
+                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'; visible=!visible" />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
@@ -150,7 +146,8 @@ onBeforeMount(() => {
                     {{ data.tipo_cadas }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por Tipo" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                        placeholder="Filtre por Tipo" />
                 </template>
             </Column>
             <Column field="cpf_cnpj" header="CPF/CNPJ" sortable style="min-width: 14rem">
@@ -158,7 +155,8 @@ onBeforeMount(() => {
                     {{ data.cpf_cnpj }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por CPF ou CNPJ" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                        placeholder="Filtre por CPF ou CNPJ" />
                 </template>
             </Column>
             <Column field="nome" header="Nome" sortable style="min-width: 25rem">
@@ -166,7 +164,8 @@ onBeforeMount(() => {
                     {{ data.nome }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por nome" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                        placeholder="Filtre por nome" />
                 </template>
             </Column>
             <Column field="atuacao" header="Atuação" sortable style="min-width: 14rem">
@@ -174,7 +173,8 @@ onBeforeMount(() => {
                     {{ data.atuacao }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por Atuação" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                        placeholder="Filtre por Atuação" />
                 </template>
             </Column>
             <Column field="aniversario" header="Aniversário" sortable style="min-width: 14rem">
@@ -182,12 +182,14 @@ onBeforeMount(() => {
                     {{ data.aniversario }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por Aniversário" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                        placeholder="Filtre por Aniversário" />
                 </template>
             </Column>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle"
+                        aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>

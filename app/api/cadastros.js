@@ -45,6 +45,7 @@ module.exports = app => {
                 notExistsOrError(dataFromDB, 'Combinação de CNPJ/ CPF já cadastrado')
             }
         } catch (error) {
+            console.log(error);
             return res.status(400).send(error)
         }
         delete body.hash; delete body.tblName
