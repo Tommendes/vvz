@@ -10,12 +10,13 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
+        if (req.params.id_cadastros) body.id_cadastros = req.params.id_cadastros
         try {
             // Alçada para edição
             if (body.id)
                 isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams , `${noAccessMsg} "Inclusão de ${tabela}"`)
+            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -23,8 +24,9 @@ module.exports = app => {
 
         try {
             existsOrError(body.cep, 'CEP não informado')
-            if(body.cep.length != 8) throw "CEP inválido"
+            if (body.cep.length != 8) throw "CEP inválido"
             existsOrError(body.uf, 'Estado não informado')
+            existsOrError(body.id_params_tipo, 'Tipo do endereço não informado')
             // Inserir depois um teste de validação
             existsOrError(body.logradouro, 'Logradouro não informado')
             existsOrError(body.nr, 'Número não informado')
@@ -33,7 +35,7 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-
+        console.log(body);
         delete body.hash; delete body.tblName
         if (body.id) {
             // Variáveis da edição de um registro
