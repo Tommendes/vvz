@@ -64,12 +64,12 @@ const loading = ref({
 });
 // Props do template
 const props = defineProps({
-    mode: String
+    itemDataRoot: Object // O próprio cadastro
 })
 // Emit do template
 const emit = defineEmits(['changed'])
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/cadastros`);
+const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
     if (route.params.id || itemData.value.id) {
@@ -106,7 +106,7 @@ const saveData = async () => {
                 const body = res.data;
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
-                    itemData.value = body;                    
+                    itemData.value = body;
                     emit('changed');
                     if (mode.value != 'new') reload();
                     mode.value = 'view';
@@ -246,103 +246,69 @@ const loadOptions = async () => {
     });
 };
 // Carregar dados do formulário
-onBeforeMount(() => {
-    loadData();
-    loadOptions();
-});
-onMounted(() => {
-    if (props.mode && props.mode != mode.value) mode.value = props.mode;
-})
+// onBeforeMount(() => {
+//     loadData();
+//     loadOptions();
+// });
+// onMounted(() => {
+//     if (props.mode && props.mode != mode.value) mode.value = props.mode;
+// })
 // Observar alterações nos dados do formulário
-watchEffect(() => {
-    isItemDataChanged();
-    validateCPF();
-    if (itemData.value.cpf_cnpj && itemData.value.cpf_cnpj.replace(/([^\d])+/gim, "").length == 14) {
-        labels.value.pfpj = 'pj';
-        labels.value.nome = 'Razão Social';
-        labels.value.aniversario = 'Fundação';
-        labels.value.rg_ie = 'I.E.';
-        labels.value.cpf_cnpj = 'CNPJ';
-    }
-    else {
-        labels.value.pfpj = 'pf';
-        labels.value.nome = 'Nome';
-        labels.value.aniversario = 'Nascimento';
-        labels.value.rg_ie = 'RG';
-        labels.value.cpf_cnpj = 'CPF';
-    }
-});
+// watchEffect(() => {
+//     isItemDataChanged();
+//     validateCPF();
+//     if (itemData.value.cpf_cnpj && itemData.value.cpf_cnpj.replace(/([^\d])+/gim, "").length == 14) {
+//         labels.value.pfpj = 'pj';
+//         labels.value.nome = 'Razão Social';
+//         labels.value.aniversario = 'Fundação';
+//         labels.value.rg_ie = 'I.E.';
+//         labels.value.cpf_cnpj = 'CNPJ';
+//     }
+//     else {
+//         labels.value.pfpj = 'pf';
+//         labels.value.nome = 'Nome';
+//         labels.value.aniversario = 'Nascimento';
+//         labels.value.rg_ie = 'RG';
+//         labels.value.cpf_cnpj = 'CPF';
+//     }
+// });
 </script>
 
 <template>
     <div class="grid">
         <form @submit="saveData">
             <div class="col-12">
+                <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo">Tipo de Registro</label>
+                        <label for="id_params_tipo">Tipo de Contato</label>
                         <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
                             v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione...">
                         </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="cpf_cnpj">{{ labels.cpf_cnpj }}</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemDataMasked.cpf_cnpj"
-                            id="cpf_cnpj" type="text" @input="validateCPF()" @blur="setUnMasked('cpf_cnpj')" v-maska
-                            data-maska="['##.###.###/####-##','###.###.###-##']" />
-                        <small id="text-error" class="p-error">{{ errorMessages.cpf_cnpj || '&nbsp;' }}</small>
+                        <label for="pessoa">Pessoa</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa"
+                            type="text" />
+                        <small id="text-error" class="p-error">{{ errorMessages.pessoa || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-2">
+                        <label for="departamento">Departamento</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.departamento"
+                            id="departamento" type="text" />
+                        <small id="text-error" class="p-error">{{ errorMessages.departamento || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-6">
-                        <label for="nome">{{ labels.nome }}</label>
-                        <InputText autocomplete="no" :disabled="!validateCPF() || mode == 'view'" v-model="itemData.nome"
-                            id="nome" type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="rg_ie">{{ labels.rg_ie }}</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie"
+                        <label for="meio">Meio de Contato</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio"
                             type="text" />
+                        <small id="text-error" class="p-error">{{ errorMessages.meio || '&nbsp;' }}</small>
                     </div>
-                    <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pf'">
-                        <label for="id_params_sexo">Sexo</label>
-                        <Dropdown id="id_params_sexo" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
-                            v-model="itemData.id_params_sexo" :options="dropdownSexo" placeholder="Selecione..."></Dropdown>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="aniversario">{{ labels.aniversario }}</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####"
-                            v-model="itemDataMasked.aniversario" id="aniversario" type="text" @input="validateDtNascto()"
-                            @blur="setUnMasked('aniversario')" />
-                        <small id="text-error" class="p-error">{{ errorMessages.aniversario || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="id_params_p_nascto">País de Origem</label>
-                        <Dropdown id="id_params_p_nascto" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
-                            v-model="itemData.id_params_p_nascto" :options="dropdownPaisNascim" placeholder="Selecione...">
-                        </Dropdown>
-                    </div>
-                    <div class="field col-12 md:col-5">
-                        <label for="id_params_atuacao">Área de Atuação</label>
-                        <Dropdown id="id_params_atuacao" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
-                            v-model="itemData.id_params_atuacao" :options="dropdownAtuacao" placeholder="Selecione...">
-                        </Dropdown>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="telefone">Telefone</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska
-                            data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemDataMasked.telefone"
-                            id="telefone" type="text" @input="validateTelefone()" @blur="setUnMasked('telefone')" />
-                        <small id="text-error" class="p-error">{{ errorMessages.telefone || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="email">E-mail</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email"
-                            type="text" @input="validateEmail()" />
-                        <small id="text-error" class="p-error">{{ errorMessages.email || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="prospect">Prospecto</label>
-                        <br>
-                        <InputSwitch id="prospect" :disabled="mode == 'view'" v-model="itemData.prospect" />
+                    <div class="field col-12 md:col-12">
+                        <label for="obs">Observação</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.obs" id="obs"
+                            type="text" />
+                        <small id="text-error" class="p-error">{{ errorMessages.obs || '&nbsp;' }}</small>
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
