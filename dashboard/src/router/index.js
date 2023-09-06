@@ -48,105 +48,105 @@ const routes = [
                 component: () => import('@/views/uikit/Button.vue')
             },
             {
-                path: '/uikit/table',
+                path: '/:client/:domain/uikit/table',
                 name: 'table',
                 component: () => import('@/views/uikit/Table.vue')
             },
             {
-                path: '/uikit/list',
+                path: '/:client/:domain/uikit/list',
                 name: 'list',
                 component: () => import('@/views/uikit/List.vue')
             },
             {
-                path: '/uikit/tree',
+                path: '/:client/:domain/uikit/tree',
                 name: 'tree',
                 component: () => import('@/views/uikit/Tree.vue')
             },
             {
-                path: '/uikit/panel',
+                path: '/:client/:domain/uikit/panel',
                 name: 'panel',
                 component: () => import('@/views/uikit/Panels.vue')
             },
 
             {
-                path: '/uikit/overlay',
+                path: '/:client/:domain/uikit/overlay',
                 name: 'overlay',
                 component: () => import('@/views/uikit/Overlay.vue')
             },
             {
-                path: '/uikit/media',
+                path: '/:client/:domain/uikit/media',
                 name: 'media',
                 component: () => import('@/views/uikit/Media.vue')
             },
             {
-                path: '/uikit/menu',
+                path: '/:client/:domain/uikit/menu',
                 component: () => import('@/views/uikit/Menu.vue'),
                 children: [
                     {
-                        path: '/uikit/menu',
+                        path: '/:client/:domain/uikit/menu',
                         component: () => import('@/views/uikit/menu/PersonalDemo.vue')
                     },
                     {
-                        path: '/uikit/menu/seat',
+                        path: '/:client/:domain/uikit/menu/seat',
                         component: () => import('@/views/uikit/menu/SeatDemo.vue')
                     },
                     {
-                        path: '/uikit/menu/payment',
+                        path: '/:client/:domain/uikit/menu/payment',
                         component: () => import('@/views/uikit/menu/PaymentDemo.vue')
                     },
                     {
-                        path: '/uikit/menu/confirmation',
+                        path: '/:client/:domain/uikit/menu/confirmation',
                         component: () => import('@/views/uikit/menu/ConfirmationDemo.vue')
                     }
                 ]
             },
             {
-                path: '/uikit/message',
+                path: '/:client/:domain/uikit/message',
                 name: 'message',
                 component: () => import('@/views/uikit/Messages.vue')
             },
             {
-                path: '/uikit/file',
+                path: '/:client/:domain/uikit/file',
                 name: 'file',
                 component: () => import('@/views/uikit/File.vue')
             },
             {
-                path: '/uikit/charts',
+                path: '/:client/:domain/uikit/charts',
                 name: 'charts',
                 component: () => import('@/views/uikit/Chart.vue')
             },
             {
-                path: '/uikit/misc',
+                path: '/:client/:domain/uikit/misc',
                 name: 'misc',
                 component: () => import('@/views/uikit/Misc.vue')
             },
             {
-                path: '/blocks',
+                path: '/:client/:domain/blocks',
                 name: 'blocks',
                 component: () => import('@/views/utilities/Blocks.vue')
             },
             {
-                path: '/utilities/icons',
+                path: '/:client/:domain/utilities/icons',
                 name: 'icons',
                 component: () => import('@/views/utilities/Icons.vue')
             },
             {
-                path: '/pages/timeline',
+                path: '/:client/:domain/pages/timeline',
                 name: 'timeline',
                 component: () => import('@/views/pages/Timeline.vue')
             },
             {
-                path: '/pages/empty',
+                path: '/:client/:domain/pages/empty',
                 name: 'empty',
                 component: () => import('@/views/pages/Empty.vue')
             },
             {
-                path: '/pages/crud',
+                path: '/:client/:domain/pages/crud',
                 name: 'crud',
                 component: () => import('@/views/pages/Crud.vue')
             },
             {
-                path: '/documentation',
+                path: '/:client/:domain/documentation',
                 name: 'documentation',
                 component: () => import('@/views/utilities/Documentation.vue')
             }
