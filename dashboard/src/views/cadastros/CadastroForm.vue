@@ -175,35 +175,6 @@ const validateTelefone = () => {
 const formIsValid = () => {
     return formAccepted() && validateDtNascto() && validateCPF() && validateEmail() && validateTelefone();
 };
-// Setar campos não mascarados
-const setUnMasked = (field) => {
-    switch (field) {
-        case 'cpf_cnpj':
-            if (itemData.value.cpf_cnpj && validateCPF()) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.unmasked(itemData.value.cpf_cnpj);
-            // else {
-            //     itemData.value.cpf_cnpj = itemDataComparision.value.cpf_cnpj;
-            //     if (itemDataComparision.value.cpf_cnpj) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemDataComparision.value.cpf_cnpj);
-            // }
-            break;
-        // case 'aniversario':
-        //     if (itemData.value.aniversario && validateDtNascto()) itemData.value.aniversario = moment(itemData.value.aniversario, 'DD/MM/YYYY').format('YYYY-MM-DD');
-        //     else {
-        //         itemData.value.aniversario = itemDataComparision.value.aniversario;
-        //         if (itemDataComparision.value.aniversario) itemData.value.aniversario = moment(itemDataComparision.value.aniversario).format('DD/MM/YYYY');
-        //     }
-        //     break;
-        case 'telefone':
-            if (itemData.value.telefone && validateTelefone()) itemData.value.telefone = itemData.value.telefone.replace(/([^\d])+/gim, '');
-            // else {
-            //     itemData.value.telefone = itemDataComparision.value.telefone;
-            //     if (itemDataComparision.value.telefone) itemData.value.telefone = masks.value.telefone.masked(itemDataComparision.value.telefone);
-            // }
-            break;
-        default:
-            true;
-            break;
-    }
-};
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
@@ -297,7 +268,7 @@ watchEffect(() => {
                         <label for="cpf_cnpj">{{ labels.cpf_cnpj }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj"
-                            id="cpf_cnpj" type="text" @input="validateCPF()" @blur="setUnMasked('cpf_cnpj')" v-maska
+                            id="cpf_cnpj" type="text" @input="validateCPF()" v-maska
                             data-maska="['##.###.###/####-##','###.###.###-##']" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.cpf_cnpj || '&nbsp;' }}</small>
                     </div>
@@ -346,7 +317,7 @@ watchEffect(() => {
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
                             data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone"
-                            type="text" @input="validateTelefone()" @blur="setUnMasked('telefone')" />
+                            type="text" @input="validateTelefone()" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.telefone || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
