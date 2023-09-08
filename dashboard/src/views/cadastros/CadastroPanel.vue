@@ -50,23 +50,23 @@ onBeforeMount(() => {
                         </template>
                         <CadastroForm />
                     </TabPanel>
-                    <TabPanel>
+                    <TabPanel :disabled="!itemData.id">
                         <template #header>
                             <i class="pi pi-at mr-2"></i>
                             <span>Contatos Adicionais</span>
                         </template>
-                        <ContatosGrid v-if="itemData.id" :itemDataRoot="itemData"/>
+                        <ContatosGrid v-if="itemData.id" :itemDataRoot="itemData" />
                     </TabPanel>
-                    <TabPanel>
+                    <TabPanel :disabled="!itemData.id">
                         <template #header>
                             <i class="pi pi-map mr-2"></i>
                             <span>Endereços</span>
                         </template>
                         <EnderecosGrid v-if="itemData.id" :itemDataRoot="itemData"/>
                     </TabPanel>
-                    <TabPanel>
+                    <TabPanel :disabled="!itemData.id">
                         <template #header>
-                            <i class="pi pi-cloud-upload mr-2"></i>
+                            <i class="pi pi-paperclip mr-2"></i>
                             <span>Pipeline</span>
                         </template>
                         <p class="line-height-3 m-0">
@@ -78,7 +78,7 @@ onBeforeMount(() => {
                             non numquam eius modi.
                         </p>
                     </TabPanel>
-                    <TabPanel>
+                    <TabPanel :disabled="!itemData.id">
                         <template #header>
                             <i class="pi pi-cart-plus mr-2"></i>
                             <span>Pós-vendas</span>

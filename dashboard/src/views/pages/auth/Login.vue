@@ -9,7 +9,7 @@ const password = ref('');
 const checked = ref(false);
 
 const logoUrl = computed(() => {
-    return `assets/images/logo-app.png`;
+    return `/assets/images/logo-app.png`;
 });
 </script>
 
