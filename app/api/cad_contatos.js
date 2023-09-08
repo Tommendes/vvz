@@ -10,6 +10,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
+        if (req.params.id_cadastros) body.id_cadastros = req.params.id_cadastros
         try {
             // Alçada para edição
             if (body.id)

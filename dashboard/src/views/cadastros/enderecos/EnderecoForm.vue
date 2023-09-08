@@ -8,14 +8,8 @@ import moment from 'moment';
 
 import { Mask, MaskInput } from 'maska';
 const masks = ref({
-    cpf_cnpj: new Mask({
-        mask: ['###.###.###-##', '##.###.###/####-##']
-    }),
-    aniversario: new Mask({
-        mask: '##/##/####'
-    }),
-    telefone: new Mask({
-        mask: ['(##) ####-####', '(##) #####-####']
+    cep: new Mask({
+        mask: '##.###-###'
     })
 });
 
@@ -52,10 +46,7 @@ const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Dropdowns
-const dropdownSexo = ref([]);
-const dropdownPaisNascim = ref([]);
 const dropdownTipo = ref([]);
-const dropdownAtuacao = ref([]);
 // Loadings
 const loading = ref({
     accepted: null,
@@ -69,7 +60,7 @@ const props = defineProps({
 // Emit do template
 const emit = defineEmits(['changed'])
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
     if (route.params.id || itemData.value.id) {
@@ -101,6 +92,7 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
+        if (itemData.value.cep) itemData.value.cep = masks.value.cep.unmasked(itemData.value.cep)
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -220,36 +212,19 @@ const optionLocalParams = async (query) => {
 };
 // Carregar opções do formulário
 const loadOptions = async () => {
-    // Sexo
-    await optionParams({ field: 'meta', value: 'sexo', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownSexo.value.push({ value: item.id, label: item.label });
-        });
-    });
-    // Pais nascimento
-    await optionParams({ field: 'meta', value: 'pais', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownPaisNascim.value.push({ value: item.id, label: item.label });
-        });
-    });
-    // Tipo Cadastro
-    await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
+    // Tipo Endereço
+    await optionLocalParams({ field: 'grupo', value: 'tipo_endereco', select: 'id,label' }).then((res) => {
+        console.log(res.data.data);
         res.data.data.map((item) => {
             dropdownTipo.value.push({ value: item.id, label: item.label });
         });
     });
-    // Área Atuação
-    await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownAtuacao.value.push({ value: item.id, label: item.label });
-        });
-    });
 };
 // Carregar dados do formulário
-// onBeforeMount(() => {
+onBeforeMount(() => {
 //     loadData();
-//     loadOptions();
-// });
+    loadOptions();
+});
 // onMounted(() => {
 //     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 // })
@@ -281,28 +256,52 @@ const loadOptions = async () => {
                 <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo">Tipo de Contato</label>
+                        <label for="id_params_tipo">Tipo</label>
                         <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
                             v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione...">
                         </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="pessoa">Pessoa</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa"
+                        <label for="cep">CEP</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep"
                             type="text" />
                         <small id="text-error" class="p-error">{{ errorMessages.pessoa || '&nbsp;' }}</small>
                     </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="departamento">Departamento</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.departamento"
-                            id="departamento" type="text" />
+                    <div class="field col-12 md:col-7">
+                        <label for="logradouro">Logradouro</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro"
+                            type="text" />
+                        <small id="text-error" class="p-error">{{ errorMessages.pessoa || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-1">
+                        <label for="nr">Número</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr"
+                            id="nr" type="text" />
                         <small id="text-error" class="p-error">{{ errorMessages.departamento || '&nbsp;' }}</small>
                     </div>
-                    <div class="field col-12 md:col-6">
-                        <label for="meio">Meio de Contato</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio"
+                    <div class="field col-12 md:col-3">
+                        <label for="complnr">Complemento</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr"
                             type="text" />
                         <small id="text-error" class="p-error">{{ errorMessages.meio || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-4">
+                        <label for="cidade">Cidade</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade"
+                            type="text" />
+                        <small id="text-error" class="p-error">{{ errorMessages.obs || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-4">
+                        <label for="bairro">Bairro</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro"
+                            type="text" />
+                        <small id="text-error" class="p-error">{{ errorMessages.obs || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-1">
+                        <label for="uf">UF</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.uf" id="uf"
+                            type="text" />
+                        <small id="text-error" class="p-error">{{ errorMessages.obs || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-12">
                         <label for="obs">Observação</label>

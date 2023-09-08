@@ -18,7 +18,7 @@ const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
 const mode = ref('grid');
 const visible = ref(false);
 // Props do template
@@ -40,9 +40,12 @@ const initFilters = () => {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
         id_params_tipo: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        pessoa: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        departamento: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        meio: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        cep: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        logradouro: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        nr: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        cidade: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        bairro: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        uf: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
     };
 };
 
@@ -98,17 +101,32 @@ onBeforeMount(() => {
                     <Skeleton></Skeleton>
                 </template>
             </Column>
-            <Column field="pessoa" header="Pessoa" style="min-width: 25rem">
+            <Column field="cep" header="CEP" style="min-width: 25rem">
                 <template #body>
                     <Skeleton></Skeleton>
                 </template>
             </Column>
-            <Column field="departamento" header="Departamento" style="min-width: 14rem">
+            <Column field="logradouro" header="Logradouro" style="min-width: 14rem">
                 <template #body>
                     <Skeleton></Skeleton>
                 </template>
             </Column>
-            <Column field="meio" header="Meio de Contato" style="min-width: 14rem">
+            <Column field="nr" header="Número" style="min-width: 14rem">
+                <template #body>
+                    <Skeleton></Skeleton>
+                </template>
+            </Column>
+            <Column field="cidade" header="Cidade" style="min-width: 14rem">
+                <template #body>
+                    <Skeleton></Skeleton>
+                </template>
+            </Column>
+            <Column field="bairro" header="Bairro" style="min-width: 14rem">
+                <template #body>
+                    <Skeleton></Skeleton>
+                </template>
+            </Column>
+            <Column field="uf" header="UF" style="min-width: 14rem">
                 <template #body>
                     <Skeleton></Skeleton>
                 </template>
@@ -121,7 +139,7 @@ onBeforeMount(() => {
         </DataTable>
         <DataTable v-else :value="gridData" :paginator="true" class="p-datatable-gridlines" :rows="10" dataKey="id"
             :rowHover="true" v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
-            responsiveLayout="scroll" :globalFilterFields="['id_params_tipo', 'pessoa', 'departamento', 'meio']">
+            responsiveLayout="scroll" :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']">
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
@@ -133,7 +151,7 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <Column field="id_params_tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
+            <Column field="id_params_tipo" header="Tipo" sortable style="min-width: 14rem">
                 <template #body="{ data }">
                     {{ data.id_params_tipo }}
                 </template>
@@ -142,31 +160,58 @@ onBeforeMount(() => {
                         placeholder="Filtre por tipo" />
                 </template>
             </Column>
-            <Column field="pessoa" header="Pessoa" sortable style="min-width: 14rem">
+            <Column field="cep" header="CEP" sortable style="min-width: 14rem">
                 <template #body="{ data }">
-                    {{ data.pessoa }}
+                    {{ data.cep }}
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por pessoa" />
+                        placeholder="Filtre por CEP" />
                 </template>
             </Column>
-            <Column field="departamento" header="Departamento" sortable style="min-width: 25rem">
+            <Column field="logradouro" header="Logradouro" sortable style="min-width: 25rem">
                 <template #body="{ data }">
-                    {{ data.departamento }}
+                    {{ data.logradouro }}
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por departamento" />
+                        placeholder="Filtre por logradouro" />
                 </template>
             </Column>
-            <Column field="meio" header="Meio" sortable style="min-width: 14rem">
+            <Column field="nr" header="Número" sortable style="min-width: 14rem">
                 <template #body="{ data }">
-                    {{ data.meio }}
+                    {{ data.nr }}
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por meio" />
+                        placeholder="Filtre por número" />
+                </template>
+            </Column>
+            <Column field="cidade" header="Cidade" sortable style="min-width: 14rem">
+                <template #body="{ data }">
+                    {{ data.cidade }}
+                </template>
+                <template #filter="{ filterModel }">
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                        placeholder="Filtre por cidade" />
+                </template>
+            </Column>
+            <Column field="bairro" header="Bairro" sortable style="min-width: 14rem">
+                <template #body="{ data }">
+                    {{ data.bairro }}
+                </template>
+                <template #filter="{ filterModel }">
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                        placeholder="Filtre por bairro" />
+                </template>
+            </Column>
+            <Column field="uf" header="UF" sortable style="min-width: 14rem">
+                <template #body="{ data }">
+                    {{ data.uf }}
+                </template>
+                <template #filter="{ filterModel }">
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                        placeholder="Filtre por UF" />
                 </template>
             </Column>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
