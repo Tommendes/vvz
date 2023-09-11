@@ -35,7 +35,6 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        console.log(body);
         delete body.hash; delete body.tblName
         if (body.id) {
             // Variáveis da edição de um registro

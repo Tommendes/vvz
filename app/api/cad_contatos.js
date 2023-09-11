@@ -25,8 +25,7 @@ module.exports = app => {
         try {
             existsOrError(body.pessoa, 'Pessoa não informado')
             existsOrError(body.meio, 'Meio não informada')
-            existsOrError(body.id_tipo, 'Tipo do contato não informado')
-
+            existsOrError(body.id_params_tipo, 'Tipo do contato não informado')
         } catch (error) {
             return res.status(400).send(error)
         }
@@ -119,6 +118,7 @@ module.exports = app => {
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
 
+            ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
         ret.where({ status: STATUS_ACTIVE, id_cadastros: id_cadastros })
             .groupBy('tbl1.id')
             .limit(limit).offset(page * limit - limit)
