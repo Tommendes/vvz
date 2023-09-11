@@ -1,56 +1,39 @@
 <script setup>
-import { ref, onBeforeMount, onMounted, provide } from 'vue';
+import { ref, onBeforeMount, provide } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn } from '@/toast';
-import { useRouter } from 'vue-router';
-import moment from 'moment';
+import { defaultWarn } from '@/toast';
 import ContatoForm from './ContatoForm.vue';
-
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
-
-const router = useRouter();
 
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
-const childForm = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
 const mode = ref('grid');
-const visible = ref(false);
 // Props do template
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
-})
-
-import { Mask } from 'maska';
-const masks = ref({
-    cpf: new Mask({
-        mask: '###.###.###-##'
-    }),
-    cnpj: new Mask({
-        mask: '##.###.###/####-##'
-    })
 });
-
+// Inicializa os filtros
 const initFilters = () => {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        id_params_tipo: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        tipo: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         pessoa: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         departamento: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        meio: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        meio: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
     };
 };
-
+// Inicializa os filtros
 initFilters();
+// Limpa os filtros
 const clearFilter = () => {
     initFilters();
 };
+// Itens do menu de contexto
 const itemsButtons = ref([
     {
         label: 'Editar',
@@ -65,28 +48,45 @@ const itemsButtons = ref([
         command: () => {
             defaultWarn('Excluir registro (ID): ' + itemData.value.id);
         }
-    },
+    }
 ]);
+// Abre o menu de contexto
 const toggle = (event) => {
     menu.value.toggle(event);
 };
+// Obtém o item selecionado
 const getItem = (data) => {
     itemData.value = data;
 };
+// Carrega os dados da grid
 const loadData = async () => {
     const url = `${urlBase.value}`;
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        gridData.value.forEach(element => {
+        gridData.value.forEach((element) => {
+            element.meioRenderizado = renderizarHTML(element.meio);
         });
         loading.value = false;
     });
 };
-
-const newItem = ref({});
+// Renderiza o HTML
+const renderizarHTML = (conteudo) => {
+    // Verifique se o conteúdo parece ser um link da web ou um endereço de e-mail
+    if (conteudo.includes('http') || conteudo.includes('https')) {
+        return `<a href="${conteudo}" target="_blank">${conteudo}</a>`;
+    } else if (conteudo.includes('www') && !conteudo.includes('https')) {
+        return `<a href="https://${conteudo}" target="_blank">${conteudo}</a>`;
+    } else if (conteudo.includes('@')) {
+        return `<a href="mailto:${conteudo}">${conteudo}</a>`;
+    } else {
+        return conteudo;
+    }
+};
+// Carrega os dados do formulário
 provide('itemData', itemData);
+// Carrega o modo do formulário
 provide('mode', mode);
-
+// Carrega as operações básicas do formulário
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -95,13 +95,9 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
-        <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
-        <ContatoForm @changed="loadData" @cancel="mode = 'grid'"
-            cd ..
-             && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot"
-            :itemDataGrid="itemData" />
+        <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable :value="gridData" v-if="loading">
-            <Column field="id_params_tipo" header="Tipo de Contato" style="min-width: 14rem">
+            <Column field="tipo" header="Tipo de Contato" style="min-width: 14rem">
                 <template #body>
                     <Skeleton></Skeleton>
                 </template>
@@ -127,27 +123,46 @@ onBeforeMount(() => {
                 </template>
             </Column>
         </DataTable>
-        <DataTable v-else :value="gridData" :paginator="true" class="p-datatable-gridlines" :rows="10" dataKey="id"
-            :rowHover="true" v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
-            responsiveLayout="scroll" :globalFilterFields="['id_params_tipo', 'pessoa', 'departamento', 'meio']">
+        <DataTable
+            v-else
+            :value="gridData"
+            :paginator="true"
+            class="p-datatable-gridlines"
+            :rows="10"
+            dataKey="id"
+            :rowHover="true"
+            v-model:filters="filters"
+            filterDisplay="menu"
+            :loading="loading"
+            :filters="filters"
+            responsiveLayout="scroll"
+            :globalFilterFields="['tipo', 'pessoa', 'departamento', 'meio']"
+        >
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined
-                        @click="itemData = { id_cadastros: props.itemDataRoot.id }; mode = 'new'" />
+                    <Button
+                        type="button"
+                        icon="pi pi-plus"
+                        label="Novo Registro"
+                        outlined
+                        @click="
+                            itemData = { id_cadastros: props.itemDataRoot.id };
+                            mode = 'new';
+                        "
+                    />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
-            <Column field="id_params_tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
+            <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
                 <template #body="{ data }">
-                    {{ data.id_params_tipo }}
+                    {{ data.tipo }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por tipo" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por tipo" />
                 </template>
             </Column>
             <Column field="pessoa" header="Pessoa" sortable style="min-width: 14rem">
@@ -155,8 +170,7 @@ onBeforeMount(() => {
                     {{ data.pessoa }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por pessoa" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por pessoa" />
                 </template>
             </Column>
             <Column field="departamento" header="Departamento" sortable style="min-width: 25rem">
@@ -164,23 +178,20 @@ onBeforeMount(() => {
                     {{ data.departamento }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por departamento" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por departamento" />
                 </template>
             </Column>
             <Column field="meio" header="Meio" sortable style="min-width: 14rem">
                 <template #body="{ data }">
-                    {{ data.meio }}
+                    <div v-html="data.meioRenderizado"></div>
                 </template>
                 <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por meio" />
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por meio" />
                 </template>
             </Column>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle"
-                        aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>

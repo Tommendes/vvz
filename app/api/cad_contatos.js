@@ -2,6 +2,7 @@ const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'cad_contatos'
+    const tabelaLocalParams = 'local_params'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -16,7 +17,7 @@ module.exports = app => {
             if (body.id)
                 isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams , `${noAccessMsg} "Inclusão de ${tabela}"`)
+            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -30,7 +31,10 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
+        delete body.hash; 
+        delete body.tblName; 
+        delete body.tipo;
+        delete body.meioRenderizado;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -109,6 +113,7 @@ module.exports = app => {
         }
         const id_cadastros = req.params.id_cadastros
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
         const page = req.query.page || 1
         let count = app.db({ tbl1: tabelaDomain }).count('* as count')
             .where({ status: STATUS_ACTIVE, id_cadastros: id_cadastros })
@@ -116,10 +121,10 @@ module.exports = app => {
         count = count[0][0].count
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*, lp.label tipo, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
 
-            ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
-        ret.where({ status: STATUS_ACTIVE, id_cadastros: id_cadastros })
+        ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_tipo')
+        ret.where({ 'tbl1.status': STATUS_ACTIVE, id_cadastros: id_cadastros })
             .groupBy('tbl1.id')
             .limit(limit).offset(page * limit - limit)
             .then(body => {

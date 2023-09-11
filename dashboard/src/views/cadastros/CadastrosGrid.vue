@@ -20,7 +20,7 @@ const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
-const loading = ref(true);
+const loading = ref(false);
 const urlBase = ref(`${baseApiUrl}/cadastros`);
 const mode = ref('grid');
 const visible = ref(false);
@@ -73,6 +73,7 @@ const getItem = (data) => {
     itemData.value = data;
 };
 const loadData = () => {
+    loading.value = true;
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
@@ -177,7 +178,7 @@ onBeforeMount(() => {
                     />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
-                        <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
+                        <InputText v-model.lazy="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>

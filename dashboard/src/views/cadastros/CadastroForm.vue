@@ -137,12 +137,6 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
-// Verifica se o inputSwitch de edições do formulário foi aceito
-const formAccepted = () => {
-    if (isItemDataChanged() && !accept.value) errorMessages.value.accepted = 'Você deve concordar para prosseguir';
-    else errorMessages.value.accepted = null;
-    return !errorMessages.value.accepted;
-};
 // Validar CPF
 const validateCPF = () => {
     if (cpf.isValid(itemData.value.cpf_cnpj) || cnpj.isValid(itemData.value.cpf_cnpj)) errorMessages.value.cpf_cnpj = null;
@@ -173,7 +167,7 @@ const validateTelefone = () => {
 };
 // Validar formulário
 const formIsValid = () => {
-    return formAccepted() && validateDtNascto() && validateCPF() && validateEmail() && validateTelefone();
+    return validateDtNascto() && validateCPF() && validateEmail() && validateTelefone();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -335,9 +329,6 @@ watchEffect(() => {
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
-                    <InputSwitch v-model="accept" @input="formAccepted" v-if="mode != 'view' && isItemDataChanged()"
-                        :class="{ 'p-invalid': errorMessages.accepted }" aria-describedby="text-error" />
-                    <small id="text-error" class="p-error" if>{{ errorMessages.accepted || '&nbsp;' }}</small>
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised
                         @click="mode = 'edit'" />
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text

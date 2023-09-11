@@ -134,7 +134,7 @@ module.exports = app => {
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.aniversario, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
         if (key)
             if (keyCnpj) ret.where(function () {
                 this.where(app.db.raw(`tbl1.cpf_cnpj like '%${keyCnpj}%'`))
