@@ -13,37 +13,69 @@ const model = ref([
     },
     {
         label: 'Cadastros',
-        items: [{ label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros` }]
+        items: [
+            { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros` },
+            { label: 'Prospecção', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/pv` }
+        ],
     },
     {
-        label: 'Outros órgãos (link externo)',
+        label: 'Pipeline',
         items: [
-            { label: 'eSocial', icon: 'pi pi-fw pi-at', url: 'https://login.esocial.gov.br', target: '_blank' },
-            { label: 'Siope', icon: 'pi pi-fw pi-at', url: 'https://www.gov.br/fnde/pt-br/assuntos/sistemas/siope', target: '_blank' },
-            { label: 'TCE - AL', icon: 'pi pi-fw pi-at', url: 'https://www.tceal.tc.br/', target: '_blank' }
-        ]
+            { label: 'Documentos', icon: 'pi pi-fw pi-paperclip', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${user.cliente}/${user.dominio}/ged` }
+        ],
     },
     {
-        label: 'UI Components',
+        label: 'Pós-vendas',
         items: [
-            { label: 'Form Layout', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/uikit/formlayout` },
-            { label: 'Input', icon: 'pi pi-fw pi-check-square', to: `/${user.cliente}/${user.dominio}/uikit/input` },
-            { label: 'Float Label', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/uikit/floatlabel` },
-            { label: 'Invalid State', icon: 'pi pi-fw pi-exclamation-circle', to: `/${user.cliente}/${user.dominio}/uikit/invalidstate` },
-            { label: 'Button', icon: 'pi pi-fw pi-mobile', to: `/${user.cliente}/${user.dominio}/uikit/button`, class: 'rotated-icon' },
-            { label: 'Cadastros', icon: 'pi pi-fw pi-table', to: `/${user.cliente}/${user.dominio}/uikit/table` },
-            { label: 'List', icon: 'pi pi-fw pi-list', to: `/${user.cliente}/${user.dominio}/uikit/list` },
-            { label: 'Tree', icon: 'pi pi-fw pi-share-alt', to: `/${user.cliente}/${user.dominio}/uikit/tree` },
-            { label: 'Panel', icon: 'pi pi-fw pi-tablet', to: `/${user.cliente}/${user.dominio}/uikit/panel` },
-            { label: 'Overlay', icon: 'pi pi-fw pi-clone', to: `/${user.cliente}/${user.dominio}/uikit/overlay` },
-            { label: 'Media', icon: 'pi pi-fw pi-image', to: `/${user.cliente}/${user.dominio}/uikit/media` },
-            { label: 'Menu', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/uikit/menu`, preventExact: true },
-            { label: 'Message', icon: 'pi pi-fw pi-comment', to: `/${user.cliente}/${user.dominio}/uikit/message` },
-            { label: 'File', icon: 'pi pi-fw pi-file', to: `/${user.cliente}/${user.dominio}/uikit/file` },
-            { label: 'Chart', icon: 'pi pi-fw pi-chart-bar', to: `/${user.cliente}/${user.dominio}/uikit/charts` },
-            { label: 'Misc', icon: 'pi pi-fw pi-circle', to: `/${user.cliente}/${user.dominio}/uikit/misc` }
-        ]
+            { label: 'Assistência Técnica', icon: 'pi pi-fw pi-wrench', to: `/${user.cliente}/${user.dominio}/pv` },
+            { label: 'Montagem', icon: 'pi pi-fw pi-box', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/ged` }],
     },
+    {
+        label: 'Financeiro',
+        items: [{ label: 'Registros', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/ged` }],
+    },
+    {
+        label: 'Gestão',
+        items: [
+            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Parâmetros', icon: 'pi pi-fw pi-cog', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${user.cliente}/${user.dominio}/ged` }
+        ],
+    },
+    {
+        label: 'Administrar',
+        items: [
+            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/ged` }
+        ],
+    },
+    // {
+    //     label: 'UI Components',
+    //     items: [
+    //         { label: 'Form Layout', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/uikit/formlayout` },
+    //         { label: 'Input', icon: 'pi pi-fw pi-check-square', to: `/${user.cliente}/${user.dominio}/uikit/input` },
+    //         { label: 'Float Label', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/uikit/floatlabel` },
+    //         { label: 'Invalid State', icon: 'pi pi-fw pi-exclamation-circle', to: `/${user.cliente}/${user.dominio}/uikit/invalidstate` },
+    //         { label: 'Button', icon: 'pi pi-fw pi-mobile', to: `/${user.cliente}/${user.dominio}/uikit/button`, class: 'rotated-icon' },
+    //         { label: 'Cadastros', icon: 'pi pi-fw pi-table', to: `/${user.cliente}/${user.dominio}/uikit/table` },
+    //         { label: 'List', icon: 'pi pi-fw pi-list', to: `/${user.cliente}/${user.dominio}/uikit/list` },
+    //         { label: 'Tree', icon: 'pi pi-fw pi-share-alt', to: `/${user.cliente}/${user.dominio}/uikit/tree` },
+    //         { label: 'Panel', icon: 'pi pi-fw pi-tablet', to: `/${user.cliente}/${user.dominio}/uikit/panel` },
+    //         { label: 'Overlay', icon: 'pi pi-fw pi-clone', to: `/${user.cliente}/${user.dominio}/uikit/overlay` },
+    //         { label: 'Media', icon: 'pi pi-fw pi-image', to: `/${user.cliente}/${user.dominio}/uikit/media` },
+    //         { label: 'Menu', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/uikit/menu`, preventExact: true },
+    //         { label: 'Message', icon: 'pi pi-fw pi-comment', to: `/${user.cliente}/${user.dominio}/uikit/message` },
+    //         { label: 'File', icon: 'pi pi-fw pi-file', to: `/${user.cliente}/${user.dominio}/uikit/file` },
+    //         { label: 'Chart', icon: 'pi pi-fw pi-chart-bar', to: `/${user.cliente}/${user.dominio}/uikit/charts` },
+    //         { label: 'Misc', icon: 'pi pi-fw pi-circle', to: `/${user.cliente}/${user.dominio}/uikit/misc` }
+    //     ]
+    // },
     // {
     //     label: 'Prime Blocks',
     //     items: [
@@ -51,13 +83,13 @@ const model = ref([
     //         { label: 'All Blocks', icon: 'pi pi-fw pi-globe', url: 'https://www.primefaces.org/primeblocks-vue', target: '_blank' }
     //     ]
     // },
-    {
-        label: 'Utilities',
-        items: [
-            { label: 'PrimeIcons', icon: 'pi pi-fw pi-prime', to: '/utilities/icons' },
-            { label: 'PrimeFlex', icon: 'pi pi-fw pi-desktop', url: 'https://www.primefaces.org/primeflex/', target: '_blank' }
-        ]
-    },
+    // {
+    //     label: 'Utilities',
+    //     items: [
+    //         { label: 'PrimeIcons', icon: 'pi pi-fw pi-prime', to: '/utilities/icons' },
+    //         { label: 'PrimeFlex', icon: 'pi pi-fw pi-desktop', url: 'https://www.primefaces.org/primeflex/', target: '_blank' }
+    //     ]
+    // },
     // {
     //     label: 'Pages',
     //     icon: 'pi pi-fw pi-briefcase',

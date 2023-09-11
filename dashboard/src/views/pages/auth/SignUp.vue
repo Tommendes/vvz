@@ -24,7 +24,7 @@ const url = ref(`${baseApiUrl}/signup`);
 const click = ref(false);
 
 const logoUrl = computed(() => {
-    return `assets/images/logo-app.png`;
+    return `/assets/images/logo-app.png`;
 });
 
 const signup = async () => {

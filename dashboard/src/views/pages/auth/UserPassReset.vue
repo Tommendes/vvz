@@ -27,7 +27,7 @@ const tokenTimeLeftMessage = ref('');
 const urlUnlock = ref(`${baseApiUrl}/password-reset/`);
 
 const logoUrl = computed(() => {
-    return `assets/images/logo-app.png`;
+    return `/assets/images/logo-app.png`;
 });
 
 onMounted(async () => {
