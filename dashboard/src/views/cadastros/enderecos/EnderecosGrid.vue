@@ -80,6 +80,14 @@ const loadData = async () => {
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach(element => {
+            element.endereco = '';
+            if (element.logradouro) element.endereco += element.logradouro;
+            if (element.nr) element.endereco += `, ${element.nr}`;
+            if (element.complnr && element.complnr.trim().length > 0) element.endereco += `, ${element.complnr.trim()}`;
+            if (element.bairro) element.endereco += ` - ${element.bairro}`;
+            if (element.cidade) element.endereco += ` - ${element.cidade}`;
+            if (element.uf) element.endereco += ` - ${element.uf}`;
+            if (element.cep) element.endereco += ` - CEP ${element.cep}`;
         });
         loading.value = false;
     });
@@ -139,7 +147,8 @@ onBeforeMount(() => {
         </DataTable>
         <DataTable v-else :value="gridData" :paginator="true" class="p-datatable-gridlines" :rows="10" dataKey="id"
             :rowHover="true" v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
-            responsiveLayout="scroll" :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']">
+            responsiveLayout="scroll"
+            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']">
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
@@ -151,67 +160,15 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <Column field="id_params_tipo" header="Tipo" sortable style="min-width: 14rem">
+            <Column field="allFields" header="Endereços" style="min-width: 400px">
                 <template #body="{ data }">
-                    {{ data.id_params_tipo }}
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.endereco }}
+                    </div>
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por tipo" />
-                </template>
-            </Column>
-            <Column field="cep" header="CEP" sortable style="min-width: 14rem">
-                <template #body="{ data }">
-                    {{ data.cep }}
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por CEP" />
-                </template>
-            </Column>
-            <Column field="logradouro" header="Logradouro" sortable style="min-width: 25rem">
-                <template #body="{ data }">
-                    {{ data.logradouro }}
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por logradouro" />
-                </template>
-            </Column>
-            <Column field="nr" header="Número" sortable style="min-width: 14rem">
-                <template #body="{ data }">
-                    {{ data.nr }}
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por número" />
-                </template>
-            </Column>
-            <Column field="cidade" header="Cidade" sortable style="min-width: 14rem">
-                <template #body="{ data }">
-                    {{ data.cidade }}
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por cidade" />
-                </template>
-            </Column>
-            <Column field="bairro" header="Bairro" sortable style="min-width: 14rem">
-                <template #body="{ data }">
-                    {{ data.bairro }}
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por bairro" />
-                </template>
-            </Column>
-            <Column field="uf" header="UF" sortable style="min-width: 14rem">
-                <template #body="{ data }">
-                    {{ data.uf }}
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por UF" />
+                        placeholder="Filtre por informações" />
                 </template>
             </Column>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
