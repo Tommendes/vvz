@@ -1,19 +1,12 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, inject } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { UFS, isValidEmail, validarDataPTBR } from '@/global';
-import moment from 'moment';
+import { UFS, isValidEmail } from '@/global';
 
 import { Mask, MaskInput } from 'maska';
 const masks = ref({
-    cpf_cnpj: new Mask({
-        mask: ['###.###.###-##', '##.###.###/####-##']
-    }),
-    aniversario: new Mask({
-        mask: '##/##/####'
-    }),
     telefone: new Mask({
         mask: ['(##) ####-####', '(##) #####-####']
     })
@@ -29,33 +22,14 @@ const router = useRouter();
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
-// Validar o cpf_cnpj
-import { cpf, cnpj } from 'cpf-cnpj-validator';
-
 // Campos de formulário
-const itemData = ref({});
-const labels = ref({
-    pfpj: 'pf',
-    nome: 'Nome',
-    aniversario: 'Nascimento',
-    cpf_cnpj: 'CPF',
-    rg_ie: 'RG',
-});
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
-// Campos de formulário mascarados
-const itemDataMasked = ref({});
+const itemData = inject('itemData');
 // Modo do formulário
-const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
+const mode = inject('mode');
 // Mensages de erro
 const errorMessages = ref({});
 // Dropdowns
-const dropdownSexo = ref([]);
-const dropdownPaisNascim = ref([]);
 const dropdownTipo = ref([]);
-const dropdownAtuacao = ref([]);
 // Loadings
 const loading = ref({
     accepted: null,
@@ -67,33 +41,27 @@ const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 })
 // Emit do template
-const emit = defineEmits(['changed'])
+const emit = defineEmits(['changed', 'cancel'])
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
-    if (route.params.id || itemData.value.id) {
-        if (route.params.id) itemData.value.id = route.params.id;
+    if ((itemData && itemData.id)) {
+        loading.value.form = true;
         const url = `${urlBase.value}/${itemData.value.id}`;
+        console.log(url);
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
                 body.id = String(body.id);
-                body.prospect = isTrue(body.prospect);
-
                 itemData.value = body;
-                itemDataComparision.value = { ...body };
-                if (itemData.value.cpf_cnpj) itemDataMasked.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj);
-                if (itemData.value.aniversario) itemDataMasked.value.aniversario = masks.value.aniversario.masked(moment(itemData.value.aniversario).format('DD/MM/YYYY'));
-                if (itemData.value.telefone) itemDataMasked.value.telefone = masks.value.telefone.masked(itemData.value.telefone);
-
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
                 router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastros` });
             }
         });
-    }
+    } 
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -107,9 +75,8 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    emit('changed');
-                    if (mode.value != 'new') reload();
                     mode.value = 'view';
+                    emit('changed');
                 } else {
                     defaultWarn('Erro ao salvar registro');
                 }
@@ -118,36 +85,6 @@ const saveData = async () => {
                 defaultWarn(err.response.data);
             });
     }
-};
-// Converte 1 ou 0 para boolean
-const isTrue = (value) => value === 1;
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        errorMessages.value = {};
-    }
-    return ret;
-};
-// Verifica se o inputSwitch de edições do formulário foi aceito
-const formAccepted = () => {
-    if (isItemDataChanged() && !accept.value) errorMessages.value.accepted = 'Você deve concordar para prosseguir';
-    else errorMessages.value.accepted = null;
-    return !errorMessages.value.accepted;
-};
-// Validar CPF
-const validateCPF = () => {
-    if (cpf.isValid(itemDataMasked.value.cpf_cnpj) || cnpj.isValid(itemDataMasked.value.cpf_cnpj)) errorMessages.value.cpf_cnpj = null;
-    else errorMessages.value.cpf_cnpj = 'CPF/CNPJ informado é inválido';
-    return !errorMessages.value.cpf_cnpj;
-};
-// Validar data de nascimento
-const validateDtNascto = () => {
-    if (itemDataMasked.value.aniversario && itemDataMasked.value.aniversario.length > 0 && !(masks.value.aniversario.completed(itemDataMasked.value.aniversario) && moment(itemDataMasked.value.aniversario, 'DD/MM/YYYY').isValid())) {
-        errorMessages.value.aniversario = 'Formato de data inválido';
-    } else errorMessages.value.aniversario = null;
-    return !errorMessages.value.aniversario;
 };
 // Validar email
 const validateEmail = () => {
@@ -158,58 +95,19 @@ const validateEmail = () => {
 };
 // Validar telefone
 const validateTelefone = () => {
-    if (itemDataMasked.value.telefone && itemDataMasked.value.telefone.length > 0 && ![10, 11].includes(itemDataMasked.value.telefone.replace(/([^\d])+/gim, "").length)) {
+    if (itemData.value.telefone && itemData.value.telefone.length > 0 && ![10, 11].includes(itemData.value.telefone.replace(/([^\d])+/gim, "").length)) {
         errorMessages.value.telefone = 'Formato de telefone inválido';
     } else errorMessages.value.telefone = null;
     return !errorMessages.value.telefone;
 };
 // Validar formulário
 const formIsValid = () => {
-    return formAccepted() && validateDtNascto() && validateCPF(), validateEmail(), validateTelefone();
-};
-// Setar campos não mascarados
-const setUnMasked = (field) => {
-    switch (field) {
-        case 'cpf_cnpj':
-            if (validateCPF()) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.unmasked(itemDataMasked.value.cpf_cnpj);
-            else {
-                itemData.value.cpf_cnpj = itemDataComparision.value.cpf_cnpj;
-                itemDataMasked.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemDataComparision.value.cpf_cnpj);
-            }
-            break;
-        case 'aniversario':
-            if (validateDtNascto()) itemData.value.aniversario = moment(itemDataMasked.value.aniversario, 'DD/MM/YYYY').format('YYYY-MM-DD');
-            else {
-                itemData.value.aniversario = itemDataComparision.value.aniversario;
-                itemDataMasked.value.aniversario = moment(itemDataComparision.value.aniversario).format('DD/MM/YYYY');
-            }
-            break;
-        case 'telefone':
-            if (validateTelefone()) itemData.value.telefone = itemDataMasked.value.telefone.replace(/([^\d])+/gim, "");
-            else {
-                itemData.value.telefone = itemDataComparision.value.telefone;
-                itemDataMasked.value.telefone = masks.value.telefone.masked(itemDataComparision.value.telefone);
-            }
-            break;
-        default:
-            true;
-            break;
-    }
+    return true;// validateEmail(), validateTelefone();
 };
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
-    itemDataMasked.value = {};
     errorMessages.value = {};
-    loadData();
-};
-// Obter parâmetros do BD
-const optionParams = async (query) => {
-    itemData.value.id = route.params.id;
-    const selects = query.select ? `&slct=${query.select}` : undefined;
-    const url = `${baseApiUrl}/params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-    return await axios.get(url);
 };
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
@@ -220,63 +118,25 @@ const optionLocalParams = async (query) => {
 };
 // Carregar opções do formulário
 const loadOptions = async () => {
-    // Sexo
-    await optionParams({ field: 'meta', value: 'sexo', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownSexo.value.push({ value: item.id, label: item.label });
-        });
-    });
-    // Pais nascimento
-    await optionParams({ field: 'meta', value: 'pais', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownPaisNascim.value.push({ value: item.id, label: item.label });
-        });
-    });
-    // Tipo Cadastro
-    await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
+    // Tipo Contato
+    await optionLocalParams({ field: 'grupo', value: 'tipo_contato', select: 'id,label' }).then((res) => {
         res.data.data.map((item) => {
             dropdownTipo.value.push({ value: item.id, label: item.label });
         });
     });
-    // Área Atuação
-    await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownAtuacao.value.push({ value: item.id, label: item.label });
-        });
-    });
 };
 // Carregar dados do formulário
-// onBeforeMount(() => {
-//     loadData();
-//     loadOptions();
-// });
-// onMounted(() => {
-//     if (props.mode && props.mode != mode.value) mode.value = props.mode;
-// })
-// Observar alterações nos dados do formulário
-// watchEffect(() => {
-//     isItemDataChanged();
-//     validateCPF();
-//     if (itemData.value.cpf_cnpj && itemData.value.cpf_cnpj.replace(/([^\d])+/gim, "").length == 14) {
-//         labels.value.pfpj = 'pj';
-//         labels.value.nome = 'Razão Social';
-//         labels.value.aniversario = 'Fundação';
-//         labels.value.rg_ie = 'I.E.';
-//         labels.value.cpf_cnpj = 'CNPJ';
-//     }
-//     else {
-//         labels.value.pfpj = 'pf';
-//         labels.value.nome = 'Nome';
-//         labels.value.aniversario = 'Nascimento';
-//         labels.value.rg_ie = 'RG';
-//         labels.value.cpf_cnpj = 'CPF';
-//     }
-// });
+onBeforeMount(() => {
+    loadData();
+    loadOptions();
+});
 </script>
 
 <template>
     <div class="grid">
-        <form @submit="saveData">
+        <form @submit.prevent="saveData">
+            {{ itemData }}
+            {{ mode }}
             <div class="col-12">
                 <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
                 <div class="p-fluid formgrid grid">
@@ -312,15 +172,12 @@ const loadOptions = async () => {
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
-                    <InputSwitch v-model="accept" @input="formAccepted" v-if="mode != 'view' && isItemDataChanged()"
-                        :class="{ 'p-invalid': errorMessages.accepted }" aria-describedby="text-error" />
-                    <small id="text-error" class="p-error">{{ errorMessages.accepted || '&nbsp;' }}</small>
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised
                         @click="mode = 'edit'" />
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text
-                        raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        raised :disabled="!formIsValid()" />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text
-                        raised @click="reload" />
+                        raised @click="reload(); emit('cancel')" />
                 </div>
             </div>
         </form>

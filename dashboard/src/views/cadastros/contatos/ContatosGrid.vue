@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, onMounted } from 'vue';
+import { ref, onBeforeMount, onMounted, provide } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -17,6 +17,7 @@ const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
+const childForm = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
 const mode = ref('grid');
@@ -55,7 +56,7 @@ const itemsButtons = ref([
         label: 'Editar',
         icon: 'pi pi-pencil',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastro/${itemData.value.id}` });
+            mode.value = 'edit';
         }
     },
     {
@@ -81,6 +82,11 @@ const loadData = async () => {
         loading.value = false;
     });
 };
+
+const newItem = ref({});
+provide('itemData', itemData);
+provide('mode', mode);
+
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -90,8 +96,10 @@ onBeforeMount(() => {
 <template>
     <div class="card">
         <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
-        <ContatoForm :mode="mode" @changed="loadData" v-if="mode == 'new' && props.itemDataRoot.id"
-            :itemDataRoot="props.itemDataRoot" />
+        <ContatoForm @changed="loadData" @cancel="mode = 'grid'"
+            cd ..
+             && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot"
+            :itemDataGrid="itemData" />
         <DataTable :value="gridData" v-if="loading">
             <Column field="id_params_tipo" header="Tipo de Contato" style="min-width: 14rem">
                 <template #body>
@@ -126,7 +134,7 @@ onBeforeMount(() => {
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined
-                        @click="mode = 'new'; visible = !visible" />
+                        @click="itemData = { id_cadastros: props.itemDataRoot.id }; mode = 'new'" />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
