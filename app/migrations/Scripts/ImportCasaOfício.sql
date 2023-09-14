@@ -14,6 +14,15 @@ INSERT INTO vivazul_cso_root.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
 ) (SELECT 0,1,NOW(),NULL,10,'id_atuacao',id,label FROM vivazul_lynkos.params 
 	WHERE grupo = 'catu' AND LENGTH(TRIM(parametro)) > 0 AND parametro IS NOT NULL GROUP BY parametro ORDER BY parametro);
+/*tipo_contato*/
+INSERT INTO `vivazul_cso_root`.`local_params` (
+  id,evento,created_at,updated_at,STATUS,grupo,parametro,label
+) VALUES (0,1,NOW(),NULL,10,"tipo_contato","CELULAR","CELULAR"),(0,1,NOW(),NULL,10,"tipo_contato","CLARO","CLARO"),
+(0,1,NOW(),NULL,10,"tipo_contato","EMAIL","EMAIL"),(0,1,NOW(),NULL,10,"tipo_contato","FAX","FAX"),
+(0,1,NOW(),NULL,10,"tipo_contato","NEXTEL","NEXTEL"),(0,1,NOW(),NULL,10,"tipo_contato","OI","OI"),
+(0,1,NOW(),NULL,10,"tipo_contato","OUTROS","OUTROS"),(0,1,NOW(),NULL,10,"tipo_contato","SITE","SITE"),
+(0,1,NOW(),NULL,10,"tipo_contato","TELEFONE","TELEFONE"),(0,1,NOW(),NULL,10,"tipo_contato","TIM","TIM"),
+(0,1,NOW(),NULL,10,"tipo_contato","VIVO","VIVO");
 /*Adiciona coluna de referência entre BDs*/
 ALTER TABLE vivazul_cso_root.cadastros ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
 

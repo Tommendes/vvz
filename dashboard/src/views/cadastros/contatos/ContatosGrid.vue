@@ -10,13 +10,15 @@ const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
-const loading = ref(true);
+const loading = ref(false);
 const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
 const mode = ref('grid');
 // Props do template
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 });
+// Ref do gridData
+const dt = ref(null);
 // Inicializa os filtros
 const initFilters = () => {
     filters.value = {
@@ -45,8 +47,8 @@ const itemsButtons = ref([
     {
         label: 'Excluir',
         icon: 'pi pi-trash',
-        command: () => {
-            defaultWarn('Excluir registro (ID): ' + itemData.value.id);
+        command: ($event) => {
+            deleteRow($event);
         }
     }
 ]);
@@ -61,12 +63,34 @@ const getItem = (data) => {
 // Carrega os dados da grid
 const loadData = async () => {
     const url = `${urlBase.value}`;
+    loading.value = true;
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
             element.meioRenderizado = renderizarHTML(element.meio);
         });
         loading.value = false;
+    });
+};
+// 
+const deleteRow = () => {
+    confirm.require({
+        group: 'templating',
+        header: 'Corfirmar exclusão',
+        message: 'Você tem certeza que deseja excluir este registro?',
+        icon: 'pi pi-question-circle',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
+                defaultSuccess('Registro excluído com sucesso!');
+                loadData();
+            });
+        },
+        reject: () => {
+            return false;
+        }
     });
 };
 // Renderiza o HTML
@@ -96,46 +120,22 @@ onBeforeMount(() => {
 <template>
     <div class="card">
         <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
-        <DataTable :value="gridData" v-if="loading">
-            <Column field="tipo" header="Tipo de Contato" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="pessoa" header="Pessoa" style="min-width: 25rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="departamento" header="Departamento" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="meio" header="Meio de Contato" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column headerStyle="width: 5rem; text-align: center">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-        </DataTable>
         <DataTable
-            v-else
+            ref="dt"
             :value="gridData"
             :paginator="true"
-            class="p-datatable-gridlines"
-            :rows="10"
+            :rowsPerPageOptions="[5, 10, 20, 50]"
+            tableStyle="min-width: 50rem"
+            :rows="5"
             dataKey="id"
             :rowHover="true"
             v-model:filters="filters"
             filterDisplay="menu"
-            :loading="loading"
             :filters="filters"
-            responsiveLayout="scroll"
+            paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
+            scrollable
+            scrollHeight="415px"
             :globalFilterFields="['tipo', 'pessoa', 'departamento', 'meio']"
         >
             <template #header>

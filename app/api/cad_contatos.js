@@ -97,7 +97,6 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         let key = req.query.key
@@ -114,11 +113,6 @@ module.exports = app => {
         const id_cadastros = req.params.id_cadastros
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE, id_cadastros: id_cadastros })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, lp.label tipo, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
@@ -126,9 +120,8 @@ module.exports = app => {
         ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_tipo')
         ret.where({ 'tbl1.status': STATUS_ACTIVE, id_cadastros: id_cadastros })
             .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
             .then(body => {
-                return res.json({ data: body, count: count, limit })
+                return res.json({ data: body })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
