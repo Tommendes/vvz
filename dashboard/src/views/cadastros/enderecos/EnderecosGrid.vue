@@ -6,6 +6,9 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import EnderecoForm from './EnderecoForm.vue';
 
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
+
 import { useRouter } from 'vue-router';
 import moment from 'moment';
 
@@ -67,8 +70,8 @@ const itemsButtons = ref([
     {
         label: 'Excluir',
         icon: 'pi pi-trash',
-        command: () => {
-            defaultWarn('Excluir registro (ID): ' + itemData.value.id);
+        command: ($event) => {
+            deleteRow($event);
         }
     }
 ]);
@@ -96,6 +99,27 @@ const loadData = async () => {
             if (element.cep) element.endereco += ` - CEP ${element.cep}`;
         });
         loading.value = false;
+    });
+};
+// Excluir registro
+const deleteRow = () => {
+    confirm.require({
+        group: 'templating',
+        header: 'Corfirmar exclusão',
+        message: 'Você tem certeza que deseja excluir este registro?',
+        icon: 'pi pi-question-circle',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
+                defaultSuccess('Registro excluído com sucesso!');
+                loadData();
+            });
+        },
+        reject: () => {
+            return false;
+        }
     });
 };
 // Renderiza o HTML
