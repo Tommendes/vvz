@@ -117,11 +117,11 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        let keyCnpj = undefined
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-            keyCnpj = (key.replace(/([^\d])+/gim, "").length <= 14) ? key.replace(/([^\d])+/gim, "") : undefined
+        let filterCnpj = undefined
+        let filter = req.query.filter
+        if (filter) {
+            filter = filter.trim()
+            filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
         }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
@@ -133,27 +133,38 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
 
+
+        // const totalRecords = await app.db(tabelaDomain)
+        //     .count('id as count').first()
+
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.aniversario, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-        if (key)
-            if (keyCnpj) ret.where(function () {
-                this.where(app.db.raw(`tbl1.cpf_cnpj like '%${keyCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
+        if (filter)
+            if (filterCnpj) ret.where(function () {
+                this.where(app.db.raw(`tbl1.cpf_cnpj like '%${filterCnpj}%'`))
+                    .orWhere(app.db.raw(`tbl1.nome regexp('${filter.toString().replace(' ', '.+')}')`))
             })
-            else ret.where(app.db.raw(`tbl1.nome regexp('${key.toString().replace(' ', '.+')}')`))
-
+            else ret.where(app.db.raw(`tbl1.nome regexp('${filter.toString().replace(' ', '.+')}')`))
         ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
         ret.join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
             .orderBy('tbl1.nome', 'tbl1.cpf_cnpj')
+            if (filter) ret.limit(250)
+            else ret.limit(100)
+        console.log(ret.toString());
 
-        ret.then(body => {
-            return res.json({ data: body })
-        })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-            })
+        const dev = await ret;
+        const count = await dev.length;
+        console.log(count);
+
+        return res.json({ data: dev, totalRecords: count })
+        // ret.then(body => {
+        //     return res.json({ data: body, totalRecords: totalRecords.count })
+        // })
+        //     .catch(error => {
+        //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        //     })
     }
 
 

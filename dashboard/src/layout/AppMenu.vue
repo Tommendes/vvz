@@ -9,34 +9,37 @@ const user = JSON.parse(json);
 const model = ref([
     {
         // label: 'Home',
-        items: [{ label: 'Início', icon: 'pi pi-fw pi-home', to: `/${user.cliente}/${user.dominio}` }]
+        items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: `/${user.cliente}/${user.dominio}` }]
     },
     {
         label: 'Cadastros',
         items: [
             { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros` },
             { label: 'Prospecção', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/pv` }
-        ],
+        ]
     },
     {
-        label: 'Pipeline',
+        label: 'Comercial',
         items: [
-            { label: 'Documentos', icon: 'pi pi-fw pi-paperclip', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${user.cliente}/${user.dominio}/ged` },
             { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/ged` },
             { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${user.cliente}/${user.dominio}/ged` }
-        ],
+        ]
     },
     {
         label: 'Pós-vendas',
         items: [
             { label: 'Assistência Técnica', icon: 'pi pi-fw pi-wrench', to: `/${user.cliente}/${user.dominio}/pv` },
             { label: 'Montagem', icon: 'pi pi-fw pi-box', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/ged` }],
+            { label: 'Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/ged` }
+        ]
     },
     {
         label: 'Financeiro',
-        items: [{ label: 'Registros', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/ged` }],
+        items: [
+            { label: 'Registros', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/ged` }
+        ]
     },
     {
         label: 'Gestão',
@@ -45,7 +48,7 @@ const model = ref([
             { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${user.cliente}/${user.dominio}/ged` },
             { label: 'Parâmetros', icon: 'pi pi-fw pi-cog', to: `/${user.cliente}/${user.dominio}/ged` },
             { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${user.cliente}/${user.dominio}/ged` }
-        ],
+        ]
     },
     {
         label: 'Administrar',
@@ -53,161 +56,8 @@ const model = ref([
             { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/ged` },
             { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${user.cliente}/${user.dominio}/ged` },
             { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/ged` }
-        ],
-    },
-    // {
-    //     label: 'UI Components',
-    //     items: [
-    //         { label: 'Form Layout', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/uikit/formlayout` },
-    //         { label: 'Input', icon: 'pi pi-fw pi-check-square', to: `/${user.cliente}/${user.dominio}/uikit/input` },
-    //         { label: 'Float Label', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/uikit/floatlabel` },
-    //         { label: 'Invalid State', icon: 'pi pi-fw pi-exclamation-circle', to: `/${user.cliente}/${user.dominio}/uikit/invalidstate` },
-    //         { label: 'Button', icon: 'pi pi-fw pi-mobile', to: `/${user.cliente}/${user.dominio}/uikit/button`, class: 'rotated-icon' },
-    //         { label: 'Cadastros', icon: 'pi pi-fw pi-table', to: `/${user.cliente}/${user.dominio}/uikit/table` },
-    //         { label: 'List', icon: 'pi pi-fw pi-list', to: `/${user.cliente}/${user.dominio}/uikit/list` },
-    //         { label: 'Tree', icon: 'pi pi-fw pi-share-alt', to: `/${user.cliente}/${user.dominio}/uikit/tree` },
-    //         { label: 'Panel', icon: 'pi pi-fw pi-tablet', to: `/${user.cliente}/${user.dominio}/uikit/panel` },
-    //         { label: 'Overlay', icon: 'pi pi-fw pi-clone', to: `/${user.cliente}/${user.dominio}/uikit/overlay` },
-    //         { label: 'Media', icon: 'pi pi-fw pi-image', to: `/${user.cliente}/${user.dominio}/uikit/media` },
-    //         { label: 'Menu', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/uikit/menu`, preventExact: true },
-    //         { label: 'Message', icon: 'pi pi-fw pi-comment', to: `/${user.cliente}/${user.dominio}/uikit/message` },
-    //         { label: 'File', icon: 'pi pi-fw pi-file', to: `/${user.cliente}/${user.dominio}/uikit/file` },
-    //         { label: 'Chart', icon: 'pi pi-fw pi-chart-bar', to: `/${user.cliente}/${user.dominio}/uikit/charts` },
-    //         { label: 'Misc', icon: 'pi pi-fw pi-circle', to: `/${user.cliente}/${user.dominio}/uikit/misc` }
-    //     ]
-    // },
-    // {
-    //     label: 'Prime Blocks',
-    //     items: [
-    //         { label: 'Free Blocks', icon: 'pi pi-fw pi-eye', to: '/blocks', badge: 'NEW` },
-    //         { label: 'All Blocks', icon: 'pi pi-fw pi-globe', url: 'https://www.primefaces.org/primeblocks-vue', target: '_blank' }
-    //     ]
-    // },
-    // {
-    //     label: 'Utilities',
-    //     items: [
-    //         { label: 'PrimeIcons', icon: 'pi pi-fw pi-prime', to: '/utilities/icons' },
-    //         { label: 'PrimeFlex', icon: 'pi pi-fw pi-desktop', url: 'https://www.primefaces.org/primeflex/', target: '_blank' }
-    //     ]
-    // },
-    // {
-    //     label: 'Pages',
-    //     icon: 'pi pi-fw pi-briefcase',
-    //     to: '/pages',
-    //     items: [
-    //         {
-    //             label: 'Landing',
-    //             icon: 'pi pi-fw pi-globe',
-    //             to: '/landing'
-    //         },
-    //         {
-    //             label: 'Auth',
-    //             icon: 'pi pi-fw pi-user',
-    //             items: [
-    //                 {
-    //                     label: 'Login',
-    //                     icon: 'pi pi-fw pi-sign-in',
-    //                     to: '/auth/login'
-    //                 },
-    //                 {
-    //                     label: 'Error',
-    //                     icon: 'pi pi-fw pi-times-circle',
-    //                     to: '/auth/error'
-    //                 },
-    //                 {
-    //                     label: 'Access Denied',
-    //                     icon: 'pi pi-fw pi-lock',
-    //                     to: '/auth/access'
-    //                 }
-    //             ]
-    //         },
-    //         {
-    //             label: 'Crud',
-    //             icon: 'pi pi-fw pi-pencil',
-    //             to: '/pages/crud'
-    //         },
-    //         {
-    //             label: 'Timeline',
-    //             icon: 'pi pi-fw pi-calendar',
-    //             to: '/pages/timeline'
-    //         },
-    //         {
-    //             label: 'Not Found',
-    //             icon: 'pi pi-fw pi-exclamation-circle',
-    //             to: '/not-found'
-    //         },
-    //         {
-    //             label: 'Empty',
-    //             icon: 'pi pi-fw pi-circle-off',
-    //             to: '/pages/empty'
-    //         }
-    //     ]
-    // },
-    // {
-    //     label: 'Hierarchy',
-    //     items: [
-    //         {
-    //             label: 'Submenu 1',
-    //             icon: 'pi pi-fw pi-bookmark',
-    //             items: [
-    //                 {
-    //                     label: 'Submenu 1.1',
-    //                     icon: 'pi pi-fw pi-bookmark',
-    //                     items: [
-    //                         { label: 'Submenu 1.1.1', icon: 'pi pi-fw pi-bookmark' },
-    //                         { label: 'Submenu 1.1.2', icon: 'pi pi-fw pi-bookmark' },
-    //                         { label: 'Submenu 1.1.3', icon: 'pi pi-fw pi-bookmark' }
-    //                     ]
-    //                 },
-    //                 {
-    //                     label: 'Submenu 1.2',
-    //                     icon: 'pi pi-fw pi-bookmark',
-    //                     items: [{ label: 'Submenu 1.2.1', icon: 'pi pi-fw pi-bookmark' }]
-    //                 }
-    //             ]
-    //         },
-    //         {
-    //             label: 'Submenu 2',
-    //             icon: 'pi pi-fw pi-bookmark',
-    //             items: [
-    //                 {
-    //                     label: 'Submenu 2.1',
-    //                     icon: 'pi pi-fw pi-bookmark',
-    //                     items: [
-    //                         { label: 'Submenu 2.1.1', icon: 'pi pi-fw pi-bookmark' },
-    //                         { label: 'Submenu 2.1.2', icon: 'pi pi-fw pi-bookmark' }
-    //                     ]
-    //                 },
-    //                 {
-    //                     label: 'Submenu 2.2',
-    //                     icon: 'pi pi-fw pi-bookmark',
-    //                     items: [{ label: 'Submenu 2.2.1', icon: 'pi pi-fw pi-bookmark' }]
-    //                 }
-    //             ]
-    //         }
-    //     ]
-    // },
-    // {
-    //     label: 'Get Started',
-    //     items: [
-    //         {
-    //             label: 'Documentation',
-    //             icon: 'pi pi-fw pi-question',
-    //             to: '/documentation'
-    //         },
-    //         {
-    //             label: 'View Source',
-    //             icon: 'pi pi-fw pi-search',
-    //             url: 'https://github.com/primefaces/sakai-vue',
-    //             target: '_blank'
-    //         },
-    //         {
-    //             label: 'Nuxt Version',
-    //             url: 'https://github.com/primefaces/sakai-nuxt',
-    //             icon: 'pi pi-fw pi-star'
-    //         }
-    //     ]
-    // }
+        ]
+    }
 ]);
 </script>
 
