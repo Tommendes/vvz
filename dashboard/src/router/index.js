@@ -18,6 +18,11 @@ const routes = [
                 component: () => import('@/views/cadastros/CadastrosGrid.vue')
             },
             {
+                path: '/:client/:domain/cadastros-l',
+                name: 'cadastros-l',
+                component: () => import('@/views/cadastros/CadastrosLazyGrid.vue')
+            },
+            {
                 path: '/:client/:domain/cadastro/:id',
                 name: 'cadastro',
                 component: () => import('@/views/cadastros/CadastroPanel.vue')

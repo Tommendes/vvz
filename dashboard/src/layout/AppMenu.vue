@@ -15,6 +15,7 @@ const model = ref([
         label: 'Cadastros',
         items: [
             { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros` },
+            { label: 'Gestão de Cadastros Lazy', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros-l` },
             { label: 'Prospecção', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/pv` }
         ]
     },

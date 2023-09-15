@@ -1,4 +1,5 @@
 const { dbPrefix } = require("../.env")
+const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'cadastros'
@@ -117,12 +118,6 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        let filterCnpj = undefined
-        let filter = req.query.filter
-        if (filter) {
-            filter = filter.trim()
-            filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
-        }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
@@ -133,38 +128,88 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
 
+        let queryes = undefined
+        let query = undefined
+        let page = 0
+        let rows = 10
+        let sortField = app.db.raw('tbl1.nome, tbl1.cpf_cnpj')
+        let sortOrder = 'asc'
+        if (req.query) {
+            queryes = req.query
+            query = ''
+            for (const key in queryes) {
+                let operator = queryes[key].split(':')[0]
+                let value = queryes[key].split(':')[1]
+                if (key.split(':')[0] == 'field') {
+                    if (['aniversario'].includes(key.split(':')[1])) {
+                        query += `EXTRACT(MONTH FROM ${key.split(':')[1]}) = '${value}' AND `
+                    } else {
+                        if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
 
-        // const totalRecords = await app.db(tabelaDomain)
-        //     .count('id as count').first()
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `like '%${value}%'`
+                                break;
+                            case 'notContains': operator = `not like '%${value}%'`
+                                break;
+                            case 'endsWith': operator = `not like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            // equals
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+                        let queryField = key.split(':')[1]
+                        if (queryField == 'atuacao') queryField = 'lp.label'
+                        else if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
+                        query += `${queryField} ${operator} AND `
+                    }
+                } else if (key.split(':')[0] == 'params') {
+                    switch (key.split(':')[1]) {
+                        case 'page': page = Number(queryes[key]);
+                            break;
+                        case 'rows': rows = Number(queryes[key]);
+                            break;
+                    }
+                } else if (key.split(':')[0] == 'sort') {
+                    sortField = key.split(':')[1].split('=')[0]
+                    sortOrder = queryes[key]
+                }
+            }
+            query = query.slice(0, -5).trim()
+        }
+        let filterCnpj = undefined
+        let filter = req.query.filter
+        if (filter) {
+            filter = filter.trim()
+            filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
+        }
+
+        const totalRecords = await app.db({ tbl1: tabelaDomain })
+            .count('tbl1.id as count').first()
+            .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
+            .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.aniversario, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-        if (filter)
-            if (filterCnpj) ret.where(function () {
-                this.where(app.db.raw(`tbl1.cpf_cnpj like '%${filterCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.nome regexp('${filter.toString().replace(' ', '.+')}')`))
-            })
-            else ret.where(app.db.raw(`tbl1.nome regexp('${filter.toString().replace(' ', '.+')}')`))
-        ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
-        ret.join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
+
+            .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
+            .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
             .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
             .groupBy('tbl1.id')
-            .orderBy('tbl1.nome', 'tbl1.cpf_cnpj')
-            if (filter) ret.limit(250)
-            else ret.limit(100)
-        console.log(ret.toString());
-
-        const dev = await ret;
-        const count = await dev.length;
-        console.log(count);
-
-        return res.json({ data: dev, totalRecords: count })
-        // ret.then(body => {
-        //     return res.json({ data: body, totalRecords: totalRecords.count })
-        // })
-        //     .catch(error => {
-        //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-        //     })
+            .orderBy(sortField, sortOrder)
+            .limit(rows).offset((page + 1) * rows - rows)
+            .then(body => {
+                return res.json({ data: body, totalRecords: totalRecords.count })
+            })
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            })
     }
 
 
