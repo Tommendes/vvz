@@ -1,13 +1,12 @@
 <script setup>
-import { ref, onBeforeMount, provide } from 'vue';
+import { ref, onBeforeMount, onMounted } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import EnderecoForm from './EnderecoForm.vue';
-
 import { useRouter } from 'vue-router';
 import moment from 'moment';
+import EnderecoForm from './EnderecoForm.vue';
 
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
@@ -26,7 +25,7 @@ const visible = ref(false);
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 })
-// Máscaras
+
 import { Mask } from 'maska';
 const masks = ref({
     cpf: new Mask({
@@ -36,7 +35,7 @@ const masks = ref({
         mask: '##.###.###/####-##'
     })
 });
-// Inicializa os filtros
+
 const initFilters = () => {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -49,19 +48,17 @@ const initFilters = () => {
         uf: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
     };
 };
-// Inicializa os filtros
+
 initFilters();
-// Limpa os filtros
 const clearFilter = () => {
     initFilters();
 };
-// Itens do menu de contexto
 const itemsButtons = ref([
     {
         label: 'Editar',
         icon: 'pi pi-pencil',
         command: () => {
-            mode.value = 'edit';
+            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastro/${itemData.value.id}` });
         }
     },
     {
@@ -70,17 +67,14 @@ const itemsButtons = ref([
         command: () => {
             defaultWarn('Excluir registro (ID): ' + itemData.value.id);
         }
-    }
+    },
 ]);
-// Abre o menu de contexto
 const toggle = (event) => {
     menu.value.toggle(event);
 };
-// Obtém o item selecionado
 const getItem = (data) => {
     itemData.value = data;
 };
-// Carrega os dados da grid
 const loadData = async () => {
     const url = `${urlBase.value}`;
     await axios.get(url).then((axiosRes) => {
@@ -98,24 +92,6 @@ const loadData = async () => {
         loading.value = false;
     });
 };
-// Renderiza o HTML
-const renderizarHTML = (conteudo) => {
-    // Verifique se o conteúdo parece ser um link da web ou um endereço de e-mail
-    if (conteudo.includes('http') || conteudo.includes('https')) {
-        return `<a href="${conteudo}" target="_blank">${conteudo}</a>`;
-    } else if (conteudo.includes('www') && !conteudo.includes('https')) {
-        return `<a href="https://${conteudo}" target="_blank">${conteudo}</a>`;
-    } else if (conteudo.includes('@')) {
-        return `<a href="mailto:${conteudo}">${conteudo}</a>`;
-    } else {
-        return conteudo;
-    }
-};
-// Carrega os dados do formulário
-provide('itemData', itemData);
-// Carrega o modo do formulário
-provide('mode', mode);
-// Carrega as operações básicas do formulário
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -125,9 +101,10 @@ onBeforeMount(() => {
 <template>
     <div class="card">
         <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
-        <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
+        <EnderecoForm :mode="mode" @changed="loadData" v-if="mode == 'new' && props.itemDataRoot.id"
+            :itemDataRoot="props.itemDataRoot" />
         <DataTable :value="gridData" v-if="loading">
-            <Column field="id_params_tipo" header="Tipo de Endereço" style="min-width: 14rem">
+            <Column field="id_params_tipo" header="Tipo de Contato" style="min-width: 14rem">
                 <template #body>
                     <Skeleton></Skeleton>
                 </template>
@@ -168,41 +145,22 @@ onBeforeMount(() => {
                 </template>
             </Column>
         </DataTable>
-        <DataTable
-            v-else
-            :value="gridData"
-            :paginator="true"
-            class="p-datatable-gridlines"
-            :rows="10"
-            dataKey="id"
-            :rowHover="true"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :loading="loading"
-            :filters="filters"
+        <DataTable v-else :value="gridData" :paginator="true" class="p-datatable-gridlines" :rows="10" dataKey="id"
+            :rowHover="true" v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']"
-        >
+            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']">
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button
-                        type="button"
-                        icon="pi pi-plus"
-                        label="Novo Registro"
-                        outlined
-                        @click="
-                            itemData = { id_cadastros: props.itemDataRoot.id };
-                            mode = 'new';
-                        "
-                    />
+                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined
+                        @click="mode = 'new'; visible = !visible" />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
-            <Column field="allFields" header="Endereços" sortable style="min-width: 400px">
+            <Column field="allFields" header="Endereços" style="min-width: 400px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.endereco }}
@@ -215,7 +173,8 @@ onBeforeMount(() => {
             </Column>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle"
+                        aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>
