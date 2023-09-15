@@ -3,10 +3,10 @@ import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { UFS, isValidEmail, validarDataPTBR } from '@/global';
+import { isValidEmail } from '@/global';
 import moment from 'moment';
 
-import { Mask, MaskInput } from 'maska';
+import { Mask } from 'maska';
 const masks = ref({
     cpf_cnpj: new Mask({
         mask: ['###.###.###-##', '##.###.###/####-##']
@@ -254,71 +254,55 @@ watchEffect(() => {
                     <div class="field col-12 md:col-2">
                         <label for="id_params_tipo">Tipo de Registro</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_tipo" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo"
-                            placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cpf_cnpj">{{ labels.cpf_cnpj }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj"
-                            id="cpf_cnpj" type="text" @input="validateCPF()" v-maska
-                            data-maska="['##.###.###/####-##','###.###.###-##']" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.cpf_cnpj || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="nome">{{ labels.nome }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="!validateCPF() || mode == 'view'"
-                            v-model="itemData.nome" id="nome" type="text" />
+                        <InputText v-else autocomplete="no" :disabled="!validateCPF() || mode == 'view'" v-model="itemData.nome" id="nome" type="text" />
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="rg_ie">{{ labels.rg_ie }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie"
-                            type="text" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie" type="text" />
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pf'">
                         <label for="id_params_sexo">Sexo</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_sexo" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.id_params_sexo" :options="dropdownSexo"
-                            placeholder="Selecione..."></Dropdown>
+                        <Dropdown v-else id="id_params_sexo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_sexo" :options="dropdownSexo" placeholder="Selecione..."></Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="aniversario">{{ labels.aniversario }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####"
-                            v-model="itemData.aniversario" id="aniversario" type="text" @input="validateDtNascto()" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" @input="validateDtNascto()" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.aniversario || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="id_params_p_nascto">País de Origem</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_p_nascto" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.id_params_p_nascto" :options="dropdownPaisNascim"
-                            placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="id_params_p_nascto" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_p_nascto" :options="dropdownPaisNascim" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-5">
                         <label for="id_params_atuacao">Área de Atuação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_atuacao" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.id_params_atuacao" :options="dropdownAtuacao"
-                            placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="id_params_atuacao" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_atuacao" :options="dropdownAtuacao" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="telefone">Telefone</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                            data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone"
-                            type="text" @input="validateTelefone()" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" @input="validateTelefone()" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.telefone || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="email">E-mail</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email"
-                            type="text" @input="validateEmail()" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.email || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-2">
@@ -329,12 +313,9 @@ watchEffect(() => {
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised
-                        @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text
-                        raised :disabled="!isItemDataChanged() || !formIsValid()" />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text
-                        raised @click="reload" />
+                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised @click="mode = 'edit'" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                 </div>
             </div>
         </form>
