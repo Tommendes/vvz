@@ -3,8 +3,10 @@ import { ref, onBeforeMount, provide } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultWarn } from '@/toast';
+import { defaultWarn, defaultSuccess } from '@/toast';
 import ContatoForm from './ContatoForm.vue';
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
 
 const filters = ref(null);
 const menu = ref();

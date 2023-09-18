@@ -19,6 +19,7 @@ const store = useUserStore();
 const itemData = inject('itemData');
 // Modo do formulário
 const mode = inject('mode');
+const errorMessages = ref({});
 // Dropdowns
 const dropdownTipo = ref([]);
 // Props do template
@@ -67,6 +68,17 @@ const saveData = async () => {
             defaultWarn(err.response.data);
         });
 };
+// Validar data cep
+const validateCep = () => {
+    errorMessages.value.cep = null;
+    // Testa o formato do cep
+    if (itemData.value.cep && itemData.value.cep.length > 0 && !masks.value.cep.completed(itemData.value.cep)) errorMessages.value.cep = 'Formato de cep inválido';
+    if (!(moment(itemData.value.cep, '##.###-###').isValid() || moment(itemData.value.cep).isValid())) errorMessages.value.cep = 'CEP inválido';
+    return !errorMessages.value.cep;
+};
+const formIsValid = () => {
+    return validateCep();
+};
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
     const selects = query.select ? `&slct=${query.select}` : undefined;
@@ -103,7 +115,8 @@ onBeforeMount(() => {
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" />
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()"/>
+                        <small id="text-error" class="p-error" if>{{ errorMessages.cep || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
                         <label for="logradouro">Logradouro</label>
