@@ -67,6 +67,7 @@ const close = () => {
     justify-content: center;
     min-height: 100vh;
     padding: 2%;
+    font-size: 16px;
     /* background-color: var(--orange-700); */
 }
 

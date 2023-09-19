@@ -167,7 +167,7 @@ onBeforeMount(() => {
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por tipo" />
                 </template>
             </Column>
-            <Column field="pessoa" header="Pessoa" sortable style="min-width: 14rem">
+            <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
                 <template #body="{ data }">
                     {{ data.pessoa }}
                 </template>
@@ -175,7 +175,7 @@ onBeforeMount(() => {
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por pessoa" />
                 </template>
             </Column>
-            <Column field="departamento" header="Departamento" sortable style="min-width: 25rem">
+            <Column field="departamento" header="Departamento" sortable style="min-width: 20rem">
                 <template #body="{ data }">
                     {{ data.departamento }}
                 </template>
@@ -183,7 +183,7 @@ onBeforeMount(() => {
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por departamento" />
                 </template>
             </Column>
-            <Column field="meio" header="Meio" sortable style="min-width: 14rem">
+            <Column field="meio" header="Meio" sortable style="min-width: 30rem">
                 <template #body="{ data }">
                     <div v-html="data.meioRenderizado"></div>
                 </template>

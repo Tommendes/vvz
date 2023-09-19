@@ -8,15 +8,10 @@ import EnderecoForm from './EnderecoForm.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
-
-import { useRouter } from 'vue-router';
 import moment from 'moment';
 
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
-
-const router = useRouter();
-
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
@@ -32,12 +27,9 @@ const props = defineProps({
 // Máscaras
 import { Mask } from 'maska';
 const masks = ref({
-    cpf: new Mask({
-        mask: '###.###.###-##'
+    cep: new Mask({
+        mask: '##.###-###'
     }),
-    cnpj: new Mask({
-        mask: '##.###.###/####-##'
-    })
 });
 // Inicializa os filtros
 const initFilters = () => {
@@ -93,10 +85,12 @@ const loadData = async () => {
             if (element.logradouro) element.endereco += element.logradouro;
             if (element.nr) element.endereco += `, ${element.nr}`;
             if (element.complnr && element.complnr.trim().length > 0) element.endereco += `, ${element.complnr.trim()}`;
-            if (element.bairro) element.endereco += ` - ${element.bairro}`;
-            if (element.cidade) element.endereco += ` - ${element.cidade}`;
-            if (element.uf) element.endereco += ` - ${element.uf}`;
-            if (element.cep) element.endereco += ` - CEP ${element.cep}`;
+            if (element.cep && element.cep.trim().length >= 8) element.cep = masks.value.cep.masked(element.cep)
+
+            // if (element.bairro) element.endereco += ` - ${element.bairro}`;
+            // if (element.cidade) element.endereco += ` - ${element.cidade}`;
+            // if (element.uf) element.endereco += ` - ${element.uf}`;
+            // if (element.cep) element.endereco += ` - CEP ${element.cep}`;
         });
         loading.value = false;
     });
@@ -149,97 +143,68 @@ onBeforeMount(() => {
 <template>
     <div class="card">
         <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
-        <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
-        <DataTable :value="gridData" v-if="loading">
-            <Column field="id_params_tipo" header="Tipo de Endereço" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="cep" header="CEP" style="min-width: 25rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="logradouro" header="Logradouro" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="nr" header="Número" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="cidade" header="Cidade" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="bairro" header="Bairro" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column field="uf" header="UF" style="min-width: 14rem">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-            <Column headerStyle="width: 5rem; text-align: center">
-                <template #body>
-                    <Skeleton></Skeleton>
-                </template>
-            </Column>
-        </DataTable>
-        <DataTable
-            v-else
-            :value="gridData"
-            :paginator="true"
-            class="p-datatable-gridlines"
-            :rows="10"
-            dataKey="id"
-            :rowHover="true"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :loading="loading"
-            :filters="filters"
+        <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id"
+            :itemDataRoot="props.itemDataRoot" />
+        <DataTable :value="gridData" :paginator="true" :rows="10" dataKey="id"
+            :rowHover="true" v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']"
-        >
+            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']">
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button
-                        type="button"
-                        icon="pi pi-plus"
-                        label="Novo Registro"
-                        outlined
-                        @click="
-                            itemData = { id_cadastros: props.itemDataRoot.id };
-                            mode = 'new';
-                        "
-                    />
+                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="
+                        itemData = { id_cadastros: props.itemDataRoot.id };
+                    mode = 'new';
+                    " />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
-            <Column field="allFields" header="Endereços" sortable style="min-width: 400px">
+            <Column field="allFields" header="Endereços" sortable style="min-width: 550px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.endereco }}
                     </div>
                 </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                        placeholder="Filtre por informações" />
+            </Column>
+            <Column field="bairro" header="Bairro" sortable style="min-width: 200px">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.bairro }}
+                    </div>
                 </template>
             </Column>
+            <Column field="cidade" header="Cidade" sortable style="min-width: 250px">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.cidade }}
+                    </div>
+                </template>
+            </Column>
+            <Column field="uf" header="Estado" sortable style="min-width: 100px">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.uf }}
+                    </div>
+                </template>
+            </Column>
+            <Column field="cep" header="CEP" sortable style="min-width: 150px">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.cep }}
+                    </div>
+                </template>
+            </Column>
+            <template #filter="{ filterModel }">
+                <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                    placeholder="Filtre por informações" />
+            </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle"
+                        aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>
