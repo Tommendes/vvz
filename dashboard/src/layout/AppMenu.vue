@@ -22,7 +22,7 @@ const model = ref([
     {
         label: 'Comercial',
         items: [
-            { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${user.cliente}/${user.dominio}/ged` },
+            { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${user.cliente}/${user.dominio}/pipeline` },
             { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/ged` },
             { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${user.cliente}/${user.dominio}/ged` }
         ]

@@ -343,11 +343,11 @@ CREATE TABLE `ged_params` (
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
-/*Table structure for table `ged_protolo` */
+/*Table structure for table `ged_protocolo` */
 
-DROP TABLE IF EXISTS `ged_protolo`;
+DROP TABLE IF EXISTS `ged_protocolo`;
 
-CREATE TABLE `ged_protolo` (
+CREATE TABLE `ged_protocolo` (
   `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `evento` INT(11) NOT NULL,
   `created_at` VARCHAR(255) NOT NULL,
@@ -360,8 +360,8 @@ CREATE TABLE `ged_protolo` (
   `e_s` VARCHAR(255) DEFAULT NULL COMMENT 'Movimento',
   `descricao` VARCHAR(255) DEFAULT NULL COMMENT 'Descrição do documento',
   PRIMARY KEY (`id`),
-  KEY `vivazul_cso_root_ged_protolo_id_cadastros_foreign` (`id_cadastros`),
-  CONSTRAINT `vivazul_cso_root_ged_protolo_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
+  KEY `vivazul_cso_root_ged_protocolo_id_cadastros_foreign` (`id_cadastros`),
+  CONSTRAINT `vivazul_cso_root_ged_protocolo_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
 /*Table structure for table `ged_status` */

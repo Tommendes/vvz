@@ -17,15 +17,20 @@ const routes = [
                 name: 'cadastros',
                 component: () => import('@/views/cadastros/CadastrosGrid.vue')
             },
-            // {
-            //     path: '/:client/:domain/cadastros-l',
-            //     name: 'cadastros-l',
-            //     component: () => import('@/views/cadastros/CadastrosLazyGrid.vue')
-            // },
             {
                 path: '/:client/:domain/cadastro/:id',
                 name: 'cadastro',
                 component: () => import('@/views/cadastros/CadastroPanel.vue')
+            },
+            {
+                path: '/:client/:domain/pipeline',
+                name: 'pipeline',
+                component: () => import('@/views/pipeline/CadastrosGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pipeline/:id',
+                name: 'pipeline-one',
+                component: () => import('@/views/pipeline/CadastroPanel.vue')
             },
             {
                 path: '/:client/:domain/uikit/formlayout',

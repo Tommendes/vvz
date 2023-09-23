@@ -13,7 +13,7 @@ Cliente_Dominio
 		com_agentes		Agentes de vendas
 		ged				Registros do Ged
 		ged_status		Status dos registros
-		ged_protolo		Protocolos de Documentos
+		ged_protocolo		Protocolos de Documentos
 		com_terceiros	Comissionamento dos agentes
 
 	#Etapa 3: Pos vendas

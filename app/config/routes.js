@@ -151,17 +151,17 @@ module.exports = app => {
         .delete(app.api.cad_documentos.remove)
 
     /**
-     * Rota de ged_params
+     * Rota de pipeline_params
      */
-    app.route('/ged-params')
+    app.route('/pipeline-params')
         .all(app.config.passport.authenticate())
-        .post(app.api.ged_params.save)
-        .get(app.api.ged_params.get)
-    app.route('/ged-params/:id')
+        .post(app.api.pipeline_params.save)
+        .get(app.api.pipeline_params.get)
+    app.route('/pipeline-params/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.ged_params.save)
-        .get(app.api.ged_params.getById)
-        .delete(app.api.ged_params.remove)
+        .put(app.api.pipeline_params.save)
+        .get(app.api.pipeline_params.getById)
+        .delete(app.api.pipeline_params.remove)
 
     /**
      * Rota de com_agentes
@@ -177,47 +177,46 @@ module.exports = app => {
         .delete(app.api.com_agentes.remove)
 
     /**
-     * Rota de ged
+     * Rota de pipeline
      */
-    app.route('/ged')
+    app.route('/pipeline')
         .all(app.config.passport.authenticate())
-        .post(app.api.ged.save)
-        .get(app.api.ged.get)
-    app.route('/ged/:id')
+        .post(app.api.pipeline.save)
+        .get(app.api.pipeline.get)
+    app.route('/pipeline/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.ged.save)
-        .get(app.api.ged.getById)
-        .delete(app.api.ged.remove)
+        .put(app.api.pipeline.save)
+        .get(app.api.pipeline.getById)
+        .delete(app.api.pipeline.remove)
 
     /**
-     * Rota de ged_status
+     * Rota de pipeline_status
      */
-    app.route('/ged-status')
+    app.route('/pipeline-status')
         .all(app.config.passport.authenticate())
-        .post(app.api.ged_status.save)
-        .get(app.api.ged_status.get)
-    app.route('/ged-status/:id')
+        .post(app.api.pipeline_status.save)
+        .get(app.api.pipeline_status.get)
+    app.route('/pipeline-status/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.ged_status.save)
-        .get(app.api.ged_status.getById)
-        .delete(app.api.ged_status.remove)
-
+        .put(app.api.pipeline_status.save)
+        .get(app.api.pipeline_status.getById)
+        .delete(app.api.pipeline_status.remove)
 
     /**
-    * Rota de ged_protolo
+    * Rota de ged_protocolo
     */
     app.route('/ged-protolo')
         .all(app.config.passport.authenticate())
-        .post(app.api.ged_protolo.save)
-        .get(app.api.ged_protolo.get)
+        .post(app.api.ged_protocolo.save)
+        .get(app.api.ged_protocolo.get)
     app.route('/ged-protolo/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.ged_protolo.save)
-        .get(app.api.ged_protolo.getById)
-        .delete(app.api.ged_protolo.remove)
+        .put(app.api.ged_protocolo.save)
+        .get(app.api.ged_protocolo.getById)
+        .delete(app.api.ged_protocolo.remove)
 
     /**
-    * Rota de ged_protolo
+    * Rota de com_terceiros
     */
     app.route('/com-terceiros')
         .all(app.config.passport.authenticate())

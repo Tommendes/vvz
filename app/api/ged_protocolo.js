@@ -1,7 +1,7 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'ged_protolo'
+    const tabela = 'ged_protocolo'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -23,7 +23,7 @@ module.exports = app => {
 
         try {
 
-            existsOrError(body.id_cadastros, 'Id_cadastros não encontrado ')
+            existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
             if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
         
         } catch (error) {

@@ -24,7 +24,7 @@ module.exports = app => {
         try {
             existsOrError(body.id_empresa, 'Id_empresa não encontrado')
             if (body.id_empresa.length > 10) throw 'Id_empresa inválido'
-            existsOrError(body.id_cadastros, 'Id_cadastros não encontrado')
+            existsOrError(body.id_cadastros, 'Cadastro não encontrado')
             if (body.id_cadastros.length > 10) throw 'Id_cadastros inválido'
             existsOrError(body.id_centro_custo, 'Id_centro_custo não encontrado')
             if (body.id_centro_custo.length > 10) throw 'Id_centro_custo inválido'
