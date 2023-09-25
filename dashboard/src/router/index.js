@@ -25,12 +25,12 @@ const routes = [
             {
                 path: '/:client/:domain/pipeline',
                 name: 'pipeline',
-                component: () => import('@/views/pipeline/CadastrosGrid.vue')
+                component: () => import('@/views/pipeline/PipelinesGrid.vue')
             },
             {
                 path: '/:client/:domain/pipeline/:id',
                 name: 'pipeline-one',
-                component: () => import('@/views/pipeline/CadastroPanel.vue')
+                component: () => import('@/views/pipeline/PipelineForm.vue')
             },
             {
                 path: '/:client/:domain/uikit/formlayout',

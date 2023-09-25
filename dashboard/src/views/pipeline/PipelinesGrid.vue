@@ -4,7 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError } from '@/toast';
 import moment from 'moment';
-import CadastroForm from './CadastroForm.vue';
+import PipelineForm from './PipelineForm.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -198,7 +198,7 @@ watchEffect(() => {
 
 <template>
     <div class="card">
-        <CadastroForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <PipelineForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             :value="gridData"
             lazy

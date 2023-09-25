@@ -11,7 +11,7 @@ const masks = ref({
     // cpf_cnpj: new Mask({
     //     mask: ['###.###.###-##', '##.###.###/####-##']
     // }),
-    data_documento: new Mask({
+    documento: new Mask({
         mask: '##/##/####'
     }),
     // telefone: new Mask({
@@ -85,10 +85,9 @@ const loadData = async () => {
             const body = res.data;
             if (body && body.id) {
                 body.id = String(body.id);
-                body.prospect = isTrue(body.prospect);
 
                 itemData.value = body;
-                if (itemData.value.data_documento) itemData.value.data_documento = masks.value.data_documento.masked(moment(itemData.value.data_documento).format('DD/MM/YYYY'));
+                if (itemData.value.documento) itemData.value.documento = masks.value.documento.masked(moment(itemData.value.documento).format('DD/MM/YYYY'));
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
@@ -106,14 +105,14 @@ const saveData = async () => {
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
 
-        if (itemData.value.data_documento) itemData.value.data_documento = moment(itemData.value.data_documento, 'DD/MM/YYYY').format('YYYY-MM-DD');
+        // if (itemData.value.documento) itemData.value.documento = moment(itemData.value.documento, 'DD/MM/YYYY').format('YYYY-MM-DD');
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    if (itemData.value.data_documento) itemData.value.data_documento = moment(itemData.value.data_documento).format('DD/MM/YYYY');
+                    if (itemData.value.documento) itemData.value.documento = moment(itemData.value.documento).format('DD/MM/YYYY');
                     itemDataComparision.value = { ...itemData.value };
                     emit('changed');
                     // if (mode.value != 'new') reload();
@@ -205,7 +204,7 @@ const optionLocalParams = async (query) => {
 // Carregar opções do formulário
 const loadOptions = async () => {
 
-    // // Tipo ativo
+    // Tipo ativo
     // await optionParams({ field: 'meta', value: 'tipo_ativo', select: 'id,label' }).then((res) => {
     //     res.data.data.map((item) => {
     //         dropdownStatus.value.push({ value: item.id, label: item.label });
@@ -217,18 +216,18 @@ const loadOptions = async () => {
 //             dropdownSexo.value.push({ value: item.id, label: item.label });
 //         });
 //     });
-//     // Pais nascimento
-//     await optionParams({ field: 'meta', value: 'pais', select: 'id,label' }).then((res) => {
-//         res.data.data.map((item) => {
-//             dropdownPaisNascim.value.push({ value: item.id, label: item.label });
-//         });
-//     });
-//     // Tipo Pipeline
-//     await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
-//         res.data.data.map((item) => {
-//             dropdownTipo.value.push({ value: item.id, label: item.label });
-//         });
-//     });
+    // Pais nascimento
+    await optionParams({ field: 'meta', value: 'pais', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownPaisNascim.value.push({ value: item.id, label: item.label });
+        });
+    });
+    // Tipo Cadastro
+    await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownTipo.value.push({ value: item.id, label: item.label });
+        });
+    });
 //     // Área Atuação
 //     await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
 //         res.data.data.map((item) => {
@@ -239,7 +238,7 @@ const loadOptions = async () => {
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
-    // loadOptions();
+    loadOptions();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -274,10 +273,17 @@ watchEffect(() => {
             <div class="col-12">
                 <div class="p-fluid formgrid grid">
 
-                    <div class="field col-12 md:col-2">
+                    <!-- <div class="field col-12 md:col-2">
                         <label for="status">Tipo (Ativo: S|N)</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <Dropdown v-else id="status" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.status" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
+                    </div> -->
+
+                    <div class="field col-12 md:col-3">
+                        <label for="status">Tipo (Ativo: S|N)</label>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.status" id="status" type="text"/>
+                        <small id="text-error" class="p-error" if>{{ errorMessages.status || '&nbsp;' }}</small>
                     </div>
 
                     <div class="field col-12 md:col-3">
@@ -308,11 +314,20 @@ watchEffect(() => {
                         <small id="text-error" class="p-error" if>{{ errorMessages.valor_bruto || '&nbsp;' }}</small>
                     </div>
 
-                    <div class="field col-12 md:col-2">
+                    <!-- <div class="field col-12 md:col-2">
                         <label for="status_comissao">Status</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="status_comissao" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.status_comissao" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="status_comissao" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.status_comissao" :options="dropdownPaisNascim" placeholder="Selecione..."> </Dropdown>
+                    </div> -->
+
+                    <div class="field col-12 md:col-3">
+                        <label for="status_comissao">Status</label>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.status_comissao" id="status_comissao" type="text"/>
+                        <small id="text-error" class="p-error" if>{{ errorMessages.status_comissao || '&nbsp;' }}</small>
                     </div>
+
+                    
 
                     <div class="field col-12 md:col-3">
                         <label for="documento">Data</label>
@@ -363,12 +378,6 @@ watchEffect(() => {
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" @input="validateTelefone()" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.telefone || '&nbsp;' }}</small>
                     </div> -->
-                    <div class="field col-12 md:col-2">
-                        <label for="prospect">Prospecto</label>
-                        <br />
-                        <Skeleton v-if="loading.form" borderRadius="16px" height="2rem"></Skeleton>
-                        <InputSwitch v-else id="prospect" :disabled="mode == 'view'" v-model="itemData.prospect" />
-                    </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised @click="mode = 'edit'" />
