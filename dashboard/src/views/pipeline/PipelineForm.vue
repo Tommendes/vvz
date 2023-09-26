@@ -81,6 +81,7 @@ const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
+        console.log('loadData',url);
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -104,8 +105,8 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-
-        // if (itemData.value.documento) itemData.value.documento = moment(itemData.value.documento, 'DD/MM/YYYY').format('YYYY-MM-DD');
+        // console.log(url);
+        // console.log(JSON.stringify(itemData.value))
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -227,7 +228,7 @@ const loadOptions = async () => {
         res.data.data.map((item) => {
             dropdownTipo.value.push({ value: item.id, label: item.label });
         });
-    });
+    }); 
 //     // Área Atuação
 //     await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
 //         res.data.data.map((item) => {
