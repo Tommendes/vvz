@@ -153,7 +153,7 @@ module.exports = app => {
                                 break;
                             case 'notContains': operator = `not like '%${value}%'`
                                 break;
-                            case 'endsWith': operator = `not like '%${value}'`
+                            case 'endsWith': operator = `like '%${value}'`
                                 break;
                             case 'notEquals': operator = `!= '${value}'`
                                 break;
