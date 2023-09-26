@@ -272,112 +272,66 @@ watchEffect(() => {
         <form @submit.prevent="saveData">
             <div class="col-12">
                 <div class="p-fluid formgrid grid">
-
-                    <!-- <div class="field col-12 md:col-2">
-                        <label for="status">Tipo (Ativo: S|N)</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="status" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.status" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
-                    </div> -->
-
                     <div class="field col-12 md:col-3">
                         <label for="status">Tipo (Ativo: S|N)</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.status" id="status" type="text"/>
                         <small id="text-error" class="p-error" if>{{ errorMessages.status || '&nbsp;' }}</small>
                     </div>
-
                     <div class="field col-12 md:col-3">
-                        <label for="id_cadastros">Cliente</label>
+                        <label for="id_cadastros">Cadastro</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text"/>
-                        <small id="text-error" class="p-error" if>{{ errorMessages.id_cadastros || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.id_cadastros">{{ errorMessages.id_cadastros || '&nbsp;' }}</small>
                     </div>
-
+                    <div class="field col-12 md:col-3">
+                        <label for="id_pipeline_params">Tipo</label>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pipeline_params" id="id_pipeline_params" type="text"/>
+                        <small id="text-error" class="p-error" v-if="errorMessages.id_pipeline_params">{{ errorMessages.id_pipeline_params || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-3">
+                        <label for="id_pai">Pai</label>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pai" id="id_pai" type="text"/>
+                        <small id="text-error" class="p-error" v-if="errorMessages.id_pai">{{ errorMessages.id_pai || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-3">
+                        <label for="id_filho">Filho</label>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_filho" id="id_filho" type="text"/>
+                        <small id="text-error" class="p-error" v-if="errorMessages.id_filho">{{ errorMessages.id_filho || '&nbsp;' }}</small>
+                    </div>
                     <div class="field col-12 md:col-3">
                         <label for="id_com_agentes">Agente</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_com_agentes" id="id_com_agentes" type="text"/>
                         <small id="text-error" class="p-error" if>{{ errorMessages.id_com_agentes || '&nbsp;' }}</small>
                     </div>
-
                     <div class="field col-12 md:col-3">
                         <label for="descricao">Descrição</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text"/>
                         <small id="text-error" class="p-error" if>{{ errorMessages.descricao || '&nbsp;' }}</small>
                     </div>
-
                     <div class="field col-12 md:col-3">
                         <label for="valor_bruto">Valor bruto</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_bruto" id="valor_bruto" type="text"/>
                         <small id="text-error" class="p-error" if>{{ errorMessages.valor_bruto || '&nbsp;' }}</small>
                     </div>
-
-                    <!-- <div class="field col-12 md:col-2">
-                        <label for="status_comissao">Status</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="status_comissao" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.status_comissao" :options="dropdownPaisNascim" placeholder="Selecione..."> </Dropdown>
-                    </div> -->
-
                     <div class="field col-12 md:col-3">
                         <label for="status_comissao">Status</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.status_comissao" id="status_comissao" type="text"/>
                         <small id="text-error" class="p-error" if>{{ errorMessages.status_comissao || '&nbsp;' }}</small>
                     </div>
-
-                    
-
                     <div class="field col-12 md:col-3">
                         <label for="documento">Data</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.documento" id="documento" type="text" @input="validateDocumento()"/>
                         <small id="text-error" class="p-error" if>{{ errorMessages.documento || '&nbsp;' }}</small>
                     </div>
-                    <!-- <div class="field col-12 md:col-2">
-                        <label for="cpf_cnpj">{{ labels.cpf_cnpj }}</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.cpf_cnpj || '&nbsp;' }}</small>
-                    </div> -->
-                    <!-- <div class="field col-12 md:col-6">
-                        <label for="nome">{{ labels.nome }}</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="!validateCPF() || mode == 'view'" v-model="itemData.nome" id="nome" type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="rg_ie">{{ labels.rg_ie }}</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie" type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pf'">
-                        <label for="id_params_sexo">Sexo</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_sexo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_sexo" :options="dropdownSexo" placeholder="Selecione..."></Dropdown>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="aniversario">{{ labels.aniversario }}</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" @input="validateDtNascto()" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.aniversario || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="id_params_p_nascto">País de Origem</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_p_nascto" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_p_nascto" :options="dropdownPaisNascim" placeholder="Selecione..."> </Dropdown>
-                    </div>
-                    <div class="field col-12 md:col-5">
-                        <label for="id_params_atuacao">Área de Atuação</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_atuacao" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_atuacao" :options="dropdownAtuacao" placeholder="Selecione..."> </Dropdown>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="telefone">Telefone</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" @input="validateTelefone()" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.telefone || '&nbsp;' }}</small>
-                    </div> -->
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised @click="mode = 'edit'" />
