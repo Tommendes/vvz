@@ -1,7 +1,7 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'ged'
+    const tabela = 'pipeline_params'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -22,12 +22,8 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-
-            existsOrError(body.id_cadastros, 'Id_cadastros não encontrado ')
-            if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
-            existsOrError(body.id_ged_params, 'Id_ged_params não encontrado')
-            if(body.id_ged_params < 0 && body.id_ged_params.length > 10) throw 'Id_ged_params inválido'
-        
+            if (!body.id_logo && !body.obrig_valor && !body.reg_agente)
+                throw "Necessário informar ao menos um dos campos: id_logo, obrig_valor e reg_agente";
         } catch (error) {
             return res.status(400).send(error)
         }
@@ -55,7 +51,7 @@ module.exports = app => {
                 .where({ id: body.id })
             rowsUpdated.then((ret) => {
                 if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Endereço não encontrado')
+                else res.status(200).send('Parâmetro não encontrado')
             })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -108,7 +104,6 @@ module.exports = app => {
         } catch (error) {
             return res.status(401).send(error)
         }
-
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const page = req.query.page || 1
         let count = app.db({ tbl1: tabelaDomain }).count('* as count')
@@ -136,7 +131,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de Cadastro de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -159,7 +154,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabela}"`)
+            isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Cadastro de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -177,7 +172,7 @@ module.exports = app => {
                 "request": req,
                 "evento": {
                     "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
+                    "evento": `Exclusão de cadastro de ${tabela}`,
                     "tabela_bd": tabela,
                 }
             })

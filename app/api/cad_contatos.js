@@ -118,7 +118,7 @@ module.exports = app => {
             .select(app.db.raw(`tbl1.*, lp.label tipo, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
 
         ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_tipo')
-        ret.where({ 'tbl1.status': STATUS_ACTIVE, id_cadastros: id_cadastros })
+            .where({ 'tbl1.status': STATUS_ACTIVE, id_cadastros: id_cadastros })
             .groupBy('tbl1.id')
             .then(body => {
                 return res.json({ data: body })

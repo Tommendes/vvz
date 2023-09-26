@@ -2,7 +2,8 @@
 SQLyog Professional v12.12 (64 bit)
 MySQL - 10.4.24-MariaDB : Database - vivazul_cliente_dominio
 *********************************************************************
-*/
+*/
+
 
 /*!40101 SET NAMES utf8 */;
 
@@ -345,11 +346,11 @@ CREATE TABLE `ged_params` (
   `proposta_interna` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Utiliza o sistema de proposta interna',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
+ged_protocolo
 /*Table structure for table `ged_protolo` */
-
+ged_protocolo
 DROP TABLE IF EXISTS `ged_protolo`;
-
+ged_protocolo
 CREATE TABLE `ged_protolo` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `evento` int(11) NOT NULL,
@@ -362,8 +363,8 @@ CREATE TABLE `ged_protolo` (
   `titulo` varchar(255) DEFAULT NULL COMMENT 'Port',
   `e_s` varchar(255) DEFAULT NULL COMMENT 'Movimento',
   `descricao` varchar(255) DEFAULT NULL COMMENT 'Descrição do documento',
-  PRIMARY KEY (`id`),
-  KEY `vivazul_cliente_dominio_ged_protolo_id_cadastros_foreign` (`id_cadastros`),
+  PRIMARY KEY (`id`),ged_protocolo
+  KEY `vivazul_cliente_dominio_ged_proged_protocoloastros_foreign` (`id_cadastros`),
   CONSTRAINT `vivazul_cliente_dominio_ged_protolo_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -157,7 +157,6 @@ module.exports = app => {
                                 break;
                             case 'notEquals': operator = `!= '${value}'`
                                 break;
-                            // equals
                             default: operator = `= '${value}'`
                                 break;
                         }

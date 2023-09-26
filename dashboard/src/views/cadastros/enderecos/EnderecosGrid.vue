@@ -86,11 +86,6 @@ const loadData = async () => {
             if (element.nr) element.endereco += `, ${element.nr}`;
             if (element.complnr && element.complnr.trim().length > 0) element.endereco += `, ${element.complnr.trim()}`;
             if (element.cep && element.cep.trim().length >= 8) element.cep = masks.value.cep.masked(element.cep)
-
-            // if (element.bairro) element.endereco += ` - ${element.bairro}`;
-            // if (element.cidade) element.endereco += ` - ${element.cidade}`;
-            // if (element.uf) element.endereco += ` - ${element.uf}`;
-            // if (element.cep) element.endereco += ` - CEP ${element.cep}`;
         });
         loading.value = false;
     });
