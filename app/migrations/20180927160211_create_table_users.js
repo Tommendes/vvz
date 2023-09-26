@@ -21,7 +21,7 @@ exports.up = function(knex, Promise) {
         table.boolean('gestor').notNull().defaultTo(0)
         table.boolean('multiCliente').notNull().defaultTo(0)
         table.boolean('cadastros').notNull().defaultTo(0).comment("Gestão de cadastros")
-        table.boolean('ged').notNull().defaultTo(0).comment("Gestão de documentos")
+        table.boolean('pipeline').notNull().defaultTo(0).comment("Gestão de documentos")
         table.boolean('pv').notNull().defaultTo(0).comment("Gestão de assistência técnica e pós-vendas")
         table.boolean('comercial').notNull().defaultTo(0).comment("Gestão de comercial")
         table.boolean('fiscal').notNull().defaultTo(0).comment("Gestão do fiscal")

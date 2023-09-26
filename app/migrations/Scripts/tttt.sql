@@ -157,17 +157,17 @@ CREATE TABLE `com_terceiros` (
   `created_at` varchar(255) NOT NULL,
   `updated_at` varchar(255) DEFAULT NULL,
   `status` varchar(255) NOT NULL DEFAULT '0' COMMENT 'Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)',
-  `id_ged` int(11) unsigned NOT NULL COMMENT 'Documento relacionado ',
+  `id_pipeline` int(11) unsigned NOT NULL COMMENT 'Documento relacionado ',
   `id_com_agentes` int(11) unsigned NOT NULL COMMENT 'Agente',
   `terceiro` tinyint(1) DEFAULT NULL COMMENT 'Se um terceiro',
   `valor_base` decimal(10,2) DEFAULT NULL COMMENT 'Valor base de cálculo da comissão',
   `participacao` decimal(10,2) DEFAULT NULL COMMENT 'Percentual de comissão',
   `liquidacao` varchar(255) DEFAULT NULL COMMENT 'Data da liquidação',
   PRIMARY KEY (`id`),
-  KEY `vivazul_cliente_dominio_com_terceiros_id_ged_foreign` (`id_ged`),
+  KEY `vivazul_cliente_dominio_com_terceiros_id_pipeline_foreign` (`id_pipeline`),
   KEY `vivazul_cliente_dominio_com_terceiros_id_com_agentes_foreign` (`id_com_agentes`),
   CONSTRAINT `vivazul_cliente_dominio_com_terceiros_id_com_agentes_foreign` FOREIGN KEY (`id_com_agentes`) REFERENCES `com_agentes` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE,
-  CONSTRAINT `vivazul_cliente_dominio_com_terceiros_id_ged_foreign` FOREIGN KEY (`id_ged`) REFERENCES `ged` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
+  CONSTRAINT `vivazul_cliente_dominio_com_terceiros_id_pipeline_foreign` FOREIGN KEY (`id_pipeline`) REFERENCES `pipeline` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*Table structure for table `empresa` */
@@ -292,19 +292,19 @@ CREATE TABLE `fin_retencoes` (
   CONSTRAINT `vivazul_cliente_dominio_fin_retencoes_id_fin_lanc_foreign` FOREIGN KEY (`id_fin_lanc`) REFERENCES `fin_lancamentos` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/*Table structure for table `ged` */
+/*Table structure for table `pipeline` */
 
-DROP TABLE IF EXISTS `ged`;
+DROP TABLE IF EXISTS `pipeline`;
 
-CREATE TABLE `ged` (
+CREATE TABLE `pipeline` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `evento` int(11) NOT NULL,
   `created_at` varchar(255) NOT NULL,
   `updated_at` varchar(255) DEFAULT NULL,
   `status` varchar(255) NOT NULL DEFAULT '0' COMMENT 'Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)',
-  `id_ged_params` int(10) unsigned NOT NULL COMMENT 'Parâmetro',
-  `id_ged_pai` int(10) unsigned DEFAULT NULL COMMENT 'Documento pai',
-  `id_ged_filho` int(10) unsigned DEFAULT NULL COMMENT 'Documento filho',
+  `id_pipeline_params` int(10) unsigned NOT NULL COMMENT 'Parâmetro',
+  `id_pai` int(10) unsigned DEFAULT NULL COMMENT 'Documento pai',
+  `id_filho` int(10) unsigned DEFAULT NULL COMMENT 'Documento filho',
   `id_cadastros` int(10) unsigned NOT NULL COMMENT 'Cliente ',
   `id_com_agentes` int(10) unsigned DEFAULT NULL COMMENT 'Agente de vendas do atendimento',
   `status_comissao` varchar(255) DEFAULT NULL COMMENT 'Status da comissão',
@@ -317,10 +317,10 @@ CREATE TABLE `ged` (
   `perc_represent` decimal(10,2) DEFAULT 0.00 COMMENT 'Percentual de comissão da representação',
   `valor_agente` decimal(10,2) DEFAULT 0.00 COMMENT 'Valor base de comissionamento dos agentes',
   PRIMARY KEY (`id`),
-  KEY `vivazul_cliente_dominio_ged_id_ged_params_foreign` (`id_ged_params`),
-  KEY `vivazul_cliente_dominio_ged_id_cadastros_foreign` (`id_cadastros`),
-  CONSTRAINT `vivazul_cliente_dominio_ged_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE,
-  CONSTRAINT `vivazul_cliente_dominio_ged_id_ged_params_foreign` FOREIGN KEY (`id_ged_params`) REFERENCES `ged_params` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
+  KEY `vivazul_cliente_dominio_pipeline_id_pipeline_params_foreign` (`id_pipeline_params`),
+  KEY `vivazul_cliente_dominio_pipeline_id_cadastros_foreign` (`id_cadastros`),
+  CONSTRAINT `vivazul_cliente_dominio_pipeline_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  CONSTRAINT `vivazul_cliente_dominio_pipeline_id_pipeline_params_foreign` FOREIGN KEY (`id_pipeline_params`) REFERENCES `ged_params` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*Table structure for table `ged_params` */
@@ -346,11 +346,11 @@ CREATE TABLE `ged_params` (
   `proposta_interna` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Utiliza o sistema de proposta interna',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-ged_protocolo
+protocolo
 /*Table structure for table `ged_protolo` */
-ged_protocolo
+protocolo
 DROP TABLE IF EXISTS `ged_protolo`;
-ged_protocolo
+protocolo
 CREATE TABLE `ged_protolo` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `evento` int(11) NOT NULL,
@@ -363,9 +363,9 @@ CREATE TABLE `ged_protolo` (
   `titulo` varchar(255) DEFAULT NULL COMMENT 'Port',
   `e_s` varchar(255) DEFAULT NULL COMMENT 'Movimento',
   `descricao` varchar(255) DEFAULT NULL COMMENT 'Descrição do documento',
-  PRIMARY KEY (`id`),ged_protocolo
-  KEY `vivazul_cliente_dominio_ged_proged_protocoloastros_foreign` (`id_cadastros`),
-  CONSTRAINT `vivazul_cliente_dominio_ged_protolo_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
+  PRIMARY KEY (`id`),protocolo
+  KEY `vivazul_cliente_dominio_pipeline_proprotocoloastros_foreign` (`id_cadastros`),
+  CONSTRAINT `vivazul_cliente_dominio_pipeline_protolo_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*Table structure for table `ged_status` */
@@ -378,11 +378,11 @@ CREATE TABLE `ged_status` (
   `created_at` varchar(255) NOT NULL,
   `updated_at` varchar(255) DEFAULT NULL,
   `status` varchar(255) NOT NULL DEFAULT '0' COMMENT 'Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)',
-  `id_ged` int(10) unsigned DEFAULT NULL COMMENT 'Documento pai',
+  `id_pipeline` int(10) unsigned DEFAULT NULL COMMENT 'Documento pai',
   `status_params` int(10) unsigned NOT NULL COMMENT 'Status do documento-+',
   PRIMARY KEY (`id`),
-  KEY `vivazul_cliente_dominio_ged_status_id_ged_foreign` (`id_ged`),
-  CONSTRAINT `vivazul_cliente_dominio_ged_status_id_ged_foreign` FOREIGN KEY (`id_ged`) REFERENCES `ged` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
+  KEY `vivazul_cliente_dominio_pipeline_status_id_pipeline_foreign` (`id_pipeline`),
+  CONSTRAINT `vivazul_cliente_dominio_pipeline_status_id_pipeline_foreign` FOREIGN KEY (`id_pipeline`) REFERENCES `pipeline` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*Table structure for table `local_params` */
@@ -412,16 +412,16 @@ CREATE TABLE `pv` (
   `updated_at` varchar(255) DEFAULT NULL,
   `status` varchar(255) NOT NULL DEFAULT '0' COMMENT 'Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)',
   `id_cadastros` int(10) unsigned NOT NULL COMMENT 'Cliente',
-  `id_ged` int(10) unsigned DEFAULT NULL COMMENT 'Ged',
+  `id_pipeline` int(10) unsigned DEFAULT NULL COMMENT 'pipeline',
   `tipo` int(1) NOT NULL DEFAULT 0 COMMENT 'Tipo de pv (SUPORTE:0; MONTAGEM:1)',
   `pv_nr` varchar(255) DEFAULT NULL COMMENT 'Número do PV',
   `obs` text DEFAULT NULL COMMENT 'Observação',
   `situacao` char(2) NOT NULL COMMENT 'Situação do pós atendimento',
   PRIMARY KEY (`id`),
   KEY `vivazul_cliente_dominio_pv_id_cadastros_foreign` (`id_cadastros`),
-  KEY `vivazul_cliente_dominio_pv_id_ged_foreign` (`id_ged`),
+  KEY `vivazul_cliente_dominio_pv_id_pipeline_foreign` (`id_pipeline`),
   CONSTRAINT `vivazul_cliente_dominio_pv_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE,
-  CONSTRAINT `vivazul_cliente_dominio_pv_id_ged_foreign` FOREIGN KEY (`id_ged`) REFERENCES `ged` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
+  CONSTRAINT `vivazul_cliente_dominio_pv_id_pipeline_foreign` FOREIGN KEY (`id_pipeline`) REFERENCES `pipeline` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*Table structure for table `pv_oat` */

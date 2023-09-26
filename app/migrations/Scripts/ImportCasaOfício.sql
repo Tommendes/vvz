@@ -1,9 +1,28 @@
+/*Importar usuários*/
+ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_api.users WHERE admin != 2;
+ALTER TABLE vivazul_api.users AUTO_INCREMENT=0;
+ALTER TABLE vivazul_api.users DROP COLUMN IF EXISTS PASSWORD;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_api.users (
+  id,evento,created_at,updated_at,STATUS,tkn_api,NAME,cpf,email,telefone,password_reset_token,cliente,dominio,admin,gestor,multiCliente,
+  cadastros,pipeline,pv,comercial,fiscal,financeiro,comissoes,agente_v,agente_arq,agente_at,time_to_pas_expires,old_id
+)(
+SELECT 
+  0,1,NOW(),NULL,STATUS,NULL,username,NULL,email,tel_contato,NULL,'cso','root',administrador,gestor,0, 
+  cadastros,ged,0,comercial,0,financeiro,0,agente_comercial,agente_arq,agente_at,30,id
+FROM vivazul_lynkos.user WHERE dominio = 'casaoficio' AND username NOT LIKE '%tom mendes%'
+);
+
 /*Criação dos parâmetros (local_params) do cliente*/
 /*Remove o tipo TESTE dentre as opções antes de inserir na tabela local_params*/
 UPDATE vivazul_lynkos.cadastros SET tipo = NULL WHERE LOWER(tipo) IN ('teste');
 /*Limpar a tabela local_params*/
+SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.local_params;
 ALTER TABLE vivazul_cso_root.local_params AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
 /*tipo_cadastro*/
 INSERT INTO vivazul_cso_root.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
@@ -12,10 +31,10 @@ INSERT INTO vivazul_cso_root.local_params (
 /*id_atuacao*/
 INSERT INTO vivazul_cso_root.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
-) (SELECT 0,1,NOW(),NULL,10,'id_atuacao',id,label FROM vivazul_lynkos.params 
+) (SELECT 0,1,NOW(),NULL,10,'id_atuacao',label,label FROM vivazul_lynkos.params 
 	WHERE grupo = 'catu' AND LENGTH(TRIM(parametro)) > 0 AND parametro IS NOT NULL GROUP BY parametro ORDER BY parametro);
 /*tipo_contato*/
-INSERT INTO `vivazul_cso_root`.`local_params` (
+INSERT INTO vivazul_cso_root.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
 ) VALUES (0,1,NOW(),NULL,10,"tipo_contato","CELULAR","CELULAR"),(0,1,NOW(),NULL,10,"tipo_contato","CLARO","CLARO"),
 (0,1,NOW(),NULL,10,"tipo_contato","EMAIL","EMAIL"),(0,1,NOW(),NULL,10,"tipo_contato","FAX","FAX"),
@@ -36,8 +55,10 @@ ORDER BY cadas_nome,created_at);
 /*Remove caracteres <>d do field cpf_cnpj*/
 UPDATE vivazul_lynkos.cadastros SET cpf_cnpj = NULL WHERE NOT(LENGTH(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(cpf_cnpj, '[^0-9]+', -1),'[^0-9]+',1) AS UNSIGNED)) IN ('11','14'));
 /*Importa os cadastros*/
-DELETE FROM `vivazul_cso_root`.`cadastros`;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.cadastros;
 ALTER TABLE vivazul_cso_root.cadastros AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_cso_root.cadastros (
   id,evento,created_at,updated_at,STATUS,prospect,
   id_params_tipo,
@@ -47,22 +68,117 @@ INSERT INTO vivazul_cso_root.cadastros (
   aniversario,id_params_p_nascto,observacao,
   telefone,email,old_id
 ) ( 
-SELECT 
-  0,1,FROM_UNIXTIME(created_at)created_at,updated_at,STATUS,
-  IF((SELECT COUNT(id) FROM ged WHERE id_cadastro = vivazul_lynkos.cadastros.id) > 0, 0, 1)prospect,
-  COALESCE((SELECT id FROM vivazul_cso_root.local_params WHERE parametro = tipo),4)id_params_tipo,
-  COALESCE((SELECT id FROM vivazul_cso_root.local_params WHERE parametro = cadas_atuacao_id),1)id_params_atuacao,
-  IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)cpf_cnpj,rg_ie,cadas_nome,
-  COALESCE((SELECT id FROM vivazul_api.params WHERE LOWER(label) = LOWER(sexo)), 3)id_params_sexo,
-  aniversario,4,obs,
-  CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(COALESCE(telefone1,telefone2), '[^0-9]+', -1),'[^0-9]+',1) AS UNSIGNED)telefone,email,id 
-FROM vivazul_lynkos.cadastros 
-WHERE STATUS = 10 AND dominio = 'casaoficio'
-GROUP BY IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
-ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
-LIMIT 0, 9999999 
+	SELECT 
+	  0,1,FROM_UNIXTIME(created_at)created_at,updated_at,STATUS,
+	  IF((SELECT COUNT(id) FROM vivazul_lynkos.ged WHERE id_cadastro = vivazul_lynkos.cadastros.id) > 0, 0, 1)prospect,
+	  COALESCE((SELECT id FROM vivazul_cso_root.local_params WHERE parametro = tipo),4)id_params_tipo,
+	  COALESCE((SELECT id FROM vivazul_cso_root.local_params WHERE parametro = cadas_atuacao_id),1)id_params_atuacao,
+	  IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)cpf_cnpj,rg_ie,cadas_nome,
+	  COALESCE((SELECT id FROM vivazul_api.params WHERE LOWER(label) = LOWER(sexo)), 3)id_params_sexo,
+	  aniversario,4,obs,
+	  CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(COALESCE(telefone1,telefone2), '[^0-9]+', -1),'[^0-9]+',1) AS UNSIGNED)telefone,email,id 
+	FROM vivazul_lynkos.cadastros 
+	WHERE STATUS = 10 AND dominio = 'casaoficio'
+	GROUP BY IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
+	ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
+	LIMIT 0, 9999999 
   ) ;
+/*Importa os contatos*/  
+ALTER TABLE vivazul_cso_root.cad_contatos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.cad_contatos;
+ALTER TABLE vivazul_cso_root.cad_contatos AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_cso_root.cad_contatos (
+  id,evento,created_at,updated_at,STATUS,id_cadastros,
+  id_params_tipo,pessoa,departamento,meio,obs,old_id
+)(
+	SELECT 
+	  0,1,FROM_UNIXTIME(o.created_at),FROM_UNIXTIME(o.updated_at),o.status,c.id,
+	  lc.id,o.pessoa,o.departamento,o.contato,NULL,o.id
+	FROM vivazul_lynkos.cadastros_ofc o
+	JOIN vivazul_cso_root.cadastros c ON c.old_id = o.id_cadas
+	JOIN vivazul_cso_root.local_params lc ON lc.label = o.tipo
+	WHERE o.dominio = 'casaoficio'
+) ;
 
-	
-DELETE FROM vivazul_cso_root.local_params WHERE id >= 11;
-ALTER TABLE vivazul_cso_root.local_params AUTO_INCREMENT=0;
+  
+/*Importa os documentos(ged_params x pipeline_params)*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.pipeline_params;
+ALTER TABLE vivazul_cso_root.pipeline_params AUTO_INCREMENT=0;
+ALTER TABLE vivazul_cso_root.pipeline_params ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_cso_root.pipeline_params (
+  id,evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,old_id
+)(
+	SELECT NULL,1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,id 
+	FROM vivazul_lynkos.ged_params
+	WHERE STATUS = 10 AND dominio = 'casaoficio'
+  );
+/*Garante o tipo_secundário de acordo com id_old*/
+UPDATE vivazul_lynkos.ged_params gp SET gp.tipo_secundario = NULL WHERE gp.tipo_secundario = 0;
+UPDATE vivazul_cso_root.pipeline_params pp SET pp.tipo_secundario = NULL WHERE pp.tipo_secundario = 0;
+UPDATE vivazul_cso_root.pipeline_params pp SET
+	pp.tipo_secundario = (SELECT gp.tipo_secundario FROM vivazul_lynkos.ged_params gp WHERE gp.id = pp.old_id);
+
+/*Importa os documentos(ged x pipeline)*/
+ALTER TABLE vivazul_cso_root.pipeline ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.pipeline;
+ALTER TABLE vivazul_cso_root.pipeline AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_cso_root.pipeline (
+  id,evento,created_at,updated_at,STATUS,
+  id_pipeline_params,
+  id_pai,id_filho,
+  id_cadastros,
+  id_com_agentes,
+  status_comissao,documento,versao,descricao,valor_bruto,valor_liq,valor_representacao,perc_represent,valor_agente,old_id
+)(
+	SELECT 
+	  NULL,1,FROM_UNIXTIME(g.created_at)created_at,FROM_UNIXTIME(g.updated_at)updated_at,g.status,
+	  pp.id id_pipeline_params,
+	  id_ged_pai,id_ged_filho, /*Executar edição num próximo update*/
+	  c.id id_cadastro,
+	  u.id id_usuario_agente_vendas,
+	  0,g.documento,g.versao,g.descricao,g.valor_bruto,g.valor_liq,g.valor_representacao,g.perc_represent,g.valor_agente,g.id
+	FROM
+	  vivazul_lynkos.ged g 
+	JOIN vivazul_cso_root.pipeline_params pp ON g.id_ged_params = pp.old_id
+	JOIN vivazul_cso_root.cadastros c ON g.id_cadastro = c.old_id
+	LEFT JOIN vivazul_api.users u ON g.id_usuario_agente_vendas = u.old_id
+	WHERE g.dominio = 'casaoficio' LIMIT 9999999
+);
+/*Garantir id_pai e id_filho em pipeline*/
+UPDATE vivazul_cso_root.pipeline pd
+SET pd.id_pai = NULL WHERE pd.id_pai = 0;
+UPDATE vivazul_cso_root.pipeline pd
+SET pd.id_filho = NULL WHERE pd.id_filho = 0;
+UPDATE vivazul_cso_root.pipeline pd
+JOIN vivazul_cso_root.pipeline po ON pd.id_pai = po.old_id
+SET pd.id_pai = po.id
+WHERE pd.id_pai IS NOT NULL;
+UPDATE vivazul_cso_root.pipeline pd
+JOIN vivazul_cso_root.pipeline po ON pd.id_filho = po.old_id
+SET pd.id_filho = po.id
+WHERE pd.id_filho IS NOT NULL;
+
+/*Importar os status(ged x pipeline)*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.pipeline_status;
+ALTER TABLE vivazul_cso_root.pipeline_status AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_cso_root.pipeline_status (
+  id,evento,created_at,updated_at,STATUS,id_ged,status_params
+)(
+SELECT 
+  NULL,1,FROM_UNIXTIME(g.created_at)created_at,FROM_UNIXTIME(g.updated_at)updated_at,10,p.id,g.status_params
+FROM vivazul_lynkos.ged_status g
+JOIN vivazul_cso_root.pipeline p ON g.id_ged = p.old_id ORDER BY g.created_at
+);
+/*Garantir data do status em pipeline_status*/
+UPDATE vivazul_cso_root.pipeline_status ps
+JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_ged
+SET ps.created_at = p.created_at
+WHERE ps.created_at NOT LIKE '20%' LIMIT 9999999;

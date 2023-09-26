@@ -22,7 +22,7 @@ exports.up = function(knex, Promise) {
         table.decimal('valor_total',10,2).comment('Valor dos serviços')
         table.string('aceite_do_cliente',255).comment('Data do aceite')
         table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_cadastro_endereco').references('id').inTable('ged_params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_cadastro_endereco').references('id').inTable('pipeline_params').onUpdate('Cascade').onDelete('NO ACTION')
         table.foreign('id_tecnico').references('id').inTable('pv_tecnicos').onUpdate('Cascade').onDelete('NO ACTION')
         
     })

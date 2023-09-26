@@ -203,17 +203,17 @@ module.exports = app => {
         .delete(app.api.pipeline_status.remove)
 
     /**
-    * Rota de ged_protocolo
+    * Rota de protocolo
     */
-    app.route('/ged-protolo')
+    app.route('/protocolo')
         .all(app.config.passport.authenticate())
-        .post(app.api.ged_protocolo.save)
-        .get(app.api.ged_protocolo.get)
-    app.route('/ged-protolo/:id')
+        .post(app.api.protocolo.save)
+        .get(app.api.protocolo.get)
+    app.route('/protocolo/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.ged_protocolo.save)
-        .get(app.api.ged_protocolo.getById)
-        .delete(app.api.ged_protocolo.remove)
+        .put(app.api.protocolo.save)
+        .get(app.api.protocolo.getById)
+        .delete(app.api.protocolo.remove)
 
     /**
     * Rota de com_terceiros

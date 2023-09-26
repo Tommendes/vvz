@@ -25,8 +25,8 @@ module.exports = app => {
 
             existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
             if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
-            existsOrError(body.id_ged_params, 'Parâmetro não encontrado')
-            if(body.id_ged_params < 0 && body.id_ged_params.length > 10) throw 'Parâmetro inválido'
+            existsOrError(body.id_pipeline_params, 'Parâmetro não encontrado')
+            if(body.id_pipeline_params < 0 && body.id_pipeline_params.length > 10) throw 'Parâmetro inválido'
         
         } catch (error) {
             return res.status(400).send(error)

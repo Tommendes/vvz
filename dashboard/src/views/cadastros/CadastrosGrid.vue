@@ -195,7 +195,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card p-fluid">
         <CadastroForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             :value="gridData"

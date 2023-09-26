@@ -8,12 +8,12 @@ Cliente_Dominio
 	cad_contatos	Contatos dos cadastros
 	cad_documentos	Documentos dos cadastros
 
-	#Etapa 2: Ged e Comissionamento
-		ged_params		Parametros do Ged
+	#Etapa 2: pipeline e Comissionamento
+		pipeline_params		Parametros do pipeline
 		com_agentes		Agentes de vendas
-		ged				Registros do Ged
-		ged_status		Status dos registros
-		ged_protocolo		Protocolos de Documentos
+		pipeline				Registros do pipeline
+		pipeline_status		Status dos registros
+		protocolo		Protocolos de Documentos
 		com_terceiros	Comissionamento dos agentes
 
 	#Etapa 3: Pos vendas

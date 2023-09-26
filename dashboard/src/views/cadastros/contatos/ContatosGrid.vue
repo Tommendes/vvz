@@ -120,7 +120,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card p-fluid">
         <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
             ref="dt"
