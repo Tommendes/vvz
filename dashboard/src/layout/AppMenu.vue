@@ -23,40 +23,40 @@ const model = ref([
         label: 'Comercial',
         items: [
             { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${user.cliente}/${user.dominio}/ged` }
+            { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${user.cliente}/${user.dominio}/pipeline` }
         ]
     },
     {
         label: 'Pós-vendas',
         items: [
             { label: 'Assistência Técnica', icon: 'pi pi-fw pi-wrench', to: `/${user.cliente}/${user.dominio}/pv` },
-            { label: 'Montagem', icon: 'pi pi-fw pi-box', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/ged` }
+            { label: 'Montagem', icon: 'pi pi-fw pi-box', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/pipeline` }
         ]
     },
     {
         label: 'Financeiro',
         items: [
-            { label: 'Registros', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/ged` }
+            { label: 'Registros', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/pipeline` }
         ]
     },
     {
         label: 'Gestão',
         items: [
-            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Parâmetros', icon: 'pi pi-fw pi-cog', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${user.cliente}/${user.dominio}/ged` }
+            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Parâmetros', icon: 'pi pi-fw pi-cog', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${user.cliente}/${user.dominio}/pipeline` }
         ]
     },
     {
         label: 'Administrar',
         items: [
-            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${user.cliente}/${user.dominio}/ged` },
-            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/ged` }
+            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/pipeline` }
         ]
     }
 ]);

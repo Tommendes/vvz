@@ -23,8 +23,8 @@ module.exports = app => {
 
         try {
 
-            existsOrError(body.id_ged, 'Id_ged não encontrado')
-            if (body.id_ged < 0 && body.id_ged.length > 11) throw "Id_ged inválido"
+            existsOrError(body.id_pipeline, 'Documento não encontrado')
+            if (body.id_pipeline < 0 && body.id_pipeline.length > 11) throw "Documento inválido"
             existsOrError(body.id_com_agentes, 'Id_com_agentes não encontrado')
             if (body.id_com_agentes < 0 && body.id_com_agentes.length > 11) throw "Id_com_agentes inválido"
         

@@ -18,7 +18,7 @@ admin                 tinyint(1)        NO              0                       
 gestor                tinyint(1)        NO              0                        Gestor do cliente (Não: 0; Sim: 1)
 multiCliente          tinyint(1)        NO              0                        Acessa dados em mais de um cliente: Alçada (Não: 0; Sim: 1)
 cadastros             tinyint(1)        NO              0                        Gestão de cadastros (Acesso negado: 0; Pesquisa: 1; Insere: 2; Edita: 3; Remove: 4)
-ged                   tinyint(1)        NO              0                        Gestão de documentos (Acesso negado: 0; Pesquisa: 1; Insere: 2; Edita: 3; Remove: 4)
+pipeline                   tinyint(1)        NO              0                        Gestão de documentos (Acesso negado: 0; Pesquisa: 1; Insere: 2; Edita: 3; Remove: 4)
 pv                    tinyint(1)        NO              0                        Gestão de assistência técnica e pós-vendas (Acesso negado: 0; Pesquisa: 1; Insere: 2; Edita: 3; Remove: 4)
 comercial             tinyint(1)        NO              0                        Gestão de comercial (Acesso negado: 0; Pesquisa: 1; Insere: 2; Edita: 3; Remove: 4)
 fiscal                tinyint(1)        NO              0                        Gestão do fiscal (Acesso negado: 0; Pesquisa: 1; Insere: 2; Edita: 3; Remove: 4)
