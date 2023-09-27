@@ -42,6 +42,11 @@ INSERT INTO vivazul_cso_root.local_params (
 (0,1,NOW(),NULL,10,"tipo_contato","OUTROS","OUTROS"),(0,1,NOW(),NULL,10,"tipo_contato","SITE","SITE"),
 (0,1,NOW(),NULL,10,"tipo_contato","TELEFONE","TELEFONE"),(0,1,NOW(),NULL,10,"tipo_contato","TIM","TIM"),
 (0,1,NOW(),NULL,10,"tipo_contato","VIVO","VIVO");
+/*tipo_endereco*/
+INSERT INTO vivazul_cso_root.local_params (
+  id,evento,created_at,updated_at,STATUS,grupo,parametro,label
+)(SELECT  0,1,NOW(),NULL,10,'id_atuacao',tipo,tipo FROM vivazul_lynkos.cadastros_enderecos ce WHERE tipo IS NOT NULL GROUP BY tipo ORDER BY tipo);
+
 /*Adiciona coluna de referência entre BDs*/
 ALTER TABLE vivazul_cso_root.cadastros ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
 
@@ -83,7 +88,7 @@ INSERT INTO vivazul_cso_root.cadastros (
 	ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
 	LIMIT 0, 9999999 
   ) ;
-/*Importa os contatos*/  
+/*Importa os contatos dos cadastros*/  
 ALTER TABLE vivazul_cso_root.cad_contatos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.cad_contatos;
@@ -99,9 +104,27 @@ INSERT INTO vivazul_cso_root.cad_contatos (
 	FROM vivazul_lynkos.cadastros_ofc o
 	JOIN vivazul_cso_root.cadastros c ON c.old_id = o.id_cadas
 	JOIN vivazul_cso_root.local_params lc ON lc.label = o.tipo
-	WHERE o.dominio = 'casaoficio'
+	WHERE o.dominio = 'casaoficio' AND ce.status = 10
 ) ;
 
+/*Importa os endereços dos cadastros*/  
+ALTER TABLE vivazul_cso_root.cad_enderecos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.cad_enderecos;
+ALTER TABLE vivazul_cso_root.cad_enderecos AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_cso_root.cad_enderecos (
+  id,evento,created_at,updated_at,STATUS,id_cadastros,
+  id_tipo,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,obs,old_id
+)(
+	SELECT 
+	0,1,FROM_UNIXTIME(ce.created_at),FROM_UNIXTIME(ce.updated_at),ce.status,c.id,
+	lc.id,LPAD(REPLACE(REPLACE(TRIM(ce.cep),'-',''),'.',''),8,'0')cep,ce.logradouro,ce.nr,ce.complnr,ce.bairro,ce.cidade,ce.uf,ce.ibge,ce.geo_ltd,ce.geo_lng,NULL,ce.id 
+	FROM vivazul_lynkos.cadastros_enderecos ce
+	JOIN vivazul_cso_root.cadastros c ON c.old_id = ce.id_cadas
+	JOIN vivazul_cso_root.local_params lc ON lc.label = ce.tipo
+	WHERE ce.dominio = 'casaoficio' AND ce.status = 10
+);
   
 /*Importa os documentos(ged_params x pipeline_params)*/
 SET FOREIGN_KEY_CHECKS=0; 
@@ -170,15 +193,29 @@ DELETE FROM vivazul_cso_root.pipeline_status;
 ALTER TABLE vivazul_cso_root.pipeline_status AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_cso_root.pipeline_status (
-  id,evento,created_at,updated_at,STATUS,id_ged,status_params
+  id,evento,created_at,updated_at,STATUS,id_pipeline,status_params
 )(
-SELECT 
-  NULL,1,FROM_UNIXTIME(g.created_at)created_at,FROM_UNIXTIME(g.updated_at)updated_at,10,p.id,g.status_params
-FROM vivazul_lynkos.ged_status g
-JOIN vivazul_cso_root.pipeline p ON g.id_ged = p.old_id ORDER BY g.created_at
+	SELECT 
+	NULL,1,FROM_UNIXTIME(g.created_at)created_at,FROM_UNIXTIME(g.updated_at)updated_at,10,p.id,g.status_params
+	FROM vivazul_lynkos.ged_status g
+	JOIN vivazul_cso_root.pipeline p ON g.id_ged = p.old_id ORDER BY g.created_at
 );
 /*Garantir data do status em pipeline_status*/
 UPDATE vivazul_cso_root.pipeline_status ps
-JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_ged
+JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_pipeline
 SET ps.created_at = p.created_at
 WHERE ps.created_at NOT LIKE '20%' LIMIT 9999999;
+
+/*Importar empresa*/
+INSERT INTO vivazul_cso_root.empresa (
+  id,evento,created_at,updated_at,STATUS,razaosocial,
+  fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,emailAt,emailComercial,emailFinanceiro,emailRH,
+  id_cadas_resplegal,url_logo
+)(
+SELECT 
+NULL,1,FROM_UNIXTIME(e.created_at)created_at,FROM_UNIXTIME(e.updated_at)updated_at,10,razaosocial,
+fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,emailAt,emailComercial,emailFinanceiro,emailRH,
+(SELECT id FROM vivazul_cso_root.cadastros c WHERE c.old_id = e.id_cadas_resplegal)id_cadas_resplegal,url_logo 
+FROM vivazul_lynkos.empresa e WHERE e.dominio = 'casaoficio' 
+  ) ;
+

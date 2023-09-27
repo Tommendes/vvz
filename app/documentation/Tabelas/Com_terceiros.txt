@@ -5,8 +5,8 @@ evento          int(10) unsigned  NO              (NULL)                     Cha
 created_at      varchar(255)      NO              (NULL)                     Date time da criação do registro
 updated_at      varchar(255)      YES             (NULL)                     Date time da última edição do registro
 status          varchar(255)      NO              0                          Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
-id_pipeline          int(11)           NO      MUL     (NULL)                     Documento relacionado                
-id_com_agentes  int(11)           NO      MUL     (NULL)                     Agente                               
+id_pipeline     int(10)           NO      MUL     (NULL)                     Documento relacionado                
+id_com_agentes  int(10)           NO      MUL     (NULL)                     Agente                               
 terceiro        boolean           YES             (NULL)                     Se um terceiro                                     
 valor_base      decimal(10,2)     YES             (NULL)                     Valor base de cálculo da comissão  
 participacao    decimal(10,2)     YES             (NULL)                     Percentual de comissão              

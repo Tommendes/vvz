@@ -2,6 +2,9 @@ const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'pipeline'
+    const tabelaStatus = 'pipeline_status'
+    const tabelaParams = 'pipeline_params'
+    const tabelaLocalParams = 'local_params'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -26,8 +29,8 @@ module.exports = app => {
             existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
             if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
             existsOrError(body.id_pipeline_params, 'Parâmetro não encontrado')
-            if(body.id_pipeline_params < 0 && body.id_pipeline_params.length > 10) throw 'Parâmetro inválido'
-        
+            if (body.id_pipeline_params < 0 && body.id_pipeline_params.length > 10) throw 'Parâmetro inválido'
+
         } catch (error) {
             return res.status(400).send(error)
         }
@@ -97,10 +100,6 @@ module.exports = app => {
     const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
@@ -110,21 +109,88 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
+
+        let queryes = undefined
+        let query = undefined
+        let page = 0
+        let rows = 10
+        let sortField = app.db.raw('tbl1.nome, tbl1.cpf_cnpj')
+        let sortOrder = 'asc'
+        if (req.query) {
+            queryes = req.query
+            query = ''
+            for (const key in queryes) {
+                let operator = queryes[key].split(':')[0]
+                let value = queryes[key].split(':')[1]
+                if (key.split(':')[0] == 'field') {
+                    if (['aniversario'].includes(key.split(':')[1])) {
+                        query += `EXTRACT(MONTH FROM ${key.split(':')[1]}) = '${value}' AND `
+                    } else {
+                        if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
+
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `like '%${value}%'`
+                                break;
+                            case 'notContains': operator = `not like '%${value}%'`
+                                break;
+                            case 'endsWith': operator = `like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+                        let queryField = key.split(':')[1]
+                        if (queryField == 'atuacao') queryField = 'lp.label'
+                        else if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
+                        query += `${queryField} ${operator} AND `
+                    }
+                } else if (key.split(':')[0] == 'params') {
+                    switch (key.split(':')[1]) {
+                        case 'page': page = Number(queryes[key]);
+                            break;
+                        case 'rows': rows = Number(queryes[key]);
+                            break;
+                    }
+                } else if (key.split(':')[0] == 'sort') {
+                    sortField = key.split(':')[1].split('=')[0]
+                    sortOrder = queryes[key]
+                }
+            }
+            query = query.slice(0, -5).trim()
+        }
+        let filterCnpj = undefined
+        let filter = req.query.filter
+        if (filter) {
+            filter = filter.trim()
+            filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
+        }
+
+        // const totalRecords = await app.db({ tbl1: tabelaDomain })
+        //     .count('tbl1.id as count').first()
+        //     .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
+        //     .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
+        //     .where({ 'tbl1.status': STATUS_ACTIVE })
+        //     .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-
-        ret.where({ status: STATUS_ACTIVE })
+            .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.aniversario, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
+            .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
             .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
-            .then(body => {
-                return res.json({ data: body, count: count, limit })
-            })
+            .orderBy(sortField, sortOrder)
+            .limit(rows).offset((page + 1) * rows - rows)
+        console.log(ret.toString());
+        ret.then(body => {
+            return res.json({ data: body, totalRecords: totalRecords.count })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
