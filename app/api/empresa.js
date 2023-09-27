@@ -22,16 +22,23 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-
-            existsOrError(body.dominio, 'Dominio não encontrado')
+            existsOrError(body.cpf_cnpj_empresa, 'CPF ou CNPJ não informado')
+            const cpfCnpjUnique = await app.db(tabelaDomain)
+                .where(function () {
+                    this.where({ cpf_cnpj_empresa: body.cpf_cnpj_empresa })
+                        .where(app.db.raw(`${body.id ? `id != ${body.id}` : '1=1'}`))
+                })
+                .first();
+            notExistsOrError(cpfCnpjUnique, `O ${body.cpf_cnpj_empresa.length == 11 ? 'CPF' : 'CNPJ' } informado já foi registrado. Por favor verifique!`)
+            // return res.send(cpfCnpjUnique.toString());
             existsOrError(body.cep, 'CEP não encontrado')
-            if (body.cep.length =! 8) throw "CEP inválido"
+            if (body.cep.length = !8) throw "CEP inválido"
             existsOrError(body.logradouro, 'Logradouro não encontrado')
             existsOrError(body.nr, 'Número não encontrado')
             existsOrError(body.cidade, 'Cidade não encontrada')
             existsOrError(body.uf, 'UF não encontrada')
-            if (body.uf.length =! 2) throw "UF inválido"
-        
+            if (body.uf.length = !2) throw "UF inválido"
+
         } catch (error) {
             return res.status(400).send(error)
         }
