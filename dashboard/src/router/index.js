@@ -33,6 +33,16 @@ const routes = [
                 component: () => import('@/views/pipeline/PipelineForm.vue')
             },
             {
+                path: '/:client/:domain/empresa',
+                name: 'empresa',
+                component: () => import('@/views/empresa/EmpresasGrid.vue')
+            },
+            {
+                path: '/:client/:domain/empresa/:id',
+                name: 'empresa-one',
+                component: () => import('@/views/empresa/EmpresaForm.vue')
+            },
+            {
                 path: '/:client/:domain/uikit/formlayout',
                 name: 'formlayout',
                 component: () => import('@/views/uikit/FormLayout.vue')
