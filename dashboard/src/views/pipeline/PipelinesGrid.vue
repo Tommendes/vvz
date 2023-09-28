@@ -3,7 +3,6 @@ import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError } from '@/toast';
-import moment from 'moment';
 import PipelineForm from './PipelineForm.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
@@ -15,28 +14,16 @@ const store = useUserStore();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
-// import { Mask } from 'maska';
-// const masks = ref({
-//     aniversario: new Mask({
-//         mask: '##/##/####'
-//     }),
-//     cpf: new Mask({
-//         mask: '###.###.###-##'
-//     }),
-//     cnpj: new Mask({
-//         mask: '##.###.###/####-##'
-//     })
-// });
-
 const urlBase = ref(`${baseApiUrl}/pipeline`);
-
 onBeforeMount(() => {
+    // Inicializa os filtros do grid
     initFilters();
 });
 onMounted(() => {
+    // Limpa os filtros do grid
     clearFilter();
 });
-
+// Exlui um registro
 const deleteRow = () => {
     confirm.require({
         group: 'templating',
@@ -61,39 +48,31 @@ const deleteRow = () => {
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
-const loading = ref(false);
+const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Seus dados iniciais
-const itemData = ref(null);
+const itemData = ref(null); // Dados do item selecionado
+const dropdownTipoParams = ref([]); // Itens do dropdown de Tipos
+// Itens do grid
+const listaNomes = ref([
+    { field: 'tipo_doc', label: 'Tipo', list: dropdownTipoParams.value },
+    { field: 'created_at', label: 'Data', type: 'date' },
+    { field: 'nome', label: 'Cliente' },
+    { field: 'agente', label: 'Agente' },
+    { field: 'documento', label: 'Documento' },
+    { field: 'descricao', label: 'Descrição' },
+    { field: 'valor_bruto', label: 'R$ bruto' }
+]);
+// Inicializa os filtros do grid
 const initFilters = () => {
-    filters.value = {
-        status: { value: '', matchMode: 'contains' },
-        id_cadastros: { value: '', matchMode: 'contains' },
-        id_com_agentes: { value: '', matchMode: 'contains' },
-        descricao: { value: '', matchMode: 'contains' },
-        valor_bruto: { value: '', matchMode: 'contains' },
-        status_comissao: { value: '', matchMode: 'contains' },
-        documento: { value: '', matchMode: 'contains' }
-    };
+    filters.value = {};
+    listaNomes.value.forEach((element) => {
+        filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
+    });
 };
 const filters = ref({});
 const lazyParams = ref({});
 const urlFilters = ref('');
-
-const dropdownMes = ref([
-    { label: 'Janeiro', value: '01' },
-    { label: 'Fevereiro', value: '02' },
-    { label: 'Março', value: '03' },
-    { label: 'Abril', value: '04' },
-    { label: 'Maio', value: '05' },
-    { label: 'Junho', value: '06' },
-    { label: 'Julho', value: '07' },
-    { label: 'Agosto', value: '08' },
-    { label: 'Setembro', value: '09' },
-    { label: 'Outubro', value: '10' },
-    { label: 'Novembro', value: '11' },
-    { label: 'Dezembro', value: '12' }
-]);
-
+// Limpa os filtros do grid
 const clearFilter = () => {
     loading.value = true;
 
@@ -109,7 +88,7 @@ const clearFilter = () => {
 
     loadLazyData();
 };
-
+// Carrega os dados do grid
 const loadLazyData = () => {
     loading.value = true;
 
@@ -121,11 +100,8 @@ const loadLazyData = () => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
-                    // // Exibe dado com máscara
-                    // if (element.cpf_cnpj && element.cpf_cnpj.length == 11) element.cpf_cnpj = masks.value.cpf.masked(element.cpf_cnpj);
-                    // else if (element.cpf_cnpj && element.cpf_cnpj.length == 14) element.cpf_cnpj = masks.value.cnpj.masked(element.cpf_cnpj);
-                    // // Converte data en para pt
-                    // if (element.aniversario) element.aniversario = moment(element.aniversario).format('DD/MM/YYYY');
+                    element.tipo_doc = element.tipo_doc.replaceAll('_', ' '); //dropdownStatusParams.value.find((item) => item.value == element.tipo_doc).label;
+                    element.descricao = element.descricao.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim();
                 });
                 loading.value = false;
             })
@@ -135,20 +111,27 @@ const loadLazyData = () => {
             });
     }, Math.random() * 1000 + 250);
 };
+// Carrega os dados do grid
 const onPage = (event) => {
     lazyParams.value = event;
     loadLazyData();
 };
+// Ordena os dados do grid
 const onSort = (event) => {
     lazyParams.value = event;
     loadLazyData();
 };
+// Filtra os dados do grid
 const onFilter = () => {
     lazyParams.value.filters = filters.value;
     mountUrlFilters();
     loadLazyData();
 };
+// Armazena o modo de operação do grid
 const mode = ref('grid');
+/**
+ * Monta a url com os filtros
+ */
 const mountUrlFilters = () => {
     let url = '?';
     Object.keys(filters.value).forEach((key) => {
@@ -164,11 +147,13 @@ const mountUrlFilters = () => {
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
     urlFilters.value = url;
 };
+// Itens do menu de contexto do grid
 const menu = ref();
-
+// Exporta os dados do grid para CSV
 const exportCSV = () => {
     dt.value.exportCSV();
 };
+// Itens do menu de contexto do grid
 const itemsButtons = ref([
     {
         label: 'Editar',
@@ -185,12 +170,15 @@ const itemsButtons = ref([
         }
     }
 ]);
+// Abre o menu de contexto do grid
 const toggle = (event) => {
     menu.value.toggle(event);
 };
+// Armazena os dados do item selecionado
 const getItem = (data) => {
     itemData.value = data;
 };
+// Carrega os dados do filtro do grid
 watchEffect(() => {
     mountUrlFilters();
 });
@@ -200,7 +188,6 @@ watchEffect(() => {
     <div class="card">
         <PipelineForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
-            class="p-fluid"
             :value="gridData"
             lazy
             paginator
@@ -223,47 +210,33 @@ watchEffect(() => {
             scrollHeight="420px"
         >
             <template #header>
-                <div class="flex justify-content-end gap-3">
-                    <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
-                    <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                <div class="">
+                    <div class="justify-content-start gap-3">
+                        <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
+                    </div>
+                    <div class="justify-content-end gap-3">
+                        <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
+                        <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
+                        <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    </div>
                 </div>
             </template>
-            <Column field="status" header="Tipo (Ativo: S|N)" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <Dropdown id="mes" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="dropdownMes" @change="filterCallback()" />
-                </template>
-            </Column>
-            <Column field="id_cadastros" header="Cliente" filterField="id_cadastros" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
-            <Column field="id_com_agentes" header="Agente" filterField="id_com_agentes" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
-            <Column field="descricao" header="Descrição" filterField="descricao" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
-            <Column field="valor_bruto" header="Valor Bruto" filterField="valor_bruto" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
-            <Column field="status_comissao" header="Status" filterField="status_comissao" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <Dropdown id="mes" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="dropdownMes" @change="filterCallback()" />
-                </template>
-            </Column>
-            <Column field="documento" header="Data" filterField="documento" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
+            <template v-for="nome in listaNomes" :key="nome">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type">
+                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" />
+                    </template>
+                    <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
+                    </template>
+                    <template v-else #filter="{ filterModel, filterCallback }">
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
+                    </template>
+                    <template #body="{ data }">
+                        <span v-html="data[nome.field]"></span>
+                    </template>
+                </Column>
+            </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />

@@ -120,9 +120,10 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div class="card p-fluid">
+    <div class="card">
         <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
+            class="p-fluid"
             ref="dt"
             :value="gridData"
             :paginator="true"

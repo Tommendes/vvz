@@ -1,10 +1,12 @@
 const { dbPrefix } = require("../.env")
+const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'pipeline'
     const tabelaStatus = 'pipeline_status'
     const tabelaParams = 'pipeline_params'
     const tabelaLocalParams = 'local_params'
+    const tabelaCadastros = 'cadastros'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -108,26 +110,51 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
+        const tabelaUsers = `${dbPrefix}_api.users`
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
 
         let queryes = undefined
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('tbl1.nome, tbl1.cpf_cnpj')
-        let sortOrder = 'asc'
+        let sortField = app.db.raw('tbl1.id')
+        let sortOrder = 'DESC'
+        let tipoParams = '1=1'
         if (req.query) {
             queryes = req.query
+            console.log(queryes);
             query = ''
             for (const key in queryes) {
                 let operator = queryes[key].split(':')[0]
                 let value = queryes[key].split(':')[1]
                 if (key.split(':')[0] == 'field') {
-                    if (['aniversario'].includes(key.split(':')[1])) {
+                    sortField = key.split(':')[1].split('=')[0]
+                    sortOrder = 'ASC'
+                    if (['status_params'].includes(key.split(':')[1])) {
                         query += `EXTRACT(MONTH FROM ${key.split(':')[1]}) = '${value}' AND `
+                    } else if (['created_at'].includes(key.split(':')[1])) {
+                        sortField = 'CAST(tbl1.created_at AS DATE)'
+                        sortOrder = 'DESC'
+                        value = queryes[key].split(':')
+                        let valueI = moment(value[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
+                        let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
+                        // console.log(operator, valueI, valueF);
+                        // value = moment(value, 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
+                        switch (operator) {
+                            case 'dateIsNot': operator = `not between '${valueI}' and '${valueF}'`
+                                break;
+                            case 'dateBefore': operator = `< '${valueI}'`
+                                break;
+                            case 'dateAfter': operator = `> '${valueF}'`
+                                break;
+                            default: operator = `between '${valueI}' and '${valueF}'`
+                                break;
+                        }
+                        query += `date(tbl1.created_at) ${operator} AND `
                     } else {
                         if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
 
@@ -146,8 +173,8 @@ module.exports = app => {
                                 break;
                         }
                         let queryField = key.split(':')[1]
-                        if (queryField == 'atuacao') queryField = 'lp.label'
-                        else if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
+                        if (queryField == 'agente') queryField = 'u.name'
+                        else if (queryField == 'descricao') queryField = 'tbl1.descricao'
                         query += `${queryField} ${operator} AND `
                     }
                 } else if (key.split(':')[0] == 'params') {
@@ -171,21 +198,25 @@ module.exports = app => {
             filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
         }
 
-        // const totalRecords = await app.db({ tbl1: tabelaDomain })
-        //     .count('tbl1.id as count').first()
-        //     .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
-        //     .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
-        //     .where({ 'tbl1.status': STATUS_ACTIVE })
-        //     .whereRaw(query ? query : '1=1')
-
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.aniversario, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
-            .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
+        const totalRecords = await app.db({ tbl1: tabelaDomain })
+            .count('tbl1.id as count').first()
+            .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
-            .groupBy('tbl1.id')
-            .orderBy(sortField, sortOrder)
+
+        const ret = app.db({ tbl1: tabelaDomain })
+            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, c.nome, u.name agente, tbl1.documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+            date_format(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y')created_at, 
+            SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
+            // .groupBy('tbl1.id')
+            .orderBy(app.db.raw(sortField), sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
         console.log(ret.toString());
         ret.then(body => {

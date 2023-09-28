@@ -23,13 +23,13 @@ const visible = ref(false);
 // Props do template
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
-})
+});
 // Máscaras
 import { Mask } from 'maska';
 const masks = ref({
     cep: new Mask({
         mask: '##.###-###'
-    }),
+    })
 });
 // Inicializa os filtros
 const initFilters = () => {
@@ -80,12 +80,12 @@ const loadData = async () => {
     const url = `${urlBase.value}`;
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        gridData.value.forEach(element => {
+        gridData.value.forEach((element) => {
             element.endereco = '';
             if (element.logradouro) element.endereco += element.logradouro;
             if (element.nr) element.endereco += `, ${element.nr}`;
             if (element.complnr && element.complnr.trim().length > 0) element.endereco += `, ${element.complnr.trim()}`;
-            if (element.cep && element.cep.trim().length >= 8) element.cep = masks.value.cep.masked(element.cep)
+            if (element.cep && element.cep.trim().length >= 8) element.cep = masks.value.cep.masked(element.cep);
         });
         loading.value = false;
     });
@@ -138,19 +138,34 @@ onBeforeMount(() => {
 <template>
     <div class="card">
         <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
-        <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id"
-            :itemDataRoot="props.itemDataRoot" />
-        <DataTable :value="gridData" :paginator="true" :rows="10" dataKey="id"
-            :rowHover="true" v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
+        <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
+        <DataTable
+            class="p-fluid"
+            :value="gridData"
+            :paginator="true"
+            :rows="10"
+            dataKey="id"
+            :rowHover="true"
+            v-model:filters="filters"
+            filterDisplay="menu"
+            :loading="loading"
+            :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']">
+            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']"
+        >
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="
-                        itemData = { id_cadastros: props.itemDataRoot.id };
-                    mode = 'new';
-                    " />
+                    <Button
+                        type="button"
+                        icon="pi pi-plus"
+                        label="Novo Registro"
+                        outlined
+                        @click="
+                            itemData = { id_cadastros: props.itemDataRoot.id };
+                            mode = 'new';
+                        "
+                    />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
@@ -193,13 +208,11 @@ onBeforeMount(() => {
                 </template>
             </Column>
             <template #filter="{ filterModel }">
-                <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                    placeholder="Filtre por informações" />
+                <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por informações" />
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle"
-                        aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>

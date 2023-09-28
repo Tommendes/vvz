@@ -173,6 +173,11 @@ INSERT INTO vivazul_cso_root.pipeline (
 	LEFT JOIN vivazul_api.users u ON g.id_usuario_agente_vendas = u.old_id
 	WHERE g.dominio = 'casaoficio' LIMIT 9999999
 );
+/*
+Edita a data de criação do registro para primeira data a partir de 2000-01-01 apenas dos registros com 
+data de criação anterior a 2000-01-01
+*/
+UPDATE vivazul_cso_root.pipeline SET created_at = (SELECT MIN(created_at) FROM vivazul_cso_root.pipeline WHERE created_at > '2000-01-01') WHERE created_at < '2000-01-01';
 /*Garantir id_pai e id_filho em pipeline*/
 UPDATE vivazul_cso_root.pipeline pd
 SET pd.id_pai = NULL WHERE pd.id_pai = 0;
@@ -205,6 +210,10 @@ UPDATE vivazul_cso_root.pipeline_status ps
 JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_pipeline
 SET ps.created_at = p.created_at
 WHERE ps.created_at NOT LIKE '20%' LIMIT 9999999;
+UPDATE vivazul_cso_root.pipeline_status ps
+JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_pipeline
+SET ps.updated_at = p.created_at
+WHERE ps.updated_at NOT LIKE '20%' LIMIT 9999999;
 
 /*Importar empresa*/
 INSERT INTO vivazul_cso_root.empresa (

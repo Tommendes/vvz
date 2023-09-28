@@ -195,9 +195,10 @@ watchEffect(() => {
 </script>
 
 <template>
-    <div class="card p-fluid">
+    <div class="card">
         <CadastroForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
+            class="p-fluid"
             :value="gridData"
             lazy
             paginator
