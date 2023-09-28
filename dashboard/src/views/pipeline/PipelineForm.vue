@@ -81,7 +81,7 @@ const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-        console.log('loadData',url);
+        // console.log('loadData',url);
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -277,7 +277,7 @@ watchEffect(() => {
                         <label for="status">Tipo (Ativo: S|N)</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.status" id="status" type="text"/>
-                        <small id="text-error" class="p-error" if>{{ errorMessages.status || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.status">{{ errorMessages.status || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="id_cadastros">Cadastro</label>
@@ -307,31 +307,31 @@ watchEffect(() => {
                         <label for="id_com_agentes">Agente</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_com_agentes" id="id_com_agentes" type="text"/>
-                        <small id="text-error" class="p-error" if>{{ errorMessages.id_com_agentes || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.id_com_agentes">{{ errorMessages.id_com_agentes || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="descricao">Descrição</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text"/>
-                        <small id="text-error" class="p-error" if>{{ errorMessages.descricao || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.descricao">{{ errorMessages.descricao || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="valor_bruto">Valor bruto</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_bruto" id="valor_bruto" type="text"/>
-                        <small id="text-error" class="p-error" if>{{ errorMessages.valor_bruto || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.valor_bruto">{{ errorMessages.valor_bruto || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="status_comissao">Status</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.status_comissao" id="status_comissao" type="text"/>
-                        <small id="text-error" class="p-error" if>{{ errorMessages.status_comissao || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.status_comissao">{{ errorMessages.status_comissao || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="documento">Data</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.documento" id="documento" type="text" @input="validateDocumento()"/>
-                        <small id="text-error" class="p-error" if>{{ errorMessages.documento || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.documento">{{ errorMessages.documento || '&nbsp;' }}</small>
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
