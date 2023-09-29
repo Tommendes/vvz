@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
+import { removeHtmlTags } from '@/global';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -55,20 +56,19 @@ const gridData = ref([]); // Seus dados iniciais
 const itemData = ref(null); // Dados do item selecionado
 // Itens do dropdown de Tipos
 const dropdownTiposDoc = ref([
-    { label: 'Todos...?', value: '-1' },
     { label: 'Outros', value: '0' },
     { label: 'Propostas', value: '1' },
     { label: 'Pedidos', value: '2' }
 ]);
-const dropdownUnidades = ref([{ label: 'Filtrar por Unidade...', value: '-1' }]); // Itens do dropdown de Unidades de Negócio
-const dropdownUnidadesFilter = ref([{ label: 'Filtrar por Tipo...', value: '-1' }]); // Itens do dropdown de Unidades de Negócio do grid
-const tipoDoc = ref('-1'); // Tipo de documento selecionado
-const unidade = ref('-1'); // Unidade de negócio selecionada
-const unidadeNegocio = ref('-1'); // Unidade de negócio selecionada
+const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
+const dropdownUnidadesFilter = ref([]); // Itens do dropdown de Unidades de Negócio do grid
+const tipoDoc = ref(null); // Tipo de documento selecionado
+const unidade = ref(null); // Unidade de negócio selecionada
+const unidadeNegocio = ref(null); // Unidade de negócio selecionada
 
 // Obter parâmetros do BD
 const optionParams = async (query) => {
-    const url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc >= 0 ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade && query.unidade != '-1' ? query.unidade : ''}`;
+    const url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
     return await axios.get(url);
 };
 // Carregar opções do formulário de pesquisa
@@ -79,6 +79,7 @@ const loadOptions = async () => {
 const filtrarUnidades = async () => {
     // Unidades de negócio
     await optionParams({ func: 'gun', tipoDoc: tipoDoc.value, unidade: unidade.value }).then((res) => {
+        dropdownUnidades.value = [];
         res.data.data.map((item) => {
             dropdownUnidades.value.push({ value: item.descricao, label: item.descricao });
         });
@@ -88,9 +89,10 @@ const filtrarUnidades = async () => {
 const filtrarUnidadesDescricao = async () => {
     // Unidades de negócio por tipo
     await optionParams({ func: 'ubt', tipoDoc: tipoDoc.value, unidade: unidade.value }).then((res) => {
-        dropdownUnidadesFilter.value = [{ label: 'Filtrar por Tipo...', value: '-1' }];
+        dropdownUnidadesFilter.value = [];
         res.data.data.map((item) => {
-            dropdownUnidadesFilter.value.push({ label: item.descricao, value: item.descricao });
+            const label = item.descricao.toString().replaceAll(/_/g, ' ');
+            dropdownUnidadesFilter.value.push({ value: item.descricao, label: label });
         });
     });
 };
@@ -98,12 +100,12 @@ const filtrarUnidadesDescricao = async () => {
 // Itens do grid
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
-    { field: 'agente', label: 'Agente', minWidth: '8rem' },
-    { field: 'documento', label: 'Documento', minWidth: '8rem' },
+    { field: 'agente', label: 'Agente', minWidth: '6rem' },
+    { field: 'documento', label: 'Documento', minWidth: '5rem' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'descricao', label: 'Descrição' },
-    { field: 'valor_bruto', label: 'R$ bruto', minWidth: '6rem' },
-    { field: 'status_created_at', label: 'Data', type: 'date', minWidth: '6rem', tagged: true }
+    { field: 'descricao', label: 'Descrição', minWidth: '8rem' },
+    { field: 'valor_bruto', label: 'R$ bruto', minWidth: '5rem' },
+    { field: 'status_created_at', label: 'Data', type: 'date', minWidth: '5rem', tagged: true }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -119,7 +121,7 @@ const urlFilters = ref('');
 // Limpa os filtros do grid
 const clearFilter = () => {
     loading.value = true;
-    tipoDoc.value = unidade.value = unidadeNegocio.value = '-1';
+    tipoDoc.value = unidade.value = unidadeNegocio.value = null;
     rowsPerPage.value = 10;
     initFilters();
     lazyParams.value = {
@@ -190,16 +192,22 @@ const mountUrlFilters = () => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
-    if (tipoDoc.value >= 0) url += `field:doc_venda=equals:${tipoDoc.value}&`;
-    if (unidade.value != '-1') url += `field:unidade=equals:${unidade.value}&`;
-    if (unidadeNegocio.value != '-1') url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
+    if (tipoDoc.value) url += `field:doc_venda=equals:${tipoDoc.value}&`;
+    if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
+    if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     urlFilters.value = url;
 };
 // Itens do menu de contexto do grid
 const menu = ref();
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
-    dt.value.exportCSV();
+    const toExport = dt.value;
+    toExport.value.forEach((element) => {
+        Object.keys(element).forEach((key) => {
+            element[key] = removeHtmlTags(element[key]);
+        });
+    });
+    toExport.exportCSV();
 };
 // Itens do menu de contexto do grid
 const itemsButtons = ref([
@@ -259,6 +267,7 @@ watchEffect(() => {
     <div class="card">
         <PipelineForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
+            style="font-size: 0.9rem"
             :value="gridData"
             lazy
             paginator
@@ -268,7 +277,7 @@ watchEffect(() => {
             dataKey="id"
             :totalRecords="totalRecords"
             :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50]"
+            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
             :loading="loading"
             @page="onPage($event)"
             @sort="onSort($event)"
@@ -286,6 +295,8 @@ watchEffect(() => {
                 </div>
                 <div class="flex justify-content-end gap-3">
                     <Dropdown
+                        placeholder="Todos...?"
+                        :showClear="tipoDoc"
                         style="min-width: 150px"
                         id="doc_venda"
                         optionLabel="label"
@@ -298,6 +309,9 @@ watchEffect(() => {
                         "
                     />
                     <Dropdown
+                        filter
+                        placeholder="Filtrar por Unidade..."
+                        :showClear="unidade"
                         style="min-width: 150px"
                         id="unidades"
                         optionLabel="label"
@@ -309,16 +323,27 @@ watchEffect(() => {
                             filtrarUnidadesDescricao();
                         "
                     />
-                    <Dropdown style="min-width: 200px" id="unidade_tipos" optionLabel="label" optionValue="value" v-model="unidadeNegocio" :options="dropdownUnidadesFilter" @change="loadLazyData()" />
+                    <Dropdown
+                        filter
+                        placeholder="Filtrar por Tipo..."
+                        :showClear="unidadeNegocio"
+                        style="min-width: 200px"
+                        id="unidade_tipos"
+                        optionLabel="label"
+                        optionValue="value"
+                        v-model="unidadeNegocio"
+                        :options="dropdownUnidadesFilter"
+                        @change="loadLazyData()"
+                    />
                     <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '10rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :style="`min-width: ${nome.minWidth ? nome.minWidth : '10rem'}`" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                         <Calendar
@@ -329,11 +354,11 @@ watchEffect(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '10rem'}`"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '10rem'}`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />

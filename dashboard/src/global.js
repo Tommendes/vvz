@@ -92,6 +92,32 @@ export function validarDataPTBR(data) {
     }
 }
 
+// Renderiza o HTML
+export function renderizarHTML(conteudo) {
+    // Verifique se o conteúdo parece ser um link da web ou um endereço de e-mail
+    if (conteudo.includes('http') || conteudo.includes('https')) {
+        return `<a href="${conteudo}" target="_blank">${conteudo}</a>`;
+    } else if (conteudo.includes('www') && !conteudo.includes('https')) {
+        return `<a href="https://${conteudo}" target="_blank">${conteudo}</a>`;
+    } else if (conteudo.includes('@')) {
+        return `<a href="mailto:${conteudo}">${conteudo}</a>`;
+    } else {
+        return conteudo;
+    }
+}
+
+// Remove as tags HTML
+export function removeHtmlTags(str) {
+    if (str === null || str === '') return str;
+    else
+        return str
+            .toString()
+            .replace(/(<([^>]+)>)/gi, '')
+            .replaceAll('  ', ' ')
+            .replace(/&nbsp;/g, '')
+            .replace(/\r?\n|\r/g, '');
+}
+
 // Um array com todos os estados do Brasil
 export const UFS = [
     { value: 'AC', label: 'Acre' },
@@ -159,6 +185,8 @@ export default {
     titleCase,
     stringToBoolean,
     validarDataPTBR,
+    renderizarHTML,
+    removeHtmlTags,
     STATUS_INACTIVE,
     STATUS_WAITING,
     STATUS_SUSPENDED_BY_TKN,

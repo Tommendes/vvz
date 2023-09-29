@@ -6,6 +6,7 @@ import axios from '@/axios-interceptor';
 import { defaultWarn, defaultSuccess } from '@/toast';
 import ContatoForm from './ContatoForm.vue';
 import { useConfirm } from 'primevue/useconfirm';
+import { renderizarHTML } from '@/global';
 const confirm = useConfirm();
 
 const filters = ref(null);
@@ -95,19 +96,6 @@ const deleteRow = () => {
         }
     });
 };
-// Renderiza o HTML
-const renderizarHTML = (conteudo) => {
-    // Verifique se o conteúdo parece ser um link da web ou um endereço de e-mail
-    if (conteudo.includes('http') || conteudo.includes('https')) {
-        return `<a href="${conteudo}" target="_blank">${conteudo}</a>`;
-    } else if (conteudo.includes('www') && !conteudo.includes('https')) {
-        return `<a href="https://${conteudo}" target="_blank">${conteudo}</a>`;
-    } else if (conteudo.includes('@')) {
-        return `<a href="mailto:${conteudo}">${conteudo}</a>`;
-    } else {
-        return conteudo;
-    }
-};
 // Carrega os dados do formulário
 provide('itemData', itemData);
 // Carrega o modo do formulário
@@ -123,6 +111,7 @@ onBeforeMount(() => {
     <div class="card">
         <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
+            style="font-size: 0.9rem"
             class="p-fluid"
             ref="dt"
             :value="gridData"

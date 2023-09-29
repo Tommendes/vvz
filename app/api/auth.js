@@ -27,7 +27,7 @@ module.exports = app => {
         }
 
         let user = await app.db({ 'u': tabela })
-            .select('u.id', 'u.name', 'u.cpf', 'u.telefone', 'u.email', 'u.id', 'u.time_to_pas_expires', 'u.status', 'u.cliente', 'u.dominio', 'u.admin')
+            .select('u.id', 'u.name', 'u.cpf', 'u.telefone', 'u.email', 'u.id', 'u.time_to_pas_expires', 'u.status', 'u.cliente', 'u.dominio', 'u.admin', 'u.gestor')
             .orWhere({ 'u.email': email })
             .orWhere({ 'u.name': email })
             .orWhere({ 'u.cpf': email.replace(/([^\d])+/gim, "") })
@@ -143,6 +143,7 @@ module.exports = app => {
                     telefone: user.telefone,
                     cliente: user.cliente,
                     dominio: user.dominio,
+                    gestor: user.gestor,
                     admin: user.admin,
                     ip: ip,
                     ipSignin: ip,

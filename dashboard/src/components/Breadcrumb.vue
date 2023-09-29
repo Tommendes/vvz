@@ -1,9 +1,12 @@
 <script setup>
 import { ref } from 'vue';
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 const home = ref({
     icon: 'pi pi-home',
-    to: '/'
+    to: `/${userData.cliente}/${userData.dominio}`
 });
 const pilha = defineProps(['items']);
 </script>

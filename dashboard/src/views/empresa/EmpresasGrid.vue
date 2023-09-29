@@ -57,7 +57,7 @@ const itemsButtons = ref([
         command: () => {
             defaultWarn('Excluir registro (ID): ' + itemData.value.id);
         }
-    },
+    }
 ]);
 const toggle = (event) => {
     menu.value.toggle(event);
@@ -69,10 +69,9 @@ const loadData = () => {
     loading.value = true;
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        gridData.value.forEach(element => {
-            if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11)
-                element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa)
-            else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa)
+        gridData.value.forEach((element) => {
+            if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
+            else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
         });
         loading.value = false;
     });
@@ -85,9 +84,21 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
-        <DataTable :value="gridData" :paginator="true" class="p-datatable-gridlines" :rows="10" dataKey="id"
-            :rowHover="true" v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
-            responsiveLayout="scroll" :globalFilterFields="['razaosocial', 'fantasia', 'cpf_cnpj_empresa']">
+        <DataTable
+            style="font-size: 0.9rem"
+            :value="gridData"
+            :paginator="true"
+            class="p-datatable-gridlines"
+            :rows="10"
+            dataKey="id"
+            :rowHover="true"
+            v-model:filters="filters"
+            filterDisplay="menu"
+            :loading="loading"
+            :filters="filters"
+            responsiveLayout="scroll"
+            :globalFilterFields="['razaosocial', 'fantasia', 'cpf_cnpj_empresa']"
+        >
             <template #header>
                 <div class="flex justify-content-between">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
@@ -98,19 +109,15 @@ onBeforeMount(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'"
-                    sortable :dataType="nome.type">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value"
-                            :options="nome.list" @change="filterCallback()" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                            :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                            class="p-column-filter" placeholder="Pesquise..." />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
                         <span v-html="data[nome.field]"></span>
@@ -119,10 +126,10 @@ onBeforeMount(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle"
-                        aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>
         </DataTable>
-</div></template>
+    </div>
+</template>

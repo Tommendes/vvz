@@ -3,20 +3,8 @@ import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { isValidEmail } from '@/global';
-import moment from 'moment';
+import { userKey } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-
-import { Mask } from 'maska';
-const masks = ref({
-    // cpf_cnpj: new Mask({
-    //     mask: ['###.###.###-##', '##.###.###/####-##']
-    // }),
-    // telefone: new Mask({
-    //     mask: ['(##) ####-####', '(##) #####-####']
-    // })
-});
-
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
@@ -26,9 +14,6 @@ const router = useRouter();
 // Cookies de usuário
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
-
-// Validar o cpf_cnpj
-import { cpf, cnpj } from 'cpf-cnpj-validator';
 
 // Campos de formulário
 const itemData = ref({});
@@ -40,11 +25,6 @@ const labels = ref({
     valor_bruto: 'Valor Bruto',
     status_comissao: 'Status',
     documento: 'Data'
-    // pfpj: 'pf',
-    // nome: 'Nome',
-    // aniversario: 'Nascimento',
-    // cpf_cnpj: 'CPF',
-    // rg_ie: 'RG'
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -55,10 +35,8 @@ const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Dropdowns
-const dropdownSexo = ref([]);
 const dropdownPaisNascim = ref([]);
 const dropdownTipo = ref([]);
-const dropdownAtuacao = ref([]);
 // Loadings
 const loading = ref({
     form: true,
@@ -226,11 +204,14 @@ watchEffect(() => {
         labels.value.documento = 'Data';
     }
 });
+
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 </script>
 
 <template>
     <div class="card">
-        <Breadcrumb :items="[{ label: 'Pipeline', to: '/cso/root/pipeline' }, { label: itemData.documento }]" />
+        <Breadcrumb :items="[{ label: 'Todos os Registros do Pipeline', to: `/${userData.cliente}/${userData.dominio}/pipeline` }, { label: itemData.documento }]" />
         <div class="grid">
             <form @submit.prevent="saveData">
                 <div class="col-12">

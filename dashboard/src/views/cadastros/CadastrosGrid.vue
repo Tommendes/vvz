@@ -5,6 +5,9 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError } from '@/toast';
 import moment from 'moment';
 import CadastroForm from './CadastroForm.vue';
+import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -25,13 +28,18 @@ const masks = ref({
     }),
     cnpj: new Mask({
         mask: '##.###.###/####-##'
+    }),
+    telefone: new Mask({
+        mask: ['(##) ####-####', '(##) #####-####']
     })
 });
 
 const urlBase = ref(`${baseApiUrl}/cadastros`);
 
 onBeforeMount(() => {
+    // Inicializa os filtros do grid
     initFilters();
+    loadOptions();
 });
 onMounted(() => {
     clearFilter();
@@ -64,19 +72,7 @@ const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
 const itemData = ref(null);
-const initFilters = () => {
-    filters.value = {
-        tipo_cadas: { value: '', matchMode: 'contains' },
-        cpf_cnpj: { value: '', matchMode: 'contains' },
-        nome: { value: '', matchMode: 'contains' },
-        atuacao: { value: '', matchMode: 'contains' },
-        aniversario: { value: '', matchMode: 'contains' }
-    };
-};
-const filters = ref({});
-const lazyParams = ref({});
-const urlFilters = ref('');
-
+// Lista de meses
 const dropdownMes = ref([
     { label: 'Janeiro', value: '01' },
     { label: 'Fevereiro', value: '02' },
@@ -92,9 +88,63 @@ const dropdownMes = ref([
     { label: 'Dezembro', value: '12' }
 ]);
 
+// Itens do grid
+const listaNomes = ref([
+    { field: 'tipo_cadas', label: 'Tipo Cadastro', showDefault: false },
+    { field: 'cpf_cnpj', label: 'CPF/CNPJ', showDefault: true },
+    { field: 'nome', label: 'Nome', minWidth: '10rem', showDefault: true },
+    { field: 'atuacao', label: 'Área de atuação', showDefault: false },
+    { field: 'email', label: 'Email', showDefault: true },
+    { field: 'telefone', label: 'Telefone', showDefault: true, mask: 'telefone' },
+    { field: 'aniversario', label: 'Aniv/Fundação', showDefault: true, list: dropdownMes.value }
+]);
+// Inicializa os filtros do grid
+const initFilters = () => {
+    filters.value = {};
+    listaNomes.value.forEach((element) => {
+        filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
+    });
+    filters.value = { ...filters.value, doc_venda: { value: '', matchMode: 'contains' } };
+};
+const filters = ref({});
+const lazyParams = ref({});
+const urlFilters = ref('');
+const dropdownTipoCadastro = ref([]); // Dropdown de tipo de cadastro
+const dropdownAtuacao = ref([]); // Dropdown de área de atuação
+const tipoCadastro = ref(null); // Tipo de cadastro
+const areaAtuacao = ref(null); // Área de atuação
+
+// Obter parâmetros do BD
+const optionLocalParams = async (query) => {
+    const selects = query.select ? `&slct=${query.select}` : undefined;
+    const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
+    return await axios.get(url);
+};
+// Carregar opções do formulário de pesquisa
+const loadOptions = async () => {
+    filtrarTiposCadastro();
+    filtrarAtuacao();
+};
+const filtrarTiposCadastro = async () => {
+    // Tipo de adastro
+    await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownTipoCadastro.value.push({ value: item.id, label: item.label });
+        });
+    });
+};
+const filtrarAtuacao = async () => {
+    // Áreas de atuação
+    await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownAtuacao.value.push({ value: item.id, label: item.label });
+        });
+    });
+};
+// Limpa os filtros do grid
 const clearFilter = () => {
     loading.value = true;
-
+    areaAtuacao.value = tipoCadastro.value = null;
     rowsPerPage.value = 10;
     initFilters();
     lazyParams.value = {
@@ -124,6 +174,7 @@ const loadLazyData = () => {
                     else if (element.cpf_cnpj && element.cpf_cnpj.length == 14) element.cpf_cnpj = masks.value.cnpj.masked(element.cpf_cnpj);
                     // Converte data en para pt
                     if (element.aniversario) element.aniversario = moment(element.aniversario).format('DD/MM/YYYY');
+                    if (element.email) element.email = renderizarHTML(element.email);
                 });
                 loading.value = false;
             })
@@ -160,12 +211,20 @@ const mountUrlFilters = () => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
+    if (tipoCadastro.value) url += `field:id_params_tipo=equals:${tipoCadastro.value}&`;
+    if (areaAtuacao.value) url += `field:id_params_atuacao=equals:${areaAtuacao.value}&`;
     urlFilters.value = url;
 };
 const menu = ref();
-
+// Exporta os dados do grid para CSV
 const exportCSV = () => {
-    dt.value.exportCSV();
+    const toExport = dt.value;
+    toExport.value.forEach((element) => {
+        Object.keys(element).forEach((key) => {
+            element[key] = removeHtmlTags(element[key]);
+        });
+    });
+    toExport.exportCSV();
 };
 const itemsButtons = ref([
     {
@@ -198,7 +257,7 @@ watchEffect(() => {
     <div class="card">
         <CadastroForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
-            class="p-fluid"
+            style="font-size: 0.9rem"
             :value="gridData"
             lazy
             paginator
@@ -208,7 +267,7 @@ watchEffect(() => {
             dataKey="id"
             :totalRecords="totalRecords"
             :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50]"
+            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
             :loading="loading"
             @page="onPage($event)"
             @sort="onSort($event)"
@@ -222,12 +281,72 @@ watchEffect(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
+                    <Dropdown
+                        filter
+                        placeholder="Filtrar por Tipo de Cadastro..."
+                        :showClear="tipoCadastro"
+                        style="min-width: 200px"
+                        id="tipoCadastro"
+                        optionLabel="label"
+                        optionValue="value"
+                        v-model="tipoCadastro"
+                        :options="dropdownTipoCadastro"
+                        @change="loadLazyData()"
+                    />
+                    <Dropdown
+                        filter
+                        placeholder="Filtrar por Área de Atuação..."
+                        :showClear="areaAtuacao"
+                        style="min-width: 200px"
+                        id="areaAtuacao"
+                        optionLabel="label"
+                        optionValue="value"
+                        v-model="areaAtuacao"
+                        :options="dropdownAtuacao"
+                        @change="loadLazyData()"
+                    />
+                    <Button v-if="userData.gestor" icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                 </div>
             </template>
-            <Column field="tipo_cadas" header="Tipo" :filterMatchMode="'contains'" sortable>
+            <template v-for="nome in listaNomes" :key="nome">
+                <Column v-if="nome.showDefault" :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
+                        <Dropdown
+                            :id="nome.field"
+                            optionLabel="label"
+                            optionValue="value"
+                            v-model="filterModel.value"
+                            :options="nome.list"
+                            @change="filterCallback()"
+                            :class="nome.class"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
+                        />
+                    </template>
+                    <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
+                        <Calendar
+                            v-model="filterModel.value"
+                            dateFormat="dd/mm/yy"
+                            selectionMode="range"
+                            :numberOfMonths="2"
+                            placeholder="dd/mm/aaaa"
+                            mask="99/99/9999"
+                            @input="filterCallback()"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
+                        />
+                    </template>
+                    <template v-else #filter="{ filterModel, filterCallback }">
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                    </template>
+                    <template #body="{ data }">
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
+                        <span v-else v-html="data[nome.field]"></span>
+                    </template>
+                </Column>
+            </template>
+            <!-- <Column field="tipo_cadas" header="Tipo" :filterMatchMode="'contains'" sortable>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                 </template>
@@ -251,7 +370,7 @@ watchEffect(() => {
                 <template #filter="{ filterModel, filterCallback }">
                     <Dropdown id="mes" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="dropdownMes" @change="filterCallback()" />
                 </template>
-            </Column>
+            </Column> -->
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />

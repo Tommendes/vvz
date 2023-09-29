@@ -1,12 +1,16 @@
 <script setup>
-import { onBeforeMount, onMounted, ref } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import router from '../../router';
-import { defaultSuccess, defaultWarn } from '@/toast';
+import { defaultWarn } from '@/toast';
 import CadastroForm from './CadastroForm.vue';
 import ContatosGrid from './contatos/ContatosGrid.vue';
 import EnderecosGrid from './enderecos/EnderecosGrid.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -41,7 +45,7 @@ onBeforeMount(() => {
     <div class="grid">
         <div class="col-12">
             <div class="card">
-                <h5>{{ itemData.nome + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }}</h5>
+                <Breadcrumb :items="[{ label: 'Todos os Cadastros', to: `/${userData.cliente}/${userData.dominio}/cadastros` }, { label: itemData.nome + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
                 <TabView>
                     <TabPanel>
                         <template #header>

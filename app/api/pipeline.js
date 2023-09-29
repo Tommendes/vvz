@@ -126,77 +126,81 @@ module.exports = app => {
         let tipoParams = '1=1'
         if (req.query) {
             queryes = req.query
+            console.log(queryes);
             query = ''
             for (const key in queryes) {
                 let operator = queryes[key].split(':')[0]
                 let value = queryes[key].split(':')[1]
-                if (key.split(':')[0] == 'field') {
-                    sortField = key.split(':')[1].split('=')[0]
-                    sortOrder = 'ASC'
-                    if (['unidade'].includes(key.split(':')[1])) {
-                        query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
-                        sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
-                        sortOrder = 'DESC'
-                    } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
-                        query += `pp.descricao = '${value}' AND `
-                        sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
-                        sortOrder = 'DESC'
-                    } else if (['status_created_at'].includes(key.split(':')[1])) {
-                        sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
-                        sortOrder = 'DESC'
-                        value = queryes[key].split(':')
-                        let valueI = moment(value[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
-                        let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
-                        if (typeof valueF != 'Date') valueF = valueI;
-                        switch (operator) {
-                            case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
-                                break;
-                            case 'dateBefore': operator = `< "${valueI}"`
-                                break;
-                            case 'dateAfter': operator = `> "${valueF}"`
-                                break;
-                            default: operator = `between "${valueI}" and "${valueF}"`
-                                break;
-                        }
-                        query += `date(ps.created_at) ${operator} AND `
-                    } else {
-                        if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
-
-                        switch (operator) {
-                            case 'startsWith': operator = `like "${value}"`
-                                break;
-                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
-                                break;
-                            case 'notContains': operator = `not like "%${value}%"`
-                                break;
-                            case 'endsWith': operator = `like "%${value}"`
-                                break;
-                            case 'notEquals': operator = `!= "${value}"`
-                                break;
-                            default: operator = `= "${value}"`
-                                break;
-                        }
-                        let queryField = key.split(':')[1]
-                        if (queryField == 'nome') {
-                            query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
+                key.split(':').forEach(element => {
+                    if (element == 'field') {
+                        if (['unidade'].includes(key.split(':')[1])) {
+                            query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
+                            sortField = 'status_created_at'
+                            sortOrder = 'DESC'
+                        } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
+                            query += `pp.descricao = '${value}' AND `
+                            sortField = 'status_created_at'
+                            sortOrder = 'DESC'
+                        } else if (['status_created_at'].includes(key.split(':')[1])) {
+                            sortField = 'status_created_at'
+                            value = queryes[key].split(':')
+                            let valueI = moment(value[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
+                            let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
+                            if (typeof valueF != 'Date') valueF = valueI;
+                            switch (operator) {
+                                case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
+                                    break;
+                                case 'dateBefore': operator = `< "${valueI}"`
+                                    break;
+                                case 'dateAfter': operator = `> "${valueF}"`
+                                    break;
+                                default: operator = `between "${valueI}" and "${valueF}"`
+                                    break;
+                            }
+                            query += `date(ps.created_at) ${operator} AND `
                         } else {
-                            if (queryField == 'agente') queryField = 'u.name'
-                            else if (queryField == 'descricao') queryField = 'tbl1.descricao'
-                            else if (queryField == 'tipo_doc') queryField = 'pp.descricao'
-                            query += `${queryField} ${operator} AND `
+                            if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
+
+                            switch (operator) {
+                                case 'startsWith': operator = `like "${value}"`
+                                    break;
+                                case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                                    break;
+                                case 'notContains': operator = `not like "%${value}%"`
+                                    break;
+                                case 'endsWith': operator = `like "%${value}"`
+                                    break;
+                                case 'notEquals': operator = `!= "${value}"`
+                                    break;
+                                default: operator = `= "${value}"`
+                                    break;
+                            }
+                            let queryField = key.split(':')[1]
+                            if (queryField == 'nome') {
+                                query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
+                            } else {
+                                if (queryField == 'agente') queryField = 'u.name'
+                                else if (queryField == 'descricao') queryField = 'tbl1.descricao'
+                                else if (queryField == 'tipo_doc') queryField = 'pp.descricao'
+                                query += `${queryField} ${operator} AND `
+                            }
                         }
                     }
-                } else if (key.split(':')[0] == 'params') {
-                    switch (key.split(':')[1]) {
-                        case 'page': page = Number(queryes[key]);
-                            break;
-                        case 'rows': rows = Number(queryes[key]);
-                            break;
+                    if (element == 'params') {
+                        switch (key.split(':')[1]) {
+                            case 'page': page = Number(queryes[key]);
+                                break;
+                            case 'rows': rows = Number(queryes[key]);
+                                break;
+                        }
                     }
-                } else if (key.split(':')[0] == 'sort') {
-                    sortField = key.split(':')[1].split('=')[0]
-                    sortOrder = queryes[key]
-                }
+                    if (element == 'sort') {
+                        sortField = key.split(':')[1].split('=')[0]
+                        if (sortField == 'status_created_at') sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
+                        sortOrder = queryes[key]
+                    }
+
+                });
             }
             query = query.slice(0, -5).trim()
         }
@@ -208,7 +212,7 @@ module.exports = app => {
         }
 
         const totalRecords = await app.db({ tbl1: tabelaDomain })
-            .count('tbl1.id as count').first()
+            .countDistinct('tbl1.id as count').first()
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             .leftJoin({ ps: tabelaPipelineStatusDomain }, 'ps.id_pipeline', '=', 'tbl1.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
@@ -230,10 +234,9 @@ module.exports = app => {
             .limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-            })
     }
 
 

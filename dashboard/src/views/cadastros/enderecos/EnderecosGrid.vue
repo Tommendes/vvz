@@ -140,6 +140,7 @@ onBeforeMount(() => {
         <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
         <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
+            style="font-size: 0.9rem"
             class="p-fluid"
             :value="gridData"
             :paginator="true"
