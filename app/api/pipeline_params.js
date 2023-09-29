@@ -191,6 +191,74 @@ module.exports = app => {
         }
     }
 
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'ubt':
+                getUnidadesByTipoDoc(req, res)
+                break;
+            case 'gun':
+                getUnidades(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }
 
-    return { save, get, getById, remove }
+    const getUnidadesByTipoDoc = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de unidades de negócios"`)
+        } catch (error) {
+            return res.status(401).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const doc_venda = req.query.doc_venda || undefined
+        const gera_baixa = req.query.gera_baixa || undefined
+        const descricao = req.query.descricao || undefined
+        const ret = app.db(tabelaDomain).where({ status: STATUS_ACTIVE })
+
+        if (doc_venda) ret.where({ doc_venda: doc_venda })
+        if (gera_baixa) ret.where({ gera_baixa: gera_baixa })
+        if (descricao && descricao != '-1') ret.where(app.db.raw(`SUBSTRING_INDEX(descricao, '_', 1) = '${descricao}'`))
+
+        ret.orderBy('descricao', 'asc')
+        ret.then(body => {
+            const quant = body.length
+            return res.json({ data: body, quant })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
+
+    const getUnidades = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de unidades de negócios"`)
+        } catch (error) {
+            return res.status(401).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const ret = app.db(tabelaDomain)
+            .select(app.db.raw(`SUBSTRING_INDEX(descricao, "_", 1) as descricao`))
+            .where({ status: STATUS_ACTIVE })
+            .groupBy(app.db.raw(`SUBSTRING_INDEX(descricao, "_", 1)`))
+            .orderBy(app.db.raw(`SUBSTRING_INDEX(descricao, "_", 1)`))
+        ret.then(body => {
+            const quant = body.length
+            return res.json({ data: body, quant })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
+
+
+    return { save, get, getById, remove, getByFunction }
 }

@@ -121,12 +121,11 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('tbl1.id')
+        let sortField = app.db.raw('str_to_date(status_created_at,"%d/%m/%Y")')
         let sortOrder = 'DESC'
         let tipoParams = '1=1'
         if (req.query) {
             queryes = req.query
-            console.log(queryes);
             query = ''
             for (const key in queryes) {
                 let operator = queryes[key].split(':')[0]
@@ -134,48 +133,58 @@ module.exports = app => {
                 if (key.split(':')[0] == 'field') {
                     sortField = key.split(':')[1].split('=')[0]
                     sortOrder = 'ASC'
-                    if (['status_params'].includes(key.split(':')[1])) {
-                        query += `EXTRACT(MONTH FROM ${key.split(':')[1]}) = '${value}' AND `
-                    } else if (['created_at'].includes(key.split(':')[1])) {
-                        sortField = 'CAST(tbl1.created_at AS DATE)'
+                    if (['unidade'].includes(key.split(':')[1])) {
+                        query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
+                        sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
+                        sortOrder = 'DESC'
+                    } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
+                        query += `pp.descricao = '${value}' AND `
+                        sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
+                        sortOrder = 'DESC'
+                    } else if (['status_created_at'].includes(key.split(':')[1])) {
+                        sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
                         sortOrder = 'DESC'
                         value = queryes[key].split(':')
                         let valueI = moment(value[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
                         let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
-                        // console.log(operator, valueI, valueF);
-                        // value = moment(value, 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
+                        if (typeof valueF != 'Date') valueF = valueI;
                         switch (operator) {
-                            case 'dateIsNot': operator = `not between '${valueI}' and '${valueF}'`
+                            case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
                                 break;
-                            case 'dateBefore': operator = `< '${valueI}'`
+                            case 'dateBefore': operator = `< "${valueI}"`
                                 break;
-                            case 'dateAfter': operator = `> '${valueF}'`
+                            case 'dateAfter': operator = `> "${valueF}"`
                                 break;
-                            default: operator = `between '${valueI}' and '${valueF}'`
+                            default: operator = `between "${valueI}" and "${valueF}"`
                                 break;
                         }
-                        query += `date(tbl1.created_at) ${operator} AND `
+                        query += `date(ps.created_at) ${operator} AND `
                     } else {
-                        if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
+                        if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
 
                         switch (operator) {
-                            case 'startsWith': operator = `like '${value}%'`
+                            case 'startsWith': operator = `like "${value}"`
                                 break;
-                            case 'contains': operator = `like '%${value}%'`
+                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not like '%${value}%'`
+                            case 'notContains': operator = `not like "%${value}%"`
                                 break;
-                            case 'endsWith': operator = `like '%${value}'`
+                            case 'endsWith': operator = `like "%${value}"`
                                 break;
-                            case 'notEquals': operator = `!= '${value}'`
+                            case 'notEquals': operator = `!= "${value}"`
                                 break;
-                            default: operator = `= '${value}'`
+                            default: operator = `= "${value}"`
                                 break;
                         }
                         let queryField = key.split(':')[1]
-                        if (queryField == 'agente') queryField = 'u.name'
-                        else if (queryField == 'descricao') queryField = 'tbl1.descricao'
-                        query += `${queryField} ${operator} AND `
+                        if (queryField == 'nome') {
+                            query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
+                        } else {
+                            if (queryField == 'agente') queryField = 'u.name'
+                            else if (queryField == 'descricao') queryField = 'tbl1.descricao'
+                            else if (queryField == 'tipo_doc') queryField = 'pp.descricao'
+                            query += `${queryField} ${operator} AND `
+                        }
                     }
                 } else if (key.split(':')[0] == 'params') {
                     switch (key.split(':')[1]) {
@@ -201,24 +210,24 @@ module.exports = app => {
         const totalRecords = await app.db({ tbl1: tabelaDomain })
             .count('tbl1.id as count').first()
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            .leftJoin({ ps: tabelaPipelineStatusDomain }, 'ps.id_pipeline', '=', 'tbl1.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, c.nome, u.name agente, tbl1.documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
-            date_format(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y')created_at, 
+            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, tbl1.documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+            (SELECT DATE_FORMAT(SUBSTRING_INDEX(MAX(ps.created_at),' ',1),'%d/%m/%Y') FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id)status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            .leftJoin({ ps: tabelaPipelineStatusDomain }, 'ps.id_pipeline', '=', 'tbl1.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
-            // .groupBy('tbl1.id')
             .orderBy(app.db.raw(sortField), sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-        console.log(ret.toString());
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
         })
