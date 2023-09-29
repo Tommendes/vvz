@@ -179,11 +179,7 @@ const validateTelefone = () => {
 };
 // Validar formulário
 const formIsValid = () => {
-    return validateCPF() && validateTelefone() && validateEmail() && validateEmail(itemData.value.email, 'Formato de email do campo "email" inválido') &&
-        validateEmail(itemData.value.emailAt, 'Formato de email do campo "emailAt" inválido') &&
-        validateEmail(itemData.value.emailComercial, 'Formato de email do campo "emailComercial" inválido') &&
-        validateEmail(itemData.value.emailFinanceiro, 'Formato de email do campo "emailFinanceiro" inválido') &&
-        validateEmail(itemData.value.emailRH, 'Formato de email do campo "emailRH" inválido');
+    return validateCPF() && validateTelefone() && validateEmail();
     // return validateDocumento();
 };
 // Recarregar dados do formulário
