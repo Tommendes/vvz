@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError } from '@/toast';
@@ -12,12 +12,14 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
 import { useRouter } from 'vue-router';
+import moment from 'moment';
 const router = useRouter();
 
 const urlBase = ref(`${baseApiUrl}/pipeline`);
 onBeforeMount(() => {
     // Inicializa os filtros do grid
     initFilters();
+    loadOptions();
 });
 onMounted(() => {
     // Limpa os filtros do grid
@@ -51,16 +53,57 @@ const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Seus dados iniciais
 const itemData = ref(null); // Dados do item selecionado
-const dropdownTipoParams = ref([]); // Itens do dropdown de Tipos
+// Itens do dropdown de Tipos
+const dropdownTiposDoc = ref([
+    { label: 'Todos...?', value: '-1' },
+    { label: 'Outros', value: '0' },
+    { label: 'Propostas', value: '1' },
+    { label: 'Pedidos', value: '2' }
+]);
+const dropdownUnidades = ref([{ label: 'Filtrar por Unidade...', value: '-1' }]); // Itens do dropdown de Unidades de Negócio
+const dropdownUnidadesFilter = ref([{ label: 'Filtrar por Tipo...', value: '-1' }]); // Itens do dropdown de Unidades de Negócio do grid
+const tipoDoc = ref('-1'); // Tipo de documento selecionado
+const unidade = ref('-1'); // Unidade de negócio selecionada
+const unidadeNegocio = ref('-1'); // Unidade de negócio selecionada
+
+// Obter parâmetros do BD
+const optionParams = async (query) => {
+    const url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc >= 0 ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade && query.unidade != '-1' ? query.unidade : ''}`;
+    return await axios.get(url);
+};
+// Carregar opções do formulário de pesquisa
+const loadOptions = async () => {
+    filtrarUnidades();
+    filtrarUnidadesDescricao();
+};
+const filtrarUnidades = async () => {
+    // Unidades de negócio
+    await optionParams({ func: 'gun', tipoDoc: tipoDoc.value, unidade: unidade.value }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownUnidades.value.push({ value: item.descricao, label: item.descricao });
+        });
+    });
+    filtrarUnidadesDescricao();
+};
+const filtrarUnidadesDescricao = async () => {
+    // Unidades de negócio por tipo
+    await optionParams({ func: 'ubt', tipoDoc: tipoDoc.value, unidade: unidade.value }).then((res) => {
+        dropdownUnidadesFilter.value = [{ label: 'Filtrar por Tipo...', value: '-1' }];
+        res.data.data.map((item) => {
+            dropdownUnidadesFilter.value.push({ label: item.descricao, value: item.descricao });
+        });
+    });
+};
+
 // Itens do grid
 const listaNomes = ref([
-    { field: 'tipo_doc', label: 'Tipo', list: dropdownTipoParams.value },
-    { field: 'created_at', label: 'Data', type: 'date' },
     { field: 'nome', label: 'Cliente' },
-    { field: 'agente', label: 'Agente' },
-    { field: 'documento', label: 'Documento' },
+    { field: 'agente', label: 'Agente', minWidth: '8rem' },
+    { field: 'documento', label: 'Documento', minWidth: '8rem' },
+    { field: 'tipo_doc', label: 'Tipo' },
     { field: 'descricao', label: 'Descrição' },
-    { field: 'valor_bruto', label: 'R$ bruto' }
+    { field: 'valor_bruto', label: 'R$ bruto', minWidth: '6rem' },
+    { field: 'status_created_at', label: 'Data', type: 'date', minWidth: '6rem', tagged: true }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -68,6 +111,7 @@ const initFilters = () => {
     listaNomes.value.forEach((element) => {
         filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
     });
+    filters.value = { ...filters.value, doc_venda: { value: '', matchMode: 'contains' } };
 };
 const filters = ref({});
 const lazyParams = ref({});
@@ -75,7 +119,7 @@ const urlFilters = ref('');
 // Limpa os filtros do grid
 const clearFilter = () => {
     loading.value = true;
-
+    tipoDoc.value = unidade.value = unidadeNegocio.value = '-1';
     rowsPerPage.value = 10;
     initFilters();
     lazyParams.value = {
@@ -102,6 +146,7 @@ const loadLazyData = () => {
                 gridData.value.forEach((element) => {
                     element.tipo_doc = element.tipo_doc.replaceAll('_', ' '); //dropdownStatusParams.value.find((item) => item.value == element.tipo_doc).label;
                     element.descricao = element.descricao.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim();
+                    if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = element.valor_bruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 });
                 loading.value = false;
             })
@@ -145,6 +190,9 @@ const mountUrlFilters = () => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
+    if (tipoDoc.value >= 0) url += `field:doc_venda=equals:${tipoDoc.value}&`;
+    if (unidade.value != '-1') url += `field:unidade=equals:${unidade.value}&`;
+    if (unidadeNegocio.value != '-1') url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     urlFilters.value = url;
 };
 // Itens do menu de contexto do grid
@@ -178,6 +226,29 @@ const toggle = (event) => {
 const getItem = (data) => {
     itemData.value = data;
 };
+// Determina a qualificação baseado no tempo de existência do registro (status_created_at)
+// Se o registro tiver 120 dias ou mais, retorne 'danger'
+// Se o registro tiver 120 dias ou menos, retorne 'help'
+// Se o registro tiver 80 dias ou menos, retorne 'warning'
+// Se o registro tiver 40 dias ou menos, retorne 'info'
+// Se o registro tiver 7 dias ou menos, retorne 'success'
+const daysToQualify = ref([
+    { days: 7, qualify: 'success', label: '7 dias ou menos' },
+    { days: 39, qualify: 'info', label: 'Inferior a 40 dias' },
+    { days: 79, qualify: 'warning', label: 'Inferior a 80 dias' },
+    { days: 119, qualify: 'help', label: 'Inferior a 120 dias' },
+    { days: 120, qualify: 'danger', label: '120 dias ou mais' }
+]);
+const getSeverity = (status_created_at) => {
+    const ageInDays = moment().diff(moment(status_created_at, 'DD/MM/YYYY'), 'days');
+    for (let i = 0; i < daysToQualify.value.length; i++) {
+        const element = daysToQualify.value[i];
+        if (ageInDays <= element.days) {
+            return element.qualify;
+        }
+    }
+    return 'danger';
+};
 // Carrega os dados do filtro do grid
 watchEffect(() => {
     mountUrlFilters();
@@ -210,30 +281,63 @@ watchEffect(() => {
             scrollHeight="420px"
         >
             <template #header>
-                <div class="">
-                    <div class="justify-content-start gap-3">
-                        <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
-                    </div>
-                    <div class="justify-content-end gap-3">
-                        <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
-                        <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
-                        <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
-                    </div>
+                <div class="flex justify-content-end gap-3 mb-3">
+                    <Tag :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"></Tag>
+                </div>
+                <div class="flex justify-content-end gap-3">
+                    <Dropdown
+                        style="min-width: 150px"
+                        id="doc_venda"
+                        optionLabel="label"
+                        optionValue="value"
+                        v-model="tipoDoc"
+                        :options="dropdownTiposDoc"
+                        @change="
+                            loadLazyData();
+                            filtrarUnidades();
+                        "
+                    />
+                    <Dropdown
+                        style="min-width: 150px"
+                        id="unidades"
+                        optionLabel="label"
+                        optionValue="value"
+                        v-model="unidade"
+                        :options="dropdownUnidades"
+                        @change="
+                            loadLazyData();
+                            filtrarUnidadesDescricao();
+                        "
+                    />
+                    <Dropdown style="min-width: 200px" id="unidade_tipos" optionLabel="label" optionValue="value" v-model="unidadeNegocio" :options="dropdownUnidadesFilter" @change="loadLazyData()" />
+                    <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
+                    <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
+                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '10rem'}`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :style="`min-width: ${nome.minWidth ? nome.minWidth : '10rem'}`" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
+                        <Calendar
+                            v-model="filterModel.value"
+                            dateFormat="dd/mm/yy"
+                            selectionMode="range"
+                            :numberOfMonths="2"
+                            placeholder="dd/mm/aaaa"
+                            mask="99/99/9999"
+                            @input="filterCallback()"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '10rem'}`"
+                        />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '10rem'}`" />
                     </template>
                     <template #body="{ data }">
-                        <span v-html="data[nome.field]"></span>
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <span v-else v-html="data[nome.field]"></span>
                     </template>
                 </Column>
             </template>

@@ -201,7 +201,7 @@ INSERT INTO vivazul_cso_root.pipeline_status (
   id,evento,created_at,updated_at,STATUS,id_pipeline,status_params
 )(
 	SELECT 
-	NULL,1,FROM_UNIXTIME(g.created_at)created_at,FROM_UNIXTIME(g.updated_at)updated_at,10,p.id,g.status_params
+	NULL,1,g.data_status created_at,FROM_UNIXTIME(g.updated_at)updated_at,10,p.id,g.status_params
 	FROM vivazul_lynkos.ged_status g
 	JOIN vivazul_cso_root.pipeline p ON g.id_ged = p.old_id ORDER BY g.created_at
 );
