@@ -170,8 +170,15 @@ const validateEmail = () => {
     } else errorMessages.value.email = null;
     return !errorMessages.value.email;
 };
+// Validar telefone 1
+const validateTelefone1 = () => {
+    if (itemData.value.tel1 && itemData.value.tel1.length > 0 && ![10, 11].includes(itemData.value.tel1.replace(/([^\d])+/gim, '').length)) {
+        errorMessages.value.tel1 = 'Formato de tel1efone inválido';
+    } else errorMessages.value.tel1 = null;
+    return !errorMessages.value.tel1;
+};
 // Validar telefone
-const validateTelefone = () => {
+const validateTelefone2 = () => {
     if (itemData.value.tel2 && itemData.value.tel2.length > 0 && ![10, 11].includes(itemData.value.tel2.replace(/([^\d])+/gim, '').length)) {
         errorMessages.value.tel2 = 'Formato de telefone inválido';
     } else errorMessages.value.tel2 = null;
@@ -179,7 +186,7 @@ const validateTelefone = () => {
 };
 // Validar formulário
 const formIsValid = () => {
-    return validateCPF() && validateTelefone() && validateEmail();
+    return validateCPF() && validateTelefone1() && validateTelefone2() && validateEmail();
     // return validateDocumento();
 };
 // Recarregar dados do formulário
