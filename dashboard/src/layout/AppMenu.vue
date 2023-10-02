@@ -52,6 +52,14 @@ const model = ref([
         ]
     },
     {
+        label: `${user.name.split(' ')[0]}${user.name.split(' ')[1] ? ' ' + user.name.split(' ')[1] : ''}`,
+        items: [
+            { label: 'Perfil', icon: 'pi pi-fw pi-user', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Trocar senha', icon: 'pi pi-fw pi-key', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Sair', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/pipeline` }
+        ]
+    },
+    {
         label: 'Administrar',
         items: [
             { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/pipeline` },

@@ -43,6 +43,17 @@ const routes = [
                 component: () => import('@/views/empresa/EmpresaForm.vue')
             },
             {
+                path: '/:client/:domain/password-reset',
+                name: 'password-reset',
+                component: () => import('@/views/pages/auth/UserPassReset.vue')
+            },
+            {
+                path: '/:client/:domain/request-password-reset',
+                name: 'request-password-reset',
+                component: () => import('@/views/pages/auth/UserRequestPassReset.vue')
+            },
+            // Rotas de teste
+            {
                 path: '/:client/:domain/uikit/formlayout',
                 name: 'formlayout',
                 component: () => import('@/views/uikit/FormLayout.vue')
