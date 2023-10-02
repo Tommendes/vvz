@@ -12,11 +12,11 @@ const model = ref([
         items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: `/${user.cliente}/${user.dominio}` }]
     },
     {
-        label: 'Cadastros',
+        label: 'Clientes',
         items: [
             { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros` },
             // { label: 'Gestão de Cadastros Lazy', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros-l` },
-            { label: 'Prospecção', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/pv` }
+            { label: 'Prospecção', icon: 'pi pi-fw pi-map-marker', to: `/${user.cliente}/${user.dominio}/prospeccoes` }
         ]
     },
     {

@@ -23,6 +23,11 @@ const routes = [
                 component: () => import('@/views/cadastros/CadastroPanel.vue')
             },
             {
+                path: '/:client/:domain/prospeccoes',
+                name: 'prospeccoes',
+                component: () => import('@/views/prospeccoes/ProspeccoesGrid.vue')
+            },
+            {
                 path: '/:client/:domain/pipeline',
                 name: 'pipeline',
                 component: () => import('@/views/pipeline/PipelinesGrid.vue')
