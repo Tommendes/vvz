@@ -4,6 +4,7 @@ import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
+import EmpresaForm from './EmpresaForm.vue'
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useConfirm } from 'primevue/useconfirm';
@@ -97,6 +98,7 @@ const loadData = () => {
         loading.value = false;
     });
 };
+const mode = ref('grid');
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -105,6 +107,7 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
+        <EmpresaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
