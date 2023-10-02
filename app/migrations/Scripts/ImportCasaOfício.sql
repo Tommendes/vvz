@@ -218,12 +218,12 @@ WHERE ps.updated_at NOT LIKE '20%' LIMIT 9999999;
 /*Importar empresa*/
 INSERT INTO vivazul_cso_root.empresa (
   id,evento,created_at,updated_at,STATUS,razaosocial,
-  fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,emailAt,emailComercial,emailFinanceiro,emailRH,
+  fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,email_at,email_comercial,email_financeiro,email_rh,
   id_cadas_resplegal,url_logo
 )(
 SELECT 
 NULL,1,FROM_UNIXTIME(e.created_at)created_at,FROM_UNIXTIME(e.updated_at)updated_at,10,razaosocial,
-fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,emailAt,emailComercial,emailFinanceiro,emailRH,
+fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,email_at,email_comercial,email_financeiro,email_rh,
 (SELECT id FROM vivazul_cso_root.cadastros c WHERE c.old_id = e.id_cadas_resplegal)id_cadas_resplegal,url_logo 
 FROM vivazul_lynkos.empresa e WHERE e.dominio = 'casaoficio' 
   ) ;
