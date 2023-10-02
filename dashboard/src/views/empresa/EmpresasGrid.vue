@@ -1,12 +1,13 @@
 <script setup>
-import { ref, onBeforeMount, onMounted } from 'vue';
-import { FilterMatchMode, FilterOperator } from 'primevue/api';
+import { ref, onBeforeMount } from 'vue';
+import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn } from '@/toast';
+import { defaultSuccess } from '@/toast';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useConfirm } from 'primevue/useconfirm';
+import Breadcrumb from '../../components/Breadcrumb.vue';
 const confirm = useConfirm();
 
 const store = useUserStore();
@@ -104,12 +105,12 @@ onBeforeMount(() => {
 </script>
 
 <template>
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros' }]" />
     <div class="card">
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
             :paginator="true"
-            class="p-datatable-gridlines"
             :rows="10"
             dataKey="id"
             :rowHover="true"

@@ -158,8 +158,9 @@ const validateRazaoSocial = () => {
     return !errorMessages.value.razaosocial;
 };
 // Validar CPF
-const validateCPF = () => {
-    if (cpf.isValid(itemData.value.cpf_cnpj_empresa) || cnpj.isValid(itemData.value.cpf_cnpj_empresa)) errorMessages.value.cpf_cnpj_empresa = null;
+const validateCPFCNPJ = () => {
+    const toValidate = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
+    if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) errorMessages.value.cpf_cnpj_empresa = null;
     else errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
     return !errorMessages.value.cpf_cnpj_empresa;
 };
@@ -171,19 +172,20 @@ const validateCep = () => {
 };
 // Validar email
 const validateEmail = (field) => {
-    if (itemData.value[field] && !isValidEmail(itemData.value[field])) {
+    if (itemData.value[field] && itemData.value[field].trim().length > 0 && !isValidEmail(itemData.value[field])) {
         errorMessages.value[field] = 'Formato de email inválido';
     } else errorMessages.value[field] = null;
     return !errorMessages.value[field];
 };
 // Validar telefone
 const validateTelefone = (field) => {
-    if (itemData.value[field] && itemData.value[field].length > 0 && ![10, 11].includes(itemData.value[field].replace(/([^\d])+/gim, '').length)) {
+    if (itemData.value[field] && itemData.value[field].trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value[field]).length)) {
         errorMessages.value[field] = 'Formato de telefone inválido';
     } else errorMessages.value[field] = null;
     return !errorMessages.value[field];
 };
 const validator = () => {
+    let isValid = true;
     [
         { field: 'email', validator: 'email' },
         { field: 'email_at', validator: 'email' },
@@ -193,13 +195,17 @@ const validator = () => {
         { field: 'tel1', validator: 'telefone' },
         { field: 'tel2', validator: 'telefone' }
     ].forEach((element) => {
-        if (element.validator == 'email') validateEmail(element.field);
-        else if (element.validator == 'telefone') validateTelefone(element.field);
+        if (element.validator == 'email' && !validateEmail(element.field)) {
+            isValid = false;
+        } else if (element.validator == 'telefone' && !validateTelefone(element.field)) {
+            isValid = false;
+        }
     });
+    return isValid;
 };
 // Validar formulário
 const formIsValid = () => {
-    return validateRazaoSocial() && validateCPF() && validator() && validateCep();
+    return validateRazaoSocial() && validateCPFCNPJ() && validateCep() && validator();
     // return validateDocumento();
 };
 // Recarregar dados do formulário
@@ -217,6 +223,10 @@ onBeforeMount(() => {
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
+    else {
+        if (itemData.value.id) mode.value = 'view';
+        else mode.value = 'new';
+    }
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {
@@ -228,7 +238,7 @@ watchEffect(() => {
 watch(
     () => itemData.value.cpf_cnpj_empresa,
     (newItemData) => {
-        validateCPF();
+        validateCPFCNPJ();
         if (newItemData.replace(/([^\d])+/gim, '').length == 14) {
             registroTipo.value = 'pj';
             labels.value.razaosocial = 'Razão Social';
@@ -269,12 +279,11 @@ const onImageRightClick = (event) => {
 </script>
 
 <template>
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.cliente}/${userData.dominio}/empresa` }, { label: itemData.razaosocial + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
-        <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.cliente}/${userData.dominio}/empresa` }, { label: itemData.razaosocial + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-3" v-if="registroTipo == 'pj'">
-                    <label for="url_logo">Logomarca</label>
                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                     <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
                     <ContextMenu ref="menu" :model="items" />
@@ -344,21 +353,21 @@ const onImageRightClick = (event) => {
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie" id="ie" type="text" />
                         </div>
-                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
+                        <!-- <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="ie_st">I.E. do Substituto Tributário</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie_st" id="ie_st" type="text" />
-                        </div>
+                        </div> -->
                         <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="im">Inscrição Municipal</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.im" id="im" type="text" />
                         </div>
-                        <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
+                        <!-- <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
                             <label for="cnae">CNAE</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cnae" id="cnae" type="text" />
-                        </div>
+                        </div> -->
                         <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
                             <label for="contato">Contato da Empresa</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>

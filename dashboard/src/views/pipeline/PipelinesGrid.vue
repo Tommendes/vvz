@@ -5,6 +5,7 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import { removeHtmlTags } from '@/global';
+import Breadcrumb from '../../components/Breadcrumb.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -264,6 +265,7 @@ watchEffect(() => {
 </script>
 
 <template>
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros' }]" />
     <div class="card">
         <PipelineForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

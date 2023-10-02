@@ -5,6 +5,7 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError } from '@/toast';
 import moment from 'moment';
 import CadastroForm from './CadastroForm.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
 import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -254,6 +255,7 @@ watchEffect(() => {
 </script>
 
 <template>
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros' }]" />
     <div class="card">
         <CadastroForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
