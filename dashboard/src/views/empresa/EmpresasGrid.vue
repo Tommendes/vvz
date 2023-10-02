@@ -98,6 +98,7 @@ const loadData = () => {
         loading.value = false;
     });
 };
+const mode = ref('grid');
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -107,6 +108,7 @@ onBeforeMount(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros' }]" />
     <div class="card">
+        <EmpresaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"

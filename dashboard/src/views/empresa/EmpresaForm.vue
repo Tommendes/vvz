@@ -348,7 +348,7 @@ const onImageRightClick = (event) => {
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.uf" id="uf" type="text" />
                         </div>
-                        <div class="col-12 md:col-3">
+                        <div class="col-12 md:col-2">
                             <label for="ie">{{ labels.ie }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie" id="ie" type="text" />
