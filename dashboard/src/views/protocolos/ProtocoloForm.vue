@@ -109,7 +109,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/empresa` });
+                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolo` });
             }
         });
     } else loading.value.form = false;
