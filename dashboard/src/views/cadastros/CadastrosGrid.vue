@@ -346,31 +346,6 @@ watchEffect(() => {
                     </template>
                 </Column>
             </template>
-            <!-- <Column field="tipo_cadas" header="Tipo" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
-            <Column field="cpf_cnpj" header="CPF/CNPJ" filterField="cpf_cnpj" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
-            <Column field="nome" header="Nome" filterField="nome" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
-            <Column field="atuacao" header="Atuação" filterField="atuacao" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                </template>
-            </Column>
-            <Column field="aniversario" header="Aniv/Fundação" filterField="aniversario" :filterMatchMode="'contains'" sortable>
-                <template #filter="{ filterModel, filterCallback }">
-                    <Dropdown id="mes" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="dropdownMes" @change="filterCallback()" />
-                </template>
-            </Column> -->
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />

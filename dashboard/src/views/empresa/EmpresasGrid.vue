@@ -40,9 +40,9 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'razaosocial', label: 'Razão Social' },
-    { field: 'fantasia', label: 'Nome Fantasia' },
-    { field: 'cpf_cnpj_empresa', label: 'CNPJ / CPF' }
+    { field: 'razaosocial', label: 'Razão Social', minWidth: '35rem' },
+    { field: 'fantasia', label: 'Nome Fantasia', minWidth: '30rem' },
+    { field: 'cpf_cnpj_empresa', label: 'CNPJ / CPF', minWidth: '12rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -121,7 +121,8 @@ onBeforeMount(() => {
             :globalFilterFields="['razaosocial', 'fantasia', 'cpf_cnpj_empresa']"
         >
             <template #header>
-                <div class="flex justify-content-between">
+                <div class="flex justify-content-end gap-3">
+                    <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
@@ -130,9 +131,9 @@ onBeforeMount(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                         <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />

@@ -4,7 +4,11 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
-import moment from 'moment';
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
+import Breadcrumb from '@/components/Breadcrumb.vue';
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -34,7 +38,7 @@ import { cpf, cnpj } from 'cpf-cnpj-validator';
 
 // Campos de formulário
 const itemData = ref({});
-const registroTipo = ref('pf')
+const registroTipo = ref('pf');
 const labels = ref({
     razaosocial: 'Razão Social',
     fantasia: 'Nome Fantasia',
@@ -50,9 +54,6 @@ const labels = ref({
     bairro: 'Bairro',
     cidade: 'Cidade',
     uf: 'UF',
-    // ibge: '',
-    // geo_ltd: '',
-    // geo_lng: '',
     contato: 'Contato da Empresa',
     tel1: 'Telefone 1',
     tel2: 'Telefone 2',
@@ -119,8 +120,6 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        // console.log(url);
-        // console.log(JSON.stringify(itemData.value))
         if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
         if (itemData.value.te1) itemData.value.tel1 = masks.value.telefone.unmasked(itemData.value.tel1);
         if (itemData.value.te2) itemData.value.tel2 = masks.value.telefone.unmasked(itemData.value.tel2);
@@ -131,11 +130,7 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    // if (itemData.value.documento) itemData.value.documento = moment(itemData.value.documento).format('DD/MM/YYYY');
                     itemDataComparision.value = { ...itemData.value };
-                    emit('changed');
-                    // if (mode.value != 'new') reload();
-                    // else router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastro/${itemData.value.id}` });
                     if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/empresa/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
@@ -147,8 +142,6 @@ const saveData = async () => {
             });
     }
 };
-// Converte 1 ou 0 para boolean
-const isTrue = (value) => value === 1;
 // Verifica se houve alteração nos dados do formulário
 const isItemDataChanged = () => {
     const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
@@ -163,12 +156,18 @@ const validateRazaoSocial = () => {
     if (itemData.value.razaosocial && typeof itemData.value.razaosocial.trim() == 'string' && itemData.value.razaosocial.trim().length > 0) errorMessages.value.razaosocial = null;
     else errorMessages.value.razaosocial = 'Nome ou razão social inválidos';
     return !errorMessages.value.razaosocial;
-}
+};
 // Validar CPF
 const validateCPF = () => {
     if (cpf.isValid(itemData.value.cpf_cnpj_empresa) || cnpj.isValid(itemData.value.cpf_cnpj_empresa)) errorMessages.value.cpf_cnpj_empresa = null;
     else errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
     return !errorMessages.value.cpf_cnpj_empresa;
+};
+// Validar Cep
+const validateCep = () => {
+    if (itemData.value.cep && itemData.value.cep.replace(/([^\d])+/gim, '').length == 8) errorMessages.value.cep = null;
+    else errorMessages.value.cep = 'Formato de cep inválido';
+    return !errorMessages.value.cep;
 };
 // Validar email
 const validateEmail = (field) => {
@@ -177,29 +176,30 @@ const validateEmail = (field) => {
     } else errorMessages.value[field] = null;
     return !errorMessages.value[field];
 };
-const validateEmails = () => {
-    ['email', 'email_at', 'email_comercial', 'email_financeiro', 'email_rh'].forEach(element => {
-        validateEmail(element);
-    });
-}
-// Validar telefone 1
-const validateTelefone1 = () => {
-    if (itemData.value.tel1 && itemData.value.tel1.length > 0 && ![10, 11].includes(itemData.value.tel1.replace(/([^\d])+/gim, '').length)) {
-        errorMessages.value.tel1 = 'Formato de tel1efone inválido';
-    } else errorMessages.value.tel1 = null;
-    return !errorMessages.value.tel1;
-};
 // Validar telefone
-const validateTelefone2 = () => {
-    if (itemData.value.tel2 && itemData.value.tel2.length > 0 && ![10, 11].includes(itemData.value.tel2.replace(/([^\d])+/gim, '').length)) {
-        errorMessages.value.tel2 = 'Formato de telefone inválido';
-    } else errorMessages.value.tel2 = null;
-    return !errorMessages.value.tel2;
+const validateTelefone = (field) => {
+    if (itemData.value[field] && itemData.value[field].length > 0 && ![10, 11].includes(itemData.value[field].replace(/([^\d])+/gim, '').length)) {
+        errorMessages.value[field] = 'Formato de telefone inválido';
+    } else errorMessages.value[field] = null;
+    return !errorMessages.value[field];
 };
-// Validar Cep
+const validator = () => {
+    [
+        { field: 'email', validator: 'email' },
+        { field: 'email_at', validator: 'email' },
+        { field: 'email_comercial', validator: 'email' },
+        { field: 'email_financeiro', validator: 'email' },
+        { field: 'email_rh', validator: 'email' },
+        { field: 'tel1', validator: 'telefone' },
+        { field: 'tel2', validator: 'telefone' }
+    ].forEach((element) => {
+        if (element.validator == 'email') validateEmail(element.field);
+        else if (element.validator == 'telefone') validateTelefone(element.field);
+    });
+};
 // Validar formulário
 const formIsValid = () => {
-    return validateRazaoSocial() && validateCPF() && validateTelefone1() && validateTelefone2() && validateEmail();
+    return validateRazaoSocial() && validateCPF() && validator() && validateCep();
     // return validateDocumento();
 };
 // Recarregar dados do formulário
@@ -222,7 +222,8 @@ onMounted(() => {
 watchEffect(() => {
     isItemDataChanged();
     validateRazaoSocial();
-    validateEmails();
+    validator();
+    validateCep();
 });
 watch(
     () => itemData.value.cpf_cnpj_empresa,
@@ -243,206 +244,176 @@ watch(
         }
     }
 );
+const menu = ref();
+const preview = ref(false);
+const items = ref([
+    {
+        label: 'View',
+        icon: 'pi pi-fw pi-search',
+        command: () => {
+            alert('Enviar nova imagem');
+        }
+    },
+    {
+        label: 'Delete',
+        icon: 'pi pi-fw pi-trash',
+        command: () => {
+            alert('Excluir imagem');
+        }
+    }
+]);
+
+const onImageRightClick = (event) => {
+    menu.value.show(event);
+};
 </script>
 
 <template>
-    <div class="grid">
+    <div class="card">
+        <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.cliente}/${userData.dominio}/empresa` }, { label: itemData.razaosocial + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
         <form @submit.prevent="saveData">
-            <div class="col-12">
-                <div class="p-fluid formgrid grid">
-                    <div class="field col-12 md:col-5">
-                        <label for="razaosocial">{{ labels.razaosocial }}</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.razaosocial"
-                            id="razaosocial" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.razaosocial">{{ errorMessages.razaosocial
-                            || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="fantasia">{{ labels.fantasia }}</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.fantasia"
-                            id="fantasia" type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="cpf_cnpj_empresa">{{ labels.cpf_cnpj_empresa }}</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                            data-maska="['###.###.###-##', '##.###.###/####-##']" v-model="itemData.cpf_cnpj_empresa"
-                            id="cpf_cnpj_empresa" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj_empresa">{{
-                            errorMessages.cpf_cnpj_empresa || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="ie">{{ labels.ie }}</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie" id="ie"
-                            type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2" v-if="registroTipo == 'pj'">
-                        <label for="ie_st">I.E. do Substituto Tributário</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie_st" id="ie_st"
-                            type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2" v-if="registroTipo == 'pj'">
-                        <label for="im">Inscrição Municipal</label>
-                        <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.im" id="im"
-                            type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2" v-if="registroTipo == 'pj'">
-                        <label for="cnae">CNAE</label>
-                        <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cnae" id="cnae"
-                            type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="cep">CEP</label>
-                        <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="#####-###"
-                            v-model="itemData.cep" id="cep" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep || '&nbsp;'
-                        }}</small>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="nr">Número</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr" id="nr"
-                            type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.nr">{{ errorMessages.nr || '&nbsp;'
-                        }}</small>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="complnr">Cmplemento</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr"
-                            id="complnr" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.complnr">{{ errorMessages.complnr ||
-                            '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="logradouro">Logradouro</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.logradouro"
-                            id="logradouro" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.logradouro">{{ errorMessages.logradouro
-                            || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="bairro">Bairro</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro"
-                            type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.bairro">{{ errorMessages.bairro ||
-                            '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="cidade">Cidade</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade"
-                            type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.cidade">{{ errorMessages.cidade ||
-                            '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-1">
-                        <label for="uf">UF</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.uf" id="uf"
-                            type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.uf">{{ errorMessages.uf || '&nbsp;'
-                        }}</small>
-                    </div>
-                    <div class="field col-12 md:col-2" v-if="registroTipo == 'pj'">
-                        <label for="contato">Contato da Empresa</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato"
-                            id="contato" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.contato">{{ errorMessages.contato ||
-                            '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-2" v-if="registroTipo == 'pj'">
-                        <label for="url_logo">Logomarca</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.url_logo"
-                            id="url_logo" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.url_logo">{{ errorMessages.url_logo ||
-                            '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="tel1">Telefone 1</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                            data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel1" id="tel1"
-                            type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.tel1">{{ errorMessages.tel1 || '&nbsp;'
-                        }}</small>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="tel2">Telefone 2</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                            data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel2" id="tel2"
-                            type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.tel2">{{ errorMessages.tel2 || '&nbsp;'
-                        }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="email">Email</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email"
-                            type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email || '&nbsp;'
-                        }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3" v-if="registroTipo == 'pj'">
-                        <label for="email_at">Email da Assistência Técnica</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_at"
-                            id="email_at" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email_at">{{ errorMessages.email_at ||
-                            '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="email_comercial">Email Comercial</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_comercial"
-                            id="email_comercial" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email_comercial">{{
-                            errorMessages.email_comercial || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3" v-if="registroTipo == 'pj'">
-                        <label for="email_financeiro">Email Financeiro</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_financeiro"
-                            id="email_financeiro" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email_financeiro">{{
-                            errorMessages.email_financeiro || '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3" v-if="registroTipo == 'pj'">
-                        <label for="email_rh">Email do RH</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_rh"
-                            id="email_rh" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email_rh">{{ errorMessages.email_rh ||
-                            '&nbsp;' }}</small>
-                    </div>
-                    <div class="field col-12 md:col-3" v-if="registroTipo == 'pj'">
-                        <label for="id_cadas_resplegal">Responsável legal perante a Receita Federal</label>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadas_resplegal"
-                            id="id_cadas_resplegal" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.id_cadas_resplegal">{{
-                            errorMessages.id_cadas_resplegal || '&nbsp;' }}</small>
+            <div class="grid">
+                <div class="col-3" v-if="registroTipo == 'pj'">
+                    <label for="url_logo">Logomarca</label>
+                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                    <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                    <ContextMenu ref="menu" :model="items" />
+                </div>
+                <div class="col-9">
+                    <div class="p-fluid grid">
+                        <div class="col-12">
+                            <label for="razaosocial">{{ labels.razaosocial }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.razaosocial" id="razaosocial" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.razaosocial">{{ errorMessages.razaosocial || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-5">
+                            <label for="fantasia">{{ labels.fantasia }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.fantasia" id="fantasia" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="cpf_cnpj_empresa">{{ labels.cpf_cnpj_empresa }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['###.###.###-##', '##.###.###/####-##']" v-model="itemData.cpf_cnpj_empresa" id="cpf_cnpj_empresa" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj_empresa">{{ errorMessages.cpf_cnpj_empresa || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="cep">CEP</label>
+                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="#####-###" v-model="itemData.cep" id="cep" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="nr">Número</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.nr">{{ errorMessages.nr || '&nbsp;' }}</small>
+                        </div>
                     </div>
                 </div>
-                <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised
-                        @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text
-                        raised :disabled="!isItemDataChanged() || !formIsValid()" />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text
-                        raised @click="reload" />
+                <div class="col-12">
+                    <div class="p-fluid grid">
+                        <div class="col-12 md:col-2">
+                            <label for="complnr">Complemento</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="logradouro">Logradouro</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="bairro">Bairro</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="cidade">Cidade</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" />
+                        </div>
+                        <div class="col-12 md:col-1">
+                            <label for="uf">UF</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.uf" id="uf" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="ie">{{ labels.ie }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie" id="ie" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
+                            <label for="ie_st">I.E. do Substituto Tributário</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie_st" id="ie_st" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
+                            <label for="im">Inscrição Municipal</label>
+                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.im" id="im" type="text" />
+                        </div>
+                        <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
+                            <label for="cnae">CNAE</label>
+                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cnae" id="cnae" type="text" />
+                        </div>
+                        <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
+                            <label for="contato">Contato da Empresa</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" />
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="tel1">Telefone 1</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel1" id="tel1" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.tel1">{{ errorMessages.tel1 || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="tel2">Telefone 2</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel2" id="tel2" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.tel2">{{ errorMessages.tel2 || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="email">Email</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
+                            <label for="email_at">Email da Assistência Técnica</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_at" id="email_at" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_at">{{ errorMessages.email_at || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="email_comercial">Email Comercial</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_comercial" id="email_comercial" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_comercial">{{ errorMessages.email_comercial || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
+                            <label for="email_financeiro">Email Financeiro</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_financeiro" id="email_financeiro" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_financeiro">{{ errorMessages.email_financeiro || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
+                            <label for="email_rh">Email do RH</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_rh" id="email_rh" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_rh">{{ errorMessages.email_rh || '&nbsp;' }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card flex justify-content-center flex-wrap gap-3">
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                    </div>
                 </div>
             </div>
         </form>
