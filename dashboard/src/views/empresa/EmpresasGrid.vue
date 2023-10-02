@@ -8,6 +8,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
+import EmpresaForm from './EmpresaForm.vue'
 const confirm = useConfirm();
 
 const store = useUserStore();

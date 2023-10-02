@@ -283,7 +283,7 @@ const onImageRightClick = (event) => {
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
-                <div class="col-3" v-if="registroTipo == 'pj'">
+                <div class="col-3">
                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                     <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
                     <ContextMenu ref="menu" :model="items" />
