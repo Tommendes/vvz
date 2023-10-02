@@ -6,17 +6,38 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
 
 const store = useUserStore();
-
 const router = useRouter();
-
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/empresa`);
+// Exlui um registro
+const deleteRow = () => {
+    confirm.require({
+        group: 'templating',
+        header: 'Corfirmar exclusão',
+        message: 'Você tem certeza que deseja excluir este registro?',
+        icon: 'pi pi-question-circle',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
+                defaultSuccess('Registro excluído com sucesso!');
+                loadData();
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
 // Itens do grid
 const listaNomes = ref([
     { field: 'razaosocial', label: 'Razão Social' },
@@ -54,8 +75,8 @@ const itemsButtons = ref([
     {
         label: 'Excluir',
         icon: 'pi pi-trash',
-        command: () => {
-            defaultWarn('Excluir registro (ID): ' + itemData.value.id);
+        command: ($event) => {
+            deleteRow($event);
         }
     }
 ]);

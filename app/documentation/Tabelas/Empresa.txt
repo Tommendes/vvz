@@ -27,10 +27,10 @@ contato                   text              YES             (NULL)              
 tel1                      text              YES             (NULL)                     Telefone 1                                                                                                                
 tel2                      varchar(255)      YES             (NULL)                     Telefone 2                                                                                                                
 email                     varchar(255)      YES             (NULL)                     Email geral                                                                                                               
-emailAt                   varchar(255)      YES             (NULL)                     Email da At                                                                                                               
-emailComercial            varchar(255)      YES             (NULL)                     Email comercial                                                                                                           
-emailFinanceiro           varchar(255)      YES             (NULL)                     Email do financeiro                                                                                                       
-emailRH                   varchar(255)      YES             (NULL)                     Email do RH                                                                                                               
+email_at                   varchar(255)      YES             (NULL)                     Email da At                                                                                                               
+email_comercial            varchar(255)      YES             (NULL)                     Email comercial                                                                                                           
+email_financeiro           varchar(255)      YES             (NULL)                     Email do financeiro                                                                                                       
+email_rh                   varchar(255)      YES             (NULL)                     Email do RH                                                                                                               
 id_cadas_resplegal        int(10) unsigned  YES             (NULL)                     Responsável legal perante a Receita Federal                                                                              
 url_logo                  text              YES             (NULL)                     Logomarca da empresa                                                                                                      
 
