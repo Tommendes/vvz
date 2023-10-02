@@ -213,15 +213,15 @@ const exportCSV = () => {
 // Itens do menu de contexto do grid
 const itemsButtons = ref([
     {
-        label: 'Editar',
-        icon: 'pi pi-pencil',
+        label: 'Ver',
+        icon: 'pi pi-eye',
         command: () => {
             router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id}` });
         }
     },
     {
         label: 'Excluir',
-        icon: 'pi pi-trash',
+        icon: 'fa-light fa-chevron-down',
         command: ($event) => {
             deleteRow($event);
         }
