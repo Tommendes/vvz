@@ -28,6 +28,11 @@ const routes = [
                 component: () => import('@/views/prospeccoes/ProspeccoesGrid.vue')
             },
             {
+                path: '/:client/:domain/protocolos',
+                name: 'protocolos',
+                component: () => import('@/views/protocolos/ProtocolosGrid.vue')
+            },
+            {
                 path: '/:client/:domain/pipeline',
                 name: 'pipeline',
                 component: () => import('@/views/pipeline/PipelinesGrid.vue')
