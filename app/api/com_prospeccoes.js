@@ -3,7 +3,8 @@ const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'com_prospeccoes'
-    const tabelaLocalParams = 'local_params'
+    const tabelaAlias = 'Prospeccoes'
+    const tabelaCadEnderecos = 'cad_enderecos'
     const tabelaCadastros = 'cadastros'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
@@ -16,9 +17,9 @@ module.exports = app => {
         try {
             // Alçada para edição
             if (body.id)
-                isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+                isMatchOrError(uParams && (uParams.comercial >= 3 ||(uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+            else isMatchOrError(uParams && (uParams.comercial >= 2 ||(uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -26,12 +27,17 @@ module.exports = app => {
 
         try {
 
-            existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
-            if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
-            existsOrError(body.id_pipeline_params, 'Parâmetro não encontrado')
-            if (body.id_pipeline_params < 0 && body.id_pipeline_params.length > 10) throw 'Parâmetro inválido'
-
+            existsOrError(body.id_cadastros, 'Cadastro não informado')
+            existsOrError(body.id_agente, 'Agente não selecionado')
+            existsOrError(body.id_cad_end, 'Endereço não selecionado')
+            if (!body.id) {
+                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, id_cad_end: body.id_cad_end, data_visita: body.data_visita, periodo: body.periodo }).first()
+                if (unique) {
+                    return res.status(400).send('Prospecção já cadastrada')
+                }
+            }
         } catch (error) {
+            console.log(error);
             return res.status(400).send(error)
         }
 
@@ -102,7 +108,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de prospecções de ${tabela}"`)
+            isMatchOrError(uParams && (uParams.comercial >= 1 ||(uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -110,8 +116,7 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
-        const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
-
+        const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadEnderecos}`
         let queryes = undefined
         let query = undefined
         let page = 0
@@ -179,8 +184,8 @@ module.exports = app => {
                         }
                     }
                     if (element == 'sort') {
-                        sortField = key.split(':')[1].split('=')[0]
-                        if (sortField == 'status_created_at') sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
+                        sortField = key.split(':')[1] ? key.split(':')[1].split('=')[0] : 'data_visita'
+                        if (sortField == 'data_visita') sortField = 'date(tbl1.data_visita)'
                         sortOrder = queryes[key]
                     }
 
@@ -197,21 +202,18 @@ module.exports = app => {
 
         const totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
-            .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
-            .leftJoin({ ps: tabelaPipelineStatusDomain }, 'ps.id_pipeline', '=', 'tbl1.id')
-            .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
+            .join({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_agente')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .join({ ce: tabelaCadEnderecosDomain }, 'c.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, tbl1.documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
-            (SELECT DATE_FORMAT(SUBSTRING_INDEX(MAX(ps.created_at),' ',1),'%d/%m/%Y') FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id)status_created_at, 
+            .select(app.db.raw(`tbl1.id, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.pessoa, tbl1.contato, tbl1.data_visita,
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
-            .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
-            .leftJoin({ ps: tabelaPipelineStatusDomain }, 'ps.id_pipeline', '=', 'tbl1.id')
-            .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
+            .join({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_agente')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .join({ ce: tabelaCadEnderecosDomain }, 'c.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
             .orderBy(app.db.raw(sortField), sortOrder)
@@ -229,7 +231,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de Pipeline de ${tabela}"`)
+            isMatchOrError(uParams && (uParams.comercial >= 1 ||(uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -252,7 +254,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError((uParams && uParams.admin >= 4), `${noAccessMsg} "Exclusão de Pipeline de ${tabela}"`)
+            isMatchOrError(uParams && ((uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -280,7 +282,7 @@ module.exports = app => {
                     updated_at: new Date(),
                     evento: evento
                 })
-                .where({ id: req.params.id })
+                .where({ id: req.params.id, status: STATUS_ACTIVE })
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
             res.status(204).send()
