@@ -18,7 +18,7 @@ const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/empresa`);
+const urlBase = ref(`${baseApiUrl}/protocolo`);
 // Exlui um registro
 const deleteRow = () => {
     confirm.require({
@@ -42,9 +42,9 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'razaosocial', label: 'Razão Social', minWidth: '35rem' },
-    { field: 'fantasia', label: 'Nome Fantasia', minWidth: '30rem' },
-    { field: 'cpf_cnpj_empresa', label: 'CNPJ / CPF', minWidth: '12rem' }
+    { field: 'titulo', label: 'Título', minWidth: '35rem' },
+    { field: 'descricao', label: 'Descrição', minWidth: '30rem' },
+    { field: 'registro', label: 'Registro', minWidth: '12rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -93,8 +93,8 @@ const loadData = () => {
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
-            if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
-            else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
+            // if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
+            // else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
         });
         loading.value = false;
     });
@@ -109,7 +109,7 @@ onBeforeMount(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros' }]" />
     <div class="card">
-        <EmpresaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <ProtocoloForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -122,7 +122,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['razaosocial', 'fantasia', 'cpf_cnpj_empresa']"
+            :globalFilterFields="['titulo', 'descricao', 'registro']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
