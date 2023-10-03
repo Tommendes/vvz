@@ -211,7 +211,7 @@ const userData = JSON.parse(json);
 
 <template>
     <div class="card">
-        <Breadcrumb :items="[{ label: 'Todos os Registros', to: `/${userData.cliente}/${userData.dominio}/pipeline` }, { label: itemData.documento }]" />
+        <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.cliente}/${userData.dominio}/pipeline` }, { label: itemData.documento }]" />
         <div class="grid">
             <form @submit.prevent="saveData">
                 <div class="col-12">
@@ -278,7 +278,7 @@ const userData = JSON.parse(json);
                         </div>
                     </div>
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="pi pi-pencil" text raised @click="mode = 'edit'" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>

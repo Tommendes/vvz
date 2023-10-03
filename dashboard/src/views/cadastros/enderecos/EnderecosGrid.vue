@@ -53,15 +53,15 @@ const clearFilter = () => {
 // Itens do menu de contexto
 const itemsButtons = ref([
     {
-        label: 'Editar',
-        icon: 'pi pi-pencil',
+        label: 'Ver',
+        icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
             mode.value = 'edit';
         }
     },
     {
         label: 'Excluir',
-        icon: 'pi pi-trash',
+        icon: 'fa-solid fa-fire fa-fade',
         command: ($event) => {
             deleteRow($event);
         }
@@ -96,7 +96,7 @@ const deleteRow = () => {
         group: 'templating',
         header: 'Corfirmar exclusão',
         message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'pi pi-question-circle',
+        icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'pi pi-check',
         rejectIcon: 'pi pi-times',
         acceptClass: 'p-button-danger',

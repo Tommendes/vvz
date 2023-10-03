@@ -228,3 +228,25 @@ fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cida
 FROM vivazul_lynkos.empresa e WHERE e.dominio = 'casaoficio' 
   ) ;
 
+/*Importar prospecções*/
+ALTER TABLE vivazul_cso_root.com_prospeccao ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.com_prospeccao;
+ALTER TABLE vivazul_cso_root.com_prospeccao AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_cso_root.com_prospeccao (
+  id,evento,created_at,updated_at,STATUS,
+  id_agente,id_cadastro,id_cad_end,
+  periodo,pessoa,contato,observacoes,data_visita,old_id
+)(
+	SELECT 
+	NULL,1,FROM_UNIXTIME(cp.created_at)created_at,FROM_UNIXTIME(cp.updated_at)updated_at,10,
+	u.id id_agente,	c.id id_cadas,	ce.id id_cadas_end,
+	periodo,pessoa,contato,observacoes,data_visita,cp.id
+	FROM vivazul_lynkos.com_prospeccao cp
+	JOIN vivazul_api.users u ON u.old_id = cp.id_agente
+	JOIN vivazul_cso_root.cadastros c ON c.old_id = cp.id_cadas
+	JOIN vivazul_cso_root.cad_enderecos ce ON ce.id_cadastros = c.id AND ce.old_id = cp.id_cadas_end
+	WHERE cp.dominio = 'casaoficio' AND cp.status = 10 AND cp.data_visita LIKE '20%' ORDER BY CAST(cp.data_visita AS DATE) LIMIT 999999
+  ) ;
+
