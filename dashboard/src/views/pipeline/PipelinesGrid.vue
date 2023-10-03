@@ -33,7 +33,7 @@ const deleteRow = () => {
         group: 'templating',
         header: 'Corfirmar exclusão',
         message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'pi pi-question-circle',
+        icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'pi pi-check',
         rejectIcon: 'pi pi-times',
         acceptClass: 'p-button-danger',
@@ -154,8 +154,8 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                defaultError(error);
-                loading.value = false;
+                defaultError(error.response.data);
+                router.push({ path: '/' });
             });
     }, Math.random() * 1000 + 250);
 };
@@ -214,14 +214,14 @@ const exportCSV = () => {
 const itemsButtons = ref([
     {
         label: 'Ver',
-        icon: 'pi pi-eye',
+        icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
             router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id}` });
         }
     },
     {
         label: 'Excluir',
-        icon: 'fa-light fa-chevron-down',
+        icon: 'fa-solid fa-fire fa-fade',
         command: ($event) => {
             deleteRow($event);
         }
@@ -265,7 +265,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todo o Pipeline' }]" />
     <div class="card">
         <PipelineForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

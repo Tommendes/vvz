@@ -15,9 +15,9 @@ module.exports = app => {
         try {
             // Alçada para edição
             if (body.id)
-                isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela}"`)
+                isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela}"`)
+            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
             return res.status(401).send(error)
         }

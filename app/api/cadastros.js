@@ -15,9 +15,9 @@ module.exports = app => {
         try {
             // Alçada para edição
             if (body.id)
-                isMatchOrError(uParams && uParams.cadastros >= 3, `${noAccessMsg} "Edição de ${tabela}"`)
+                isMatchOrError(uParams && uParams.cadastros >= 3, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.cadastros >= 2, `${noAccessMsg} "Inclusão de ${tabela}"`)
+            else isMatchOrError(uParams && uParams.cadastros >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -65,7 +65,7 @@ module.exports = app => {
                 "next": body,
                 "request": req,
                 "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
+                    "evento": `Alteração de ${tabela}`,
                     "tabela_bd": tabela,
                 }
             })
@@ -121,7 +121,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -216,7 +216,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -239,7 +239,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError((uParams && uParams.cadastros >= 1), `${noAccessMsg} "Exclusão de cadastro de ${tabela}"`)
+            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exclusão de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -257,7 +257,7 @@ module.exports = app => {
                 "request": req,
                 "evento": {
                     "classevento": "Remove",
-                    "evento": `Exclusão de cadastro de ${tabela}`,
+                    "evento": `Exclusão de ${tabela}`,
                     "tabela_bd": tabela,
                 }
             })

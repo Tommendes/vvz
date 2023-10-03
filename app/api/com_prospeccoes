@@ -2,9 +2,7 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'pipeline'
-    const tabelaStatus = 'pipeline_status'
-    const tabelaParams = 'pipeline_params'
+    const tabela = 'com_prospeccoes'
     const tabelaLocalParams = 'local_params'
     const tabelaCadastros = 'cadastros'
     const STATUS_ACTIVE = 10
@@ -29,7 +27,7 @@ module.exports = app => {
         try {
 
             existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
-            if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Cadastro inválido"
+            if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
             existsOrError(body.id_pipeline_params, 'Parâmetro não encontrado')
             if (body.id_pipeline_params < 0 && body.id_pipeline_params.length > 10) throw 'Parâmetro inválido'
 
@@ -104,15 +102,13 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de pipeline"`)
+            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de prospecções de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
 
@@ -120,7 +116,7 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('str_to_date(status_created_at,"%d/%m/%Y")')
+        let sortField = app.db.raw('date(data_visita)')
         let sortOrder = 'DESC'
         let tipoParams = '1=1'
         if (req.query) {
@@ -131,16 +127,8 @@ module.exports = app => {
                 let value = queryes[key].split(':')[1]
                 key.split(':').forEach(element => {
                     if (element == 'field') {
-                        if (['unidade'].includes(key.split(':')[1])) {
-                            query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
-                            sortField = 'status_created_at'
-                            sortOrder = 'DESC'
-                        } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
-                            query += `pp.descricao = '${value}' AND `
-                            sortField = 'status_created_at'
-                            sortOrder = 'DESC'
-                        } else if (['status_created_at'].includes(key.split(':')[1])) {
-                            sortField = 'status_created_at'
+                        if (['data_visita'].includes(key.split(':')[1])) {
+                            sortField = 'data_visita'
                             value = queryes[key].split(':')
                             let valueI = moment(value[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
                             let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
@@ -155,10 +143,8 @@ module.exports = app => {
                                 default: operator = `between "${valueI}" and "${valueF}"`
                                     break;
                             }
-                            query += `date(ps.created_at) ${operator} AND `
+                            query += `date(tbl1.data_visita) ${operator} AND `
                         } else {
-                            if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
-
                             switch (operator) {
                                 case 'startsWith': operator = `like "${value}"`
                                     break;
@@ -243,7 +229,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de Pipeline"`)
+            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de Pipeline de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -266,7 +252,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError((uParams && uParams.admin >= 4), `${noAccessMsg} "Exclusão de Pipeline"`)
+            isMatchOrError((uParams && uParams.admin >= 4), `${noAccessMsg} "Exclusão de Pipeline de ${tabela}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
