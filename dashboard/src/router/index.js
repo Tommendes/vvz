@@ -28,9 +28,19 @@ const routes = [
                 component: () => import('@/views/prospeccoes/ProspeccoesGrid.vue')
             },
             {
+                path: '/:client/:domain/prospeccao/:id',
+                name: 'prospeccao',
+                component: () => import('@/views/prospeccoes/ProspeccaoForm.vue')
+            },
+            {
                 path: '/:client/:domain/protocolos',
                 name: 'protocolos',
                 component: () => import('@/views/protocolos/ProtocolosGrid.vue')
+            },
+            {
+                path: '/:client/:domain/protocolo/:id',
+                name: 'protocolo',
+                component: () => import('@/views/protocolos/ProtocoloForm.vue')
             },
             {
                 path: '/:client/:domain/pipeline',

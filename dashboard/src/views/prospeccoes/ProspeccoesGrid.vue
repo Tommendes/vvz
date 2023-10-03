@@ -8,7 +8,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-import EmpresaForm from './EmpresaForm.vue';
+import ProspeccaoForm from './ProspeccaoForm.vue';
 const confirm = useConfirm();
 
 const store = useUserStore();
@@ -71,7 +71,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/empresa/${itemData.value.id}` });
+            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccao/${itemData.value.id}` });
         }
     },
     {
