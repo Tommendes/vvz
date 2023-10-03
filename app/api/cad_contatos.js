@@ -45,7 +45,7 @@ module.exports = app => {
                 "next": body,
                 "request": req,
                 "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
+                    "evento": `Alteração de  ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}`,
                     "tabela_bd": tabela,
                 }
             })
@@ -106,7 +106,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -134,7 +134,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
             return res.status(401).send(error)
         }

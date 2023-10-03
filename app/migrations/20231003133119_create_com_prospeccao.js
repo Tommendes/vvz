@@ -13,15 +13,13 @@ exports.up = function (knex, Promise) {
         table.string('updated_at')
         table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_agente', 10).unsigned().notNull().references('id').inTable('vivazul_api.users').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela users')
-        table.integer('id_cadastro', 10).unsigned().notNull().references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela cadastros')
+        table.integer('id_cadastros', 10).unsigned().notNull().references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela cadastros')
         table.integer('id_cad_end', 10).unsigned().notNull().references('id').inTable('cad_enderecos').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela cad_enderecos')
         table.boolean('periodo').default(0).comment('0 = manhã, 1 = tarde, 2 = noite')
         table.string('pessoa').comment('Pessoa contatada')
         table.string('contato').comment('Forma de contato')
         table.string('observacoes', 2550).comment('Observações da visita')
         table.string('data_visita').comment('Data da visita')
-        // table.foreign('id_cadastro')
-        // table.foreign('id_cad_end')
     })
 };
 
