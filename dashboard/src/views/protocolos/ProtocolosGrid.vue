@@ -53,15 +53,15 @@ const initFilters = () => {
         filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
     });
 };
-import { Mask } from 'maska';
-const masks = ref({
-    cpf: new Mask({
-        mask: '###.###.###-##'
-    }),
-    cnpj: new Mask({
-        mask: '##.###.###/####-##'
-    })
-});
+// import { Mask } from 'maska';
+// const masks = ref({
+//     cpf: new Mask({
+//         mask: '###.###.###-##'
+//     }),
+//     cnpj: new Mask({
+//         mask: '##.###.###/####-##'
+//     })
+// });
 initFilters();
 const clearFilter = () => {
     initFilters();
@@ -107,7 +107,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Prospecções' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos' }]" />
     <div class="card">
         <ProtocoloForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
