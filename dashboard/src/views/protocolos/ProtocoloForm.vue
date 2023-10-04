@@ -40,37 +40,12 @@ import { cpf, cnpj } from 'cpf-cnpj-validator';
 const itemData = ref({});
 const registroTipo = ref('pf');
 const labels = ref({
-    id_cadastros: "Id",
+    // id_cadastros: "Destinatário no cadastro",
     email_destinatario: "Email",
     registro: "Registro",
     titulo: "Título",
     e_s: "Movimento",
     descricao: "Descrição"
-
-    // razaosocial: 'Razão Social',
-    // fantasia: 'Nome Fantasia',
-    // cpf_cnpj_empresa: 'CPF',
-    // ie: 'Inscrição Estadual',
-    // ie_st: 'Inscrição Estadual do substituto tributário',
-    // im: 'Inscrição Municipal',
-    // cnae: 'CNAE',
-    // cep: 'CEP',
-    // logradouro: 'Logradouro',
-    // nr: 'Número',
-    // complnr: 'Complemento',
-    // bairro: 'Bairro',
-    // cidade: 'Cidade',
-    // uf: 'UF',
-    // contato: 'Contato da Empresa',
-    // tel1: 'Telefone 1',
-    // tel2: 'Telefone 2',
-    // email: 'Email',
-    // email_at: 'Email da atendente',
-    // email_comercial: 'Email Comercial',
-    // email_financeiro: 'Email Financeiro',
-    // email_rh: 'Email do RH',
-    // id_cadas_resplegal: 'Responsável legal perante a Receita Federal',
-    // url_logo: 'Logomarca da Empresa'
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -127,10 +102,6 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        // if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-        // if (itemData.value.te1) itemData.value.tel1 = masks.value.telefone.unmasked(itemData.value.tel1);
-        // if (itemData.value.te2) itemData.value.tel2 = masks.value.telefone.unmasked(itemData.value.tel2);
-        // if (itemData.value.cep) itemData.value.cep = masks.value.cep.unmasked(itemData.value.cep);
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -281,32 +252,32 @@ const items = ref([
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.cliente}/${userData.dominio}/protocolos` }, { label: itemData.titulo + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.cliente}/${userData.dominio}/protocolos` }, { label: itemData.pessoa + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-1">
+                        <!-- <div class="col-12 md:col-4">
                             <label for="id_cadastros">{{ labels.id_cadastros }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
-                        </div>
-                        <div class="col-6">
+                        </div> -->
+                        <div class="col-12 md:col-6">
                             <label for="titulo">{{ labels.titulo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.titulo" id="titulo" type="text" />
-                        </div>
-                        <div class="col-12 md:col-6">
-                            <label for="registro">{{ labels.registro }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.registro" id="registro" type="text" />
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="email_destinatario">{{ labels.email_destinatario }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_destinatario" id="email_destinatario" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email_destinatario">{{ errorMessages.email_destinatario || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-6">
+                            <label for="registro">{{ labels.registro }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.registro" id="registro" type="text" />
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="e_s">{{ labels.e_s }}</label>
