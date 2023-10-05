@@ -92,6 +92,18 @@ const changeToPortuguese = () => {
     primevue.config.locale.dateIsNot = 'Data não é';
     primevue.config.locale.dateBefore = 'Date é anterior';
     primevue.config.locale.dateAfter = 'Data é posterior';
+    primevue.config.locale.today = 'Hoje';
+    primevue.config.locale.emptyFilterMessage = 'Nenhum resultado encontrado';
+    primevue.config.locale.searchMessage = '{0} resultados disponíveis';
+    primevue.config.locale.selectionMessage = '{0} itens selecionados';
+    primevue.config.locale.emptySelectionMessage = 'Nenhum item selecionado';
+    primevue.config.locale.emptySearchMessage = 'Nenhum resultado encontrado';
+    primevue.config.locale.emptyMessage = 'Nenhuma opção disponível';
+    primevue.config.locale.dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    primevue.config.locale.dayNamesShort = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    primevue.config.locale.dayNamesMin = ['Do', 'Se', 'Te', 'Qa', 'Qi', 'Sx', 'Sa'];
+    primevue.config.locale.monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    primevue.config.locale.monthNamesShort = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 };
 onMounted(() => {
     applyScale();

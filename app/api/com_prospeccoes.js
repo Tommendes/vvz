@@ -17,9 +17,9 @@ module.exports = app => {
         try {
             // Alçada para edição
             if (body.id)
-                isMatchOrError(uParams && (uParams.comercial >= 3 ||(uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+                isMatchOrError(uParams && (uParams.comercial >= 3 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams && (uParams.comercial >= 2 ||(uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.comercial >= 2 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -42,6 +42,7 @@ module.exports = app => {
         }
 
         delete body.hash; delete body.tblName
+        delete body.name; delete body.nome; delete body.cpf_cnpj; delete body.logradouro; delete body.nr; delete body.bairro; delete body.cidade; delete body.uf;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -108,7 +109,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && (uParams.comercial >= 1 ||(uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.comercial >= 1 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
@@ -137,7 +138,9 @@ module.exports = app => {
                             value = queryes[key].split(':')
                             let valueI = moment(value[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
                             let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
-                            if (typeof valueF != 'Date') valueF = valueI;
+                            if (!moment(valueF, 'YYYY-MM-DD', true).isValid()) {
+                                valueF = moment(valueI).add(1, 'day').format('YYYY-MM-DD');
+                            }
                             switch (operator) {
                                 case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
                                     break;
@@ -204,16 +207,16 @@ module.exports = app => {
             .countDistinct('tbl1.id as count').first()
             .join({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_agente')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
-            .join({ ce: tabelaCadEnderecosDomain }, 'c.id', '=', 'tbl1.id_cad_end')
+            .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.pessoa, tbl1.contato, tbl1.data_visita,
+            .select(app.db.raw(`tbl1.id, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.periodo, tbl1.pessoa, tbl1.contato, tbl1.data_visita,
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .join({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_agente')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
-            .join({ ce: tabelaCadEnderecosDomain }, 'c.id', '=', 'tbl1.id_cad_end')
+            .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
             .orderBy(app.db.raw(sortField), sortOrder)
@@ -231,14 +234,21 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && (uParams.comercial >= 1 ||(uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.comercial >= 1 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
 
+        const tabelaUsers = `${dbPrefix}_api.users`
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
+        const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadEnderecos}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.periodo, tbl1.pessoa, tbl1.contato, tbl1.data_visita,
+                                 SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .join({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_agente')
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 return res.json(body)
