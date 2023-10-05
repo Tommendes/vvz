@@ -10,6 +10,7 @@
         "format": "prettier --write src/"
     },
     "dependencies": {
+        "@fawmi/vue-google-maps": "^0.9.79",
         "axios": "^1.4.0",
         "chart.js": "3.3.2",
         "cpf-cnpj-validator": "^1.0.3",

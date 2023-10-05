@@ -99,14 +99,15 @@ import Tree from 'primevue/tree';
 import TreeSelect from 'primevue/treeselect';
 import TreeTable from 'primevue/treetable';
 import TriStateCheckbox from 'primevue/tristatecheckbox';
-import VirtualScroller from 'primevue/virtualscroller'; 
+import VirtualScroller from 'primevue/virtualscroller';
 import Editor from 'primevue/editor';
 
 import CodeHighlight from '@/components/CodeHighlight.vue';
 import BlockViewer from '@/components/BlockViewer.vue';
 import Geolocation from '@/components/Geolocation.vue';
+import VueGoogleMaps from '@fawmi/vue-google-maps';
 
-import { vMaska } from "maska"
+import { vMaska } from 'maska';
 
 import '@/assets/app.css';
 import '@/assets/styles.scss';
@@ -123,6 +124,12 @@ app.use(PrimeVue, {
 app.use(ToastService);
 app.use(DialogService);
 app.use(ConfirmationService);
+app.use(VueGoogleMaps, {
+    load: {
+        key: 'AIzaSyBj82tRHU6HYF9zR-AOKOknCBVlZ4kVlMI'
+    },
+    autobindAllEvents: true
+});
 
 app.directive('tooltip', Tooltip);
 app.directive('badge', BadgeDirective);
