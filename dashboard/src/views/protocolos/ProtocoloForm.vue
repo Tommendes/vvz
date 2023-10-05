@@ -40,9 +40,9 @@ import { cpf, cnpj } from 'cpf-cnpj-validator';
 const itemData = ref({});
 const registroTipo = ref('pf');
 const labels = ref({
-    // id_cadastros: "Destinatário no cadastro",
-    email_destinatario: "Email",
-    registro: "Registro",
+    id_cadastros: "Registro do Destinatário no Cadastro",
+    email_destinatario: "Email do Destinatário",
+    registro: "Número do Protocolo",
     titulo: "Título",
     e_s: "Movimento",
     descricao: "Descrição"
@@ -252,23 +252,23 @@ const items = ref([
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.cliente}/${userData.dominio}/protocolos` }, { label: itemData.pessoa + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.cliente}/${userData.dominio}/protocolos` }, { label: itemData.registro + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <!-- <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-4">
                             <label for="id_cadastros">{{ labels.id_cadastros }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
-                        </div> -->
-                        <div class="col-12 md:col-6">
+                        </div>
+                        <div class="col-12 md:col-4">
                             <label for="titulo">{{ labels.titulo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.titulo" id="titulo" type="text" />
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-4">
                             <label for="email_destinatario">{{ labels.email_destinatario }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_destinatario" id="email_destinatario" type="text" />

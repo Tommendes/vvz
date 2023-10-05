@@ -44,7 +44,7 @@ const deleteRow = () => {
 const listaNomes = ref([
     { field: 'titulo', label: 'Título', minWidth: '35rem' },
     { field: 'descricao', label: 'Descrição', minWidth: '30rem' },
-    { field: 'registro', label: 'Registro', minWidth: '12rem' }
+    { field: 'registro', label: 'Número do Protocolo', minWidth: '12rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {

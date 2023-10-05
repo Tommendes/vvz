@@ -40,7 +40,9 @@ import { cpf, cnpj } from 'cpf-cnpj-validator';
 const itemData = ref({});
 const registroTipo = ref('pf');
 const labels = ref({
-    // id_cadastros: "Destinatário no cadastro",
+    id_agente: "Identificador Agente",
+    id_cadastros: "Identificador Cadastro",
+    id_cad_end: " Identificador do Endereço",
     pessoa: "Pessoa Contatada",
     contato: "Forma de Contato",
     periodo: "Período da Visita",
@@ -70,16 +72,17 @@ const props = defineProps({
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/com-prospeccoes`);
-// // Converte para Número
-// const convertNumberToTurno = (data_visita) => {
-//   if (data_visita === 0) {
-//     return 'Manhã';
-//   } else if (data_visita === 1) {
-//     return 'Tarde';
-//   } else if (data_visita === 2) {
-//     return 'Noite';
-//   }
-//   return ' ';
+// function convertNumberToTurno(value) {
+//     switch (value) {
+//         case 0:
+//             return 'Manhã';
+//         case 1:
+//             return 'Tarde';
+//         case 2:
+//             return 'Noite';
+//         default:
+//             return '';
+//     }
 // };
 // Carragamento de dados do form
 const loadData = async () => {
@@ -93,10 +96,8 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                // if (itemData.value.data_visita) itemData.value.data_visita = convertNumberToTurno(body.data_visita);
-                // if (itemData.value.cep) itemData.value.cep = masks.value.cep.masked(itemData.value.cep);
+                // itemData.periodo = convertNumberToTurno(body.periodo);
                 if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(itemData.value.data_visita);
-                // if (itemData.value.tel2) itemData.value.tel2 = masks.value.telefone.masked(itemData.value.tel2);
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
@@ -107,24 +108,25 @@ const loadData = async () => {
         });
     } else loading.value.form = false;
 };
-// // Converte o período de Visita
-// const convertTurnoToNumber = (data_visita) => {
-//   if (data_visita === 'Manhã') {
-//     return 0;
-//   } else if (data_visita === 'Tarde') {
-//     return 1;
-//   } else if (data_visita === 'Noite') {
-//     return 2;
-//   }
-//   return !errorMessages.value.data_visita;
+// Função para converter o nome do turno para o valor numérico
+// function convertTurnoToNumber(turno) {
+//     switch (turno) {
+//         case 'Manhã':
+//             return 0;
+//         case 'Tarde':
+//             return 1;
+//         case 'Noite':
+//             return 2;
+//         default:
+//             return -1; // Valor inválido
+//     }
 // };
-// Salvar dados do formulário
 const saveData = async () => {
     if (formIsValid()) {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        // if (itemData.value.data_visita) itemData.value.data_visita = convertTurnoToNumber(itemData.value.data_visita);
+        // itemData.periodo = convertTurnoToNumber(itemData.periodo);
         if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.unmasked(itemData.value.data_visita);
         axios[method](url, itemData.value)
             .then((res) => {
@@ -282,11 +284,21 @@ const items = ref([
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <!-- <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-4">
+                            <label for="id_agente">{{ labels.id_agente }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_agente" id="id_agente" type="text" />
+                        </div>
+                        <div class="col-12 md:col-4">
                             <label for="id_cadastros">{{ labels.id_cadastros }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
-                        </div> -->
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <label for="id_cad_end">{{ labels.id_cad_end }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cad_end" id="id_cad_end" type="text" />
+                        </div>
                         <div class="col-12 md:col-3">
                             <label for="pessoa">{{ labels.pessoa }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
