@@ -12,14 +12,14 @@ import Breadcrumb from '@/components/Breadcrumb.vue';
 
 import { Mask } from 'maska';
 const masks = ref({
-    cpf_cnpj_empresa: new Mask({
-        mask: ['###.###.###-##', '##.###.###/####-##']
-    }),
-    telefone: new Mask({
-        mask: ['(##) ####-####', '(##) #####-####']
-    }),
-    cep: new Mask({
-        mask: '#####-###'
+    // cpf_cnpj_empresa: new Mask({
+    //     mask: ['###.###.###-##', '##.###.###/####-##']
+    // }),
+    // telefone: new Mask({
+    //     mask: ['(##) ####-####', '(##) #####-####']
+    // }),
+    data_visita: new Mask({
+        mask: '##/##/####'
     })
 });
 
@@ -40,30 +40,14 @@ import { cpf, cnpj } from 'cpf-cnpj-validator';
 const itemData = ref({});
 const registroTipo = ref('pf');
 const labels = ref({
-    razaosocial: 'Razão Social',
-    fantasia: 'Nome Fantasia',
-    cpf_cnpj_empresa: 'CPF',
-    ie: 'Inscrição Estadual',
-    ie_st: 'Inscrição Estadual do substituto tributário',
-    im: 'Inscrição Municipal',
-    cnae: 'CNAE',
-    cep: 'CEP',
-    logradouro: 'Logradouro',
-    nr: 'Número',
-    complnr: 'Complemento',
-    bairro: 'Bairro',
-    cidade: 'Cidade',
-    uf: 'UF',
-    contato: 'Contato da Empresa',
-    tel1: 'Telefone 1',
-    tel2: 'Telefone 2',
-    email: 'Email',
-    email_at: 'Email da atendente',
-    email_comercial: 'Email Comercial',
-    email_financeiro: 'Email Financeiro',
-    email_rh: 'Email do RH',
-    id_cadas_resplegal: 'Responsável legal perante a Receita Federal',
-    url_logo: 'Logomarca da Empresa'
+    id_agente: "Identificador Agente",
+    id_cadastros: "Identificador Cadastro",
+    id_cad_end: " Identificador do Endereço",
+    pessoa: "Pessoa Contatada",
+    contato: "Forma de Contato",
+    periodo: "Período da Visita",
+    data_visita: "Data da Visita",
+    observacoes: "Observações"
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -87,7 +71,19 @@ const props = defineProps({
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/empresa`);
+const urlBase = ref(`${baseApiUrl}/com-prospeccoes`);
+// function convertNumberToTurno(value) {
+//     switch (value) {
+//         case 0:
+//             return 'Manhã';
+//         case 1:
+//             return 'Tarde';
+//         case 2:
+//             return 'Noite';
+//         default:
+//             return '';
+//     }
+// };
 // Carragamento de dados do form
 const loadData = async () => {
     if (route.params.id || itemData.value.id) {
@@ -100,30 +96,38 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.masked(itemData.value.cpf_cnpj_empresa);
-                if (itemData.value.cep) itemData.value.cep = masks.value.cep.masked(itemData.value.cep);
-                if (itemData.value.tel1) itemData.value.tel1 = masks.value.telefone.masked(itemData.value.tel1);
-                if (itemData.value.tel2) itemData.value.tel2 = masks.value.telefone.masked(itemData.value.tel2);
+                // itemData.periodo = convertNumberToTurno(body.periodo);
+                if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(itemData.value.data_visita);
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccao` });
+                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}prospeccao` });
             }
         });
     } else loading.value.form = false;
 };
-// Salvar dados do formulário
+// Função para converter o nome do turno para o valor numérico
+// function convertTurnoToNumber(turno) {
+//     switch (turno) {
+//         case 'Manhã':
+//             return 0;
+//         case 'Tarde':
+//             return 1;
+//         case 'Noite':
+//             return 2;
+//         default:
+//             return -1; // Valor inválido
+//     }
+// };
 const saveData = async () => {
     if (formIsValid()) {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-        if (itemData.value.te1) itemData.value.tel1 = masks.value.telefone.unmasked(itemData.value.tel1);
-        if (itemData.value.te2) itemData.value.tel2 = masks.value.telefone.unmasked(itemData.value.tel2);
-        if (itemData.value.cep) itemData.value.cep = masks.value.cep.unmasked(itemData.value.cep);
+        // itemData.periodo = convertTurnoToNumber(itemData.periodo);
+        if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.unmasked(itemData.value.data_visita);
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -131,7 +135,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccao/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}prospeccao/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -151,62 +155,61 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
-// Validar a existência do nome do cliente
-const validateRazaoSocial = () => {
-    if (itemData.value.razaosocial && typeof itemData.value.razaosocial.trim() == 'string' && itemData.value.razaosocial.trim().length > 0) errorMessages.value.razaosocial = null;
-    else errorMessages.value.razaosocial = 'Nome ou razão social inválidos';
-    return !errorMessages.value.razaosocial;
+// Validar a existência de pessoa contatada
+const validatePessoa = () => {
+    if (itemData.value.pessoa && typeof itemData.value.pessoa.trim() == 'string' && itemData.value.pessoa.trim().length > 0) errorMessages.value.pessoa = null;
+    else errorMessages.value.pessoa = 'Nome ou razão social inválidos';
+    return !errorMessages.value.pessoa;
 };
-// Validar CPF
-const validateCPFCNPJ = () => {
-    const toValidate = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-    if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) errorMessages.value.cpf_cnpj_empresa = null;
-    else errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
-    return !errorMessages.value.cpf_cnpj_empresa;
-};
-// Validar Cep
-const validateCep = () => {
-    if (itemData.value.cep && itemData.value.cep.replace(/([^\d])+/gim, '').length == 8) errorMessages.value.cep = null;
-    else errorMessages.value.cep = 'Formato de cep inválido';
-    return !errorMessages.value.cep;
-};
+// // Validar CPF
+// const validateCPFCNPJ = () => {
+//     const toValidate = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
+//     if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) errorMessages.value.cpf_cnpj_empresa = null;
+//     else errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
+//     return !errorMessages.value.cpf_cnpj_empresa;
+// };
+// // Validar Cep
+// const validateCep = () => {
+//     if (itemData.value.cep && itemData.value.cep.replace(/([^\d])+/gim, '').length == 8) errorMessages.value.cep = null;
+//     else errorMessages.value.cep = 'Formato de cep inválido';
+//     return !errorMessages.value.cep;
+// };
 // Validar email
-const validateEmail = (field) => {
-    if (itemData.value[field] && itemData.value[field].trim().length > 0 && !isValidEmail(itemData.value[field])) {
-        errorMessages.value[field] = 'Formato de email inválido';
-    } else errorMessages.value[field] = null;
-    return !errorMessages.value[field];
-};
-// Validar telefone
-const validateTelefone = (field) => {
-    if (itemData.value[field] && itemData.value[field].trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value[field]).length)) {
-        errorMessages.value[field] = 'Formato de telefone inválido';
-    } else errorMessages.value[field] = null;
-    return !errorMessages.value[field];
-};
-const validator = () => {
-    let isValid = true;
-    [
-        { field: 'email', validator: 'email' },
-        { field: 'email_at', validator: 'email' },
-        { field: 'email_comercial', validator: 'email' },
-        { field: 'email_financeiro', validator: 'email' },
-        { field: 'email_rh', validator: 'email' },
-        { field: 'tel1', validator: 'telefone' },
-        { field: 'tel2', validator: 'telefone' }
-    ].forEach((element) => {
-        if (element.validator == 'email' && !validateEmail(element.field)) {
-            isValid = false;
-        } else if (element.validator == 'telefone' && !validateTelefone(element.field)) {
-            isValid = false;
-        }
-    });
-    return isValid;
-};
+// const validateEmail = (field) => {
+//     if (itemData.value.email_destinatario && itemData.value.email_destinatario.trim().length > 0 && !isValidEmail(itemData.value.email_destinatario)) {
+//         errorMessages.value.email_destinatario = 'Formato de email inválido';
+//     } else errorMessages.value.email_destinatario = null;
+//     return !errorMessages.value.email_destinatario;
+// };
+// // Validar telefone
+// const validateTelefone = (field) => {
+//     if (itemData.value[field] && itemData.value[field].trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value[field]).length)) {
+//         errorMessages.value[field] = 'Formato de telefone inválido';
+//     } else errorMessages.value[field] = null;
+//     return !errorMessages.value[field];
+// };
+// const validator = () => {
+//     let isValid = true;
+//     [
+//         { field: 'email', validator: 'email' },
+//         { field: 'email_at', validator: 'email' },
+//         { field: 'email_comercial', validator: 'email' },
+//         { field: 'email_financeiro', validator: 'email' },
+//         { field: 'email_rh', validator: 'email' },
+//         { field: 'tel1', validator: 'telefone' },
+//         { field: 'tel2', validator: 'telefone' }
+//     ].forEach((element) => {
+//         if (element.validator == 'email' && !validateEmail(element.field)) {
+//             isValid = false;
+//         } else if (element.validator == 'telefone' && !validateTelefone(element.field)) {
+//             isValid = false;
+//         }
+//     });
+//     return isValid;
+// };
 // Validar formulário
 const formIsValid = () => {
-    return validateRazaoSocial() && validateCPFCNPJ() && validateCep() && validator();
-    // return validateDocumento();
+    return validatePessoa();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -231,29 +234,29 @@ onMounted(() => {
 // Observar alterações nos dados do formulário
 watchEffect(() => {
     isItemDataChanged();
-    validateRazaoSocial();
-    validator();
-    validateCep();
+    // validateRazaoSocial();
+    // validator();
+    // validateCep();
 });
-watch(
-    () => itemData.value.cpf_cnpj_empresa,
-    (newItemData) => {
-        validateCPFCNPJ();
-        if (newItemData.replace(/([^\d])+/gim, '').length == 14) {
-            registroTipo.value = 'pj';
-            labels.value.razaosocial = 'Razão Social';
-            labels.value.fantasia = 'Nome Fantasia';
-            labels.value.cpf_cnpj_empresa = 'CNPJ';
-            labels.value.ie = 'Inscrição Estadual';
-        } else {
-            registroTipo.value = 'pf';
-            labels.value.razaosocial = 'Nome';
-            labels.value.fantasia = 'Nome Social';
-            labels.value.cpf_cnpj_empresa = 'CPF';
-            labels.value.ie = 'RG';
-        }
-    }
-);
+// watch(
+//     () => itemData.value.cpf_cnpj_empresa,
+//     (newItemData) => {
+//         // validateCPFCNPJ();
+//         if (newItemData.replace(/([^\d])+/gim, '').length == 14) {
+//             registroTipo.value = 'pj';
+//             labels.value.razaosocial = 'Razão Social';
+//             labels.value.fantasia = 'Nome Fantasia';
+//             labels.value.cpf_cnpj_empresa = 'CNPJ';
+//             labels.value.ie = 'Inscrição Estadual';
+//         } else {
+//             registroTipo.value = 'pf';
+//             labels.value.razaosocial = 'Nome';
+//             labels.value.fantasia = 'Nome Social';
+//             labels.value.cpf_cnpj_empresa = 'CPF';
+//             labels.value.ie = 'RG';
+//         }
+//     }
+// );
 const menu = ref();
 const preview = ref(false);
 const items = ref([
@@ -272,148 +275,54 @@ const items = ref([
         }
     }
 ]);
-
-const onImageRightClick = (event) => {
-    menu.value.show(event);
-};
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.cliente}/${userData.dominio}/prospeccao` }, { label: itemData.razaosocial + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Prospecções', to: `/${userData.cliente}/${userData.dominio}/prospeccoes` }, { label: itemData.titulo + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
-                <div class="col-3">
-                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                    <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
-                    <ContextMenu ref="menu" :model="items" />
-                </div>
-                <div class="col-9">
-                    <div class="p-fluid grid">
-                        <div class="col-12">
-                            <label for="razaosocial">{{ labels.razaosocial }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.razaosocial" id="razaosocial" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.razaosocial">{{ errorMessages.razaosocial || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-5">
-                            <label for="fantasia">{{ labels.fantasia }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.fantasia" id="fantasia" type="text" />
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="cpf_cnpj_empresa">{{ labels.cpf_cnpj_empresa }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['###.###.###-##', '##.###.###/####-##']" v-model="itemData.cpf_cnpj_empresa" id="cpf_cnpj_empresa" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj_empresa">{{ errorMessages.cpf_cnpj_empresa || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="cep">CEP</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="#####-###" v-model="itemData.cep" id="cep" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="nr">Número</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.nr">{{ errorMessages.nr || '&nbsp;' }}</small>
-                        </div>
-                    </div>
-                </div>
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-2">
-                            <label for="complnr">Complemento</label>
+                        <div class="col-12 md:col-4">
+                            <label for="id_agente">{{ labels.id_agente }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_agente" id="id_agente" type="text" />
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <label for="id_cadastros">{{ labels.id_cadastros }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <label for="id_cad_end">{{ labels.id_cad_end }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cad_end" id="id_cad_end" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="logradouro">Logradouro</label>
+                            <label for="pessoa">{{ labels.pessoa }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="bairro">Bairro</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" />
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="cidade">Cidade</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" />
-                        </div>
-                        <div class="col-12 md:col-1">
-                            <label for="uf">UF</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.uf" id="uf" type="text" />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="ie">{{ labels.ie }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie" id="ie" type="text" />
-                        </div>
-                        <!-- <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
-                            <label for="ie_st">I.E. do Substituto Tributário</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie_st" id="ie_st" type="text" />
-                        </div> -->
-                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
-                            <label for="im">Inscrição Municipal</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.im" id="im" type="text" />
-                        </div>
-                        <!-- <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
-                            <label for="cnae">CNAE</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cnae" id="cnae" type="text" />
-                        </div> -->
-                        <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
-                            <label for="contato">Contato da Empresa</label>
+                            <label for="contato">{{ labels.contato }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" />
                         </div>
-                        <div class="col-12 md:col-2">
-                            <label for="tel1">Telefone 1</label>
+                        <div class="col-12 md:col-3">
+                            <label for="periodo">{{ labels.periodo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel1" id="tel1" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.tel1">{{ errorMessages.tel1 || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="tel2">Telefone 2</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel2" id="tel2" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.tel2">{{ errorMessages.tel2 || '&nbsp;' }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.periodo" id="periodo" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="email">Email</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email || '&nbsp;' }}</small>
+                            <label for="data_visita">{{ labels.data_visita }}</label>
+                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska='##/##/####' v-model="itemData.data_visita" id="data_visita" type="text" />
                         </div>
-                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
-                            <label for="email_at">Email da Assistência Técnica</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_at" id="email_at" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_at">{{ errorMessages.email_at || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="email_comercial">Email Comercial</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_comercial" id="email_comercial" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_comercial">{{ errorMessages.email_comercial || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
-                            <label for="email_financeiro">Email Financeiro</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_financeiro" id="email_financeiro" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_financeiro">{{ errorMessages.email_financeiro || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
-                            <label for="email_rh">Email do RH</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_rh" id="email_rh" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_rh">{{ errorMessages.email_rh || '&nbsp;' }}</small>
+                        <div class="col-12 md:col-12">
+                            <label for="observacoes">{{ labels.observacoes }}</label>
+                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacoes" id="observacoes" type="text" />
                         </div>
                     </div>
                 </div>
