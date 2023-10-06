@@ -29,9 +29,9 @@ const store = useUserStore();
 // Campos de formulário
 const itemData = ref({});
 const labels = ref({
-    id_agente: 'Identificador Agente',
-    id_cadastros: 'Identificador Cadastro',
-    id_cad_end: ' Identificador do Endereço',
+    id_agente: 'Agente',
+    id_cadastros: 'Cadastro',
+    id_cad_end: 'Endereço',
     pessoa: 'Pessoa Contatada',
     contato: 'Forma de Contato',
     periodo: 'Período da Visita',
@@ -163,40 +163,41 @@ watchEffect(() => {
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-8">
                             <label for="id_agente">{{ labels.id_agente }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="id_agente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_agente" :options="dropdownAgentes" />
                         </div>
-                        <div class="col-12 md:col-4">
-                            <label for="id_cadastros">{{ labels.id_cadastros }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cadastros" :options="dropdownCadastros" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="id_cad_end">{{ labels.id_cad_end }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_cad_end" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cad_end" :options="dropdownEnderecos" />
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="pessoa">{{ labels.pessoa }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="contato">{{ labels.contato }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" />
-                        </div>
-                        <div class="col-12 md:col-3">
+                        <div class="col-12 md:col-2">
                             <label for="periodo">{{ labels.periodo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="periodo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.periodo" :options="dropdownPeriodo" />
                         </div>
-                        <div class="col-12 md:col-3">
+                        <div class="col-12 md:col-2">
                             <label for="data_visita">{{ labels.data_visita }}</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" />
+                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" /> -->
+                            <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.data_visita" id="data_visita" :numberOfMonths="2" showIcon />
+                        </div>
+                        <div class="col-12 md:col-12">
+                            <label for="id_cadastros">{{ labels.id_cadastros }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Dropdown v-else id="id_cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cadastros" :options="dropdownCadastros" />
+                        </div>
+                        <div class="col-12 md:col-12">
+                            <label for="id_cad_end">{{ labels.id_cad_end }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Dropdown v-else id="id_cad_end" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cad_end" :options="dropdownEnderecos" />
+                        </div>
+                        <div class="col-12 md:col-6">
+                            <label for="pessoa">{{ labels.pessoa }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
+                        </div>
+                        <div class="col-12 md:col-6">
+                            <label for="contato">{{ labels.contato }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" />
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="observacoes">{{ labels.observacoes }}</label>
