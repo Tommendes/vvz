@@ -18,6 +18,7 @@ module.exports = app => {
     const { titleCase, encryptPassword, comparePassword } = app.api.facilities
     const { transporter } = app.api.mailer
     const tabela = `users`
+    const tabelaAlias = 'Usuários'
     const tabelaKeys = 'users_keys'
     const tabelaParams = 'params'
     const tabelaFinParametros = 'fin_parametros'
@@ -92,6 +93,7 @@ module.exports = app => {
                 return res.status(400).send({ msg: error })
             }
         }
+
         /**
          * #2 - Se não tem perfil e já informou os dados necessários para a criação do perfil:
         */
@@ -142,10 +144,6 @@ module.exports = app => {
                 body.password_reset_token = randomstring.generate(8).toUpperCase() + '_' + Number(now + TOKEN_VALIDE_MINUTES * 60)
                 body.status = STATUS_WAITING
                 body.created_at = new Date()
-                body.f_ano = body.created_at.getFullYear()
-                body.f_mes = body.created_at.getMonth().toString().padStart(2, "0")
-                body.f_complementar = '000'
-                body.id_cadas = body.id
                 body.telefone = body.celular
                 body.cliente = body.client
                 body.dominio = body.domain
@@ -241,74 +239,74 @@ module.exports = app => {
          * #2 - Se não tem perfil e não informou os dados necessários para a criação do perfil:
          *      a) vai para a localização dos dados nos schemas dos clientes
         */
-        else {
-            const cad_servidor = {
-                data: {}
-            }
-            const clientServidor = {}
-            const dbSchemas = await app.db.raw(`WITH RECURSIVE bd_schemas AS (
-                            SELECT p.status, p.dominio, p.value, p.label
-                            FROM params p
-                            WHERE p.dominio = 'root' AND p.meta = 'clientName' AND p.status = 10 AND p.value != 'root'
-                            UNION ALL
-                            SELECT f.status, f.dominio, f.value, f.label
-                            FROM params f
-                            INNER JOIN bd_schemas d ON f.dominio = d.value
-                            WHERE f.meta = 'domainName' AND f.status = 10 AND f.value != 'root'
-                        )
-                        SELECT r.dominio cliente, r.value dominio, r.label clienteName
-                        FROM bd_schemas r WHERE r.dominio != 'root'`)
+        // else {
+        //     const cad_servidor = {
+        //         data: {}
+        //     }
+        //     const clientServidor = {}
+        //     const dbSchemas = await app.db.raw(`WITH RECURSIVE bd_schemas AS (
+        //                     SELECT p.status, p.dominio, p.value, p.label
+        //                     FROM params p
+        //                     WHERE p.dominio = 'root' AND p.meta = 'clientName' AND p.status = 10 AND p.value != 'root'
+        //                     UNION ALL
+        //                     SELECT f.status, f.dominio, f.value, f.label
+        //                     FROM params f
+        //                     INNER JOIN bd_schemas d ON f.dominio = d.value
+        //                     WHERE f.meta = 'domainName' AND f.status = 10 AND f.value != 'root'
+        //                 )
+        //                 SELECT r.dominio cliente, r.value dominio, r.label clienteName
+        //                 FROM bd_schemas r WHERE r.dominio != 'root'`)
 
-            for (let index = 0; index < dbSchemas[0].length; index++) {
-                const element = dbSchemas[0][index];
-                const client = element.cliente
-                const domain = element.dominio
-                const clienteName = element.clienteName
-                const tabelaCadServidoresDomain = `${dbPrefix}_${client}_${domain}.cad_servidores`
-                const tabelaFinSFuncionalDomain = `${dbPrefix}_${client}_${domain}.fin_sfuncional`
-                const cad_servidores = await app.db({ cs: tabelaCadServidoresDomain })
-                    .select('cs.id', 'cs.cpf', 'cs.nome', 'cs.email', 'cs.celular')
-                    .join({ ff: `${tabelaFinSFuncionalDomain}` }, function () {
-                        this.on(`ff.id_cad_servidores`, `=`, `cs.id`)
-                    })
-                    .where({ 'cs.cpf': body.cpf.replace(/([^\d])+/gim, "") })
-                    .andWhere(app.db.raw(`ff.situacaofuncional is not null and ff.situacaofuncional > 0 and ff.mes < 13`))
-                    .first()
-                    .orderBy('ff.ano', 'desc')
-                    .orderBy('ff.mes', 'desc')
-                    .limit(1)
-                clientServidor.client = client
-                clientServidor.domain = domain
-                clientServidor.clientName = clienteName
+        //     for (let index = 0; index < dbSchemas[0].length; index++) {
+        //         const element = dbSchemas[0][index];
+        //         const client = element.cliente
+        //         const domain = element.dominio
+        //         const clienteName = element.clienteName
+        //         const tabelaCadServidoresDomain = `${dbPrefix}_${client}_${domain}.cad_servidores`
+        //         const tabelaFinSFuncionalDomain = `${dbPrefix}_${client}_${domain}.fin_sfuncional`
+        //         const cad_servidores = await app.db({ cs: tabelaCadServidoresDomain })
+        //             .select('cs.id', 'cs.cpf', 'cs.nome', 'cs.email', 'cs.celular')
+        //             .join({ ff: `${tabelaFinSFuncionalDomain}` }, function () {
+        //                 this.on(`ff.id_cad_servidores`, `=`, `cs.id`)
+        //             })
+        //             .where({ 'cs.cpf': body.cpf.replace(/([^\d])+/gim, "") })
+        //             .andWhere(app.db.raw(`ff.situacaofuncional is not null and ff.situacaofuncional > 0 and ff.mes < 13`))
+        //             .first()
+        //             .orderBy('ff.ano', 'desc')
+        //             .orderBy('ff.mes', 'desc')
+        //             .limit(1)
+        //         clientServidor.client = client
+        //         clientServidor.domain = domain
+        //         clientServidor.clientName = clienteName
 
-                if (cad_servidores) {
-                    cad_servidor.data = { ...cad_servidores, ...clientServidor }
-                    break
-                }
-            }
-            // Se localizou um resgitro em um dos clientes...
-            if (cad_servidor.data.id) {
-                if (cad_servidor.data.celular.replace(/([^\d])+/gim, "").length == 11)
-                    return res.json({
-                        isCelularValid: true,
-                        ...cad_servidor.data
-                    })
-                else
-                    // Se o celular está num formato inválido...
-                    return res.json({
-                        isCelularValid: false,
-                        msg: `O servidor ${titleCase(cad_servidor.data.nome)} foi localizado nos registro do município de ${clientServidor.clientName}, 
-                        mas não tem um telefone celular válido registrado${cad_servidor.data.celular ? ' (' + cad_servidor.data.celular + ')' : ''}. 
-                        Antes de prosseguir com o registro será necessário procurar o RH/DP de ${clientServidor.clientName.split("-")[0]} 
-                        para regularizar seu registro`
-                    })
-            } else {
-                /**
-                 * #3 - Se não tem perfil e não é localizado nos schemas dos clientes todos os dados tornam-se obrigatórios exceto o id
-                */
-                return res.json({ isNewUser: true, msg: await showNewUserMessage() || "Não encontramos as informações que você forneceu. Por favor, complete os campos com os dados necessários para criar seu perfil de usuário" })
-            }
-        }
+        //         if (cad_servidores) {
+        //             cad_servidor.data = { ...cad_servidores, ...clientServidor }
+        //             break
+        //         }
+        //     }
+        //     // Se localizou um resgitro em um dos clientes...
+        //     if (cad_servidor.data.id) {
+        //         if (cad_servidor.data.celular.replace(/([^\d])+/gim, "").length == 11)
+        //             return res.json({
+        //                 isCelularValid: true,
+        //                 ...cad_servidor.data
+        //             })
+        //         else
+        //             // Se o celular está num formato inválido...
+        //             return res.json({
+        //                 isCelularValid: false,
+        //                 msg: `O servidor ${titleCase(cad_servidor.data.nome)} foi localizado nos registro do município de ${clientServidor.clientName}, 
+        //                 mas não tem um telefone celular válido registrado${cad_servidor.data.celular ? ' (' + cad_servidor.data.celular + ')' : ''}. 
+        //                 Antes de prosseguir com o registro será necessário procurar o RH/DP de ${clientServidor.clientName.split("-")[0]} 
+        //                 para regularizar seu registro`
+        //             })
+        //     } else {
+        //         /**
+        //          * #3 - Se não tem perfil e não é localizado nos schemas dos clientes todos os dados tornam-se obrigatórios exceto o id
+        //         */
+        //         return res.json({ isNewUser: true, msg: await showNewUserMessage() || "Não encontramos as informações que você forneceu. Por favor, complete os campos com os dados necessários para criar seu perfil de usuário" })
+        //     }
+        // }
     }
 
     /**
@@ -542,7 +540,6 @@ module.exports = app => {
         user.status = STATUS_ACTIVE
         user.updated_at = new Date()
         user.password_reset_token = null
-        user.tipoUsuario = user.id_cadas ? 0 : 1
         app.db(tabela)
             .update(user)
             .where({ id: user.id })
@@ -912,6 +909,12 @@ module.exports = app => {
         const page = req.query.page || 1
         const key = req.query.key ? req.query.key : undefined
         const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            if (!(uParams && (uParams.admin + uParams.gestor) >= 1)) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            return res.status(401).send(error)
+        }
 
         const sql = app.db({ us: tabela }).select(app.db.raw('count(*) as count'))
             .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
@@ -939,10 +942,11 @@ module.exports = app => {
         count = parseInt(result[0][0].count) || 0
 
         const ret = app.db({ us: tabela })
-            .select("id", "status", "name", "cpf", "email", "telefone", "id_cadas",
-                "cliente", "dominio", "admin", "gestor", "multiCliente", "consignatario",
-                "tipoUsuario", "averbaOnline", "cad_servidores", "financeiro", "con_contratos",
-                "cad_orgao", "f_ano", "f_mes", "f_complementar", "tkn_api")
+
+            .select("us.name", "us.cpf", "us.email", "us.telefone", "us.cliente", "us.dominio",
+                "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
+                "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
+                "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
             .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
         if (key)
             ret.where(function () {
@@ -977,12 +981,14 @@ module.exports = app => {
     const getById = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
-        if (req.user.id != req.params.id && uParams.gestor < 1) return res.status(401).send('Unauthorized')
-        app.db(tabela)
-            // .select('users.id', 'users.status', 'users.evento', 'users.created_at', 'users.updated_at', 'dominio', 'cliente', 'email', 'telefone',
-            //     'name', 'cpf', 'admin', 'gestor', 'tipoUsuario', 'multiCliente')
-            .where(app.db.raw(`users.id = ${req.params.id}`))
-            .where(app.db.raw(`users.status = ${STATUS_ACTIVE}`))
+        if (req.user.id != req.params.id || !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+        app.db({ us: tabela })
+            .select("us.name", "us.cpf", "us.email", "us.telefone", "us.cliente", "us.dominio",
+                "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
+                "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
+                "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
+            .where(app.db.raw(`us.id = ${req.params.id}`))
+            .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
             .first()
             .then(users => {
                 users.j_user = jasperServerU
@@ -1154,10 +1160,52 @@ module.exports = app => {
             case 'gtt':
                 getTokenTime(req, res)
                 break;
+            case 'gbf':
+                getByField(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
         }
+    }
+
+    const getByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            return res.status(401).send(error)
+        }
+
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.params.first == true
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} = '${value}'`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
     }
 
     const getSisMessages = async (req, res) => {

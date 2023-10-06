@@ -95,7 +95,7 @@ module.exports = app => {
         .delete(app.api.cadastros.remove)
     app.route('/cadastros/f-a/:func')
         .all(app.config.passport.authenticate())
-    // .post(app.api.cadastros.getByFunction)*/
+        .get(app.api.cadastros.getByFunction)
 
     /**
      * Rota de local_params
@@ -113,7 +113,10 @@ module.exports = app => {
 
     /**
      * Rota de cad_endereços
-     */
+    */
+    app.route('/cad-enderecos/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.cad_enderecos.getByFunction)
     app.route('/cad-enderecos/:id_cadastros')
         .all(app.config.passport.authenticate())
         .post(app.api.cad_enderecos.save)

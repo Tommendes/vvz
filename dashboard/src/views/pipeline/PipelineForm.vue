@@ -210,8 +210,8 @@ const userData = JSON.parse(json);
 </script>
 
 <template>
+    <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.cliente}/${userData.dominio}/pipeline` }, { label: itemData.documento }]" />
     <div class="card">
-        <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.cliente}/${userData.dominio}/pipeline` }, { label: itemData.documento }]" />
         <div class="grid">
             <form @submit.prevent="saveData">
                 <div class="col-12">
