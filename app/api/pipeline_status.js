@@ -2,6 +2,7 @@ const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'pipeline_status'
+    const tabelaAlias = 'Status de Pipeline'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -22,10 +23,9 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-
             existsOrError(body.status_params, 'Status_params não encontrado ')
             if (body.status_params < 0 && body.status_params.length > 10) throw "Status_params inválido"
-            
+
         } catch (error) {
             return res.status(400).send(error)
         }
@@ -92,37 +92,29 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
+        let id_pipeline = req.query.id_pipeline || undefined
+
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             return res.status(401).send(error)
         }
-
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
-
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-
+        if (id_pipeline) ret.where({ id_pipeline: id_pipeline })
         ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
-            .then(body => {
-                return res.json({ data: body, count: count, limit })
-            })
+            .orderBy('created_at')
+            .orderBy('status_params')
+        ret.then(body => {
+            const quantidade = body.length
+            return res.json({ data: body, count: quantidade })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
@@ -194,6 +186,60 @@ module.exports = app => {
         }
     }
 
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'glf':
+                getListByField(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }
 
-    return { save, get, getById, remove }
+    // Lista de registros por campo
+    const getListByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            return res.status(401).send(error)
+        }
+
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.params.first == true
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} = ${value}`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+        ret.orderBy('created_at')
+        ret.orderBy('status_params')
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
+
+
+    return { save, get, getById, remove, getByFunction }
 }

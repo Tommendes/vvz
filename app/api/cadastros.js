@@ -292,6 +292,7 @@ module.exports = app => {
         }
     }
 
+    // Busca por campo
     const getByField = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
@@ -331,6 +332,7 @@ module.exports = app => {
         })
     }
 
+    // Lista de registros por campo
     const getListByField = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();

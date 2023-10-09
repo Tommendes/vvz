@@ -194,6 +194,9 @@ module.exports = app => {
         .put(app.api.pipeline_status.save)
         .get(app.api.pipeline_status.getById)
         .delete(app.api.pipeline_status.remove)
+    app.route('/pipeline-status/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.pipeline_status.getByFunction)
 
     /**
     * Rota de protocolo

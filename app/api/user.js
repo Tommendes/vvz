@@ -1169,6 +1169,7 @@ module.exports = app => {
         }
     }
 
+
     const getByField = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();

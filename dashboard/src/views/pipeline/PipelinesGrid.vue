@@ -298,7 +298,7 @@ watchEffect(() => {
                 <div class="flex justify-content-end gap-3">
                     <Dropdown
                         placeholder="Todos...?"
-                        :showClear="tipoDoc"
+                        :showClear="!!tipoDoc"
                         style="min-width: 150px"
                         id="doc_venda"
                         optionLabel="label"
@@ -313,7 +313,7 @@ watchEffect(() => {
                     <Dropdown
                         filter
                         placeholder="Filtrar por Unidade..."
-                        :showClear="unidade"
+                        :showClear="!!unidade"
                         style="min-width: 150px"
                         id="unidades"
                         optionLabel="label"
@@ -328,7 +328,7 @@ watchEffect(() => {
                     <Dropdown
                         filter
                         placeholder="Filtrar por Tipo..."
-                        :showClear="unidadeNegocio"
+                        :showClear="!!unidadeNegocio"
                         style="min-width: 200px"
                         id="unidade_tipos"
                         optionLabel="label"
