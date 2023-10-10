@@ -185,11 +185,11 @@ module.exports = app => {
     /**
      * Rota de pipeline_status
      */
-    app.route('/pipeline-status')
+    app.route('/pipeline-status/:id_pipeline')
         .all(app.config.passport.authenticate())
         .post(app.api.pipeline_status.save)
         .get(app.api.pipeline_status.get)
-    app.route('/pipeline-status/:id')
+    app.route('/pipeline-status/:id_pipeline/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.pipeline_status.save)
         .get(app.api.pipeline_status.getById)

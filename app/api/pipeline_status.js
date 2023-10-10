@@ -94,7 +94,9 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        let id_pipeline = req.query.id_pipeline || undefined
+        const id_pipeline = req.params.id_pipeline
+        // Enviar apenas o último registro de cada pipeline
+        const last = req.query.last || false
 
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
@@ -106,11 +108,11 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-        if (id_pipeline) ret.where({ id_pipeline: id_pipeline })
+            .where({ id_pipeline: id_pipeline })
         ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .orderBy('created_at')
-            .orderBy('status_params')
+        if (last) ret.orderBy('created_at', 'desc').orderBy('status_params', 'desc').first()
+        else ret.orderBy('created_at').orderBy('status_params')
         ret.then(body => {
             const quantidade = body.length
             return res.json({ data: body, count: quantidade })

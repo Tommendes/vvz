@@ -32,10 +32,6 @@ const itemData = ref({});
 const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
-// Mensages de erro
-const errorMessages = ref({});
 // Loadings
 const loading = ref({
     form: true,
@@ -73,6 +69,8 @@ const loadData = async () => {
                     name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
                 };
                 await getNomeCliente();
+                // Retorna os parâmetros do registro
+                await getPipelineParam();
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
@@ -110,15 +108,6 @@ const saveData = async () => {
             });
     }
 };
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        errorMessages.value = {};
-    }
-    return ret;
-};
 // Validar formulário
 const formIsValid = () => {
     return true;
@@ -127,8 +116,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
-    errorMessages.value = {};
     loadData();
     emit('cancel');
 };
@@ -140,7 +127,7 @@ const listUnidadesDescricao = async () => {
     await axios.get(url).then((res) => {
         dropdownUnidades.value = [];
         res.data.data.map((item) => {
-            const label = item.descricao.toString().replaceAll(/_/g, ' ');
+            const label = item.descricao.toString().replaceAll(/_/g, ' ') + (userData.admin >= 1 ? ` (${item.id})` : '');
             const itemList = { value: item.id, label: label };
             dropdownUnidades.value.push(itemList);
         });
@@ -236,6 +223,8 @@ const confirmEditCadastro = () => {
  */
 // Preload de status do registro
 const itemDataStatus = ref([]);
+const itemDataLastStatus = ref({});
+const itemDataParam = ref([]);
 const itemDataStatusPreload = ref([
     { status: '0', label: 'Criado', icon: 'pi pi-plus', color: '#3b82f6' },
     { status: '10', label: 'Convertido para pedido', icon: 'pi pi-shopping-cart', color: '#4cd07d' },
@@ -247,27 +236,78 @@ const itemDataStatusPreload = ref([
 // Listar status do registro
 const listStatusRegistro = async () => {
     loading.value.form = true;
-    const url = `${baseApiUrl}/pipeline-status/?id_pipeline=${itemData.value.id}`;
+    const url = `${baseApiUrl}/pipeline-status/${itemData.value.id}`;
     await axios.get(url).then((res) => {
-        itemDataStatus.value = [];
-        res.data.data.forEach((element) => {
-            // Filtrar element.status_params e retornar o objeto correspondente em itemDataStatusPreload
-            const status = itemDataStatusPreload.value.filter((item) => {
-                return item.status == element.status_params;
+        if (res.data && res.data.data.length > 0) {
+            itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
+            itemDataStatus.value = [];
+            res.data.data.forEach((element) => {
+                // Filtrar element.status_params e retornar o objeto correspondente em itemDataStatusPreload
+                const status = itemDataStatusPreload.value.filter((item) => {
+                    return item.status == element.status_params;
+                });
+                itemDataStatus.value.push({
+                    // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                    date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                    status: status[0].label,
+                    icon: status[0].icon,
+                    color: status[0].color
+                });
             });
-            itemDataStatus.value.push({
-                // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
-                date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
-                status: status[0].label,
-                icon: status[0].icon,
-                color: status[0].color
-            });
-        });
+        }
         loading.value.form = false;
     });
 };
 /**
  * Fim de status do registro
+ */
+const getPipelineParam = async () => {
+    loading.value.form = true;
+    const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.id) itemDataParam.value = res.data;
+        loading.value.form = false;
+    });
+};
+const itemsComiss = [
+    {
+        label: 'Agente interno',
+        icon: 'pi pi-user',
+        command: () => {
+            defaultSuccess('Agente interno');
+        }
+    },
+    {
+        label: 'Terceiros',
+        icon: 'pi pi-users',
+        command: () => {
+            defaultSuccess('Terceiros');
+        }
+    }
+];
+const toPai = () => {
+    location.href = `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id_pai}`;
+    // router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id_pai}` });
+};
+const toFilho = () => {
+    location.href = `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id_filho}`;
+    // router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id_filho}` });
+};
+/**
+ * Ferramentas do registro
+ */
+const statusRecord = async (status) => {
+    loading.value.form = true;
+    if (route.params.id) itemData.value.id = route.params.id;
+    const url = `${urlBase.value}/${itemData.value.id}?st=${status}`;
+    await axios.delete(url).then(async (res) => {
+        defaultSuccess('Registro cancelado com sucesso');
+        loading.value.form = false;
+        reload();
+    });
+};
+/**
+ * Fim de ferramentas do registro
  */
 // Carregar dados do formulário
 onBeforeMount(() => {
@@ -282,10 +322,6 @@ onMounted(async () => {
     // Lista o andamento do registro
     listStatusRegistro();
 });
-// Observar alterações nos dados do formulário
-watchEffect(() => {
-    isItemDataChanged();
-});
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
     if (value) {
@@ -297,11 +333,11 @@ watch(selectedCadastro, (value) => {
 <template>
     <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.cliente}/${userData.dominio}/pipeline` }, { label: itemData.documento }]" />
     <div class="card">
-        <div class="grid">
-            <form @submit.prevent="saveData">
-                <div class="col-12">
-                    <div class="p-fluid formgrid grid">
-                        <div class="field col-12 md:col-4">
+        <form @submit.prevent="saveData">
+            <div class="grid">
+                <div class="col-9">
+                    <div class="p-fluid grid">
+                        <div class="col-12 md:col-4">
                             <label for="id_pipeline_params">Tipo</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown
@@ -315,9 +351,10 @@ watch(selectedCadastro, (value) => {
                                 v-model="itemData.id_pipeline_params"
                                 :options="dropdownUnidades"
                                 :disabled="mode == 'view'"
+                                @change="getPipelineParam"
                             />
                         </div>
-                        <div class="field col-12 md:col-8">
+                        <div class="col-12 md:col-8">
                             <label for="id_cadastros">Cadastro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editCadastro" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
@@ -326,7 +363,7 @@ watch(selectedCadastro, (value) => {
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                             </div>
                         </div>
-                        <div class="field col-12 md:col-4">
+                        <div class="col-12 md:col-4">
                             <label for="id_com_agentes">Agente</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown
@@ -342,51 +379,68 @@ watch(selectedCadastro, (value) => {
                                 :disabled="mode == 'view'"
                             />
                         </div>
-                        <div class="field col-12 md:col-12">
-                            <label for="status_params">Status</label>
+                        <div class="col-12 md:col-2">
+                            <label for="documento">Documento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Timeline v-else :value="itemDataStatus" layout="horizontal" align="bottom">
-                                <template #marker="slotProps">
-                                    <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
-                                        <i :class="slotProps.item.icon"></i>
-                                    </span>
-                                </template>
-                                <template #opposite="slotProps">
-                                    <small class="p-text-secondary">{{ slotProps.item.date }}</small>
-                                </template>
-                                <template #content="slotProps">
-                                    {{ slotProps.item.status }}
-                                </template>
-                            </Timeline>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.documento" id="documento" type="text" @input="validateDocumento()" />
                         </div>
-                        <div class="field col-12 md:col-3">
-                            <label for="id_pai">Pai</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pai" id="id_pai" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.id_pai">{{ errorMessages.id_pai || '&nbsp;' }}</small>
+                        <div class="col-12 md:col-1" v-if="itemData.versao">
+                            <label for="versao">Versão</label>
+                            <p class="p-inputtext p-component p-filled">{{ itemData.versao }}</p>
                         </div>
-                        <div class="field col-12 md:col-3">
-                            <label for="id_filho">Filho</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_filho" id="id_filho" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.id_filho">{{ errorMessages.id_filho || '&nbsp;' }}</small>
+                        <div class="col-12 md:col-2" v-if="itemData.id_pai">
+                            <label for="id_pai">Convertido por</label>
+                            <Button severity="success" text raised @click="toPai">
+                                <span>Proposta&nbsp;<i class="fa-solid fa-angles-right fa-fade"></i></span>
+                            </Button>
                         </div>
-                        <div class="field col-12 md:col-3">
+                        <div class="col-12 md:col-2" v-if="itemData.id_filho">
+                            <label for="id_filho">Convertido para</label>
+                            <Button severity="success" text raised @click="toFilho">
+                                <span>Pedido&nbsp;<i class="fa-solid fa-angles-right fa-fade"></i></span>
+                            </Button>
+                        </div>
+                        <div class="col-12 md:col-2">
                             <label for="valor_bruto">Valor bruto</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
                                 <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_bruto" id="valor_bruto" type="text" />
                             </div>
-                            <small id="text-error" class="p-error" v-if="errorMessages.valor_bruto">{{ errorMessages.valor_bruto || '&nbsp;' }}</small>
                         </div>
-                        <div class="field col-12 md:col-3">
-                            <label for="documento">Documento</label>
+                        <div class="col-12 md:col-2">
+                            <label for="valor_liq">Valor Líquido</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.documento" id="documento" type="text" @input="validateDocumento()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.documento">{{ errorMessages.documento || '&nbsp;' }}</small>
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_liq" id="valor_liq" type="text" />
+                            </div>
                         </div>
-                        <div class="field col-12 md:col12">
+                        <div class="col-12 md:col-2">
+                            <label for="valor_representacao">Valor Representação</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_representacao" id="valor_representacao" type="text" />
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="perc_represent">Perc Representação</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">%</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.perc_represent" id="perc_represent" type="text" />
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="valor_agente">Valor Agente</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_agente" id="valor_agente" type="text" />
+                            </div>
+                        </div>
+                        <div class="col-12 md:col12">
                             <label for="descricao">Descrição</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
@@ -395,11 +449,110 @@ watch(selectedCadastro, (value) => {
                     </div>
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
+                    <p>{{ itemDataParam }}</p>
+                    <p>{{ itemDataLastStatus }}</p>
                 </div>
-            </form>
-        </div>
+                <div class="col-12 md:col-3">
+                    <Fieldset :toggleable="true" class="mb-2">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="pi pi-clock mr-2"></span>
+                                <span class="font-bold text-lg">Andamento do Registro</span>
+                            </div>
+                        </template>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <Timeline v-else :value="itemDataStatus">
+                            <template #marker="slotProps">
+                                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                                    <i :class="slotProps.item.icon"></i>
+                                </span>
+                            </template>
+                            <template #opposite="slotProps">
+                                <small class="p-text-secondary">{{ slotProps.item.date }}</small>
+                            </template>
+                            <template #content="slotProps">
+                                {{ slotProps.item.status }}
+                            </template>
+                        </Timeline>
+                    </Fieldset>
+                    <Fieldset :toggleable="true">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="pi pi-clock mr-2"></span>
+                                <span class="font-bold text-lg">Ferramentas do Registro</span>
+                            </div>
+                        </template>
+                        <Button
+                            label="Converter para Pedido"
+                            type="button"
+                            :disabled="!(itemDataParam.gera_baixa == 1 && itemData.status_params == 0)"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && itemData.status_params == 0 ? 'fa-shake' : ''}`"
+                            style="color: #db1414"
+                            text
+                            raised
+                        />
+                        <!-- @click="convertToPedido" -->
+                        <SplitButton
+                            label="Comissionar"
+                            :disabled="!(itemDataParam.doc_venda >= 2 && (itemData.status_params == 0 || itemData.status == 10))"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-money-bill-transfer ${itemDataParam.doc_venda >= 2 && (itemData.status_params == 0 || itemData.status == 10) ? 'fa-fade' : ''}`"
+                            severity="success"
+                            text
+                            raised
+                            :model="itemsComiss"
+                        />
+                        <Button
+                            label="Criar OAT"
+                            type="button"
+                            :disabled="!(itemDataParam.doc_venda >= 2 && (itemData.status_params == 0 || itemData.status == 10))"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-screwdriver-wrench ${itemDataParam.doc_venda >= 2 && (itemData.status_params == 0 || itemData.status == 10) ? 'fa-fade' : ''}`"
+                            style="color: #a97328"
+                            text
+                            raised
+                        />
+                        <!-- @click="newOAT" -->
+                        <Button
+                            label="Cancelar Registro"
+                            type="button"
+                            :disabled="!(userData.pipeline >= 4 && (itemData.status_params == 0 || itemData.status == 10))"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-ban`"
+                            severity="danger"
+                            text
+                            raised
+                            @click="statusRecord(0)"
+                        />
+                        <Button
+                            label="Excluir Registro"
+                            type="button"
+                            :disabled="!(userData.pipeline >= 4 && itemData.status_params == 0 && itemData.status == 10)"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-fire`"
+                            severity="danger"
+                            text
+                            raised
+                            @click="statusRecord(99)"
+                        />
+                        <Button
+                            label="Reativar Registro"
+                            type="button"
+                            v-if="userData.gestor >= 1 && itemData.status == 0"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-file-invoice ${itemData.status == 0 ? 'fa-fade' : ''}`"
+                            severity="warning"
+                            text
+                            raised
+                            @click="statusRecord(10)"
+                        />
+                    </Fieldset>
+                </div>
+            </div>
+        </form>
     </div>
 </template>

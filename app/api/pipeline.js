@@ -251,7 +251,9 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
+            .where({ 'tbl1.id': req.params.id })
+            // .whereNot({ 'tbl1.status': STATUS_DELETE })            
+            .first()
             .then(body => {
                 return res.json(body)
             })
@@ -266,13 +268,13 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError((uParams && uParams.admin >= 4), `${noAccessMsg} "Exclusão de Pipeline"`)
+            isMatchOrError((uParams && uParams.pipeline >= 4), `${noAccessMsg} "Exclusão de Pipeline"`)
         } catch (error) {
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const registro = { status: STATUS_DELETE }
+        const registro = { status: req.query.st || STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
