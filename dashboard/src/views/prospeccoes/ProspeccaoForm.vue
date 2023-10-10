@@ -119,9 +119,13 @@ const isItemDataChanged = () => {
     return ret;
 };
 const dropdownAgentes = ref([]);
-const dropdownCadastros = ref([]);
-const dropdownEnderecos = ref([]);
-
+// const dropdownCadastros = ref([]);
+// const dropdownEnderecos = ref([]);
+// Obter parâmetros do BD
+const optionParams = async (query) => {
+    const url = `${baseApiUrl}/users/f-a/${query.func}?fld=agente_v&vl=${query.dropdownAgentes ? query.dropdownAgentes : ''}&slct=${query.id , query.name}`;
+    return await axios.get(url);
+};
 const dropdownPeriodo = ref([
     { value: 0, label: 'Manhã' },
     { value: 1, label: 'Tarde' }
@@ -138,10 +142,33 @@ const reload = () => {
     loadData();
     emit('cancel');
 };
+// Obter parâmetros do BD
+// const optionLocalParams = async (query) => {
+//     itemData.value.id = route.params.id;
+//     const selects = query.select ? `&slct=${query.select}` : undefined;
+//     const url = `${baseApiUrl}/users/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
+//     return await axios.get(url);
+// };
+// Carregar opções do formulário
+const loadOptions = async () => {
+    // Agente
+    await optionParams({ field: 'meta', value: 'id_agente', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownAgentes.value.push({ value: item.id, label: item.label });
+        });
+    });
+
+    // Área Atuação
+    //     await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
+    //         res.data.data.map((item) => {
+    //             dropdownAtuacao.value.push({ value: item.id, label: item.label });
+    //         });
+    //     });
+};
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
-    // loadOptions();
+    loadOptions();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -166,7 +193,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-8">
                             <label for="id_agente">{{ labels.id_agente }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_agente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_agente" :options="dropdownAgentes" />
+                            <Dropdown v-else id="id_agente" :disabled="mode == 'view'" optionLabel="label"  placeholder="Selecione um agente" optionValue="value" v-model="itemData.id_agente" :options="dropdownAgentes" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="periodo">{{ labels.periodo }}</label>
