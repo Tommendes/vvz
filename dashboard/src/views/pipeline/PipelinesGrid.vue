@@ -267,8 +267,9 @@ watchEffect(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todo o Pipeline' }]" />
     <div class="card">
-        <PipelineForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <PipelineForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" />
         <DataTable
+            class="hidden lg:block"
             style="font-size: 0.9rem"
             :value="gridData"
             lazy

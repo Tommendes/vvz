@@ -19,6 +19,9 @@ import { Mask } from 'maska';
 const masks = ref({
     cpf_cnpj: new Mask({
         mask: ['###.###.###-##', '##.###.###/####-##']
+    }),
+    valor: new Mask({
+        mask: '0,99'
     })
 });
 
@@ -63,6 +66,12 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
+                itemData.value.valor_bruto = formatValor(itemData.value.valor_bruto);
+                itemData.value.valor_liq = formatValor(itemData.value.valor_liq);
+                itemData.value.valor_representacao = formatValor(itemData.value.valor_representacao);
+                itemData.value.valor_agente = formatValor(itemData.value.valor_agente);
+                itemData.value.perc_represent = formatValor(itemData.value.perc_represent);
+
                 itemDataComparision.value = { ...itemData.value };
                 selectedCadastro.value = {
                     code: itemData.value.id_cadastros,
@@ -79,14 +88,29 @@ const loadData = async () => {
         });
     } else loading.value.form = false;
 };
+// Formatar valor 0.00 para 0,00
+const formatValor = (value, result = 'pt') => {
+    if (result == 'pt') {
+        if (value && result == 'pt') return value.toString().replace('.', ',');
+        else return '0,00';
+    } else {
+        if (value && result == 'en') return value.toString().replace(',', '.');
+        else return '0.00';
+    }
+};
 // Salvar dados do formulário
 const saveData = async () => {
     if (formIsValid()) {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        // console.log(url);
-        // console.log(JSON.stringify(itemData.value))
+
+        itemData.value.valor_bruto = formatValor(itemData.value.valor_bruto, 'en');
+        itemData.value.valor_liq = formatValor(itemData.value.valor_liq, 'en');
+        itemData.value.valor_representacao = formatValor(itemData.value.valor_representacao, 'en');
+        itemData.value.valor_agente = formatValor(itemData.value.valor_agente, 'en');
+        itemData.value.perc_represent = formatValor(itemData.value.perc_represent, 'en');
+
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -98,7 +122,7 @@ const saveData = async () => {
                     // if (mode.value != 'new') reload();
                     // else router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastro/${itemData.value.id}` });
                     if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id}` });
-                    mode.value = 'view';
+                    reload();
                 } else {
                     defaultWarn('Erro ao salvar registro');
                 }
@@ -224,7 +248,7 @@ const confirmEditCadastro = () => {
 // Preload de status do registro
 const itemDataStatus = ref([]);
 const itemDataLastStatus = ref({});
-const itemDataParam = ref([]);
+const itemDataParam = ref({});
 const itemDataStatusPreload = ref([
     { status: '0', label: 'Criado', icon: 'pi pi-plus', color: '#3b82f6' },
     { status: '10', label: 'Convertido para pedido', icon: 'pi pi-shopping-cart', color: '#4cd07d' },
@@ -335,9 +359,18 @@ watch(selectedCadastro, (value) => {
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
-                <div class="col-9">
+                <div :class="`${mode == 'new' ? 'col-12' : 'col-12 lg:col-9'}`">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
+                        <div class="col-12">
+                            <label for="id_cadastros">Cadastro</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <div class="p-inputgroup flex-1" v-else>
+                                <InputText disabled v-model="nomeCliente" />
+                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
+                            </div>
+                        </div>
+                        <div class="col-12 lg:col-5">
                             <label for="id_pipeline_params">Tipo</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown
@@ -351,19 +384,10 @@ watch(selectedCadastro, (value) => {
                                 v-model="itemData.id_pipeline_params"
                                 :options="dropdownUnidades"
                                 :disabled="mode == 'view'"
-                                @change="getPipelineParam"
+                                @change="getPipelineParam()"
                             />
                         </div>
-                        <div class="col-12 md:col-8">
-                            <label for="id_cadastros">Cadastro</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editCadastro" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
-                            <div class="p-inputgroup flex-1" v-else>
-                                <InputText disabled v-model="nomeCliente" />
-                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
-                            </div>
-                        </div>
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 lg:col-5">
                             <label for="id_com_agentes">Agente</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown
@@ -379,68 +403,80 @@ watch(selectedCadastro, (value) => {
                                 :disabled="mode == 'view'"
                             />
                         </div>
-                        <div class="col-12 md:col-2">
+                        <div class="col-12 lg:col-2">
                             <label for="documento">Documento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.documento" id="documento" type="text" @input="validateDocumento()" />
                         </div>
-                        <div class="col-12 md:col-1" v-if="itemData.versao">
+                        <div class="col-12 lg:col-1" v-if="itemData.versao">
                             <label for="versao">Versão</label>
                             <p class="p-inputtext p-component p-filled">{{ itemData.versao }}</p>
                         </div>
-                        <div class="col-12 md:col-2" v-if="itemData.id_pai">
+                        <div class="col-12 lg:col-2" v-if="itemData.id_pai">
                             <label for="id_pai">Convertido por</label>
                             <Button severity="success" text raised @click="toPai">
                                 <span>Proposta&nbsp;<i class="fa-solid fa-angles-right fa-fade"></i></span>
                             </Button>
                         </div>
-                        <div class="col-12 md:col-2" v-if="itemData.id_filho">
+                        <div class="col-12 lg:col-2" v-if="itemData.id_filho">
                             <label for="id_filho">Convertido para</label>
                             <Button severity="success" text raised @click="toFilho">
                                 <span>Pedido&nbsp;<i class="fa-solid fa-angles-right fa-fade"></i></span>
                             </Button>
                         </div>
-                        <div class="col-12 md:col-2">
-                            <label for="valor_bruto">Valor bruto</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_bruto" id="valor_bruto" type="text" />
+                        <div class="col-12" v-if="itemDataParam.doc_venda >= 1">
+                            <div class="grid">
+                                <div class="hidden lg:block lg:col-2">
+                                    <div class="flex align-items-end flex-wrap card-container purple-container">
+                                        <span class="p-inputtext p-component p-filled surface-100">Valores referência para comissão <i class="fa-solid fa-angles-right fa-fade"></i></span>
+                                    </div>
+                                    <!-- <label class="hide">.</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <span class="p-inputtext p-component p-filled surface-300">Valores de referência <i class="fa-solid fa-angles-right fa-fade"></i></span> -->
+                                </div>
+                                <div class="col-12 lg:col-2">
+                                    <label for="valor_bruto">Bruto</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                        <span class="p-inputgroup-addon">R$</span>
+                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_bruto" id="valor_bruto" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                    </div>
+                                </div>
+                                <div class="col-12 lg:col-2">
+                                    <label for="valor_liq">Líquido</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                        <span class="p-inputgroup-addon">R$</span>
+                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_liq" id="valor_liq" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                    </div>
+                                </div>
+                                <div class="col-12 lg:col-2">
+                                    <label for="valor_representacao">Representação</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                        <span class="p-inputgroup-addon">R$</span>
+                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_representacao" id="valor_representacao" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                    </div>
+                                </div>
+                                <div class="col-12 lg:col-2">
+                                    <label for="perc_represent">Representação</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                        <span class="p-inputgroup-addon">%</span>
+                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.perc_represent" id="perc_represent" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                    </div>
+                                </div>
+                                <div class="col-12 lg:col-2">
+                                    <label for="valor_agente">Agente</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                        <span class="p-inputgroup-addon">R$</span>
+                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_agente" id="valor_agente" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-12 md:col-2">
-                            <label for="valor_liq">Valor Líquido</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_liq" id="valor_liq" type="text" />
-                            </div>
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="valor_representacao">Valor Representação</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_representacao" id="valor_representacao" type="text" />
-                            </div>
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="perc_represent">Perc Representação</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                <span class="p-inputgroup-addon">%</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.perc_represent" id="perc_represent" type="text" />
-                            </div>
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="valor_agente">Valor Agente</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_agente" id="valor_agente" type="text" />
-                            </div>
-                        </div>
-                        <div class="col-12 md:col12">
+                        <div class="col-12 lg:col12">
                             <label for="descricao">Descrição</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
@@ -452,10 +488,12 @@ watch(selectedCadastro, (value) => {
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
-                    <p>{{ itemDataParam }}</p>
-                    <p>{{ itemDataLastStatus }}</p>
+                    <div class="card bg-green-200" v-if="userData.admin >= 2">
+                        <p>itemDataParam: {{ itemDataParam }}</p>
+                        <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
+                    </div>
                 </div>
-                <div class="col-12 md:col-3">
+                <div class="col-12 lg:col-3" v-if="mode != 'new'">
                     <Fieldset :toggleable="true" class="mb-2">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -491,7 +529,7 @@ watch(selectedCadastro, (value) => {
                             :disabled="!(itemDataParam.gera_baixa == 1 && itemData.status_params == 0)"
                             class="w-full mb-3"
                             :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && itemData.status_params == 0 ? 'fa-shake' : ''}`"
-                            style="color: #db1414"
+                            severity="danger"
                             text
                             raised
                         />
@@ -556,3 +594,9 @@ watch(selectedCadastro, (value) => {
         </form>
     </div>
 </template>
+
+<style scoped>
+.hide {
+    opacity: 0;
+}
+</style>
