@@ -5,6 +5,14 @@ module.exports = app => {
     const tabelaAlias = 'Status de Pipeline'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+    // Andamento do registro    
+    const STATUS_PENDENTE = 0;
+    const STATUS_CONVERTIDO = 10;
+    const STATUS_PEDIDO = 20;
+    const STATUS_PEDIDO_REATIVADO = 21;
+    const STATUS_LIQUIDADO = 80;
+    const STATUS_CANCELADO = 89;
+    const STATUS_EXCLUIDO = 99;
 
     const save = async (req, res) => {
         let user = req.user
@@ -243,5 +251,13 @@ module.exports = app => {
     }
 
 
-    return { save, get, getById, remove, getByFunction }
+    return {
+        save, get, getById, remove, getByFunction,
+        STATUS_PENDENTE,
+        STATUS_CONVERTIDO,
+        STATUS_PEDIDO,
+        STATUS_PEDIDO_REATIVADO,
+        STATUS_LIQUIDADO,
+        STATUS_CANCELADO
+    }
 }

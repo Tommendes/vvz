@@ -10,8 +10,9 @@ import Breadcrumb from '../../components/Breadcrumb.vue';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 import { useRouter } from 'vue-router';
 import moment from 'moment';
@@ -147,14 +148,20 @@ const loadLazyData = () => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
-                    element.tipo_doc = element.tipo_doc.replaceAll('_', ' '); //dropdownStatusParams.value.find((item) => item.value == element.tipo_doc).label;
-                    element.descricao = element.descricao.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim();
+                    if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' '); //dropdownStatusParams.value.find((item) => item.value == element.tipo_doc).label;
+                    const limitDescription = 100;
+                    const description = element.descricao || undefined;
+                    if (description) element.descricao = description.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim().substr(0, limitDescription);
+                    if (description.length > limitDescription) element.descricao += ' ...';
                     if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = element.valor_bruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 });
                 loading.value = false;
             })
             .catch((error) => {
-                defaultError(error.response.data);
+                if (typeof error.response.data == 'string') defaultError(error.response.data);
+                else if (typeof error.response == 'string') defaultError(error.response);
+                else if (typeof error == 'string') defaultError(error);
+                else defaultError('Erro ao carregar dados!');
                 router.push({ path: '/' });
             });
     }, Math.random() * 1000 + 250);
@@ -216,12 +223,13 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id}` });
+            router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id}` });
         }
     },
     {
         label: 'Excluir',
         icon: 'fa-solid fa-fire fa-fade',
+        disabled: userData.pipeline < 4,
         command: ($event) => {
             deleteRow($event);
         }
@@ -267,7 +275,7 @@ watchEffect(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todo o Pipeline' }]" />
     <div class="card">
-        <PipelineForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" />
+        <PipelineForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             class="hidden lg:block"
             style="font-size: 0.9rem"

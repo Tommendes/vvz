@@ -1,7 +1,8 @@
 const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
-    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PEDIDO_REATIVADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
+    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pipeline'
     const tabelaStatus = 'pipeline_status'
     const tabelaParams = 'pipeline_params'
@@ -22,80 +23,130 @@ module.exports = app => {
             // Alçada para inclusão
             else isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
+            console.log(error);
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
+
+        const pipeline_params_force = body.pipeline_params_force
 
         try {
-
-            existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
-            if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Cadastro inválido"
-            existsOrError(body.id_pipeline_params, 'Parâmetro não encontrado')
-            if (body.id_pipeline_params < 0 && body.id_pipeline_params.length > 10) throw 'Parâmetro inválido'
+            if (pipeline_params_force.obrig_valor == 1) {
+                existsOrError(body.valor_bruto, 'Valor bruto não informado')
+                if (body.valor_bruto < 0.01) throw 'Valor bruto inválido'
+                existsOrError(body.valor_liquido, 'Valor líquido não informado')
+                if (body.valor_liquido < 0.01) throw 'Valor líquido inválido'
+            }
+            existsOrError(body.id_cadastros, 'Cadastro não informado')
+            existsOrError(body.id_pipeline_params, 'Tipo de documento não informado')
 
         } catch (error) {
             return res.status(400).send(error)
         }
-
-        delete body.hash; delete body.tblName
+        const status_params_force = body.status_params_force; // Status forçado para edição
+        const status_params = body.status_params; // Último status do registro
+        delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force; delete body.hash; delete body.tblName;
         if (body.id) {
-            // Variáveis da edição de um registro
-            // registrar o evento na tabela de eventos
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento',],
-                "last": await app.db(tabelaDomain).where({ id: body.id }).first(),
-                "next": body,
-                "request": req,
-                "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
-                    "tabela_bd": tabela,
-                }
-            })
+            // Variáveis da edição de um registro            
+            let updateRecord = {
+                updated_at: new Date(),
+                ...body, // Incluindo outros dados do corpo da solicitação
+            };
 
-            body.evento = evento
-            body.updated_at = new Date()
-            let rowsUpdated = app.db(tabelaDomain)
-                .update(body)
-                .where({ id: body.id })
-            rowsUpdated.then((ret) => {
-                if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Registro não encontrado')
-            })
-                .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
+            app.db.transaction(async (trx) => {
+                // Iniciar a transação e editar na tabela principal
+                const { createEventUpd } = app.api.sisEvents
+                // Registrar o evento na tabela de eventos
+                const eventPayload = {
+                    notTo: ['created_at', 'updated_at', 'evento',],
+                    last: await app.db(tabelaDomain).where({ id: body.id }).first(),
+                    next: body,
+                    request: req,
+                    evento: {
+                        "evento": `Alteração de cadastro de ${tabela}`,
+                        "tabela_bd": tabela,
+                    }
+                };
+                const evento = await createEventUpd(eventPayload, trx);
+                updateRecord = { ...updateRecord, evento: evento }
+                await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
+                if (status_params_force != status_params) {
+                    // Inserir na tabela de status apenas se o status for diferente
+                    await trx(tabelaPipelineStatusDomain).insert({
+                        status: STATUS_ACTIVE,
+                        status_params: status_params_force,
+                        created_at: new Date(),
+                        id_pipeline: body.id,
+                    });
+                }
+
+                return res.json(updateRecord);
+            }).catch((error) => {
+                // Se ocorrer um erro, faça rollback da transação
+                app.api.logger.logError({
+                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                });
+                return res.status(500).send(error);
+            });
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+            app.db.transaction(async (trx) => {
+                // Se autom_nr = 1, gerar um novo número de documento
+                if (pipeline_params_force.autom_nr == 1) {
+                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('max(documento) + 1 as documento')).where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
+                    body.documento = nextDocumentNr.documento
+                }
 
-            body.evento = nextEventID.count + 1
-            // Variáveis da criação de um novo registro
-            body.status = STATUS_ACTIVE
-            body.created_at = new Date()
+                // Variáveis da criação de um registro
+                const newRecord = {
+                    status: STATUS_ACTIVE,
+                    created_at: new Date(),
+                    ...body, // Incluindo outros dados do corpo da solicitação
+                };
 
-            app.db(tabelaDomain)
-                .insert(body)
-                .then(ret => {
-                    body.id = ret[0]
-                    // registrar o evento na tabela de eventos
-                    const { createEventIns } = app.api.sisEvents
-                    createEventIns({
-                        "notTo": ['created_at', 'evento'],
-                        "next": body,
-                        "request": req,
-                        "evento": {
-                            "evento": `Novo registro`,
-                            "tabela_bd": tabela,
-                        }
-                    })
-                    return res.json(body)
-                })
-                .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
+                // Iniciar a transação e inserir na tabela principal
+                const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+                const [recordId] = await trx(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
+
+                // Registrar o evento na tabela de eventos
+                const eventPayload = {
+                    notTo: ['created_at', 'evento'],
+                    next: newRecord,
+                    request: req,
+                    evento: {
+                        evento: 'Novo registro',
+                        tabela_bd: tabelaDomain,
+                    },
+                };
+                const { createEventIns } = app.api.sisEvents
+                await createEventIns(eventPayload, trx);
+
+                // Inserir na tabela de status um registro de criação
+                await trx(tabelaPipelineStatusDomain).insert({
+                    status: STATUS_ACTIVE,
+                    created_at: new Date(),
+                    id_pipeline: recordId,
+                    status_params: STATUS_PENDENTE,
+                });
+                // Se gera_baixa = 0, liquidar o registro na criação
+                if (pipeline_params_force.gera_baixa == 0) {
+                    const bodyStatus = {
+                        status: STATUS_ACTIVE,
+                        created_at: new Date(),
+                        id_pipeline: recordId,
+                        status_params: STATUS_LIQUIDADO,
+                    };
+                    await trx(tabelaPipelineStatusDomain).insert(bodyStatus);
+                }
+                return res.json({ ...newRecord, id: recordId });
+            }).catch((error) => {
+                // Se ocorrer um erro, faça rollback da transação
+                app.api.logger.logError({
+                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                });
+                return res.status(500).send(error);
+            });
         }
     }
 
@@ -252,7 +303,7 @@ module.exports = app => {
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id })
-            // .whereNot({ 'tbl1.status': STATUS_DELETE })            
+            .whereNot({ 'tbl1.status': STATUS_DELETE })            
             .first()
             .then(body => {
                 return res.json(body)
@@ -264,7 +315,7 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
-        let user = req.user
+        let user = req.user        
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
@@ -274,33 +325,53 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
         const registro = { status: req.query.st || STATUS_DELETE }
         try {
-            // registrar o evento na tabela de eventos
-            const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento'],
-                "last": last,
-                "next": registro,
-                "request": req,
-                "evento": {
-                    "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
-                    "tabela_bd": tabela,
-                }
-            })
-            const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
-                .where({ id: req.params.id })
-            existsOrError(rowsUpdated, 'Registro não foi encontrado')
+            // Variáveis da edição de um registro            
+            let updateRecord = {
+                updated_at: new Date(),
+                status: registro.status,
+                id: req.params.id
+            };
 
-            res.status(204).send()
+            app.db.transaction(async (trx) => {
+                // Iniciar a transação e editar na tabela principal
+                const { createEventUpd } = app.api.sisEvents
+                // Registrar o evento na tabela de eventos
+                const eventPayload = {
+                    notTo: ['created_at', 'updated_at', 'evento',],
+                    last: await app.db(tabelaDomain).where({ id: req.params.id }).first(),
+                    next: updateRecord,
+                    request: req,
+                    evento: {
+                        "classevento": "Remove",
+                        "evento": `Exclusão de Endereço de ${tabela}`,
+                        "tabela_bd": tabela,
+                    }
+                };
+                const evento = await createEventUpd(eventPayload, trx);
+                updateRecord = { ...updateRecord, evento: evento }
+                await trx(tabelaPipelineStatusDomain).insert({
+                    status: STATUS_ACTIVE,
+                    status_params: registro.status,
+                    created_at: new Date(),
+                    id_pipeline: req.params.id,
+                });
+
+                if (registro.status == STATUS_DELETE) {
+                    await trx(tabelaDomain).update(updateRecord).where({ id: req.params.id });
+                    return res.status(204).send()
+                } else return res.status(200).send(updateRecord);
+            }).catch((error) => {
+                // Se ocorrer um erro, faça rollback da transação
+                app.api.logger.logError({
+                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                });
+                return res.status(500).send(error);
+            });
         } catch (error) {
+            console.log(error);
             res.status(400).send(error)
         }
     }
