@@ -1,14 +1,11 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultError } from '@/toast';
+import { defaultError } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import { removeHtmlTags } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-
-import { useConfirm } from 'primevue/useconfirm';
-const confirm = useConfirm();
 
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -28,34 +25,12 @@ onMounted(() => {
     // Limpa os filtros do grid
     clearFilter();
 });
-// Exlui um registro
-const deleteRow = () => {
-    confirm.require({
-        group: 'templating',
-        header: 'Corfirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
-                defaultSuccess('Registro excluído com sucesso!');
-                loadLazyData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
 
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Seus dados iniciais
-const itemData = ref(null); // Dados do item selecionado
 // Itens do dropdown de Tipos
 const dropdownTiposDoc = ref([
     { label: 'Outros', value: '0' },
@@ -151,17 +126,22 @@ const loadLazyData = () => {
                     if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' '); //dropdownStatusParams.value.find((item) => item.value == element.tipo_doc).label;
                     const limitDescription = 100;
                     const description = element.descricao || undefined;
-                    if (description) element.descricao = description.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim().substr(0, limitDescription);
-                    if (description.length > limitDescription) element.descricao += ' ...';
+                    if (description) {
+                        element.descricao = description.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim().substr(0, limitDescription);
+                        if (description.length > limitDescription) element.descricao += ' ...';
+                    }
                     if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = element.valor_bruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 });
                 loading.value = false;
             })
             .catch((error) => {
-                if (typeof error.response.data == 'string') defaultError(error.response.data);
-                else if (typeof error.response == 'string') defaultError(error.response);
-                else if (typeof error == 'string') defaultError(error);
-                else defaultError('Erro ao carregar dados!');
+                const logTo = error;
+                try {
+                    defaultError(error.response.data);
+                } catch (error) {
+                    defaultError('Erro ao carregar dados!');
+                    console.log(typeof logTo, logTo);
+                }
                 router.push({ path: '/' });
             });
     }, Math.random() * 1000 + 250);
@@ -205,8 +185,6 @@ const mountUrlFilters = () => {
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     urlFilters.value = url;
 };
-// Itens do menu de contexto do grid
-const menu = ref();
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
     const toExport = dt.value;
@@ -216,32 +194,6 @@ const exportCSV = () => {
         });
     });
     toExport.exportCSV();
-};
-// Itens do menu de contexto do grid
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id}` });
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        disabled: userData.pipeline < 4,
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-// Abre o menu de contexto do grid
-const toggle = (event) => {
-    menu.value.toggle(event);
-};
-// Armazena os dados do item selecionado
-const getItem = (data) => {
-    itemData.value = data;
 };
 // Determina a qualificação baseado no tempo de existência do registro (status_created_at)
 // Se o registro tiver 120 dias ou mais, retorne 'danger'
@@ -379,8 +331,7 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${data.id}` })" title="Clique para mais opções" />
                 </template>
             </Column>
         </DataTable>
