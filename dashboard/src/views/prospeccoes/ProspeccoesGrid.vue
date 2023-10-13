@@ -42,7 +42,7 @@ onMounted(() => {
 const deleteRow = () => {
     confirm.require({
         group: 'templating',
-        header: 'Corfirmar exclusão',
+        header: 'Confirmar exclusão',
         message: 'Você tem certeza que deseja excluir este registro?',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'pi pi-check',
@@ -129,11 +129,13 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                if (typeof error.response.data == 'string') defaultError(error.response.data);
-                else if (typeof error.response == 'string') defaultError(error.response);
-                else if (typeof error == 'string') defaultError(error);
-                else defaultError('Erro ao carregar dados!');
-                console.log(error);
+                const logTo = error;
+                try {
+                    defaultError(error.response.data);
+                } catch (error) {
+                    defaultError('Erro ao carregar dados!');
+                    console.log(typeof logTo, logTo);
+                }
             });
     }, Math.random() * 1000 + 250);
 };

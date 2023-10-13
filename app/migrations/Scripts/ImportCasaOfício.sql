@@ -127,23 +127,23 @@ INSERT INTO vivazul_cso_root.cad_enderecos (
 );
   
 /*Importa os documentos(ged_params x pipeline_params)*/
+ALTER TABLE vivazul_cso_root.pipeline_params ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+UPDATE vivazul_lynkos.ged_params gp SET gp.tipo_secundario = NULL WHERE gp.tipo_secundario = 0;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.pipeline_params;
 ALTER TABLE vivazul_cso_root.pipeline_params AUTO_INCREMENT=0;
-ALTER TABLE vivazul_cso_root.pipeline_params ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_cso_root.pipeline_params (
-  id,evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,old_id
+  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,old_id
 )(
-	SELECT NULL,1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,id 
+	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,id 
 	FROM vivazul_lynkos.ged_params
 	WHERE STATUS = 10 AND dominio = 'casaoficio'
+	ORDER BY descricao
   );
 /*Garante o tipo_secundário de acordo com id_old*/
-UPDATE vivazul_lynkos.ged_params gp SET gp.tipo_secundario = NULL WHERE gp.tipo_secundario = 0;
-UPDATE vivazul_cso_root.pipeline_params pp SET pp.tipo_secundario = NULL WHERE pp.tipo_secundario = 0;
 UPDATE vivazul_cso_root.pipeline_params pp SET
-	pp.tipo_secundario = (SELECT gp.tipo_secundario FROM vivazul_lynkos.ged_params gp WHERE gp.id = pp.old_id);
+	pp.tipo_secundario = (SELECT gp.id FROM vivazul_cso_root.pipeline_params gp WHERE gp.old_id = pp.tipo_secundario);
 
 /*Importa os documentos(ged x pipeline)*/
 ALTER TABLE vivazul_cso_root.pipeline ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
@@ -171,7 +171,7 @@ INSERT INTO vivazul_cso_root.pipeline (
 	JOIN vivazul_cso_root.pipeline_params pp ON g.id_ged_params = pp.old_id
 	JOIN vivazul_cso_root.cadastros c ON g.id_cadastro = c.old_id
 	LEFT JOIN vivazul_api.users u ON g.id_usuario_agente_vendas = u.old_id
-	WHERE g.dominio = 'casaoficio' LIMIT 9999999
+	WHERE g.dominio = 'casaoficio' ORDER BY LIMIT 9999999
 );
 /*
 Edita a data de criação do registro para primeira data a partir de 2000-01-01 apenas dos registros com 
@@ -183,16 +183,18 @@ UPDATE vivazul_cso_root.pipeline pd
 SET pd.id_pai = NULL WHERE pd.id_pai = 0;
 UPDATE vivazul_cso_root.pipeline pd
 SET pd.id_filho = NULL WHERE pd.id_filho = 0;
+
 UPDATE vivazul_cso_root.pipeline pd
 JOIN vivazul_cso_root.pipeline po ON pd.id_pai = po.old_id
 SET pd.id_pai = po.id
 WHERE pd.id_pai IS NOT NULL;
+
 UPDATE vivazul_cso_root.pipeline pd
 JOIN vivazul_cso_root.pipeline po ON pd.id_filho = po.old_id
 SET pd.id_filho = po.id
 WHERE pd.id_filho IS NOT NULL;
 
-/*Importar os status(ged x pipeline)*/
+/*Importar os status(ged_status x pipeline_status)*/
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.pipeline_status;
 ALTER TABLE vivazul_cso_root.pipeline_status AUTO_INCREMENT=0;

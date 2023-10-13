@@ -60,9 +60,9 @@ const calcTypeAgente = ref('R$');
 // Andamento do registro
 const andamentoRegistro = ref({
     STATUS_PENDENTE: 0,
+    STATUS_REATIVADO: 1,
     STATUS_CONVERTIDO: 10,
     STATUS_PEDIDO: 20,
-    STATUS_PEDIDO_REATIVADO: 21,
     STATUS_LIQUIDADO: 80,
     STATUS_CANCELADO: 89,
     STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
@@ -75,7 +75,7 @@ const convertFloatFields = (result = 'pt') => {
     itemData.value.valor_agente = formatValor(itemData.value.valor_agente, result);
     itemData.value.perc_represent = formatValor(itemData.value.perc_represent, result);
 };
-
+ 
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
@@ -130,7 +130,6 @@ const saveData = async () => {
 
         convertFloatFields('en');
         const preparedBody = { ...itemData.value, status_params_force: andamentoRegistro.value.STATUS_PENDENTE, pipeline_params_force: itemDataParam.value };
-        console.log('preparedBody', preparedBody);
         axios[method](url, preparedBody)
             .then(async (res) => {
                 const body = res.data;
@@ -275,12 +274,13 @@ const itemDataStatus = ref([]);
 const itemDataLastStatus = ref({});
 const itemDataParam = ref({});
 const itemDataStatusPreload = ref([
-    { status: '0', label: 'Criado', icon: 'pi pi-plus', color: '#3b82f6' },
-    { status: '10', label: 'Convertido para pedido', icon: 'pi pi-shopping-cart', color: '#4cd07d' },
-    { status: '20', label: 'Pedido criado', icon: 'pi pi-shopping-cart', color: '#4cd07d' },
-    { status: '21', label: 'Reativado', icon: 'fa-solid fa-retweet', color: '#195825' },
-    { status: '80', label: 'Liquidado', icon: 'pi pi-check', color: '#607D8B' },
-    { status: '89', label: 'Cancelado', icon: 'pi pi-times', color: '#8c221c' }
+    { status: '0', action: 'Criação', label: 'Criado', icon: 'pi pi-plus', color: '#3b82f6' },
+    { status: '1', action: 'Reativação', label: 'Reativado', icon: 'fa-solid fa-retweet', color: '#195825' },
+    { status: '10', action: 'Conversão', label: 'Convertido para pedido', icon: 'pi pi-shopping-cart', color: '#4cd07d' },
+    { status: '20', action: 'Criação', label: 'Pedido criado', icon: 'pi pi-shopping-cart', color: '#4cd07d' },
+    { status: '80', action: 'Liquidação', label: 'Liquidado', icon: 'pi pi-check', color: '#607D8B' },
+    { status: '89', action: 'Cancelamento', label: 'Cancelado', icon: 'pi pi-times', color: '#8c221c' },
+    { status: '99', action: 'Exclusão', label: 'Excluído', icon: 'pi pi-times', color: '#8c221c' }
 ]);
 // Listar status do registro
 const listStatusRegistro = async () => {
@@ -375,19 +375,39 @@ const toFilho = () => {
 const statusRecord = async (status) => {
     if (route.params.id) itemData.value.id = route.params.id;
     const url = `${urlBase.value}/${itemData.value.id}?st=${status}`;
-    if (status == 99)
+    const optionsConfirmation = {
+        group: 'templating',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger'
+    };
+    if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_EXCLUIDO].includes(status))
         confirm.require({
-            group: 'templating',
-            header: 'Corfirmar exclusão',
-            message: 'Você tem certeza que deseja excluir este registro?',
-            icon: 'fa-solid fa-question fa-beat',
-            acceptIcon: 'pi pi-check',
-            rejectIcon: 'pi pi-times',
-            acceptClass: 'p-button-danger',
+            ...optionsConfirmation,
+            header: 'Confirmar',
+            message: `Essa operação não poderá ser revertida. Confirma a ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].action.toLowerCase()}?`,
             accept: async () => {
                 await axios.delete(url, itemData.value).then(() => {
                     defaultError(`Registro excluído com sucesso`);
-                    toGrid();
+                    if (status == andamentoRegistro.value.STATUS_EXCLUIDO) toGrid();
+                    else if (status == andamentoRegistro.value.STATUS_CANCELADO) reload(); 
+                });
+            },
+            reject: () => { 
+                return false;
+            }
+        });
+    else if ([andamentoRegistro.value.STATUS_CONVERTIDO].includes(status))
+        confirm.require({
+            ...optionsConfirmation,
+            header: 'Confirmar',
+            message: `Essa operação não poderá ser revertida. Confirma a ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].action.toLowerCase()}?`,
+            accept: async () => {
+                const preparedBody = { ...itemData.value, status_params_force: andamentoRegistro.value.STATUS_CONVERTIDO, pipeline_params_force: itemDataParam.value };
+                await axios.put(url, preparedBody).then((body) => {
+                    defaultError(`Registro convertido com sucesso`);
+                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${body.data.id}` });
                 });
             },
             reject: () => {
@@ -405,13 +425,15 @@ const statusRecord = async (status) => {
  * Fim de ferramentas do registro
  */
 const toGrid = () => {
+    mode.value = 'grid';
+    emit('cancel');
     router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline` });
 };
+// onBeforeMount(() => {
+// });
 // Carregar dados do formulário
-onBeforeMount(() => {
+onMounted(() => {
     loadData();
-});
-onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
 // Observar alterações na propriedade selectedCadastro
@@ -482,18 +504,18 @@ watch(selectedCadastro, (value) => {
                             <label for="versao">Versão</label>
                             <p class="p-inputtext p-component p-filled">{{ itemData.versao }}</p>
                         </div>
-                        <div class="col-12 lg:col-2" v-if="itemData.id_pai">
+                        <!-- <div class="col-12 lg:col-2" v-if="itemData.id_pai">
                             <label for="id_pai">Convertido por</label>
                             <Button severity="success" text raised @click="toPai">
                                 <span>Proposta&nbsp;<i class="fa-solid fa-angles-right fa-fade"></i></span>
                             </Button>
-                        </div>
-                        <div class="col-12 lg:col-2" v-if="itemData.id_filho">
+                        </div> -->
+                        <!-- <div class="col-12 lg:col-2" v-if="itemData.id_filho">
                             <label for="id_filho">Convertido para</label>
                             <Button severity="success" text raised @click="toFilho">
                                 <span>Pedido&nbsp;<i class="fa-solid fa-angles-right fa-fade"></i></span>
                             </Button>
-                        </div>
+                        </div> -->
                         <div class="col-12" v-if="itemDataParam.doc_venda >= 1">
                             <div class="grid">
                                 <div class="col-12" style="text-align: center">
@@ -571,20 +593,7 @@ watch(selectedCadastro, (value) => {
                     <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new' || itemDataLastStatus.status_params < 80">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
-                        <Button
-                            type="button"
-                            v-if="mode != 'view'"
-                            label="Cancelar"
-                            icon="pi pi-ban"
-                            severity="danger"
-                            text
-                            raised
-                            @click="
-                                mode = 'grid';
-                                emit('cancel');
-                                toGrid();
-                            "
-                        />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode == 'edit' ? reload() : toGrid()" />
                     </div>
                     <div class="card bg-green-200" v-if="userData.admin >= 2">
                         <p>itemData: {{ itemData }}</p>
@@ -593,29 +602,7 @@ watch(selectedCadastro, (value) => {
                     </div>
                 </div>
                 <div class="col-12 lg:col-3" v-if="mode != 'new'">
-                    <Fieldset :toggleable="true" class="mb-2">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="pi pi-clock mr-2"></span>
-                                <span class="font-bold text-lg">Andamento do Registro</span>
-                            </div>
-                        </template>
-                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Timeline v-else :value="itemDataStatus">
-                            <template #marker="slotProps">
-                                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
-                                    <i :class="slotProps.item.icon"></i>
-                                </span>
-                            </template>
-                            <template #opposite="slotProps">
-                                <small class="p-text-secondary">{{ slotProps.item.date }}</small>
-                            </template>
-                            <template #content="slotProps">
-                                {{ slotProps.item.status }}
-                            </template>
-                        </Timeline>
-                    </Fieldset>
-                    <Fieldset :toggleable="true">
+                    <Fieldset :toggleable="true" class="mb-3">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="pi pi-bolt mr-2"></span>
@@ -624,16 +611,27 @@ watch(selectedCadastro, (value) => {
                         </template>
                         <SplitButton label="Novo Registro Idêntico" class="w-full mb-3" icon="fa-solid fa-plus fa-fade" severity="primary" text raised :model="itemNovo" />
                         <Button
+                            :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
+                            v-if="itemData.id_filho || itemData.id_pai"
+                            type="button"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-turn-${itemData.id_filho ? 'down' : 'up'} fa-fade`"
+                            severity="success"
+                            text
+                            raised
+                            @click="itemData.id_filho ? toFilho() : toPai()"
+                        />
+                        <Button
                             label="Converter para Pedido"
-                            v-if="itemDataParam.gera_baixa == 1 && itemData.status_params == 0"
+                            v-if="itemDataParam.gera_baixa == 1 && [andamentoRegistro.STATUS_PENDENTE, andamentoRegistro.STATUS_REATIVADO].includes(itemData.status_params)"
                             type="button"
                             class="w-full mb-3"
                             :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && itemData.status_params == 0 ? 'fa-shake' : ''}`"
                             severity="danger"
                             text
                             raised
+                            @click="statusRecord(andamentoRegistro.STATUS_CONVERTIDO)"
                         />
-                        <!-- @click="convertToPedido" -->
                         <SplitButton
                             label="Comissionar"
                             v-if="itemDataParam.doc_venda >= 2 && (itemData.status_params == 0 || itemData.status == 10)"
@@ -657,7 +655,8 @@ watch(selectedCadastro, (value) => {
                         <!-- @click="newOAT" -->
                         <Button
                             label="Cancelar Registro"
-                            v-if="itemData.status_params < 89"
+                            v-tooltip.top="'Se cancelar, cancelará o pedido relacionado!'"
+                            v-if="itemData.id_filho && itemData.status_params < 89"
                             type="button"
                             :disabled="!(userData.pipeline >= 3 && (itemData.status_params == 0 || itemData.status == 10))"
                             class="w-full mb-3"
@@ -665,31 +664,54 @@ watch(selectedCadastro, (value) => {
                             severity="warning"
                             text
                             raised
-                            @click="statusRecord(89)"
+                            @click="statusRecord(andamentoRegistro.STATUS_CANCELADO)"
                         />
                         <Button
                             label="Reativar Registro"
-                            v-else-if="userData.gestor >= 1 && itemData.status_params == 89"
+                            v-tooltip.top="'Se reativar, reativará o pedido relacionado!'"
+                            v-else-if="itemData.id_filho && userData.gestor >= 1 && itemData.status_params == 89"
                             type="button"
                             class="w-full mb-3"
                             :icon="`fa-solid fa-file-invoice ${itemData.status_params == 0 ? 'fa-fade' : ''}`"
                             severity="warning"
                             text
                             raised
-                            @click="statusRecord(21)"
+                            @click="statusRecord(andamentoRegistro.STATUS_REATIVADO)"
                         />
                         <Button
                             label="Excluir Registro"
                             v-tooltip.top="'Não pode ser desfeito!'"
                             type="button"
-                            :disabled="!(userData.pipeline >= 4 && itemData.status == 10)"
+                            :disabled="itemData.id_filho || !(userData.pipeline >= 4 && itemData.status == 10)"
                             class="w-full mb-3"
                             :icon="`fa-solid fa-fire`"
                             severity="danger"
                             text
                             raised
-                            @click="statusRecord(99)"
+                            @click="statusRecord(andamentoRegistro.STATUS_EXCLUIDO)"
                         />
+                    </Fieldset>
+                    <Fieldset :toggleable="true">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="pi pi-clock mr-2"></span>
+                                <span class="font-bold text-lg">Andamento do Registro</span>
+                            </div>
+                        </template>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <Timeline v-else :value="itemDataStatus">
+                            <template #marker="slotProps">
+                                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                                    <i :class="slotProps.item.icon"></i>
+                                </span>
+                            </template>
+                            <template #opposite="slotProps">
+                                <small class="p-text-secondary">{{ slotProps.item.date }}</small>
+                            </template>
+                            <template #content="slotProps">
+                                {{ slotProps.item.status }}
+                            </template>
+                        </Timeline>
                     </Fieldset>
                 </div>
             </div>

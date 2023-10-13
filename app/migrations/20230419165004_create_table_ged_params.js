@@ -13,7 +13,7 @@ exports.up = function(knex, Promise) {
         table.boolean('doc_venda').default(0).comment('select,insert,update,references  É documento de venda')
         table.boolean('autom_nr').default(0).comment('select,insert,update,references  Numeracao automatica')
         table.boolean('gera_baixa').default(0).comment('select,insert,update,references  Pode ser convertido em pedido')
-        table.boolean('tipo_secundario').default(0).comment('select,insert,update,references  Tipo secundário')
+        table.integer('tipo_secundario', 10).unsigned().comment('select,insert,update,references  Tipo secundário')
         table.boolean('obrig_valor').default(0).comment('select,insert,update,references  Obrigatorio declarar valor')
         table.boolean('reg_agente').default(0).comment('select,insert,update,references  Obrigatório agente ')
         table.string('id_logo',255).default(0).comment('select,insert,update,references  URL logomarca representada')

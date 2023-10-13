@@ -1,7 +1,7 @@
 const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
-    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PEDIDO_REATIVADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
+    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_REATIVADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pipeline'
     const tabelaStatus = 'pipeline_status'
@@ -32,6 +32,13 @@ module.exports = app => {
         const pipeline_params_force = body.pipeline_params_force
 
         try {
+            if (pipeline_params_force.reg_agente == 1) existsOrError(body.id_com_agentes, 'Agente não informado')
+            if (body.id_com_agentes && pipeline_params_force.doc_venda >= 2) {
+                existsOrError(body.valor_representacao, 'Valor base da comissão da representação não informado')
+                if (body.valor_representacao < 0.01) throw 'Valor base da comissão da representação inválido'
+                existsOrError(body.valor_agente, 'Valor base da comissão do agente não informado')
+                if (body.valor_agente < 0.01) throw 'Valor base da comissão do agente inválido'
+            }
             if (pipeline_params_force.obrig_valor == 1) {
                 existsOrError(body.valor_bruto, 'Valor bruto não informado')
                 if (body.valor_bruto < 0.01) throw 'Valor bruto inválido'
@@ -68,7 +75,7 @@ module.exports = app => {
                         "evento": `Alteração de cadastro de ${tabela}`,
                         "tabela_bd": tabela,
                     }
-                };                
+                };
                 const { createEventUpd } = app.api.sisEvents
                 await createEventUpd(eventPayload, trx);
                 await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
@@ -82,6 +89,66 @@ module.exports = app => {
                     });
                 }
 
+                // Se a mudança for para convertido, deve criar um novo registro com base no pipeline_params_force.tipo_secundario com o status pedido
+                if (status_params_force == STATUS_CONVERTIDO) {
+                    
+                    // Gerar um número de documento baseado no pipeline_params_force.tipo_secundario
+                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento'))
+                    .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
+                    body.documento = nextDocumentNr.documento
+                    // Informa o id do registro pai
+                    const idPai = body.id
+                    // Limpa os dados do corpo da solicitação
+                    delete body.id; delete body.id_filho;; delete body.versao; delete body.updated_at;
+                    
+                    // Variáveis da criação de um registro
+                    const newRecord = {
+                        ...body, // Incluir os dados do corpo da solicitação
+                        status: STATUS_ACTIVE,
+                        created_at: new Date(),
+                        id_pai: idPai,
+                        id_pipeline_params: pipeline_params_force.tipo_secundario,
+                    };
+                    
+                    // Iniciar a transação e inserir na tabela principal
+                    const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+                    const newRecordWithEvent = { ...newRecord, evento: nextEventID.count + 1 }
+                    const [recordId] = await trx(tabelaDomain).insert(newRecordWithEvent);
+                    // Informa o id do filho no registro pai
+                    await trx(tabelaDomain).update({id_filho: recordId}).where({ id: idPai });
+                    const newRecordWithID = { ...newRecordWithEvent, id: recordId }
+                    console.log(newRecordWithID);
+                    
+                    // Registrar o evento na tabela de eventos
+                    const eventPayload = {
+                        notTo: ['created_at', 'evento'],
+                        next: newRecord,
+                        request: req,
+                        evento: {
+                            evento: 'Novo registro',
+                            tabela_bd: tabelaDomain,
+                        },
+                    };
+                    const { createEventIns } = app.api.sisEvents
+                    await createEventIns(eventPayload, trx);
+
+                    // Inserir na tabela de status um registro de criação
+                    await trx(tabelaPipelineStatusDomain).insert({
+                        status: STATUS_ACTIVE,
+                        created_at: new Date(),
+                        id_pipeline: recordId,
+                        status_params: STATUS_PENDENTE,
+                    });
+                    // Inserir na tabela de status um registro de pedido                    
+                    await trx(tabelaPipelineStatusDomain).insert({
+                        status: STATUS_ACTIVE,
+                        created_at: new Date(),
+                        id_pipeline: recordId,
+                        status_params: STATUS_PEDIDO,
+                    });
+
+                    return res.json(newRecordWithID);
+                }
                 return res.json(updateRecord);
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
@@ -95,7 +162,7 @@ module.exports = app => {
             app.db.transaction(async (trx) => {
                 // Se autom_nr = 1, gerar um novo número de documento
                 if (pipeline_params_force.autom_nr == 1) {
-                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('max(documento) + 1 as documento')).where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
+                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento')).where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
                     body.documento = nextDocumentNr.documento
                 }
 
@@ -167,15 +234,13 @@ module.exports = app => {
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
-        const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
 
         let queryes = undefined
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('tbl1.id')
+        let sortField = app.db.raw('str_to_date(status_created_at,"%d/%m/%Y")')
         let sortOrder = 'desc'
-        let tipoParams = '1=1'
         if (req.query) {
             queryes = req.query
             query = ''
@@ -248,6 +313,7 @@ module.exports = app => {
                     if (element == 'sort') {
                         sortField = key.split(':')[1].split('=')[0]
                         if (sortField == 'status_created_at') sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
+                        if (sortField == 'documento') sortField = 'cast(documento as int)'
                         sortOrder = queryes[key]
                     }
 
@@ -280,6 +346,7 @@ module.exports = app => {
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
             .orderBy(app.db.raw(sortField), sortOrder)
+            .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
@@ -296,6 +363,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de Pipeline"`)
         } catch (error) {
+            console.log(error);
             return res.status(401).send(error)
         }
 
@@ -303,7 +371,7 @@ module.exports = app => {
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id })
-            .whereNot({ 'tbl1.status': STATUS_DELETE })            
+            .whereNot({ 'tbl1.status': STATUS_DELETE })
             .first()
             .then(body => {
                 return res.json(body)
@@ -315,7 +383,7 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
-        let user = req.user        
+        let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
@@ -334,14 +402,15 @@ module.exports = app => {
                 status: registro.status,
                 id: req.params.id
             };
-
+            const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
             app.db.transaction(async (trx) => {
                 // Iniciar a transação e editar na tabela principal
                 const { createEventUpd } = app.api.sisEvents
                 // Registrar o evento na tabela de eventos
+                // Dados originais do registro
                 const eventPayload = {
                     notTo: ['created_at', 'updated_at', 'evento',],
-                    last: await app.db(tabelaDomain).where({ id: req.params.id }).first(),
+                    last: last,
                     next: updateRecord,
                     request: req,
                     evento: {
@@ -358,11 +427,23 @@ module.exports = app => {
                     created_at: new Date(),
                     id_pipeline: req.params.id,
                 });
-
+                // Se o registro tiver um filho, e a mudança for para cancelado ou reativado, também muda o status do filho
+                if (last.id_filho && [STATUS_CANCELADO, STATUS_REATIVADO].includes(Number(registro.status))) {
+                    await trx(tabelaPipelineStatusDomain).insert({
+                        status: STATUS_ACTIVE,
+                        status_params: registro.status,
+                        created_at: new Date(),
+                        id_pipeline: last.id_filho,
+                    });
+                }
                 if (registro.status == STATUS_DELETE) {
                     await trx(tabelaDomain).update(updateRecord).where({ id: req.params.id });
+                    // Se o registro tiver um filho, ele também é excluído
+                    await trx(tabelaDomain).update({ status: registro.status, evento: evento }).where({ id: last.id_filho });
                     return res.status(204).send()
-                } else return res.status(200).send(updateRecord);
+                } else {
+                    return res.status(200).send(updateRecord);
+                }
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
                 app.api.logger.logError({

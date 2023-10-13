@@ -23,7 +23,7 @@ const urlBase = ref(`${baseApiUrl}/protocolo`);
 const deleteRow = () => {
     confirm.require({
         group: 'templating',
-        header: 'Corfirmar exclusão',
+        header: 'Confirmar exclusão',
         message: 'Você tem certeza que deseja excluir este registro?',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'pi pi-check',

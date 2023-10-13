@@ -330,10 +330,10 @@ CREATE TABLE `pipeline_params` (
   `doc_venda` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  É documento de venda',
   `autom_nr` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Numeracao automatica',
   `gera_baixa` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Pode ser convertido em pedido',
-  `tipo_secundario` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Tipo secundário',
+  `tipo_secundario` int(10) unsigned DEFAULT NULL COMMENT 'select,insert,update,references  Tipo secundário',
   `obrig_valor` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Obrigatorio declarar valor',
   `reg_agente` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Obrigatório agente ',
-  `id_logo` varchar(255) DEFAULT '0' COMMENT 'select,insert,update,references  URL logomarca representada',
+  `id_logo` varchar(255) DEFAULT NULL COMMENT 'select,insert,update,references  URL logomarca representada',
   `gera_pasta` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Gera pasta(0=Não, 1=Documento, 2=documento_baixa)',
   `proposta_interna` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Utiliza o sistema de proposta interna',
   PRIMARY KEY (`id`)
