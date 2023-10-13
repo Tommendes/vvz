@@ -35,8 +35,8 @@ module.exports = app => {
             if (pipeline_params_force.obrig_valor == 1) {
                 existsOrError(body.valor_bruto, 'Valor bruto não informado')
                 if (body.valor_bruto < 0.01) throw 'Valor bruto inválido'
-                existsOrError(body.valor_liquido, 'Valor líquido não informado')
-                if (body.valor_liquido < 0.01) throw 'Valor líquido inválido'
+                existsOrError(body.valor_liq, 'Valor líquido não informado')
+                if (body.valor_liq < 0.01) throw 'Valor líquido inválido'
             }
             existsOrError(body.id_cadastros, 'Cadastro não informado')
             existsOrError(body.id_pipeline_params, 'Tipo de documento não informado')
@@ -56,20 +56,21 @@ module.exports = app => {
 
             app.db.transaction(async (trx) => {
                 // Iniciar a transação e editar na tabela principal
-                const { createEventUpd } = app.api.sisEvents
+                const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+                updateRecord = { ...updateRecord, evento: nextEventID.count + 1 }
                 // Registrar o evento na tabela de eventos
                 const eventPayload = {
                     notTo: ['created_at', 'updated_at', 'evento',],
                     last: await app.db(tabelaDomain).where({ id: body.id }).first(),
-                    next: body,
+                    next: updateRecord,
                     request: req,
                     evento: {
                         "evento": `Alteração de cadastro de ${tabela}`,
                         "tabela_bd": tabela,
                     }
-                };
-                const evento = await createEventUpd(eventPayload, trx);
-                updateRecord = { ...updateRecord, evento: evento }
+                };                
+                const { createEventUpd } = app.api.sisEvents
+                await createEventUpd(eventPayload, trx);
                 await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
                 if (status_params_force != status_params) {
                     // Inserir na tabela de status apenas se o status for diferente
@@ -139,7 +140,8 @@ module.exports = app => {
                     };
                     await trx(tabelaPipelineStatusDomain).insert(bodyStatus);
                 }
-                return res.json({ ...newRecord, id: recordId });
+                const newRecordWithID = { ...newRecord, id: recordId }
+                return res.json(newRecordWithID);
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
                 app.api.logger.logError({
@@ -171,8 +173,8 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('str_to_date(status_created_at,"%d/%m/%Y")')
-        let sortOrder = 'DESC'
+        let sortField = app.db.raw('tbl1.id')
+        let sortOrder = 'desc'
         let tipoParams = '1=1'
         if (req.query) {
             queryes = req.query
@@ -263,7 +265,6 @@ module.exports = app => {
         const totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
-            .leftJoin({ ps: tabelaPipelineStatusDomain }, 'ps.id_pipeline', '=', 'tbl1.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
@@ -274,7 +275,6 @@ module.exports = app => {
             (SELECT DATE_FORMAT(SUBSTRING_INDEX(MAX(ps.created_at),' ',1),'%d/%m/%Y') FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id)status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
-            .leftJoin({ ps: tabelaPipelineStatusDomain }, 'ps.id_pipeline', '=', 'tbl1.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
