@@ -53,6 +53,12 @@ const loading = ref({
     email: null,
     telefone: null
 });
+// DropDown
+const dropdownAgentes = ref([]);
+// const dropdownCadastros = ref([]);
+const cadastro = ref("");
+// const cadastros = ref([]);
+const dropdownEnderecos = ref([]);
 // Props do template
 const props = defineProps({
     mode: String
@@ -83,6 +89,9 @@ const loadData = async () => {
             }
         });
     } else loading.value.form = false;
+    await listAgentes();
+    await listCadastros();
+    await listEnderecos();
 };
 const saveData = async () => {
     if (formIsValid()) {
@@ -118,14 +127,11 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
-const dropdownAgentes = ref([]);
-// const dropdownCadastros = ref([]);
-// const dropdownEnderecos = ref([]);
 // Obter parâmetros do BD
-const optionParams = async (query) => {
-    const url = `${baseApiUrl}/users/f-a/${query.func}?fld=agente_v&vl=${query.dropdownAgentes ? query.dropdownAgentes : ''}&slct=${query.id , query.name}`;
-    return await axios.get(url);
-};
+// const optionParams = async (query) => {
+//     const url = `${baseApiUrl}/users/f-a/${query.func}?fld=agente_v&vl=${query.dropdownAgentes ? query.dropdownAgentes : ''}&slct=${query.id , query.name}`;
+//     return await axios.get(url);
+// };
 const dropdownPeriodo = ref([
     { value: 0, label: 'Manhã' },
     { value: 1, label: 'Tarde' }
@@ -143,20 +149,44 @@ const reload = () => {
     emit('cancel');
 };
 // Obter parâmetros do BD
-// const optionLocalParams = async (query) => {
-//     itemData.value.id = route.params.id;
-//     const selects = query.select ? `&slct=${query.select}` : undefined;
-//     const url = `${baseApiUrl}/users/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-//     return await axios.get(url);
-// };
-// Carregar opções do formulário
-const loadOptions = async () => {
-    // Agente
-    await optionParams({ field: 'meta', value: 'id_agente', select: 'id,label' }).then((res) => {
+//  Parâmetros Agente
+const listAgentes = async (query) => {
+    const url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name`;
+    await axios.get(url).then((res) => {
+        dropdownAgentes.value = [];
         res.data.data.map((item) => {
-            dropdownAgentes.value.push({ value: item.id, label: item.label });
+            dropdownAgentes.value.push({ value: item.id, label: item.name });
         });
     });
+};
+//  Parâmetros Endereços
+const listEnderecos = async (query) => {
+    const url = `${baseApiUrl}/cad-enderecos/f-a/glf?fld=id_cadastros&vl=${id_cadastros}&slct=id,logradouro,nr,complnr,bairro,cidade,uf`;
+    await axios.get(url).then((res) => {
+        dropdownEnderecos.value = [];
+        res.data.data.map((item) => {
+            dropdownEnderecos.value.push({ value: item.id, label: item.name });
+        });
+    });
+};
+//  Parâmetros Cadastros
+const listCadastros = async (query) => {
+    const url = `${baseApiUrl}/cadastros/f-a/glf?fld=nome&vl=tom&slct=id,nome`;
+    await axios.get(url).then((res) => {
+        dropdownCadastros.value = [];
+        res.data.data.map((item) => {
+            dropdownCadastros.value.push({ value: item.id, label: item.name });
+        });
+    });
+};
+// Carregar opções do formulário
+// const loadOptions = async () => {
+    // Agente
+    // await optionParams({ field: 'meta', value: 'id_agente', select: 'id,label' }).then((res) => {
+    //     res.data.data.map((item) => {
+    //         dropdownAgentes.value.push({ value: item.id, label: item.label });
+    //     });
+    // });
 
     // Área Atuação
     //     await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
@@ -164,11 +194,11 @@ const loadOptions = async () => {
     //             dropdownAtuacao.value.push({ value: item.id, label: item.label });
     //         });
     //     });
-};
+// };
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
-    loadOptions();
+    // loadOptions();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -193,7 +223,17 @@ watchEffect(() => {
                         <div class="col-12 md:col-8">
                             <label for="id_agente">{{ labels.id_agente }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_agente" :disabled="mode == 'view'" optionLabel="label"  placeholder="Selecione um agente" optionValue="value" v-model="itemData.id_agente" :options="dropdownAgentes" />
+                            <Dropdown 
+                            v-else
+                            id="id_agente"
+                            :disabled="mode == 'view'"
+                            :showClear="!!itemData.id_agente"
+                            optionLabel="label"
+                            placeholder="Selecione um agente"
+                            optionValue="value"
+                            v-model="itemData.id_agente"
+                            :options="dropdownAgentes"
+                        />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="periodo">{{ labels.periodo }}</label>
@@ -209,12 +249,40 @@ watchEffect(() => {
                         <div class="col-12 md:col-12">
                             <label for="id_cadastros">{{ labels.id_cadastros }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cadastros" :options="dropdownCadastros" />
+                            <!-- <Dropdown 
+                            v-else
+                            id="id_cadastros"
+                            :disabled="mode == 'view'"
+                            :showClear="!!itemData.id_cadastros"
+                            optionLabel="label"
+                            placeholder="Selecione um cadastro"
+                            optionValue="value"
+                            v-model="itemData.id_cadastros"
+                            :options="dropdownCadastros"/> -->
+
+                            <AutoComplete
+                            v-else id="id_cadastros"
+                            :disabled="mode == 'view'"
+                            :showClear="!!itemData.id_cadastros"
+                            optionLabel="label"
+                            optionValue="value"
+                            v-model="itemData.id_cadastros"
+                            :suggestions="cadastros"
+                            @complete="search" />
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="id_cad_end">{{ labels.id_cad_end }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_cad_end" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cad_end" :options="dropdownEnderecos" />
+                            <Dropdown
+                            v-else
+                            id="id_cad_end"
+                            :disabled="mode == 'view'"
+                            :showClear="!!itemData.id_cad_end"
+                            optionLabel="label"
+                            placeholder="Selecione um endereço"
+                            optionValue="value"
+                            v-model="itemData.id_cad_end"
+                            :options="dropdownEnderecos" />
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="pessoa">{{ labels.pessoa }}</label>
