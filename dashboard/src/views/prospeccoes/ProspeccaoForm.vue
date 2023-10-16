@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { userKey } from '@/global';
+import moment from 'moment';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -79,7 +80,7 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(itemData.value.data_visita);
+                if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
@@ -99,13 +100,14 @@ const saveData = async () => {
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
         // itemData.periodo = convertTurnoToNumber(itemData.periodo);
-        if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.unmasked(itemData.value.data_visita);
+        if (itemData.value.data_visita) itemData.value.data_visita = moment(itemData.value.data_visita, 'DD/MM/YYYY').format('YYYY-MM-DD');
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
+                    if (itemData.value.data_visita) itemData.value.data_visita = moment(itemData.value.data_visita).format('DD/MM/YYYY');
                     itemDataComparision.value = { ...itemData.value };
                     if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}prospeccao/${itemData.value.id}` });
                     mode.value = 'view';
