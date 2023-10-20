@@ -43,6 +43,16 @@ const routes = [
                 component: () => import('@/views/protocolos/ProtocoloForm.vue')
             },
             {
+                path: '/:client/:domain/pipeline_params',
+                name: 'pipeline-params',
+                component: () => import('@/views/pipeline_params/ParamsGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pipeline_param/:id',
+                name: 'pipeline-param',
+                component: () => import('@/views/pipeline_params/ParamForm.vue')
+            },
+            {
                 path: '/:client/:domain/pipeline',
                 name: 'pipeline',
                 component: () => import('@/views/pipeline/PipelinesGrid.vue')
