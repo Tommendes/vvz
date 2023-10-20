@@ -10,19 +10,6 @@ const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
-// import { Mask } from 'maska';
-// const masks = ref({
-//     cpf_cnpj_empresa: new Mask({
-//         mask: ['###.###.###-##', '##.###.###/####-##']
-//     }),
-//     telefone: new Mask({
-//         mask: ['(##) ####-####', '(##) #####-####']
-//     }),
-//     cep: new Mask({
-//         mask: '#####-###'
-//     })
-// });
-
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
@@ -33,9 +20,17 @@ const router = useRouter();
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
-// Validar o cpf_cnpj
-import { cpf, cnpj } from 'cpf-cnpj-validator';
+import { useToast } from "primevue/usetoast";
+const toast = useToast();
 
+// Envio da logo com componente PrimeVue
+const onUpload = (event) => {
+    const uploadedFile = event.files[0]; // Envio do arquivo URL
+    if (uploadedFile) {
+        // Atualize o campo id_logo com a URL do arquivo carregado
+        itemData.id_logo = uploadedFile.objectURL;
+    }
+};
 // Campos de formulário
 const itemData = ref({});
 const registroTipo = ref('pf');
@@ -44,13 +39,13 @@ const labels = ref({
     bi_index: "Apresentação em BI",
     doc_venda: "É documento de venda",
     autom_nr: "Numeracao automatica  ",
-    gera_baixa: "Pode ser convertido em pedido  ",
+    gera_baixa: "Pode ser solicitado",
     tipo_secundario: "Tipo secundário",
     obrig_valor: "Obrigatorio declarar valor",
     reg_agente: "Obrigatório agente",
     id_logo: "logomarca representada",
     gera_pasta: "Gera pasta", // (0=Não, 1=Documento, 2=documento_baixa)
-    proposta_interna: "Utiliza o sistema de proposta interna"
+    proposta_interna: "Usa sistema interno"
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -134,60 +129,47 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
-// // Validar CPF
-// const validateCPFCNPJ = () => {
-//     const toValidate = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-//     if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) errorMessages.value.cpf_cnpj_empresa = null;
-//     else errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
-//     return !errorMessages.value.cpf_cnpj_empresa;
-// };
-// // Validar Cep
-// const validateCep = () => {
-//     if (itemData.value.cep && itemData.value.cep.replace(/([^\d])+/gim, '').length == 8) errorMessages.value.cep = null;
-//     else errorMessages.value.cep = 'Formato de cep inválido';
-//     return !errorMessages.value.cep;
-// };
-// Validar email
-const validateEmail = (field) => {
-    if (itemData.value.email_destinatario && itemData.value.email_destinatario.trim().length > 0 && !isValidEmail(itemData.value.email_destinatario)) {
-        errorMessages.value.email_destinatario = 'Formato de email inválido';
-    } else errorMessages.value.email_destinatario = null;
-    return !errorMessages.value.email_destinatario;
-};
-// // Validar telefone
-// const validateTelefone = (field) => {
-//     if (itemData.value[field] && itemData.value[field].trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value[field]).length)) {
-//         errorMessages.value[field] = 'Formato de telefone inválido';
-//     } else errorMessages.value[field] = null;
-//     return !errorMessages.value[field];
-// };
-// const validator = () => {
-//     let isValid = true;
-//     [
-//         { field: 'email', validator: 'email' },
-//         { field: 'email_at', validator: 'email' },
-//         { field: 'email_comercial', validator: 'email' },
-//         { field: 'email_financeiro', validator: 'email' },
-//         { field: 'email_rh', validator: 'email' },
-//         { field: 'tel1', validator: 'telefone' },
-//         { field: 'tel2', validator: 'telefone' }
-//     ].forEach((element) => {
-//         if (element.validator == 'email' && !validateEmail(element.field)) {
-//             isValid = false;
-//         } else if (element.validator == 'telefone' && !validateTelefone(element.field)) {
-//             isValid = false;
-//         }
-//     });
-//     return isValid;
-// };
+// Opções de DropDown do Form
+const dropdownApresentacaoBi = ref([
+    { value: 0, label: 'Sim' },
+    { value: 1, label: 'Não'}
+]);
+const dropdownDocVenda = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'É proposta'},
+    { value: 2, label: 'É pedido'}
+]);
+const dropdownAutomNum = ref([
+    { value: 0, label: 'Sim' },
+    { value: 1, label: 'Não'}
+]);
+const dropdownGeraBaixa = ref([
+    { value: 0, label: 'Sim' },
+    { value: 1, label: 'Não'}
+]);
+const dropdownTipoSec = ref([
+    { value: 0, label: 'Não há' }
+]);
+const dropdownObrigValor = ref([
+    { value: 0, label: 'Sim' },
+    { value: 1, label: 'Não'}
+]);
+const dropdownObrigAgente = ref([
+    { value: 0, label: 'Sim' },
+    { value: 1, label: 'Não'}
+]);
 const dropdownGeraPasta = ref([
     { value: 0, label: 'Não' },
-    { value: 1, label: 'Documento'},
-    { value: 2, label: "Documento Baixa"}
+    { value: 1, label: 'Para o documento'},
+    { value: 2, label: "Para o pedido"}
+]);
+const dropdownPropInterna = ref([
+    { value: 0, label: 'Sim' },
+    { value: 1, label: 'Não'}
 ]);
 // Validar formulário
 const formIsValid = () => {
-    return validateEmail();
+    return true;
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -212,29 +194,7 @@ onMounted(() => {
 // Observar alterações nos dados do formulário
 watchEffect(() => {
     isItemDataChanged();
-    // validateRazaoSocial();
-    // validator();
-    // validateCep();
 });
-// watch(
-//     () => itemData.value.cpf_cnpj_empresa,
-//     (newItemData) => {
-//         // validateCPFCNPJ();
-//         if (newItemData.replace(/([^\d])+/gim, '').length == 14) {
-//             registroTipo.value = 'pj';
-//             labels.value.razaosocial = 'Razão Social';
-//             labels.value.fantasia = 'Nome Fantasia';
-//             labels.value.cpf_cnpj_empresa = 'CNPJ';
-//             labels.value.ie = 'Inscrição Estadual';
-//         } else {
-//             registroTipo.value = 'pf';
-//             labels.value.razaosocial = 'Nome';
-//             labels.value.fantasia = 'Nome Social';
-//             labels.value.cpf_cnpj_empresa = 'CPF';
-//             labels.value.ie = 'RG';
-//         }
-//     }
-// );
 const menu = ref();
 const preview = ref(false);
 const items = ref([
@@ -262,62 +222,78 @@ const items = ref([
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-12">
                             <label for="descricao">{{ labels.descricao }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" />
                         </div>
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-2">
                             <label for="bi_index">{{ labels.bi_index }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.bi_index" id="bi_index" type="text" />
+                            <Dropdown v-else id="bi_index" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.bi_index" :options="dropdownApresentacaoBi" />
                         </div>
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-2">
                             <label for="doc_venda">{{ labels.doc_venda }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.doc_venda" id="doc_venda" type="text" />
-                            <!-- <small id="text-error" class="p-error" v-if="errorMessages.doc_venda">{{ errorMessages.doc_venda || '&nbsp;' }}</small> -->
+                            <Dropdown v-else id="doc_venda" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.doc_venda" :options="dropdownDocVenda" />
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-2">
                             <label for="autom_nr">{{ labels.autom_nr }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.autom_nr" id="autom_nr" type="text" />
+                            <Dropdown v-else id="autom_nr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.autom_nr" :options="dropdownAutomNum" />
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-2">
                             <label for="gera_baixa">{{ labels.gera_baixa }}</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.gera_baixa" id="gera_baixa" type="text" />
+                            <Dropdown v-else id="gera_baixa" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gera_baixa" :options="dropdownGeraBaixa" />
                         </div>
-                        <div class="col-12 md:col-12">
+                        <div class="col-12 md:col-2">
                             <label for="tipo_secundario">{{ labels.tipo_secundario }}</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tipo_secundario" id="tipo_secundario" type="text" />
+                            <Dropdown v-else id="tipo_secundario" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo_secundario" :options="dropdownTipoSec" />
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-2">
                             <label for="obrig_valor">{{ labels.obrig_valor }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.obrig_valor" id="obrig_valor" type="text" />
+                            <Dropdown v-else id="obrig_valor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.obrig_valor" :options="dropdownObrigValor" />
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-2">
                             <label for="reg_agente">{{ labels.reg_agente }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.reg_agente" id="reg_agente" type="text" />
+                            <Dropdown v-else id="reg_agente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.reg_agente" :options="dropdownObrigAgente" />
                         </div>
-                        <div class="col-12 md:col-6">
-                            <label for="id_logo">{{ labels.id_logo }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_logo" id="id_logo" type="text" />
-                        </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-2">
                             <label for="gera_pasta">{{ labels.gera_pasta }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="gera_pasta" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gera_pasta" :options="dropdownGeraPasta" />
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-2">
                             <label for="proposta_interna">{{ labels.proposta_interna }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.proposta_interna" id="proposta_interna" type="text" />
+                            <Dropdown v-else id="proposta_interna" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.proposta_interna" :options="dropdownPropInterna" />
                         </div>
+                        <div class="col-12 md:col-4">
+                            <label for="id_logo">{{ labels.id_logo }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_logo" id="id_logo" type="text" />
+                        </div>
+
+                        <!-- logo carregada -->
+                        <!-- <div class="col-12 md:col-4">
+                            <label for="id_logo">{{ labels.id_logo }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <FileUpload
+                                v-else
+                                mode="basic"
+                                name="logo"
+                                url="./upload.php"
+                                accept="image/*"
+                                :disabled="mode == 'view'"
+                                :maxFileSize="1000000"
+                                @upload="onUpload"
+                                chooseLabel="Carregar"
+                            />
+                        </div> -->
                     </div>
                 </div>
                 <div class="col-12">
