@@ -32,7 +32,13 @@ module.exports = app => {
         const pipeline_params_force = body.pipeline_params_force
 
         try {
+            existsOrError(body.id_cadastros, 'Cadastro não informado')
+            existsOrError(body.id_pipeline_params, 'Tipo de documento não informado')
             if (pipeline_params_force.reg_agente == 1) existsOrError(body.id_com_agentes, 'Agente não informado')
+            if (pipeline_params_force.autom_nr == 0) {
+                existsOrError(body.documento, 'Número de documento não informado')
+                if (!(parseInt(body.documento) > 0)) throw 'Número de documento não informado'
+            }
             if (body.id_com_agentes && pipeline_params_force.doc_venda >= 2) {
                 existsOrError(body.valor_representacao, 'Valor base da comissão da representação não informado')
                 if (body.valor_representacao < 0.01) throw 'Valor base da comissão da representação inválido'
@@ -45,9 +51,6 @@ module.exports = app => {
                 existsOrError(body.valor_liq, 'Valor líquido não informado')
                 if (body.valor_liq < 0.01) throw 'Valor líquido inválido'
             }
-            existsOrError(body.id_cadastros, 'Cadastro não informado')
-            existsOrError(body.id_pipeline_params, 'Tipo de documento não informado')
-
         } catch (error) {
             return res.status(400).send(error)
         }
@@ -91,16 +94,16 @@ module.exports = app => {
 
                 // Se a mudança for para convertido, deve criar um novo registro com base no pipeline_params_force.tipo_secundario com o status pedido
                 if (status_params_force == STATUS_CONVERTIDO) {
-                    
+
                     // Gerar um número de documento baseado no pipeline_params_force.tipo_secundario
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento'))
-                    .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
+                        .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
                     body.documento = nextDocumentNr.documento
                     // Informa o id do registro pai
                     const idPai = body.id
                     // Limpa os dados do corpo da solicitação
                     delete body.id; delete body.id_filho;; delete body.versao; delete body.updated_at;
-                    
+
                     // Variáveis da criação de um registro
                     const newRecord = {
                         ...body, // Incluir os dados do corpo da solicitação
@@ -109,16 +112,15 @@ module.exports = app => {
                         id_pai: idPai,
                         id_pipeline_params: pipeline_params_force.tipo_secundario,
                     };
-                    
+
                     // Iniciar a transação e inserir na tabela principal
                     const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
                     const newRecordWithEvent = { ...newRecord, evento: nextEventID.count + 1 }
                     const [recordId] = await trx(tabelaDomain).insert(newRecordWithEvent);
                     // Informa o id do filho no registro pai
-                    await trx(tabelaDomain).update({id_filho: recordId}).where({ id: idPai });
+                    await trx(tabelaDomain).update({ id_filho: recordId }).where({ id: idPai });
                     const newRecordWithID = { ...newRecordWithEvent, id: recordId }
-                    console.log(newRecordWithID);
-                    
+
                     // Registrar o evento na tabela de eventos
                     const eventPayload = {
                         notTo: ['created_at', 'evento'],
@@ -163,7 +165,7 @@ module.exports = app => {
                 // Se autom_nr = 1, gerar um novo número de documento
                 if (pipeline_params_force.autom_nr == 1) {
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento')).where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
-                    body.documento = nextDocumentNr.documento
+                    body.documento = nextDocumentNr.documento || 1
                 }
 
                 // Variáveis da criação de um registro
@@ -197,16 +199,19 @@ module.exports = app => {
                     id_pipeline: recordId,
                     status_params: STATUS_PENDENTE,
                 });
-                // Se gera_baixa = 0, liquidar o registro na criação
-                if (pipeline_params_force.gera_baixa == 0) {
-                    const bodyStatus = {
-                        status: STATUS_ACTIVE,
-                        created_at: new Date(),
-                        id_pipeline: recordId,
-                        status_params: STATUS_LIQUIDADO,
-                    };
-                    await trx(tabelaPipelineStatusDomain).insert(bodyStatus);
-                }
+                /**
+                 * Não pareceu bom liquidar, por exemplo, um projeto, carta ou memorando já na criação
+                 */
+                // // Se gera_baixa = 0, liquidar o registro na criação
+                // if (pipeline_params_force.gera_baixa == 0) {
+                //     const bodyStatus = {
+                //         status: STATUS_ACTIVE,
+                //         created_at: new Date(),
+                //         id_pipeline: recordId,
+                //         status_params: STATUS_LIQUIDADO,
+                //     };
+                //     await trx(tabelaPipelineStatusDomain).insert(bodyStatus);
+                // }
                 const newRecordWithID = { ...newRecord, id: recordId }
                 return res.json(newRecordWithID);
             }).catch((error) => {
@@ -403,6 +408,8 @@ module.exports = app => {
                 id: req.params.id
             };
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
+            // if (registro.status == STATUS_REATIVADO && last.id_filho) registro.status = STATUS_CONVERTIDO
+            // if (registro.status == STATUS_REATIVADO && last.id_pai) registro.status = STATUS_PEDIDO
             app.db.transaction(async (trx) => {
                 // Iniciar a transação e editar na tabela principal
                 const { createEventUpd } = app.api.sisEvents
@@ -427,8 +434,8 @@ module.exports = app => {
                     created_at: new Date(),
                     id_pipeline: req.params.id,
                 });
-                // Se o registro tiver um filho, e a mudança for para cancelado ou reativado, também muda o status do filho
-                if (last.id_filho && [STATUS_CANCELADO, STATUS_REATIVADO].includes(Number(registro.status))) {
+                // Se o registro tiver um filho, e a mudança for para cancelado, reativado ou convertido(no caso do registro filho), também muda o status do filho
+                if (last.id_filho && [STATUS_CANCELADO, STATUS_REATIVADO, /*STATUS_CONVERTIDO*/].includes(Number(registro.status))) {
                     await trx(tabelaPipelineStatusDomain).insert({
                         status: STATUS_ACTIVE,
                         status_params: registro.status,

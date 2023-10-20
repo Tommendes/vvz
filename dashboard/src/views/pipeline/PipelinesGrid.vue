@@ -55,21 +55,35 @@ const loadOptions = async () => {
 };
 const filtrarUnidades = async () => {
     // Unidades de negócio
-    await optionParams({ func: 'gun', tipoDoc: tipoDoc.value, unidade: unidade.value }).then((res) => {
+    await optionParams({
+        func: 'gun',
+        tipoDoc: tipoDoc.value,
+        unidade: unidade.value
+    }).then((res) => {
         dropdownUnidades.value = [];
         res.data.data.map((item) => {
-            dropdownUnidades.value.push({ value: item.descricao, label: item.descricao });
+            dropdownUnidades.value.push({
+                value: item.descricao,
+                label: item.descricao
+            });
         });
     });
     filtrarUnidadesDescricao();
 };
 const filtrarUnidadesDescricao = async () => {
     // Unidades de negócio por tipo
-    await optionParams({ func: 'ubt', tipoDoc: tipoDoc.value, unidade: unidade.value }).then((res) => {
+    await optionParams({
+        func: 'ubt',
+        tipoDoc: tipoDoc.value,
+        unidade: unidade.value
+    }).then((res) => {
         dropdownUnidadesFilter.value = [];
         res.data.data.map((item) => {
             const label = item.descricao.toString().replaceAll(/_/g, ' ');
-            dropdownUnidadesFilter.value.push({ value: item.descricao, label: label });
+            dropdownUnidadesFilter.value.push({
+                value: item.descricao,
+                label: label
+            });
         });
     });
 };
@@ -82,15 +96,27 @@ const listaNomes = ref([
     { field: 'tipo_doc', label: 'Tipo' },
     { field: 'descricao', label: 'Descrição', minWidth: '8rem' },
     { field: 'valor_bruto', label: 'R$ bruto', minWidth: '5rem' },
-    { field: 'status_created_at', label: 'Data', type: 'date', minWidth: '5rem', tagged: true }
+    {
+        field: 'status_created_at',
+        label: 'Data',
+        type: 'date',
+        minWidth: '5rem',
+        tagged: true
+    }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
     filters.value = {};
     listaNomes.value.forEach((element) => {
-        filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
+        filters.value = {
+            ...filters.value,
+            [element.field]: { value: '', matchMode: 'contains' }
+        };
     });
-    filters.value = { ...filters.value, doc_venda: { value: '', matchMode: 'contains' } };
+    filters.value = {
+        ...filters.value,
+        doc_venda: { value: '', matchMode: 'contains' }
+    };
 };
 const filters = ref({});
 const lazyParams = ref({});
@@ -130,7 +156,11 @@ const loadLazyData = () => {
                         element.descricao = description.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim().substr(0, limitDescription);
                         if (description.length > limitDescription) element.descricao += ' ...';
                     }
-                    if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = element.valor_bruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    if (element.valor_bruto && element.valor_bruto >= 0)
+                        element.valor_bruto = element.valor_bruto.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        });
                 });
                 loading.value = false;
             })
@@ -254,7 +284,7 @@ watchEffect(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3 mb-3">
-                    <Tag :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"></Tag>
+                    <Tag :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
                 </div>
                 <div class="flex justify-content-end gap-3">
                     <Dropdown
@@ -331,7 +361,18 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${data.id}` })" title="Clique para mais opções" />
+                    <Button
+                        type="button"
+                        class="p-button-outlined"
+                        rounded
+                        icon="fa-solid fa-bars"
+                        @click="
+                            router.push({
+                                path: `/${userData.cliente}/${userData.dominio}/pipeline/${data.id}`
+                            })
+                        "
+                        title="Clique para mais opções"
+                    />
                 </template>
             </Column>
         </DataTable>
