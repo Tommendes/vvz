@@ -5,6 +5,7 @@ export function defaultToast(msg, severity, clear) {
     let msgTimeLife = 1;
     if (typeof msg == 'string') msgTimeLife = msg.split(' ').length;
     else console.log(msg);
+    if (msgTimeLife < 3) msgTimeLife = 3;
 
     if (clear) app.config.globalProperties.$toast.removeAllGroups();
     if (typeof msg == 'object') {
@@ -12,7 +13,9 @@ export function defaultToast(msg, severity, clear) {
         msg.forEach((element) => {
             lengths.push(element.split(' ').length);
         });
-        const msgTimeLife = Math.max(...lengths) * 500;
+        let msgTimeLife = Math.max(...lengths) * 500;
+        console.log(msgTimeLife);
+        if (msgTimeLife < 2000) msgTimeLife = 2000;
         msg.forEach((element) => {
             app.config.globalProperties.$toast.add({ severity: severityRes, detail: element, life: msgTimeLife * 500 });
         });
