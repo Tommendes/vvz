@@ -154,18 +154,12 @@ onBeforeMount(() => {
                         {{ data.tipo }}
                     </div>
                 </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por tipo" />
-                </template>
             </Column>
             <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.pessoa }}
                     </div>
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por pessoa" />
                 </template>
             </Column>
             <Column field="departamento" header="Departamento" sortable style="min-width: 20rem">
@@ -174,18 +168,12 @@ onBeforeMount(() => {
                         {{ data.departamento }}
                     </div>
                 </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por departamento" />
-                </template>
             </Column>
             <Column field="meio" header="Meio" sortable style="min-width: 30rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
-                        <div v-html="data.meioRenderizado"></div>
+                        <span v-html="data.meioRenderizado" />
                     </div>
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por meio" />
                 </template>
             </Column>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">

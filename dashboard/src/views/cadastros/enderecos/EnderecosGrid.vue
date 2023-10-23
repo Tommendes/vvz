@@ -182,9 +182,11 @@ onBeforeMount(() => {
                     <div class="flex flex-wrap gap-2 text-lg">{{ data.cidade }}{{ data.uf ? `, ${data.uf}` : '' }}</div>
                 </template>
             </Column>
-            <Column field="cep" header="CEP" sortable style="min-width: 120px" class="flex flex-wrap gap-2 text-lg">
+            <Column field="cep" header="CEP" sortable style="min-width: 120px">
                 <template #body="{ data }">
-                    {{ data.cep }}
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.cep }}
+                    </div>
                 </template>
             </Column>
             <Column field="tipo" header="TIPO" sortable style="min-width: 120px">
