@@ -172,10 +172,13 @@ const saveData = async () => {
                 }
             })
             .catch((error) => {
-                if (typeof error.response.data == 'string') defaultError(error.response.data);
-                else if (typeof error.response == 'string') defaultError(error.response);
-                else if (typeof error == 'string') defaultError(error);
-                else defaultError('Erro ao carregar dados!');
+                if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+                else if (typeof error.response == 'string') defaultWarn(error.response);
+                else if (typeof error == 'string') defaultWarn(error);
+                else {
+                    console.log(error);
+                    defaultWarn('Erro ao carregar dados!');
+                }
             });
     }
 };
@@ -572,15 +575,13 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb
-        :items="[
-            {
-                label: 'Todo o Pipeline',
-                to: `/${userData.cliente}/${userData.dominio}/pipeline`
-            },
-            { label: itemData.documento }
-        ]"
-    />
+    <Breadcrumb :items="[
+        {
+            label: 'Todo o Pipeline',
+            to: `/${userData.cliente}/${userData.dominio}/pipeline`
+        },
+        { label: itemData.documento }
+    ]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -589,56 +590,48 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12">
                             <label for="id_cadastros">Cadastro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editCadastro || (mode == 'new' && !itemData.id_cadastros)" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <AutoComplete v-else-if="editCadastro || (mode == 'new' && !itemData.id_cadastros)"
+                                v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros"
+                                @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button v-if="!itemDataLastStatus.status_params >= 80" icon="pi pi-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
+                                <Button v-if="!itemDataLastStatus.status_params >= 80" icon="pi pi-pencil"
+                                    severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                             </div>
                             <!-- <p>{{ itemData.id_cadastros }} {{ mode }} {{ editCadastro }}</p> -->
                         </div>
-                        <div :class="`col-12 lg:col-${mode == 'new' && !(itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
+                        <div
+                            :class="`col-12 lg:col-${mode == 'new' && !(itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
                             <label for="id_pipeline_params">Tipo</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else-if="mode != 'new' && unidadeLabel" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`" v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
+                            <p v-else-if="mode != 'new' && unidadeLabel"
+                                :class="`${animationDocNr}disabled p-inputtext p-component p-filled`"
+                                v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
                                 {{ unidadeLabel }}
                             </p>
-                            <Dropdown
-                                v-else
-                                filter
-                                placeholder="Selecione..."
-                                :showClear="!!itemData.id_pipeline_params"
-                                id="unidade_tipos"
-                                optionLabel="label"
-                                optionValue="value"
-                                v-model="itemData.id_pipeline_params"
-                                :options="dropdownUnidades"
-                                :disabled="mode != 'new'"
-                                @change="getPipelineParam()"
-                            />
+                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.id_pipeline_params"
+                                id="unidade_tipos" optionLabel="label" optionValue="value"
+                                v-model="itemData.id_pipeline_params" :options="dropdownUnidades" :disabled="mode != 'new'"
+                                @change="getPipelineParam()" />
                         </div>
-                        <div :class="`col-12 lg:col-${mode == 'new' && !(itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
+                        <div
+                            :class="`col-12 lg:col-${mode == 'new' && !(itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
                             <label for="id_com_agentes">Agente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown
-                                v-else
-                                filter
-                                placeholder="Selecione..."
-                                :showClear="!!itemData.id_com_agentes"
-                                id="unidade_tipos"
-                                optionLabel="label"
-                                optionValue="value"
-                                v-model="itemData.id_com_agentes"
-                                :options="dropdownAgentes"
-                                :disabled="mode == 'view'"
-                            />
+                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.id_com_agentes"
+                                id="unidade_tipos" optionLabel="label" optionValue="value" v-model="itemData.id_com_agentes"
+                                :options="dropdownAgentes" :disabled="mode == 'view'" />
                         </div>
-                        <div class="col-12 lg:col-2" v-if="itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)">
+                        <div class="col-12 lg:col-2"
+                            v-if="itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)">
                             <label for="documento">Documento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else-if="itemDataParam.autom_nr" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
+                            <p v-else-if="itemDataParam.autom_nr"
+                                :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
                                 {{ itemData.documento }}
                             </p>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.documento" id="documento" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.documento"
+                                id="documento" type="text" />
                         </div>
                         <div class="col-12 lg:col-1" v-if="itemData.versao">
                             <label for="versao">Versão</label>
@@ -646,24 +639,13 @@ watch(selectedCadastro, (value) => {
                                 {{ itemData.versao }}
                             </p>
                         </div>
-                        <!-- <div class="col-12 lg:col-2" v-if="itemData.id_pai">
-                            <label for="id_pai">Convertido por</label>
-                            <Button severity="success" text raised @click="toPai">
-                                <span>Proposta&nbsp;<i class="fa-solid fa-angles-right fa-shake"></i></span>
-                            </Button>
-                        </div> -->
-                        <!-- <div class="col-12 lg:col-2" v-if="itemData.id_filho">
-                            <label for="id_filho">Convertido para</label>
-                            <Button severity="success" text raised @click="toFilho">
-                                <span>Pedido&nbsp;<i class="fa-solid fa-angles-right fa-shake"></i></span>
-                            </Button>
-                        </div> -->
                         <div class="col-12" v-if="itemDataParam.doc_venda >= 1">
                             <div class="grid">
                                 <div class="col-12" style="text-align: center">
                                     <div class="flex align-items-end flex-wrap card-container purple-container">
                                         <span class="p-inputtext p-component p-filled surface-100">
-                                            <i class="fa-solid fa-angles-down fa-shake"></i> Valores referência para comissão
+                                            <i class="fa-solid fa-angles-down fa-shake"></i> Valores referência para
+                                            comissão
                                             <i class="fa-solid fa-angles-down fa-shake" />
                                         </span>
                                     </div>
@@ -673,7 +655,9 @@ watch(selectedCadastro, (value) => {
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
-                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_bruto" id="valor_bruto" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                        <InputText autocomplete="no" :disabled="mode == 'view'"
+                                            v-model="itemData.valor_bruto" id="valor_bruto" type="text" v-maska
+                                            data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                     </div>
                                 </div>
                                 <div class="col-12 lg:col-6">
@@ -681,63 +665,51 @@ watch(selectedCadastro, (value) => {
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
-                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_liq" id="valor_liq" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                                        <Button :disabled="mode == 'view'" v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500" label="VB" @click="itemData.valor_liq = itemData.valor_bruto" />
+                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_liq"
+                                            id="valor_liq" type="text" v-maska data-maska="0,99"
+                                            data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                        <Button :disabled="mode == 'view'"
+                                            v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500"
+                                            label="VB" @click="itemData.valor_liq = itemData.valor_bruto" />
                                     </div>
                                 </div>
                                 <div class="col-12 lg:col-6">
                                     <label for="valor_representacao">Representação</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <SelectButton :disabled="mode == 'view'" v-model="calcTypeRepres" :options="['R$', '%']" aria-labelledby="basic" />
-                                        <InputText
-                                            v-if="calcTypeRepres == 'R$'"
-                                            autocomplete="no"
-                                            :disabled="mode == 'view'"
-                                            v-model="itemData.valor_representacao"
-                                            id="valor_representacao"
-                                            type="text"
-                                            v-maska
-                                            data-maska="0,99"
-                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                        />
-                                        <InputText
-                                            v-else-if="calcTypeRepres == '%'"
-                                            autocomplete="no"
-                                            :disabled="mode == 'view'"
-                                            v-model="itemData.perc_represent"
-                                            id="perc_represent"
-                                            type="text"
-                                            v-maska
-                                            data-maska="0,99"
-                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                        />
-                                        <Button
-                                            :disabled="mode == 'view'"
-                                            v-if="calcTypeRepres == 'R$'"
-                                            v-tooltip.top="'Clique para repetir o valor líquido aqui'"
-                                            class="bg-blue-500"
-                                            label="VL"
-                                            @click="itemData.valor_representacao = itemData.valor_liq"
-                                        />
-                                        <Button
-                                            :disabled="mode == 'view'"
-                                            v-if="calcTypeRepres == 'R$'"
-                                            v-tooltip.top="'Clique para repetir o valor bruto aqui'"
-                                            class="bg-blue-500"
-                                            label="VB"
-                                            @click="itemData.valor_representacao = itemData.valor_bruto"
-                                        />
+                                        <SelectButton :disabled="mode == 'view'" v-model="calcTypeRepres"
+                                            :options="['R$', '%']" aria-labelledby="basic" />
+                                        <InputText v-if="calcTypeRepres == 'R$'" autocomplete="no"
+                                            :disabled="mode == 'view'" v-model="itemData.valor_representacao"
+                                            id="valor_representacao" type="text" v-maska data-maska="0,99"
+                                            data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                        <InputText v-else-if="calcTypeRepres == '%'" autocomplete="no"
+                                            :disabled="mode == 'view'" v-model="itemData.perc_represent" id="perc_represent"
+                                            type="text" v-maska data-maska="0,99"
+                                            data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                        <Button :disabled="mode == 'view'" v-if="calcTypeRepres == 'R$'"
+                                            v-tooltip.top="'Clique para repetir o valor líquido aqui'" class="bg-blue-500"
+                                            label="VL" @click="itemData.valor_representacao = itemData.valor_liq" />
+                                        <Button :disabled="mode == 'view'" v-if="calcTypeRepres == 'R$'"
+                                            v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500"
+                                            label="VB" @click="itemData.valor_representacao = itemData.valor_bruto" />
                                     </div>
                                 </div>
                                 <div class="col-12 lg:col-6">
                                     <label for="valor_agente">Agente</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <SelectButton :disabled="mode == 'view'" v-model="calcTypeAgente" :options="['R$', '%']" aria-labelledby="basic" />
-                                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_agente" id="valor_agente" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                                        <Button :disabled="mode == 'view'" v-tooltip.top="'Clique para repetir o valor líquido aqui'" class="bg-blue-500" label="VL" @click="itemData.valor_agente = itemData.valor_liq" />
-                                        <Button :disabled="mode == 'view'" v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500" label="VB" @click="itemData.valor_agente = itemData.valor_bruto" />
+                                        <SelectButton :disabled="mode == 'view'" v-model="calcTypeAgente"
+                                            :options="['R$', '%']" aria-labelledby="basic" />
+                                        <InputText autocomplete="no" :disabled="mode == 'view'"
+                                            v-model="itemData.valor_agente" id="valor_agente" type="text" v-maska
+                                            data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                        <Button :disabled="mode == 'view'"
+                                            v-tooltip.top="'Clique para repetir o valor líquido aqui'" class="bg-blue-500"
+                                            label="VL" @click="itemData.valor_agente = itemData.valor_liq" />
+                                        <Button :disabled="mode == 'view'"
+                                            v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500"
+                                            label="VB" @click="itemData.valor_agente = itemData.valor_bruto" />
                                     </div>
                                 </div>
                             </div>
@@ -745,13 +717,16 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 lg:col12">
                             <label for="descricao">Descrição</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao"
+                                editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
                     <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text
+                            raised :disabled="!formIsValid()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text
+                            raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
                     <!-- <div class="card bg-green-200"> -->
                     <Fieldset class="bg-green-200" toggleable :collapsed="true">
@@ -781,108 +756,59 @@ watch(selectedCadastro, (value) => {
                         </template>
 
                         <div v-if="(mode == 'new' || itemDataLastStatus.status_params < 80) && !itemData.id_filho">
-                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
-                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'"
+                                icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'"
+                                icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'"
+                                icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr class="w-full mb-3" v-if="!itemData.id_filho" />
-                            <SplitButton label="Novo Registro Idêntico" v-if="!itemData.id_pai" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
-                            <Button
-                                :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
-                                v-if="itemData.id_filho || itemData.id_pai"
-                                type="button"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-turn-${itemData.id_filho ? 'down' : 'up'} fa-shake`"
-                                severity="success"
-                                text
-                                raised
-                                @click="itemData.id_filho ? toFilho() : toPai()"
-                            />
-                            <Button
-                                label="Converter para Pedido"
-                                v-if="itemDataParam.doc_venda == 1"
+                            <SplitButton label="Novo Registro Idêntico" v-if="!itemData.id_pai" class="w-full mb-3"
+                                icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
+                            <Button :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
+                                v-if="itemData.id_filho || itemData.id_pai" type="button" class="w-full mb-3"
+                                :icon="`fa-solid fa-turn-${itemData.id_filho ? 'down' : 'up'} fa-shake`" severity="success"
+                                text raised @click="itemData.id_filho ? toFilho() : toPai()" />
+                            <Button label="Converter para Pedido" v-if="itemDataParam.doc_venda == 1"
                                 :disabled="![andamentoRegistro.STATUS_PENDENTE, andamentoRegistro.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
-                                type="button"
-                                class="w-full mb-3"
+                                type="button" class="w-full mb-3"
                                 :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && [andamentoRegistro.STATUS_PENDENTE, andamentoRegistro.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''}`"
-                                severity="danger"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistro.STATUS_CONVERTIDO)"
-                            />
-                            <SplitButton
-                                label="Comissionar"
+                                severity="danger" text raised @click="statusRecord(andamentoRegistro.STATUS_CONVERTIDO)" />
+                            <SplitButton label="Comissionar"
                                 v-if="itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10"
-                                :disabled="itemDataLastStatus.status_params >= 89"
-                                class="w-full mb-3"
+                                :disabled="itemDataLastStatus.status_params >= 89" class="w-full mb-3"
                                 :icon="`fa-solid fa-money-bill-transfer ${itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10 ? 'fa-shake' : ''}`"
-                                severity="success"
-                                text
-                                raised
-                                :model="itemsComiss"
-                            />
-                            <Button
-                                label="Criar OAT"
+                                severity="success" text raised :model="itemsComiss" />
+                            <Button label="Criar OAT"
                                 v-if="itemDataParam.doc_venda >= 2 && (itemDataLastStatus.status_params == 20 || itemData.status == 10)"
-                                :disabled="itemDataLastStatus.status_params >= 89"
-                                type="button"
-                                class="w-full mb-3"
+                                :disabled="itemDataLastStatus.status_params >= 89" type="button" class="w-full mb-3"
                                 :icon="`fa-solid fa-screwdriver-wrench ${itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params <= 20 ? 'fa-shake' : ''}`"
-                                style="color: #a97328"
-                                text
-                                raised
-                                @click="defaultSuccess('OAT')"
-                            />
-                            <Button
-                                label="Liquidar Registro"
-                                v-if="itemDataLastStatus.status_params < 80 && itemDataParam.doc_venda == 0"
-                                type="button"
+                                style="color: #a97328" text raised @click="defaultSuccess('OAT')" />
+                            <Button label="Liquidar Registro"
+                                v-if="itemDataLastStatus.status_params < 80 && itemDataParam.doc_venda == 0" type="button"
                                 :disabled="!(userData.pipeline >= 3 && (itemDataLastStatus.status_params == 0 || itemData.status == 10))"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-check ${itemDataLastStatus.status_params == 0 || itemData.status == 10 ? 'fa-shake' : ''}`"
-                                severity="success"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistro.STATUS_LIQUIDADO)"
-                            />
-                            <Button
-                                label="Cancelar Registro"
+                                severity="success" text raised @click="statusRecord(andamentoRegistro.STATUS_LIQUIDADO)" />
+                            <Button label="Cancelar Registro"
                                 v-tooltip.top="itemData.id_filho ? `Se cancelar, cancelará o documento relacionado e suas comissões, caso haja!` : 'Inutiliza o registro, mas não exclui!'"
-                                v-if="itemDataLastStatus.status_params < 80"
-                                type="button"
+                                v-if="itemDataLastStatus.status_params < 80" type="button"
                                 :disabled="!(userData.pipeline >= 3 && (itemDataLastStatus.status_params == 0 || itemData.status == 10))"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-ban`"
-                                severity="warning"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistro.STATUS_CANCELADO)"
-                            />
-                            <Button
-                                label="Reativar Registro"
+                                class="w-full mb-3" :icon="`fa-solid fa-ban`" severity="warning" text raised
+                                @click="statusRecord(andamentoRegistro.STATUS_CANCELADO)" />
+                            <Button label="Reativar Registro"
                                 v-tooltip.top="itemData.id_filho ? `Se reativar, reativará o documento relacionado e suas comissões, caso haja!` : ''"
-                                v-else-if="userData.gestor >= 1 && itemDataLastStatus.status_params == 89"
-                                type="button"
+                                v-else-if="userData.gestor >= 1 && itemDataLastStatus.status_params == 89" type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice ${itemDataLastStatus.status_params == 0 ? 'fa-shake' : ''}`"
-                                severity="warning"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistro.STATUS_REATIVADO)"
-                            />
-                            <Button
-                                label="Excluir Registro"
+                                severity="warning" text raised @click="statusRecord(andamentoRegistro.STATUS_REATIVADO)" />
+                            <Button label="Excluir Registro"
                                 v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
-                                type="button"
-                                :disabled="!(userData.pipeline >= 4 && itemData.status == 10)"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-fire`"
-                                severity="danger"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistro.STATUS_EXCLUIDO)"
-                            />
+                                type="button" :disabled="!(userData.pipeline >= 4 && itemData.status == 10)"
+                                class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
+                                @click="statusRecord(andamentoRegistro.STATUS_EXCLUIDO)" />
                         </div>
                     </Fieldset>
                     <Fieldset :toggleable="true">
@@ -895,7 +821,9 @@ watch(selectedCadastro, (value) => {
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                         <Timeline v-else :value="itemDataStatus">
                             <template #marker="slotProps">
-                                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                                <span
+                                    class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
+                                    :style="{ backgroundColor: slotProps.item.color }">
                                     <i :class="slotProps.item.icon"></i>
                                 </span>
                             </template>

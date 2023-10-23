@@ -2,19 +2,13 @@
 import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultError } from '@/toast';
+import { defaultError } from '@/toast';
 import moment from 'moment';
 import CadastroForm from './CadastroForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
-
-import { useConfirm } from 'primevue/useconfirm';
-const confirm = useConfirm();
-
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
 
 import { useRouter } from 'vue-router';
 const router = useRouter();
@@ -46,33 +40,11 @@ onMounted(() => {
     clearFilter();
 });
 
-const deleteRow = () => {
-    confirm.require({
-        group: 'templating',
-        header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
-                defaultSuccess('Registro excluído com sucesso!');
-                loadLazyData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
-
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
-const itemData = ref(null);
 // Lista de meses
 const dropdownMes = ref([
     { label: 'Janeiro', value: '01' },
@@ -216,7 +188,6 @@ const mountUrlFilters = () => {
     if (areaAtuacao.value) url += `field:id_params_atuacao=equals:${areaAtuacao.value}&`;
     urlFilters.value = url;
 };
-const menu = ref();
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
     const toExport = dt.value;
@@ -226,28 +197,6 @@ const exportCSV = () => {
         });
     });
     toExport.exportCSV();
-};
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastro/${itemData.value.id}` });
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-const toggle = (event) => {
-    menu.value.toggle(event);
-};
-const getItem = (data) => {
-    itemData.value = data;
 };
 watchEffect(() => {
     mountUrlFilters();
@@ -343,15 +292,14 @@ watchEffect(() => {
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
+                        <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
                         <span v-else v-html="data[nome.field]"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastro/${data.id}` })" title="Clique para mais opções" />
                 </template>
             </Column>
         </DataTable>

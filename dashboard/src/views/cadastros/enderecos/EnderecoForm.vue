@@ -2,11 +2,11 @@
 import { onBeforeMount, ref, inject } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn } from '@/toast';
+import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 // Máscaras dos campos
-import { Mask, MaskInput } from 'maska';
+import { Mask } from 'maska';
 const masks = ref({
     cep: new Mask({
         mask: '##.###-###'
@@ -51,7 +51,7 @@ const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
-    if (itemData.value.cep) itemData.value.cep = masks.value.cep.unmasked(itemData.value.cep)
+    if (itemData.value.cep) itemData.value.cep = masks.value.cep.unmasked(itemData.value.cep);
     axios[method](url, itemData.value)
         .then((res) => {
             const body = res.data;
@@ -64,8 +64,14 @@ const saveData = async () => {
                 defaultWarn('Erro ao salvar registro');
             }
         })
-        .catch((err) => {
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
         });
 };
 // Validar data cep
@@ -73,7 +79,6 @@ const validateCep = () => {
     errorMessages.value.cep = null;
     // Testa o formato do cep
     if (itemData.value.cep && itemData.value.cep.length > 0 && !masks.value.cep.completed(itemData.value.cep)) errorMessages.value.cep = 'Formato de cep inválido';
-    if (!(moment(itemData.value.cep, '##.###-###').isValid() || moment(itemData.value.cep).isValid())) errorMessages.value.cep = 'CEP inválido';
     return !errorMessages.value.cep;
 };
 const formIsValid = () => {
@@ -105,17 +110,15 @@ onBeforeMount(() => {
     <div class="grid">
         <form @submit.prevent="saveData">
             <div class="col-12">
-                <h5>{{ store.userStore.admin >= 1 ? `Registro: (${props.itemDataRoot.id})` : '' }}</h5>
+                <h5>{{ itemData.id && store.userStore.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
                         <label for="id_params_tipo">Tipo</label>
-                        <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
-                            v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione...">
-                        </Dropdown>
+                        <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()"/>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.cep || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
@@ -143,15 +146,13 @@ onBeforeMount(() => {
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.uf" id="uf" type="text" />
                     </div>
                     <div class="field col-12 md:col-12">
-                        <label for="obs">Obsercação</label>
+                        <label for="obs">Observação</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.obs" id="obs" type="text" />
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised />
-
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode = 'view'" />
                 </div>
             </div>

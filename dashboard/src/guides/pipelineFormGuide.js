@@ -39,7 +39,7 @@ export const guide = `
     </ul>
     <p>Esta página oferece um conjunto de recursos para gerenciar registros de pipeline de maneira eficiente.
         Certifique-se de usar as ações apropriadas de acordo com suas necessidades. Se tiver alguma dúvida, não hesite
-        em entrar em contato com o suporte por <a href="mailto:${supportEmail}">email</a> ou <a href="https://wa.me/${supportMsgs}" target="_blank">mensagem</a>.</p>
+        em entrar em contato com o suporte por <a href="mailto:${supportEmail}"><i class="fa-solid fa-at mr-1"></i>email</a> ou <a href="https://wa.me/${supportMsgs}" target="_blank"><i class="fa-brands fa-whatsapp mr-1"></i>mensagem</a>.</p>
 `;
 
 export default guide;

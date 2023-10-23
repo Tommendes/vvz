@@ -75,7 +75,7 @@ const loadData = async () => {
         loading.value = false;
     });
 };
-// 
+//
 const deleteRow = () => {
     confirm.require({
         group: 'templating',
@@ -112,7 +112,6 @@ onBeforeMount(() => {
         <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
             style="font-size: 0.9rem"
-            class="p-fluid"
             ref="dt"
             :value="gridData"
             :paginator="true"
@@ -151,7 +150,9 @@ onBeforeMount(() => {
             </template>
             <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
                 <template #body="{ data }">
-                    {{ data.tipo }}
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.tipo }}
+                    </div>
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por tipo" />
@@ -159,7 +160,9 @@ onBeforeMount(() => {
             </Column>
             <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
                 <template #body="{ data }">
-                    {{ data.pessoa }}
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.pessoa }}
+                    </div>
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por pessoa" />
@@ -167,7 +170,9 @@ onBeforeMount(() => {
             </Column>
             <Column field="departamento" header="Departamento" sortable style="min-width: 20rem">
                 <template #body="{ data }">
-                    {{ data.departamento }}
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.departamento }}
+                    </div>
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por departamento" />
@@ -175,7 +180,9 @@ onBeforeMount(() => {
             </Column>
             <Column field="meio" header="Meio" sortable style="min-width: 30rem">
                 <template #body="{ data }">
-                    <div v-html="data.meioRenderizado"></div>
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        <div v-html="data.meioRenderizado"></div>
+                    </div>
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por meio" />

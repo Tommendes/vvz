@@ -1,10 +1,11 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
 import moment from 'moment';
+import { guide } from '@/guides/cadastroFormGuide.js';
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -38,7 +39,6 @@ const labels = ref({
     pfpj: 'pf',
     nome: 'Nome',
     aniversario: 'Nascimento',
-    cpf_cnpj: 'CPF',
     rg_ie: 'RG'
 });
 // Modelo de dados usado para comparação
@@ -219,7 +219,7 @@ const loadOptions = async () => {
     });
 };
 // Carregar dados do formulário
-onBeforeMount(() => {
+onMounted(() => {
     loadData();
     loadOptions();
 });
@@ -257,7 +257,7 @@ watchEffect(() => {
                         <Dropdown v-else id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="cpf_cnpj">{{ labels.cpf_cnpj }}</label>
+                        <label for="cpf_cnpj">CPF/CNPJ</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                         <small id="text-error" class="p-error" if>{{ errorMessages.cpf_cnpj || '&nbsp;' }}</small>
@@ -306,6 +306,21 @@ watchEffect(() => {
                         <small id="text-error" class="p-error" if>{{ errorMessages.email || '&nbsp;' }}</small>
                     </div>
                     <div class="field col-12 md:col-2">
+                        <label for="inss">INSS (Para comissionamento)</label>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.inss" id="inss" type="text" />
+                    </div>
+                    <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pj'">
+                        <label for="cim">CIM</label>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cim" id="cim" type="text" />
+                    </div>
+                    <div class="field col-12 md:col-4">
+                        <label for="doc_esp">Outro Documento(Qual?)</label>
+                        <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.doc_esp" id="doc_esp" type="text" />
+                    </div>
+                    <div class="field col-12 md:col-1">
                         <label for="prospect">Prospecto</label>
                         <br />
                         <Skeleton v-if="loading.form" borderRadius="16px" height="2rem"></Skeleton>
@@ -319,5 +334,19 @@ watchEffect(() => {
                 </div>
             </div>
         </form>
+
+        <div class="col-12">
+            <Fieldset class="bg-green-200" toggleable :collapsed="true">
+                <template #legend>
+                    <div class="flex align-items-center text-primary">
+                        <span class="fa-solid fa-circle-info mr-2"></span>
+                        <span class="font-bold text-lg">Instruções</span>
+                    </div>
+                </template>
+                <p class="m-0">
+                    <span v-html="guide" />
+                </p>
+            </Fieldset>
+        </div>
     </div>
 </template>

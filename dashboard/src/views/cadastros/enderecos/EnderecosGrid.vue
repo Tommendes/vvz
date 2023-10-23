@@ -111,19 +111,6 @@ const deleteRow = () => {
         }
     });
 };
-// Renderiza o HTML
-const renderizarHTML = (conteudo) => {
-    // Verifique se o conteúdo parece ser um link da web ou um endereço de e-mail
-    if (conteudo.includes('http') || conteudo.includes('https')) {
-        return `<a href="${conteudo}" target="_blank">${conteudo}</a>`;
-    } else if (conteudo.includes('www') && !conteudo.includes('https')) {
-        return `<a href="https://${conteudo}" target="_blank">${conteudo}</a>`;
-    } else if (conteudo.includes('@')) {
-        return `<a href="mailto:${conteudo}">${conteudo}</a>`;
-    } else {
-        return conteudo;
-    }
-};
 // Carrega os dados do formulário
 provide('itemData', itemData);
 // Carrega o modo do formulário
@@ -137,21 +124,24 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
-        <h5>{{ props.itemDataRoot.nome + (store.userStore.admin >= 1 ? `: (${props.itemDataRoot.id})` : '') }}</h5>
         <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
             style="font-size: 0.9rem"
-            class="p-fluid"
+            ref="dt"
             :value="gridData"
             :paginator="true"
-            :rows="10"
+            :rowsPerPageOptions="[5, 10, 20, 50]"
+            tableStyle="min-width: 50rem"
+            :rows="5"
             dataKey="id"
             :rowHover="true"
             v-model:filters="filters"
             filterDisplay="menu"
-            :loading="loading"
             :filters="filters"
-            responsiveLayout="scroll"
+            paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
+            scrollable
+            scrollHeight="415px"
             :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']"
         >
             <template #header>
@@ -173,7 +163,7 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <Column field="allFields" header="Endereços" sortable style="min-width: 550px">
+            <Column field="allFields" header="Endereços" sortable style="min-width: 470px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.endereco }}
@@ -189,22 +179,18 @@ onBeforeMount(() => {
             </Column>
             <Column field="cidade" header="Cidade" sortable style="min-width: 250px">
                 <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.cidade }}
-                    </div>
+                    <div class="flex flex-wrap gap-2 text-lg">{{ data.cidade }}{{ data.uf ? `, ${data.uf}` : '' }}</div>
                 </template>
             </Column>
-            <Column field="uf" header="Estado" sortable style="min-width: 100px">
+            <Column field="cep" header="CEP" sortable style="min-width: 120px" class="flex flex-wrap gap-2 text-lg">
                 <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.uf }}
-                    </div>
+                    {{ data.cep }}
                 </template>
             </Column>
-            <Column field="cep" header="CEP" sortable style="min-width: 150px">
+            <Column field="tipo" header="TIPO" sortable style="min-width: 120px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.cep }}
+                        {{ data.tipo }}
                     </div>
                 </template>
             </Column>
