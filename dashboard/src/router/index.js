@@ -53,13 +53,13 @@ const routes = [
                 component: () => import('@/views/pipeline_params/ParamForm.vue')
             },
             {
-                path: '/:client/:domain/pv-tecnicos',
-                name: 'pv-tecnicos',
+                path: '/:client/:domain/tecnicos-pv',
+                name: 'tecnicos-pv',
                 component: () => import('@/views/tecnicos/TecnicosGrid.vue')
             },
             {
-                path: '/:client/:domain/pv-tecnico/:id',
-                name: 'pv-tecnico',
+                path: '/:client/:domain/tecnico-pv/:id',
+                name: 'tecnico-pv',
                 component: () => import('@/views/tecnicos/TecnicoForm.vue')
             },
             {

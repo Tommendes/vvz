@@ -68,7 +68,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pv-tecnico/${itemData.value.id}` });
+            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/tecnico-pv/${itemData.value.id}` });
         }
     },
     {
@@ -105,7 +105,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos PV' }]" />
     <div class="card">
         <TecnicoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
