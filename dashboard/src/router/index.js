@@ -53,6 +53,27 @@ const routes = [
                 component: () => import('@/views/pipeline_params/ParamForm.vue')
             },
             {
+                path: '/:client/:domain/pv-tecnicos',
+                name: 'pv-tecnicos',
+                component: () => import('@/views/tecnicos/TecnicosGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pv-tecnico/:id',
+                name: 'pv-tecnico',
+                component: () => import('@/views/tecnicos/TecnicoForm.vue')
+            },
+            {
+                path: '/:client/:domain/pv?t=2',
+                name: 'pos-vendas',
+                component: () => import('@/views/pos-vendas/PosVendasGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pv?t=2/:id',
+                name: 'pos-venda',
+                component: () => import('@/views/pos-vendas/PosVendaForm.vue')
+            },
+            
+            {
                 path: '/:client/:domain/pipeline',
                 name: 'pipeline',
                 component: () => import('@/views/pipeline/PipelinesGrid.vue')
