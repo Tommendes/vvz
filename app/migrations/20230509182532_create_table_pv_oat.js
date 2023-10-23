@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('vivazul_cliente_dominio.pv_oat', table => {
+    return knex.schema.createTable('vivazul_cso_root.pv_oat', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -15,19 +15,19 @@ exports.up = function(knex, Promise) {
         table.integer('int_ext',10).notNull().comment('Interno/Externo')
         table.integer('garantia',1).notNull().comment('Garantia')
         table.string('nf_garantia',255).comment('Nota fiscal do produto')
-        table.string('pessoa_contato',255).notNull().comment('Contato no cliente')
-        table.string('telefone_contato',255).notNull().comment('Telefone do contato')
+        table.string('pessoa_contato',255).comment('Contato no cliente')
+        table.string('telefone_contato',255).comment('Telefone do contato')
         table.string('email_contato',255).comment('Email do contato')
         table.text('descricao').comment('Descrição dos serviços')
         table.decimal('valor_total',10,2).comment('Valor dos serviços')
         table.string('aceite_do_cliente',255).comment('Data do aceite')
         table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_cadastro_endereco').references('id').inTable('pipeline_params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_cadastro_endereco').references('id').inTable('cad_enderecos').onUpdate('Cascade').onDelete('NO ACTION')
         table.foreign('id_tecnico').references('id').inTable('pv_tecnicos').onUpdate('Cascade').onDelete('NO ACTION')
         
     })
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('vivazul_cliente_dominio.pv_oat')
+    return knex.schema.dropTable('vivazul_cso_root.pv_oat')
 };

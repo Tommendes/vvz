@@ -150,9 +150,9 @@ module.exports = app => {
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `like '%${value}%'`
+                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not like '%${value}%'`
+                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -188,7 +188,7 @@ module.exports = app => {
         }
 
         const totalRecords = await app.db({ tbl1: tabelaDomain })
-            .count('tbl1.id as count').first()
+            .countDistinct('tbl1.id as count').first()
             .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
             .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
             .where({ 'tbl1.status': STATUS_ACTIVE })

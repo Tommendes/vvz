@@ -398,7 +398,6 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
-        console.log(req.body);
         if (!(req.query.tkn || (req.body && req.body.token)))
             return res.status(400).send(await showRandomMessage() || 'Token ausente, inválido ou não corresponde a nenhuma conta em nosso sistema')
         const token = req.query.tkn || req.body.token

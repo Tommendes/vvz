@@ -5,6 +5,7 @@ module.exports = app => {
     const tabelaAlias = 'Endereços'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+    const { removeAccents, titleCase } = app.api.facilities
 
     const save = async (req, res) => {
         let user = req.user
@@ -24,14 +25,15 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
+            existsOrError(body.id_params_tipo, 'Tipo do endereço não informado')
             existsOrError(body.cep, 'CEP não informado')
             if (body.cep.length != 8) throw "CEP inválido"
-            existsOrError(body.uf, 'Estado não informado')
-            existsOrError(body.id_tipo, 'Tipo do endereço não informado')
-            // Inserir depois um teste de validação
-            existsOrError(body.logradouro, 'Logradouro não informado')
             existsOrError(body.nr, 'Número não informado')
+            existsOrError(body.logradouro, 'Logradouro não informado')
+            existsOrError(body.bairro, 'Bairro não informado')
             existsOrError(body.cidade, 'Cidade não informada')
+            existsOrError(body.uf, 'Estado não informado')
+            // Inserir depois um teste de validação
 
         } catch (error) {
             return res.status(400).send(error)
@@ -54,6 +56,16 @@ module.exports = app => {
 
             body.evento = evento
             body.updated_at = new Date()
+            //body = JSON.parse(JSON.stringify(body).toUpperCase())
+            // Colocar cada campo em maiúsculo e remover acentos
+            Object.keys(body).forEach(function (key) {
+                if (typeof body[key] == 'string' && key != 'uf') {                    
+                    body[key] = removeAccents(titleCase(body[key]))
+                } else if (typeof body[key] == 'string' && key == 'uf') {
+                    body[key] = body[key].toUpperCase()
+                }
+            });
+
             let rowsUpdated = app.db(tabelaDomain)
                 .update(body)
                 .where({ id: body.id })
@@ -68,9 +80,10 @@ module.exports = app => {
         } else {
 
             try {
-                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, cep: body.cep, logradouro: body.logradouro, nr: body.nr, complnr: body.complnr }).first()
+                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, cep: body.cep, logradouro: body.logradouro, nr: body.nr, complnr: body.complnr || ''}).first()
                 notExistsOrError(unique, 'Este endereço já foi registrado')
             } catch (error) {
+                console.log(error);
                 return res.status(400).send(error)
             }
             // Criação de um novo registro

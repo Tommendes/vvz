@@ -106,7 +106,7 @@ module.exports = app => {
                 .where({ id_users: user.id })
                 .orderBy('ut.created_at', 'desc')
                 .first()
-            isMatch = comparePassword(password, userKeyPass.password)
+            if (userKeyPass) isMatch = comparePassword(password, userKeyPass.password)
 
             if (isMatch) {
                 const dateStr = userKeyPass.created_at;

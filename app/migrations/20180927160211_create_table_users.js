@@ -30,6 +30,7 @@ exports.up = function(knex, Promise) {
         table.boolean('agente_v').notNull().defaultTo(0).comment("Agente vendedor")
         table.boolean('agente_arq').notNull().defaultTo(0).comment("Agente arquiteto")
         table.boolean('agente_at').notNull().defaultTo(0).comment("Agente at")
+        table.integer('time_to_pas_expires').notNull().default(99999).comment("Tempo para expirar a senha")
     })
 };
 

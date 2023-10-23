@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('vivazul_cso_root.fin_cc', table => {
+    return knex.schema.createTable('vivazul_cso_root.pv_status', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -8,12 +8,12 @@ exports.up = function(knex, Promise) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
-        table.string('codigo',255).notNull().comment('Código da despesa ou receita')
-        table.specificType('tipo','char(1)').notNull().comment('Despesa ou receita')
-        table.string('descricao',50).notNull().comment('Descrição do centro de custo')
+        table.integer('id_pv',10).unsigned().comment('Documento pai')
+        table.integer('status_pv',10).unsigned().notNull().comment('Status do PV')
+        table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('vivazul_cso_root.fin_cc')
+    return knex.schema.dropTable('vivazul_cso_root.pv_status')
 };

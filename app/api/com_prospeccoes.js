@@ -158,7 +158,7 @@ module.exports = app => {
                                     break;
                                 case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
                                     break;
-                                case 'notContains': operator = `not like "%${value}%"`
+                                case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
                                     break;
                                 case 'endsWith': operator = `like "%${value}"`
                                     break;
