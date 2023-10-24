@@ -31,9 +31,9 @@ const model = ref([
     {
         label: 'Pós-vendas',
         items: [
-            { label: 'Assistência Técnica', icon: 'pi pi-fw pi-wrench', to: `/${user.cliente}/${user.dominio}/pv?t=0` },
-            { label: 'Montagem', icon: 'pi pi-fw pi-box', to: `/${user.cliente}/${user.dominio}/pv?t=1` },
-            { label: 'Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/pv?t=2` },
+            { label: 'Assistência Técnica', icon: 'pi pi-fw pi-wrench', to: `/${user.cliente}/${user.dominio}/assistencias` },
+            { label: 'Montagem', icon: 'pi pi-fw pi-box', to: `/${user.cliente}/${user.dominio}/montagens` },
+            { label: 'Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/pos-vendas` },
             { label: 'Técnicos', icon: 'pi pi-fw pi-cog', to: `/${user.cliente}/${user.dominio}/tecnicos-pv` }
         ]
     },

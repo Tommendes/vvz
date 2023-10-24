@@ -63,16 +63,35 @@ const routes = [
                 component: () => import('@/views/tecnicos/TecnicoForm.vue')
             },
             {
-                path: '/:client/:domain/pv?t=2',
+                path: '/:client/:domain/pos-vendas',
                 name: 'pos-vendas',
                 component: () => import('@/views/pos-vendas/PosVendasGrid.vue')
             },
             {
-                path: '/:client/:domain/pv?t=2/:id',
+                path: '/:client/:domain/pos-venda/:id',
                 name: 'pos-venda',
                 component: () => import('@/views/pos-vendas/PosVendaForm.vue')
             },
-            
+            {
+                path: '/:client/:domain/montagens',
+                name: 'monatagens',
+                component: () => import('@/views/montagem/MontagensGrid.vue')
+            },
+            {
+                path: '/:client/:domain/montagem/:id',
+                name: 'montagem',
+                component: () => import('@/views/montagem/MontagemForm.vue')
+            },
+            {
+                path: '/:client/:domain/assistencias',
+                name: 'assistencias',
+                component: () => import('@/views/assistencia/AssistenciasGrid.vue')
+            },
+            {
+                path: '/:client/:domain/montagem/:id',
+                name: 'montagem',
+                component: () => import('@/views/montagem/MontagemForm.vue')
+            },
             {
                 path: '/:client/:domain/pipeline',
                 name: 'pipeline',
