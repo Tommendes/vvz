@@ -8,7 +8,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-import PosVendaForm from './PosVendaForm.vue';
+import MontagemForm from './MontagemForm.vue';
 const confirm = useConfirm();
 
 const store = useUserStore();
@@ -18,7 +18,7 @@ const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/pv`);
+const urlBase = ref(`${baseApiUrl}/pv-oat`);
 // Exlui um registro
 const deleteRow = () => {
     confirm.require({
@@ -42,10 +42,10 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'id_cadastros', label: 'Cliente', minWidth: '30rem' },
-    { field: 'id_pipeline', label: 'Piepeline', minWidth: '30rem' },
-    { field: 'tipo', label: 'Tipo de Pós-venda', minWidth: '30rem' },
-    { field: 'pv_nr', label: 'Número do Pós-venda', minWidth: '30rem' }
+    { field: 'id_pv', label: 'PV', minWidth: '20rem' },
+    { field: 'id_cadastro_endereco', label: 'Cadastro Endereço', minWidth: '25rem' },
+    { field: 'id_tecnico', label: 'Técnico', minWidth: '20rem' },
+    { field: 'nr_oat', label: 'Número OAT', minWidth: '20rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -69,7 +69,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pos-venda/${itemData.value.id}` });
+            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/montagem/${itemData.value.id}` });
         }
     },
     {
@@ -106,9 +106,9 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Pós-vendas' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Montagens' }]" />
     <div class="card">
-        <PosVendaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <MontagemForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -121,7 +121,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id_cadastros', 'id_pipeline', 'tipo', 'pv_nr']"
+            :globalFilterFields="['id_pv', 'id_cadastro_endereco', 'id_tecnico', 'nr_oat']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">

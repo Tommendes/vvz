@@ -10,12 +10,12 @@ const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
-import { Mask } from 'maska';
-const masks = ref({
-    telefone: new Mask({
-        mask: ['(##) ####-####', '(##) #####-####']
-    })
-});
+// import { Mask } from 'maska';
+// const masks = ref({
+//     telefone: new Mask({
+//         mask: ['(##) ####-####', '(##) #####-####']
+//     })
+// });
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -34,11 +34,11 @@ const toast = useToast();
 const itemData = ref({});
 const registroTipo = ref('pf');
 const labels = ref({
-    id_cadastros: "Técnico Responsável",
-    id_pipeline: "Telefone para Contato",
-    tipo: "E-mail para contato",
-    pv_nr: "Observação",
-    observacao: "Técnico Responsável"
+    id_cadastros: "Cliente",
+    id_pipeline: "Pipeline",
+    tipo: "Tipo de Pós-venda",
+    pv_nr: "Número da Pós-venda",
+    observacao: "Observação"
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -75,7 +75,6 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.masked(itemData.value.telefone_contato);
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
@@ -92,7 +91,6 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -169,31 +167,37 @@ const items = ref([
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/${userData.dominio}/pv-tecnicos` }, { label: itemData.registro + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Pós-venda', to: `/${userData.cliente}/${userData.dominio}/pv-tecnicos` }, { label: itemData.registro + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
-                            <label for="tecnico">{{ labels.tecnico }}</label>
+                        <div class="col-12 md:col-3">
+                            <label for="id_cadastros">{{ labels.id_cadastros }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tecnico" id="tecnico" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
                         </div>
-                        <div class="col-12 md:col-4">
-                            <label for="telefone_contato">{{ labels.telefone_contato }}</label>
+                        <div class="col-12 md:col-3">
+                            <label for="id_pipeline">{{ labels.id_pipeline }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pipeline" id="id_pipeline" type="text" />
                         </div>
-                        <div class="col-12 md:col-4">
-                            <label for="email_contato">{{ labels.email_contato }}</label>
+                        <div class="col-12 md:col-3">
+                            <label for="tipo">{{ labels.tipo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="tecnico" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tipo" id="tipo" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="pv_nr">{{ labels.pv_nr }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pv_nr" id="pv_nr" type="text" />
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="observacao">{{ labels.observacao }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
+                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
+                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
                 </div>
