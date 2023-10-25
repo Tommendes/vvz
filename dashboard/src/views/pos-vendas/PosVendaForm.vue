@@ -167,7 +167,7 @@ const items = ref([
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Pós-venda', to: `/${userData.cliente}/${userData.dominio}/pv` }, { label: itemData.registro + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Pós-venda', to: `/${userData.cliente}/${userData.dominio}/pos-vendas` }, { label: itemData.id_cadastros + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">

@@ -104,7 +104,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Assitencias' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Assistencias' }]" />
     <div class="card">
         <AssistenciaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

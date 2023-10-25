@@ -88,9 +88,9 @@ const routes = [
                 component: () => import('@/views/assistencia/AssistenciasGrid.vue')
             },
             {
-                path: '/:client/:domain/montagem/:id',
-                name: 'montagem',
-                component: () => import('@/views/montagem/MontagemForm.vue')
+                path: '/:client/:domain/assistencia/:id',
+                name: 'assistencia',
+                component: () => import('@/views/assistencia/AssistenciaForm.vue')
             },
             {
                 path: '/:client/:domain/pipeline',

@@ -119,9 +119,23 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
+// Validar telefone
+const validateTelefone = () => {
+    if (itemData.value.telefone_contato && itemData.value.telefone_contato.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone_contato).length)) {
+        errorMessages.value.telefone_contato = 'Formato de telefone inválido';
+    } else errorMessages.value.telefone_contato = null;
+    return !errorMessages.value.telefone_contato;
+};
+// Validar email
+const validateEmail = (field) => {
+    if (itemData.value.email_contato && itemData.value.email_contato.trim().length > 0 && !isValidEmail(itemData.value.email_contato)) {
+        errorMessages.value.email_contato = 'Formato de email inválido';
+    } else errorMessages.value.email_contato = null;
+    return !errorMessages.value.email_contato;
+};
 // Validar formulário
 const formIsValid = () => {
-    return true;
+    return validateTelefone() && validateEmail();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -183,16 +197,19 @@ const items = ref([
                             <label for="telefone_contato">{{ labels.telefone_contato }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-4">
                             <label for="email_contato">{{ labels.email_contato }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="tecnico" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="observacao">{{ labels.observacao }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
+                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
+                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
                 </div>

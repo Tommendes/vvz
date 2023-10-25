@@ -71,10 +71,10 @@ const itemData = ref(null);
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'id_cadastros', label: 'Cliente', minWidth: '30rem' },
-    { field: 'id_pipeline', label: 'Piepeline', minWidth: '30rem' },
-    { field: 'tipo', label: 'Tipo de Pós-venda', minWidth: '30rem' },
-    { field: 'pv_nr', label: 'Número do Pós-venda', minWidth: '30rem' }
+    { field: 'id_cadastros', label: 'Cliente', minWidth: '15rem' },
+    { field: 'id_pipeline', label: 'Piepeline', minWidth: '10rem' },
+    { field: 'tipo', label: 'Tipo de Pós-venda', minWidth: '10rem' },
+    { field: 'pv_nr', label: 'Número do Pós-venda', minWidth: '10rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
