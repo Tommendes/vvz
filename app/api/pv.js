@@ -241,7 +241,8 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
+            .where({ 'tbl1.id': req.params.id })
+            .whereNot({ 'tbl1.status': STATUS_DELETE }).first()
             .then(body => {
                 return res.json(body)
             })

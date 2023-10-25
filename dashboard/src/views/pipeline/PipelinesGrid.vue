@@ -243,18 +243,23 @@ const getSeverity = (status_created_at) => {
 };
 const goField = (data) => {
     idPipeline.value = data.id;
+    // Abrir em outra aba
+    // window.open(`/${userData.cliente}/${userData.dominio}/pipeline/${data.id}`);
     router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${data.id}` });
 };
 const onRowExpand = (event) => {
-    defaultInfo('Product Expanded: ' + event.data.documento);
+    // defaultInfo('Product Expanded: ' + event.data.documento);
 };
 const onRowCollapse = (event) => {
-    defaultSuccess('Product Collapsed: ' + event.data.documento);
+    // defaultSuccess('Product Collapsed: ' + event.data.documento);
 };
+const expanded = ref(false);
 const expandAll = () => {
+    expanded.value = true;
     expandedRows.value = gridData.value.filter((p) => p.id);
 };
 const collapseAll = () => {
+    expanded.value = false;
     expandedRows.value = null;
 };
 // Carrega os dados do filtro do grid
@@ -364,8 +369,8 @@ onMounted(() => {
                     <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
-                    <Button type="button" icon="pi pi-plus" label="Expand All" @click="expandAll" />
-                    <Button type="button" icon="pi pi-minus" label="Collapse All" @click="collapseAll" />
+                    <Button type="button" icon="fa-solid fa-angles-up" @click="collapseAll()" v-if="expanded" />
+                    <Button type="button" icon="fa-solid fa-angles-down" @click="expandAll()" v-else />
                 </div>
             </template>
             <Column expander style="width: 5rem" />
@@ -409,9 +414,9 @@ onMounted(() => {
                     />
                 </div>
             </template>
-            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" style="0.6rem" v-if="route.name == 'pipeline'">
+            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" style="0.6rem">
                 <template #body="{ data }">
-                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" title="Clique para mais opções" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

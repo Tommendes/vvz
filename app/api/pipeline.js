@@ -57,6 +57,7 @@ module.exports = app => {
         const status_params_force = body.status_params_force; // Status forçado para edição
         const status_params = body.status_params; // Último status do registro
         delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force; delete body.hash; delete body.tblName;
+        body.documento = body.documento.toString().padStart(6, '0')
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {

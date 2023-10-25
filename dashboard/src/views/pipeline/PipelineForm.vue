@@ -615,7 +615,7 @@ watch(selectedCadastro, (value) => {
                         <div :class="`col-12 lg:col-${mode == 'new' && !(itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
                             <label for="id_pipeline_params">Tipo</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else-if="!['new', 'expandedFormMode'].includes(mode) && unidadeLabel" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`" v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
+                            <p v-else-if="['view', 'expandedFormMode'].includes(mode) && unidadeLabel" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`" v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
                                 {{ unidadeLabel }}
                             </p>
                             <Dropdown
@@ -651,7 +651,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 lg:col-2" v-if="itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)">
                             <label for="documento">Documento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else-if="itemDataParam.autom_nr" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
+                            <p v-else-if="itemDataParam.autom_nr || mode == 'expandedFormMode'" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
                                 {{ itemData.documento }}
                             </p>
                             <InputText v-else autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)" v-model="itemData.documento" id="documento" type="text" />
