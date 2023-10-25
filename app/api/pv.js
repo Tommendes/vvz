@@ -2,6 +2,11 @@ const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'pv'
+    const tabelaPipeline = 'pipeline'
+    const tabelaStatus = 'pipeline_status'
+    const tabelaParams = 'pipeline_params'
+    const tabelaLocalParams = 'local_params'
+    const tabelaCadastros = 'cadastros'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -97,40 +102,129 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
+    
     const get = async (req, res) => {
         let user = req.user
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de pós-vendas"`)
         } catch (error) {
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaPipeline}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
+
+        let queryes = undefined
+        let query = undefined
+        let page = 0
+        let rows = 10
+        let sortField = app.db.raw('str_to_date(tbl1.created_at,"%d/%m/%Y")')
+        let sortOrder = 'desc'
+        if (req.query) {
+            queryes = req.query
+            query = ''
+            for (const key in queryes) {
+                let operator = queryes[key].split(':')[0]
+                let value = queryes[key].split(':')[1]
+                key.split(':').forEach(element => {
+                    if (element == 'field') {
+                        if (['created_at'].includes(key.split(':')[1])) {
+                            sortField = 'tbl1.created_at'
+                            value = queryes[key].split(':')
+                            let valueI = moment(value[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
+                            let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
+                            if (typeof valueF != 'Date') valueF = valueI;
+                            switch (operator) {
+                                case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
+                                    break;
+                                case 'dateBefore': operator = `< "${valueI}"`
+                                    break;
+                                case 'dateAfter': operator = `> "${valueF}"`
+                                    break;
+                                default: operator = `between "${valueI}" and "${valueF}"`
+                                    break;
+                            }
+                            query += `date(tbl1.created_at) ${operator} AND `
+                        } else {
+                            if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
+
+                            switch (operator) {
+                                case 'startsWith': operator = `like "${value}"`
+                                    break;
+                                case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                                    break;
+                                case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                                    break;
+                                case 'endsWith': operator = `like "%${value}"`
+                                    break;
+                                case 'notEquals': operator = `!= "${value}"`
+                                    break;
+                                default: operator = `= "${value}"`
+                                    break;
+                            }
+                            let queryField = key.split(':')[1]
+                            if (queryField == 'nome') {
+                                query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
+                            } else {
+                                query += `${queryField} ${operator} AND `
+                            }
+                        }
+                    }
+                    if (element == 'params') {
+                        switch (key.split(':')[1]) {
+                            case 'page': page = Number(queryes[key]);
+                                break;
+                            case 'rows': rows = Number(queryes[key]);
+                                break;
+                        }
+                    }
+                    if (element == 'sort') {
+                        sortField = key.split(':')[1].split('=')[0]
+                        if (sortField == 'created_at') sortField = 'str_to_date(tbl1.created_at,"%d/%m/%Y")'
+                        if (sortField == 'documento') sortField = 'cast(documento as int)'
+                        sortOrder = queryes[key]
+                    }
+
+                });
+            }
+            query = query.slice(0, -5).trim()
+        }
+        let filterCnpj = undefined
+        let filter = req.query.filter
+        if (filter) {
+            filter = filter.trim()
+            filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
+        }
+
+        const totalRecords = await app.db({ tbl1: tabelaDomain })
+            .countDistinct('tbl1.id as count').first()
+            .leftJoin({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
+            .leftJoin({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'p.id_pipeline_params')
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .whereNot({ 'tbl1.status': STATUS_DELETE })
+            .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-
-        ret.where({ status: STATUS_ACTIVE })
-            .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
-            .then(body => {
-                return res.json({ data: body, count: count, limit })
-            })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-            })
+            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, tbl1.pv_nr, 
+            SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .leftJoin({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
+            .leftJoin({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'p.id_pipeline_params')
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .whereNot({ 'tbl1.status': STATUS_DELETE })
+            .whereRaw(query ? query : '1=1')
+            .orderBy(app.db.raw(sortField), sortOrder)
+            .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
+            .limit(rows).offset((page + 1) * rows - rows)
+            // console.log(ret.toString());
+        ret.then(body => {
+            return res.json({ data: body, totalRecords: totalRecords.count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        })
     }
 
 
