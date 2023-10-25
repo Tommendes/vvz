@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
+import moment from 'moment';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -84,6 +85,7 @@ const loadData = async () => {
 
                 itemData.value = body;
                 itemDataComparision.value = { ...itemData.value };
+                if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.masked(itemData.value.telefone_contato);
                 if (itemData.value.aceite_do_cliente) itemData.value.aceite_do_cliente = masks.value.aceite_do_cliente.masked(moment(itemData.value.aceite_do_cliente).format('DD/MM/YYYY'));
                 itemDataComparision.value = { ...itemData.value };
 
@@ -95,17 +97,18 @@ const loadData = async () => {
         });
     } else loading.value.form = false;
 };
-// DropDown
-const dropdownInternoExterno = ref([
-    { value: 0, label: 'Interno' },
-    { value: 1, label: 'Externo' }
-]);
+// // DropDown
+// const dropdownInt_ext = ref([
+//     { value: 0, label: 'Interno' },
+//     { value: 1, label: 'Externo' }
+// ]);
 // Salvar dados do formulário
 const saveData = async () => {
     if (formIsValid()) {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
+        if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
         if (itemData.value.aceite_do_cliente) itemData.value.aceite_do_cliente = moment(itemData.value.aceite_do_cliente, 'DD/MM/YYYY').format('YYYY-MM-DD');
         axios[method](url, itemData.value)
             .then((res) => {
@@ -113,7 +116,7 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    if (itemData.value.data_visita) itemData.value.data_visita = moment(itemData.value.data_visita).format('DD/MM/YYYY');
+                    if (itemData.value.aceite_do_cliente) itemData.value.aceite_do_cliente = moment(itemData.value.aceite_do_cliente).format('DD/MM/YYYY');
                     itemDataComparision.value = { ...itemData.value };
                     if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/montagem/${itemData.value.id}` });
                     mode.value = 'view';
@@ -135,9 +138,23 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
+// Validar telefone
+const validateTelefone = () => {
+    if (itemData.value.telefone_contato && itemData.value.telefone_contato.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone_contato).length)) {
+        errorMessages.value.telefone_contato = 'Formato de telefone inválido';
+    } else errorMessages.value.telefone_contato = null;
+    return !errorMessages.value.telefone_contato;
+};
+// Validar email
+const validateEmail = (field) => {
+    if (itemData.value.email_contato && itemData.value.email_contato.trim().length > 0 && !isValidEmail(itemData.value.email_contato)) {
+        errorMessages.value.email_contato = 'Formato de email inválido';
+    } else errorMessages.value.email_contato = null;
+    return !errorMessages.value.email_contato;
+};
 // Validar formulário
 const formIsValid = () => {
-    return true;
+    return validateTelefone() && validateEmail();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -213,7 +230,8 @@ const items = ref([
                         <div class="col-12 md:col-2">
                             <label for="int_ext">{{ labels.int_ext }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownInternoExterno" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.int_ext" id="int_ext" type="text" />
+                            <!-- <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownInt_ext" /> -->
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="garantia">{{ labels.garantia }}</label>
@@ -233,12 +251,14 @@ const items = ref([
                         <div class="col-12 md:col-2">
                             <label for="telefone_contato">{{ labels.telefone_contato }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']"  v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-4">
                             <label for="email_contato">{{ labels.email_contato }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="valor_total">{{ labels.valor_total }}</label>

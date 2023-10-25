@@ -42,10 +42,10 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'id_pv', label: 'PV', minWidth: '30rem' },
-    { field: 'id_cadastro_endereco', label: 'Cadastro Endereço', minWidth: '30rem' },
-    { field: 'id_tecnico', label: 'Técnico', minWidth: '30rem' },
-    { field: 'nr_oat', label: 'Número OAT', minWidth: '30rem' }
+    { field: 'id_pv', label: 'PV', minWidth: '20rem' },
+    { field: 'id_cadastro_endereco', label: 'Cadastro Endereço', minWidth: '25rem' },
+    { field: 'id_tecnico', label: 'Técnico', minWidth: '20rem' },
+    { field: 'nr_oat', label: 'Número OAT', minWidth: '20rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
