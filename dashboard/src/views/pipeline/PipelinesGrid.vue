@@ -2,7 +2,7 @@
 import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultError } from '@/toast';
+import { defaultError, defaultInfo, defaultSuccess } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import { removeHtmlTags } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
@@ -11,26 +11,20 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import moment from 'moment';
 const router = useRouter();
+const route = useRoute();
 
 const urlBase = ref(`${baseApiUrl}/pipeline`);
-onBeforeMount(() => {
-    // Inicializa os filtros do grid
-    initFilters();
-    loadOptions();
-});
-onMounted(() => {
-    // Limpa os filtros do grid
-    clearFilter();
-});
-
+const props = defineProps(['idCadastro']);
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Seus dados iniciais
+const idPipeline = ref(null); // Id do registro selecionado
+const expandedRows = ref([]); // Registro expandido
 // Itens do dropdown de Tipos
 const dropdownTiposDoc = ref([
     { label: 'Outros', value: '0' },
@@ -89,11 +83,11 @@ const filtrarUnidadesDescricao = async () => {
 };
 
 // Itens do grid
+// { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
-    { field: 'agente', label: 'Agente', minWidth: '6rem' },
-    { field: 'documento', label: 'Documento', minWidth: '5rem' },
     { field: 'tipo_doc', label: 'Tipo' },
+    { field: 'documento', label: 'Documento', minWidth: '5rem' },
     { field: 'descricao', label: 'Descrição', minWidth: '8rem' },
     { field: 'valor_bruto', label: 'R$ bruto', minWidth: '5rem' },
     {
@@ -134,13 +128,11 @@ const clearFilter = () => {
         sortOrder: null,
         filters: filters.value
     };
-
     loadLazyData();
 };
 // Carrega os dados do grid
 const loadLazyData = () => {
     loading.value = true;
-
     setTimeout(() => {
         const url = `${urlBase.value}${urlFilters.value}`;
         axios
@@ -213,6 +205,7 @@ const mountUrlFilters = () => {
     if (tipoDoc.value) url += `field:doc_venda=equals:${tipoDoc.value}&`;
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
+    if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = url;
 };
 // Exporta os dados do grid para CSV
@@ -248,16 +241,53 @@ const getSeverity = (status_created_at) => {
     }
     return 'danger';
 };
+const goField = (data) => {
+    idPipeline.value = data.id;
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${data.id}` });
+};
+const onRowExpand = (event) => {
+    defaultInfo('Product Expanded: ' + event.data.documento);
+};
+const onRowCollapse = (event) => {
+    defaultSuccess('Product Collapsed: ' + event.data.documento);
+};
+const expandAll = () => {
+    expandedRows.value = gridData.value.filter((p) => p.id);
+};
+const collapseAll = () => {
+    expandedRows.value = null;
+};
 // Carrega os dados do filtro do grid
 watchEffect(() => {
     mountUrlFilters();
 });
+onBeforeMount(() => {
+    // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
+    if (props.idCadastro) listaNomes.value.shift();
+    // Inicializa os filtros do grid
+    initFilters();
+    loadOptions();
+});
+onMounted(() => {
+    // Limpa os filtros do grid
+    clearFilter();
+});
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todo o Pipeline' }]" />
+    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline' }]" />
     <div class="card">
-        <PipelineForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <PipelineForm
+            :mode="mode"
+            :idCadastro="props.idCadastro"
+            :idPipeline="idPipeline"
+            @changed="loadLazyData()"
+            @cancel="
+                mode = 'grid';
+                idPipeline = undefined;
+            "
+            v-if="mode == 'new' || idPipeline"
+        />
         <DataTable
             class="hidden lg:block"
             style="font-size: 0.9rem"
@@ -280,7 +310,10 @@ watchEffect(() => {
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
-            scrollHeight="420px"
+            scrollHeight="600px"
+            v-model:expandedRows="expandedRows"
+            @rowExpand="onRowExpand"
+            @rowCollapse="onRowCollapse"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3 mb-3">
@@ -331,8 +364,11 @@ watchEffect(() => {
                     <Button icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    <Button type="button" icon="pi pi-plus" label="Expand All" @click="expandAll" />
+                    <Button type="button" icon="pi pi-minus" label="Collapse All" @click="collapseAll" />
                 </div>
             </template>
+            <Column expander style="width: 5rem" />
             <template v-for="nome in listaNomes" :key="nome">
                 <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
@@ -359,20 +395,23 @@ watchEffect(() => {
                     </template>
                 </Column>
             </template>
-            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
-                <template #body="{ data }">
-                    <Button
-                        type="button"
-                        class="p-button-outlined"
-                        rounded
-                        icon="fa-solid fa-bars"
-                        @click="
-                            router.push({
-                                path: `/${userData.cliente}/${userData.dominio}/pipeline/${data.id}`
-                            })
+            <template #expansion="slotProps">
+                <div class="ml-5 p-3">
+                    <PipelineForm
+                        :mode="'expandedFormMode'"
+                        :idCadastro="props.idCadastro"
+                        :idPipeline="slotProps.data.id"
+                        @changed="loadLazyData()"
+                        @cancel="
+                            mode = 'grid';
+                            idPipeline = undefined;
                         "
-                        title="Clique para mais opções"
                     />
+                </div>
+            </template>
+            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" style="0.6rem" v-if="route.name == 'pipeline'">
+                <template #body="{ data }">
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" title="Clique para mais opções" />
                 </template>
             </Column>
         </DataTable>

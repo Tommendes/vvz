@@ -174,7 +174,7 @@ INSERT INTO vivazul_cso_root.pipeline (
 	  id_ged_pai,id_ged_filho, /*Executar edição num próximo update*/
 	  c.id id_cadastro,
 	  u.id id_usuario_agente_vendas,
-	  0,g.documento,g.versao,g.descricao,g.valor_bruto,g.valor_liq,g.valor_representacao,g.perc_represent,g.valor_agente,g.id
+	  0,LPAD(g.documento,6,'0'),g.versao,g.descricao,g.valor_bruto,g.valor_liq,g.valor_representacao,g.perc_represent,g.valor_agente,g.id
 	FROM
 	  vivazul_lynkos.ged g 
 	JOIN vivazul_cso_root.pipeline_params pp ON g.id_ged_params = pp.old_id
