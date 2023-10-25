@@ -315,11 +315,11 @@ onMounted(() => {
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
-            scrollHeight="600px"
             v-model:expandedRows="expandedRows"
             @rowExpand="onRowExpand"
             @rowCollapse="onRowCollapse"
         >
+            <!-- scrollHeight="600px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3 mb-3">
                     <Tag :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>

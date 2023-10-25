@@ -126,9 +126,9 @@ onBeforeMount(() => {
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
             scrollable
-            scrollHeight="415px"
             :globalFilterFields="['tipo', 'pessoa', 'departamento', 'meio']"
         >
+            <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />

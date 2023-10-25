@@ -232,8 +232,8 @@ watchEffect(() => {
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
-            scrollHeight="420px"
         >
+            <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <!-- <Dropdown
