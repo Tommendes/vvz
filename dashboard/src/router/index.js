@@ -63,6 +63,36 @@ const routes = [
                 component: () => import('@/views/tecnicos/TecnicoForm.vue')
             },
             {
+                path: '/:client/:domain/registros',
+                name: 'registros',
+                component: () => import('@/views/registros/RegistrosGrid.vue')
+            },
+            {
+                path: '/:client/:domain/registro/:id',
+                name: 'registro',
+                component: () => import('@/views/registros/RegistroForm.vue')
+            },
+            {
+                path: '/:client/:domain/comissoes',
+                name: 'comissoes',
+                component: () => import('@/views/comissoes/ComissoesGrid.vue')
+            },
+            {
+                path: '/:client/:domain/comissao/:id',
+                name: 'comissao',
+                component: () => import('@/views/comissoes/ComissaoForm.vue')
+            },
+            {
+                path: '/:client/:domain/retencoes',
+                name: 'retencoes',
+                component: () => import('@/views/retencoes/RetencoesGrid.vue')
+            },
+            {
+                path: '/:client/:domain/retencao/:id',
+                name: 'retencao',
+                component: () => import('@/views/comissoes/RetencaoForm.vue')
+            },
+            {
                 path: '/:client/:domain/pos-vendas',
                 name: 'pos-vendas',
                 component: () => import('@/views/pos-vendas/PosVendasGrid.vue')
