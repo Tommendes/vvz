@@ -27,9 +27,9 @@ const toast = useToast();
 const itemData = ref({});
 const registroTipo = ref('pf');
 const labels = ref({
-    id_fin_lanc: " Chave estrangeira com a tabela fin_lancamentos",
-    valor: " Valor da retenção",
-    valor_da_retencao: " Descrição da retenção"
+    id_fin_lanc: " ID Lançamentos",
+    valor: " Valor da Retenção",
+    valor_da_retencao: " Descrição da Retenção"
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -171,14 +171,14 @@ const items = ref([
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_fin_lanc" id="id_fin_lanc" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="tipo">{{ labels.tipo }}</label>
+                            <label for="valor">{{ labels.valor }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="tipo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTipo" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor" id="valor" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="descricao">{{ labels.descricao }}</label>
+                            <label for="valor_da_retencao">{{ labels.valor_da_retencao }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_da_retencao" id="valor_da_retencao" type="text" />
                         </div>
                     </div>
                 </div>

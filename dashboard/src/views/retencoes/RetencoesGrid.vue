@@ -96,7 +96,6 @@ onBeforeMount(() => {
     loadData();
 });
 </script>
-
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Retenções' }]" />
     <div class="card">

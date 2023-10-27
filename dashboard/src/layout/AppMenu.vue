@@ -42,7 +42,7 @@ const model = ref([
         items: [
             { label: 'Registros', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/registros` },
             { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/comissoes` },
-            { label: 'Retenção', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/retencoes` }
+            { label: 'Retenção', icon: 'pi pi-fw pi-wallet', to: `/${user.cliente}/${user.dominio}/retencoes` }
         ]
     },
     {

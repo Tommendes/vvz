@@ -12,6 +12,7 @@ const routes = [
                 name: 'dashboard',
                 component: () => import('@/views/Dashboard.vue')
             },
+            // Seção Clientes
             {
                 path: '/:client/:domain/cadastros',
                 name: 'cadastros',
@@ -32,6 +33,17 @@ const routes = [
                 name: 'prospeccao',
                 component: () => import('@/views/prospeccoes/ProspeccaoForm.vue')
             },
+            //Seção Comercial
+            {
+                path: '/:client/:domain/pipeline',
+                name: 'pipeline',
+                component: () => import('@/views/pipeline/PipelinesGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pipeline/:id',
+                name: 'pipeline-one',
+                component: () => import('@/views/pipeline/PipelineForm.vue')
+            },
             {
                 path: '/:client/:domain/protocolos',
                 name: 'protocolos',
@@ -42,15 +54,36 @@ const routes = [
                 name: 'protocolo',
                 component: () => import('@/views/protocolos/ProtocoloForm.vue')
             },
+            // Seção Pós-Vendas
             {
-                path: '/:client/:domain/pipeline_params',
-                name: 'pipeline-params',
-                component: () => import('@/views/pipeline_params/ParamsGrid.vue')
+                path: '/:client/:domain/assistencias',
+                name: 'assistencias',
+                component: () => import('@/views/assistencia/AssistenciasGrid.vue')
             },
             {
-                path: '/:client/:domain/pipeline_param/:id',
-                name: 'pipeline-param',
-                component: () => import('@/views/pipeline_params/ParamForm.vue')
+                path: '/:client/:domain/assistencia/:id',
+                name: 'assistencia',
+                component: () => import('@/views/assistencia/AssistenciaForm.vue')
+            },
+            {
+                path: '/:client/:domain/montagens',
+                name: 'monatagens',
+                component: () => import('@/views/montagem/MontagensGrid.vue')
+            },
+            {
+                path: '/:client/:domain/montagem/:id',
+                name: 'montagem',
+                component: () => import('@/views/montagem/MontagemForm.vue')
+            },
+            {
+                path: '/:client/:domain/pos-vendas',
+                name: 'pos-vendas',
+                component: () => import('@/views/pos-vendas/PosVendasGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pos-venda/:id',
+                name: 'pos-venda',
+                component: () => import('@/views/pos-vendas/PosVendaForm.vue')
             },
             {
                 path: '/:client/:domain/tecnicos-pv',
@@ -62,6 +95,7 @@ const routes = [
                 name: 'tecnico-pv',
                 component: () => import('@/views/tecnicos/TecnicoForm.vue')
             },
+            // Seção Financeiro
             {
                 path: '/:client/:domain/registros',
                 name: 'registros',
@@ -92,46 +126,7 @@ const routes = [
                 name: 'retencao',
                 component: () => import('@/views/comissoes/RetencaoForm.vue')
             },
-            {
-                path: '/:client/:domain/pos-vendas',
-                name: 'pos-vendas',
-                component: () => import('@/views/pos-vendas/PosVendasGrid.vue')
-            },
-            {
-                path: '/:client/:domain/pos-venda/:id',
-                name: 'pos-venda',
-                component: () => import('@/views/pos-vendas/PosVendaForm.vue')
-            },
-            {
-                path: '/:client/:domain/montagens',
-                name: 'monatagens',
-                component: () => import('@/views/montagem/MontagensGrid.vue')
-            },
-            {
-                path: '/:client/:domain/montagem/:id',
-                name: 'montagem',
-                component: () => import('@/views/montagem/MontagemForm.vue')
-            },
-            {
-                path: '/:client/:domain/assistencias',
-                name: 'assistencias',
-                component: () => import('@/views/assistencia/AssistenciasGrid.vue')
-            },
-            {
-                path: '/:client/:domain/assistencia/:id',
-                name: 'assistencia',
-                component: () => import('@/views/assistencia/AssistenciaForm.vue')
-            },
-            {
-                path: '/:client/:domain/pipeline',
-                name: 'pipeline',
-                component: () => import('@/views/pipeline/PipelinesGrid.vue')
-            },
-            {
-                path: '/:client/:domain/pipeline/:id',
-                name: 'pipeline-one',
-                component: () => import('@/views/pipeline/PipelineForm.vue')
-            },
+            // Seção Gestão
             {
                 path: '/:client/:domain/empresa',
                 name: 'empresa',
@@ -142,6 +137,17 @@ const routes = [
                 name: 'empresa-one',
                 component: () => import('@/views/empresa/EmpresaForm.vue')
             },
+            {
+                path: '/:client/:domain/pipeline_params',
+                name: 'pipeline-params',
+                component: () => import('@/views/pipeline_params/ParamsGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pipeline_param/:id',
+                name: 'pipeline-param',
+                component: () => import('@/views/pipeline_params/ParamForm.vue')
+            },
+            // Password
             {
                 path: '/:client/:domain/password-reset',
                 name: 'password-reset',
