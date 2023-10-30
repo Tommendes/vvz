@@ -170,20 +170,22 @@ const items = ref([
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-6">
                             <label for="codigo">{{ labels.codigo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.codigo" id="codigo" type="text" />
                         </div>
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-6">
                             <label for="tipo">{{ labels.tipo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="tipo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTipo" />
                         </div>
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-12">
                             <label for="descricao">{{ labels.descricao }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" />
+                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" /> -->
+                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
                 </div>
