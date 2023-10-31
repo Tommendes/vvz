@@ -8,7 +8,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-import AssistenciaForm from './AssistenciaForm.vue';
+import ComissaoForm from './ComissaoForm.vue';
 const confirm = useConfirm();
 
 const store = useUserStore();
@@ -18,7 +18,7 @@ const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/pv-status`);
+const urlBase = ref(`${baseApiUrl}/fin-cc`);
 // Exlui um registro
 const deleteRow = () => {
     confirm.require({
@@ -42,8 +42,9 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'id_pv', label: 'PV', minWidth: '30rem' },
-    { field: 'status_pv', label: 'Status PV', minWidth: '30rem' }
+    { field: 'codigo', label:' Código da despesa ou receita', minWidth: '25rem' },
+    { field: 'tipo', label:' Despesa ou receita', minWidth: '25rem' },
+    { field: 'descricao', label:' Descrição do centro de custo', minWidth: '25rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -52,12 +53,6 @@ const initFilters = () => {
         filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
     });
 };
-// import { Mask } from 'maska';
-// const masks = ref({
-//     telefone: new Mask({
-//         mask: '(##) #####-####'
-//     })
-// });
 initFilters();
 const clearFilter = () => {
     initFilters();
@@ -67,7 +62,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/assistencia/${itemData.value.id}` });
+            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/comissao/${itemData.value.id}` });
         }
     },
     {
@@ -104,9 +99,9 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Assistência' }]" />
-    <div class="card" style="min-width: 100rem">
-        <AssistenciaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Comissões' }]" />
+    <div class="card">
+        <ComissaoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -119,7 +114,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id_pv', 'status_pv']"
+            :globalFilterFields="['codigo', 'tipo', 'descricao']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">

@@ -12,6 +12,7 @@ const routes = [
                 name: 'dashboard',
                 component: () => import('@/views/Dashboard.vue')
             },
+            // Seção Clientes
             {
                 path: '/:client/:domain/cadastros',
                 name: 'cadastros',
@@ -32,6 +33,17 @@ const routes = [
                 name: 'prospeccao',
                 component: () => import('@/views/prospeccoes/ProspeccaoForm.vue')
             },
+            //Seção Comercial
+            {
+                path: '/:client/:domain/pipeline',
+                name: 'pipeline',
+                component: () => import('@/views/pipeline/PipelinesGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pipeline/:id',
+                name: 'pipeline-one',
+                component: () => import('@/views/pipeline/PipelineForm.vue')
+            },
             {
                 path: '/:client/:domain/protocolos',
                 name: 'protocolos',
@@ -42,35 +54,16 @@ const routes = [
                 name: 'protocolo',
                 component: () => import('@/views/protocolos/ProtocoloForm.vue')
             },
+            // Seção Pós-Vendas
             {
-                path: '/:client/:domain/pipeline_params',
-                name: 'pipeline-params',
-                component: () => import('@/views/pipeline_params/ParamsGrid.vue')
+                path: '/:client/:domain/assistencias',
+                name: 'assistencias',
+                component: () => import('@/views/assistencia/AssistenciasGrid.vue')
             },
             {
-                path: '/:client/:domain/pipeline_param/:id',
-                name: 'pipeline-param',
-                component: () => import('@/views/pipeline_params/ParamForm.vue')
-            },
-            {
-                path: '/:client/:domain/tecnicos-pv',
-                name: 'tecnicos-pv',
-                component: () => import('@/views/tecnicos/TecnicosGrid.vue')
-            },
-            {
-                path: '/:client/:domain/tecnico-pv/:id',
-                name: 'tecnico-pv',
-                component: () => import('@/views/tecnicos/TecnicoForm.vue')
-            },
-            {
-                path: '/:client/:domain/pos-vendas',
-                name: 'pos-vendas',
-                component: () => import('@/views/pos-vendas/PosVendasGrid.vue')
-            },
-            {
-                path: '/:client/:domain/pos-venda/:id',
-                name: 'pos-venda',
-                component: () => import('@/views/pos-vendas/PosVendaForm.vue')
+                path: '/:client/:domain/assistencia/:id',
+                name: 'assistencia',
+                component: () => import('@/views/assistencia/AssistenciaForm.vue')
             },
             {
                 path: '/:client/:domain/montagens',
@@ -83,25 +76,57 @@ const routes = [
                 component: () => import('@/views/montagem/MontagemForm.vue')
             },
             {
-                path: '/:client/:domain/assistencias',
-                name: 'assistencias',
-                component: () => import('@/views/assistencia/AssistenciasGrid.vue')
+                path: '/:client/:domain/pos-vendas',
+                name: 'pos-vendas',
+                component: () => import('@/views/pos-vendas/PosVendasGrid.vue')
             },
             {
-                path: '/:client/:domain/montagem/:id',
-                name: 'montagem',
-                component: () => import('@/views/montagem/MontagemForm.vue')
+                path: '/:client/:domain/pos-venda/:id',
+                name: 'pos-venda',
+                component: () => import('@/views/pos-vendas/PosVendaForm.vue')
             },
             {
-                path: '/:client/:domain/pipeline',
-                name: 'pipeline',
-                component: () => import('@/views/pipeline/PipelinesGrid.vue')
+                path: '/:client/:domain/tecnicos-pv',
+                name: 'tecnicos-pv',
+                component: () => import('@/views/tecnicos/TecnicosGrid.vue')
             },
             {
-                path: '/:client/:domain/pipeline/:id',
-                name: 'pipeline-one',
-                component: () => import('@/views/pipeline/PipelineForm.vue')
+                path: '/:client/:domain/tecnico-pv/:id',
+                name: 'tecnico-pv',
+                component: () => import('@/views/tecnicos/TecnicoForm.vue')
             },
+            // Seção Financeiro
+            {
+                path: '/:client/:domain/registros',
+                name: 'registros',
+                component: () => import('@/views/registros/RegistrosGrid.vue')
+            },
+            {
+                path: '/:client/:domain/registro/:id',
+                name: 'registro',
+                component: () => import('@/views/registros/RegistroForm.vue')
+            },
+            {
+                path: '/:client/:domain/comissoes',
+                name: 'comissoes',
+                component: () => import('@/views/comissoes/ComissoesGrid.vue')
+            },
+            {
+                path: '/:client/:domain/comissao/:id',
+                name: 'comissao',
+                component: () => import('@/views/comissoes/ComissaoForm.vue')
+            },
+            {
+                path: '/:client/:domain/retencoes',
+                name: 'retencoes',
+                component: () => import('@/views/retencoes/RetencoesGrid.vue')
+            },
+            {
+                path: '/:client/:domain/retencao/:id',
+                name: 'retencao',
+                component: () => import('@/views/comissoes/RetencaoForm.vue')
+            },
+            // Seção Gestão
             {
                 path: '/:client/:domain/empresa',
                 name: 'empresa',
@@ -112,6 +137,17 @@ const routes = [
                 name: 'empresa-one',
                 component: () => import('@/views/empresa/EmpresaForm.vue')
             },
+            {
+                path: '/:client/:domain/pipeline_params',
+                name: 'pipeline-params',
+                component: () => import('@/views/pipeline_params/ParamsGrid.vue')
+            },
+            {
+                path: '/:client/:domain/pipeline_param/:id',
+                name: 'pipeline-param',
+                component: () => import('@/views/pipeline_params/ParamForm.vue')
+            },
+            // Password
             {
                 path: '/:client/:domain/password-reset',
                 name: 'password-reset',

@@ -97,11 +97,11 @@ const loadData = async () => {
         });
     } else loading.value.form = false;
 };
-// // DropDown
-// const dropdownInt_ext = ref([
-//     { value: 0, label: 'Interno' },
-//     { value: 1, label: 'Externo' }
-// ]);
+// DropDown
+const dropdownIntExt = ref([
+    { value: 0, label: 'Interno' },
+    { value: 1, label: 'Externo' }
+]);
 // Salvar dados do formulário
 const saveData = async () => {
     if (formIsValid()) {
@@ -230,8 +230,8 @@ const items = ref([
                         <div class="col-12 md:col-2">
                             <label for="int_ext">{{ labels.int_ext }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.int_ext" id="int_ext" type="text" />
-                            <!-- <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownInt_ext" /> -->
+                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.int_ext" id="int_ext" type="text" /> -->
+                            <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownIntExt" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="garantia">{{ labels.garantia }}</label>

@@ -10,13 +10,6 @@ const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
-import { Mask } from 'maska';
-const masks = ref({
-    telefone: new Mask({
-        mask: ['(##) ####-####', '(##) #####-####']
-    })
-});
-
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
@@ -34,10 +27,9 @@ const toast = useToast();
 const itemData = ref({});
 const registroTipo = ref('pf');
 const labels = ref({
-    tecnico: "Técnico Responsável",
-    telefone_contato: "Telefone para Contato",
-    email_contato: "E-mail para contato",
-    observacao: "Observação"
+    codigo: "Código da despesa ou receita",
+    tipo:"Despesa ou receita",
+    descricao: "Descrição do centro de custo"
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -61,7 +53,7 @@ const props = defineProps({
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/pv-tecnicos`);
+const urlBase = ref(`${baseApiUrl}/fin-lancamentos`);
 // Carragamento de dados do form
 const loadData = async () => {
     if (route.params.id || itemData.value.id) {
@@ -80,7 +72,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pv-tecnicos` });
+                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/lancamentos` });
             }
         });
     } else loading.value.form = false;
@@ -99,7 +91,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pv-tecnico/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/lancamento/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -119,23 +111,14 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
-// Validar telefone
-const validateTelefone = () => {
-    if (itemData.value.telefone_contato && itemData.value.telefone_contato.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone_contato).length)) {
-        errorMessages.value.telefone_contato = 'Formato de telefone inválido';
-    } else errorMessages.value.telefone_contato = null;
-    return !errorMessages.value.telefone_contato;
-};
-// Validar email
-const validateEmail = (field) => {
-    if (itemData.value.email_contato && itemData.value.email_contato.trim().length > 0 && !isValidEmail(itemData.value.email_contato)) {
-        errorMessages.value.email_contato = 'Formato de email inválido';
-    } else errorMessages.value.email_contato = null;
-    return !errorMessages.value.email_contato;
-};
+// DropDown Tipo
+const dropdownTipo = ref([
+    { value: 0, label: 'Despesa' },
+    { value: 1, label: 'Receita' }
+]);
 // Validar formulário
 const formIsValid = () => {
-    return validateTelefone() && validateEmail();
+    return true;
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -147,9 +130,10 @@ const reload = () => {
 };
 // Carregar dados do formulário
 onBeforeMount(() => {
+    loadData();
+    // loadOptions();
 });
 onMounted(() => {
-    loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
         if (itemData.value.id) mode.value = 'view';
@@ -179,36 +163,29 @@ const items = ref([
     }
 ]);
 </script>
-
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: `/${userData.cliente}/${userData.dominio}/tecnicos-pv` }, { label: itemData.tecnico + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card" style="min-width: 100rem">
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Registros', to: `/${userData.cliente}/${userData.dominio}/registros` }, { label: itemData.tecnico + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
-                            <label for="tecnico">{{ labels.tecnico }}</label>
+                        <div class="col-12 md:col-6">
+                            <label for="codigo">{{ labels.codigo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tecnico" id="tecnico" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.codigo" id="codigo" type="text" />
                         </div>
-                        <div class="col-12 md:col-4">
-                            <label for="telefone_contato">{{ labels.telefone_contato }}</label>
+                        <div class="col-12 md:col-6">
+                            <label for="tipo">{{ labels.tipo }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="email_contato">{{ labels.email_contato }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="tecnico" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
+                            <Dropdown v-else id="tipo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTipo" />
                         </div>
                         <div class="col-12 md:col-12">
-                            <label for="observacao">{{ labels.observacao }}</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
+                            <label for="descricao">{{ labels.descricao }}</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" /> -->
+                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
                 </div>

@@ -46,9 +46,9 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'tecnico', label: 'Técnico', minWidth: '30rem' },
-    { field: 'telefone_contato', label: 'Telefone de Contato', minWidth: '30rem' },
-    { field: 'email_contato', label: 'E-mail para Contato', minWidth: '30rem' },
+    { field: 'tecnico', label: 'Técnico', minWidth: '20rem' },
+    { field: 'telefone_contato', label: 'Telefone de Contato', minWidth: '20rem' },
+    { field: 'email_contato', label: 'E-mail para Contato', minWidth: '20rem' },
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
