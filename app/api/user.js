@@ -912,7 +912,7 @@ module.exports = app => {
             // Alçada para exibição
             if (!(uParams && (uParams.admin + uParams.gestor) >= 1)) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const sql = app.db({ us: tabela }).select(app.db.raw('count(*) as count'))
@@ -1176,7 +1176,7 @@ module.exports = app => {
             // Alçada para exibição
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const fieldName = req.query.fld

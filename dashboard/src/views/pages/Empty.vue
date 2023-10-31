@@ -1,5 +1,5 @@
 <template>
-    <div className="card">
+    <div className="card" style="min-width: 100rem"
         <h5>Empty Page</h5>
         <p>Use this page to start from scratch and place your custom content.</p>
     </div>

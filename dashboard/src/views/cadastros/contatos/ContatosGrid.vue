@@ -108,7 +108,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card" style="min-width: 100%">
         <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
             style="font-size: 0.9rem"

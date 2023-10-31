@@ -20,7 +20,7 @@ module.exports = app => {
             // Alçada para inclusão
             else isMatchOrError(uParams && uParams.cadastros >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
@@ -124,7 +124,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaLocalParams}`
@@ -219,7 +219,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -242,7 +242,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exclusão de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -300,7 +300,7 @@ module.exports = app => {
             // Alçada para exibição
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const fieldName = req.query.fld
@@ -340,7 +340,7 @@ module.exports = app => {
             // Alçada para exibição
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const fieldName = req.query.fld

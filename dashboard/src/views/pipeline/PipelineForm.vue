@@ -4,20 +4,15 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-import { useRoute } from 'vue-router';
-const route = useRoute();
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
 import { guide } from '@/guides/pipelineFormGuide.js';
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
-
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -30,8 +25,8 @@ const masks = ref({
 });
 
 import { useConfirm } from 'primevue/useconfirm';
-import moment from 'moment';
 const confirm = useConfirm();
+import moment from 'moment';
 
 const animationDocNr = ref('animation-color animation-fill-forwards ');
 // Campos de formulário
@@ -46,8 +41,9 @@ const loading = ref(true);
 const editCadastro = ref(false);
 // Itens do dropdown de Unidades de Negócio do grid
 const dropdownUnidades = ref([]);
-const unidadeLabel = ref(undefined);
+// Itens do dropdown de Agentes de Negócio do grid
 const dropdownAgentes = ref([]);
+const unidadeLabel = ref(undefined);
 // Props do template
 const props = defineProps(['mode', 'idPipeline', 'idCadastro']);
 // Emit do template
@@ -79,6 +75,7 @@ const convertFloatFields = (result = 'pt') => {
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
+    setTimeout(() => {}, 250);
     if (props.idPipeline || (route.name == 'pipeline-one' && (route.params.id || itemData.value.id))) {
         if (route.name == 'pipeline-one' && route.params.id) itemData.value.id = route.params.id;
         else if (props.idPipeline) itemData.value.id = props.idPipeline;
@@ -153,22 +150,20 @@ const saveData = async () => {
                     convertFloatFields();
                     itemDataComparision.value = { ...itemData.value };
                     emit('changed');
-                    if (!route.name == 'cadastro' && mode.value == 'new')
+                    if (route.name != 'cadastro' && mode.value == 'new')
                         router.push({
-                            path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id}`
+                            path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id}`
                         });
-                    if (!route.name == 'cadastro' && id != itemData.value.id) {
+                    else if (route.name != 'cadastro' && id != itemData.value.id) {
                         router.push({
-                            path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id}`
+                            path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id}`
                         });
                         // Lista o andamento do registro
                         await listStatusRegistro();
                         const animation = animationDocNr.value;
                         animationDocNr.value = '';
-                        setTimeout(() => {
-                            loadData();
-                            animationDocNr.value = animation;
-                        }, 250);
+                        await loadData();
+                        animationDocNr.value = animation;
                     } else reload();
                     mode.value = 'view';
                 } else {
@@ -298,9 +293,9 @@ const confirmEditCadastro = () => {
  * Status do registro
  */
 // Preload de status do registro
+const itemDataParam = ref({});
 const itemDataStatus = ref([]);
 const itemDataLastStatus = ref({});
-const itemDataParam = ref({});
 const itemDataStatusPreload = ref([
     {
         status: '0',
@@ -417,6 +412,7 @@ const itemNovo = [
             delete itemData.value.id_filho;
             delete itemData.value.id_pai;
             delete itemData.value.documento;
+            delete itemData.value.updated_at;
             itemData.value = {
                 id_cadastros: itemData.value.id_cadastros,
                 id_pipeline_params: itemData.value.id_pipeline_params,
@@ -468,19 +464,15 @@ const itemsComiss = [
         }
     }
 ];
-const toPai = () => {
-    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id_pai}` });
+const toPai = async () => {
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id_pai}` });
     loading.value = true;
-    setTimeout(() => {
-        loadData();
-    }, 250);
+    await loadData();
 };
-const toFilho = () => {
-    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${itemData.value.id_filho}` });
+const toFilho = async () => {
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id_filho}` });
     loading.value = true;
-    setTimeout(() => {
-        loadData();
-    }, 250);
+    await loadData();
 };
 /**
  * Ferramentas do registro
@@ -509,9 +501,7 @@ const statusRecord = async (status) => {
                         toGrid();
                     } // Se for excluído, redireciona para o grid
                     else if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_LIQUIDADO].includes(status)) {
-                        setTimeout(() => {
-                            reload();
-                        }, 250);
+                        reload();
                     } // Se for cancelado ou liquidado, recarrega o registro
                     defaultSuccess(msgDone);
                 });
@@ -531,15 +521,13 @@ const statusRecord = async (status) => {
                     status_params_force: andamentoRegistro.value.STATUS_CONVERTIDO,
                     pipeline_params_force: itemDataParam.value
                 };
-                await axios.put(url, preparedBody).then((body) => {
+                await axios.put(url, preparedBody).then(async (body) => {
                     defaultError(`Registro convertido com sucesso`);
                     router.push({
-                        path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline/${body.data.id}`
+                        path: `/${userData.cliente}/${userData.dominio}/pipeline/${body.data.id}`
                     });
                     loading.value = true;
-                    setTimeout(() => {
-                        loadData();
-                    }, 250);
+                    await loadData();
                 });
             },
             reject: () => {
@@ -559,12 +547,8 @@ const statusRecord = async (status) => {
 const toGrid = () => {
     mode.value = 'grid';
     emit('cancel');
-    router.push({
-        path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline`
-    });
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline` });
 };
-// onBeforeMount(() => {
-// });
 // Carregar dados do formulário
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -580,17 +564,8 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb
-        :items="[
-            {
-                label: 'Todo o Pipeline',
-                to: `/${userData.cliente}/${userData.dominio}/pipeline`
-            },
-            { label: itemData.documento }
-        ]"
-        v-if="!(idCadastro || mode == 'expandedFormMode')"
-    />
-    <div class="card">
+    <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.cliente}/${userData.dominio}/pipeline` }, { label: itemData.documento }]" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
+    <div class="card" :style="route.name == 'pipeline' ? 'min-width: 100rem' : ''">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div :class="`${['new', 'expandedFormMode'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">
@@ -781,7 +756,7 @@ watch(selectedCadastro, (value) => {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 lg:col12">
+                        <div class="col-12 lg:col12" v-if="mode == 'new' || itemData.descricao">
                             <label for="descricao">Descrição</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <Editor v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
@@ -792,7 +767,6 @@ watch(selectedCadastro, (value) => {
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
-                    <!-- <div class="card bg-green-200"> -->
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">

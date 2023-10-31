@@ -4,6 +4,7 @@ module.exports = app => {
     const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_REATIVADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pipeline'
+    const tabelaAlias = 'Pipeline'
     const tabelaStatus = 'pipeline_status'
     const tabelaParams = 'pipeline_params'
     const tabelaLocalParams = 'local_params'
@@ -24,7 +25,7 @@ module.exports = app => {
             else isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
             console.log(error);
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
@@ -57,7 +58,7 @@ module.exports = app => {
         const status_params_force = body.status_params_force; // Status forçado para edição
         const status_params = body.status_params; // Último status do registro
         delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force; delete body.hash; delete body.tblName;
-        body.documento = body.documento.toString().padStart(6, '0')
+        if (body.documento) body.documento = body.documento.toString().padStart(6, '0')
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -99,7 +100,8 @@ module.exports = app => {
                     // Gerar um número de documento baseado no pipeline_params_force.tipo_secundario
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento'))
                         .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
-                    body.documento = nextDocumentNr.documento
+                    body.documento = nextDocumentNr.documento.toString() || '1'
+                    body.documento = body.documento.padStart(6, '0')
                     // Informa o id do registro pai
                     const idPai = body.id
                     // Limpa os dados do corpo da solicitação
@@ -165,8 +167,10 @@ module.exports = app => {
             app.db.transaction(async (trx) => {
                 // Se autom_nr = 1, gerar um novo número de documento
                 if (pipeline_params_force.autom_nr == 1) {
-                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento')).where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
-                    body.documento = nextDocumentNr.documento || 1
+                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento'))
+                    .where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
+                    body.documento = nextDocumentNr.documento.toString() || '1'
+                    body.documento = body.documento.padStart(6, '0')
                 }
 
                 // Variáveis da criação de um registro
@@ -232,7 +236,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de pipeline"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
@@ -370,7 +374,7 @@ module.exports = app => {
             isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de Pipeline"`)
         } catch (error) {
             console.log(error);
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -395,7 +399,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError((uParams && uParams.pipeline >= 4), `${noAccessMsg} "Exclusão de Pipeline"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -465,6 +469,71 @@ module.exports = app => {
         }
     }
 
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'glf':
+                getListByField(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }
 
-    return { save, get, getById, remove }
+    // Lista de registros por campo
+    const getListByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            res.status(401).send(error)
+        }
+        // const idCadastro = req.query.idCadastro || undefined
+        // try {
+        //     if (!idCadastro) throw `Faltando o id do cadastro`
+        // } catch (error) {
+        //     app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        //     res.status(401).send(error)
+        // }
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.params.first == true
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const ret = app.db({ tbl1: tabelaDomain })
+            .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            selectArr.forEach(element => {
+                if (element.split(' ') > 0) element = `${element.split(' ')[0]} as ${element.split(' ')[1]}`;
+            });
+            ret.select(app.db.raw(selectArr))
+        }
+        if (fieldName.includes('id') && !fieldName.includes('_')) ret.where({ 'tbl1.id': value })
+        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+
+        ret.where({ 'tbl1.status': STATUS_ACTIVE });//, 'tbl1.id_cadastros': idCadastro
+
+        if (first) {
+            ret.first()
+        }
+
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
+
+    return { save, get, getById, remove, getByFunction }
 }

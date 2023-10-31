@@ -1,17 +1,21 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
+import { ref, onBeforeMount, onMounted } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
-import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import TecnicoForm from './TecnicoForm.vue';
+import { renderizarHTML } from '@/global';
+
+import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
-const store = useUserStore();
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
 const router = useRouter();
 const filters = ref(null);
 const menu = ref();
@@ -53,12 +57,6 @@ const initFilters = () => {
         filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
     });
 };
-import { Mask } from 'maska';
-const masks = ref({
-    telefone: new Mask({
-        mask: '(##) #####-####'
-    })
-});
 initFilters();
 const clearFilter = () => {
     initFilters();
@@ -68,7 +66,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/tecnico-pv/${itemData.value.id}` });
+            router.push({ path: `/${userData.cliente}/${userData.dominio}/tecnico-pv/${itemData.value.id}` });
         }
     },
     {
@@ -90,7 +88,8 @@ const loadData = () => {
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
-            // if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.masked(itemData.value.telefone_contato);
+            if (element.telefone_contato) element.telefone_contato = renderizarHTML(element.telefone_contato, { to: element.tecnico, from: userData.name });
+            if (element.email_contato) element.email_contato = renderizarHTML(element.email_contato);
             // if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
             // else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
         });
@@ -105,8 +104,8 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos PV' }]" />
-    <div class="card">
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas' }]" />
+    <div class="card" style="min-width: 100rem">
         <TecnicoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"

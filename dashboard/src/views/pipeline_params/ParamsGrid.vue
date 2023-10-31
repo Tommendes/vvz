@@ -106,7 +106,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros' }]" />
-    <div class="card">
+    <div class="card" style="min-width: 100rem">
         <ParamForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"

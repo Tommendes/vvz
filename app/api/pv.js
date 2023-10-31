@@ -1,14 +1,16 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
-    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
+    const { STATUS_PENDENTE, STATUS_REATIVADO, STATUS_EM_ANDAMENTO, STATUS_LIQUIDADO, STATUS_CANCELADO, STATUS_FINALIZADO, STATUS_EXCLUIDO,
+        MOTIVO_AT, MOTIVO_MONTAGEM, MOTIVO_VENDA } = require('./pv_status.js')(app)
     const tabela = 'pv'
+    const tabelaStatus = 'pv_status'
     const tabelaPipeline = 'pipeline'
-    const tabelaStatus = 'pipeline_status'
     const tabelaParams = 'pipeline_params'
-    const tabelaLocalParams = 'local_params'
     const tabelaCadastros = 'cadastros'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+
 
     const save = async (req, res) => {
         let user = req.user
@@ -18,91 +20,220 @@ module.exports = app => {
         try {
             // Alçada para edição
             if (body.id)
-                isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+                isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+            else isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaPvStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
+
+        const pipeline_params_force = body.pipeline_params_force
 
         try {
-
             existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
             if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
             existsOrError(body.tipo, 'Tipo não encontrado')
-            if(body.tipo =! 1 || 0) throw 'Tipo inválido'
-            existsOrError(body.situacao, 'Situação não encontrada')
-            if(body.situacao.length > 2) throw 'Situação inválida'
-
-        
+            if (body.tipo = !1 || 0) throw 'Tipo inválido'
         } catch (error) {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
+        const status_pv_force = body.status_pv_force; // Status forçado para edição
+        const status_pv = body.status_pv; // Último status do registro
+        delete body.status_pv; delete body.pipeline_params_force; delete body.status_pv_force; delete body.hash; delete body.tblName;
+        if (body.pv_nr) body.pv_nr = body.pv_nr.toString().padStart(6, '0')
         if (body.id) {
-            // Variáveis da edição de um registro
-            // registrar o evento na tabela de eventos
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento',],
-                "last": await app.db(tabelaDomain).where({ id: body.id }).first(),
-                "next": body,
-                "request": req,
-                "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
-                    "tabela_bd": tabela,
-                }
-            })
+            // Variáveis da edição de um registro            
+            let updateRecord = {
+                updated_at: new Date(),
+                ...body, // Incluindo outros dados do corpo da solicitação
+            };
 
-            body.evento = evento
-            body.updated_at = new Date()
-            let rowsUpdated = app.db(tabelaDomain)
-                .update(body)
-                .where({ id: body.id })
-            rowsUpdated.then((ret) => {
-                if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Endereço não encontrado')
-            })
-                .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
+            app.db.transaction(async (trx) => {
+                // Iniciar a transação e editar na tabela principal
+                const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+                updateRecord = { ...updateRecord, evento: nextEventID.count + 1 }
+                // Registrar o evento na tabela de eventos
+                const eventPayload = {
+                    notTo: ['created_at', 'updated_at', 'evento',],
+                    last: await app.db(tabelaDomain).where({ id: body.id }).first(),
+                    next: updateRecord,
+                    request: req,
+                    evento: {
+                        "evento": `Alteração de cadastro de ${tabela}`,
+                        "tabela_bd": tabela,
+                    }
+                };
+                const { createEventUpd } = app.api.sisEvents
+                await createEventUpd(eventPayload, trx);
+                await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
+                if (status_pv_force != status_pv) {
+                    // Inserir na tabela de status apenas se o status for diferente
+                    await trx(tabelaPvStatusDomain).insert({
+                        status: STATUS_ACTIVE,
+                        status_pv: status_pv_force,
+                        created_at: new Date(),
+                        id_pv: body.id,
+                    });
+                }
+                return res.json(updateRecord);
+            }).catch((error) => {
+                // Se ocorrer um erro, faça rollback da transação
+                app.api.logger.logError({
+                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                });
+                return res.status(500).send(error);
+            });
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+            app.db.transaction(async (trx) => {
+                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr AS INT)) + 1 AS pv_nr'))
+                    .where({ status: STATUS_ACTIVE }).first()
+                body.pv_nr = nextDocumentNr.pv_nr.toString() || '1'
+                body.pv_nr = body.pv_nr.padStart(6, '0')
 
-            body.evento = nextEventID.count + 1
-            // Variáveis da criação de um novo registro
-            body.status = STATUS_ACTIVE
-            body.created_at = new Date()
+                // Variáveis da criação de um registro
+                const newRecord = {
+                    status: STATUS_ACTIVE,
+                    created_at: new Date(),
+                    ...body, // Incluindo outros dados do corpo da solicitação
+                };
 
-            app.db(tabelaDomain)
-                .insert(body)
-                .then(ret => {
-                    body.id = ret[0]
-                    // registrar o evento na tabela de eventos
-                    const { createEventIns } = app.api.sisEvents
-                    createEventIns({
-                        "notTo": ['created_at', 'evento'],
-                        "next": body,
-                        "request": req,
-                        "evento": {
-                            "evento": `Novo registro`,
-                            "tabela_bd": tabela,
-                        }
-                    })
-                    return res.json(body)
-                })
-                .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
+                // Iniciar a transação e inserir na tabela principal
+                const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+                const [recordId] = await trx(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
+
+                // Registrar o evento na tabela de eventos
+                const eventPayload = {
+                    notTo: ['created_at', 'evento'],
+                    next: newRecord,
+                    request: req,
+                    evento: {
+                        evento: 'Novo registro',
+                        tabela_bd: tabelaDomain,
+                    },
+                };
+                const { createEventIns } = app.api.sisEvents
+                await createEventIns(eventPayload, trx);
+
+                // Inserir na tabela de status um registro de criação
+                await trx(tabelaPvStatusDomain).insert({
+                    status: STATUS_ACTIVE,
+                    created_at: new Date(),
+                    id_pv: recordId,
+                    status_pv: STATUS_PENDENTE,
+                });
+                // Inserir na tabela de status um registro de criação
+                await trx(tabelaPvStatusDomain).insert({
+                    status: STATUS_ACTIVE,
+                    created_at: new Date(),
+                    id_pv: recordId,
+                    status_pv: STATUS_EM_ANDAMENTO,
+                });
+                const newRecordWithID = { ...newRecord, id: recordId }
+                return res.json(newRecordWithID);
+            }).catch((error) => {
+                // Se ocorrer um erro, faça rollback da transação
+                app.api.logger.logError({
+                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                });
+                return res.status(500).send(error);
+            });
         }
     }
 
-    
+    // const save = async (req, res) => {
+    //     let user = req.user
+    //     const uParams = await app.db('users').where({ id: user.id }).first();
+    //     let body = { ...req.body }
+    //     if (req.params.id) body.id = req.params.id
+    //     try {
+    //         // Alçada para edição
+    //         if (body.id)
+    //             isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+    //         // Alçada para inclusão
+    //         else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+    //     } catch (error) {
+    //         app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+    //     }
+    //     const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+
+    //     try {
+    //         existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
+    //         if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
+    //         existsOrError(body.tipo, 'Tipo não encontrado')
+    //         if (body.tipo = !1 || 0) throw 'Tipo inválido'
+    //     } catch (error) {
+    //         return res.status(400).send(error)
+    //     }
+
+    //     delete body.hash; delete body.tblName
+    //     if (body.id) {
+    //         // Variáveis da edição de um registro
+    //         // registrar o evento na tabela de eventos
+    //         const { createEventUpd } = app.api.sisEvents
+    //         const evento = await createEventUpd({
+    //             "notTo": ['created_at', 'updated_at', 'evento',],
+    //             "last": await app.db(tabelaDomain).where({ id: body.id }).first(),
+    //             "next": body,
+    //             "request": req,
+    //             "evento": {
+    //                 "evento": `Alteração de cadastro de ${tabela}`,
+    //                 "tabela_bd": tabela,
+    //             }
+    //         })
+
+    //         body.evento = evento
+    //         body.updated_at = new Date()
+    //         let rowsUpdated = app.db(tabelaDomain)
+    //             .update(body)
+    //             .where({ id: body.id })
+    //         rowsUpdated.then((ret) => {
+    //             if (ret > 0) res.status(200).send(body)
+    //             else res.status(200).send('Endereço não encontrado')
+    //         })
+    //             .catch(error => {
+    //                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+    //                 return res.status(500).send(error)
+    //             })
+    //     } else {
+    //         // Criação de um novo registro
+    //         const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+    //         const nextPv = await app.db(tabelaDomain).select(app.db.raw('max(pv_nr) as pv_nr')).first()
+
+    //         body.evento = nextEventID.count + 1
+    //         // Variáveis da criação de um novo registro
+    //         body.status = STATUS_ACTIVE
+    //         body.created_at = new Date()
+    //         body.pv_nr = nextPv.pv_nr + 1
+
+    //         app.db(tabelaDomain)
+    //             .insert(body)
+    //             .then(ret => {
+    //                 body.id = ret[0]
+    //                 // registrar o evento na tabela de eventos
+    //                 const { createEventIns } = app.api.sisEvents
+    //                 createEventIns({
+    //                     "notTo": ['created_at', 'evento'],
+    //                     "next": body,
+    //                     "request": req,
+    //                     "evento": {
+    //                         "evento": `Novo registro`,
+    //                         "tabela_bd": tabela,
+    //                     }
+    //                 })
+    //                 return res.json(body)
+    //             })
+    //             .catch(error => {
+    //                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+    //                 return res.status(500).send(error)
+    //             })
+    //     }
+    // }
+
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
@@ -110,7 +241,8 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de pós-vendas"`)
         } catch (error) {
-            return res.status(401).send(error)
+            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -122,7 +254,7 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('str_to_date(tbl1.created_at,"%d/%m/%Y")')
+        let sortField = app.db.raw('cast(tbl1.pv_nr as int)')
         let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
@@ -167,7 +299,9 @@ module.exports = app => {
                                     break;
                             }
                             let queryField = key.split(':')[1]
-                            if (queryField == 'nome') {
+                            if (queryField == 'pipeline') {
+                                query += `(pp.descricao ${operator} or p.documento ${operator}) AND `
+                            } else if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
                             } else {
                                 query += `${queryField} ${operator} AND `
@@ -184,8 +318,8 @@ module.exports = app => {
                     }
                     if (element == 'sort') {
                         sortField = key.split(':')[1].split('=')[0]
-                        if (sortField == 'created_at') sortField = 'str_to_date(tbl1.created_at,"%d/%m/%Y")'
-                        if (sortField == 'documento') sortField = 'cast(documento as int)'
+                        if (sortField == 'pipeline') sortField = 'pp.descricao ' + queryes[key] + ', cast(documento as int)'
+                        // if (sortField == 'documento') sortField = 'cast(documento as int)'
                         sortOrder = queryes[key]
                     }
 
@@ -209,7 +343,7 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, tbl1.pv_nr, 
+            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, p.documento, c.nome, c.cpf_cnpj, tbl1.pv_nr, tbl1.tipo,
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
             .leftJoin({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'p.id_pipeline_params')
@@ -217,9 +351,8 @@ module.exports = app => {
             .whereNot({ 'tbl1.status': STATUS_DELETE })
             .whereRaw(query ? query : '1=1')
             .orderBy(app.db.raw(sortField), sortOrder)
-            .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
+            .orderBy(app.db.raw('cast(tbl1.pv_nr as int)'), 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
-            // console.log(ret.toString());
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
         }).catch(error => {
@@ -235,7 +368,8 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -259,7 +393,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`

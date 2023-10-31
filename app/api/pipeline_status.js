@@ -26,7 +26,7 @@ module.exports = app => {
             // Alçada para inclusão
             else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
@@ -111,7 +111,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
@@ -138,7 +138,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -161,7 +161,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -216,7 +216,7 @@ module.exports = app => {
             // Alçada para exibição
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const fieldName = req.query.fld

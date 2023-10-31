@@ -17,7 +17,7 @@ module.exports = app => {
             existsOrError(asset, "Nome do arquivo não informado")
             existsOrError(extension, "Extensão do arquivo não informado")
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const mime = {
             html: 'text/html',

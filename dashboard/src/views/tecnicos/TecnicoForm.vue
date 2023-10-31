@@ -133,10 +133,9 @@ const reload = () => {
 };
 // Carregar dados do formulário
 onBeforeMount(() => {
-    loadData();
-    // loadOptions();
 });
 onMounted(() => {
+    loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
         if (itemData.value.id) mode.value = 'view';
@@ -168,8 +167,8 @@ const items = ref([
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos PV', to: `/${userData.cliente}/${userData.dominio}/tecnicos-pv` }, { label: itemData.tecnico + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card">
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: `/${userData.cliente}/${userData.dominio}/tecnicos-pv` }, { label: itemData.tecnico + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">

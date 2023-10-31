@@ -181,6 +181,9 @@ module.exports = app => {
         .put(app.api.pipeline.save)
         .get(app.api.pipeline.getById)
         .delete(app.api.pipeline.remove)
+    app.route('/pipeline/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.pipeline.getByFunction)
 
     /**
      * Rota de pipeline_status
@@ -262,6 +265,22 @@ module.exports = app => {
         .put(app.api.pv.save)
         .get(app.api.pv.getById)
         .delete(app.api.pv.remove)
+
+    /**
+     * Rota de pv_status
+     */
+    app.route('/pv-status/:id_pv')
+        .all(app.config.passport.authenticate())
+        .post(app.api.pv_status.save)
+        .get(app.api.pv_status.get)
+    app.route('/pv-status/:id_pv/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.pv_status.save)
+        .get(app.api.pv_status.getById)
+        .delete(app.api.pv_status.remove)
+    app.route('/pv-status/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.pv_status.getByFunction)
 
     /**
     * Rota de pv_tecnicos

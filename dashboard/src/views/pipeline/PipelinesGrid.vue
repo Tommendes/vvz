@@ -6,13 +6,13 @@ import { defaultError, defaultInfo, defaultSuccess } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import { removeHtmlTags } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
+import moment from 'moment';
 
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
 import { useRouter, useRoute } from 'vue-router';
-import moment from 'moment';
 const router = useRouter();
 const route = useRoute();
 
@@ -133,6 +133,7 @@ const clearFilter = () => {
 // Carrega os dados do grid
 const loadLazyData = () => {
     loading.value = true;
+    expanded.value = false;
     setTimeout(() => {
         const url = `${urlBase.value}${urlFilters.value}`;
         axios
@@ -281,7 +282,7 @@ onMounted(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline' }]" />
-    <div class="card">
+    <div class="card" :style="!route.name == 'pipeline' ? 'min-width: 100%' : ''">
         <PipelineForm
             :mode="mode"
             :idCadastro="props.idCadastro"

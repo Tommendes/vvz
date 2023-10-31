@@ -185,7 +185,7 @@ const items = ref([
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Montagem', to: `/${userData.cliente}/${userData.dominio}/montagens` }, { label: itemData.id_pv + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card">
+    <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">

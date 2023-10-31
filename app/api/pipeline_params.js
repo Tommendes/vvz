@@ -17,7 +17,7 @@ module.exports = app => {
             // Alçada para inclusão
             else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
@@ -102,7 +102,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const page = req.query.page || 1
@@ -133,7 +133,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de Cadastro de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -156,7 +156,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Cadastro de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -213,7 +213,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de unidades de negócios"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const doc_venda = req.query.doc_venda || undefined
@@ -242,7 +242,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de unidades de negócios"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db(tabelaDomain)

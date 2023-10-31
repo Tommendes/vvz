@@ -1,5 +1,5 @@
 /*Recriar tabelas*/
-DELETE FROM vivazul_api.knex_migrations WHERE id > 1;
+DELETE FROM vivazul_api.knex_migrations WHERE id > 2;
 ALTER TABLE vivazul_api.knex_migrations AUTO_INCREMENT=0;
 
 /*Importar usuários*/
@@ -55,7 +55,6 @@ INSERT INTO vivazul_cso_root.local_params (
 
 /*Adiciona coluna de referência entre BDs*/
 ALTER TABLE vivazul_cso_root.cadastros ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
-
 /*Remover duplicatas em cadastros. Executar até o resultado da execução ser igual a zero*/
 UPDATE vivazul_lynkos.cadastros SET dominio = CONCAT(dominio,'_XDEL'), STATUS = 99
 WHERE id IN(SELECT id FROM vivazul_lynkos.cadastros 
@@ -134,6 +133,23 @@ INSERT INTO vivazul_cso_root.cad_enderecos (
 	JOIN vivazul_cso_root.local_params lc ON lc.label = ce.tipo
 	WHERE ce.dominio = 'casaoficio' AND ce.status = 10
 );
+
+/*Importar empresa*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.empresa;
+ALTER TABLE vivazul_cso_root.empresa AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_cso_root.empresa (
+  id,evento,created_at,updated_at,STATUS,razaosocial,
+  fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,email_at,email_comercial,email_financeiro,email_rh,
+  id_cadas_resplegal,url_logo
+)(
+SELECT 
+NULL,1,FROM_UNIXTIME(e.created_at)created_at,FROM_UNIXTIME(e.updated_at)updated_at,10,razaosocial,
+fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,emailat,emailcomercial,emailfinanceiro,emailrh,
+(SELECT id FROM vivazul_cso_root.cadastros c WHERE c.old_id = e.id_cadas_resplegal)id_cadas_resplegal,url_logo 
+FROM vivazul_lynkos.empresa e WHERE e.dominio = 'casaoficio' 
+  );
   
 /*Importa os documentos(ged_params x pipeline_params)*/
 ALTER TABLE vivazul_cso_root.pipeline_params ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
@@ -147,7 +163,7 @@ INSERT INTO vivazul_cso_root.pipeline_params (
 )(
 	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,id 
 	FROM vivazul_lynkos.ged_params
-	WHERE STATUS = 10 AND dominio = 'casaoficio'
+	WHERE dominio = 'casaoficio'
 	ORDER BY descricao
   );
 /*Garante o tipo_secundário de acordo com id_old*/
@@ -174,13 +190,13 @@ INSERT INTO vivazul_cso_root.pipeline (
 	  id_ged_pai,id_ged_filho, /*Executar edição num próximo update*/
 	  c.id id_cadastro,
 	  u.id id_usuario_agente_vendas,
-	  0,LPAD(g.documento,6,'0'),g.versao,g.descricao,g.valor_bruto,g.valor_liq,g.valor_representacao,g.perc_represent,g.valor_agente,g.id
+	  0,IF(pp.doc_venda = 2,LPAD(g.documento_baixa,6,'0'),LPAD(g.documento,6,'0'))documento,g.versao,g.descricao,g.valor_bruto,g.valor_liq,g.valor_representacao,g.perc_represent,g.valor_agente,g.id
 	FROM
 	  vivazul_lynkos.ged g 
 	JOIN vivazul_cso_root.pipeline_params pp ON g.id_ged_params = pp.old_id
 	JOIN vivazul_cso_root.cadastros c ON g.id_cadastro = c.old_id
 	LEFT JOIN vivazul_api.users u ON g.id_usuario_agente_vendas = u.old_id
-	WHERE g.dominio = 'casaoficio' ORDER BY g.created_at LIMIT 9999999
+	WHERE g.dominio = 'casaoficio' AND (CAST(g.documento_baixa AS INT) > 0 OR CAST(g.documento AS INT) > 0) AND g.status < 99 ORDER BY g.created_at -- LIMIT 250
 );
 /*
 Edita a data de criação do registro para primeira data a partir de 2000-01-01 apenas dos registros com 
@@ -226,26 +242,13 @@ JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_pipeline
 SET ps.updated_at = p.created_at
 WHERE ps.updated_at NOT LIKE '20%' LIMIT 9999999;
 
-/*Importar empresa*/
-INSERT INTO vivazul_cso_root.empresa (
-  id,evento,created_at,updated_at,STATUS,razaosocial,
-  fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,email_at,email_comercial,email_financeiro,email_rh,
-  id_cadas_resplegal,url_logo
-)(
-SELECT 
-NULL,1,FROM_UNIXTIME(e.created_at)created_at,FROM_UNIXTIME(e.updated_at)updated_at,10,razaosocial,
-fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,emailat,emailcomercial,emailfinanceiro,emailrh,
-(SELECT id FROM vivazul_cso_root.cadastros c WHERE c.old_id = e.id_cadas_resplegal)id_cadas_resplegal,url_logo 
-FROM vivazul_lynkos.empresa e WHERE e.dominio = 'casaoficio' 
-  ) ;
-
 /*Importar prospecções*/
-ALTER TABLE vivazul_cso_root.com_prospeccao ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.com_prospeccoes ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
 SET FOREIGN_KEY_CHECKS=0; 
-DELETE FROM vivazul_cso_root.com_prospeccao;
-ALTER TABLE vivazul_cso_root.com_prospeccao AUTO_INCREMENT=0;
+DELETE FROM vivazul_cso_root.com_prospeccoes;
+ALTER TABLE vivazul_cso_root.com_prospeccoes AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
-INSERT INTO vivazul_cso_root.com_prospeccao (
+INSERT INTO vivazul_cso_root.com_prospeccoes (
   id,evento,created_at,updated_at,STATUS,
   id_agente,id_cadastros,id_cad_end,
   periodo,pessoa,contato,observacoes,data_visita,old_id
@@ -267,14 +270,14 @@ SET FOREIGN_KEY_CHECKS=0;
 DELETE FROM vivazul_cso_root.pv;
 ALTER TABLE vivazul_cso_root.pv AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
-INSERT INTO vivazul_cso_root.pv (evento,created_at,updated_at,STATUS,id_cadastros,id_pipeline,tipo,pv_nr,observacao,situacao,old_id
+INSERT INTO vivazul_cso_root.pv (evento,created_at,updated_at,STATUS,id_cadastros,id_pipeline,tipo,pv_nr,observacao,old_id
 )(
 	SELECT 1,FROM_UNIXTIME(pv.created_at)created_at,FROM_UNIXTIME(pv.updated_at)updated_at,pv.status,
-	c.id id_cadastro,p.id id_ged,
-	IF(pv.motivo = 10,2,IF(pv.motivo = 30,1,0))tipo,pv.pv_nr,pv.obs,pv.status,pv.id FROM vivazul_lynkos.pv pv
+	c.id id_cadastro,p.id id_pipeline, -- p.old_id id_ged,
+	IF(pv.motivo = 10,2,IF(pv.motivo = 30,1,0))tipo,LPAD(pv.pv_nr, 6, '0')pv_nr,pv.obs,pv.id FROM vivazul_lynkos.pv pv
 	JOIN vivazul_cso_root.cadastros c ON c.old_id = pv.id_cadastro
 	LEFT JOIN vivazul_cso_root.pipeline p ON p.old_id = pv.id_ged
-	WHERE vivazul_lynkos.pv.dominio = 'casaoficio'
+	WHERE vivazul_lynkos.pv.dominio = 'casaoficio' 
 ); 
   
 /*Importar pv_oat*/
@@ -299,6 +302,8 @@ SET FOREIGN_KEY_CHECKS=0;
 DELETE FROM vivazul_cso_root.pv_status;
 ALTER TABLE vivazul_cso_root.pv_status AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1;
+INSERT INTO vivazul_cso_root.pv_status (evento,created_at,updated_at,STATUS,id_pv,status_pv
+) (SELECT 1,created_at,NULL updated_at,10,pv.id,0 FROM vivazul_cso_root.pv pv);
 INSERT INTO vivazul_cso_root.pv_status (evento,created_at,updated_at,STATUS,id_pv,status_pv
 ) (SELECT 1,NOW() created_at,NULL updated_at,10,pv.id,pv.status FROM vivazul_cso_root.pv pv);
 

@@ -46,7 +46,7 @@ onBeforeMount(() => {
     <Breadcrumb v-if="itemData.id" :items="[{ label: 'Todos os cadastros', to: `/${userData.cliente}/${userData.dominio}/cadastros` }, { label: itemData.nome + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="grid">
         <div class="col-12">
-            <div class="card">
+            <div class="card" style="min-width: 100rem">
                 <TabView>
                     <TabPanel>
                         <template #header>

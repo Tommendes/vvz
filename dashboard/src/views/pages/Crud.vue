@@ -126,7 +126,7 @@ const initFilters = () => {
 <template>
     <div class="grid">
         <div class="col-12">
-            <div class="card">
+            <div class="card" style="min-width: 100rem">
                 <Toast />
                 <Toolbar class="mb-4">
                     <template v-slot:start>

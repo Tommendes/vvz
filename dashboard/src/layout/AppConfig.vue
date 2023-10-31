@@ -117,8 +117,8 @@ const markers = ref([
         <h5>Seu IP atual</h5>
         <span>{{ user.ip }}</span>
 
-        <h5>Sua localização atual</h5>
-        <ComponentWithMap :markers="markers" :center="center" :mapFrameStyle="'width:250px;height:250px;'" />
+        <h5>Sua localização aproximada</h5>
+        <ComponentWithMap :markers="markers" :center="center" :mapFrameStyle="'width:100%;height:300px;'" />
         <!-- v-if="userGL.geolocation.latitude && userGL.geolocation.longitude"  -->
         <!-- <template v-if="!simple">
             <h5>Input Style</h5>

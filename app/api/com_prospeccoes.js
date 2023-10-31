@@ -21,7 +21,7 @@ module.exports = app => {
             // Alçada para inclusão
             else isMatchOrError(uParams && (uParams.comercial >= 2 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
@@ -111,7 +111,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && (uParams.comercial >= 1 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
@@ -236,7 +236,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && (uParams.comercial >= 1 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
@@ -266,7 +266,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && ((uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`

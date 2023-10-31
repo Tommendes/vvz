@@ -216,7 +216,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Prospecções', to: `/${userData.cliente}/${userData.dominio}/prospeccoes` }, { label: itemData.nome + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card">
+    <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">

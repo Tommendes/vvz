@@ -17,7 +17,7 @@ module.exports = app => {
             // Alçada para inclusão
             else isMatchOrError(uParams , `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
@@ -103,7 +103,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const id_cadastros = req.params.id_cadastros
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -135,7 +135,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de Documento de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -158,7 +158,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Documento de ${tabela}"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`

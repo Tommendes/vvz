@@ -31,7 +31,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams && uParams.id && uParams.financeiro >= 1, `${noAccessMsg} "Impressão de relatório da folha de pagamentos"`)
         } catch (error) {
-            return res.status(401).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const body = {...req.body }
         const dbSchema = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}`

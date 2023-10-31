@@ -3,6 +3,7 @@ export const glKey = '__gl_user';
 export const appName = 'Vivazul';
 export const softwareHouse = 'Vivazul Smart';
 export const dbPrefix = 'vivazul';
+import { Mask } from 'maska';
 export const noPermissAccess = 'Ops!!! Parece que seu perfil não dá acesso a essa operação';
 
 export function isValidEmail(email) {
@@ -92,15 +93,30 @@ export function validarDataPTBR(data) {
     }
 }
 
+// Verifique o horario e informe: Bom dia, boa tarde ou boa noite
+export const saudation = () => {
+    const hora = new Date().getHours();
+    if (hora >= 0 && hora < 12) return 'Bom dia';
+    else if (hora >= 12 && hora < 18) return 'Boa tarde';
+    else return 'Boa noite';
+};
+
 // Renderiza o HTML
-export function renderizarHTML(conteudo) {
+export function renderizarHTML(conteudo, options) {
+    const telefoneMask = new Mask({ mask: '(##) #####-####' });
+
     // Verifique se o conteúdo parece ser um link da web ou um endereço de e-mail
     if (conteudo.includes('http') || conteudo.includes('https')) {
-        return `<a href="${conteudo}" target="_blank">${conteudo}</a>`;
+        return `<a href="${conteudo}" target="_blank" title="Clique para acessar a página">${conteudo}</a>`;
     } else if (conteudo.includes('www') && !conteudo.includes('https')) {
-        return `<a href="https://${conteudo}" target="_blank">${conteudo}</a>`;
+        return `<a href="https://${conteudo}" target="_blank" title="Clique para acessar a página">${conteudo}</a>`;
     } else if (conteudo.includes('@')) {
-        return `<a href="mailto:${conteudo}">${conteudo}</a>`;
+        return `<a href="mailto:${conteudo}" title="Clique para iniciar um email">${conteudo}</a>`;
+    } else if (telefoneMask.completed(conteudo.replace(/\D/g, '')) && options) {
+        // Verifique o horario e informe: Bom dia, boa tarde ou boa noite
+        return `<a href="https://api.whatsapp.com/send/?phone=55${telefoneMask.unmasked(conteudo.replace(/\D/g, ''))}
+        &text=Olá${options && options.to ? ', ' + options.to : ''}! ${saudation()}. ${options && options.from ? '%0A' + options.from + ' aqui!%0A%0A' : '%0A%0A'}&type=phone_number&app_absent=0
+        " target="_blank" title="Clique para iniciar uma conversa">${telefoneMask.masked(conteudo)} <i class="fa-brands fa-whatsapp"></i></a>`;
     } else {
         return conteudo;
     }
@@ -185,6 +201,7 @@ export default {
     titleCase,
     stringToBoolean,
     validarDataPTBR,
+    saudation,
     renderizarHTML,
     removeHtmlTags,
     STATUS_INACTIVE,

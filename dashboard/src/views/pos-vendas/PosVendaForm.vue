@@ -3,19 +3,16 @@ import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { isValidEmail } from '@/global';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import Breadcrumb from '@/components/Breadcrumb.vue';
+import { guide } from '@/guides/pvFormGuide.js';
 
-// import { Mask } from 'maska';
-// const masks = ref({
-//     telefone: new Mask({
-//         mask: ['(##) ####-####', '(##) #####-####']
-//     })
-// });
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
+
+import Breadcrumb from '@/components/Breadcrumb.vue';
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -23,67 +20,80 @@ const route = useRoute();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+import { Mask } from 'maska';
+import moment from 'moment';
+const masks = ref({
+    cpf_cnpj: new Mask({
+        mask: ['###.###.###-##', '##.###.###/####-##']
+    }),
+    valor: new Mask({
+        mask: '0,99'
+    })
+});
 
-import { useToast } from "primevue/usetoast";
-const toast = useToast();
+// Andamento do registro
+const andamentoRegistro = ref({
+    STATUS_PENDENTE: 0,
+    STATUS_REATIVADO: 1,
+    STATUS_EM_ANDAMENTO: 60,
+    STATUS_LIQUIDADO: 80,
+    STATUS_CANCELADO: 89,
+    STATUS_FINALIZADO: 90,
+    STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
+});
 
 // Campos de formulário
 const itemData = ref({});
-const registroTipo = ref('pf');
-const labels = ref({
-    id_cadastros: "Cliente",
-    id_pipeline: "Pipeline",
-    tipo: "Tipo de Pós-venda",
-    pv_nr: "Número da Pós-venda",
-    observacao: "Observação"
-});
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
-// Mensages de erro
-const errorMessages = ref({});
 // Loadings
-const loading = ref({
-    form: true,
-    accepted: null,
-    email: null,
-    telefone: null
-});
+const loading = ref(true);
+// Editar cadastro no autocomplete
+const editCadastro = ref(false);
+// Editar pipeline no autocomplete
+const editPipeline = ref(false);
 // Props do template
-const props = defineProps({
-    mode: String
-});
+const props = defineProps(['mode', 'idCadastro']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pv`);
+// Dropdown de tipos de pós-venda
+const dropdownPipelineByCadastro = ref([]);
+const dropdownTiposPv = ref([
+    // Suporte:0; Montagem:1; Vendas:2
+    { value: '0', label: 'Suporte' },
+    { value: '1', label: 'Montagem' },
+    { value: '2', label: 'Vendas' }
+]);
 // Carragamento de dados do form
 const loadData = async () => {
+    mode.value = 'view';
+    loading.value = true;
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
         // console.log('loadData',url);
-        await axios.get(url).then((res) => {
+        await axios.get(url).then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 body.id = String(body.id);
-
+                body.tipo = String(body.tipo);
                 itemData.value = body;
-                itemDataComparision.value = { ...itemData.value };
-
-                loading.value.form = false;
+                await getNomeCliente();
+                await listPipeline();
+                editCadastro.value = false;
+                editPipeline.value = false;
+                loading.value = false;
+                // Lista o andamento do registro
+                await listStatusRegistro();
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pos-vendas` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-vendas` });
             }
         });
-    } else loading.value.form = false;
+    }
+    loading.value = false;
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -91,121 +101,503 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        axios[method](url, itemData.value)
-            .then((res) => {
+        const preparedBody = {
+            ...itemData.value,
+            status_pv_force: andamentoRegistro.value.STATUS_PENDENTE
+        };
+        axios[method](url, preparedBody)
+            .then(async (res) => {
                 const body = res.data;
-                if (body && body.id) {
-                    defaultSuccess('Registro salvo com sucesso');
-                    itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pos-venda/${itemData.value.id}` });
-                    mode.value = 'view';
-                } else {
-                    defaultWarn('Erro ao salvar registro');
-                }
+                defaultSuccess('Registro salvo com sucesso');
+                if (mode.value == 'new') window.location.href = `/${userData.cliente}/${userData.dominio}/pos-venda/${body.id}`;
+                else reload();
             })
-            .catch((err) => {
-                defaultWarn(err.response.data);
+            .catch((error) => {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
             });
     }
 };
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        // errorMessages.value = {};
+/**
+ * Autocomplete de cadastros e pipeline
+ */
+const cadastros = ref([]);
+const filteredCadastros = ref([]);
+const selectedCadastro = ref();
+const nomeCliente = ref();
+const getNomeCliente = async () => {
+    try {
+        const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&slct=nome,cpf_cnpj`;
+        const response = await axios.get(url);
+        if (response.data.data.length > 0) {
+            nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj) + ' - PV: ' + itemData.value.pv_nr;
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cadastros:', error);
     }
-    return ret;
 };
+const searchCadastros = (event) => {
+    setTimeout(async () => {
+        // Verifique se o campo de pesquisa não está vazio
+        if (!event.query.trim().length) {
+            // Se estiver vazio, exiba todas as sugestões
+            filteredCadastros.value = [...cadastros.value];
+        } else {
+            // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
+            if (cadastros.value.length === 0) {
+                // Carregue os cadastros da API (ou de onde quer que você os obtenha)
+                getCadastroBySearchedId();
+            }
+            // Filtrar os cadastros com base na consulta do usuário
+            filteredCadastros.value = cadastros.value.filter((registro) => {
+                return registro.name.toLowerCase().includes(event.query.toLowerCase());
+            });
+        }
+    }, 250);
+};
+const getCadastroBySearchedId = async (idCadastro) => {
+    const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
+    try {
+        const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
+        const response = await axios.get(url);
+        cadastros.value = response.data.data.map((element) => {
+            return {
+                code: element.id,
+                name: element.nome + ' - ' + element.cpf_cnpj
+            };
+        });
+    } catch (error) {
+        console.error('Erro ao buscar cadastros:', error);
+    }
+};
+// Listar pipelines do cadastro
+const listPipeline = async () => {
+    try {
+        const url = `${baseApiUrl}/pipeline/f-a/glf?fld=tbl1.id_cadastros&vl=${itemData.value.id_cadastros}&slct=tbl1.id,tbl1.documento,pp.descricao,pp.id idPipelineParams`;
+        await axios.get(url).then((res) => {
+            dropdownPipelineByCadastro.value = [];
+            res.data.data.map((item) => {
+                const label = `${item.descricao.toString().replaceAll(/_/g, ' ')} - ${item.documento}${userData.admin >= 1 ? ` (${item.idPipelineParams})` : ''}`;
+                dropdownPipelineByCadastro.value.push({ value: item.id, label: label });
+            });
+        });
+    } catch (error) {
+        console.error('Erro ao buscar pipeline:', error);
+    }
+};
+const confirmEditAutoSuggest = (tipo) => {
+    confirm.require({
+        group: 'templating',
+        header: `Corfirmar edição`,
+        message: `Corfirma que deseja editar o ${tipo}?`,
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            if (tipo == 'cadastro') {
+                selectedCadastro.value = undefined;
+                editCadastro.value = true;
+            } else if (tipo == 'pipeline') {
+                editPipeline.value = true;
+            }
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+/**
+ * Fim de autocomplete de cadastros
+ */
 // Validar formulário
 const formIsValid = () => {
-    return true;
+    return itemData.value.tipo && String(itemData.value.tipo) && itemData.value.id_cadastros;
 };
+
 // Recarregar dados do formulário
-const reload = () => {
-    mode.value = 'view';
-    accept.value = false;
-    errorMessages.value = {};
-    loadData();
+const reload = async () => {
+    editCadastro.value = false;
+    editPipeline.value = false;
+    await loadData();
     emit('cancel');
 };
-// Carregar dados do formulário
-onBeforeMount(() => {
-    loadData();
-    // loadOptions();
-});
-onMounted(() => {
-    if (props.mode && props.mode != mode.value) mode.value = props.mode;
-    else {
-        if (itemData.value.id) mode.value = 'view';
-        else mode.value = 'new';
-    }
-});
-// Observar alterações nos dados do formulário
-watchEffect(() => {
-    isItemDataChanged();
-});
-const menu = ref();
-const preview = ref(false);
-const items = ref([
+
+const itemNovo = [
     {
-        label: 'View',
-        icon: 'pi pi-fw pi-search',
+        label: 'Outro Cliente ou Tipo',
+        icon: 'fa-solid fa-plus',
         command: () => {
-            alert('Enviar nova imagem');
+            itemData.value = {};
+            selectedCadastro.value = undefined;
+            editCadastro.value = true;
+            editPipeline.value = true;
+            dropdownPipelineByCadastro.value = [];
+            mode.value = 'new';
         }
     },
     {
-        label: 'Delete',
-        icon: 'pi pi-fw pi-trash',
+        label: 'Mesmo Cliente e Outro Tipo',
+        icon: 'fa-regular fa-copy',
         command: () => {
-            alert('Excluir imagem');
+            // delete itemData.value.id;
+            // delete itemData.value.id_filho;
+            // delete itemData.value.id_pai;
+            // delete itemData.value.documento;
+            // itemData.value = {
+            //     id_cadastros: itemData.value.id_cadastros,
+            //     id_pipeline_params: itemData.value.id_pipeline_params,
+            //     id_com_agentes: itemData.value.id_com_agentes,
+            //     valor_bruto: itemData.value.valor_bruto,
+            //     valor_liq: itemData.value.valor_liq,
+            //     valor_representacao: itemData.value.valor_representacao,
+            //     valor_agente: itemData.value.valor_agente,
+            //     perc_represent: itemData.value.perc_represent,
+            //     descricao: itemData.value.descricao
+            // };
+            mode.value = 'new';
+        }
+    },
+    {
+        label: 'Mesmo Cliente e Tipo (Clonar)',
+        icon: 'fa-solid fa-copy',
+        command: async () => {
+            // delete itemData.value.id;
+            // delete itemData.value.id_filho;
+            // delete itemData.value.id_pai;
+            // delete itemData.value.documento;
+            await saveData();
         }
     }
+];
+
+/**
+ * Status do registro
+ */
+// Preload de status do registro
+const itemDataStatus = ref([]);
+const itemDataLastStatus = ref({});
+
+/*
+STATUS_PENDENTE = 0;
+STATUS_REATIVADO = 1;
+STATUS_EM_ANDAMENTO = 60;
+STATUS_LIQUIDADO = 80;
+STATUS_CANCELADO = 89;
+STATUS_FINALIZADO = 90;
+STATUS_EXCLUIDO = 99;
+*/
+
+const itemDataStatusPreload = ref([
+    {
+        status: '0',
+        action: 'Criação',
+        label: 'Criado',
+        icon: 'pi pi-plus',
+        color: '#3b82f6'
+    },
+    {
+        status: '1',
+        action: 'Reativação',
+        label: 'Reativado',
+        icon: 'fa-solid fa-retweet',
+        color: '#195825'
+    },
+    {
+        status: '60',
+        action: 'Em andamento',
+        label: 'Registro em andamento',
+        icon: 'fa-solid fa-ellipsis',
+        color: '#4cd07d'
+    },
+    {
+        status: '80',
+        action: 'Liquidação',
+        label: 'Liquidado',
+        icon: 'pi pi-check',
+        color: '#607D8B'
+    },
+    {
+        status: '89',
+        action: 'Cancelamento',
+        label: 'Cancelado',
+        icon: 'pi pi-times',
+        color: '#8c221c'
+    },
+    {
+        status: '90',
+        action: 'Finalização',
+        label: 'Finalizado',
+        icon: 'pi pi-times',
+        color: '#8c221c'
+    },
+    {
+        status: '99',
+        action: 'Exclusão',
+        label: 'Excluído',
+        icon: 'pi pi-ban',
+        color: '#8c221c'
+    }
 ]);
+// Listar status do registro
+const listStatusRegistro = async () => {
+    const url = `${baseApiUrl}/pv-status/${itemData.value.id}`;
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.data.length > 0) {
+            itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
+            itemData.value.status_pv = itemDataLastStatus.value.status_pv;
+            itemDataStatus.value = [];
+            res.data.data.forEach((element) => {
+                const status = itemDataStatusPreload.value.filter((item) => {
+                    return item.status == element.status_pv;
+                });
+                if (status && status[0])
+                    itemDataStatus.value.push({
+                        // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                        date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                        status: status[0].label,
+                        icon: status[0].icon,
+                        color: status[0].color
+                    });
+            });
+        }
+    });
+};
+/**
+ * Fim de status do registro
+ */
+
+/**
+ * Ferramentas do registro
+ */
+const statusRecord = async (status) => {
+    if (route.params.id) itemData.value.id = route.params.id;
+    const url = `${urlBase.value}/${itemData.value.id}?st=${status}`;
+    const optionsConfirmation = {
+        group: 'templating',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger'
+    };
+    if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_EXCLUIDO, andamentoRegistro.value.STATUS_LIQUIDADO].includes(status)) {
+        let startMessage = '';
+        if (andamentoRegistro.value.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
+        confirm.require({
+            ...optionsConfirmation,
+            header: 'Confirmar',
+            message: `${startMessage}Confirma a ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].action.toLowerCase()}?`,
+            accept: async () => {
+                await axios.delete(url, itemData.value).then(() => {
+                    const msgDone = `Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`;
+                    if (status == andamentoRegistro.value.STATUS_EXCLUIDO) {
+                        toGrid();
+                    } // Se for excluído, redireciona para o grid
+                    else if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_LIQUIDADO].includes(status)) {
+                        reload();
+                    } // Se for cancelado ou liquidado, recarrega o registro
+                    defaultSuccess(msgDone);
+                });
+            },
+            reject: () => {
+                return false;
+            }
+        });
+    } else
+        await axios.delete(url, itemData.value).then(() => {
+            // Definir a mensagem baseado nos status e de acordo com itemDataStatusPreload
+            defaultSuccess(`Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`);
+            reload();
+        });
+};
+/**
+ * Fim de ferramentas do registro
+ */
+const toGrid = () => {
+    mode.value = 'grid';
+    emit('cancel');
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-vendas` });
+};
+
+// Carregar dados do formulário
+onMounted(() => {
+    loadData();
+    // Importante que props.mode seja definido após o loadData
+    if (props.mode && props.mode != mode.value) mode.value = props.mode;
+});
+// Observar alterações na propriedade selectedCadastro
+watch(selectedCadastro, (value) => {
+    if (value) {
+        itemData.value.id_cadastros = value.code;
+        listPipeline();
+    }
+});
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Pós-venda', to: `/${userData.cliente}/${userData.dominio}/pv` }, { label: itemData.registro + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card">
+    <Breadcrumb :items="[{ label: 'Pós-venda', to: `/${userData.cliente}/${userData.dominio}/pos-vendas` }, { label: nomeCliente }]" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
+    <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
-                <div class="col-12">
+                <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-3">
-                            <label for="id_cadastros">{{ labels.id_cadastros }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
+                        <div class="col-12 md:col-9">
+                            <label for="id_cadastros">Cliente</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <AutoComplete
+                                v-else-if="mode != 'expandedFormMode' && (editCadastro || (mode == 'new' && !itemData.id_cadastros))"
+                                v-model="selectedCadastro"
+                                optionLabel="name"
+                                :suggestions="filteredCadastros"
+                                @complete="searchCadastros"
+                                forceSelection
+                            />
+                            <div class="p-inputgroup flex-1" v-else>
+                                <InputText disabled v-model="nomeCliente" />
+                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                            </div>
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="id_pipeline">{{ labels.id_pipeline }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pipeline" id="id_pipeline" type="text" />
+                            <label for="tipo">Tipo do Pós-venda</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.tipo" id="tipo" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTiposPv" :disabled="mode == 'view'" />
                         </div>
-                        <div class="col-12 md:col-3">
-                            <label for="tipo">{{ labels.tipo }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tipo" id="tipo" type="text" />
+                        <div class="col-12" v-if="dropdownPipelineByCadastro.length && (itemData.id_pipeline || mode != 'view')">
+                            <label for="id_pipeline">Pipeline</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <div class="p-inputgroup flex-1" v-else>
+                                <Dropdown
+                                    filter
+                                    placeholder="Selecione..."
+                                    :showClear="!!itemData.id_pipeline"
+                                    id="id_pipeline"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    v-model="itemData.id_pipeline"
+                                    :options="dropdownPipelineByCadastro"
+                                    :disabled="!editPipeline"
+                                />
+                                <Button v-if="!editPipeline" icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('pipeline')" :disabled="mode == 'view'" />
+                            </div>
                         </div>
-                        <div class="col-12 md:col-3">
-                            <label for="pv_nr">{{ labels.pv_nr }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pv_nr" id="pv_nr" type="text" />
+                        <div class="col-12 md:col-12" v-if="itemData.observacao || mode != 'view'">
+                            <label for="observacao">Observação</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Editor v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.observacao || ''" class="p-inputtext p-component p-filled p-disabled" />
                         </div>
-                        <div class="col-12 md:col-12">
-                            <label for="observacao">{{ labels.observacao }}</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
+                        <div class="col-12" v-if="mode == 'view' && 1 == 1">
+                            <div class="card bg-green-200 mt-3">
+                                <div class="flex flex-wrap align-items-center justify-content-center">
+                                    <div class="border-round bg-primary-100 h-12rem p-3 m-3">
+                                        <div class="min-h-full border-round bg-primary font-bold p-3 flex align-items-center justify-content-center">Não foram registradas OATs para este Pós Venda</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
+                    <Fieldset :toggleable="true" class="mb-3">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="pi pi-bolt mr-2"></span>
+                                <span class="font-bold text-lg">Ações do Registro</span>
+                            </div>
+                        </template>
+                        <div v-if="mode != 'new'">
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
+                        </div>
+                        <div v-if="mode != 'edit'">
+                            <hr />
+                            <SplitButton label="Novo Registro" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
+                            <Button label="Criar OAT" type="button" class="w-full mb-3" :icon="`fa-solid fa-screwdriver-wrench fa-shake'`" style="color: #a97328" text raised @click="defaultSuccess('OAT')" />
+                            <Button label="Liquidar Registro" type="button" class="w-full mb-3" :icon="`fa-solid fa-check fa-shake'`" severity="success" text raised @click="statusRecord(andamentoRegistro.STATUS_LIQUIDADO)" />
+                            <Button
+                                label="Cancelar Registro"
+                                v-tooltip.top="itemData.id_filho ? `Se cancelar, cancelará o documento relacionado e suas comissões, caso haja!` : 'Inutiliza o registro, mas não exclui!'"
+                                v-if="itemData.status < andamentoRegistro.STATUS_CANCELADO"
+                                type="button"
+                                :disabled="!(userData.pv >= 3 && itemData.status == 10)"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-ban`"
+                                severity="warning"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistro.STATUS_CANCELADO)"
+                            />
+                            <Button
+                                label="Reativar Registro"
+                                v-tooltip.top="itemData.id_filho ? `Se reativar, reativará o documento relacionado e suas comissões, caso haja!` : ''"
+                                v-else-if="itemData.status >= andamentoRegistro.STATUS_CANCELADO"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-file-invoice fa-shake'`"
+                                severity="warning"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistro.STATUS_REATIVADO)"
+                            />
+                            <Button
+                                label="Excluir Registro"
+                                v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
+                                type="button"
+                                :disabled="!(userData.pv >= 4 && itemData.status != andamentoRegistro.STATUS_EXCLUIDO)"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-fire`"
+                                severity="danger"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistro.STATUS_EXCLUIDO)"
+                            />
+                        </div>
+                    </Fieldset>
+                    <Fieldset :toggleable="true">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="pi pi-clock mr-2"></span>
+                                <span class="font-bold text-lg">Andamento do Registro</span>
+                            </div>
+                        </template>
+                        <Skeleton v-if="loading" height="3rem"></Skeleton>
+                        <Timeline v-else :value="itemDataStatus">
+                            <template #marker="slotProps">
+                                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                                    <i :class="slotProps.item.icon"></i>
+                                </span>
+                            </template>
+                            <template #opposite="slotProps">
+                                <small class="p-text-secondary">{{ slotProps.item.date }}</small>
+                            </template>
+                            <template #content="slotProps">
+                                {{ slotProps.item.status }}
+                            </template>
+                        </Timeline>
+                    </Fieldset>
+                </div>
                 <div class="col-12">
-                    <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                    <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload()" />
+                    </div>
+                    <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-circle-info mr-2"></span>
+                                <span class="font-bold text-lg">Instruções</span>
+                            </div>
+                        </template>
+                        <p class="m-0">
+                            <span v-html="guide" />
+                        </p>
+                    </Fieldset>
+                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                        <p>mode: {{ mode }}</p>
+                        <p>itemData: {{ itemData }}</p>
+                        <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
+                        <p v-if="props.idPipeline">idPipeline: {{ props.idPipeline }}</p>
                     </div>
                 </div>
             </div>

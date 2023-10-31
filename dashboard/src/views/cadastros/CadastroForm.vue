@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -20,15 +20,15 @@ const masks = ref({
     })
 });
 
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
-
-import { useRouter } from 'vue-router';
 const router = useRouter();
 
 // Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 // Validar o cpf_cnpj
 import { cpf, cnpj } from 'cpf-cnpj-validator';
@@ -89,7 +89,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastros` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastros` });
             }
         });
     } else loading.value.form = false;
@@ -114,8 +114,8 @@ const saveData = async () => {
                     itemDataComparision.value = { ...itemData.value };
                     emit('changed');
                     // if (mode.value != 'new') reload();
-                    // else router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastro/${itemData.value.id}` });
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastro/${itemData.value.id}` });
+                    // else router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastro/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastro/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');

@@ -3,10 +3,9 @@ import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError } from '@/toast';
-import moment from 'moment';
 import PosVendaForm from './PosVendaForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
-import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
+import { removeHtmlTags, userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -63,18 +62,19 @@ const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
 const itemData = ref(null);
-// Lista de períodos
-// const dropdownPeriodo = ref([
-//     { value: '0', label: 'Manhã' },
-//     { value: '1', label: 'Tarde' }
-// ]);
+// Lista de tipos
+const dropdownTipos = ref([
+    { label: 'Suporte', value: '0' },
+    { label: 'Montagem', value: '1' },
+    { label: 'Venda', value: '2' }
+]);
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'id_cadastros', label: 'Cliente', minWidth: '30rem' },
-    { field: 'id_pipeline', label: 'Piepeline', minWidth: '30rem' },
-    { field: 'tipo', label: 'Tipo de Pós-venda', minWidth: '30rem' },
-    { field: 'pv_nr', label: 'Número do Pós-venda', minWidth: '30rem' }
+    { field: 'nome', label: 'Cliente', minWidth: '18rem' },
+    { field: 'pipeline', label: 'Pipeline', minWidth: '6rem' },
+    { field: 'tipo', label: 'Tipo', minWidth: '1rem', list: dropdownTipos.value },
+    { field: 'pv_nr', label: 'Número', minWidth: '1rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -114,13 +114,20 @@ const loadLazyData = () => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
-                    // Exibe dado com máscara
-                    // Converte data en para pt
-                    // if (element.data_visita) element.data_visita = moment(element.data_visita).format('DD/MM/YYYY');
-                    // if (element.contato) element.contato = renderizarHTML(element.contato);
-                    // element.periodo = String(element.periodo);
-                    // if (element.periodo) element.periodo = dropdownPeriodo.value.find((x) => x.value == element.periodo).label;
-                    // console.log(element.periodo);
+                    // Exibe dados formatados
+                    if (element.documento) element.pipeline = `${element.tipo_doc.replaceAll('_', ' ')} (${element.documento})`;
+                    element.tipo = String(element.tipo);
+                    switch (element.tipo) {
+                        case '1':
+                            element.tipo = 'Montagem';
+                            break;
+                        case '2':
+                            element.tipo = 'Venda';
+                            break;
+                        default:
+                            element.tipo = 'Suporte';
+                            break;
+                    }
                 });
                 loading.value = false;
             })
@@ -162,10 +169,8 @@ const mountUrlFilters = () => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
-    console.log(url);
     urlFilters.value = url;
 };
-const menu = ref();
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
     const toExport = dt.value;
@@ -176,27 +181,10 @@ const exportCSV = () => {
     });
     toExport.exportCSV();
 };
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pos-venda/${itemData.value.id}` });
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-const toggle = (event) => {
-    menu.value.toggle(event);
-};
-const getItem = (data) => {
-    itemData.value = data;
+const goField = (data) => {
+    // Abrir em outra aba
+    // window.open(`/${userData.cliente}/${userData.dominio}/pipeline/${data.id}`);
+    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pos-venda/${data.id}` });
 };
 watchEffect(() => {
     mountUrlFilters();
@@ -205,7 +193,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Pós-Vendas' }]" />
-    <div class="card">
+    <div class="card" style="min-width: 100rem">
         <PosVendaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
@@ -228,22 +216,10 @@ watchEffect(() => {
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} Pós-Vendas`"
             scrollable
-            scrollHeight="420px"
         >
+            <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <!-- <Dropdown
-                        filter
-                        placeholder="Filtrar por Área de Atuação..."
-                        :showClear="areaAtuacao"
-                        style="min-width: 200px"
-                        id="areaAtuacao"
-                        optionLabel="label"
-                        optionValue="value"
-                        v-model="areaAtuacao"
-                        :options="dropdownAtuacao"
-                        @change="loadLazyData()"
-                    /> -->
                     <Button v-if="userData.gestor" icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
@@ -289,8 +265,7 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

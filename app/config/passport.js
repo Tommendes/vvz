@@ -13,8 +13,13 @@ module.exports = app => {
         app.db('users')
             .where({ id: payload.id })
             .first()
-            .then(user => done(null, user ? { ...payload } : false))
-            .catch(error => done(error, false))
+            .then(user => {
+                return done(null, user ? { ...payload } : false)
+            })
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in access. Error: ${error}`, sConsole: true } })
+                return done(error, false)
+            })
     })
 
     passport.use(strategy)

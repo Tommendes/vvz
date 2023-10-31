@@ -253,7 +253,7 @@ const items = ref([
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.cliente}/${userData.dominio}/protocolos` }, { label: itemData.registro + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card">
+    <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
