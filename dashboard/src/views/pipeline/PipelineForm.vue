@@ -75,7 +75,6 @@ const convertFloatFields = (result = 'pt') => {
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    setTimeout(() => {}, 250);
     if (props.idPipeline || (route.name == 'pipeline-one' && (route.params.id || itemData.value.id))) {
         if (route.name == 'pipeline-one' && route.params.id) itemData.value.id = route.params.id;
         else if (props.idPipeline) itemData.value.id = props.idPipeline;
@@ -93,6 +92,8 @@ const loadData = async () => {
                     name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
                 };
                 await getNomeCliente();
+                // Lista o andamento do registro
+                await listStatusRegistro();
                 loading.value = false;
             } else {
                 defaultWarn('Registro não localizado');
@@ -108,14 +109,6 @@ const loadData = async () => {
         await getNomeCliente();
         loading.value = false;
     }
-    // Retorna os parâmetros do registro
-    await getPipelineParam();
-    // Unidades de negócio
-    await listUnidadesDescricao();
-    // Agentes de negócio
-    await listAgentesNegocio();
-    // Lista o andamento do registro
-    await listStatusRegistro();
     loading.value = false;
 };
 // Formatar valor 0.00 para 0,00
@@ -150,16 +143,15 @@ const saveData = async () => {
                     convertFloatFields();
                     itemDataComparision.value = { ...itemData.value };
                     emit('changed');
-                    if (route.name != 'cadastro' && mode.value == 'new')
+                    if (route.name != 'cadastro' && mode.value == 'new') {
                         router.push({
                             path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id}`
                         });
-                    else if (route.name != 'cadastro' && id != itemData.value.id) {
+                        await loadData();
+                    } else if (route.name != 'cadastro' && id != itemData.value.id) {
                         router.push({
                             path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id}`
                         });
-                        // Lista o andamento do registro
-                        await listStatusRegistro();
                         const animation = animationDocNr.value;
                         animationDocNr.value = '';
                         await loadData();
@@ -349,7 +341,7 @@ const itemDataStatusPreload = ref([
 ]);
 // Listar status do registro
 const listStatusRegistro = async () => {
-    const url = `${baseApiUrl}/pipeline-status/${itemData.value.id}`;
+    const url = `${baseApiUrl}/pipeline-status/${route.params.id}`;
     await axios.get(url).then((res) => {
         if (res.data && res.data.data.length > 0) {
             itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
@@ -442,9 +434,10 @@ const itemNovo = [
             delete itemData.value.id;
             delete itemData.value.id_filho;
             delete itemData.value.id_pai;
-            delete itemData.value.documento;
             itemDataParam.value.obrig_valor = 0;
             await saveData();
+            defaultSuccess('Registro clonado com sucesso');
+            defaultWarn('Verifique se o número do documento deve ser editado');
         }
     }
 ];
@@ -465,14 +458,14 @@ const itemsComiss = [
     }
 ];
 const toPai = async () => {
-    router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id_pai}` });
-    loading.value = true;
-    await loadData();
+    window.location.href = `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id_pai}`;
+    // loading.value = true;
+    // await loadData();
 };
 const toFilho = async () => {
-    router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id_filho}` });
-    loading.value = true;
-    await loadData();
+    window.location.href = `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id_filho}`;
+    // loading.value = true;
+    // await loadData();
 };
 /**
  * Ferramentas do registro
@@ -528,6 +521,7 @@ const statusRecord = async (status) => {
                     });
                     loading.value = true;
                     await loadData();
+                    await toFilho();
                 });
             },
             reject: () => {
@@ -550,15 +544,26 @@ const toGrid = () => {
     router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline` });
 };
 // Carregar dados do formulário
-onMounted(() => {
+onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     if (props.idCadastro) itemData.value.id_cadastros = props.idCadastro;
-    loadData();
+    await loadData();
+    // Retorna os parâmetros do registro
+    await getPipelineParam();
+    // Unidades de negócio
+    await listUnidadesDescricao();
+    // Agentes de negócio
+    await listAgentesNegocio();
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
     if (value) {
         itemData.value.id_cadastros = value.code;
+    }
+});
+watch(route, (value) => {
+    if (value !== itemData.value.id) {
+        reload();
     }
 });
 </script>
@@ -623,7 +628,7 @@ watch(selectedCadastro, (value) => {
                                 :disabled="['view', 'expandedFormMode'].includes(mode)"
                             />
                         </div>
-                        <div class="col-12 lg:col-2" v-if="itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)">
+                        <div class="col-12 lg:col-2" v-if="itemData.documento || (['new', 'edit'].includes(mode) && itemDataParam.autom_nr == 0)">
                             <label for="documento">Documento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <p v-else-if="itemDataParam.autom_nr || mode == 'expandedFormMode'" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
@@ -779,6 +784,7 @@ watch(selectedCadastro, (value) => {
                         </p>
                     </Fieldset>
                     <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                        <p>{{ route.name }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
                         <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>

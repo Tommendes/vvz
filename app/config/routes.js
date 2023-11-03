@@ -298,11 +298,11 @@ module.exports = app => {
     /**
     * Rota de pv_oat
     */
-    app.route('/pv-oat')
+    app.route('/pv-oat/:id_pv')
         .all(app.config.passport.authenticate())
         .post(app.api.pv_oat.save)
         .get(app.api.pv_oat.get)
-    app.route('/pv-oat/:id')
+    app.route('/pv-oat/:id_pv/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.pv_oat.save)
         .get(app.api.pv_oat.getById)

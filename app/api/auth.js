@@ -207,9 +207,22 @@ module.exports = app => {
                 }
             }
         } catch (error) {
-            console.log(error);
-         }
-
+            let errorString = error.toString();
+            
+            // Use uma expressão regular para verificar a mensagem de erro em relação às opções
+            if (/Signature verification failed/.test(errorString)) {
+                errorString = 'Falha na verificação da assinatura';
+            } else if (/Token not yet active/.test(errorString)) {
+                errorString = 'Token ainda não está ativo';
+            } else if (/Token expired/.test(errorString)) {
+                errorString = 'Token expirado';
+            } else if (/No token supplied/.test(errorString)) {
+                errorString = 'Nenhum token fornecido';
+            } else if (/Not enough or too many segments/.test(errorString)) {
+                errorString = 'Número insuficiente ou excessivo de segmentos';
+            }        
+            app.api.logger.logInfo({ log: { line: errorString, sConsole: true } });
+        }      
         res.send(false)
     }
 

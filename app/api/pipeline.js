@@ -79,10 +79,12 @@ module.exports = app => {
                     evento: {
                         "evento": `Alteração de cadastro de ${tabela}`,
                         "tabela_bd": tabela,
-                    }
+                    },
+                    trx: trx
                 };
                 const { createEventUpd } = app.api.sisEvents
-                await createEventUpd(eventPayload, trx);
+                await createEventUpd(eventPayload)
+                updateRecord.updated_at = new Date();
                 await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
                 if (status_params_force != status_params) {
                     // Inserir na tabela de status apenas se o status for diferente
@@ -100,8 +102,8 @@ module.exports = app => {
                     // Gerar um número de documento baseado no pipeline_params_force.tipo_secundario
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento'))
                         .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
-                    body.documento = nextDocumentNr.documento.toString() || '1'
-                    body.documento = body.documento.padStart(6, '0')
+                    body.documento = nextDocumentNr.documento || '1'
+                    body.documento = body.documento.toString().padStart(6, '0')
                     // Informa o id do registro pai
                     const idPai = body.id
                     // Limpa os dados do corpo da solicitação
@@ -133,9 +135,10 @@ module.exports = app => {
                             evento: 'Novo registro',
                             tabela_bd: tabelaDomain,
                         },
+                        trx: trx
                     };
                     const { createEventIns } = app.api.sisEvents
-                    await createEventIns(eventPayload, trx);
+                    await createEventIns(eventPayload);
 
                     // Inserir na tabela de status um registro de criação
                     await trx(tabelaPipelineStatusDomain).insert({
@@ -169,8 +172,8 @@ module.exports = app => {
                 if (pipeline_params_force.autom_nr == 1) {
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento'))
                     .where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
-                    body.documento = nextDocumentNr.documento.toString() || '1'
-                    body.documento = body.documento.padStart(6, '0')
+                    body.documento = nextDocumentNr.documento || '1'
+                    body.documento = body.documento.toString().padStart(6, '0')
                 }
 
                 // Variáveis da criação de um registro
@@ -193,9 +196,10 @@ module.exports = app => {
                         evento: 'Novo registro',
                         tabela_bd: tabelaDomain,
                     },
+                    trx: trx
                 };
                 const { createEventIns } = app.api.sisEvents
-                await createEventIns(eventPayload, trx);
+                await createEventIns(eventPayload);
 
                 // Inserir na tabela de status um registro de criação
                 await trx(tabelaPipelineStatusDomain).insert({
@@ -427,11 +431,12 @@ module.exports = app => {
                     request: req,
                     evento: {
                         "classevento": "Remove",
-                        "evento": `Exclusão de Endereço de ${tabela}`,
-                        "tabela_bd": tabela,
-                    }
+                        "evento": `Exclusão de registro de ${tabela}`,
+                        "tabela_bd": tabela
+                    },
+                    trx: trx,
                 };
-                const evento = await createEventUpd(eventPayload, trx);
+                const evento = await createEventUpd(eventPayload);
                 updateRecord = { ...updateRecord, evento: evento }
                 await trx(tabelaPipelineStatusDomain).insert({
                     status: STATUS_ACTIVE,
@@ -502,6 +507,7 @@ module.exports = app => {
         const fieldName = req.query.fld
         const value = req.query.vl
         const select = req.query.slct
+        const doc_venda = req.query.doc_venda
 
         const first = req.query.first && req.params.first == true
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -519,6 +525,8 @@ module.exports = app => {
         }
         if (fieldName.includes('id') && !fieldName.includes('_')) ret.where({ 'tbl1.id': value })
         else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+
+        if (doc_venda) ret.where({ 'pp.doc_venda': doc_venda })
 
         ret.where({ 'tbl1.status': STATUS_ACTIVE });//, 'tbl1.id_cadastros': idCadastro
 

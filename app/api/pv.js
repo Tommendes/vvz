@@ -65,12 +65,13 @@ module.exports = app => {
                     evento: {
                         "evento": `Alteração de cadastro de ${tabela}`,
                         "tabela_bd": tabela,
-                    }
+                    }, 
+                    trx: trx
                 };
                 const { createEventUpd } = app.api.sisEvents
-                await createEventUpd(eventPayload, trx);
+                await createEventUpd(eventPayload);
                 await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
-                if (status_pv_force != status_pv) {
+                if (status_pv_force && status_pv && status_pv_force != status_pv) {
                     // Inserir na tabela de status apenas se o status for diferente
                     await trx(tabelaPvStatusDomain).insert({
                         status: STATUS_ACTIVE,
@@ -114,10 +115,11 @@ module.exports = app => {
                     evento: {
                         evento: 'Novo registro',
                         tabela_bd: tabelaDomain,
-                    },
+                    }, 
+                    trx: trx
                 };
                 const { createEventIns } = app.api.sisEvents
-                await createEventIns(eventPayload, trx);
+                await createEventIns(eventPayload);
 
                 // Inserir na tabela de status um registro de criação
                 await trx(tabelaPvStatusDomain).insert({

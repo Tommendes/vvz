@@ -105,7 +105,6 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         let key = req.query.key
@@ -119,22 +118,17 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
-
+        const id_pv = req.params.id_pv
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
 
-        ret.where({ status: STATUS_ACTIVE })
+        ret.where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pv': id_pv })
             .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
             .then(body => {
-                return res.json({ data: body, count: count, limit })
+                const count = body.length
+                return res.json({ data: body, count: count })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -152,10 +146,11 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
+        const id_pv = req.params.id_pv
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
+            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pv': id_pv }).first()
             .then(body => {
                 return res.json(body)
             })

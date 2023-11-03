@@ -5,8 +5,9 @@ import { supportEmail, supportMsgs } from '@/env';
 
 export const guide = `
     <p>Nesta página você pode criar e editar registros de pós-vendas. Ela fornece acesso a várias funcionalidades para gerenciar esses registros. O formulário é composto por diferentes campos e recursos para auxiliar na entrada de dados, validação e interação com a API.</p>
-    <p><strong>Funcionalidades Principais:</strong></p>
+    <p><strong>Dados do Registro:</strong></p>
     <ul>
+        <li><strong>Número do PV:</strong> É o número sequencial gerado dinamicamente na criação do registro e não pode ser editado.</li>
         <li><strong>Cliente:</strong> Você pode selecionar um cadastro associado ao registro. Se não houver cadastro
             registrado, você deve adicioná-lo. A criação do cadastro está disponível <i class="fa-solid fa-angles-right fa-fade"></i> <a href="/${userData.cliente}/${userData.dominio}/cadastros" class="font-bold">aqui</a> e depois clicando no botão <span class="text-xs p-button p-button-sm p-button-info p-button-outlined"><i class="pi pi-plus"></i> Novo Registro</span>.</li>
         <li><strong>Tipo do Pós-venda:</strong> Escolha o tipo de registro do pipeline a partir da lista.</li>

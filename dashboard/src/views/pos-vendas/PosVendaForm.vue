@@ -31,6 +31,8 @@ const masks = ref({
     })
 });
 
+import EnderecosGrid from '../cadastros/enderecos/EnderecosGrid.vue';
+
 // Andamento do registro
 const andamentoRegistro = ref({
     STATUS_PENDENTE: 0,
@@ -50,8 +52,6 @@ const mode = ref('view');
 const loading = ref(true);
 // Editar cadastro no autocomplete
 const editCadastro = ref(false);
-// Editar pipeline no autocomplete
-const editPipeline = ref(false);
 // Props do template
 const props = defineProps(['mode', 'idCadastro']);
 // Emit do template
@@ -70,9 +70,9 @@ const dropdownTiposPv = ref([
 const loadData = async () => {
     mode.value = 'view';
     loading.value = true;
-    if (route.params.id || itemData.value.id) {
-        if (route.params.id) itemData.value.id = route.params.id;
-        const url = `${urlBase.value}/${itemData.value.id}`;
+    const id = route.params.id || itemData.value.id;
+    if (id) {
+        const url = `${urlBase.value}/${id}`;
         // console.log('loadData',url);
         await axios.get(url).then(async (res) => {
             const body = res.data;
@@ -83,7 +83,6 @@ const loadData = async () => {
                 await getNomeCliente();
                 await listPipeline();
                 editCadastro.value = false;
-                editPipeline.value = false;
                 loading.value = false;
                 // Lista o andamento do registro
                 await listStatusRegistro();
@@ -173,7 +172,7 @@ const getCadastroBySearchedId = async (idCadastro) => {
 // Listar pipelines do cadastro
 const listPipeline = async () => {
     try {
-        const url = `${baseApiUrl}/pipeline/f-a/glf?fld=tbl1.id_cadastros&vl=${itemData.value.id_cadastros}&slct=tbl1.id,tbl1.documento,pp.descricao,pp.id idPipelineParams`;
+        const url = `${baseApiUrl}/pipeline/f-a/glf?doc_venda=2&fld=tbl1.id_cadastros&vl=${itemData.value.id_cadastros}&slct=tbl1.id,tbl1.documento,pp.descricao,pp.id idPipelineParams`;
         await axios.get(url).then((res) => {
             dropdownPipelineByCadastro.value = [];
             res.data.data.map((item) => {
@@ -198,8 +197,6 @@ const confirmEditAutoSuggest = (tipo) => {
             if (tipo == 'cadastro') {
                 selectedCadastro.value = undefined;
                 editCadastro.value = true;
-            } else if (tipo == 'pipeline') {
-                editPipeline.value = true;
             }
         },
         reject: () => {
@@ -218,7 +215,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = async () => {
     editCadastro.value = false;
-    editPipeline.value = false;
     await loadData();
     emit('cancel');
 };
@@ -231,7 +227,6 @@ const itemNovo = [
             itemData.value = {};
             selectedCadastro.value = undefined;
             editCadastro.value = true;
-            editPipeline.value = true;
             dropdownPipelineByCadastro.value = [];
             mode.value = 'new';
         }
@@ -420,8 +415,8 @@ const toGrid = () => {
 };
 
 // Carregar dados do formulário
-onMounted(() => {
-    loadData();
+onMounted(async () => {
+    await loadData();
     // Importante que props.mode seja definido após o loadData
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
@@ -441,17 +436,13 @@ watch(selectedCadastro, (value) => {
             <div class="grid">
                 <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
                     <div class="p-fluid grid">
+                        <div class="col-12" v-if="itemData.pv_nr" style="margin: 0">
+                            <h3>Número do PV: {{ itemData.pv_nr }}</h3>
+                        </div>
                         <div class="col-12 md:col-9">
                             <label for="id_cadastros">Cliente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete
-                                v-else-if="mode != 'expandedFormMode' && (editCadastro || (mode == 'new' && !itemData.id_cadastros))"
-                                v-model="selectedCadastro"
-                                optionLabel="name"
-                                :suggestions="filteredCadastros"
-                                @complete="searchCadastros"
-                                forceSelection
-                            />
+                            <AutoComplete v-else-if="mode != 'expandedFormMode' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
@@ -475,9 +466,8 @@ watch(selectedCadastro, (value) => {
                                     optionValue="value"
                                     v-model="itemData.id_pipeline"
                                     :options="dropdownPipelineByCadastro"
-                                    :disabled="!editPipeline"
+                                    :disabled="mode == 'view'"
                                 />
-                                <Button v-if="!editPipeline" icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('pipeline')" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.observacao || mode != 'view'">
@@ -486,7 +476,7 @@ watch(selectedCadastro, (value) => {
                             <Editor v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacao || ''" class="p-inputtext p-component p-filled p-disabled" />
                         </div>
-                        <div class="col-12" v-if="mode == 'view' && 1 == 1">
+                        <!-- <div class="col-12" v-if="mode == 'view' && 1 == 1">
                             <div class="card bg-green-200 mt-3">
                                 <div class="flex flex-wrap align-items-center justify-content-center">
                                     <div class="border-round bg-primary-100 h-12rem p-3 m-3">
@@ -494,7 +484,8 @@ watch(selectedCadastro, (value) => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
+                        <EnderecosGrid v-if="itemData.id" :itemDataRoot="itemData" />
                     </div>
                 </div>
                 <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">

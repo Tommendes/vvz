@@ -48,7 +48,10 @@ module.exports = app => {
             evento.created_at = new Date()
 
             try {
-                const dba = await app.db(tabelaSisEvents).insert(evento)
+                const trx = req.trx
+                let dba = undefined
+                if (trx) dba = await trx(tabelaSisEvents).insert(evento)
+                else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });
@@ -93,7 +96,10 @@ module.exports = app => {
             evento.created_at = new Date()
 
             try {
-                const dba = await app.db(tabelaSisEvents).insert(evento)
+                const trx = req.trx
+                let dba = undefined
+                if (trx) dba = await trx(tabelaSisEvents).insert(evento)
+                else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
                 res.status(500).send(error)
@@ -134,7 +140,10 @@ module.exports = app => {
             evento.created_at = new Date()
 
             try {
-                const dba = await app.db(tabelaSisEvents).insert(evento)
+                const trx = req.trx
+                let dba = undefined
+                if (trx) dba = await trx(tabelaSisEvents).insert(evento)
+                else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
                 res.status(500).send(error)
@@ -160,8 +169,10 @@ module.exports = app => {
         evento.created_at = new Date()
 
         try {
-
-            const dba = await app.db(tabelaSisEvents).insert(evento)
+            const trx = req.trx
+            let dba = undefined
+            if (trx) dba = await trx(tabelaSisEvents).insert(evento)
+            else dba = await app.db(tabelaSisEvents).insert(evento)
             return dba[0]
         } catch (error) {
             res.status(500).send(error)

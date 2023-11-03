@@ -14,6 +14,7 @@ axios.interceptors.request.use((config) => {
         config.headers['x-geo-lt'] = geoLocationData.geolocation.latitude;
         config.headers['x-geo-ln'] = geoLocationData.geolocation.longitude;
     }
+    setTimeout(() => {}, 200);
     return config;
 });
 
