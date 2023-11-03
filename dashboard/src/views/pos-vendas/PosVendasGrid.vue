@@ -15,8 +15,9 @@ const confirm = useConfirm();
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -26,8 +27,11 @@ const masks = ref({
 });
 
 const urlBase = ref(`${baseApiUrl}/pv`);
+const props = defineProps(['idCadastro']);
 
 onBeforeMount(() => {
+    // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
+    if (props.idCadastro) listaNomes.value.shift();
     // Inicializa os filtros do grid
     initFilters();
 });
@@ -35,33 +39,11 @@ onMounted(() => {
     clearFilter();
 });
 
-const deleteRow = () => {
-    confirm.require({
-        group: 'templating',
-        header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
-                defaultSuccess('Pós-Venda excluída com sucesso!');
-                loadLazyData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
-
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
-const itemData = ref(null);
 // Lista de tipos
 const dropdownTipos = ref([
     { label: 'Suporte', value: '0' },
@@ -140,7 +122,7 @@ const loadLazyData = () => {
                     console.log(typeof logTo, logTo);
                 }
             });
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100 + 250);
 };
 const onPage = (event) => {
     lazyParams.value = event;
@@ -169,6 +151,7 @@ const mountUrlFilters = () => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
+    if (props.idCadastro) url += `field:tbl1.id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = url;
 };
 // Exporta os dados do grid para CSV
@@ -192,9 +175,9 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Pós-Vendas' }]" />
-    <div class="card" style="min-width: 100rem">
-        <PosVendaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas' }]" />
+    <div class="card" :style="route.name == 'pos-vendas' ? 'min-width: 100rem' : ''">
+        <PosVendaForm :mode="mode" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"

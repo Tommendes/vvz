@@ -497,13 +497,6 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             res.status(401).send(error)
         }
-        // const idCadastro = req.query.idCadastro || undefined
-        // try {
-        //     if (!idCadastro) throw `Faltando o id do cadastro`
-        // } catch (error) {
-        //     app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-        //     res.status(401).send(error)
-        // }
         const fieldName = req.query.fld
         const value = req.query.vl
         const select = req.query.slct

@@ -155,7 +155,7 @@ const loadLazyData = () => {
                 defaultError(error.response.data);
                 router.push({ path: '/' });
             });
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100 + 250);
 };
 const onPage = (event) => {
     lazyParams.value = event;

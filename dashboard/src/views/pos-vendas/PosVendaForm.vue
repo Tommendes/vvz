@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -70,27 +70,38 @@ const dropdownTiposPv = ref([
 const loadData = async () => {
     mode.value = 'view';
     loading.value = true;
-    const id = route.params.id || itemData.value.id;
-    if (id) {
-        const url = `${urlBase.value}/${id}`;
-        // console.log('loadData',url);
-        await axios.get(url).then(async (res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                body.tipo = String(body.tipo);
-                itemData.value = body;
-                await getNomeCliente();
-                await listPipeline();
-                editCadastro.value = false;
-                loading.value = false;
-                // Lista o andamento do registro
-                await listStatusRegistro();
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-vendas` });
+    if (mode.value != 'new') {
+        const id = route.params.id || itemData.value.id;
+        setTimeout(async () => {
+            if (id) {
+                const url = `${urlBase.value}/${id}`;
+                await axios.get(url).then(async (res) => {
+                    const body = res.data;
+                    if (body && body.id) {
+                        body.id = String(body.id);
+                        body.tipo = String(body.tipo);
+                        itemData.value = body;
+                        await getNomeCliente();
+                        await listPipeline();
+                        editCadastro.value = false;
+                        loading.value = false;
+                        // Lista o andamento do registro
+                        await listStatusRegistro();
+                    } else {
+                        defaultWarn('Registro não localizado');
+                        router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-vendas` });
+                    }
+                });
             }
-        });
+        }, Math.random() * 100 + 250);
+    } else if (props.idCadastro) {
+        itemData.value.id_cadastros = props.idCadastro;
+        selectedCadastro.value = {
+            code: itemData.value.id_cadastros,
+            name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+        };
+        await getNomeCliente();
+        loading.value = false;
     }
     loading.value = false;
 };
@@ -416,6 +427,7 @@ const toGrid = () => {
 
 // Carregar dados do formulário
 onMounted(async () => {
+    // Carrega os dados do formulário
     await loadData();
     // Importante que props.mode seja definido após o loadData
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -430,8 +442,8 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb :items="[{ label: 'Pós-venda', to: `/${userData.cliente}/${userData.dominio}/pos-vendas` }, { label: nomeCliente }]" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
-    <div class="card" style="min-width: 100rem">
+    <Breadcrumb v-if="!['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :items="[{ label: 'Pós-venda', to: `/${userData.cliente}/${userData.dominio}/pos-vendas` }, { label: nomeCliente }]" />
+    <div class="card" :style="route.name == 'pos-venda' ? 'min-width: 100rem' : ''">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
@@ -442,7 +454,14 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-9">
                             <label for="id_cadastros">Cliente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="mode != 'expandedFormMode' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <AutoComplete
+                                v-else-if="mode != 'expandedFormMode' && (editCadastro || (mode == 'new' && !itemData.id_cadastros))"
+                                v-model="selectedCadastro"
+                                optionLabel="name"
+                                :suggestions="filteredCadastros"
+                                @complete="searchCadastros"
+                                forceSelection
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
@@ -485,7 +504,7 @@ watch(selectedCadastro, (value) => {
                                 </div>
                             </div>
                         </div> -->
-                        <EnderecosGrid v-if="itemData.id" :itemDataRoot="itemData" />
+                        <EnderecosGrid v-if="itemData.id && !['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :itemDataRoot="itemData" />
                     </div>
                 </div>
                 <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">

@@ -75,10 +75,9 @@ const convertFloatFields = (result = 'pt') => {
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    if (props.idPipeline || (route.name == 'pipeline-one' && (route.params.id || itemData.value.id))) {
-        if (route.name == 'pipeline-one' && route.params.id) itemData.value.id = route.params.id;
-        else if (props.idPipeline) itemData.value.id = props.idPipeline;
-        const url = `${urlBase.value}/${itemData.value.id}`;
+    const id = props.idPipeline || route.params.id;
+    const url = `${urlBase.value}/${id}`;
+    if (mode.value != 'new')
         await axios.get(url).then(async (res) => {
             const body = res.data;
             if (body && body.id) {
@@ -100,7 +99,7 @@ const loadData = async () => {
                 toGrid();
             }
         });
-    } else if (props.idCadastro) {
+    else if (props.idCadastro) {
         itemData.value.id_cadastros = props.idCadastro;
         selectedCadastro.value = {
             code: itemData.value.id_cadastros,
@@ -147,14 +146,14 @@ const saveData = async () => {
                         router.push({
                             path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id}`
                         });
-                        await loadData();
+                        loadData();
                     } else if (route.name != 'cadastro' && id != itemData.value.id) {
                         router.push({
                             path: `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id}`
                         });
                         const animation = animationDocNr.value;
                         animationDocNr.value = '';
-                        await loadData();
+                        loadData();
                         animationDocNr.value = animation;
                     } else reload();
                     mode.value = 'view';
@@ -181,7 +180,7 @@ const formIsValid = () => {
 const reload = async () => {
     mode.value = 'view';
     editCadastro.value = false;
-    await loadData();
+    loadData();
     emit('cancel');
 };
 // Listar unidades de negócio
@@ -216,14 +215,16 @@ const filteredCadastros = ref([]);
 const selectedCadastro = ref();
 const nomeCliente = ref();
 const getNomeCliente = async () => {
-    try {
-        const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&slct=nome,cpf_cnpj`;
-        const response = await axios.get(url);
-        if (response.data.data.length > 0) {
-            nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+    if (itemData.value.id_cadastros) {
+        try {
+            const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&slct=nome,cpf_cnpj`;
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar cadastros:', error);
         }
-    } catch (error) {
-        console.error('Erro ao buscar cadastros:', error);
     }
 };
 const searchCadastros = (event) => {
@@ -366,10 +367,12 @@ const listStatusRegistro = async () => {
  * Fim de status do registro
  */
 const getPipelineParam = async () => {
-    const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
-    await axios.get(url).then((res) => {
-        if (res.data && res.data.id) itemDataParam.value = res.data;
-    });
+    if (itemData.value.id_pipeline_params) {
+        const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
+        await axios.get(url).then((res) => {
+            if (res.data && res.data.id) itemDataParam.value = res.data;
+        });
+    }
 };
 const itemNovo = [
     {
@@ -436,7 +439,6 @@ const itemNovo = [
             delete itemData.value.id_pai;
             itemDataParam.value.obrig_valor = 0;
             await saveData();
-            defaultSuccess('Registro clonado com sucesso');
             defaultWarn('Verifique se o número do documento deve ser editado');
         }
     }
@@ -459,13 +461,9 @@ const itemsComiss = [
 ];
 const toPai = async () => {
     window.location.href = `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id_pai}`;
-    // loading.value = true;
-    // await loadData();
 };
 const toFilho = async () => {
     window.location.href = `/${userData.cliente}/${userData.dominio}/pipeline/${itemData.value.id_filho}`;
-    // loading.value = true;
-    // await loadData();
 };
 /**
  * Ferramentas do registro
@@ -520,7 +518,7 @@ const statusRecord = async (status) => {
                         path: `/${userData.cliente}/${userData.dominio}/pipeline/${body.data.id}`
                     });
                     loading.value = true;
-                    await loadData();
+                    loadData();
                     await toFilho();
                 });
             },
@@ -547,13 +545,16 @@ const toGrid = () => {
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     if (props.idCadastro) itemData.value.id_cadastros = props.idCadastro;
-    await loadData();
-    // Retorna os parâmetros do registro
-    await getPipelineParam();
-    // Unidades de negócio
-    await listUnidadesDescricao();
-    // Agentes de negócio
-    await listAgentesNegocio();
+    setTimeout(async () => {
+        // Carrega os dados do formulário
+        await loadData();
+        // Retorna os parâmetros do registro
+        await getPipelineParam();
+        // Unidades de negócio
+        await listUnidadesDescricao();
+        // Agentes de negócio
+        await listAgentesNegocio();
+    }, Math.random() * 100 + 250);
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
@@ -576,7 +577,7 @@ watch(route, (value) => {
                 <div :class="`${['new', 'expandedFormMode'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">
                     <div class="p-fluid grid">
                         <div class="col-12">
-                            <label for="id_cadastros">Cadastro</label>
+                            <label for="id_cadastros">Cliente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete
                                 v-else-if="mode != 'expandedFormMode' && (editCadastro || (mode == 'new' && !itemData.id_cadastros))"
