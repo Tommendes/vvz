@@ -4,7 +4,7 @@ import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import EnderecoForm from './EnderecoForm.vue';
+import OatForm from './OatForm.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -17,7 +17,7 @@ const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/pv-oat/${props.itemDataRoot.id}`);
 const mode = ref('grid');
 const visible = ref(false);
 // Props do template
@@ -35,13 +35,11 @@ const masks = ref({
 const initFilters = () => {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        id_params_tipo: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        cep: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        logradouro: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        nr: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        cidade: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        bairro: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        uf: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
+        nr_oat: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        int_ext: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        garantia: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        descricao: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        valor_total: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
     };
 };
 // Inicializa os filtros
@@ -124,7 +122,7 @@ onBeforeMount(() => {
 
 <template>
     <div class="card" style="min-width: 100%">
-        <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
+        <OatForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
             style="font-size: 0.9rem"
             ref="dt"
@@ -142,7 +140,7 @@ onBeforeMount(() => {
             currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
             scrollable
             scrollHeight="415px"
-            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']"
+            :globalFilterFields="['nr_oat', 'int_ext', 'garantia', 'descricao', 'valor_total']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
@@ -163,36 +161,29 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <Column field="allFields" header="Endereços" sortable style="min-width: 470px">
+            <Column field="nr_oat" header="Número OAT" sortable style="min-width: 200px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.endereco }}
+                        {{ data.nr_oat }}
                     </div>
                 </template>
             </Column>
-            <Column field="bairro" header="Bairro" sortable style="min-width: 200px">
+            <Column field="int_ext" header="int_ext" sortable style="min-width: 250px">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">{{ data.int_ext }}{{ data.uf ? `, ${data.uf}` : '' }}</div>
+                </template>
+            </Column>
+            <Column field="garantia" header="garantia" sortable style="min-width: 120px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.bairro }}
+                        {{ data.garantia }}
                     </div>
                 </template>
             </Column>
-            <Column field="cidade" header="Cidade" sortable style="min-width: 250px">
-                <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">{{ data.cidade }}{{ data.uf ? `, ${data.uf}` : '' }}</div>
-                </template>
-            </Column>
-            <Column field="cep" header="CEP" sortable style="min-width: 120px">
+            <Column field="descricao" header="descricao" sortable style="min-width: 120px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.cep }}
-                    </div>
-                </template>
-            </Column>
-            <Column field="tipo" header="TIPO" sortable style="min-width: 120px">
-                <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.tipo }}
+                        {{ data.descricao }}
                     </div>
                 </template>
             </Column>
