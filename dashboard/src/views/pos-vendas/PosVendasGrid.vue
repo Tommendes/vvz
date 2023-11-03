@@ -9,9 +9,6 @@ import { removeHtmlTags, userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useConfirm } from 'primevue/useconfirm';
-const confirm = useConfirm();
-
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
@@ -28,6 +25,7 @@ const masks = ref({
 
 const urlBase = ref(`${baseApiUrl}/pv`);
 const props = defineProps(['idCadastro']);
+const idPv = ref(null); // Id do registro selecionado
 
 onBeforeMount(() => {
     // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
@@ -165,8 +163,7 @@ const exportCSV = () => {
     toExport.exportCSV();
 };
 const goField = (data) => {
-    // Abrir em outra aba
-    // window.open(`/${userData.cliente}/${userData.dominio}/pipeline/${data.id}`);
+    idPv.value = data.id;
     router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pos-venda/${data.id}` });
 };
 watchEffect(() => {
@@ -177,7 +174,17 @@ watchEffect(() => {
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas' }]" />
     <div class="card" :style="route.name == 'pos-vendas' ? 'min-width: 100rem' : ''">
-        <PosVendaForm :mode="mode" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <PosVendaForm
+            :mode="mode"
+            :idCadastro="props.idCadastro"
+            :idPv="idPv"
+            @changed="loadLazyData()"
+            @cancel="
+                mode = 'grid';
+                idPv = undefined;
+            "
+            v-if="mode == 'new' || idPv"
+        />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"

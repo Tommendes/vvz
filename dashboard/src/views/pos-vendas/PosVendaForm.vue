@@ -53,7 +53,7 @@ const loading = ref(true);
 // Editar cadastro no autocomplete
 const editCadastro = ref(false);
 // Props do template
-const props = defineProps(['mode', 'idCadastro']);
+const props = defineProps(['mode', 'idPv', 'idCadastro']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
@@ -68,13 +68,14 @@ const dropdownTiposPv = ref([
 ]);
 // Carragamento de dados do form
 const loadData = async () => {
-    mode.value = 'view';
+    // mode.value = 'view';
     loading.value = true;
+    const id = props.idPv || route.params.id;
+    const url = `${urlBase.value}/${id}`;
     if (mode.value != 'new') {
-        const id = route.params.id || itemData.value.id;
+        console.log('loadData', url);
         setTimeout(async () => {
             if (id) {
-                const url = `${urlBase.value}/${id}`;
                 await axios.get(url).then(async (res) => {
                     const body = res.data;
                     if (body && body.id) {
@@ -84,7 +85,6 @@ const loadData = async () => {
                         await getNomeCliente();
                         await listPipeline();
                         editCadastro.value = false;
-                        loading.value = false;
                         // Lista o andamento do registro
                         await listStatusRegistro();
                     } else {
@@ -95,13 +95,13 @@ const loadData = async () => {
             }
         }, Math.random() * 100 + 250);
     } else if (props.idCadastro) {
+        console.log('props.idCadastro', props.idCadastro);
         itemData.value.id_cadastros = props.idCadastro;
         selectedCadastro.value = {
             code: itemData.value.id_cadastros,
             name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
         };
         await getNomeCliente();
-        loading.value = false;
     }
     loading.value = false;
 };
@@ -140,7 +140,7 @@ const getNomeCliente = async () => {
         const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&slct=nome,cpf_cnpj`;
         const response = await axios.get(url);
         if (response.data.data.length > 0) {
-            nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj) + ' - PV: ' + itemData.value.pv_nr;
+            nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj) + (itemData.value.pv_nr ? ' - PV: ' + itemData.value.pv_nr : '');
         }
     } catch (error) {
         console.error('Erro ao buscar cadastros:', error);
@@ -427,10 +427,10 @@ const toGrid = () => {
 
 // Carregar dados do formulário
 onMounted(async () => {
+    if (props.mode && props.mode != mode.value) mode.value = props.mode;
+    if (props.idCadastro) itemData.value.id_cadastros = props.idCadastro;
     // Carrega os dados do formulário
     await loadData();
-    // Importante que props.mode seja definido após o loadData
-    if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
@@ -522,6 +522,17 @@ watch(selectedCadastro, (value) => {
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr />
+                            <Button
+                                v-if="route.name == 'pos-venda'"
+                                label="Ir para o Cadastro"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`pi pi-fw pi-id-card`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="router.push(`/${userData.cliente}/${userData.dominio}/cadastro/${itemData.id_cadastros}`)"
+                            />
                             <SplitButton label="Novo Registro" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
                             <Button label="Criar OAT" type="button" class="w-full mb-3" :icon="`fa-solid fa-screwdriver-wrench fa-shake'`" style="color: #a97328" text raised @click="defaultSuccess('OAT')" />
                             <Button label="Liquidar Registro" type="button" class="w-full mb-3" :icon="`fa-solid fa-check fa-shake'`" severity="success" text raised @click="statusRecord(andamentoRegistro.STATUS_LIQUIDADO)" />

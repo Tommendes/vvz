@@ -93,7 +93,6 @@ const loadData = async () => {
                 await getNomeCliente();
                 // Lista o andamento do registro
                 await listStatusRegistro();
-                loading.value = false;
             } else {
                 defaultWarn('Registro não localizado');
                 toGrid();
@@ -106,7 +105,6 @@ const loadData = async () => {
             name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
         };
         await getNomeCliente();
-        loading.value = false;
     }
     loading.value = false;
 };
@@ -810,6 +808,17 @@ watch(route, (value) => {
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr class="w-full mb-3" v-if="!itemData.id_filho" />
+                            <Button
+                                v-if="route.name == 'pipeline-one'"
+                                label="Ir para o Cadastro"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`pi pi-fw pi-id-card`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="router.push(`/${userData.cliente}/${userData.dominio}/cadastro/${itemData.id_cadastros}`)"
+                            />
                             <SplitButton label="Novo Registro Idêntico" v-if="!itemData.id_pai" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
                             <Button
                                 :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
