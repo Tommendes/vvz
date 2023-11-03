@@ -74,15 +74,8 @@ const saveData = async () => {
             }
         });
 };
-// Validar data cep
-const validateCep = () => {
-    errorMessages.value.cep = null;
-    // Testa o formato do cep
-    if (itemData.value.cep && itemData.value.cep.length > 0 && !masks.value.cep.completed(itemData.value.cep)) errorMessages.value.cep = 'Formato de cep inválido';
-    return !errorMessages.value.cep;
-};
 const formIsValid = () => {
-    return validateCep();
+    return true;
 };
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
@@ -112,74 +105,61 @@ onBeforeMount(() => {
             <div class="col-12">
                 <h5>{{ itemData.id && store.userStore.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
-                    <div class="col-12 md:col-3">
-                            <label for="id_pv">{{ labels.id_pv }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pv" id="id_pv" type="text" />
+                        <div class="col-12 md:col-3">
+                            <label for="id_pv">ID do PV</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pv" id="id_pv" type="text" />
                         </div>
                         <div class="col-12 md:col-5">
-                            <label for="id_cadastro_endereco">id_cadastro_endereco</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastro_endereco" id="id_cadastro_endereco" type="text" />
+                            <label for="id_cadastro_endereco">Endereço do atendimento</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastro_endereco" id="id_cadastro_endereco" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="id_tecnico">{{ labels.id_tecnico }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_tecnico" id="id_tecnico" type="text" />
+                            <label for="id_tecnico">Técnico responsável</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_tecnico" id="id_tecnico" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="nr_oat">{{ labels.nr_oat }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr_oat" id="nr_oat" type="text" />
+                            <label for="nr_oat">OAT</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr_oat" id="nr_oat" type="text" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="int_ext">{{ labels.int_ext }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.int_ext" id="int_ext" type="text" /> -->
-                            <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownIntExt" />
+                            <label for="int_ext">Interno/Externo</label>
+                            <!-- <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.int_ext" id="int_ext" type="text" /> -->
+                            <Dropdown  id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownIntExt" />
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="garantia">{{ labels.garantia }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.garantia" id="garantia" type="text" />
+                            <label for="garantia">Garantia</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.garantia" id="garantia" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="nf_garantia">{{ labels.nf_garantia }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nf_garantia" id="nf_garantia" type="text" />
+                            <label for="nf_garantia">Nota fiscal do produto</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nf_garantia" id="nf_garantia" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="pessoa_contato">{{ labels.pessoa_contato }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
+                            <label for="pessoa_contato">Contato no cliente</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="telefone_contato">{{ labels.telefone_contato }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']"  v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                            <label for="telefone_contato">Telefone do contato</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']"  v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="email_contato">{{ labels.email_contato }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
+                            <label for="email_contato">Email do contato</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="valor_total">{{ labels.valor_total }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_total" id="valor_total" type="text" />
+                            <label for="valor_total">Valor dos serviços</label>
+                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_total" id="valor_total" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="aceite_do_cliente">{{ labels.aceite_do_cliente }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.aceite_do_cliente" id="aceite_do_cliente" :numberOfMonths="2" showIcon />
+                            <label for="aceite_do_cliente">Data do aceite</label>
+                            <Calendar  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.aceite_do_cliente" id="aceite_do_cliente" :numberOfMonths="2" showIcon />
                         </div>
                         <div class="col-12 md:col-12">
-                            <label for="descricao">{{ labels.descricao }}</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
+                            <label for="descricao">Descrição dos serviços</label>
+                            <Editor v-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
