@@ -22,6 +22,8 @@ const router = useRouter();
 
 import { Mask } from 'maska';
 import moment from 'moment';
+
+import { useDialog } from 'primevue/usedialog';
 const masks = ref({
     cpf_cnpj: new Mask({
         mask: ['###.###.###-##', '##.###.###/####-##']
@@ -33,6 +35,7 @@ const masks = ref({
 
 // import EnderecosGrid from '../cadastros/enderecos/EnderecosGrid.vue';
 import OatsGrid from './oat/OatsGrid.vue';
+import OatForm from './oat/OatForm.vue';
 
 // Andamento do registro
 const andamentoRegistro = ref({
@@ -74,7 +77,6 @@ const loadData = async () => {
     const id = props.idPv || route.params.id;
     const url = `${urlBase.value}/${id}`;
     if (mode.value != 'new') {
-        console.log('loadData', url);
         setTimeout(async () => {
             if (id) {
                 await axios.get(url).then(async (res) => {
@@ -96,7 +98,6 @@ const loadData = async () => {
             }
         }, Math.random() * 100 + 250);
     } else if (props.idCadastro) {
-        console.log('props.idCadastro', props.idCadastro);
         itemData.value.id_cadastros = props.idCadastro;
         selectedCadastro.value = {
             code: itemData.value.id_cadastros,
@@ -226,6 +227,7 @@ const formIsValid = () => {
 
 // Recarregar dados do formulário
 const reload = async () => {
+    mode.value = 'view';
     editCadastro.value = false;
     await loadData();
     emit('cancel');
@@ -426,6 +428,38 @@ const toGrid = () => {
     router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-vendas` });
 };
 
+const dialog = useDialog();
+const showPvOatForm = () => {
+    const dialogRef = dialog.open(OatForm, {
+        data: {
+            idPv: itemData.value,
+            idPvOat: undefined
+        },
+        props: {
+            header: 'Product List',
+            style: {
+                width: '100rem'
+            },
+            breakpoints: {
+                '960px': '75vw',
+                '640px': '90vw'
+            },
+            modal: true
+        },
+        // templates: {
+        //     footer: markRaw(FooterDemo)
+        // },
+        onClose: (options) => {
+            const data = options.data;
+            if (data) {
+                // const buttonType = data.buttonType;
+                // const summary_and_detail = buttonType ? { summary: 'No Product Selected', detail: `Pressed '${buttonType}' button` } : { summary: 'Product Selected', detail: data.name };
+            }
+            defaultSuccess('Funcionou!!!');
+        }
+    });
+};
+
 // Carregar dados do formulário
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -450,7 +484,7 @@ watch(selectedCadastro, (value) => {
                 <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
                     <div class="p-fluid grid">
                         <div class="col-12" v-if="itemData.pv_nr" style="margin: 0">
-                            <h3>Número do PV: {{ itemData.pv_nr }}</h3>
+                            <h3>Número do Pós-venda: {{ itemData.pv_nr }}</h3>
                         </div>
                         <div class="col-12 md:col-9">
                             <label for="id_cadastros">Cliente</label>
@@ -496,17 +530,10 @@ watch(selectedCadastro, (value) => {
                             <Editor v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacao || ''" class="p-inputtext p-component p-filled p-disabled" />
                         </div>
-                        <!-- <div class="col-12" v-if="mode == 'view' && 1 == 1">
-                            <div class="card bg-green-200 mt-3">
-                                <div class="flex flex-wrap align-items-center justify-content-center">
-                                    <div class="border-round bg-primary-100 h-12rem p-3 m-3">
-                                        <div class="min-h-full border-round bg-primary font-bold p-3 flex align-items-center justify-content-center">Não foram registradas OATs para este Pós Venda</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
-                        <OatsGrid v-if="itemData.id && !['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :itemDataRoot="itemData" />
                     </div>
+
+                    <!-- <OatForm @changed="console.log('Gabriel clicou')" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" /> -->
+                    <OatsGrid v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="itemData" />
                 </div>
                 <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
                     <Fieldset :toggleable="true" class="mb-3">
@@ -535,7 +562,7 @@ watch(selectedCadastro, (value) => {
                                 @click="router.push(`/${userData.cliente}/${userData.dominio}/cadastro/${itemData.id_cadastros}`)"
                             />
                             <SplitButton label="Novo Registro" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
-                            <Button label="Criar OAT" type="button" class="w-full mb-3" :icon="`fa-solid fa-screwdriver-wrench fa-shake'`" style="color: #a97328" text raised @click="defaultSuccess('OAT')" />
+                            <Button label="Criar OAT" type="button" class="w-full mb-3" :icon="`fa-solid fa-screwdriver-wrench fa-shake'`" style="color: #a97328" text raised @click="showPvOatForm" />
                             <Button label="Liquidar Registro" type="button" class="w-full mb-3" :icon="`fa-solid fa-check fa-shake'`" severity="success" text raised @click="statusRecord(andamentoRegistro.STATUS_LIQUIDADO)" />
                             <Button
                                 label="Cancelar Registro"
@@ -602,7 +629,7 @@ watch(selectedCadastro, (value) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode == 'edit' ? reload() : toGrid()" />
                     </div>
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>

@@ -49,6 +49,7 @@ const close = () => {
                 <Button label="Ok" @click="close" icon="pi pi-check" class="p-button-outlined" />
             </template>
         </Dialog>
+        <DynamicDialog />
         <ConfirmDialog group="templating">
             <template #message="slotProps">
                 <div class="flex p-4">

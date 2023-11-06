@@ -569,7 +569,7 @@ watch(route, (value) => {
 
 <template>
     <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.cliente}/${userData.dominio}/pipeline` }, { label: itemData.documento }]" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
-    <div class="card" :style="route.name == 'pipeline' ? 'min-width: 100rem' : ''">
+    <div class="card" :style="route.name == 'pipeline-one' ? 'min-width: 100rem' : ''">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div :class="`${['new', 'expandedFormMode'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">
@@ -782,7 +782,7 @@ watch(route, (value) => {
                             <span v-html="guide" />
                         </p>
                     </Fieldset>
-                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 3">
                         <p>{{ route.name }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>

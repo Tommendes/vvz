@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, provide } from 'vue';
+import { ref, onBeforeMount, provide, onMounted } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -22,8 +22,9 @@ const mode = ref('grid');
 const visible = ref(false);
 // Props do template
 const props = defineProps({
-    itemDataRoot: Object // O próprio cadastro
+    itemDataRoot: Object // O próprio pv
 });
+import { useDialog } from 'primevue/usedialog';
 // Máscaras
 import { Mask } from 'maska';
 const masks = ref({
@@ -54,7 +55,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            mode.value = 'edit';
+            showPvOatForm();
         }
     },
     {
@@ -79,11 +80,10 @@ const loadData = async () => {
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
-            element.endereco = '';
-            if (element.logradouro) element.endereco += element.logradouro;
-            if (element.nr) element.endereco += `, ${element.nr}`;
-            if (element.complnr && element.complnr.trim().length > 0) element.endereco += `, ${element.complnr.trim()}`;
-            if (element.cep && element.cep.trim().length >= 8) element.cep = masks.value.cep.masked(element.cep);
+            if (element.int_ext == 0) element.int_ext = 'Interno';
+            else element.int_ext = 'Externo';
+            const maxStringLength = 150;
+            if (element.descricao.length > maxStringLength) element.descricao = element.descricao.substring(0, maxStringLength).trim() + '...';
         });
         loading.value = false;
     });
@@ -109,21 +109,64 @@ const deleteRow = () => {
         }
     });
 };
-// Carrega os dados do formulário
-provide('itemData', itemData);
-// Carrega o modo do formulário
-provide('mode', mode);
+
+const dialog = useDialog();
+const showPvOatForm = () => {
+    dialog.open(OatForm, {
+        data: {
+            idPv: itemData.value.id_pv,
+            idPvOat: itemData.value.id
+        },
+        props: {
+            header: 'OAT',
+            style: {
+                width: '100rem',
+            },
+            breakpoints: {
+                '1199px': '75vw',
+                '575px': '90vw'
+            },
+            modal: true
+        },
+        // templates: {
+        //     footer: markRaw(FooterDemo)
+        // },
+        onClose: (options) => {
+            const data = options.data;
+            if (data) {
+                // const buttonType = data.buttonType;
+                // const summary_and_detail = buttonType ? { summary: 'No Product Selected', detail: `Pressed '${buttonType}' button` } : { summary: 'Product Selected', detail: data.name };
+            }
+            loadData();
+        }
+    });
+};
+
 // Carrega as operações básicas do formulário
 onBeforeMount(() => {
     initFilters();
-    loadData();
+});
+onMounted(() => {
+    setTimeout(() => {
+        loadData();
+    }, Math.random() * 1000 + 250);
 });
 </script>
 
 <template>
     <div class="card" style="min-width: 100%">
-        <OatForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
+        <!-- <OatForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" /> -->
+        <div class="col-12" v-if="gridData && gridData.length == 0">
+            <div class="card bg-green-200 mt-3">
+                <div class="flex flex-wrap align-items-center justify-content-center">
+                    <div class="border-round bg-primary-100 h-12rem p-3 m-3">
+                        <div class="min-h-full border-round bg-primary font-bold p-3 flex align-items-center justify-content-center">Não foram registradas OATs para este Pós Venda</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <DataTable
+            v-else
             style="font-size: 0.9rem"
             ref="dt"
             :value="gridData"
@@ -161,29 +204,29 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <Column field="nr_oat" header="Número OAT" sortable style="min-width: 200px">
+            <Column field="nr_oat" header="OAT" sortable style="min-width: 120px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.nr_oat }}
+                        {{ data.nr_oat.toString().padStart(3, '0') }}
                     </div>
                 </template>
             </Column>
-            <Column field="int_ext" header="Interno/Externo" sortable style="min-width: 250px">
+            <Column field="int_ext" header="Atendimento" sortable style="min-width: 120px">
                 <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">{{ data.int_ext }}{{ data.uf ? `, ${data.uf}` : '' }}</div>
+                    <div class="flex flex-wrap gap-2 text-lg">{{ data.int_ext }}</div>
                 </template>
             </Column>
             <Column field="garantia" header="Garantia" sortable style="min-width: 120px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.garantia }}
+                        {{ data.garantia == 1 ? 'Sim' : 'Não' }}
                     </div>
                 </template>
             </Column>
             <Column field="descricao" header="Descricao" sortable style="min-width: 120px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.descricao }}
+                        <span v-html="data.descricao"></span>
                     </div>
                 </template>
             </Column>

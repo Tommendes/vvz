@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref, inject } from 'vue';
+import { onBeforeMount, ref, onMounted, inject } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
@@ -13,27 +13,30 @@ const masks = ref({
     })
 });
 // Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 // Campos de formulário
-const itemData = inject('itemData');
+const itemData = ref({});
 // Modo do formulário
-const mode = inject('mode');
+const mode = ref('view');
 const errorMessages = ref({});
 // Dropdowns
 const dropdownTipo = ref([]);
+const dropdownIntExt = ref([
+    { value: '0', label: 'Interno' },
+    { value: '1', label: 'Externo' }
+]);
 // Props do template
-const props = defineProps({
-    itemDataRoot: Object // O próprio cadastro
-});
+const dialogRef = inject('dialogRef');
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/pv-oat/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/pv-oat/${dialogRef.value.data.idPv}`);
 // Carragamento de dados do form
 const loadData = async () => {
-    if (itemData && itemData.id) {
-        const url = `${urlBase.value}/${itemData.value.id}`;
+    if (dialogRef.value.data.idPvOat) {
+        const url = `${urlBase.value}/${dialogRef.value.data.idPvOat}`;
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -41,9 +44,25 @@ const loadData = async () => {
                 itemData.value = body;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pos-venda` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-venda` });
             }
         });
+    } else {
+        itemData.value = {
+            id_pv: dialogRef.value.data.idPv,
+            id_cadastro_endereco: null,
+            id_tecnico: null,
+            nr_oat: null,
+            int_ext: null,
+            garantia: null,
+            nf_garantia: null,
+            pessoa_contato: null,
+            telefone_contato: null,
+            email_contato: null,
+            valor_total: null,
+            aceite_do_cliente: null,
+            descricao: null
+        };
     }
 };
 // Salvar dados do formulário
@@ -94,8 +113,12 @@ const loadOptions = async () => {
 };
 // Carregar dados do formulário
 onBeforeMount(() => {
-    loadData();
     loadOptions();
+});
+onMounted(() => {
+    setTimeout(() => {
+        loadData();
+    }, Math.random() * 1000 + 250);
 });
 </script>
 
@@ -103,64 +126,64 @@ onBeforeMount(() => {
     <div class="grid">
         <form @submit.prevent="saveData">
             <div class="col-12">
-                <h5>{{ itemData.id && store.userStore.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
-                <div class="p-fluid formgrid grid">
-                        <div class="col-12 md:col-3">
-                            <label for="id_pv">ID do PV</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pv" id="id_pv" type="text" />
-                        </div>
-                        <div class="col-12 md:col-5">
-                            <label for="id_cadastro_endereco">Endereço do atendimento</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastro_endereco" id="id_cadastro_endereco" type="text" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="id_tecnico">Técnico responsável</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_tecnico" id="id_tecnico" type="text" />
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="nr_oat">OAT</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr_oat" id="nr_oat" type="text" />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="int_ext">Interno/Externo</label>
-                            <!-- <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.int_ext" id="int_ext" type="text" /> -->
-                            <Dropdown  id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownIntExt" />
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="garantia">Garantia</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.garantia" id="garantia" type="text" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="nf_garantia">Nota fiscal do produto</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nf_garantia" id="nf_garantia" type="text" />
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="pessoa_contato">Contato no cliente</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="telefone_contato">Telefone do contato</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']"  v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="email_contato">Email do contato</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="valor_total">Valor dos serviços</label>
-                            <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_total" id="valor_total" type="text" />
-                        </div>
-                        <div class="col-12 md:col-3">
-                            <label for="aceite_do_cliente">Data do aceite</label>
-                            <Calendar  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.aceite_do_cliente" id="aceite_do_cliente" :numberOfMonths="2" showIcon />
-                        </div>
-                        <div class="col-12 md:col-12">
-                            <label for="descricao">Descrição dos serviços</label>
-                            <Editor v-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                            <p v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
-                        </div>
+                <h5 v-if="itemData && itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
+                <div class="p-fluid grid">
+                    <div class="col-12 md:col-3">
+                        <label for="id_pv">ID do PV</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pv" id="id_pv" type="text" />
+                    </div>
+                    <div class="col-12 md:col-5">
+                        <label for="id_cadastro_endereco">Endereço do atendimento</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastro_endereco" id="id_cadastro_endereco" type="text" />
+                    </div>
+                    <div class="col-12 md:col-4">
+                        <label for="id_tecnico">Técnico responsável</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_tecnico" id="id_tecnico" type="text" />
+                    </div>
+                    <div class="col-12 md:col-3">
+                        <label for="nr_oat">OAT</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr_oat" id="nr_oat" type="text" />
+                    </div>
+                    <div class="col-12 md:col-2">
+                        <label for="int_ext">Interno/Externo</label>
+                        <!-- <InputText  autocomplete="no" :disabled="mode == 'view'" v-model="itemData.int_ext" id="int_ext" type="text" /> -->
+                        <Dropdown id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownIntExt" />
+                    </div>
+                    <div class="col-12 md:col-3">
+                        <label for="garantia">Garantia</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.garantia" id="garantia" type="text" />
+                    </div>
+                    <div class="col-12 md:col-4">
+                        <label for="nf_garantia">Nota fiscal do produto</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nf_garantia" id="nf_garantia" type="text" />
+                    </div>
+                    <div class="col-12 md:col-3">
+                        <label for="pessoa_contato">Contato no cliente</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
+                    </div>
+                    <div class="col-12 md:col-2">
+                        <label for="telefone_contato">Telefone do contato</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
+                    </div>
+                    <div class="col-12 md:col-4">
+                        <label for="email_contato">Email do contato</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
+                    </div>
+                    <div class="col-12 md:col-3">
+                        <label for="valor_total">Valor dos serviços</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_total" id="valor_total" type="text" />
+                    </div>
+                    <div class="col-12 md:col-3">
+                        <label for="aceite_do_cliente">Data do aceite</label>
+                        <Calendar autocomplete="no" :disabled="mode == 'view'" v-model="itemData.aceite_do_cliente" id="aceite_do_cliente" :numberOfMonths="2" showIcon />
+                    </div>
+                    <div class="col-12 md:col-12">
+                        <label for="descricao">Descrição dos serviços</label>
+                        <Editor v-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <p v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
+                    </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
