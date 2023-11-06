@@ -31,7 +31,8 @@ const masks = ref({
     })
 });
 
-import EnderecosGrid from '../cadastros/enderecos/EnderecosGrid.vue';
+// import EnderecosGrid from '../cadastros/enderecos/EnderecosGrid.vue';
+import OatsGrid from './oat/OatsGrid.vue';
 
 // Andamento do registro
 const andamentoRegistro = ref({
@@ -504,7 +505,7 @@ watch(selectedCadastro, (value) => {
                                 </div>
                             </div>
                         </div> -->
-                        <EnderecosGrid v-if="itemData.id && !['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :itemDataRoot="itemData" />
+                        <OatsGrid v-if="itemData.id && !['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :itemDataRoot="itemData" />
                     </div>
                 </div>
                 <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">

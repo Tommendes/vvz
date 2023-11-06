@@ -168,19 +168,19 @@ onBeforeMount(() => {
                     </div>
                 </template>
             </Column>
-            <Column field="int_ext" header="int_ext" sortable style="min-width: 250px">
+            <Column field="int_ext" header="Interno/Externo" sortable style="min-width: 250px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">{{ data.int_ext }}{{ data.uf ? `, ${data.uf}` : '' }}</div>
                 </template>
             </Column>
-            <Column field="garantia" header="garantia" sortable style="min-width: 120px">
+            <Column field="garantia" header="Garantia" sortable style="min-width: 120px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.garantia }}
                     </div>
                 </template>
             </Column>
-            <Column field="descricao" header="descricao" sortable style="min-width: 120px">
+            <Column field="descricao" header="Descricao" sortable style="min-width: 120px">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.descricao }}
