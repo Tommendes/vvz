@@ -53,7 +53,7 @@ const props = defineProps({
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/fin-lancamentos`);
+const urlBase = ref(`${baseApiUrl}/fin-cc`);
 // Carragamento de dados do form
 const loadData = async () => {
     if (route.params.id || itemData.value.id) {
@@ -64,15 +64,11 @@ const loadData = async () => {
             const body = res.data;
             if (body && body.id) {
                 body.id = String(body.id);
-
                 itemData.value = body;
-                if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.masked(itemData.value.telefone_contato);
-                itemDataComparision.value = { ...itemData.value };
-
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/lancamentos` });
+                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/comissoes` });
             }
         });
     } else loading.value.form = false;
@@ -83,7 +79,6 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -107,7 +102,6 @@ const isItemDataChanged = () => {
     const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
     if (!ret) {
         accept.value = false;
-        // errorMessages.value = {};
     }
     return ret;
 };
@@ -131,7 +125,6 @@ const reload = () => {
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
-    // loadOptions();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -183,7 +176,6 @@ const items = ref([
                         <div class="col-12 md:col-12">
                             <label for="descricao">{{ labels.descricao }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" /> -->
                             <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
