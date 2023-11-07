@@ -8,10 +8,11 @@ import OatForm from './OatForm.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
-import moment from 'moment';
 
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
@@ -118,7 +119,7 @@ const showPvOatForm = () => {
             idPvOat: itemData.value.id
         },
         props: {
-            header: 'OAT',
+            header: `OAT ${itemData.value.nr_oat ? itemData.value.nr_oat : ''}${userData.admin >= 1 ? ` - (Registro: ${itemData.value.id})` : ''}`,
             style: {
                 width: '100rem',
             },
