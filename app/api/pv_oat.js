@@ -39,7 +39,7 @@ module.exports = app => {
         delete body.hash; delete body.tblName
         if (body.id) {
             try {
-                existsOrError(body.id && !body.nr_oat, 'Número OAT não encontrado')
+                existsOrError(body.nr_oat, 'Número OAT não encontrado')
             } catch (error) {
                 return res.status(400).send(error)
             }
