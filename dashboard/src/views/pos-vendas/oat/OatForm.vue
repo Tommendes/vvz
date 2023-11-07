@@ -194,3 +194,7 @@ onMounted(() => {
         </form>
     </div>
 </template>
+<style>
+.p-input-filled .p-inputtext {
+    background-color: #e9ecef00;
+}</style>
