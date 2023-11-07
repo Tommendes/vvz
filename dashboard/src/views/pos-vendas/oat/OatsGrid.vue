@@ -26,13 +26,6 @@ const props = defineProps({
     itemDataRoot: Object // O próprio pv
 });
 import { useDialog } from 'primevue/usedialog';
-// Máscaras
-import { Mask } from 'maska';
-const masks = ref({
-    cep: new Mask({
-        mask: '##.###-###'
-    })
-});
 // Inicializa os filtros
 const initFilters = () => {
     filters.value = {
@@ -116,10 +109,11 @@ const showPvOatForm = () => {
     dialog.open(OatForm, {
         data: {
             idPv: itemData.value.id_pv,
-            idPvOat: itemData.value.id
+            idPvOat: itemData.value.id,
+            idCadastro: props.itemDataRoot.id_cadastros
         },
         props: {
-            header: `OAT ${itemData.value.nr_oat ? itemData.value.nr_oat : ''}${userData.admin >= 1 ? ` - (Registro: ${itemData.value.id})` : ''}`,
+            header: `OAT ${itemData.value.nr_oat ? itemData.value.nr_oat.toString().padStart(3, '0') : ''}`,
             style: {
                 width: '100rem',
             },

@@ -11,7 +11,7 @@ exports.up = function(knex, Promise) {
         table.integer('id_pv',10).unsigned().notNull().comment('ID do pv')
         table.integer('id_cadastro_endereco',10).unsigned().notNull().comment('Endereço do atendimento')
         table.integer('id_tecnico',10).unsigned().comment('Técnico responsável')
-        table.integer('nr_oat',3).notNull().comment('OAT')
+        table.string('nr_oat').notNull().comment('OAT')
         table.integer('int_ext',10).notNull().comment('Interno/Externo')
         table.integer('garantia',1).notNull().comment('Garantia')
         table.string('nf_garantia',255).comment('Nota fiscal do produto')

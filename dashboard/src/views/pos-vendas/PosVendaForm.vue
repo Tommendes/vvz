@@ -430,19 +430,20 @@ const toGrid = () => {
 
 const dialog = useDialog();
 const showPvOatForm = () => {
-    const dialogRef = dialog.open(OatForm, {
+    dialog.open(OatForm, {
         data: {
-            idPv: itemData.value,
-            idPvOat: undefined
+            idPv: itemData.value.id,
+            idPvOat: undefined,
+            idCadastro: itemData.value.id_cadastros
         },
         props: {
-            header: 'Product List',
+            header: `Registrar OAT`,
             style: {
                 width: '100rem'
             },
             breakpoints: {
-                '960px': '75vw',
-                '640px': '90vw'
+                '1199px': '75vw',
+                '575px': '90vw'
             },
             modal: true
         },
@@ -531,8 +532,6 @@ watch(selectedCadastro, (value) => {
                             <p v-else v-html="itemData.observacao || ''" class="p-inputtext p-component p-filled p-disabled" />
                         </div>
                     </div>
-
-                    <!-- <OatForm @changed="console.log('Gabriel clicou')" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" /> -->
                     <OatsGrid v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="itemData" />
                 </div>
                 <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">

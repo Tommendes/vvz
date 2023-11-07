@@ -22,29 +22,27 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-
             existsOrError(body.id_pv, 'Id_pv não encontrado')
             if (body.id_pv < 0 && body.id_pv.length > 10) throw "Id_pv inválido"
             existsOrError(body.id_cadastro_endereco, 'Id_cadastro_endereco não encontrado')
             if (body.id_cadastro_endereco < 0 && body.id_cadastro_endereco.length > 10) throw "id_cadastro_endereco inválido"
-            existsOrError(body.nr_oat,'Número OAT não encontrado')
-            if (body.nr_oat.length > 3) throw "Número OAT inválido"
-            existsOrError(body.int_ext,'Int_ext não encontrado')
+            existsOrError(body.int_ext, 'Int_ext não encontrado')
             if (body.int_ext.length > 10) throw "Int_ext inválido"
-            existsOrError(body.garantia,'Garantia não encontrada')
-            if (body.garantia.length > 1) throw "Garantia inválida"
-            existsOrError(body.pessoa_contato,'Contato no cliente não encontrado')
-            existsOrError(body.telefone_contato,'Telefone do contato não encontrado')
-
-        
-
-        
+            existsOrError(body.garantia, 'Garantia não encontrada')
+            if (body.garantia == 1 && !(!!body.nf_garantia.trim())) throw "Favor informar a nota fiscal"
+            existsOrError(body.pessoa_contato, 'Contato no cliente não encontrado')
+            existsOrError(body.telefone_contato, 'Telefone do contato não encontrado')
         } catch (error) {
             return res.status(400).send(error)
         }
 
         delete body.hash; delete body.tblName
         if (body.id) {
+            try {
+                existsOrError(body.id && !body.nr_oat, 'Número OAT não encontrado')
+            } catch (error) {
+                return res.status(400).send(error)
+            }
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
             const { createEventUpd } = app.api.sisEvents
@@ -80,6 +78,11 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
+            let nextDocumentNr = await app.db(tabelaDomain).select(app.db.raw('MAX(CAST(nr_oat AS INT)) + 1 AS nr_oat'))
+                .where({ status: STATUS_ACTIVE, id_pv: body.id_pv }).first()
+            body.nr_oat = nextDocumentNr.nr_oat.toString() || '1'
+            body.nr_oat = body.nr_oat.padStart(3, '0')
+
 
             app.db(tabelaDomain)
                 .insert(body)

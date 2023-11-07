@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -27,18 +27,8 @@ const router = useRouter();
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
-import { useToast } from "primevue/usetoast";
-const toast = useToast();
-
 // Campos de formulário
 const itemData = ref({});
-const registroTipo = ref('pf');
-const labels = ref({
-    tecnico: "Técnico Responsável",
-    telefone_contato: "Telefone para Contato",
-    email_contato: "E-mail para contato",
-    observacao: "Observação"
-});
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -48,12 +38,7 @@ const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
-const loading = ref({
-    form: true,
-    accepted: null,
-    email: null,
-    telefone: null
-});
+const loading = ref(false);
 // Props do template
 const props = defineProps({
     mode: String
@@ -77,13 +62,13 @@ const loadData = async () => {
                 if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.masked(itemData.value.telefone_contato);
                 itemDataComparision.value = { ...itemData.value };
 
-                loading.value.form = false;
+                loading.value = false;
             } else {
                 defaultWarn('Registro não localizado');
                 router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pv-tecnicos` });
             }
         });
-    } else loading.value.form = false;
+    } else loading.value = false;
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -99,7 +84,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pv-tecnico/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/tecnico-pv/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -127,7 +112,7 @@ const validateTelefone = () => {
     return !errorMessages.value.telefone_contato;
 };
 // Validar email
-const validateEmail = (field) => {
+const validateEmail = () => {
     if (itemData.value.email_contato && itemData.value.email_contato.trim().length > 0 && !isValidEmail(itemData.value.email_contato)) {
         errorMessages.value.email_contato = 'Formato de email inválido';
     } else errorMessages.value.email_contato = null;
@@ -160,24 +145,6 @@ onMounted(() => {
 watchEffect(() => {
     isItemDataChanged();
 });
-const menu = ref();
-const preview = ref(false);
-const items = ref([
-    {
-        label: 'View',
-        icon: 'pi pi-fw pi-search',
-        command: () => {
-            alert('Enviar nova imagem');
-        }
-    },
-    {
-        label: 'Delete',
-        icon: 'pi pi-fw pi-trash',
-        command: () => {
-            alert('Excluir imagem');
-        }
-    }
-]);
 </script>
 
 <template>
@@ -188,27 +155,33 @@ const items = ref([
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-4">
-                            <label for="tecnico">{{ labels.tecnico }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <label for="tecnico">Técnico Responsável</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tecnico" id="tecnico" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="telefone_contato">{{ labels.telefone_contato }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <label for="telefone_contato">Telefone para Contato</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="email_contato">{{ labels.email_contato }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <label for="email_contato">E-mail para contato</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="tecnico" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
                         </div>
-                        <div class="col-12 md:col-12">
-                            <label for="observacao">{{ labels.observacao }}</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <div class="col-12 md:col-12" v-if="itemData.observacao || ['edit', 'new'].includes(mode)">
+                            <label for="observacao">Observação</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
+                        </div>
+                    </div>
+                    <div class="col-12" v-if="userData.admin >= 2">
+                        <div class="card bg-green-200 mt-3">
+                            <p>Mode: {{ mode }}</p>
+                            <p>itemData: {{ itemData }}</p>
                         </div>
                     </div>
                 </div>
