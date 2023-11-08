@@ -57,7 +57,7 @@ const loadData = async () => {
                 body.int_ext = String(body.int_ext);
                 body.garantia = String(body.garantia);
                 body.id_cadastro_endereco = String(body.id_cadastro_endereco);
-                body.id_tecnico = String(body.id_tecnico);
+                if (body.id_tecnico) body.id_tecnico = String(body.id_tecnico);
                 if (body.aceite_do_cliente) dataAceite.value = moment(body.aceite_do_cliente).format('DD/MM/YYYY');
                 // Se body.valor_total então formate o valor com duas casas decimais em português
                 if (body.valor_total) body.valor_total = Number(body.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

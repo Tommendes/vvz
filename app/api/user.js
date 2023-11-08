@@ -1232,7 +1232,7 @@ module.exports = app => {
 
     const getTokenTime = async (req, res) => {
         const userFromDB = await app.db(tabela)
-            .select('status', 'password_reset_token')
+            .select('name', 'status', 'password_reset_token')
             .where({ id: req.query.q }).first()
         let tokenCreationTime = 0
         if (userFromDB && userFromDB.password_reset_token) {
@@ -1245,6 +1245,7 @@ module.exports = app => {
             if (userFromDB.password_reset_token) expirationTimOk = Number(userFromDB.password_reset_token.split('_')[1]) > now
             if (!expirationTimOk) {
                 return res.status(200).send({
+                    name: userFromDB.name, 
                     isTokenValid: false,
                     gtt: 0,
                     msg: 'O token informado ultrapassou o tempo máximo para ser utilizado'
@@ -1252,7 +1253,7 @@ module.exports = app => {
             }
             else {
                 const totalTimeRelase = tokenCreationTime - now
-                return res.send({ isTokenValid: true, gtt: totalTimeRelase })
+                return res.send({ name: userFromDB.name, isTokenValid: true, gtt: totalTimeRelase })
             }
         } else if (userFromDB && userFromDB.status == STATUS_ACTIVE) {
             return res.status(400).send({

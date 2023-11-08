@@ -813,7 +813,7 @@ watch(route, (value) => {
                                 label="Ir para o Cadastro"
                                 type="button"
                                 class="w-full mb-3"
-                                :icon="`pi pi-fw pi-id-card`"
+                                :icon="`fa-regular fa-address-card fa-shake`"
                                 style="color: #a97328"
                                 text
                                 raised

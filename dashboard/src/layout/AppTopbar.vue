@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue';
 import { useLayout } from '@/layout/composables/layout';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useToast } from 'primevue/usetoast';
 import { appName } from '@/global';
@@ -13,7 +13,18 @@ const { onMenuToggle } = useLayout();
 const outsideClickListener = ref(null);
 const topbarMenuActive = ref(false);
 const router = useRouter();
-const items = [
+const route = useRoute();
+
+import axios from '@/axios-interceptor';
+import { defaultSuccess, defaultError, defaultWarn } from '@/toast';
+
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
+import { baseApiUrl } from '@/env';
+const urlRequestRequestPassReset = ref(`${baseApiUrl}/request-password-reset/`);
+const items = ref([
     {
         label: 'Ver perfil',
         icon: 'pi pi-refresh',
@@ -31,11 +42,21 @@ const items = [
     {
         label: 'Trocar senha',
         icon: 'pi pi-external-link',
-        command: () => {
-            router.push({ path: '/request-password-reset' });
+        command: async () => {
+            await axios
+                .post(urlRequestRequestPassReset.value, { cpf: userData.cpf })
+                .then((body) => {
+                    if (body.data.id) {
+                        router.push({ path: `/${userData.cliente}/${userData.dominio}/password-reset`, query: { q: body.data.id } });
+                        defaultSuccess(body.data.msg);
+                    } else defaultWarn('Ops! Parece que houve um erro ao executar sua solicitação. Por favor tente de novo');
+                })
+                .catch((error) => {
+                    defaultError(error);
+                });
         }
     }
-];
+]);
 
 const logout = () => {
     useUserStore().logout();

@@ -108,6 +108,7 @@ import Geolocation from '@/components/Geolocation.vue';
 import VueGoogleMaps from '@fawmi/vue-google-maps';
 
 import { vMaska } from 'maska';
+import FocusTrap from 'primevue/focustrap';
 
 import '@/assets/app.css';
 import '@/assets/styles.scss';
@@ -136,6 +137,7 @@ app.directive('badge', BadgeDirective);
 app.directive('ripple', Ripple);
 app.directive('styleclass', StyleClass);
 app.directive('maska', vMaska);
+app.directive('focustrap', FocusTrap);
 
 app.component('CodeHighlight', CodeHighlight);
 app.component('BlockViewer', BlockViewer);

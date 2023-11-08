@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, provide, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -42,9 +42,8 @@ const andamentoRegistro = ref({
     STATUS_PENDENTE: 0,
     STATUS_REATIVADO: 1,
     STATUS_EM_ANDAMENTO: 60,
-    STATUS_LIQUIDADO: 80,
+    STATUS_FINALIZADO: 80,
     STATUS_CANCELADO: 89,
-    STATUS_FINALIZADO: 90,
     STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
 });
 
@@ -233,53 +232,6 @@ const reload = async () => {
     emit('cancel');
 };
 
-const itemNovo = [
-    {
-        label: 'Outro Cliente ou Tipo',
-        icon: 'fa-solid fa-plus',
-        command: () => {
-            itemData.value = {};
-            selectedCadastro.value = undefined;
-            editCadastro.value = true;
-            dropdownPipelineByCadastro.value = [];
-            mode.value = 'new';
-        }
-    },
-    {
-        label: 'Mesmo Cliente e Outro Tipo',
-        icon: 'fa-regular fa-copy',
-        command: () => {
-            // delete itemData.value.id;
-            // delete itemData.value.id_filho;
-            // delete itemData.value.id_pai;
-            // delete itemData.value.documento;
-            // itemData.value = {
-            //     id_cadastros: itemData.value.id_cadastros,
-            //     id_pipeline_params: itemData.value.id_pipeline_params,
-            //     id_com_agentes: itemData.value.id_com_agentes,
-            //     valor_bruto: itemData.value.valor_bruto,
-            //     valor_liq: itemData.value.valor_liq,
-            //     valor_representacao: itemData.value.valor_representacao,
-            //     valor_agente: itemData.value.valor_agente,
-            //     perc_represent: itemData.value.perc_represent,
-            //     descricao: itemData.value.descricao
-            // };
-            mode.value = 'new';
-        }
-    },
-    {
-        label: 'Mesmo Cliente e Tipo (Clonar)',
-        icon: 'fa-solid fa-copy',
-        command: async () => {
-            // delete itemData.value.id;
-            // delete itemData.value.id_filho;
-            // delete itemData.value.id_pai;
-            // delete itemData.value.documento;
-            await saveData();
-        }
-    }
-];
-
 /**
  * Status do registro
  */
@@ -291,9 +243,8 @@ const itemDataLastStatus = ref({});
 STATUS_PENDENTE = 0;
 STATUS_REATIVADO = 1;
 STATUS_EM_ANDAMENTO = 60;
-STATUS_LIQUIDADO = 80;
+STATUS_FINALIZADO = 80;
 STATUS_CANCELADO = 89;
-STATUS_FINALIZADO = 90;
 STATUS_EXCLUIDO = 99;
 */
 
@@ -321,8 +272,8 @@ const itemDataStatusPreload = ref([
     },
     {
         status: '80',
-        action: 'Liquidação',
-        label: 'Liquidado',
+        action: 'Finalização',
+        label: 'Finalizado',
         icon: 'pi pi-check',
         color: '#607D8B'
     },
@@ -330,13 +281,6 @@ const itemDataStatusPreload = ref([
         status: '89',
         action: 'Cancelamento',
         label: 'Cancelado',
-        icon: 'pi pi-times',
-        color: '#8c221c'
-    },
-    {
-        status: '90',
-        action: 'Finalização',
-        label: 'Finalizado',
         icon: 'pi pi-times',
         color: '#8c221c'
     },
@@ -364,7 +308,7 @@ const listStatusRegistro = async () => {
                     itemDataStatus.value.push({
                         // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
                         date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
-                        status: status[0].label,
+                        status: status[0].label + (userData.admin >= 2 ? ' ' + status[0].status : ''),
                         icon: status[0].icon,
                         color: status[0].color
                     });
@@ -389,7 +333,7 @@ const statusRecord = async (status) => {
         rejectIcon: 'pi pi-times',
         acceptClass: 'p-button-danger'
     };
-    if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_EXCLUIDO, andamentoRegistro.value.STATUS_LIQUIDADO].includes(status)) {
+    if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_EXCLUIDO, andamentoRegistro.value.STATUS_FINALIZADO].includes(status)) {
         let startMessage = '';
         if (andamentoRegistro.value.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
         confirm.require({
@@ -402,7 +346,7 @@ const statusRecord = async (status) => {
                     if (status == andamentoRegistro.value.STATUS_EXCLUIDO) {
                         toGrid();
                     } // Se for excluído, redireciona para o grid
-                    else if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_LIQUIDADO].includes(status)) {
+                    else if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_FINALIZADO].includes(status)) {
                         reload();
                     } // Se for cancelado ou liquidado, recarrega o registro
                     defaultSuccess(msgDone);
@@ -428,6 +372,8 @@ const toGrid = () => {
     router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-vendas` });
 };
 
+const oatsGrid = ref(null);
+
 const dialog = useDialog();
 const showPvOatForm = () => {
     dialog.open(OatForm, {
@@ -452,11 +398,8 @@ const showPvOatForm = () => {
         // },
         onClose: (options) => {
             const data = options.data;
-            if (data) {
-                // const buttonType = data.buttonType;
-                // const summary_and_detail = buttonType ? { summary: 'No Product Selected', detail: `Pressed '${buttonType}' button` } : { summary: 'Product Selected', detail: data.name };
-            }
-            defaultSuccess('Funcionou!!!');
+            if (data) console.log(data);
+            oatsGrid.value.loadData();
         }
     });
 };
@@ -532,7 +475,7 @@ watch(selectedCadastro, (value) => {
                             <p v-else v-html="itemData.observacao || ''" class="p-inputtext p-component p-filled p-disabled" />
                         </div>
                     </div>
-                    <OatsGrid v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="itemData" />
+                    <OatsGrid ref="oatsGrid" v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="itemData" />
                 </div>
                 <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
                     <Fieldset :toggleable="true" class="mb-3">
@@ -542,7 +485,7 @@ watch(selectedCadastro, (value) => {
                                 <span class="font-bold text-lg">Ações do Registro</span>
                             </div>
                         </template>
-                        <div v-if="mode != 'new'">
+                        <div v-if="mode != 'new' && itemDataLastStatus.status_pv < andamentoRegistro.STATUS_FINALIZADO">
                             <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
                             <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
                             <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
@@ -554,19 +497,38 @@ watch(selectedCadastro, (value) => {
                                 label="Ir para o Cadastro"
                                 type="button"
                                 class="w-full mb-3"
-                                :icon="`pi pi-fw pi-id-card`"
+                                :icon="`fa-regular fa-address-card fa-shake`"
                                 style="color: #a97328"
                                 text
                                 raised
                                 @click="router.push(`/${userData.cliente}/${userData.dominio}/cadastro/${itemData.id_cadastros}`)"
                             />
-                            <SplitButton label="Novo Registro" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
-                            <Button label="Criar OAT" type="button" class="w-full mb-3" :icon="`fa-solid fa-screwdriver-wrench fa-shake'`" style="color: #a97328" text raised @click="showPvOatForm" />
-                            <Button label="Liquidar Registro" type="button" class="w-full mb-3" :icon="`fa-solid fa-check fa-shake'`" severity="success" text raised @click="statusRecord(andamentoRegistro.STATUS_LIQUIDADO)" />
                             <Button
-                                label="Cancelar Registro"
-                                v-tooltip.top="itemData.id_filho ? `Se cancelar, cancelará o documento relacionado e suas comissões, caso haja!` : 'Inutiliza o registro, mas não exclui!'"
-                                v-if="itemData.status < andamentoRegistro.STATUS_CANCELADO"
+                                label="Criar OAT"
+                                v-if="itemDataLastStatus.status_pv < andamentoRegistro.STATUS_FINALIZADO"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-screwdriver-wrench fa-shake`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="showPvOatForm"
+                            />
+                            <Button
+                                label="Finalizar Atendimento"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-check fa-shake'`"
+                                severity="success"
+                                :disabled="itemDataLastStatus.status_pv >= andamentoRegistro.STATUS_FINALIZADO"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistro.STATUS_FINALIZADO)"
+                            />
+                            <Button
+                                label="Cancelar Atendimento"
+                                v-tooltip.top="'Cancela o atendimento, mas não o exclui!'"
+                                v-if="itemDataLastStatus.status_pv < andamentoRegistro.STATUS_CANCELADO"
                                 type="button"
                                 :disabled="!(userData.pv >= 3 && itemData.status == 10)"
                                 class="w-full mb-3"
@@ -577,9 +539,8 @@ watch(selectedCadastro, (value) => {
                                 @click="statusRecord(andamentoRegistro.STATUS_CANCELADO)"
                             />
                             <Button
-                                label="Reativar Registro"
-                                v-tooltip.top="itemData.id_filho ? `Se reativar, reativará o documento relacionado e suas comissões, caso haja!` : ''"
-                                v-else-if="itemData.status >= andamentoRegistro.STATUS_CANCELADO"
+                                label="Reativar Atendimento"
+                                v-else-if="itemDataLastStatus.status_pv >= andamentoRegistro.STATUS_CANCELADO"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice fa-shake'`"
@@ -589,7 +550,7 @@ watch(selectedCadastro, (value) => {
                                 @click="statusRecord(andamentoRegistro.STATUS_REATIVADO)"
                             />
                             <Button
-                                label="Excluir Registro"
+                                label="Excluir Atendimento"
                                 v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
                                 type="button"
                                 :disabled="!(userData.pv >= 4 && itemData.status != andamentoRegistro.STATUS_EXCLUIDO)"
@@ -646,6 +607,7 @@ watch(selectedCadastro, (value) => {
                         <p>itemData: {{ itemData }}</p>
                         <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
                         <p v-if="props.idPipeline">idPipeline: {{ props.idPipeline }}</p>
+                        <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
                     </div>
                 </div>
             </div>

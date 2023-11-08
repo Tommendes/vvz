@@ -150,13 +150,8 @@ const routes = [
             // Password
             {
                 path: '/:client/:domain/password-reset',
-                name: 'password-reset',
+                name: 'cli-password-reset',
                 component: () => import('@/views/pages/auth/UserPassReset.vue')
-            },
-            {
-                path: '/:client/:domain/request-password-reset',
-                name: 'request-password-reset',
-                component: () => import('@/views/pages/auth/UserRequestPassReset.vue')
             },
             // Rotas de teste
             {

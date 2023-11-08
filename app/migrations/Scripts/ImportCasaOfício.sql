@@ -306,5 +306,6 @@ INSERT INTO vivazul_cso_root.pv_status (evento,created_at,updated_at,STATUS,id_p
 ) (SELECT 1,created_at,NULL updated_at,10,pv.id,0 FROM vivazul_cso_root.pv pv);
 INSERT INTO vivazul_cso_root.pv_status (evento,created_at,updated_at,STATUS,id_pv,status_pv
 ) (SELECT 1,NOW() created_at,NULL updated_at,10,pv.id,pv.status FROM vivazul_cso_root.pv pv);
+UPDATE vivazul_cso_root.pv_status SET status_pv = 80 WHERE status_pv = 90;
 
 
