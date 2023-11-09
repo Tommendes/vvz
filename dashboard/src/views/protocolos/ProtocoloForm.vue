@@ -22,7 +22,6 @@ const store = useUserStore();
 
 // Campos de formulário
 const itemData = ref({});
-const registroTipo = ref('pf');
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -51,7 +50,6 @@ const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-        // console.log('loadData',url);
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -139,24 +137,6 @@ onMounted(() => {
 watchEffect(() => {
     isItemDataChanged();
 });
-const menu = ref();
-const preview = ref(false);
-const items = ref([
-    {
-        label: 'View',
-        icon: 'pi pi-fw pi-search',
-        command: () => {
-            alert('Enviar nova imagem');
-        }
-    },
-    {
-        label: 'Delete',
-        icon: 'pi pi-fw pi-trash',
-        command: () => {
-            alert('Excluir imagem');
-        }
-    }
-]);
 </script>
 
 <template>

@@ -14,7 +14,6 @@ const confirm = useConfirm();
 const store = useUserStore();
 const router = useRouter();
 const filters = ref(null);
-const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
@@ -47,7 +46,7 @@ const loadData = () => {
         loading.value = true;
         axios.get(`${urlBase.value}`).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
-            gridData.value.forEach((element) => {
+            gridData.value.forEach(() => {
             });
             loading.value = false;
         });
