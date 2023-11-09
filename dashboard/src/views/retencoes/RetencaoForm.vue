@@ -66,7 +66,6 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.masked(itemData.value.telefone_contato);
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
@@ -83,7 +82,6 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;

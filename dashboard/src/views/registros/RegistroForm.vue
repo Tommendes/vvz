@@ -1,9 +1,8 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { isValidEmail } from '@/global';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -25,34 +24,6 @@ const toast = useToast();
 
 // Campos de formulário
 const itemData = ref({});
-const registroTipo = ref('pf');
-const labels = ref({
-    tp_cta: "Tipo de CTA",
-	id_empresa: "iD da Empresa",
-	id_cadastros: "iD do Cadastros",
-	id_centro_custo: "Codigo relacional com a tabela fin_centro_custo",
-	tipoDocumento: "Tipo de Documento Gerado",
-	doc_fiscal: "Nota fiscal do lancamento",
-	data_lanc: "Data do lancamento da conta no sistema",
-	data_vencimento: "Data de vencimento programado",
-	data_pagto: "Data do Pagamento",
-	valor_bruto: "Valor bruto da conta",
-	valor_bruto_nf: "Valor Bruto da Nota Fiscal",
-	valor_retencao: "Valor da Retenção",
-	valor_liquido: "Valor Liquido da Conta",
-	descricao_retencao: "Descrição do Motivo da Retencao",
-	valor_vencimentos: "Valor Bruto da Conta",
-	valor_nota_fiscal: "Valor Total da Nota Fiscal",
-	duplicata: "Duplicata da conta gerada no faturamento",
-	duplicata_impr: "Quantidade de vezes que a duplicata foi impresso",
-	descricao_conta: "Descrição da conta",
-	obs_da_conta: "Observacao da conta",
-	vencimento: "Parcela da conta. Ex.",
-	forma_pagto: "Forma de pagamento utilizada",
-	doc_pagto: "Documento que quitou o pagamento",
-	situacao: "Situacao",
-	motiv_cancel: "Motivo do cancelamento"
-});
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -88,7 +59,6 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.masked(itemData.value.telefone_contato);
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
@@ -105,7 +75,6 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -196,143 +165,130 @@ const items = ref([
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-4">
-                            <label for="tp_cta">{{ labels.tp_cta }}</label>
+                            <label for="tp_cta">Tipo de CTA</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tp_cta" id="tp_cta" type="text" />
                         </div>
-                        <div class="col-12 md:col-4">
-                            <label for="id_empresa">{{ labels.id_empresa }}</label>
+                        <!-- <div class="col-12 md:col-4">
+                            <label for="id_empresa">iD da Empresa</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_empresa" id="id_empresa" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="id_cadastros">{{ labels.id_cadastros }}</label>
+                            <label for="id_cadastros">iD do Cadastros</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="id_centro_custo">{{ labels.id_centro_custo }}</label>
+                        </div> -->
+                        <!-- <div class="col-12 md:col-4">
+                            <label for="id_centro_custo">Codigo relacional com a tabela fin_centro_custo</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_centro_custo" id="id_centro_custo" type="text" />
-                        </div>
+                        </div> -->
                         <div class="col-12 md:col-4">
-                            <label for="tipoDocumento">{{ labels.tipoDocumento }}</label>
+                            <label for="tipoDocumento">Tipo de Documento Gerado</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tipoDocumento" id="tipoDocumento" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="doc_fiscal">{{ labels.doc_fiscal }}</label>
+                            <label for="doc_fiscal">Nota fiscal do lancamento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.doc_fiscal" id="doc_fiscal" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="data_lanc">{{ labels.data_lanc }}</label>
+                            <label for="data_lanc">Data do lancamento da conta no sistema</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.data_lanc" id="data_lanc" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="data_vencimento">{{ labels.data_vencimento }}</label>
+                            <label for="data_vencimento">Data de vencimento programado</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.data_vencimento" id="data_vencimento" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="data_pagto">{{ labels.data_pagto }}</label>
+                            <label for="data_pagto">Data do Pagamento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.data_pagto" id="data_pagto" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_bruto">{{ labels.valor_bruto }}</label>
+                            <label for="valor_bruto">Valor bruto da conta</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_bruto" id="valor_bruto" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_bruto_nf">{{ labels.valor_bruto_nf }}</label>
+                            <label for="valor_bruto_nf">Valor Bruto da Nota Fiscal</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_bruto_nf" id="valor_bruto_nf" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_retencao">{{ labels.valor_retencao }}</label>
+                            <label for="valor_retencao">Valor da Retenção</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_retencao" id="valor_retencao" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_liquido">{{ labels.valor_liquido }}</label>
+                            <label for="valor_liquido">Valor Liquido da Conta</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_liquido" id="valor_liquido" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="descricao_retencao">{{ labels.descricao_retencao }}</label>
+                            <label for="descricao_retencao">Descrição do Motivo da Retencao</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao_retencao" id="descricao_retencao" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_vencimentos">{{ labels.valor_vencimentos }}</label>
+                            <label for="valor_vencimentos">Valor Bruto da Conta</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_vencimentos" id="valor_vencimentos" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_nota_fiscal">{{ labels.valor_nota_fiscal }}</label>
+                            <label for="valor_nota_fiscal">Valor Total da Nota Fiscal</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_nota_fiscal" id="valor_nota_fiscal" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="duplicata">{{ labels.duplicata }}</label>
+                            <label for="duplicata">Duplicata da conta gerada no faturamento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.duplicata" id="duplicata" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="duplicata_impr">{{ labels.duplicata_impr }}</label>
+                            <label for="duplicata_impr">Quantidade de vezes que a duplicata foi impresso</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.duplicata_impr" id="duplicata_impr" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="descricao_conta">{{ labels.descricao_conta }}</label>
+                            <label for="descricao_conta">Descrição da conta</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao_conta" id="descricao_conta" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="obs_da_conta">{{ labels.obs_da_conta }}</label>
+                            <label for="obs_da_conta">Observação da conta</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.obs_da_conta" id="obs_da_conta" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="vencimento">{{ labels.vencimento }}</label>
+                            <label for="vencimento">vencimento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.vencimento" id="vencimento" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="forma_pagto">{{ labels.forma_pagto }}</label>
+                            <label for="forma_pagto">Forma de pagamento utilizada</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.forma_pagto" id="forma_pagto" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="doc_pagto">{{ labels.doc_pagto }}</label>
+                            <label for="doc_pagto">Documento que quitou o pagamento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.doc_pagto" id="doc_pagto" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="situacao">{{ labels.situacao }}</label>
+                            <label for="situacao">Situacao</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="situacao" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.situacao" :options="dropdownSituacao" />
                         </div>
                         <div v-if="situacao == 2" class="col-12 md:col-4">
-                            <label for="motiv_cancel">{{ labels.motiv_cancel }}</label>
+                            <label for="motiv_cancel">Motivo do cancelamento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.motiv_cancel" id="motiv_cancel" type="text" />
                         </div>
-                        
-                        <!-- <div class="col-12 md:col-4">
-                            <label for="telefone_contato">{{ labels.telefone_contato }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
-                        </div>
-                        <div class="col-12 md:col-12">
-                            <label for="observacao">{{ labels.observacao }}</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
-                        </div> -->
                     </div>
                 </div>
                 <div class="col-12">

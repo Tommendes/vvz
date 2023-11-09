@@ -25,12 +25,6 @@ const toast = useToast();
 
 // Campos de formulário
 const itemData = ref({});
-const registroTipo = ref('pf');
-const labels = ref({
-    codigo: "Código da despesa ou receita",
-    tipo:"Despesa ou receita",
-    descricao: "Descrição do centro de custo"
-});
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -164,17 +158,17 @@ const items = ref([
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-6">
-                            <label for="codigo">{{ labels.codigo }}</label>
+                            <label for="codigo">Código da despesa ou receita</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.codigo" id="codigo" type="text" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="tipo">{{ labels.tipo }}</label>
+                            <label for="tipo">Despesa ou receita</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="tipo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTipo" />
                         </div>
                         <div class="col-12 md:col-12">
-                            <label for="descricao">{{ labels.descricao }}</label>
+                            <label for="descricao">Descrição do centro de custo</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
