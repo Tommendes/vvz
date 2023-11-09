@@ -120,7 +120,7 @@ const loadLazyData = () => {
                     console.log(typeof logTo, logTo);
                 }
             });
-    }, Math.random() * 100 + 250);
+    }, Math.random() * 1000 + 250);
 };
 const onPage = (event) => {
     lazyParams.value = event;

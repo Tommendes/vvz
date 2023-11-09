@@ -31,16 +31,14 @@ const model = ref([
     {
         label: 'Pós-vendas',
         items: [
-            { label: 'Assistência Técnica', icon: 'pi pi-fw pi-wrench', to: `/${user.cliente}/${user.dominio}/assistencias` },
-            { label: 'Montagem', icon: 'pi pi-fw pi-box', to: `/${user.cliente}/${user.dominio}/montagens` },
-            { label: 'Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/pos-vendas` },
+            { label: 'Gestão de Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/pos-vendas` },
             { label: 'Técnicos', icon: 'pi pi-fw pi-cog', to: `/${user.cliente}/${user.dominio}/tecnicos-pv` }
         ]
     },
     {
         label: 'Financeiro',
         items: [
-            { label: 'Registros', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/registros` },
+            { label: 'Gestão de Financeiro', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/registros` },
             { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/comissoes` },
             { label: 'Retenção', icon: 'pi pi-fw pi-wallet', to: `/${user.cliente}/${user.dominio}/retencoes` }
         ]

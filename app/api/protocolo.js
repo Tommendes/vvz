@@ -67,6 +67,10 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
+            let nextDocumentNr = await app.db(tabelaDomain).select(app.db.raw('MAX(CAST(registro AS INT)) + 1 AS registro'))
+                .where({ status: STATUS_ACTIVE }).first()
+            body.registro = nextDocumentNr.registro || '1'
+            body.registro = body.registro.toString().padStart(6, '0')
 
             app.db(tabelaDomain)
                 .insert(body)

@@ -167,7 +167,7 @@ const loadLazyData = () => {
                 }
                 router.push({ path: '/' });
             });
-    }, Math.random() * 100 + 250);
+    }, Math.random() * 1000 + 250);
 };
 // Carrega os dados do grid
 const onPage = (event) => {

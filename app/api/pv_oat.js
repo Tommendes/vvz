@@ -77,8 +77,8 @@ module.exports = app => {
             body.created_at = new Date()
             let nextDocumentNr = await app.db(tabelaDomain).select(app.db.raw('MAX(CAST(nr_oat AS INT)) + 1 AS nr_oat'))
                 .where({ status: STATUS_ACTIVE, id_pv: body.id_pv }).first()
-            body.nr_oat = nextDocumentNr.nr_oat.toString() || '1'
-            body.nr_oat = body.nr_oat.padStart(3, '0')
+            body.nr_oat = nextDocumentNr.nr_oat || '1'
+            body.nr_oat = body.nr_oat.toString().padStart(3, '0')
 
 
             app.db(tabelaDomain)

@@ -552,7 +552,7 @@ onMounted(async () => {
         await listUnidadesDescricao();
         // Agentes de negócio
         await listAgentesNegocio();
-    }, Math.random() * 100 + 250);
+    }, Math.random() * 1000 + 250);
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
@@ -577,19 +577,11 @@ watch(route, (value) => {
                         <div class="col-12">
                             <label for="id_cadastros">Cliente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete
-                                v-else-if="mode != 'expandedFormMode' && (editCadastro || (mode == 'new' && !itemData.id_cadastros))"
-                                v-model="selectedCadastro"
-                                optionLabel="name"
-                                :suggestions="filteredCadastros"
-                                @complete="searchCadastros"
-                                forceSelection
-                            />
+                            <AutoComplete v-else-if="mode != 'expandedFormMode' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button v-if="!itemDataLastStatus.status_params >= 80" icon="pi pi-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                             </div>
-                            <!-- <p>{{ itemData.id_cadastros }} {{ mode }} {{ editCadastro }}</p> -->
                         </div>
                         <div :class="`col-12 lg:col-${mode == 'new' && !(itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
                             <label for="id_pipeline_params">Tipo</label>
@@ -782,7 +774,7 @@ watch(route, (value) => {
                             <span v-html="guide" />
                         </p>
                     </Fieldset>
-                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 3">
+                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                         <p>{{ route.name }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>

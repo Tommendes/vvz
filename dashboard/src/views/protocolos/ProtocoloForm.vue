@@ -291,6 +291,11 @@ const items = ref([
                             <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
+                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                        <p>{{ route.name }}</p>
+                        <p>mode: {{ mode }}</p>
+                        <p>itemData: {{ itemData }}</p>
+                    </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">

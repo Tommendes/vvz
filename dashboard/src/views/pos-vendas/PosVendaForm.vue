@@ -95,7 +95,7 @@ const loadData = async () => {
                     }
                 });
             }
-        }, Math.random() * 100 + 250);
+        }, Math.random() * 1000 + 250);
     } else if (props.idCadastro) {
         itemData.value.id_cadastros = props.idCadastro;
         selectedCadastro.value = {
@@ -433,14 +433,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-9">
                             <label for="id_cadastros">Cliente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete
-                                v-else-if="mode != 'expandedFormMode' && (editCadastro || (mode == 'new' && !itemData.id_cadastros))"
-                                v-model="selectedCadastro"
-                                optionLabel="name"
-                                :suggestions="filteredCadastros"
-                                @complete="searchCadastros"
-                                forceSelection
-                            />
+                            <AutoComplete v-else-if="mode != 'expandedFormMode' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
@@ -449,7 +442,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-3">
                             <label for="tipo">Tipo do Pós-venda</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.tipo" id="tipo" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTiposPv" :disabled="mode == 'view'" />
+                            <Dropdown v-else placeholder="Selecione..." :showClear="!!itemData.tipo" id="tipo" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTiposPv" :disabled="mode == 'view'" />
                         </div>
                         <div class="col-12" v-if="dropdownPipelineByCadastro.length && (itemData.id_pipeline || mode != 'view')">
                             <label for="id_pipeline">Pipeline</label>

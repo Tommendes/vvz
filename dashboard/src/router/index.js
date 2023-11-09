@@ -56,26 +56,6 @@ const routes = [
             },
             // Seção Pós-Vendas
             {
-                path: '/:client/:domain/assistencias',
-                name: 'assistencias',
-                component: () => import('@/views/assistencia/AssistenciasGrid.vue')
-            },
-            {
-                path: '/:client/:domain/assistencia/:id',
-                name: 'assistencia',
-                component: () => import('@/views/assistencia/AssistenciaForm.vue')
-            },
-            {
-                path: '/:client/:domain/montagens',
-                name: 'monatagens',
-                component: () => import('@/views/montagem/MontagensGrid.vue')
-            },
-            {
-                path: '/:client/:domain/montagem/:id',
-                name: 'montagem',
-                component: () => import('@/views/montagem/MontagemForm.vue')
-            },
-            {
                 path: '/:client/:domain/pos-vendas',
                 name: 'pos-vendas',
                 component: () => import('@/views/pos-vendas/PosVendasGrid.vue')

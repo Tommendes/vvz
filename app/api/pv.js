@@ -93,8 +93,8 @@ module.exports = app => {
             app.db.transaction(async (trx) => {
                 let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr AS INT)) + 1 AS pv_nr'))
                     .where({ status: STATUS_ACTIVE }).first()
-                body.pv_nr = nextDocumentNr.pv_nr.toString() || '1'
-                body.pv_nr = body.pv_nr.padStart(6, '0')
+                body.pv_nr = nextDocumentNr.pv_nr || '1'
+                body.pv_nr = body.pv_nr.toString().padStart(6, '0')
 
                 // Variáveis da criação de um registro
                 const newRecord = {
