@@ -387,45 +387,68 @@ module.exports = app => {
                 return res.status(500).send(error)
             })
     }
-
+    
     const remove = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
+        const registro = { status: req.query.st || STATUS_DELETE }
         try {
             // Alçada para exibição
-            isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabela}"`)
+            isMatchOrError(uParams && !((registro.status == STATUS_DELETE && uParams.pv < 4) || uParams.pv < 3), `${noAccessMsg} "Exclusão/liquidação de Pós-venda"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const registro = { status: STATUS_DELETE }
+        const tabelaPvStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
         try {
-            // registrar o evento na tabela de eventos
+            // Variáveis da edição de um registro            
+            let updateRecord = {
+                updated_at: new Date(),
+                status: registro.status,
+                id: req.params.id
+            };
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento'],
-                "last": last,
-                "next": registro,
-                "request": req,
-                "evento": {
-                    "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
-                    "tabela_bd": tabela,
+            app.db.transaction(async (trx) => {
+                // Iniciar a transação e editar na tabela principal
+                const { createEventUpd } = app.api.sisEvents
+                // Registrar o evento na tabela de eventos
+                // Dados originais do registro
+                const eventPayload = {
+                    notTo: ['created_at', 'updated_at', 'evento',],
+                    last: last,
+                    next: updateRecord,
+                    request: req,
+                    evento: {
+                        "classevento": "Remove",
+                        "evento": `Exclusão de registro de ${tabela}`,
+                        "tabela_bd": tabela
+                    },
+                    trx: trx,
+                };
+                const evento = await createEventUpd(eventPayload);
+                updateRecord = { ...updateRecord, evento: evento }
+                await trx(tabelaPvStatusDomain).insert({
+                    status: STATUS_ACTIVE,
+                    status_pv: registro.status,
+                    created_at: new Date(),
+                    id_pv: req.params.id,
+                });
+                if (registro.status == STATUS_DELETE) {
+                    await trx(tabelaDomain).update(updateRecord).where({ id: req.params.id });
+                    return res.status(204).send()
+                } else {
+                    return res.status(200).send(updateRecord);
                 }
-            })
-            const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
-                .where({ id: req.params.id })
-            existsOrError(rowsUpdated, 'Registro não foi encontrado')
-
-            res.status(204).send()
+            }).catch((error) => {
+                // Se ocorrer um erro, faça rollback da transação
+                app.api.logger.logError({
+                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                });
+                return res.status(500).send(error);
+            });
         } catch (error) {
+            console.log(error);
             res.status(400).send(error)
         }
     }

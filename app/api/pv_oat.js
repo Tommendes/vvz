@@ -22,13 +22,10 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-            existsOrError(body.id_pv, 'Id_pv não encontrado')
-            if (body.id_pv < 0 && body.id_pv.length > 10) throw "Id_pv inválido"
-            existsOrError(body.id_cadastro_endereco, 'Id_cadastro_endereco não encontrado')
-            if (body.id_cadastro_endereco < 0 && body.id_cadastro_endereco.length > 10) throw "id_cadastro_endereco inválido"
-            existsOrError(body.int_ext, 'Int_ext não encontrado')
-            if (body.int_ext.length > 10) throw "Int_ext inválido"
-            existsOrError(body.garantia, 'Garantia não encontrada')
+            existsOrError(body.id_pv, 'Pós-venda não encontrado')
+            existsOrError(body.id_cadastro_endereco, 'Endereço não informado')
+            existsOrError(body.int_ext, 'Se interno ou externo não informado')
+            existsOrError(body.garantia, 'Se garantia não informado')
             if (body.garantia == 1 && !(!!body.nf_garantia.trim())) throw "Favor informar a nota fiscal"
             existsOrError(body.pessoa_contato, 'Contato no cliente não encontrado')
             existsOrError(body.telefone_contato, 'Telefone do contato não encontrado')

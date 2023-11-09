@@ -139,7 +139,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-bluegray-200 mb-3"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-fw pi-id-card text-2xl text-bluegray-700"></i>
+                                    <i class="fa-regular fa-address-card text-2xl text-bluegray-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Responsive Layout</h5>
                                 <span class="text-600">Nulla malesuada pellentesque elit.</span>

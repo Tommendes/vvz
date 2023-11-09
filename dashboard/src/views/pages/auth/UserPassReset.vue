@@ -25,6 +25,8 @@ const tokenTimeLeft = ref(0);
 const tokenTimeMessage = ref('');
 const tokenTimeLeftMessage = ref('');
 const urlUnlock = ref(`${baseApiUrl}/password-reset/`);
+const user = ref({});
+const saudation = ref('');
 
 const logoUrl = computed(() => {
     return `/assets/images/logo-app.png`;
@@ -33,6 +35,7 @@ const logoUrl = computed(() => {
 onMounted(async () => {
     idUser.value = route.query.q;
     await getTokenTime();
+    if (user.value.name) saudation.value = `Olá, ${user.value.name}!<br />`;
 });
 
 const passReset = async () => {
@@ -64,7 +67,8 @@ const getTokenTime = async () => {
         await axios
             .get(urlTo)
             .then((body) => {
-                const gtt = body.data.gtt;
+                user.value = body.data;
+                const gtt = user.value.gtt;
                 tokenTimeLeft.value = gtt;
                 setInterval(() => {
                     if (tokenTimeLeft.value > 0) {
@@ -118,13 +122,13 @@ const moveToNextInput = (index) => {
 
 <template>
     <div class="align-items-center justify-content-center">
-        <div class="flex flex-column max-w-25rem md:max-w-45rem">
+        <div class="flex flex-column max-w-25rem md:max-w-30rem">
             <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
                 <div class="w-full text-center surface-card py-5 px-5" style="border-radius: 53px">
                     <div class="text-center mb-2">
                         <img :src="logoUrl" :alt="`${appName} logo`" class="mb-2 w-4rem flex-shrink-0" />
                         <div class="text-900 text-3xl font-medium mb-3">
-                            Bem vindo ao {{ appName }}<small><sup>&copy;</sup></small>
+                            <span v-html="saudation + `Bem vindo ao ${appName}<small><sup>&copy;</sup></small>`"></span>
                         </div>
                     </div>
                     <div v-if="tokenTimeLeft > 0" class="text-center mb-2">
@@ -133,30 +137,19 @@ const moveToNextInput = (index) => {
                         </span>
                     </div>
 
-                    <form @submit.prevent="passReset" class="max-w-30rem">
+                    <form @submit.prevent="passReset" class="max-w-35rem">
                         <div class="formgrid grid" v-if="tokenTimeLeft > 0">
                             <div class="field col-12">
-                                <label for="token1" class="block text-900 text-xl font-medium mb-2">Seu token</label>
+                                <label for="token1" class="block text-900 mb-2">Seu token</label>
                                 <div v-focustrap class="flex flex-wrap justify-content-center card-container blue-container gap-1">
-                                    <InputText
-                                        autofocus
-                                        v-model="token1"
-                                        id="token1"
-                                        autocomplete="off"
-                                        maxlength="1"
-                                        :size="1"
-                                        @input="moveToNextInput(1)"
-                                        pattern="[0-9a-zA-Z]{1}"
-                                        class="centered-input"
-                                        style="max-width: 30px; text-transform: uppercase"
-                                    />
-                                    <InputText v-model="token2" id="token2" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(2)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token3" id="token3" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(3)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token4" id="token4" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(4)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token5" id="token5" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(5)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token6" id="token6" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(6)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token7" id="token7" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(7)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token8" id="token8" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput('password')" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
+                                    <InputText autofocus v-model="token1" id="token1" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(1)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
+                                    <InputText v-model="token2" id="token2" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(2)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
+                                    <InputText v-model="token3" id="token3" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(3)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
+                                    <InputText v-model="token4" id="token4" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(4)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
+                                    <InputText v-model="token5" id="token5" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(5)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
+                                    <InputText v-model="token6" id="token6" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(6)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
+                                    <InputText v-model="token7" id="token7" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(7)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
+                                    <InputText v-model="token8" id="token8" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput('password')" class="token-input" />
                                 </div>
 
                                 <div class="formgrid grid">
@@ -176,7 +169,7 @@ const moveToNextInput = (index) => {
                             <span style="color: chocolate; text-decoration: underline" v-html="tokenTimeLeftMessage" />
                         </div>
 
-                        <div class="flex align-items-center justify-content-between mb-2">
+                        <div class="flex align-items-center justify-content-between mb-2" v-if="!route.params.client">
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')">Acessar plataforma&nbsp;<i class="pi pi-sign-in"></i></Button>
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')">Início</Button>
                         </div>
@@ -199,7 +192,10 @@ const moveToNextInput = (index) => {
 </template>
 
 <style scoped>
-.centered-input .p-inputtext {
+.token-input {
     text-align: center;
+    font-size: 0.8rem;
+    max-width: 35px;
+    text-transform: uppercase;
 }
 </style>

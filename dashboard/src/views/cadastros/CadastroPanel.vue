@@ -51,7 +51,7 @@ onBeforeMount(() => {
                 <TabView>
                     <TabPanel>
                         <template #header>
-                            <i class="pi pi-fw pi-id-card mr-2"></i>
+                            <i class="fa-regular fa-address-card mr-2"></i>
                             <span>Dados básicos</span>
                         </template>
                         <CadastroForm />

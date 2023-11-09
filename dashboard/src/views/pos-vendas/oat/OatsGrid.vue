@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, provide, onMounted } from 'vue';
+import { ref, onBeforeMount, provide, onMounted, inject } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -71,17 +71,20 @@ const getItem = (data) => {
 // Carrega os dados da grid
 const loadData = async () => {
     const url = `${urlBase.value}`;
+    console.log(url);
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
             if (element.int_ext == 0) element.int_ext = 'Interno';
             else element.int_ext = 'Externo';
             const maxStringLength = 150;
-            if (element.descricao.length > maxStringLength) element.descricao = element.descricao.substring(0, maxStringLength).trim() + '...';
+            if (element.descricao && element.descricao.length > maxStringLength) element.descricao = element.descricao.substring(0, maxStringLength).trim() + ' ...';
         });
         loading.value = false;
     });
 };
+defineExpose({ loadData }); // Expondo a função para o componente pai
+
 // Excluir registro
 const deleteRow = () => {
     confirm.require({
@@ -113,7 +116,7 @@ const showPvOatForm = () => {
             idCadastro: props.itemDataRoot.id_cadastros
         },
         props: {
-            header: `OAT ${itemData.value.nr_oat ? itemData.value.nr_oat.toString().padStart(3, '0') : ''}`,
+            header: `OAT ${props.itemDataRoot.pv_nr}.${itemData.value.nr_oat ? itemData.value.nr_oat.toString().padStart(3, '0') : ''}`,
             style: {
                 width: '100rem',
             },
@@ -127,11 +130,8 @@ const showPvOatForm = () => {
         //     footer: markRaw(FooterDemo)
         // },
         onClose: (options) => {
-            const data = options.data;
-            if (data) {
-                // const buttonType = data.buttonType;
-                // const summary_and_detail = buttonType ? { summary: 'No Product Selected', detail: `Pressed '${buttonType}' button` } : { summary: 'Product Selected', detail: data.name };
-            }
+            const data = options;
+            if (data) console.log(data);
             loadData();
         }
     });
@@ -150,7 +150,6 @@ onMounted(() => {
 
 <template>
     <div class="card" style="min-width: 100%">
-        <!-- <OatForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" /> -->
         <div class="col-12" v-if="gridData && gridData.length == 0">
             <div class="card bg-green-200 mt-3">
                 <div class="flex flex-wrap align-items-center justify-content-center">
@@ -183,16 +182,6 @@ onMounted(() => {
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button
-                        type="button"
-                        icon="pi pi-plus"
-                        label="Novo Registro"
-                        outlined
-                        @click="
-                            itemData = { id_cadastros: props.itemDataRoot.id };
-                            mode = 'new';
-                        "
-                    />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />

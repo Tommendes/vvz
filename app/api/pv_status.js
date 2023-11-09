@@ -9,9 +9,8 @@ module.exports = app => {
     const STATUS_PENDENTE = 0;
     const STATUS_REATIVADO = 1;
     const STATUS_EM_ANDAMENTO = 60;
-    const STATUS_LIQUIDADO = 80;
+    const STATUS_FINALIZADO = 80;
     const STATUS_CANCELADO = 89;
-    const STATUS_FINALIZADO = 90;
     const STATUS_EXCLUIDO = 99;
 
     const MOTIVO_AT = 0;
@@ -251,7 +250,7 @@ module.exports = app => {
         STATUS_PENDENTE,
         STATUS_REATIVADO,
         STATUS_EM_ANDAMENTO,
-        STATUS_LIQUIDADO,
+        STATUS_FINALIZADO,
         STATUS_CANCELADO,
         STATUS_FINALIZADO,
         STATUS_EXCLUIDO,
