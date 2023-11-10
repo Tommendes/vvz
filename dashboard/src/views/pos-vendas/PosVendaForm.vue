@@ -38,14 +38,7 @@ import OatsGrid from './oat/OatsGrid.vue';
 import OatForm from './oat/OatForm.vue';
 
 // Andamento do registro
-const andamentoRegistro = ref({
-    STATUS_PENDENTE: 0,
-    STATUS_REATIVADO: 1,
-    STATUS_EM_ANDAMENTO: 60,
-    STATUS_FINALIZADO: 80,
-    STATUS_CANCELADO: 89,
-    STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
-});
+import { andamentoRegistroPv } from '@/global';
 
 // Campos de formulário
 const itemData = ref({});
@@ -114,7 +107,7 @@ const saveData = async () => {
         const url = `${urlBase.value}${id}`;
         const preparedBody = {
             ...itemData.value,
-            status_pv_force: andamentoRegistro.value.STATUS_PENDENTE
+            status_pv_force: andamentoRegistroPv.STATUS_PENDENTE
         };
         axios[method](url, preparedBody)
             .then(async (res) => {
@@ -333,9 +326,9 @@ const statusRecord = async (status) => {
         rejectIcon: 'pi pi-times',
         acceptClass: 'p-button-danger'
     };
-    if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_EXCLUIDO, andamentoRegistro.value.STATUS_FINALIZADO].includes(status)) {
+    if ([andamentoRegistroPv.STATUS_CANCELADO, andamentoRegistroPv.STATUS_EXCLUIDO, andamentoRegistroPv.STATUS_FINALIZADO].includes(status)) {
         let startMessage = '';
-        if (andamentoRegistro.value.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
+        if (andamentoRegistroPv.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
         confirm.require({
             ...optionsConfirmation,
             header: 'Confirmar',
@@ -343,10 +336,10 @@ const statusRecord = async (status) => {
             accept: async () => {
                 await axios.delete(url, itemData.value).then(() => {
                     const msgDone = `Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`;
-                    if (status == andamentoRegistro.value.STATUS_EXCLUIDO) {
+                    if (status == andamentoRegistroPv.STATUS_EXCLUIDO) {
                         toGrid();
                     } // Se for excluído, redireciona para o grid
-                    else if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_FINALIZADO].includes(status)) {
+                    else if ([andamentoRegistroPv.STATUS_CANCELADO, andamentoRegistroPv.STATUS_FINALIZADO].includes(status)) {
                         reload();
                     } // Se for cancelado ou liquidado, recarrega o registro
                     defaultSuccess(msgDone);
@@ -478,7 +471,7 @@ watch(selectedCadastro, (value) => {
                                 <span class="font-bold text-lg">Ações do Registro</span>
                             </div>
                         </template>
-                        <div v-if="mode != 'new' && itemDataLastStatus.status_pv < andamentoRegistro.STATUS_FINALIZADO">
+                        <div v-if="mode != 'new' && itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO">
                             <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
                             <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
                             <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
@@ -498,7 +491,7 @@ watch(selectedCadastro, (value) => {
                             />
                             <Button
                                 label="Criar OAT"
-                                v-if="itemDataLastStatus.status_pv < andamentoRegistro.STATUS_FINALIZADO"
+                                v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-screwdriver-wrench fa-shake`"
@@ -513,15 +506,15 @@ watch(selectedCadastro, (value) => {
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-check fa-shake'`"
                                 severity="success"
-                                :disabled="itemDataLastStatus.status_pv >= andamentoRegistro.STATUS_FINALIZADO"
+                                :disabled="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_FINALIZADO"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_FINALIZADO)"
+                                @click="statusRecord(andamentoRegistroPv.STATUS_FINALIZADO)"
                             />
                             <Button
                                 label="Cancelar Atendimento"
                                 v-tooltip.top="'Cancela o atendimento, mas não o exclui!'"
-                                v-if="itemDataLastStatus.status_pv < andamentoRegistro.STATUS_CANCELADO"
+                                v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_CANCELADO"
                                 type="button"
                                 :disabled="!(userData.pv >= 3 && itemData.status == 10)"
                                 class="w-full mb-3"
@@ -529,30 +522,30 @@ watch(selectedCadastro, (value) => {
                                 severity="warning"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_CANCELADO)"
+                                @click="statusRecord(andamentoRegistroPv.STATUS_CANCELADO)"
                             />
                             <Button
                                 label="Reativar Atendimento"
-                                v-else-if="itemDataLastStatus.status_pv >= andamentoRegistro.STATUS_CANCELADO"
+                                v-else-if="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_CANCELADO"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice fa-shake'`"
                                 severity="warning"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_REATIVADO)"
+                                @click="statusRecord(andamentoRegistroPv.STATUS_REATIVADO)"
                             />
                             <Button
                                 label="Excluir Atendimento"
                                 v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
                                 type="button"
-                                :disabled="!(userData.pv >= 4 && itemData.status != andamentoRegistro.STATUS_EXCLUIDO)"
+                                :disabled="!(userData.pv >= 4 && itemData.status != andamentoRegistroPv.STATUS_EXCLUIDO)"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-fire`"
                                 severity="danger"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_EXCLUIDO)"
+                                @click="statusRecord(andamentoRegistroPv.STATUS_EXCLUIDO)"
                             />
                         </div>
                     </Fieldset>
