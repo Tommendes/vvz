@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
+import { ref, onBeforeMount, watchEffect } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -17,11 +17,12 @@ const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/protocolos`);
+const urlBaseProtoDocs = ref(`${baseApiUrl}/proto-docs`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'titulo', label: 'Título', minWidth: '35rem' },
+    { field: 'titulo', label: 'Título', minWidth: '15rem' },
     { field: 'descricao', label: 'Descrição', minWidth: '30rem' },
-    { field: 'registro', label: 'Número do Protocolo', minWidth: '12rem' }
+    { field: 'registro', label: 'Protocolo', minWidth: '10rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -45,11 +46,44 @@ const loadData = () => {
         loading.value = true;
         axios.get(`${urlBase.value}`).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
+            gridData.value.forEach(async (element) => {
+                const url = `${urlBaseProtoDocs.value}/${element.id}`;
+                element.descricao = '';
+                await axios.get(url).then((axiosRes) => {
+                    const items = axiosRes.data.data;
+                    items.forEach((protoDocs) => {
+                        if (protoDocs.descricao) element.descricao += `${protoDocs.descricao.split(',')},`;
+                    });
+                });
+                element.descricao = element.descricao.replaceAll(',', ', ').trim().slice(0, -1);
+            });
             loading.value = false;
         });
     }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
+// const highlight = (value, markTxt) => {
+//     let target = value;
+//     let targetMark = markTxt.toString().trim().replace(/\s\s+/g, ' ').split(' ');
+//     targetMark.forEach((elementMark) => {
+//         target = target.replaceAll(elementMark, `<span class="foundMark">tommendes.com.br</span>`);
+//     });
+//     return target;
+// };
+// watchEffect(() => {
+//     if (filters.value.global.value) {
+//         if (gridData.value)
+//             gridData.value.forEach((element) => {
+//                 // console.log(element.descricao);
+//                 listaNomes.value.forEach((elementNome) => {
+//                     if (filters.value.global.value) {
+//                         // element[elementNome.field] = highlight(element[elementNome.field], filters.value.global.value);
+//                         console.log(highlight(element[elementNome.field], filters.value.global.value));
+//                     }
+//                 });
+//             });
+//     }
+// });
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -58,7 +92,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos' }]" />
-    <div class="card" style="min-width: 100rem">
+    <div class="card" style="min-width: 100%">
         <ProtocoloForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
@@ -108,3 +142,9 @@ onBeforeMount(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.foundMark {
+    background-color: yellow;
+    padding: 0;
+}
+</style>

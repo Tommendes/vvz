@@ -11,7 +11,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
-        const id_protocolos = req.params.id_protocolos
+        body.id_protocolos = req.params.id_protocolos
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
         const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
         try {
@@ -21,23 +21,30 @@ module.exports = app => {
             // Alçada para inclusão
             else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+        }
+
+        if (typeof body.descricao === 'array') {
+            body.descricao = body.descricao.join()
+        }
+        else if (typeof body.descricao === 'object') {
+            body.descricao = JSON.stringify(body.descricao)
         }
         
         try {
             existsOrError(body.tp_documento, 'Tipo do documento não informado')
             existsOrError(body.descricao, 'Descrição do documento não informado')
-            const duplicated = await app.db(tabelaDomain).where({ id_protocolos: id_protocolos, tp_documento: body.tp_documento, descricao: body.descricao }).first()
+            const duplicated = await app.db(tabelaDomain).where({ id_protocolos: body.id_protocolos, tp_documento: body.tp_documento, descricao: body.descricao }).first()
             if (duplicated) throw 'Documento já cadastrado'
-            const idProtocolosExists = await app.db(tabelaProtocoloDomain).where({ id: id_protocolos }).first()
+            const idProtocolosExists = await app.db(tabelaProtocoloDomain).where({ id: body.id_protocolos }).first()
             if (!idProtocolosExists) throw 'Protocolo não encontrado'
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
+        delete body.hash; delete body.tblName; delete body.items;
 
-        body.id_protocolos = id_protocolos
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -63,7 +70,7 @@ module.exports = app => {
                 else res.status(200).send('Endereço não encontrado')
             })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         } else {
@@ -93,7 +100,7 @@ module.exports = app => {
                     return res.json(body)
                 })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         }
@@ -110,7 +117,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
         }
         const id_protocolos = req.params.id_protocolos
 
@@ -118,7 +125,7 @@ module.exports = app => {
         const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.id, tbl1.tp_documento, tbl1.descricao, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
 
         ret.where({ 'tbl1.status': STATUS_ACTIVE, id_protocolos: id_protocolos })
             .join({ tbl2: tabelaProtocoloDomain }, 'tbl2.id', 'tbl1.id_protocolos')
@@ -127,7 +134,7 @@ module.exports = app => {
                 return res.json({ data: body, count: count })
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             })
     }
 
@@ -139,7 +146,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
         }
         const id_protocolos = req.params.id_protocolos
 
@@ -151,7 +158,7 @@ module.exports = app => {
                 return res.json(body)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)
             })
     }
@@ -163,7 +170,7 @@ module.exports = app => {
             // Alçada para exibição
             isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabela}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`

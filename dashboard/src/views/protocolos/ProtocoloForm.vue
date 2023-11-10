@@ -18,6 +18,7 @@ import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
 import { Mask } from 'maska';
+import moment from 'moment';
 const masks = ref({
     cpf_cnpj: new Mask({
         mask: ['###.###.###-##', '##.###.###/####-##']
@@ -28,6 +29,8 @@ const masks = ref({
 const itemData = ref({
     e_s: 's'
 });
+const dataRegistro = ref('');
+const gridDatProtoDocs = ref([]);
 // Modo do formulário
 const mode = ref('view');
 // Mensages de erro
@@ -44,25 +47,40 @@ const props = defineProps({
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/protocolos`);
+const urlBaseProtoDocs = ref(`${baseApiUrl}/proto-docs`);
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    if (route.params.id || itemData.value.id) {
-        if (route.params.id) itemData.value.id = route.params.id;
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        await axios.get(url).then(async (res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                itemData.value = body;
-                await getNomeCliente();
-                loading.value = false;
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/${userData.dominio}/protocolos` });
-            }
+    setTimeout(async () => {
+        if (route.params.id || itemData.value.id) {
+            if (route.params.id) itemData.value.id = route.params.id;
+            const url = `${urlBase.value}/${itemData.value.id}`;
+            await axios.get(url).then(async (res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    itemData.value = body;
+                    await getNomeCliente();
+                    await loadDataProtoDocs();
+                    dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
+                    loading.value = false;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${userData.cliente}/${userData.dominio}/protocolos` });
+                }
+            });
+        } else loading.value = false;
+    }, Math.random() * 1000 + 250);
+};
+const loadDataProtoDocs = async () => {
+    setTimeout(() => {
+        loading.value = true;
+        axios.get(`${urlBaseProtoDocs.value}/${itemData.value.id}`).then((axiosRes) => {
+            gridDatProtoDocs.value = axiosRes.data.data;
+            if (gridDatProtoDocs.value.descricao) itemDataProtDocs.value.items = gridDatProtoDocs.value.descricao.split(',');
+            loading.value = false;
         });
-    } else loading.value = false;
+    }, Math.random() * 1000 + 250);
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -76,7 +94,8 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/protocolos/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/protocolo/${itemData.value.id}` });
+                    dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -86,6 +105,32 @@ const saveData = async () => {
                 defaultWarn(err.response.data);
             });
     }
+};
+
+const itemDataProtDocs = ref({});
+const saveDataProtDocs = async () => {
+    const method = itemDataProtDocs.value.id ? 'put' : 'post';
+    const id = itemDataProtDocs.value.id ? `/${itemDataProtDocs.value.id}` : '';
+    const url = `${urlBaseProtoDocs.value}/${itemData.value.id}${id}`;
+    // Remover os colchetes do array itemDataProtDocs.value.descricao
+    itemDataProtDocs.value.descricao = itemDataProtDocs.value.items.join(',');
+    await axios[method](url, itemDataProtDocs.value)
+        .then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Documentos registrados com sucesso');
+                itemDataProtDocs.value = body;
+                loadDataProtoDocs();
+                itemDataProtDocs.value = { id_protocolos: itemData.value.id };
+            } else {
+                defaultWarn('Erro ao salvar documentos');
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            defaultWarn(err.response.data);
+        });
+    if (itemDataProtDocs.value.descricao) itemDataProtDocs.value.descricao = itemDataProtDocs.value.descricao.split(',');
 };
 
 /**
@@ -186,6 +231,33 @@ const reload = () => {
     loadData();
     emit('cancel');
 };
+// Editar item da lista de documentos
+const editItem = (item) => {
+    itemDataProtDocs.value = item;
+    // transform itemDataProtDocs.value.descricao em array
+    itemDataProtDocs.value.items = itemDataProtDocs.value.descricao.split(',');
+};
+// Excluir item da lista de documentos
+const deleteItem = (item) => {
+    confirm.require({
+        group: 'templating',
+        header: 'Confirmar exclusão',
+        message: 'Você tem certeza que deseja excluir este registro?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            axios.delete(`${urlBaseProtoDocs.value}/${itemData.value.id}/${item.id}`).then(() => {
+                defaultSuccess('Lista de itens excluída com sucesso!');
+                loadDataProtoDocs();
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
@@ -193,10 +265,6 @@ onBeforeMount(() => {
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
-    else {
-        if (itemData.value.id) mode.value = 'view';
-        else mode.value = 'new';
-    }
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
@@ -215,9 +283,11 @@ watch(selectedCadastro, (value) => {
                     <div class="p-fluid grid">
                         <div class="col-12" v-if="itemData.registro" style="margin: 0">
                             <h3>Número do Registro: {{ itemData.registro }}</h3>
+                            <hr />
+                            <h5>Registrado em: {{ dataRegistro }}</h5>
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="id_cadastros">Cliente</label>
+                            <label for="id_cadastros">Destinatário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
@@ -225,12 +295,6 @@ watch(selectedCadastro, (value) => {
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                         </div>
-                        <!-- primeiro: -->
-                        <!-- <div class="col-12 md:col-6">
-                            <label for="id_cadastros">Registro do Destinatário no Cadastro</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
-                        </div> -->
                         <div class="col-12 md:col-6">
                             <label for="titulo">Título do Protocolo</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
@@ -247,12 +311,6 @@ watch(selectedCadastro, (value) => {
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <Dropdown v-else id="e_s" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.e_s" :options="dropdownMovimento" />
                         </div>
-                        <div class="col-12 md:col-12" v-if="itemData.descricao || ['edit', 'new'].includes(mode)">
-                            <label for="descricao">Descrição</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
-                        </div>
                     </div>
                 </div>
                 <div class="col-12">
@@ -261,11 +319,50 @@ watch(selectedCadastro, (value) => {
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
+                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                        <p>{{ route.name }}</p>
+                        <p>mode: {{ mode }}</p>
+                        <p>itemData: {{ itemData }}</p>
+                    </div>
                 </div>
-                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
-                    <p>{{ route.name }}</p>
-                    <p>mode: {{ mode }}</p>
-                    <p>itemData: {{ itemData }}</p>
+            </div>
+        </form>
+        <form @submit.prevent="saveDataProtDocs" v-if="itemData.id">
+            <div class="grid">
+                <div class="col-12">
+                    <Card class="bg-blue-200">
+                        <!-- v-if="['edit'].includes(mode)" -->
+                        <template #title> Documentos do protocolo </template>
+                        <template #content>
+                            <div class="col-12">
+                                <div class="p-fluid grid">
+                                    <div class="col-6">
+                                        <div class="col-12 md:col-12">
+                                            <label for="email_destinatario">Tipo de Documento</label>
+                                            <InputText v-model="itemDataProtDocs.tp_documento" id="email_destinatario" type="text" />
+                                        </div>
+                                        <div class="col-12 md:col-12">
+                                            <label for="descricao">Lista de Documentos (pressione Enter ou vírgula para novos itens)</label>
+                                            <Chips v-model="itemDataProtDocs.items" separator="," />
+                                        </div>
+                                        <div class="col-12 md:col-12">
+                                            <Button type="button" v-if="itemDataProtDocs.tp_documento && itemDataProtDocs.items" label="Salvar documentos" severity="success" text raised @click="saveDataProtDocs" />
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <h4>Itens do protocolo</h4>
+                                        <ol>
+                                            <li v-for="(item, index) in gridDatProtoDocs" :key="item.id">
+                                                {{ item.tp_documento }} - {{ item.descricao.replaceAll(',', ', ') }}
+                                                <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
+                                                <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir toda a lista'"></i>
+                                            </li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </Card>
                 </div>
             </div>
         </form>

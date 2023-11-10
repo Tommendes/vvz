@@ -50,8 +50,8 @@ const routes = [
                 component: () => import('@/views/protocolos/ProtocolosGrid.vue')
             },
             {
-                path: '/:client/:domain/protocolos/:id',
-                name: 'protocolos',
+                path: '/:client/:domain/protocolo/:id',
+                name: 'protocolo',
                 component: () => import('@/views/protocolos/ProtocoloForm.vue')
             },
             // Seção Pós-Vendas

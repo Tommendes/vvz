@@ -13,7 +13,6 @@ exports.up = function(knex, Promise) {
         table.string('registro',255).comment('Número do protocolos')
         table.string('titulo',255).comment('Port')
         table.string('e_s',255).comment('Movimento')
-        table.string('descricao',255).comment('Descrição do documento')
         table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
