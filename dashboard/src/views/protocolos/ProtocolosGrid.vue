@@ -3,43 +3,20 @@ import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess } from '@/toast';
-import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
-import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import ProtocoloForm from './ProtocoloForm.vue';
-const confirm = useConfirm();
 
-const store = useUserStore();
+import { useRouter } from 'vue-router';
 const router = useRouter();
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
 const filters = ref(null);
-const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/protocolos`);
-// Exlui um registro
-const deleteRow = () => {
-    confirm.require({
-        group: 'templating',
-        header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
-                defaultSuccess('Registro excluído com sucesso!');
-                loadData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
 // Itens do grid
 const listaNomes = ref([
     { field: 'titulo', label: 'Título', minWidth: '35rem' },
@@ -53,37 +30,12 @@ const initFilters = () => {
         filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
     });
 };
-// import { Mask } from 'maska';
-// const masks = ref({
-//     cpf: new Mask({
-//         mask: '###.###.###-##'
-//     }),
-//     cnpj: new Mask({
-//         mask: '##.###.###/####-##'
-//     })
-// });
 initFilters();
 const clearFilter = () => {
     initFilters();
 };
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolos/${itemData.value.id}` });
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-const toggle = (event) => {
-    menu.value.toggle(event);
+const goField = () => {
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/protocolo/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -93,10 +45,6 @@ const loadData = () => {
         loading.value = true;
         axios.get(`${urlBase.value}`).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
-            gridData.value.forEach((element) => {
-                // if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
-                // else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
-            });
             loading.value = false;
         });
     }, Math.random() * 1000 + 250);
@@ -154,8 +102,7 @@ onBeforeMount(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="goField" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

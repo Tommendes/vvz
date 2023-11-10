@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -10,58 +10,32 @@ const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
-// import { Mask } from 'maska';
-// const masks = ref({
-//     cpf_cnpj_empresa: new Mask({
-//         mask: ['###.###.###-##', '##.###.###/####-##']
-//     }),
-//     telefone: new Mask({
-//         mask: ['(##) ####-####', '(##) #####-####']
-//     }),
-//     cep: new Mask({
-//         mask: '#####-###'
-//     })
-// });
-
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
-
-import { useRouter } from 'vue-router';
 const router = useRouter();
 
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
 
-// Validar o cpf_cnpj
-import { cpf, cnpj } from 'cpf-cnpj-validator';
+import { Mask } from 'maska';
+const masks = ref({
+    cpf_cnpj: new Mask({
+        mask: ['###.###.###-##', '##.###.###/####-##']
+    })
+});
 
 // Campos de formulário
-const itemData = ref({});
-const registroTipo = ref('pf');
-const labels = ref({
-    id_cadastros: 'Registro do Destinatário no Cadastro',
-    email_destinatario: 'Email do Destinatário',
-    registro: 'Número do Protocolo',
-    titulo: 'Título',
-    e_s: 'Movimento',
-    descricao: 'Descrição'
+const itemData = ref({
+    e_s: 's'
 });
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
-const loading = ref({
-    form: true,
-    accepted: null,
-    email: null,
-    telefone: null
-});
+const loading = ref(false);
+// Editar cadastro no autocomplete
+const editCadastro = ref(false);
 // Props do template
 const props = defineProps({
     mode: String
@@ -72,29 +46,23 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/protocolos`);
 // Carragamento de dados do form
 const loadData = async () => {
+    loading.value = true;
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-
-        await axios.get(url).then((res) => {
+        await axios.get(url).then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 body.id = String(body.id);
-
                 itemData.value = body;
-                // if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.masked(itemData.value.cpf_cnpj_empresa);
-                // if (itemData.value.cep) itemData.value.cep = masks.value.cep.masked(itemData.value.cep);
-                // if (itemData.value.tel1) itemData.value.tel1 = masks.value.telefone.masked(itemData.value.tel1);
-                // if (itemData.value.tel2) itemData.value.tel2 = masks.value.telefone.masked(itemData.value.tel2);
-                itemDataComparision.value = { ...itemData.value };
-
-                loading.value.form = false;
+                await getNomeCliente();
+                loading.value = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolos` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/protocolos` });
             }
         });
-    } else loading.value.form = false;
+    } else loading.value = false;
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -108,8 +76,7 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolos/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/protocolos/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -120,67 +87,94 @@ const saveData = async () => {
             });
     }
 };
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        // errorMessages.value = {};
+
+/**
+ * Autocomplete de cadastros e pipeline
+ */
+const cadastros = ref([]);
+const filteredCadastros = ref([]);
+const selectedCadastro = ref();
+const nomeCliente = ref();
+const getNomeCliente = async () => {
+    try {
+        const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&slct=nome,cpf_cnpj`;
+        const response = await axios.get(url);
+        if (response.data.data.length > 0) {
+            nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj) + (itemData.value.pv_nr ? ' - PV: ' + itemData.value.pv_nr : '');
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cadastros:', error);
     }
-    return ret;
 };
-// // Validar a existência do nome do cliente
-// const validateRazaoSocial = () => {
-//     if (itemData.value.razaosocial && typeof itemData.value.razaosocial.trim() == 'string' && itemData.value.razaosocial.trim().length > 0) errorMessages.value.razaosocial = null;
-//     else errorMessages.value.razaosocial = 'Nome ou razão social inválidos';
-//     return !errorMessages.value.razaosocial;
-// };
-// // Validar CPF
-// const validateCPFCNPJ = () => {
-//     const toValidate = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-//     if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) errorMessages.value.cpf_cnpj_empresa = null;
-//     else errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
-//     return !errorMessages.value.cpf_cnpj_empresa;
-// };
-// // Validar Cep
-// const validateCep = () => {
-//     if (itemData.value.cep && itemData.value.cep.replace(/([^\d])+/gim, '').length == 8) errorMessages.value.cep = null;
-//     else errorMessages.value.cep = 'Formato de cep inválido';
-//     return !errorMessages.value.cep;
-// };
+const searchCadastros = (event) => {
+    setTimeout(async () => {
+        // Verifique se o campo de pesquisa não está vazio
+        if (!event.query.trim().length) {
+            // Se estiver vazio, exiba todas as sugestões
+            filteredCadastros.value = [...cadastros.value];
+        } else {
+            // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
+            if (cadastros.value.length === 0) {
+                // Carregue os cadastros da API (ou de onde quer que você os obtenha)
+                getCadastroBySearchedId();
+            }
+            // Filtrar os cadastros com base na consulta do usuário
+            filteredCadastros.value = cadastros.value.filter((registro) => {
+                return registro.name.toLowerCase().includes(event.query.toLowerCase());
+            });
+        }
+    }, 250);
+};
+const getCadastroBySearchedId = async (idCadastro) => {
+    const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
+    try {
+        const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
+        const response = await axios.get(url);
+        cadastros.value = response.data.data.map((element) => {
+            return {
+                code: element.id,
+                name: element.nome + ' - ' + element.cpf_cnpj
+            };
+        });
+    } catch (error) {
+        console.error('Erro ao buscar cadastros:', error);
+    }
+};
+const confirmEditAutoSuggest = (tipo) => {
+    confirm.require({
+        group: 'templating',
+        header: `Corfirmar edição`,
+        message: `Corfirma que deseja editar o ${tipo}?`,
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            if (tipo == 'cadastro') {
+                selectedCadastro.value = undefined;
+                editCadastro.value = true;
+            }
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+/**
+ * Fim de autocomplete de cadastros
+ */
+// Opções de DropDown de Movimento
+const dropdownMovimento = ref([
+    { value: 'e', label: 'Entrada' },
+    { value: 's', label: 'Saída' }
+]);
 // Validar email
-const validateEmail = (field) => {
+const validateEmail = () => {
     if (itemData.value.email_destinatario && itemData.value.email_destinatario.trim().length > 0 && !isValidEmail(itemData.value.email_destinatario)) {
         errorMessages.value.email_destinatario = 'Formato de email inválido';
     } else errorMessages.value.email_destinatario = null;
     return !errorMessages.value.email_destinatario;
 };
-// // Validar telefone
-// const validateTelefone = (field) => {
-//     if (itemData.value[field] && itemData.value[field].trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value[field]).length)) {
-//         errorMessages.value[field] = 'Formato de telefone inválido';
-//     } else errorMessages.value[field] = null;
-//     return !errorMessages.value[field];
-// };
-// const validator = () => {
-//     let isValid = true;
-//     [
-//         { field: 'email', validator: 'email' },
-//         { field: 'email_at', validator: 'email' },
-//         { field: 'email_comercial', validator: 'email' },
-//         { field: 'email_financeiro', validator: 'email' },
-//         { field: 'email_rh', validator: 'email' },
-//         { field: 'tel1', validator: 'telefone' },
-//         { field: 'tel2', validator: 'telefone' }
-//     ].forEach((element) => {
-//         if (element.validator == 'email' && !validateEmail(element.field)) {
-//             isValid = false;
-//         } else if (element.validator == 'telefone' && !validateTelefone(element.field)) {
-//             isValid = false;
-//         }
-//     });
-//     return isValid;
-// };
 // Validar formulário
 const formIsValid = () => {
     return validateEmail();
@@ -188,7 +182,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
     errorMessages.value = {};
     loadData();
     emit('cancel');
@@ -205,104 +198,74 @@ onMounted(() => {
         else mode.value = 'new';
     }
 });
-// Observar alterações nos dados do formulário
-watchEffect(() => {
-    isItemDataChanged();
-    // validateRazaoSocial();
-    // validator();
-    // validateCep();
-});
-// watch(
-//     () => itemData.value.cpf_cnpj_empresa,
-//     (newItemData) => {
-//         // validateCPFCNPJ();
-//         if (newItemData.replace(/([^\d])+/gim, '').length == 14) {
-//             registroTipo.value = 'pj';
-//             labels.value.razaosocial = 'Razão Social';
-//             labels.value.fantasia = 'Nome Fantasia';
-//             labels.value.cpf_cnpj_empresa = 'CNPJ';
-//             labels.value.ie = 'Inscrição Estadual';
-//         } else {
-//             registroTipo.value = 'pf';
-//             labels.value.razaosocial = 'Nome';
-//             labels.value.fantasia = 'Nome Social';
-//             labels.value.cpf_cnpj_empresa = 'CPF';
-//             labels.value.ie = 'RG';
-//         }
-//     }
-// );
-const menu = ref();
-const preview = ref(false);
-const items = ref([
-    {
-        label: 'View',
-        icon: 'pi pi-fw pi-search',
-        command: () => {
-            alert('Enviar nova imagem');
-        }
-    },
-    {
-        label: 'Delete',
-        icon: 'pi pi-fw pi-trash',
-        command: () => {
-            alert('Excluir imagem');
-        }
+// Observar alterações na propriedade selectedCadastro
+watch(selectedCadastro, (value) => {
+    if (value) {
+        itemData.value.id_cadastros = value.code;
     }
-]);
+});
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.cliente}/${userData.dominio}/protocolos` }, { label: itemData.registro + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.cliente}/${userData.dominio}/protocolos` }, { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
-                            <label for="id_cadastros">{{ labels.id_cadastros }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
+                        <div class="col-12" v-if="itemData.registro" style="margin: 0">
+                            <h3>Número do Registro: {{ itemData.registro }}</h3>
                         </div>
-                        <div class="col-12 md:col-4">
-                            <label for="titulo">{{ labels.titulo }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <div class="col-12 md:col-6">
+                            <label for="id_cadastros">Cliente</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <div class="p-inputgroup flex-1" v-else>
+                                <InputText disabled v-model="nomeCliente" />
+                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                            </div>
+                        </div>
+                        <!-- primeiro: -->
+                        <!-- <div class="col-12 md:col-6">
+                            <label for="id_cadastros">Registro do Destinatário no Cadastro</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastros" id="id_cadastros" type="text" />
+                        </div> -->
+                        <div class="col-12 md:col-6">
+                            <label for="titulo">Título do Protocolo</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.titulo" id="titulo" type="text" />
                         </div>
-                        <div class="col-12 md:col-4">
-                            <label for="email_destinatario">{{ labels.email_destinatario }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                        <div class="col-12 md:col-6">
+                            <label for="email_destinatario">Email do Destinatário</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_destinatario" id="email_destinatario" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email_destinatario">{{ errorMessages.email_destinatario || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="registro">{{ labels.registro }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.registro" id="registro" type="text" />
+                            <label for="e_s">Movimento</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="e_s" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.e_s" :options="dropdownMovimento" />
                         </div>
-                        <div class="col-12 md:col-6">
-                            <label for="e_s">{{ labels.e_s }}</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.e_s" id="e_s" type="text" />
-                        </div>
-                        <div class="col-12 md:col-12">
-                            <label for="descricao">{{ labels.descricao }}</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <div class="col-12 md:col-12" v-if="itemData.descricao || ['edit', 'new'].includes(mode)">
+                            <label for="descricao">Descrição</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
-                    </div>
-                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
-                        <p>{{ route.name }}</p>
-                        <p>mode: {{ mode }}</p>
-                        <p>itemData: {{ itemData }}</p>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
+                </div>
+                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>{{ route.name }}</p>
+                    <p>mode: {{ mode }}</p>
+                    <p>itemData: {{ itemData }}</p>
                 </div>
             </div>
         </form>
