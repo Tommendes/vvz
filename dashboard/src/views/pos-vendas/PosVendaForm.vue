@@ -20,10 +20,10 @@ const route = useRoute();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
-import { Mask } from 'maska';
 import moment from 'moment';
 
 import { useDialog } from 'primevue/usedialog';
+import { Mask } from 'maska';
 const masks = ref({
     cpf_cnpj: new Mask({
         mask: ['###.###.###-##', '##.###.###/####-##']
@@ -181,21 +181,6 @@ const getCadastroBySearchedId = async (idCadastro) => {
         console.error('Erro ao buscar cadastros:', error);
     }
 };
-// Listar pipelines do cadastro
-const listPipeline = async () => {
-    try {
-        const url = `${baseApiUrl}/pipeline/f-a/glf?doc_venda=2&fld=tbl1.id_cadastros&vl=${itemData.value.id_cadastros}&slct=tbl1.id,tbl1.documento,pp.descricao,pp.id idPipelineParams`;
-        await axios.get(url).then((res) => {
-            dropdownPipelineByCadastro.value = [];
-            res.data.data.map((item) => {
-                const label = `${item.descricao.toString().replaceAll(/_/g, ' ')} - ${item.documento}${userData.admin >= 1 ? ` (${item.idPipelineParams})` : ''}`;
-                dropdownPipelineByCadastro.value.push({ value: item.id, label: label });
-            });
-        });
-    } catch (error) {
-        console.error('Erro ao buscar pipeline:', error);
-    }
-};
 const confirmEditAutoSuggest = (tipo) => {
     confirm.require({
         group: 'templating',
@@ -219,6 +204,21 @@ const confirmEditAutoSuggest = (tipo) => {
 /**
  * Fim de autocomplete de cadastros
  */
+// Listar pipelines do cadastro
+const listPipeline = async () => {
+    try {
+        const url = `${baseApiUrl}/pipeline/f-a/glf?doc_venda=2&fld=tbl1.id_cadastros&vl=${itemData.value.id_cadastros}&slct=tbl1.id,tbl1.documento,pp.descricao,pp.id idPipelineParams`;
+        await axios.get(url).then((res) => {
+            dropdownPipelineByCadastro.value = [];
+            res.data.data.map((item) => {
+                const label = `${item.descricao.toString().replaceAll(/_/g, ' ')} - ${item.documento}${userData.admin >= 1 ? ` (${item.idPipelineParams})` : ''}`;
+                dropdownPipelineByCadastro.value.push({ value: item.id, label: label });
+            });
+        });
+    } catch (error) {
+        console.error('Erro ao buscar pipeline:', error);
+    }
+};
 // Validar formulário
 const formIsValid = () => {
     return itemData.value.tipo && String(itemData.value.tipo) && itemData.value.id_cadastros;
