@@ -468,9 +468,9 @@ watch(selectedCadastro, (value) => {
                             <p v-else v-html="itemData.observacao || ''" class="p-inputtext p-component p-filled p-disabled" />
                         </div>
                     </div>
-                    <OatsGrid ref="oatsGrid" v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="itemData" />
+                    <OatsGrid ref="oatsGrid" v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="{ ...itemData, last_status: itemDataLastStatus.status_pv }" />
                 </div>
-                <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
+                <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
                     <Fieldset :toggleable="true" class="mb-3">
                         <template #legend>
                             <div class="flex align-items-center text-primary">

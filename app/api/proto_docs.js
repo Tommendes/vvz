@@ -1,7 +1,8 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'protocolo'
+    const tabela = 'proto_docs'
+    const tabelaProtocolo = 'protocolos'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -10,6 +11,9 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
+        const id_protocolos = req.params.id_protocolos
+        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
         try {
             // Alçada para edição
             if (body.id)
@@ -19,18 +23,21 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
-
-        try {
-
-            existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
-            if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
         
+        try {
+            existsOrError(body.tp_documento, 'Tipo do documento não informado')
+            existsOrError(body.descricao, 'Descrição do documento não informado')
+            const duplicated = await app.db(tabelaDomain).where({ id_protocolos: id_protocolos, tp_documento: body.tp_documento, descricao: body.descricao }).first()
+            if (duplicated) throw 'Documento já cadastrado'
+            const idProtocolosExists = await app.db(tabelaProtocoloDomain).where({ id: id_protocolos }).first()
+            if (!idProtocolosExists) throw 'Protocolo não encontrado'
         } catch (error) {
             return res.status(400).send(error)
         }
 
         delete body.hash; delete body.tblName
+
+        body.id_protocolos = id_protocolos
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -67,10 +74,6 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-            let nextDocumentNr = await app.db(tabelaDomain).select(app.db.raw('MAX(CAST(registro AS INT)) + 1 AS registro'))
-                .where({ status: STATUS_ACTIVE }).first()
-            body.registro = nextDocumentNr.registro || '1'
-            body.registro = body.registro.toString().padStart(6, '0')
 
             app.db(tabelaDomain)
                 .insert(body)
@@ -96,7 +99,6 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         let key = req.query.key
@@ -110,22 +112,19 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
+        const id_protocolos = req.params.id_protocolos
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
+        const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
 
-        ret.where({ status: STATUS_ACTIVE })
-            .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
+        ret.where({ 'tbl1.status': STATUS_ACTIVE, id_protocolos: id_protocolos })
+            .join({ tbl2: tabelaProtocoloDomain }, 'tbl2.id', 'tbl1.id_protocolos')
             .then(body => {
-                return res.json({ data: body, count: count, limit })
+                const count = body.length
+                return res.json({ data: body, count: count })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -142,11 +141,12 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
+        const id_protocolos = req.params.id_protocolos
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
+            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_protocolos': id_protocolos }).first()
             .then(body => {
                 return res.json(body)
             })

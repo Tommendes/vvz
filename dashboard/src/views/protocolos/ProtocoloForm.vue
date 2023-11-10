@@ -40,12 +40,12 @@ import { cpf, cnpj } from 'cpf-cnpj-validator';
 const itemData = ref({});
 const registroTipo = ref('pf');
 const labels = ref({
-    id_cadastros: "Registro do Destinatário no Cadastro",
-    email_destinatario: "Email do Destinatário",
-    registro: "Número do Protocolo",
-    titulo: "Título",
-    e_s: "Movimento",
-    descricao: "Descrição"
+    id_cadastros: 'Registro do Destinatário no Cadastro',
+    email_destinatario: 'Email do Destinatário',
+    registro: 'Número do Protocolo',
+    titulo: 'Título',
+    e_s: 'Movimento',
+    descricao: 'Descrição'
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -69,13 +69,13 @@ const props = defineProps({
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/protocolo`);
+const urlBase = ref(`${baseApiUrl}/protocolos`);
 // Carragamento de dados do form
 const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-        // console.log('loadData',url);
+
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -91,7 +91,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolo` });
+                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolos` });
             }
         });
     } else loading.value.form = false;
@@ -109,7 +109,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolo/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolos/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');

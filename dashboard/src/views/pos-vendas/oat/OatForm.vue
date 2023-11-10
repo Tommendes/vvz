@@ -2,19 +2,14 @@
 import { onBeforeMount, ref, onMounted, inject } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
+import { defaultSuccess, defaultWarn } from '@/toast';
+
+import { andamentoRegistroPv } from '@/global';
 import { useRouter } from 'vue-router';
 const router = useRouter();
-// Máscaras dos campos
-import { Mask } from 'maska';
-const masks = ref({
-    valor: new Mask({
-        mask: '0,99'
-    })
-});
+import moment from 'moment';
 // Cookies de usuário
 import { userKey } from '@/global';
-import moment from 'moment';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 // Campos de formulário
@@ -137,6 +132,10 @@ const saveData = async () => {
 const formIsValid = () => {
     return true;
 };
+const openInNewTab = (url) => {
+    window.open(url, '_blank');
+};
+
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadTecnicos();
@@ -149,73 +148,182 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="grid">
+    <div class="card">
         <form @submit.prevent="saveData">
-            <div class="col-12">
-                <h5 v-if="itemData.id && userData.admin >= 2">Registro: {{ `${itemData.id}` }} (apenas suporte)</h5>
-                <div class="p-fluid grid">
-                    <div class="col-12 md:col-5">
-                        <label for="id_cadastro_endereco">Endereço do atendimento</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastro_endereco" id="id_cadastro_endereco" type="text" /> -->
-                        <Dropdown v-else id="id_cadastro_endereco" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cadastro_endereco" :options="dropdownEnderecos" />
-                    </div>
-                    <div class="col-12 md:col-3">
-                        <label for="id_tecnico">Técnico responsável</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_tecnico" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_tecnico" :options="dropdownTecnicos" />
-                    </div>
-                    <div class="col-12 md:col-2">
-                        <label for="int_ext">Interno/Externo</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownIntExt" />
-                    </div>
-                    <div class="col-12 md:col-2">
-                        <label for="garantia">Garantia</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Dropdown v-else id="garantia" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.garantia" :options="dropdownGarantia" />
-                    </div>
-                    <div class="col-12 md:col-2">
-                        <label for="nf_garantia">Nota fiscal do produto</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" :required="itemData.garantia == 1" v-model="itemData.nf_garantia" id="nf_garantia" type="text" />
-                    </div>
-                    <div class="col-12 md:col-3">
-                        <label for="pessoa_contato">Contato no cliente</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
-                    </div>
-                    <div class="col-12 md:col-2">
-                        <label for="telefone_contato">Telefone do contato</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
-                    </div>
-                    <div class="col-12 md:col-3">
-                        <label for="email_contato">Email do contato</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
-                    </div>
-                    <div class="col-12 md:col-2">
-                        <label for="valor_total">Valor dos serviços</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                            <span class="p-inputgroup-addon">R$</span>
-                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_total" id="valor_total" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+            <div class="grid">
+                <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
+                    <div class="p-fluid grid">
+                        <div class="col-12 md:col-5">
+                            <label for="id_cadastro_endereco">Endereço do atendimento</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastro_endereco" id="id_cadastro_endereco" type="text" /> -->
+                            <Dropdown v-else id="id_cadastro_endereco" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cadastro_endereco" :options="dropdownEnderecos" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="id_tecnico">Técnico responsável</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <Dropdown v-else id="id_tecnico" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_tecnico" :options="dropdownTecnicos" />
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="int_ext">Interno/Externo</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownIntExt" />
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="garantia">Garantia</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <Dropdown v-else id="garantia" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.garantia" :options="dropdownGarantia" />
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="nf_garantia">Nota fiscal do produto</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" :required="itemData.garantia == 1" v-model="itemData.nf_garantia" id="nf_garantia" type="text" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="pessoa_contato">Contato no cliente</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="telefone_contato">Telefone do contato</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="email_contato">Email do contato</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="valor_total">Valor dos serviços</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_total" id="valor_total" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-12" v-if="itemData.aceite_do_cliente">
+                            <h3>Este serviço foi autorizado na data de {{ dataAceite }}</h3>
+                        </div>
+                        <div class="col-12 md:col-12">
+                            <label for="descricao">Descrição dos serviços</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <Editor v-else-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
-                    <div class="col-12 md:col-12" v-if="itemData.aceite_do_cliente">
-                        <h3>Este serviço foi autorizado na data de {{ dataAceite }}</h3>
-                    </div>
-                    <div class="col-12 md:col-12">
-                        <label for="descricao">Descrição dos serviços</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Editor v-else-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
-                    </div>
                 </div>
-                <div class="card flex justify-content-center flex-wrap gap-3">
+                <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
+                    <Fieldset :toggleable="true" class="mb-3">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="pi pi-bolt mr-2"></span>
+                                <span class="font-bold text-lg">Ações do Registro</span>
+                            </div>
+                        </template>
+                        <div v-if="mode != 'new' && dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO">
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
+                        </div>
+                        <div v-if="mode != 'edit'">
+                            <hr />
+                            <Button
+                                label="Ir para o Cadastro"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-regular fa-address-card fa-shake`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="openInNewTab(`/${userData.cliente}/${userData.dominio}/cadastro/${dialogRef.data.idCadastro}`)"
+                            />
+                            <Button
+                                label="Criar OAT"
+                                v-if="dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-screwdriver-wrench fa-shake`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="showPvOatForm"
+                            />
+                            <Button
+                                label="Finalizar Atendimento"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-check fa-shake'`"
+                                severity="success"
+                                :disabled="dialogRef.data.lastStatus >= andamentoRegistroPv.STATUS_FINALIZADO"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_FINALIZADO)"
+                            />
+                            <Button
+                                label="Cancelar Atendimento"
+                                v-tooltip.top="'Cancela o atendimento, mas não o exclui!'"
+                                v-if="dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_CANCELADO"
+                                type="button"
+                                :disabled="!(userData.pv >= 3 && itemData.status == 10)"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-ban`"
+                                severity="warning"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_CANCELADO)"
+                            />
+                            <Button
+                                label="Reativar Atendimento"
+                                v-else-if="dialogRef.data.lastStatus >= andamentoRegistroPv.STATUS_CANCELADO"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-file-invoice fa-shake'`"
+                                severity="warning"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_REATIVADO)"
+                            />
+                            <Button
+                                label="Excluir Atendimento"
+                                v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
+                                type="button"
+                                :disabled="!(userData.pv >= 4 && itemData.status != andamentoRegistroPv.STATUS_EXCLUIDO)"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-fire`"
+                                severity="danger"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_EXCLUIDO)"
+                            />
+                        </div>
+                    </Fieldset>
+                    <Fieldset :toggleable="true">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="pi pi-clock mr-2"></span>
+                                <span class="font-bold text-lg">Andamento do Registro</span>
+                            </div>
+                        </template>
+                        <Skeleton v-if="loading" height="3rem"></Skeleton>
+                        <Timeline v-else :value="itemDataStatus">
+                            <template #marker="slotProps">
+                                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                                    <i :class="slotProps.item.icon"></i>
+                                </span>
+                            </template>
+                            <template #opposite="slotProps">
+                                <small class="p-text-secondary">{{ slotProps.item.date }}</small>
+                            </template>
+                            <template #content="slotProps">
+                                {{ slotProps.item.status }}
+                            </template>
+                        </Timeline>
+                    </Fieldset>
+                </div>
+                <div class="card flex justify-content-center flex-wrap gap-3" v-if="!(dialogRef.data.lastStatus >= 80)">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode = 'view'" />

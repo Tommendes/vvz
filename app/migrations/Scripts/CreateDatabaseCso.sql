@@ -343,11 +343,11 @@ CREATE TABLE `pipeline_params` (
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
-/*Table structure for table `protocolo` */
+/*Table structure for table `protocolos` */
 
-DROP TABLE IF EXISTS `protocolo`;
+DROP TABLE IF EXISTS `protocolos`;
 
-CREATE TABLE `protocolo` (
+CREATE TABLE `protocolos` (
   `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `evento` INT(11) NOT NULL,
   `created_at` VARCHAR(255) NOT NULL,
@@ -355,7 +355,7 @@ CREATE TABLE `protocolo` (
   `status` VARCHAR(255) NOT NULL DEFAULT '0' COMMENT 'Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)',
   `id_cadastros` INT(10) UNSIGNED NOT NULL COMMENT 'Registro do Destinatário no cadastro',
   `email_destinatario` VARCHAR(255) DEFAULT NULL COMMENT 'Destinatário(email)',
-  `registro` VARCHAR(255) DEFAULT NULL COMMENT 'Número do protocolo',
+  `registro` VARCHAR(255) DEFAULT NULL COMMENT 'Número do protocolos',
   `titulo` VARCHAR(255) DEFAULT NULL COMMENT 'Port',
   `e_s` VARCHAR(255) DEFAULT NULL COMMENT 'Movimento',
   `descricao` VARCHAR(255) DEFAULT NULL COMMENT 'Descrição do documento',

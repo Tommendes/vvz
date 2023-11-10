@@ -202,17 +202,26 @@ module.exports = app => {
         .get(app.api.pipeline_status.getByFunction)
 
     /**
-    * Rota de protocolo
+    * Rotas de protocolos
     */
-    app.route('/protocolo')
+    app.route('/protocolos')
         .all(app.config.passport.authenticate())
-        .post(app.api.protocolo.save)
-        .get(app.api.protocolo.get)
-    app.route('/protocolo/:id')
+        .post(app.api.protocolos.save)
+        .get(app.api.protocolos.get)
+    app.route('/protocolos/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.protocolo.save)
-        .get(app.api.protocolo.getById)
-        .delete(app.api.protocolo.remove)
+        .put(app.api.protocolos.save)
+        .get(app.api.protocolos.getById)
+        .delete(app.api.protocolos.remove)
+    app.route('/proto-docs/:id_protocolos')
+        .all(app.config.passport.authenticate())
+        .post(app.api.proto_docs.save)
+        .get(app.api.proto_docs.get)
+    app.route('/proto-docs/:id_protocolos/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.proto_docs.save)
+        .get(app.api.proto_docs.getById)
+        .delete(app.api.proto_docs.remove)
 
     /**
      * Rota de com_prospeccao

@@ -54,15 +54,7 @@ const calcTypeRepres = ref('R$');
 const calcTypeAgente = ref('R$');
 
 // Andamento do registro
-const andamentoRegistro = ref({
-    STATUS_PENDENTE: 0,
-    STATUS_REATIVADO: 1,
-    STATUS_CONVERTIDO: 10,
-    STATUS_PEDIDO: 20,
-    STATUS_LIQUIDADO: 80,
-    STATUS_CANCELADO: 89,
-    STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
-});
+import { andamentoRegistroPipeline } from '@/global';
 
 const convertFloatFields = (result = 'pt') => {
     itemData.value.valor_bruto = formatValor(itemData.value.valor_bruto, result);
@@ -128,7 +120,7 @@ const saveData = async () => {
         convertFloatFields('en');
         const preparedBody = {
             ...itemData.value,
-            status_params_force: andamentoRegistro.value.STATUS_PENDENTE,
+            status_params_force: andamentoRegistroPipeline.STATUS_PENDENTE,
             pipeline_params_force: itemDataParam.value
         };
         axios[method](url, preparedBody)
@@ -476,9 +468,9 @@ const statusRecord = async (status) => {
         rejectIcon: 'pi pi-times',
         acceptClass: 'p-button-danger'
     };
-    if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_EXCLUIDO, andamentoRegistro.value.STATUS_LIQUIDADO].includes(status)) {
+    if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_EXCLUIDO, andamentoRegistroPipeline.STATUS_LIQUIDADO].includes(status)) {
         let startMessage = '';
-        if (andamentoRegistro.value.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
+        if (andamentoRegistroPipeline.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
         confirm.require({
             ...optionsConfirmation,
             header: 'Confirmar',
@@ -486,10 +478,10 @@ const statusRecord = async (status) => {
             accept: async () => {
                 await axios.delete(url, itemData.value).then(() => {
                     const msgDone = `Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`;
-                    if (status == andamentoRegistro.value.STATUS_EXCLUIDO) {
+                    if (status == andamentoRegistroPipeline.STATUS_EXCLUIDO) {
                         toGrid();
                     } // Se for excluído, redireciona para o grid
-                    else if ([andamentoRegistro.value.STATUS_CANCELADO, andamentoRegistro.value.STATUS_LIQUIDADO].includes(status)) {
+                    else if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_LIQUIDADO].includes(status)) {
                         reload();
                     } // Se for cancelado ou liquidado, recarrega o registro
                     defaultSuccess(msgDone);
@@ -499,7 +491,7 @@ const statusRecord = async (status) => {
                 return false;
             }
         });
-    } else if ([andamentoRegistro.value.STATUS_CONVERTIDO].includes(status))
+    } else if ([andamentoRegistroPipeline.STATUS_CONVERTIDO].includes(status))
         confirm.require({
             ...optionsConfirmation,
             header: 'Confirmar',
@@ -507,7 +499,7 @@ const statusRecord = async (status) => {
             accept: async () => {
                 const preparedBody = {
                     ...itemData.value,
-                    status_params_force: andamentoRegistro.value.STATUS_CONVERTIDO,
+                    status_params_force: andamentoRegistroPipeline.STATUS_CONVERTIDO,
                     pipeline_params_force: itemDataParam.value
                 };
                 await axios.put(url, preparedBody).then(async (body) => {
@@ -784,7 +776,7 @@ watch(route, (value) => {
                         <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
                     </div>
                 </div>
-                <div class="col-12 lg:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
+                <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
                     <Fieldset :toggleable="true" class="mb-3">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -826,14 +818,14 @@ watch(route, (value) => {
                             <Button
                                 label="Converter para Pedido"
                                 v-if="itemDataParam.doc_venda == 1"
-                                :disabled="![andamentoRegistro.STATUS_PENDENTE, andamentoRegistro.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
+                                :disabled="![andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
                                 type="button"
                                 class="w-full mb-3"
-                                :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && [andamentoRegistro.STATUS_PENDENTE, andamentoRegistro.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''}`"
+                                :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''}`"
                                 severity="danger"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_CONVERTIDO)"
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_CONVERTIDO)"
                             />
                             <SplitButton
                                 label="Comissionar"
@@ -868,7 +860,7 @@ watch(route, (value) => {
                                 severity="success"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_LIQUIDADO)"
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_LIQUIDADO)"
                             />
                             <Button
                                 label="Cancelar Registro"
@@ -881,7 +873,7 @@ watch(route, (value) => {
                                 severity="warning"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_CANCELADO)"
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_CANCELADO)"
                             />
                             <Button
                                 label="Reativar Registro"
@@ -893,7 +885,7 @@ watch(route, (value) => {
                                 severity="warning"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_REATIVADO)"
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_REATIVADO)"
                             />
                             <Button
                                 label="Excluir Registro"
@@ -905,7 +897,7 @@ watch(route, (value) => {
                                 severity="danger"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistro.STATUS_EXCLUIDO)"
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_EXCLUIDO)"
                             />
                         </div>
                     </Fieldset>

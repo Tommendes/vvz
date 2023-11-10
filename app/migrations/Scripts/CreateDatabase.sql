@@ -339,11 +339,11 @@ CREATE TABLE `pipeline_params` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/*Table structure for table `protocolo` */
+/*Table structure for table `protocolos` */
 
-DROP TABLE IF EXISTS `protocolo`;
+DROP TABLE IF EXISTS `protocolos`;
 
-CREATE TABLE `protocolo` (
+CREATE TABLE `protocolos` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `evento` int(11) NOT NULL,
   `created_at` varchar(255) NOT NULL,
@@ -351,7 +351,7 @@ CREATE TABLE `protocolo` (
   `status` varchar(255) NOT NULL DEFAULT '0' COMMENT 'Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)',
   `id_cadastros` int(10) unsigned NOT NULL COMMENT 'Registro do Destinatário no cadastro',
   `email_destinatario` varchar(255) DEFAULT NULL COMMENT 'Destinatário(email)',
-  `registro` varchar(255) DEFAULT NULL COMMENT 'Número do protocolo',
+  `registro` varchar(255) DEFAULT NULL COMMENT 'Número do protocolos',
   `titulo` varchar(255) DEFAULT NULL COMMENT 'Port',
   `e_s` varchar(255) DEFAULT NULL COMMENT 'Movimento',
   `descricao` varchar(255) DEFAULT NULL COMMENT 'Descrição do documento',

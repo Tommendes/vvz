@@ -18,7 +18,7 @@ const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/protocolo`);
+const urlBase = ref(`${baseApiUrl}/protocolos`);
 // Exlui um registro
 const deleteRow = () => {
     confirm.require({
@@ -71,7 +71,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolo/${itemData.value.id}` });
+            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/protocolos/${itemData.value.id}` });
         }
     },
     {

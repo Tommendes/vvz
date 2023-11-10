@@ -1,30 +1,16 @@
 <script setup>
-import { ref, onBeforeMount, provide, onMounted, inject } from 'vue';
+import { ref, onBeforeMount, onMounted } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn } from '@/toast';
 import OatForm from './OatForm.vue';
-
-import { useConfirm } from 'primevue/useconfirm';
-const confirm = useConfirm();
-
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
-
 const filters = ref(null);
-const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/pv-oat/${props.itemDataRoot.id}`);
-const mode = ref('grid');
-const visible = ref(false);
 // Props do template
-const props = defineProps({
-    itemDataRoot: Object // O próprio pv
-});
+const props = defineProps(['itemDataRoot']); // O próprio pv
 import { useDialog } from 'primevue/usedialog';
 // Inicializa os filtros
 const initFilters = () => {
@@ -37,41 +23,19 @@ const initFilters = () => {
         valor_total: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
     };
 };
+// Cookies de usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 // Inicializa os filtros
 initFilters();
 // Limpa os filtros
 const clearFilter = () => {
     initFilters();
 };
-// Itens do menu de contexto
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            showPvOatForm();
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-// Abre o menu de contexto
-const toggle = (event) => {
-    menu.value.toggle(event);
-};
-// Obtém o item selecionado
-const getItem = (data) => {
-    itemData.value = data;
-};
 // Carrega os dados da grid
 const loadData = async () => {
     const url = `${urlBase.value}`;
-    console.log(url);
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
@@ -85,38 +49,18 @@ const loadData = async () => {
 };
 defineExpose({ loadData }); // Expondo a função para o componente pai
 
-// Excluir registro
-const deleteRow = () => {
-    confirm.require({
-        group: 'templating',
-        header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
-                defaultSuccess('Registro excluído com sucesso!');
-                loadData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
-
 const dialog = useDialog();
-const showPvOatForm = () => {
+const showPvOatForm = (data) => {
+    itemData.value = data;
     dialog.open(OatForm, {
         data: {
             idPv: itemData.value.id_pv,
             idPvOat: itemData.value.id,
-            idCadastro: props.itemDataRoot.id_cadastros
+            idCadastro: props.itemDataRoot.id_cadastros,
+            lastStatus: props.itemDataRoot.last_status
         },
         props: {
-            header: `OAT ${props.itemDataRoot.pv_nr}.${itemData.value.nr_oat ? itemData.value.nr_oat.toString().padStart(3, '0') : ''}`,
+            header: `OAT ${props.itemDataRoot.pv_nr}.${itemData.value.nr_oat ? itemData.value.nr_oat.toString().padStart(3, '0') : ''}${userData.admin >= 2 ? ` (${itemData.value.id})` : ''}`,
             style: {
                 width: '100rem',
             },
@@ -219,8 +163,7 @@ onMounted(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="showPvOatForm(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

@@ -2,7 +2,7 @@
 import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultError } from '@/toast';
+import { defaultError } from '@/toast';
 import PosVendaForm from './PosVendaForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { removeHtmlTags, userKey } from '@/global';
@@ -117,7 +117,7 @@ const loadLazyData = () => {
                     defaultError(error.response.data);
                 } catch (error) {
                     defaultError('Erro ao carregar dados!');
-                    console.log(typeof logTo, logTo);
+                    console.log(error, typeof logTo, logTo);
                 }
             });
     }, Math.random() * 1000 + 250);

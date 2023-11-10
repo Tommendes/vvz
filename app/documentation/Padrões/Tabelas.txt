@@ -13,7 +13,7 @@ Cliente_Dominio
 		com_agentes		Agentes de vendas
 		pipeline				Registros do pipeline
 		pipeline_status		Status dos registros
-		protocolo		Protocolos de Documentos
+		protocolos		Protocolos de Documentos
 		com_terceiros	Comissionamento dos agentes
 
 	#Etapa 3: Pos vendas

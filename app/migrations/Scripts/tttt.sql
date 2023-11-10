@@ -346,11 +346,11 @@ CREATE TABLE `ged_params` (
   `proposta_interna` tinyint(1) DEFAULT 0 COMMENT 'select,insert,update,references  Utiliza o sistema de proposta interna',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-protocolo
+protocolos
 /*Table structure for table `ged_protolo` */
-protocolo
+protocolos
 DROP TABLE IF EXISTS `ged_protolo`;
-protocolo
+protocolos
 CREATE TABLE `ged_protolo` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `evento` int(11) NOT NULL,
@@ -359,11 +359,11 @@ CREATE TABLE `ged_protolo` (
   `status` varchar(255) NOT NULL DEFAULT '0' COMMENT 'Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)',
   `id_cadastros` int(10) unsigned NOT NULL COMMENT 'Registro do Destinatário no cadastro',
   `email_destinatario` varchar(255) DEFAULT NULL COMMENT 'Destinatário(email)',
-  `registro` varchar(255) DEFAULT NULL COMMENT 'Número do protocolo',
+  `registro` varchar(255) DEFAULT NULL COMMENT 'Número do protocolos',
   `titulo` varchar(255) DEFAULT NULL COMMENT 'Port',
   `e_s` varchar(255) DEFAULT NULL COMMENT 'Movimento',
   `descricao` varchar(255) DEFAULT NULL COMMENT 'Descrição do documento',
-  PRIMARY KEY (`id`),protocolo
+  PRIMARY KEY (`id`),protocolos
   KEY `vivazul_cliente_dominio_pipeline_proprotocoloastros_foreign` (`id_cadastros`),
   CONSTRAINT `vivazul_cliente_dominio_pipeline_protolo_id_cadastros_foreign` FOREIGN KEY (`id_cadastros`) REFERENCES `cadastros` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

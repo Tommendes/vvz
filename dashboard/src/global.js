@@ -187,6 +187,26 @@ export const STATUS_DELETE = 99;
 export const MINIMUM_KEYS_BEFORE_CHANGE = 3; // Não pode repetiar a últimas X senhas
 export const TOKEN_VALIDE_MINUTES = 10; // 10 minutos de validade
 
+// Andamento do registro
+export const andamentoRegistroPv = ({
+    STATUS_PENDENTE: 0,
+    STATUS_REATIVADO: 1,
+    STATUS_EM_ANDAMENTO: 60,
+    STATUS_FINALIZADO: 80,
+    STATUS_CANCELADO: 89,
+    STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
+});
+
+export const andamentoRegistroPipeline = ({
+    STATUS_PENDENTE: 0,
+    STATUS_REATIVADO: 1,
+    STATUS_CONVERTIDO: 10,
+    STATUS_PEDIDO: 20,
+    STATUS_LIQUIDADO: 80,
+    STATUS_CANCELADO: 89,
+    STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
+});
+
 export default {
     userKey,
     glKey,
@@ -213,5 +233,7 @@ export default {
     STATUS_DELETE,
     MINIMUM_KEYS_BEFORE_CHANGE,
     TOKEN_VALIDE_MINUTES,
-    UFS
+    UFS,
+    andamentoRegistroPv,
+    andamentoRegistroPipeline
 };

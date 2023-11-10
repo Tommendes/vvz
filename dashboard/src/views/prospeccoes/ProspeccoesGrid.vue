@@ -124,7 +124,6 @@ const loadLazyData = () => {
                     if (element.contato) element.contato = renderizarHTML(element.contato);
                     element.periodo = String(element.periodo);
                     if (element.periodo) element.periodo = dropdownPeriodo.value.find((x) => x.value == element.periodo).label;
-                    console.log(element.periodo);
                 });
                 loading.value = false;
             })
@@ -134,7 +133,7 @@ const loadLazyData = () => {
                     defaultError(error.response.data);
                 } catch (error) {
                     defaultError('Erro ao carregar dados!');
-                    console.log(typeof logTo, logTo);
+                    console.log(error, typeof logTo, logTo);
                 }
             });
     }, Math.random() * 1000 + 250);
@@ -166,7 +165,6 @@ const mountUrlFilters = () => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
-    console.log(url);
     urlFilters.value = url;
 };
 const menu = ref();

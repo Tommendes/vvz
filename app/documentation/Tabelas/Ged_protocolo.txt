@@ -7,7 +7,7 @@ updated_at          varchar(255)      YES             (NULL)                    
 status              varchar(255)      NO              0                          Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)
 id_cadastros        int(10) unsigned  NO      MUL     (NULL)                     Registro do Destinatário no cadastro
 email_destinatario  varchar(255)      YES             (NULL)                     Destinatário(email)       
-registro            varchar(255)      YES             (NULL)                     Número do protocolo       
+registro            varchar(255)      YES             (NULL)                     Número do protocolos       
 titulo              varchar(255)      YES             (NULL)                     Port                       
 e_s                 varchar(255)      YES             (NULL)                     Movimento                  
 descricao           varchar(255)      YES             (NULL)                     Descrição do documento   

@@ -1,5 +1,5 @@
 /*Recriar tabelas*/
-DELETE FROM vivazul_api.knex_migrations WHERE id > 2;
+DELETE FROM vivazul_api.knex_migrations WHERE id > 7;
 ALTER TABLE vivazul_api.knex_migrations AUTO_INCREMENT=0;
 
 /*Importar usuários*/
@@ -63,7 +63,7 @@ GROUP BY cpf_cnpj
 HAVING COUNT(cpf_cnpj) > 1
 ORDER BY cadas_nome,created_at);
 /*Remove caracteres !d do field cpf_cnpj*/
-UPDATE vivazul_lynkos.cadastros SET cpf_cnpj = NULL WHERE NOT(LENGTH(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(cpf_cnpj, '[^0-9]+', -1),'[^0-9]+',1) AS UNSIGNED)) IN ('11','14'));
+UPDATE vivazul_lynkos.cadastros SET cpf_cnpj = NULL WHERE NOT(LENGTH(SUBSTRING_INDEX(SUBSTRING_INDEX(cpf_cnpj, '[^0-9]+', -1),'[^0-9]+',1)) IN ('11','14'));
 /*Importa os cadastros*/
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.cadastros;

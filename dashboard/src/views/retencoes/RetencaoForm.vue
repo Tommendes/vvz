@@ -59,7 +59,7 @@ const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-        // console.log('loadData',url);
+        
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
