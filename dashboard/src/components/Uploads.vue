@@ -5,13 +5,20 @@ import { usePrimeVue } from 'primevue/config';
 const primevue = usePrimeVue();
 
 import { defaultSuccess, defaultWarn } from '@/toast';
-import fs from 'fs';
+import axios from '@/axios-interceptor';
+import { baseApiUrl } from '@/env';
+
+// Cookies de usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 const totalSize = ref(0);
 const totalSizePercent = ref(0);
 const files = ref([]);
 
 const onRemoveTemplatingFile = (file, removeFileCallback, index) => {
+    console.log(file, removeFileCallback, index);
     removeFileCallback(index);
     totalSize.value -= parseInt(formatSize(file.size));
     totalSizePercent.value = totalSize.value / 10;
@@ -35,9 +42,38 @@ const uploadEvent = (callback) => {
     callback();
 };
 
-const onTemplatedUpload = (event) => {
-    const msg = JSON.parse(event.xhr.response);
-    defaultSuccess(msg.message);
+const onTemplatedUpload = async (event) => {
+    const resp = JSON.parse(event.xhr.response);
+    if (event.xhr.status !== 200) {
+        defaultWarn(resp.message);
+        return;
+    }
+    filesData.value = resp.files;
+    await saveData();
+    defaultSuccess(resp.message);
+};
+const urlBase = ref(`${baseApiUrl}/uploads`);
+const itemData = ref({});
+const filesData = ref([]);
+// Salvar dados dos arquivos
+const saveData = async () => {
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`;
+    console.log('saveData', url, method, itemData.value, filesData.value);
+    // axios[method](url, itemData.value)
+    //     .then((res) => {
+    //         const body = res.data;
+    //         if (body && body.id) {
+    //             defaultSuccess('Registro salvo com sucesso');
+    //             itemData.value = body;
+    //         } else {
+    //             defaultWarn('Erro ao salvar registro');
+    //         }
+    //     })
+    //     .catch((err) => {
+    //         defaultWarn(err.response.data);
+    //     });
 };
 
 const formatSize = (bytes) => {
@@ -54,31 +90,11 @@ const formatSize = (bytes) => {
 
     return `${formattedSize} ${sizes[i]}`;
 };
-
-import axios from '@/axios-interceptor';
-import { baseApiUrl } from '@/env';
-const customBase64Uploader = async (event) => {
-    // Url base do form action
-    const urlBase = ref(`${baseApiUrl}/uploads/f-a/hfl`);
-    const file = event.files[0];
-
-    const formData = new FormData();
-    formData.append('arquivos', fs.createReadStream(file));
-
-    // const reader = new FileReader();
-    let blob = await axios.post(urlBase.value, formData).then((r) => console.log(r));
-
-    // reader.readAsDataURL(blob);
-
-    // reader.onloadend = function () {
-    //     const base64data = reader.result;
-    // };
-};
 </script>
 
 <template>
     <div class="card">
-        <FileUpload name="arquivos" url="http://localhost:55596/uploads/f-a/hfl" @upload="onTemplatedUpload($event)" :multiple="true" accept="image/*" :maxFileSize="1000000" @select="onSelectedFiles" customUpload @uploader="customBase64Uploader">
+        <FileUpload name="arquivos" :url="`${urlBase}/f/hfl?tkn=${userData.id}_${userData.exp}`" @upload="onTemplatedUpload($event)" :multiple="true" accept="image/*" :maxFileSize="1000000" @select="onSelectedFiles">
             <template #header="{ chooseCallback, uploadCallback, clearCallback, files }">
                 <div class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2">
                     <div class="flex gap-2">

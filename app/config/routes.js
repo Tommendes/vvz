@@ -327,8 +327,9 @@ module.exports = app => {
     //     // .all(app.config.passport.authenticate())
     //     .post(app.api.uploads.hostFile)
     app.route('/uploads/f-a/:func')
-        // .all(app.config.passport.authenticate())
+        .all(app.config.passport.authenticate())
         .post(app.api.uploads.getByFunction)
+    app.route('/uploads/f/:func').post(app.api.uploads.getByFunction)
 
     // const multer = require('multer');
     // const path = require('path');

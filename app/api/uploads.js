@@ -1,6 +1,7 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
+    const { baseFrontendUrl, uploadsRoot } = require("../config/params")
     const tabela = 'uploads'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
@@ -14,7 +15,7 @@ module.exports = app => {
             console.log(error);
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
 
         let body = { ...req.body }
         try {
@@ -55,15 +56,6 @@ module.exports = app => {
                 const { createEventUpd } = app.api.sisEvents
                 await createEventUpd(eventPayload);
                 await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
-                if (status_pv_oat_force && status_pv_oat && status_pv_oat_force != status_pv_oat) {
-                    // Inserir na tabela de status apenas se o status for diferente
-                    await trx(tabelaPvOatStatusDomain).insert({
-                        status: STATUS_ACTIVE,
-                        status_pv_oat: status_pv_oat_force,
-                        created_at: new Date(),
-                        id_pv: body.id,
-                    });
-                }
                 return res.json(updateRecord);
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
@@ -104,21 +96,6 @@ module.exports = app => {
                 };
                 const { createEventIns } = app.api.sisEvents
                 await createEventIns(eventPayload);
-
-                // Inserir na tabela de status um registro de criação
-                await trx(tabelaPvOatStatusDomain).insert({
-                    status: STATUS_ACTIVE,
-                    created_at: new Date(),
-                    id_pv: recordId,
-                    status_pv_oat: STATUS_PENDENTE,
-                });
-                // Inserir na tabela de status um registro de criação
-                await trx(tabelaPvOatStatusDomain).insert({
-                    status: STATUS_ACTIVE,
-                    created_at: new Date(),
-                    id_pv: recordId,
-                    status_pv_oat: STATUS_EM_ANDAMENTO,
-                });
                 const newRecordWithID = { ...newRecord, id: recordId }
                 return res.json(newRecordWithID);
             }).catch((error) => {
@@ -129,6 +106,48 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         }
+    }
+
+    const saveNewFile = async (req, res) => {
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
+
+        let body = { ...req.body }
+
+        // Criação de um novo registro
+        app.db.transaction(async (trx) => {
+            // Variáveis da criação de um registro
+            const newRecord = {
+                status: STATUS_ACTIVE,
+                created_at: new Date(),
+                ...body, // Incluindo outros dados do corpo da solicitação
+            };
+
+            // Iniciar a transação e inserir na tabela principal
+            const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+            const [recordId] = await trx(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
+
+            // Registrar o evento na tabela de eventos
+            const eventPayload = {
+                notTo: ['created_at', 'evento'],
+                next: newRecord,
+                request: req,
+                evento: {
+                    evento: 'Novo registro',
+                    tabela_bd: tabelaDomain,
+                },
+                trx: trx
+            };
+            const { createEventIns } = app.api.sisEvents
+            await createEventIns(eventPayload);
+            const newRecordWithID = { ...newRecord, id: recordId }
+            return newRecordWithID;
+        }).catch((error) => {
+            // Se ocorrer um erro, faça rollback da transação
+            app.api.logger.logError({
+                log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+            });
+            return res.status(500).send(error);
+        });
     }
 
     const get = async (req, res) => {
@@ -145,7 +164,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const id_pv = req.params.id_pv
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
@@ -172,7 +191,7 @@ module.exports = app => {
         }
 
         const id_pv = req.params.id_pv
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pv': id_pv }).first()
@@ -196,8 +215,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPvOatStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
         try {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -225,18 +243,6 @@ module.exports = app => {
                 };
                 const evento = await createEventUpd(eventPayload);
                 updateRecord = { ...updateRecord, evento: evento }
-                await trx(tabelaPvOatStatusDomain).insert({
-                    status: STATUS_ACTIVE,
-                    status_pv_oat: registro.status,
-                    created_at: new Date(),
-                    id_pv_oat: req.params.id,
-                });
-                if (registro.status == STATUS_DELETE) {
-                    await trx(tabelaDomain).update(updateRecord).where({ id: req.params.id });
-                    return res.status(204).send()
-                } else {
-                    return res.status(200).send(updateRecord);
-                }
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
                 app.api.logger.logError({
@@ -266,10 +272,33 @@ module.exports = app => {
         const multer = require('multer');
         const path = require('path');
         const fs = require('fs');
+        let tknQueryId = undefined
+        let tknQueryTime = undefined
+        let timeExpired = false
+        if (req.query.tkn && req.query.tkn.split('_').length > 1) {
+            tknQueryId = { id: req.query.tkn.split('_')[0] }
+            tknQueryTime = req.query.tkn.split('_')[1]
+            const now = Math.floor(Date.now() / 1000)
+            timeExpired = tknQueryTime < now
+        }
+        if (!(req.user || (tknQueryId && tknQueryTime))) {
+            return res.status(401).send('Usuário não autenticado')
+        }
+        let user = req.user || tknQueryId
+        // return res.send(user);
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        // return res.send({tknQueryTime, now})
+        try {
+            if (timeExpired) throw 'Token expirado'
+            isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Upload de arquivos"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
         // Configurando o multer para lidar com o upload de arquivos
+        const destinationPath = path.join(__dirname, uploadsRoot);
         const storage = multer.diskStorage({
             destination: function (req, file, cb) {
-                const destinationPath = path.join(__dirname, '../../dashboard/public/assets/files');
                 if (!fs.existsSync(destinationPath)) {
                     fs.mkdirSync(destinationPath);
                 }
@@ -286,48 +315,36 @@ module.exports = app => {
 
         const upload = multer({ storage: storage }).array('arquivos');
         upload(req, res, async (err) => {
-
-            // let user = req.user
-            // const uParams = await app.db('users').where({ id: user.id }).first();
-            // try {
-            //     isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Upload de arquivos"`)
-            // } catch (error) {
-            //     app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-            //     return res.status(401).send(error)
-            // }
-            // const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
-
+            const uParams = await app.db('users').where({ id: user.id }).first();
+            // Verifica se tem alçada para upload
             const files = req.files;
-            // files.forEach(async (file) => {
-            //     const newRecord = {
-            //         status: STATUS_ACTIVE,
-            //         created_at: new Date(),
-            //         file_name: file.filename,
-            //         file_caption: body.file_caption,
-            //         file_permission: body.file_permission,
-            //         file_wd: body.file_wd,
-            //         file_size: file.size,
-            //         file_ext: path.extname(file.originalname),
-            //         file_type: file.mimetype,
-            //         file_hash: file.filename,
-            //         file_path: file.path,
-            //         file_url: `/assets/files/${file.filename}`,
-            //         id_pv: body.id_pv,
-            //         id_pv_oat: body.id_pv_oat,
-            //         id_pv_oat_status: body.id_pv_oat_status,
-            //     };
-            //     const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
-            //     const [recordId] = await app.db(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
-            //     const newRecordWithID = { ...newRecord, id: recordId }
-            //     return newRecordWithID;
-            // });
-            
-            // body.file_size = body.file_size || 0
-            // body.file_ext = body.file_ext || ''
+            try {
+                isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Upload de arquivos"`)
+            } catch (error) {
+                // Se Não tiver permissão, faça rollback da transação
+                app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                // Deletar os arquivos enviados
+                files.forEach(file => {
+                    const filePath = path.join(destinationPath, file.filename);
+                    fs.unlinkSync(filePath);
+                });
+                return res.status(401).send(error)
+            }
             if (err) {
                 console.log(err);
                 return res.status(500).send({ message: 'Erro ao enviar arquivos', err });
             }
+            files.forEach(async (file) => {
+                file.url = `${baseFrontendUrl}/assets/files/${file.filename}`;
+                // Adicione a propriedade file.label contendo o file.originalname sem a extensão
+                let nomeArquivo = file.originalname;
+                let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
+                let nomeSemExtensao = ultimaPosicaoPonto !== -1 ? nomeArquivo.substring(0, ultimaPosicaoPonto) : nomeArquivo;
+                file.label = nomeSemExtensao;
+                file.uid = file.filename.split('-')[1].split('.')[0];
+                req.body = file
+                await saveNewFile(req, res)
+            });
             return res.status(200).send({ message: 'Arquivos enviados com sucesso', files });
         });
     }
