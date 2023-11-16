@@ -34,8 +34,9 @@ exports.up = function (knex, Promise) {
         table.string('email_financeiro', 255).comment('Email do financeiro')
         table.string('email_rh', 255).comment('Email do RH')
         table.integer('id_cadas_resplegal', 10).unsigned().comment('Responsável legal perante a Receita Federal')
-        table.text('url_logo').comment('Logomarca da empresa')
+        table.text('id_uploads_logo').unsigned().comment('Logomarca da empresa')
         table.foreign('id_cadas_resplegal').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_uploads_logo').references('id').inTable('vivazul_api.cadastros').onUpdate('Cascade').onDelete('Cascade')
     })
 };
 

@@ -25,7 +25,6 @@ const route = useRoute();
 const router = useRouter();
 
 // Cookies de usuário
-
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);

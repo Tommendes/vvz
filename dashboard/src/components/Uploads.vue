@@ -1,26 +1,34 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { usePrimeVue } from 'primevue/config';
 const primevue = usePrimeVue();
 
 import { defaultSuccess, defaultWarn } from '@/toast';
-import fs from 'fs';
+import axios from '@/axios-interceptor';
+import { baseApiUrl } from '@/env';
+
+// Cookies de usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 const totalSize = ref(0);
 const totalSizePercent = ref(0);
 const files = ref([]);
 
 const onRemoveTemplatingFile = (file, removeFileCallback, index) => {
+    console.log(file, removeFileCallback, index);
     removeFileCallback(index);
     totalSize.value -= parseInt(formatSize(file.size));
     totalSizePercent.value = totalSize.value / 10;
 };
 
-const onClearTemplatingUpload = (clear) => {
-    clear();
-    totalSize.value = 0;
-    totalSizePercent.value = 0;
+const onClearTemplatingUpload = (file, index) => {
+    defaultWarn('Enviar unlink para o servidor apagar o arquivo após confirmação do usuário');
+    console.log(file, index);
+    totalSize.value -= parseInt(formatSize(file.size));
+    totalSizePercent.value = totalSize.value / 10;
 };
 
 const onSelectedFiles = (event) => {
@@ -35,9 +43,74 @@ const uploadEvent = (callback) => {
     callback();
 };
 
-const onTemplatedUpload = (event) => {
-    const msg = JSON.parse(event.xhr.response);
-    defaultSuccess(msg.message);
+const onTemplatedUpload = async (event) => {
+    const resp = JSON.parse(event.xhr.response);
+    if (event.xhr.status !== 200) {
+        defaultWarn(resp.message);
+        return;
+    }
+    filesData.value = resp.files[0];
+    await saveData();
+    defaultSuccess(resp.message);
+};
+const urlBase = ref(`${baseApiUrl}/uploads`);
+const itemData = ref({});
+const filesData = ref([]);
+// Definir props do form upload. Valores Default
+// multiple: true
+// accept: 'image/*'
+// maxFileSize: 1000000
+const props = defineProps({
+    multiple: {
+        type: Boolean,
+        default: false
+    },
+    accept: {
+        type: String,
+        default: 'image/*'
+    },
+    maxFileSize: {
+        type: Number,
+        default: 1000000
+    },
+    tabela: {
+        type: String,
+        default: ''
+    },
+    registro_id: {
+        type: Number,
+        default: 0
+    },
+    schema: {
+        type: String,
+        default: ''
+    },
+    field: {
+        type: String,
+        default: ''
+    }
+});
+// Salvar dados dos arquivos
+const saveData = async () => {
+    filesData.value.itemData = itemData.value;
+    const url = `${urlBase.value}/f-a/sown`;
+    await axios
+        .post(url, filesData.value)
+        .then((res) => {
+            const resp = res.data;
+            // const body = res.data;
+            // if (body && body.id) {
+            console.log('resp', resp);
+            defaultSuccess('Upload executado com sucesso');
+            //     itemData.value = body;
+            // } else {
+            //     defaultWarn('Erro ao executar upload');
+            // }
+        })
+        .catch((err) => {
+            console.log('err', err);
+            defaultWarn(err.response.data);
+        });
 };
 
 const formatSize = (bytes) => {
@@ -54,31 +127,43 @@ const formatSize = (bytes) => {
 
     return `${formattedSize} ${sizes[i]}`;
 };
-
-import axios from '@/axios-interceptor';
-import { baseApiUrl } from '@/env';
-const customBase64Uploader = async (event) => {
-    // Url base do form action
-    const urlBase = ref(`${baseApiUrl}/uploads/f-a/hfl`);
-    const file = event.files[0];
-
-    const formData = new FormData();
-    formData.append('arquivos', fs.createReadStream(file));
-
-    // const reader = new FileReader();
-    let blob = await axios.post(urlBase.value, formData).then((r) => console.log(r));
-
-    // reader.readAsDataURL(blob);
-
-    // reader.onloadend = function () {
-    //     const base64data = reader.result;
-    // };
-};
+onMounted(() => {
+    setTimeout(() => {
+        itemData.value = {
+            registro_id: props.registro_id || 1,
+            tabela: props.tabela || 'empresa',
+            field: props.field || 'id_uploads_logo',
+            schema: props.schema || `${userData.cliente}_${userData.dominio}`
+        };
+    }, Math.random() * 1000);
+});
 </script>
 
 <template>
     <div class="card">
-        <FileUpload name="arquivos" url="http://localhost:55596/uploads/f-a/hfl" @upload="onTemplatedUpload($event)" :multiple="true" accept="image/*" :maxFileSize="1000000" @select="onSelectedFiles" customUpload @uploader="customBase64Uploader">
+        <div class="grid">
+            <div class="col-12">
+                <div class="p-fluid formgrid grid">
+                    <div class="field col-12 md:col-3">
+                        <label for="tabela">Tabela</label>
+                        <InputText autocomplete="no" v-model="itemData.tabela" id="tabela" />
+                    </div>
+                    <div class="field col-12 md:col-3">
+                        <label for="registro_id">Registro</label>
+                        <InputText autocomplete="no" v-model="itemData.registro_id" id="registro_id" />
+                    </div>
+                    <div class="field col-12 md:col-3">
+                        <label for="field">Field</label>
+                        <InputText autocomplete="no" v-model="itemData.field" id="field" />
+                    </div>
+                    <div class="field col-12 md:col-3">
+                        <label for="schema">Schema</label>
+                        <InputText autocomplete="no" v-model="itemData.schema" id="schema" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <FileUpload name="arquivos" :url="`${urlBase}/f/hfl?tkn=${userData.id}_${userData.exp}`" @upload="onTemplatedUpload($event)" :multiple="props.multiple" :accept="props.accept" :maxFileSize="props.maxFileSize" @select="onSelectedFiles">
             <template #header="{ chooseCallback, uploadCallback, clearCallback, files }">
                 <div class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2">
                     <div class="flex gap-2">
@@ -93,7 +178,7 @@ const customBase64Uploader = async (event) => {
             </template>
             <template #content="{ files, uploadedFiles, removeUploadedFileCallback, removeFileCallback }">
                 <div v-if="files.length > 0">
-                    <h5>Pending</h5>
+                    <h5>Pendente</h5>
                     <div class="flex flex-wrap p-0 sm:p-5 gap-5">
                         <div v-for="(file, index) of files" :key="file.name + file.type + file.size" class="card m-0 px-6 flex flex-column border-1 surface-border align-items-center gap-3">
                             <div>
@@ -101,14 +186,13 @@ const customBase64Uploader = async (event) => {
                             </div>
                             <span class="font-semibold">{{ file.name }}</span>
                             <div>{{ formatSize(file.size) }}</div>
-                            <Badge value="Pending" severity="warning" />
+                            <Badge value="Pendente" severity="warning" />
                             <Button icon="pi pi-times" @click="onRemoveTemplatingFile(file, removeFileCallback, index)" outlined rounded severity="danger" />
                         </div>
                     </div>
                 </div>
-
                 <div v-if="uploadedFiles.length > 0">
-                    <h5>Completed</h5>
+                    <h5>Completo</h5>
                     <div class="flex flex-wrap p-0 sm:p-5 gap-5">
                         <div v-for="(file, index) of uploadedFiles" :key="file.name + file.type + file.size" class="card m-0 px-6 flex flex-column border-1 surface-border align-items-center gap-3">
                             <div>
@@ -116,8 +200,20 @@ const customBase64Uploader = async (event) => {
                             </div>
                             <span class="font-semibold">{{ file.name }}</span>
                             <div>{{ formatSize(file.size) }}</div>
-                            <Badge value="Completed" class="mt-3" severity="success" />
-                            <Button icon="pi pi-times" @click="removeUploadedFileCallback(index)" outlined rounded severity="danger" />
+                            <Badge value="Completo" class="mt-3" severity="success" />
+                            <Button
+                                icon="pi pi-times"
+                                @click="
+                                    removeUploadedFileCallback(index);
+                                    onClearTemplatingUpload(file, removeFileCallback, index);
+                                "
+                                outlined
+                                rounded
+                                severity="danger"
+                            />
+                            <p>file: {{ JSON.stringify(file) }}</p>
+                            <p>index: {{ index }}</p>
+                            <p>removeFileCallback: {{ removeFileCallback.toString() }}</p>
                         </div>
                     </div>
                 </div>
@@ -125,7 +221,7 @@ const customBase64Uploader = async (event) => {
             <template #empty>
                 <div class="flex align-items-center justify-content-center flex-column">
                     <i class="pi pi-cloud-upload border-2 border-circle p-5 text-8xl text-400 border-400" />
-                    <p class="mt-4 mb-0">Drag and drop files to here to upload.</p>
+                    <p class="mt-4 mb-0">Arraste e solte arquivos para aqui para fazer o upload.</p>
                 </div>
             </template>
         </FileUpload>

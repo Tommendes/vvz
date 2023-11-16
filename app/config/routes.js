@@ -322,52 +322,21 @@ module.exports = app => {
 
     /**
      * Rotas para uploads de arquivos
-     */    
-    // app.route('/uploads')
-    //     // .all(app.config.passport.authenticate())
-    //     .post(app.api.uploads.hostFile)
+     */
+    app.route('/uploads')
+        .all(app.config.passport.authenticate())
+        .post(app.api.uploads.save)
+        .get(app.api.uploads.get)
+    app.route('/uploads/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.uploads.save)
+        .get(app.api.uploads.getById)
+        .delete(app.api.uploads.remove)
     app.route('/uploads/f-a/:func')
-        // .all(app.config.passport.authenticate())
+        .all(app.config.passport.authenticate())
         .post(app.api.uploads.getByFunction)
+    app.route('/uploads/f/:func').post(app.api.uploads.getByFunction)
 
-    // const multer = require('multer');
-    // const path = require('path');
-    // const fs = require('fs');
-
-    // const destinationPath = path.join(__dirname, '../../dashboard/public/assets/files');
-    // // Configurando o multer para lidar com o upload de arquivos
-    // const storage = multer.diskStorage({
-    //     //   destination: function (req, file, cb) {
-    //     //     cb(null, 'uploads/'); // Os arquivos serão armazenados na pasta 'uploads/'
-    //     //   },
-    //     destination: function (req, file, cb) {
-    //         const uploadDir = destinationPath;
-    //         if (!fs.existsSync(uploadDir)) {
-    //             fs.mkdirSync(uploadDir);
-    //         }
-    //         cb(null, uploadDir);
-    //     },
-
-    //     filename: function (req, file, cb) {
-    //         let nomeArquivo = file.originalname;
-    //         let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
-    //         let nomeSemExtensao = ultimaPosicaoPonto !== -1 ? nomeArquivo.substring(0, ultimaPosicaoPonto) : nomeArquivo;
-
-    //         cb(null, nomeSemExtensao + '-' + Date.now() + path.extname(file.originalname));
-    //     },
-    // });
-
-    // const upload = multer({ storage: storage });
-
-    // // Rota para lidar com o upload de arquivos
-    // app.post('/uploads', upload.array('arquivos'), (req, res) => {
-    //     res.send('Arquivos enviados com sucesso!');
-    // });
-
-    // app.post('/pv-oat/:id_pv/:id/f-a/:func', upload.array('file'), async (req, res) => {
-    //     console.log(req.files);
-    //     res.send({ upload: true, files: req.files });
-    // });
     /**
      * Rota de pv_oat_status
      */
