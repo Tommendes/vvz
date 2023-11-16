@@ -65,7 +65,8 @@ const model = ref([
         items: [
             { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/pipeline` },
             { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/pipeline` }
+            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Uploads', icon: 'pi pi-fw pi-cloud-upload', to: `/${user.cliente}/${user.dominio}/uploads` }
         ]
     }
 ]);
