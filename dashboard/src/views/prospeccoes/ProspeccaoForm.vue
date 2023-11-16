@@ -14,6 +14,9 @@ import { Mask } from 'maska';
 const masks = ref({
     data_visita: new Mask({
         mask: '##/##/####'
+    }),
+    telefone: new Mask({
+        mask: ['(##) ####-####', '(##) #####-####']
     })
 });
 
@@ -28,16 +31,8 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
 // Campos de formulário
-const itemData = ref({});
-const labels = ref({
-    id_agente: 'Agente',
-    id_cadastros: 'Cadastro',
-    id_cad_end: 'Endereço',
-    pessoa: 'Pessoa Contatada',
-    contato: 'Forma de Contato',
-    periodo: 'Período da Visita',
-    data_visita: 'Data da Visita',
-    observacoes: 'Observações'
+const itemData = ref({
+    periodo: 0
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -56,9 +51,6 @@ const loading = ref({
 });
 // DropDown
 const dropdownAgentes = ref([]);
-// const dropdownCadastros = ref([]);
-const cadastro = ref("");
-// const cadastros = ref([]);
 const dropdownEnderecos = ref([]);
 // Props do template
 const props = defineProps({
@@ -74,12 +66,12 @@ const loadData = async () => {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
         
-        await axios.get(url).then((res) => {
+        await axios.get(url).then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 body.id = String(body.id);
-
                 itemData.value = body;
+                await getNomeCliente();
                 if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
                 itemDataComparision.value = { ...itemData.value };
 
@@ -91,8 +83,8 @@ const loadData = async () => {
         });
     } else loading.value.form = false;
     await listAgentes();
-    await listCadastros();
     await listEnderecos();
+    await getNomeCliente();
 };
 const saveData = async () => {
     if (formIsValid()) {
@@ -119,6 +111,82 @@ const saveData = async () => {
             });
     }
 };
+/**
+ * Autocomplete de cadastros e pipeline
+ */
+ const cadastros = ref([]);
+const filteredCadastros = ref([]);
+const selectedCadastro = ref();
+const nomeCliente = ref();
+const getNomeCliente = async () => {
+    try {
+        const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&slct=nome,cpf_cnpj`;
+        const response = await axios.get(url);
+        if (response.data.data.length > 0) {
+            nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj) + (itemData.value.pv_nr ? ' - PV: ' + itemData.value.pv_nr : '');
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cadastros:', error);
+    }
+};
+const searchCadastros = (event) => {
+    setTimeout(async () => {
+        // Verifique se o campo de pesquisa não está vazio
+        if (!event.query.trim().length) {
+            // Se estiver vazio, exiba todas as sugestões
+            filteredCadastros.value = [...cadastros.value];
+        } else {
+            // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
+            if (cadastros.value.length === 0) {
+                // Carregue os cadastros da API (ou de onde quer que você os obtenha)
+                getCadastroBySearchedId();
+            }
+            // Filtrar os cadastros com base na consulta do usuário
+            filteredCadastros.value = cadastros.value.filter((registro) => {
+                return registro.name.toLowerCase().includes(event.query.toLowerCase());
+            });
+        }
+    }, 250);
+};
+const getCadastroBySearchedId = async (idCadastro) => {
+    const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
+    try {
+        const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
+        const response = await axios.get(url);
+        cadastros.value = response.data.data.map((element) => {
+            return {
+                code: element.id,
+                name: element.nome + ' - ' + element.cpf_cnpj
+            };
+        });
+    } catch (error) {
+        console.error('Erro ao buscar cadastros:', error);
+    }
+};
+const confirmEditAutoSuggest = (tipo) => {
+    confirm.require({
+        group: 'templating',
+        header: `Corfirmar edição`,
+        message: `Corfirma que deseja editar o ${tipo}?`,
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            if (tipo == 'cadastro') {
+                selectedCadastro.value = undefined;
+                editCadastro.value = true;
+            }
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+/**
+ * Fim de autocomplete de cadastros
+*/
+
 // Verifica se houve alteração nos dados do formulário
 const isItemDataChanged = () => {
     const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
@@ -128,15 +196,24 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
-// Obter parâmetros do BD
-// const optionParams = async (query) => {
-//     const url = `${baseApiUrl}/users/f-a/${query.func}?fld=agente_v&vl=${query.dropdownAgentes ? query.dropdownAgentes : ''}&slct=${query.id , query.name}`;
-//     return await axios.get(url);
-// };
 const dropdownPeriodo = ref([
     { value: 0, label: 'Manhã' },
     { value: 1, label: 'Tarde' }
 ]);
+// Validar email
+// const validateEmail = () => {
+//     if (itemData.value.contato && itemData.value.contato.trim().length > 0 && !isValidEmail(itemData.value.contato)) {
+//         errorMessages.value.contato = 'Formato de email inválido';
+//     } else errorMessages.value.contato = null;
+//     return !errorMessages.value.contato;
+// };
+// Validar telefone
+// const validateTelefone = () => {
+//     if (itemData.value.contato && itemData.value.contato.trim().length > 0 && ![10, 11].includes(masks.value.contato.unmasked(itemData.value.contato).length)) {
+//         errorMessages.value.contato = 'Formato de telefone inválido';
+//     } else errorMessages.value.contato = null;
+//     return !errorMessages.value.contato;
+// };
 // Validar formulário
 const formIsValid = () => {
     return true;
@@ -162,7 +239,7 @@ const listAgentes = async (query) => {
 };
 //  Parâmetros Endereços
 const listEnderecos = async (query) => {
-    const url = `${baseApiUrl}/cad-enderecos/f-a/glf?fld=id_cadastros&vl=${id_cadastros}&slct=id,logradouro,nr,complnr,bairro,cidade,uf`;
+    const url = `${baseApiUrl}/cad-enderecos/${itemData.id_cadastros}`;
     await axios.get(url).then((res) => {
         dropdownEnderecos.value = [];
         res.data.data.map((item) => {
@@ -170,32 +247,6 @@ const listEnderecos = async (query) => {
         });
     });
 };
-//  Parâmetros Cadastros
-const listCadastros = async (query) => {
-    const url = `${baseApiUrl}/cadastros/f-a/glf?fld=nome&vl=tom&slct=id,nome`;
-    await axios.get(url).then((res) => {
-        dropdownCadastros.value = [];
-        res.data.data.map((item) => {
-            dropdownCadastros.value.push({ value: item.id, label: item.name });
-        });
-    });
-};
-// Carregar opções do formulário
-// const loadOptions = async () => {
-    // Agente
-    // await optionParams({ field: 'meta', value: 'id_agente', select: 'id,label' }).then((res) => {
-    //     res.data.data.map((item) => {
-    //         dropdownAgentes.value.push({ value: item.id, label: item.label });
-    //     });
-    // });
-
-    // Área Atuação
-    //     await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
-    //         res.data.data.map((item) => {
-    //             dropdownAtuacao.value.push({ value: item.id, label: item.label });
-    //         });
-    //     });
-// };
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
@@ -211,6 +262,7 @@ onMounted(() => {
 // Observar alterações nos dados do formulário
 watchEffect(() => {
     isItemDataChanged();
+    console.log('alteração feita')
 });
 </script>
 
@@ -222,7 +274,7 @@ watchEffect(() => {
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-8">
-                            <label for="id_agente">{{ labels.id_agente }}</label>
+                            <label for="id_agente">Agente</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown 
                             v-else
@@ -237,42 +289,27 @@ watchEffect(() => {
                         />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="periodo">{{ labels.periodo }}</label>
+                            <label for="periodo">Período da Visita</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="periodo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.periodo" :options="dropdownPeriodo" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="data_visita">{{ labels.data_visita }}</label>
+                            <label for="data_visita">Data da Visita</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" /> -->
                             <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.data_visita" id="data_visita" :numberOfMonths="2" showIcon />
                         </div>
                         <div class="col-12 md:col-12">
-                            <label for="id_cadastros">{{ labels.id_cadastros }}</label>
+                            <label for="id_cadastros">Cadastro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <!-- <Dropdown 
-                            v-else
-                            id="id_cadastros"
-                            :disabled="mode == 'view'"
-                            :showClear="!!itemData.id_cadastros"
-                            optionLabel="label"
-                            placeholder="Selecione um cadastro"
-                            optionValue="value"
-                            v-model="itemData.id_cadastros"
-                            :options="dropdownCadastros"/> -->
-
-                            <AutoComplete
-                            v-else id="id_cadastros"
-                            :disabled="mode == 'view'"
-                            :showClear="!!itemData.id_cadastros"
-                            optionLabel="label"
-                            optionValue="value"
-                            v-model="itemData.id_cadastros"
-                            :suggestions="cadastros"
-                            @complete="search" />
+                            <AutoComplete v-else-if="mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <div class="p-inputgroup flex-1" v-else>
+                                <InputText disabled v-model="nomeCliente" />
+                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                            </div>
                         </div>
                         <div class="col-12 md:col-12">
-                            <label for="id_cad_end">{{ labels.id_cad_end }}</label>
+                            <label for="id_cad_end">Endereço</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown
                             v-else
@@ -286,17 +323,17 @@ watchEffect(() => {
                             :options="dropdownEnderecos" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="pessoa">{{ labels.pessoa }}</label>
+                            <label for="pessoa">Pessoa Contatada</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
                         </div>
-                        <div class="col-12 md:col-6">
-                            <label for="contato">{{ labels.contato }}</label>
+                        <div class="col-12 md:col-6 contato">
+                            <label for="contato">Contato</label> 
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" />
                         </div>
                         <div class="col-12 md:col-12">
-                            <label for="observacoes">{{ labels.observacoes }}</label>
+                            <label for="observacoes">Observações</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacoes" class="p-inputtext p-component p-filled"></p>
