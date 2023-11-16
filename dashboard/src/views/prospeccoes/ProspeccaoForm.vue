@@ -83,7 +83,7 @@ const loadData = async () => {
         });
     } else loading.value.form = false;
     await listAgentes();
-    await listEnderecos();
+    // await loadEnderecos();
     await getNomeCliente();
 };
 const saveData = async () => {
@@ -228,7 +228,7 @@ const reload = () => {
 };
 // Obter parâmetros do BD
 //  Parâmetros Agente
-const listAgentes = async (query) => {
+const listAgentes = async () => {
     const url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name`;
     await axios.get(url).then((res) => {
         dropdownAgentes.value = [];
@@ -237,16 +237,18 @@ const listAgentes = async (query) => {
         });
     });
 };
-//  Parâmetros Endereços
-const listEnderecos = async (query) => {
-    const url = `${baseApiUrl}/cad-enderecos/${itemData.id_cadastros}`;
+const loadEnderecos = async () => {
+    const url = `${baseApiUrl}/cad-enderecos/${20}`;
     await axios.get(url).then((res) => {
-        dropdownEnderecos.value = [];
         res.data.data.map((item) => {
-            dropdownEnderecos.value.push({ value: item.id, label: item.name });
+            const label = `${item.logradouro}${item.nr ? ', ' + item.nr : ''}${item.complnr ? ' ' + item.complnr : ''}${item.bairro ? ' - ' + item.bairro : ''}${userData.admin >= 2 ? ` (${item.id})` : ''}`;
+            dropdownEnderecos.value.push({ value: String(item.id), label: label });
         });
     });
 };
+if (selectedCadastro) {
+    loadEnderecos();
+}
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
@@ -262,7 +264,6 @@ onMounted(() => {
 // Observar alterações nos dados do formulário
 watchEffect(() => {
     isItemDataChanged();
-    console.log('alteração feita')
 });
 </script>
 
@@ -307,6 +308,7 @@ watchEffect(() => {
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
+                            <p v-if="selectedCadastro">{{ selectedCadastro.code }}</p>
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="id_cad_end">Endereço</label>
@@ -321,7 +323,7 @@ watchEffect(() => {
                             optionValue="value"
                             v-model="itemData.id_cad_end"
                             :options="dropdownEnderecos" />
-                        </div>
+                        </div>                        
                         <div class="col-12 md:col-6">
                             <label for="pessoa">Pessoa Contatada</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
@@ -332,7 +334,7 @@ watchEffect(() => {
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" />
                         </div>
-                        <div class="col-12 md:col-12">
+                        <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
                             <label for="observacoes">Observações</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 160px" aria-describedby="editor-error" />

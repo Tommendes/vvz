@@ -357,7 +357,6 @@ const onAdvancedUpload = async (comp) => {
                         <div class="col-12 md:col-5">
                             <label for="id_cadastro_endereco">Endereço do atendimento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_cadastro_endereco" id="id_cadastro_endereco" type="text" /> -->
                             <Dropdown v-else id="id_cadastro_endereco" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cadastro_endereco" :options="dropdownEnderecos" />
                         </div>
                         <div class="col-12 md:col-3">
