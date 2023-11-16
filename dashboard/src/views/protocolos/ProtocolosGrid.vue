@@ -62,6 +62,27 @@ const loadData = () => {
     }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
+const searchInPage = () => {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const contentElement = document.getElementByTagName('tbody');
+
+    if (searchTerm) {
+        const contentText = contentElement.innerText.toLowerCase();
+
+        if (contentText.includes(searchTerm)) {
+            // Criamos uma expressão regular global (g) para encontrar todas as correspondências
+            const regex = new RegExp(searchTerm, 'g');
+
+            // Usamos o método replace para envolver as correspondências com uma tag de destaque
+            contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
+
+            // Definimos o foco de volta no campo de input
+            document.getElementById('searchInput').focus();
+        } else {
+            alert('Nenhuma correspondência encontrada.');
+        }
+    }
+};
 // const highlight = (value, markTxt) => {
 //     let target = value;
 //     let targetMark = markTxt.toString().trim().replace(/\s\s+/g, ' ').split(' ');
@@ -70,20 +91,21 @@ const mode = ref('grid');
 //     });
 //     return target;
 // };
-// watchEffect(() => {
-//     if (filters.value.global.value) {
-//         if (gridData.value)
-//             gridData.value.forEach((element) => {
-//                 // console.log(element.descricao);
-//                 listaNomes.value.forEach((elementNome) => {
-//                     if (filters.value.global.value) {
-//                         // element[elementNome.field] = highlight(element[elementNome.field], filters.value.global.value);
-//                         console.log(highlight(element[elementNome.field], filters.value.global.value));
-//                     }
-//                 });
-//             });
-//     }
-// });
+watchEffect(() => {
+    // searchInPage();
+    //     if (filters.value.global.value) {
+    //         if (gridData.value)
+    //             gridData.value.forEach((element) => {
+    //                 // console.log(element.descricao);
+    //                 listaNomes.value.forEach((elementNome) => {
+    //                     if (filters.value.global.value) {
+    //                         // element[elementNome.field] = highlight(element[elementNome.field], filters.value.global.value);
+    //                         console.log(highlight(element[elementNome.field], filters.value.global.value));
+    //                     }
+    //                 });
+    //             });
+    //     }
+});
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -114,7 +136,7 @@ onBeforeMount(() => {
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
-                        <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
+                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
                     </span>
                 </div>
             </template>
@@ -130,7 +152,8 @@ onBeforeMount(() => {
                         <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
-                        <span v-html="data[nome.field]"></span>
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <span v-else v-html="data[nome.field]"></span>
                     </template>
                 </Column>
             </template>

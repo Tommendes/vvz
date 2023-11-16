@@ -1,10 +1,27 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'protocolos'
-    const tabelaDocs = 'proto_docs'
+    const tabela = 'pv_oat_status'
+    const tabelaAlias = 'Status de Oats'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+    // Andamento do registro    
+
+
+    const STATUS_OS = 10;
+    const STATUS_PROPOSTA = 30;
+    const STATUS_PEDIDO = 40;
+    const STATUS_EXECUTANDO = 60;
+    const STATUS_FATURADO = 80;
+    const STATUS_FINALIZADO = 90;
+    const STATUS_REATIVADO = 97;
+    const STATUS_CANCELADO = 98;
+    const STATUS_EXCLUIDO = 99;
+    const INTERNO = 0;
+    const EXTERNO = 1;
+    const GARANTIA_INDEFINIDO = -1;
+    const GARANTIA_NAO = 0;
+    const GARANTIA_SIM = 1;
 
     const save = async (req, res) => {
         let user = req.user
@@ -21,15 +38,6 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
-
-        try {
-
-            existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
-            if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
-
-        } catch (error) {
-            return res.status(400).send(error)
-        }
 
         delete body.hash; delete body.tblName
         if (body.id) {
@@ -68,10 +76,6 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-            let nextDocumentNr = await app.db(tabelaDomain).select(app.db.raw('MAX(CAST(registro AS INT)) + 1 AS registro'))
-                .where({ status: STATUS_ACTIVE }).first()
-            body.registro = nextDocumentNr.registro || '1'
-            body.registro = body.registro.toString().padStart(6, '0')
 
             app.db(tabelaDomain)
                 .insert(body)
@@ -97,37 +101,30 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
+        const id_pv_oat = req.params.id_pv_oat
+        // Enviar apenas o último registro de cada pós-venda
+        const last = req.query.last || false
+
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
-
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
-
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-
+            .where({ id_pv_oat: id_pv_oat })
         ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
-            .then(body => {
-                return res.json({ data: body, count: count, limit })
-            })
+        if (last) ret.orderBy('created_at', 'desc').first()
+        else ret.orderBy('created_at')
+        ret.then(body => {
+            const quantidade = body.length
+            return res.json({ data: body, count: quantidade })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
@@ -202,8 +199,8 @@ module.exports = app => {
     const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
-            case 'gtt':
-                getTitulos(req, res)
+            case 'glf':
+                getListByField(req, res)
                 break;
             default:
                 res.status(404).send('Função inexitente')
@@ -211,8 +208,8 @@ module.exports = app => {
         }
     }
 
-    // Busca por campo
-    const getTitulos = async (req, res) => {
+    // Lista de registros por campo
+    const getListByField = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
@@ -222,19 +219,52 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
         const first = req.query.first && req.params.first == true
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaDocs}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db(tabelaDomain)
-            .select('tp_documento').groupBy('tp_documento').orderBy('tp_documento')
-            .then(body => {
-                const count = body.length
-                return res.json({ data: body, count })
-            }).catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
-            })
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} = ${value}`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+        ret.orderBy('created_at')
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
     }
 
 
-    return { save, get, getById, remove, getByFunction }
+    return {
+        save, get, getById, remove, getByFunction,
+        STATUS_OS, 
+        STATUS_PROPOSTA,
+        STATUS_PEDIDO,
+        STATUS_EXECUTANDO,
+        STATUS_FATURADO,
+        STATUS_FINALIZADO,
+        STATUS_REATIVADO,
+        STATUS_CANCELADO,
+        STATUS_EXCLUIDO,
+        INTERNO,
+        EXTERNO,
+        GARANTIA_INDEFINIDO,
+        GARANTIA_NAO,
+        GARANTIA_SIM
+    }
 }

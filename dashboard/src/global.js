@@ -188,16 +188,28 @@ export const MINIMUM_KEYS_BEFORE_CHANGE = 3; // Não pode repetiar a últimas X 
 export const TOKEN_VALIDE_MINUTES = 10; // 10 minutos de validade
 
 // Andamento do registro
-export const andamentoRegistroPv = ({
+export const andamentoRegistroPv = {
     STATUS_PENDENTE: 0,
     STATUS_REATIVADO: 1,
     STATUS_EM_ANDAMENTO: 60,
     STATUS_FINALIZADO: 80,
     STATUS_CANCELADO: 89,
     STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
-});
+};
 
-export const andamentoRegistroPipeline = ({
+export const andamentoRegistroPvOat = {
+    STATUS_OS: 10,
+    STATUS_PROPOSTA: 30,
+    STATUS_PEDIDO: 40,
+    STATUS_EXECUTANDO: 60,
+    STATUS_FATURADO: 80,
+    STATUS_FINALIZADO: 90,
+    STATUS_REATIVADO: 97,
+    STATUS_CANCELADO: 98,
+    STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
+};
+
+export const andamentoRegistroPipeline = {
     STATUS_PENDENTE: 0,
     STATUS_REATIVADO: 1,
     STATUS_CONVERTIDO: 10,
@@ -205,7 +217,7 @@ export const andamentoRegistroPipeline = ({
     STATUS_LIQUIDADO: 80,
     STATUS_CANCELADO: 89,
     STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
-});
+};
 
 export default {
     userKey,
@@ -235,5 +247,6 @@ export default {
     TOKEN_VALIDE_MINUTES,
     UFS,
     andamentoRegistroPv,
+    andamentoRegistroPvOat,
     andamentoRegistroPipeline
 };

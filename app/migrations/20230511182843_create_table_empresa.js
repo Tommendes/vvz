@@ -26,7 +26,7 @@ exports.up = function (knex, Promise) {
         table.string('geo_ltd', 255).comment('Geo. latd')
         table.string('geo_lng', 255).comment('Geo. lng')
         table.text('contato').comment('Contato da empresa')
-        table.text('tel1').comment('Telefone 1')
+        table.string('tel1', 255).comment('Telefone 1')
         table.string('tel2', 255).comment('Telefone 2')
         table.string('email', 255).comment('Email geral')
         table.string('email_at', 255).comment('Email da At')

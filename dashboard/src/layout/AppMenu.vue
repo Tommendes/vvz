@@ -20,11 +20,11 @@ const model = ref([
         ]
     },
     {
-        label: 'Comercial',
+        label: 'Comercial e Documentos',
         items: [
             { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Protocolos', icon: 'pi pi-fw pi-folder', to: `/${user.cliente}/${user.dominio}/protocolos` },
             { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/pipeline` },
+            { label: 'Protocolos', icon: 'pi pi-fw pi-folder', to: `/${user.cliente}/${user.dominio}/protocolos` },
             { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${user.cliente}/${user.dominio}/pipeline` }
         ]
     },

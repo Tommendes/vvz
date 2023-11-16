@@ -3,7 +3,6 @@ const { dbPrefix, jasperServerUrl, jasperServerU, jasperServerK } = require("../
 const { baseFrontendUrl } = require("../config/params")
 const JSIntegration = require('../config/jSIntegration')
 const { cnpj } = require('cpf-cnpj-validator')
-const accents = require('remove-accents')
 const path = require('path')
 const fs = require('fs')
 
@@ -11,13 +10,12 @@ module.exports = app => {
     const { isMatchOrError, noAccessMsg, existsOrError } = app.api.validation
     const { capitalizeFirstLetter, capitalizeWords } = app.api.facilities
     const STATUS_ACTIVE = 10
-    const tabelaOrgao = 'orgao'
 
-    const getByFunction = async(req, res) => {
+    const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
-            case 'gfo':
-                getReportFolha(req, res)
+            case 'oat':
+                getReportOat(req, res)
                 break;
             default:
                 res.status(404).send('Função inexitente')
@@ -25,51 +23,47 @@ module.exports = app => {
         }
     }
 
-    const getReportFolha = async(req, res) => {
+    const getReportOat = async (req, res) => {
         const uParams = await app.db('users').where({ id: req.user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.id && uParams.financeiro >= 1, `${noAccessMsg} "Impressão de relatório da folha de pagamentos"`)
+            isMatchOrError(uParams && uParams.id && uParams.pv >= 1, `${noAccessMsg} "Impressão de OAT"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
-        const body = {...req.body }
+        const body = { ...req.body }
+        try {
+            existsOrError(body.idOat, 'OAT não informada')
+        } catch (error) {
+            return res.status(400).send(error)
+        }
         const dbSchema = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}`
-        const tabelaDomainOrgao = `${dbSchema}.${tabelaOrgao}`
+        const usuario = uParams.name
+        const idEmpresa = 1
+        const idOat = req.body.idOat
+        const tabelaPvOatDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.pv_oat`
+        const tabelaPvDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.pv`
+        const oat = await app.db({ oat: tabelaPvOatDomain })
+            .join({ pv: tabelaPvDomain }, 'pv.id', 'oat.id_pv')
+            .select(app.db.raw(`pv.pv_nr, oat.nr_oat`))
+            .where({ 'oat.id': idOat, 'oat.status': STATUS_ACTIVE }).first()
 
-        const orgao = await app.db({ o: tabelaDomainOrgao }).select('o.orgao', 'o.cnpj', 'o.url_logo').first()
-        const complementar = body.complementar || uParams.f_complementar
-        const complementarTitle = complementar != "000" ? ` - Complementar: ${complementar}` : ""
+
         moment.locale('pt-br');
-        const defaultTitle = `Relatorio Geral da Folha de Pagamento ${capitalizeFirstLetter(moment({ year: uParams.f_ano, month: uParams.f_mes - 1 }).format("MMMM/YYYY"))}${complementarTitle}`
-        const fileName = body.fileName || `Relatorio_Folha_Pagamento_${capitalizeFirstLetter(moment({ year: uParams.f_ano, month: uParams.f_mes - 1 }).format("MMMM_YYYY"))}`
+        const fileName = oat.pv_nr.toString().padStart(6, '0') + '_' + oat.nr_oat.toString().padStart(3, '0') + '_' + moment().format('DDMMYYYY_HHmmss')
 
         const optionParameters = {
-                "orgao": accents.remove(orgao.orgao),
-                // Encaminhar parâmetros abaixo pelo body
-                "logoUrl": body.logo_url || orgao.url_logo || `${baseFrontendUrl}/assets/imgs/logo_vivazul.png`,
-                "titulo": accents.remove(body.titulo || defaultTitle),
-                "descricao": accents.remove(body.descricao || `CNPJ: ${cnpj.format(orgao.cnpj)}`),
-                "dbSchema": dbSchema,
-                "id_cad_servidores": body.id_cad_servidores || "ff.id_cad_servidores IS NOT NULL",
-                "id_cad_centros": body.id_cad_centros || "ff.id_cad_centros IS NOT NULL",
-                "id_cad_departamentos": body.id_cad_departamentos || "ff.id_cad_departamentos IS NOT NULL",
-                "id_cad_cargos": body.id_cad_cargos || "ff.id_cad_cargos IS NOT NULL",
-                "id_cad_locais_trabalho": body.id_local_trabalho || "ff.id_local_trabalho IS NOT NULL",
-                "resumo": body.resumo || "1",
-                "geral": body.geral || "1",
-                "agrupar": body.agrupar || "0",
-                "grupo": body.grupo || "",
-                "resumirGrupo": body.resumirGrupo || "0",
-                "groupBy": body.groupBy || "cs.nome, cs.matricula",
-                "orderBy": body.orderBy || "cs.nome, cs.matricula",
-            }
+            "usuario": usuario,
+            "idEmpresa": idEmpresa,
+            "idOat": idOat,
+            "dbSchema": dbSchema,
+        }
 
         const exportType = body.exportType || 'pdf'
 
         const jsIntegration = new JSIntegration(
             jasperServerUrl, // URL of the Jasper Server
-            'reports/Vivazul/folha_de_pagamento/folha', // Path to the Report Unit
+            'reports/Vivazul/pv/oat/Oat', // Path to the Report Unit
             exportType, // Export type
             jasperServerU, // User
             jasperServerK, // Password

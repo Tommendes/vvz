@@ -75,7 +75,7 @@ const loadData = async () => {
 const loadDataProtoDocs = async () => {
     setTimeout(() => {
         loading.value = true;
-        axios.get(`${urlBaseProtoDocs.value}/${itemData.value.id}`).then((axiosRes) => {
+        axios.get(`${urlBaseProtoDocs.value}/${itemData.value.id}`).then(async (axiosRes) => {
             gridDatProtoDocs.value = axiosRes.data.data;
             if (gridDatProtoDocs.value.descricao) itemDataProtDocs.value.items = gridDatProtoDocs.value.descricao.split(',');
             loading.value = false;
@@ -114,6 +114,7 @@ const saveDataProtDocs = async () => {
     const url = `${urlBaseProtoDocs.value}/${itemData.value.id}${id}`;
     // Remover os colchetes do array itemDataProtDocs.value.descricao
     itemDataProtDocs.value.descricao = itemDataProtDocs.value.items.join(',');
+    itemDataProtDocs.value.tp_documento = selectedTitulo.value;
     await axios[method](url, itemDataProtDocs.value)
         .then((res) => {
             const body = res.data;
@@ -122,6 +123,8 @@ const saveDataProtDocs = async () => {
                 itemDataProtDocs.value = body;
                 loadDataProtoDocs();
                 itemDataProtDocs.value = { id_protocolos: itemData.value.id };
+                selectedTitulo.value = undefined;
+                document.getElementById('tp_documento').focus();
             } else {
                 defaultWarn('Erro ao salvar documentos');
             }
@@ -186,24 +189,71 @@ const getCadastroBySearchedId = async (idCadastro) => {
     }
 };
 const confirmEditAutoSuggest = (tipo) => {
-    confirm.require({
-        group: 'templating',
-        header: `Corfirmar edição`,
-        message: `Corfirma que deseja editar o ${tipo}?`,
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            if (tipo == 'cadastro') {
+    if (tipo == 'cadastro') {
+        confirm.require({
+            group: 'templating',
+            header: `Corfirmar edição`,
+            message: `Corfirma que deseja editar o ${tipo}?`,
+            icon: 'fa-solid fa-question fa-beat',
+            acceptIcon: 'pi pi-check',
+            rejectIcon: 'pi pi-times',
+            acceptClass: 'p-button-danger',
+            accept: () => {
                 selectedCadastro.value = undefined;
                 editCadastro.value = true;
+            },
+            reject: () => {
+                return false;
             }
-        },
-        reject: () => {
-            return false;
+        });
+    } else if (tipo == 'titulo') {
+        selectedTitulo.value = undefined;
+        editTitulo.value = true;
+    }
+};
+/**
+ * Fim de autocomplete de cadastros
+ */
+
+/**
+ * Autocomplete de cadastros e pipeline
+ */
+const titulos = ref([]);
+const filteredTitulos = ref([]);
+const selectedTitulo = ref();
+const editTitulo = ref(false);
+const searchTitulos = (event) => {
+    setTimeout(async () => {
+        // Verifique se o campo de pesquisa não está vazio
+        if (!event.query.trim().length) {
+            // Se estiver vazio, exiba todas as sugestões
+            filteredTitulos.value = [...titulos.value];
+        } else {
+            // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
+            if (titulos.value.length === 0) {
+                // Carregue os titulos da API (ou de onde quer que você os obtenha)
+                getTitulos();
+            }
+            // Filtrar os titulos com base na consulta do usuário
+            filteredTitulos.value = titulos.value.filter((registro) => {
+                return registro.name.toLowerCase().includes(event.query.toString().toLowerCase());
+            });
         }
-    });
+    }, 250);
+};
+const getTitulos = async () => {
+    try {
+        const url = `${baseApiUrl}/protocolos/f-a/gtt`;
+        const response = await axios.get(url);
+        titulos.value = response.data.data.map((element) => {
+            return {
+                code: element.tp_documento,
+                name: element.tp_documento
+            };
+        });
+    } catch (error) {
+        console.error('Erro ao buscar titulos:', error);
+    }
 };
 /**
  * Fim de autocomplete de cadastros
@@ -234,6 +284,7 @@ const reload = () => {
 // Editar item da lista de documentos
 const editItem = (item) => {
     itemDataProtDocs.value = item;
+    selectedTitulo.value = { code: itemDataProtDocs.value.tp_documento, name: itemDataProtDocs.value.tp_documento };
     // transform itemDataProtDocs.value.descricao em array
     itemDataProtDocs.value.items = itemDataProtDocs.value.descricao.split(',');
 };
@@ -338,15 +389,15 @@ watch(selectedCadastro, (value) => {
                                 <div class="p-fluid grid">
                                     <div class="col-6">
                                         <div class="col-12 md:col-12">
-                                            <label for="email_destinatario">Tipo de Documento</label>
-                                            <InputText v-model="itemDataProtDocs.tp_documento" id="email_destinatario" type="text" />
+                                            <label for="tp_documento">Tipo de Documento</label>
+                                            <AutoComplete v-model="selectedTitulo" id="tp_documento" optionLabel="name" :suggestions="filteredTitulos" @complete="searchTitulos" />
                                         </div>
                                         <div class="col-12 md:col-12">
                                             <label for="descricao">Lista de Documentos (pressione Enter ou vírgula para novos itens)</label>
                                             <Chips v-model="itemDataProtDocs.items" separator="," />
                                         </div>
                                         <div class="col-12 md:col-12">
-                                            <Button type="button" v-if="itemDataProtDocs.tp_documento && itemDataProtDocs.items" label="Salvar documentos" severity="success" text raised @click="saveDataProtDocs" />
+                                            <Button type="button" v-if="(itemDataProtDocs.tp_documento || selectedTitulo) && itemDataProtDocs.items" label="Salvar documentos" severity="success" text raised @click="saveDataProtDocs" />
                                         </div>
                                     </div>
                                     <div class="col-6">

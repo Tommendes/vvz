@@ -4,10 +4,15 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 
-import { andamentoRegistroPv } from '@/global';
-import { useRouter } from 'vue-router';
+import { andamentoRegistroPv, andamentoRegistroPvOat } from '@/global';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 import moment from 'moment';
+
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
+
 // Cookies de usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -45,7 +50,7 @@ const loadData = async () => {
     }
     if (dialogRef.value.data.idPvOat) {
         const url = `${urlBase.value}/${dialogRef.value.data.idPvOat}`;
-        await axios.get(url).then((res) => {
+        await axios.get(url).then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 body.id = String(body.id);
@@ -57,6 +62,8 @@ const loadData = async () => {
                 // Se body.valor_total então formate o valor com duas casas decimais em português
                 if (body.valor_total) body.valor_total = Number(body.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 itemData.value = body;
+                // Lista o andamento do registro
+                await listStatusRegistro();
             } else {
                 defaultWarn('Registro não localizado');
                 router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-venda` });
@@ -81,6 +88,12 @@ const loadData = async () => {
     }
     loading.value = false;
     if (!dialogRef.value.data.idPvOat) mode.value = 'new';
+};
+// Recarregar dados do formulário
+const reload = async () => {
+    mode.value = 'view';
+    await loadData();
+    emit('cancel');
 };
 const loadEnderecos = async () => {
     const url = `${baseApiUrl}/cad-enderecos/${dialogRef.value.data.idCadastro}`;
@@ -129,6 +142,182 @@ const saveData = async () => {
             }
         });
 };
+
+/**
+ * Status do registro
+ */
+// Preload de status do registro
+const itemDataStatus = ref([]);
+const itemDataLastStatus = ref({});
+
+/*
+STATUS_OS = 10;
+STATUS_PROPOSTA = 30;
+STATUS_PEDIDO = 40;
+STATUS_EXECUTANDO = 60;
+STATUS_FATURADO = 80;
+STATUS_FINALIZADO = 90;
+STATUS_REATIVADO = 97;
+STATUS_CANCELADO = 98;
+STATUS_EXCLUIDO = 99;
+
+INTERNO = 0;
+EXTERNO = 1;
+
+GARANTIA_INDEFINIDO = -1;
+GARANTIA_NAO = 0;
+GARANTIA_SIM = 1;
+*/
+
+const itemDataStatusPreload = ref([
+    {
+        status: '10',
+        action: 'Registrar OAT',
+        label: 'OAT Criada',
+        icon: 'pi pi-plus',
+        color: '#3b82f6'
+    },
+    {
+        status: '30',
+        action: 'Registrar Proposta',
+        label: 'Proposta Criada',
+        icon: 'pi pi-plus',
+        color: '#3b82f6'
+    },
+    {
+        status: '40',
+        action: 'Aguardar peças', //Registrar Pedido
+        label: 'Aguardando de peças',
+        icon: 'fa-solid fa-retweet',
+        color: '#195825'
+    },
+    {
+        status: '60',
+        action: 'Iniciar execução',
+        label: 'Serviço em andamento',
+        icon: 'fa-solid fa-ellipsis',
+        color: '#4cd07d'
+    },
+    {
+        status: '80',
+        action: 'Faturar',
+        label: 'Em faturamento',
+        icon: 'fa-solid fa-ellipsis',
+        color: '#4cd07d'
+    },
+    {
+        status: '90',
+        action: 'Finalizar',
+        label: 'Finalizado',
+        icon: 'pi pi-check',
+        color: '#607D8B'
+    },
+    {
+        status: '97',
+        action: 'Reativar',
+        label: 'Reativado',
+        icon: 'fa-solid fa-retweet',
+        color: '#195825'
+    },
+    {
+        status: '98',
+        action: 'Cancelar',
+        label: 'Cancelado',
+        icon: 'pi pi-times',
+        color: '#8c221c'
+    },
+    {
+        status: '99',
+        action: 'Excluir',
+        label: 'Excluído',
+        icon: 'pi pi-ban',
+        color: '#8c221c'
+    }
+]);
+// Listar status do registro
+const listStatusRegistro = async () => {
+    const url = `${baseApiUrl}/pv-oat-status/${dialogRef.value.data.idPvOat}`;
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.data.length > 0) {
+            itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
+            itemData.value.status_pv_oat = itemDataLastStatus.value.status_pv_oat;
+            itemDataStatus.value = [];
+            res.data.data.forEach((element) => {
+                const status = itemDataStatusPreload.value.filter((item) => {
+                    return item.status == element.status_pv_oat;
+                });
+                if (status && status[0])
+                    itemDataStatus.value.push({
+                        // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                        date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                        status: status[0].label + (userData.admin >= 2 ? ' ' + status[0].status : ''),
+                        icon: status[0].icon,
+                        color: status[0].color
+                    });
+            });
+        }
+    });
+};
+// Ferramentas do registro
+const statusRecord = async (status) => {
+    const url = `${urlBase.value}/${itemData.value.id}?st=${status}`;
+    const optionsConfirmation = {
+        group: 'templating',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger'
+    };
+    if ([andamentoRegistroPvOat.STATUS_CANCELADO, andamentoRegistroPvOat.STATUS_EXCLUIDO, andamentoRegistroPvOat.STATUS_FINALIZADO].includes(status)) {
+        let startMessage = '';
+        if (andamentoRegistroPvOat.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
+        confirm.require({
+            ...optionsConfirmation,
+            header: 'Confirmar',
+            message: `${startMessage}Confirma a ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].action.toLowerCase()}?`,
+            accept: async () => {
+                await axios.delete(url, itemData.value).then(() => {
+                    const msgDone = `Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`;
+                    if (status == andamentoRegistroPvOat.STATUS_EXCLUIDO) {
+                        closeDialog();
+                    } // Se for excluído, redireciona para o grid
+                    else if ([andamentoRegistroPvOat.STATUS_CANCELADO, andamentoRegistroPvOat.STATUS_FINALIZADO].includes(status)) {
+                        reload();
+                    } // Se for cancelado ou liquidado, recarrega o registro
+                    defaultSuccess(msgDone);
+                });
+            },
+            reject: () => {
+                return false;
+            }
+        });
+    } else
+        await axios.delete(url, itemData.value).then(() => {
+            // Definir a mensagem baseado nos status e de acordo com itemDataStatusPreload
+            defaultSuccess(`Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`);
+            reload();
+        });
+};
+/**
+ * Fim de status do registro
+ */
+const imprimirOat = async () => {
+    defaultSuccess('Por favor aguarde...');
+    const url = `${baseApiUrl}/printing/oat/`;
+    await axios.post(url, { idOat: itemData.value.id, encoding: 'base64' }).then((res) => {
+        const body = res.data;
+        let pdfWindow = window.open('');
+        pdfWindow.document.write(
+            `<iframe width='100%' height='100%' src='data:application/pdf;base64, 
+            ${encodeURI(body)} '></iframe>`
+        );
+    });
+};
+// Fchar formulário
+const closeDialog = () => {
+    dialogRef.value.close();
+};
+
 const formIsValid = () => {
     return true;
 };
@@ -145,6 +334,18 @@ onMounted(() => {
         loadData();
     }, Math.random() * 1000 + 250);
 });
+const onAdvancedUpload = async (comp) => {
+    console.log(comp);
+    // const url = `${urlBase.value}/${itemData.value.id}/f-a/hfl`;
+    // await axios.post(url, { idOat: itemData.value.id, encoding: 'base64' }).then((res) => {
+    //     const body = res.data;
+    //     let pdfWindow = window.open('');
+    //     pdfWindow.document.write(
+    //         `<iframe width='100%' height='100%' src='data:application/pdf;base64,
+    //         ${encodeURI(body)} '></iframe>`
+    //     );
+    // });
+};
 </script>
 
 <template>
@@ -175,7 +376,7 @@ onMounted(() => {
                             <Dropdown v-else id="garantia" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.garantia" :options="dropdownGarantia" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="nf_garantia">Nota fiscal do produto</label>
+                            <label for="nf_garantia">NF do produto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" :required="itemData.garantia == 1" v-model="itemData.nf_garantia" id="nf_garantia" type="text" />
                         </div>
@@ -210,7 +411,7 @@ onMounted(() => {
                         <div class="col-12 md:col-12">
                             <label for="descricao">Descrição dos serviços</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Editor v-else-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <Editor v-else-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 320px" aria-describedby="editor-error"></Editor>
                             <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
@@ -223,7 +424,7 @@ onMounted(() => {
                                 <span class="font-bold text-lg">Ações do Registro</span>
                             </div>
                         </template>
-                        <div v-if="mode != 'new' && dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO">
+                        <div v-if="mode != 'new' && dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO && itemDataLastStatus.status_pv_oat < andamentoRegistroPvOat.STATUS_FINALIZADO">
                             <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
                             <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
                             <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
@@ -241,31 +442,31 @@ onMounted(() => {
                                 @click="openInNewTab(`/${userData.cliente}/${userData.dominio}/cadastro/${dialogRef.data.idCadastro}`)"
                             />
                             <Button
-                                label="Criar OAT"
-                                v-if="dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO"
-                                type="button"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-screwdriver-wrench fa-shake`"
-                                style="color: #a97328"
-                                text
-                                raised
-                                @click="showPvOatForm"
-                            />
-                            <Button
-                                label="Finalizar Atendimento"
+                                label="Finalizar Oat"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-check fa-shake'`"
                                 severity="success"
-                                :disabled="dialogRef.data.lastStatus >= andamentoRegistroPv.STATUS_FINALIZADO"
+                                :disabled="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_FINALIZADO"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistroPv.STATUS_FINALIZADO)"
+                                @click="statusRecord(andamentoRegistroPvOat.STATUS_FINALIZADO)"
                             />
                             <Button
-                                label="Cancelar Atendimento"
-                                v-tooltip.top="'Cancela o atendimento, mas não o exclui!'"
-                                v-if="dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_CANCELADO"
+                                label="Imprimir Oat"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-print fa-shake'`"
+                                style="color: #1d067a"
+                                :disabled="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_FINALIZADO"
+                                text
+                                raised
+                                @click="imprimirOat()"
+                            />
+                            <Button
+                                label="Cancelar Oat"
+                                v-tooltip.top="'Cancela o Oat, mas não o exclui!'"
+                                v-if="itemDataLastStatus.status_pv_oat < andamentoRegistroPvOat.STATUS_CANCELADO"
                                 type="button"
                                 :disabled="!(userData.pv >= 3 && itemData.status == 10)"
                                 class="w-full mb-3"
@@ -273,30 +474,30 @@ onMounted(() => {
                                 severity="warning"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistroPv.STATUS_CANCELADO)"
+                                @click="statusRecord(andamentoRegistroPvOat.STATUS_CANCELADO)"
                             />
                             <Button
-                                label="Reativar Atendimento"
-                                v-else-if="dialogRef.data.lastStatus >= andamentoRegistroPv.STATUS_CANCELADO"
+                                label="Reativar Oat"
+                                v-else-if="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_CANCELADO"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice fa-shake'`"
                                 severity="warning"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistroPv.STATUS_REATIVADO)"
+                                @click="statusRecord(andamentoRegistroPvOat.STATUS_REATIVADO)"
                             />
                             <Button
-                                label="Excluir Atendimento"
+                                label="Excluir Oat"
                                 v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
                                 type="button"
-                                :disabled="!(userData.pv >= 4 && itemData.status != andamentoRegistroPv.STATUS_EXCLUIDO)"
+                                :disabled="!(userData.pv >= 4 && itemData.status != andamentoRegistroPvOat.STATUS_EXCLUIDO)"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-fire`"
                                 severity="danger"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistroPv.STATUS_EXCLUIDO)"
+                                @click="statusRecord(andamentoRegistroPvOat.STATUS_EXCLUIDO)"
                             />
                         </div>
                     </Fieldset>
@@ -323,18 +524,14 @@ onMounted(() => {
                         </Timeline>
                     </Fieldset>
                 </div>
-                <div class="card flex justify-content-center flex-wrap gap-3" v-if="!(dialogRef.data.lastStatus >= 80)">
-                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode = 'view'" />
-                </div>
             </div>
         </form>
         <div class="col-12" v-if="userData.admin >= 2">
             <div class="card bg-green-200 mt-3">
                 <p>Mode: {{ mode }}</p>
                 <p>itemData: {{ itemData }}</p>
-                <p>dialogRef.data: {{ dialogRef.data }}</p>
+                <p>PV last status (dialogRef.data): {{ dialogRef.data }}</p>
+                <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
             </div>
         </div>
     </div>

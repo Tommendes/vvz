@@ -1,48 +1,34 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
-    const { STATUS_OS, STATUS_PROPOSTA, STATUS_PEDIDO, STATUS_EXECUTANDO, STATUS_FATURADO, STATUS_FINALIZADO, STATUS_CANCELADO, INTERNO, EXTERNO, GARANTIA_INDEFINIDO, GARANTIA_NAO, GARANTIA_SIM } = require('./pv_oat_status.js')(app)
-    const tabela = 'pv_oat'
-    const tabelaStatus = 'pv_oat_status'
+    const tabela = 'uploads'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
-        let body = { ...req.body }
-        if (req.params.id) body.id = req.params.id
         try {
-            // Alçada para edição
-            if (body.id)
-                isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-            // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+            isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Upload de arquivos"`)
         } catch (error) {
             console.log(error);
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
-        const tabelaPvOatStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
 
-        const pipeline_params_force = body.pipeline_params_force
-
+        let body = { ...req.body }
         try {
-            existsOrError(body.id_pv, 'Pós-venda não encontrado')
-            existsOrError(body.id_cadastro_endereco, 'Endereço não informado')
-            existsOrError(body.int_ext, 'Se interno ou externo não informado')
-            existsOrError(body.garantia, 'Se garantia não informado')
-            if (body.garantia == 1 && !(!!body.nf_garantia.trim())) throw "Favor informar a nota fiscal"
-            existsOrError(body.pessoa_contato, 'Contato no cliente não encontrado')
-            existsOrError(body.telefone_contato, 'Telefone do contato não encontrado')
+            existsOrError(body.file_permission, 'Permissão do arquivo não informado')
+            existsOrError(body.file_name, 'Nome do arquivo não informado')
+            existsOrError(body.file_caption, 'Identificador do arquivo não informado')
+            existsOrError(body.file_wd, 'Local de armazenamento do arquivo não informado')
         } catch (error) {
             return res.status(400).send(error)
         }
 
-        const status_pv_oat_force = body.status_pv_oat_force; // Status forçado para edição
-        const status_pv_oat = body.status_pv_oat; // Último status do registro
-        delete body.status_pv_oat; delete body.pipeline_params_force; delete body.status_pv_oat_force; delete body.hash; delete body.tblName;
-        if (body.pv_nr) body.pv_nr = body.pv_nr.toString().padStart(6, '0')
+        body.file_size = body.file_size || 0
+        body.file_ext = body.file_ext || ''
+
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -277,39 +263,73 @@ module.exports = app => {
     }
 
     const hostFile = async (req, res) => {
+        const multer = require('multer');
+        const path = require('path');
         const fs = require('fs');
-        const multer = require('multer')
-        const path = require('path')
-        // Caminho de destino
-        const destinationPath = path.join(__dirname, '../../dashboard/public/assets/files');
-        // Crie o diretório se não existir
-        if (!fs.existsSync(destinationPath)) {
-            fs.mkdirSync(destinationPath);
-        }
-        console.log(process.cwd() + '/public/', 'destinationPath');
-        return res.send('Arquivo enviado com sucesso.');
-        // Configuração do multer
+        // Configurando o multer para lidar com o upload de arquivos
         const storage = multer.diskStorage({
-            destination: (req, file, cb) => {
-                console.log(file);
-                cb(null, destinationPath)
+            destination: function (req, file, cb) {
+                const destinationPath = path.join(__dirname, '../../dashboard/public/assets/files');
+                if (!fs.existsSync(destinationPath)) {
+                    fs.mkdirSync(destinationPath);
+                }
+                cb(null, destinationPath);
             },
-            filename: (req, file, cb) => {
-                console.log(file);
-                cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
-            }
-        })
-        // Instância do multer
-        const upload = multer({ storage: storage }).single('file')
-        
-        // Executa o upload
-        upload(req, res, (err) => {
+            filename: function (req, file, cb) {
+                let nomeArquivo = file.originalname;
+                let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
+                let nomeSemExtensao = ultimaPosicaoPonto !== -1 ? nomeArquivo.substring(0, ultimaPosicaoPonto) : nomeArquivo;
+
+                cb(null, nomeSemExtensao + '-' + Date.now() + path.extname(file.originalname));
+            },
+        });
+
+        const upload = multer({ storage: storage }).array('arquivos');
+        upload(req, res, async (err) => {
+
+            // let user = req.user
+            // const uParams = await app.db('users').where({ id: user.id }).first();
+            // try {
+            //     isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Upload de arquivos"`)
+            // } catch (error) {
+            //     app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            //     return res.status(401).send(error)
+            // }
+            // const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+
+            const files = req.files;
+            // files.forEach(async (file) => {
+            //     const newRecord = {
+            //         status: STATUS_ACTIVE,
+            //         created_at: new Date(),
+            //         file_name: file.filename,
+            //         file_caption: body.file_caption,
+            //         file_permission: body.file_permission,
+            //         file_wd: body.file_wd,
+            //         file_size: file.size,
+            //         file_ext: path.extname(file.originalname),
+            //         file_type: file.mimetype,
+            //         file_hash: file.filename,
+            //         file_path: file.path,
+            //         file_url: `/assets/files/${file.filename}`,
+            //         id_pv: body.id_pv,
+            //         id_pv_oat: body.id_pv_oat,
+            //         id_pv_oat_status: body.id_pv_oat_status,
+            //     };
+            //     const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+            //     const [recordId] = await app.db(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
+            //     const newRecordWithID = { ...newRecord, id: recordId }
+            //     return newRecordWithID;
+            // });
+            
+            // body.file_size = body.file_size || 0
+            // body.file_ext = body.file_ext || ''
             if (err) {
                 console.log(err);
-                return res.status(400).send(err)
+                return res.status(500).send({ message: 'Erro ao enviar arquivos', err });
             }
-            return res.send('Arquivo enviado com sucesso.');
-        })
+            return res.status(200).send({ message: 'Arquivos enviados com sucesso', files });
+        });
     }
 
 

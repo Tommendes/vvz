@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, provide, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -309,13 +309,7 @@ const listStatusRegistro = async () => {
         }
     });
 };
-/**
- * Fim de status do registro
- */
-
-/**
- * Ferramentas do registro
- */
+// Ferramentas do registro
 const statusRecord = async (status) => {
     if (route.params.id) itemData.value.id = route.params.id;
     const url = `${urlBase.value}/${itemData.value.id}?st=${status}`;
@@ -357,7 +351,7 @@ const statusRecord = async (status) => {
         });
 };
 /**
- * Fim de ferramentas do registro
+ * Fim de status do registro
  */
 const toGrid = () => {
     mode.value = 'grid';
@@ -421,7 +415,7 @@ watch(selectedCadastro, (value) => {
                 <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
                     <div class="p-fluid grid">
                         <div class="col-12" v-if="itemData.pv_nr" style="margin: 0">
-                            <h3>Número do Pós-venda: {{ itemData.pv_nr }}</h3>
+                            <h3>Número do Pós-venda: {{ itemData.pv_nr }}{{ userData.admin >= 2 ? ` (${itemData.id})` : '' }}</h3>
                         </div>
                         <div class="col-12 md:col-9">
                             <label for="id_cadastros">Cliente</label>

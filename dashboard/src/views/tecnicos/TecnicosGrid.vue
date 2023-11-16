@@ -84,17 +84,20 @@ const getItem = (data) => {
     itemData.value = data;
 };
 const loadData = () => {
-    loading.value = true;
-    axios.get(`${urlBase.value}`).then((axiosRes) => {
-        gridData.value = axiosRes.data.data;
-        gridData.value.forEach((element) => {
-            if (element.telefone_contato) element.telefone_contato = renderizarHTML(element.telefone_contato, { to: element.tecnico, from: userData.name });
-            if (element.email_contato) element.email_contato = renderizarHTML(element.email_contato);
-            // if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
-            // else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
+    setTimeout(() => {
+        gridData.value = null;
+        loading.value = true;
+        axios.get(`${urlBase.value}`).then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            gridData.value.forEach((element) => {
+                if (element.telefone_contato) element.telefone_contato = renderizarHTML(element.telefone_contato, { to: element.tecnico, from: userData.name });
+                if (element.email_contato) element.email_contato = renderizarHTML(element.email_contato);
+                // if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
+                // else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
+            });
+            loading.value = false;
         });
-        loading.value = false;
-    });
+    }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
 onBeforeMount(() => {

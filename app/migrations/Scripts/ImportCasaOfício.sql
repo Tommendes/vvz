@@ -1,6 +1,28 @@
 /*Recriar tabelas*/
-DELETE FROM vivazul_api.knex_migrations WHERE id > 7;
+DELETE FROM vivazul_api.knex_migrations WHERE id > 8;
 ALTER TABLE vivazul_api.knex_migrations AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=0; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`cad_contatos`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`cad_documentos`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`cad_enderecos`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`cadastros`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`com_agentes`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`com_prospeccoes`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`com_terceiros`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`empresa`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`fin_cc`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`fin_lancamentos`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`fin_retencoes`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`pipeline`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`pipeline_params`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`pipeline_status`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`proto_docs`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`protocolos`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`pv`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`pv_oat`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`pv_status`; 
+DROP TABLE IF EXISTS `vivazul_cso_root`.`pv_tecnicos`;
+SET FOREIGN_KEY_CHECKS=1; 
 
 /*Importar usuários*/
 ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
@@ -18,7 +40,7 @@ SELECT
   0,1,NOW(),NULL,STATUS,NULL,username,(SELECT FLOOR(RAND() * 9000000000 + 1000000000) AS numero_aleatorio),
   email,tel_contato,NULL,'cso','root',administrador,gestor,0, 
   cadastros,ged,0,comercial,0,financeiro,0,agente_comercial,agente_arq,agente_at,99999,id
-FROM vivazul_lynkos.user WHERE dominio = 'casaoficio'-- AND username NOT LIKE '%tom mendes%'
+FROM vivazul_lynkos.user WHERE dominio = 'casaoficio' AND username NOT LIKE '%tom mendes%'
 );
 
 /*Criação dos parâmetros (local_params) do cliente*/
@@ -57,13 +79,13 @@ INSERT INTO vivazul_cso_root.local_params (
 ALTER TABLE vivazul_cso_root.cadastros ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
 /*Remover duplicatas em cadastros. Executar até o resultado da execução ser igual a zero*/
 UPDATE vivazul_lynkos.cadastros SET dominio = CONCAT(dominio,'_XDEL'), STATUS = 99
-WHERE id IN(SELECT id FROM vivazul_lynkos.cadastros 
-WHERE STATUS = 10 AND dominio = 'casaoficio' AND LENGTH(cpf_cnpj) IN ('11','14')
-GROUP BY cpf_cnpj 
-HAVING COUNT(cpf_cnpj) > 1
-ORDER BY cadas_nome,created_at);
+	WHERE id IN(SELECT id FROM vivazul_lynkos.cadastros 
+	WHERE STATUS = 10 AND dominio = 'casaoficio' AND LENGTH(cpf_cnpj) IN ('11','14')
+	GROUP BY cpf_cnpj 
+	HAVING COUNT(cpf_cnpj) > 1
+	ORDER BY cadas_nome,created_at);
 /*Remove caracteres !d do field cpf_cnpj*/
-UPDATE vivazul_lynkos.cadastros SET cpf_cnpj = NULL WHERE NOT(LENGTH(SUBSTRING_INDEX(SUBSTRING_INDEX(cpf_cnpj, '[^0-9]+', -1),'[^0-9]+',1)) IN ('11','14'));
+UPDATE vivazul_lynkos.cadastros SET cpf_cnpj = FLOOR(RAND() * 9000000000 + 1000000000) WHERE NOT(LENGTH(SUBSTRING_INDEX(SUBSTRING_INDEX(cpf_cnpj, '[^0-9]+', -1),'[^0-9]+',1)) IN ('11','14'));
 /*Importa os cadastros*/
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.cadastros;
@@ -86,7 +108,7 @@ INSERT INTO vivazul_cso_root.cadastros (
 	  IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)cpf_cnpj,rg_ie,cadas_nome,
 	  COALESCE((SELECT id FROM vivazul_api.params WHERE LOWER(label) = LOWER(sexo) AND meta = 'sexo'), 3)id_params_sexo,
 	  aniversario,4,obs,
-	  CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(COALESCE(telefone1,telefone2), '[^0-9]+', -1),'[^0-9]+',1) AS UNSIGNED)telefone,email,
+	  REGEXP_REPLACE(COALESCE(telefone1,telefone2), '[^0-9]', '')telefone,email,
 	  inss,cim,doc_esp,id 
 	FROM vivazul_lynkos.cadastros 
 	WHERE STATUS = 10 AND dominio = 'casaoficio' AND cadas_nome IS NOT NULL AND LENGTH(TRIM(cadas_nome)) > 0
@@ -95,7 +117,7 @@ INSERT INTO vivazul_cso_root.cadastros (
 	LIMIT 0, 9999999 
   ) ;
  /*Remover espaços extras em nomes de cadastros*/
- UPDATE cadastros SET nome = TRIM(nome);
+UPDATE cadastros SET nome = TRIM(nome);
 /*Importa os contatos dos cadastros*/  
 ALTER TABLE vivazul_cso_root.cad_contatos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
 SET FOREIGN_KEY_CHECKS=0; 
@@ -234,13 +256,13 @@ INSERT INTO vivazul_cso_root.pipeline_status (
 );
 /*Garantir data do status em pipeline_status*/
 UPDATE vivazul_cso_root.pipeline_status ps
-JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_pipeline
-SET ps.created_at = p.created_at
-WHERE ps.created_at NOT LIKE '20%' LIMIT 9999999;
+	JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_pipeline
+	SET ps.created_at = p.created_at
+	WHERE ps.created_at NOT LIKE '20%' LIMIT 9999999;
 UPDATE vivazul_cso_root.pipeline_status ps
-JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_pipeline
-SET ps.updated_at = p.created_at
-WHERE ps.updated_at NOT LIKE '20%' LIMIT 9999999;
+	JOIN vivazul_cso_root.pipeline p ON p.id = ps.id_pipeline
+	SET ps.updated_at = p.created_at
+	WHERE ps.updated_at NOT LIKE '20%' LIMIT 9999999;
 
 /*Importar prospecções*/
 ALTER TABLE vivazul_cso_root.com_prospeccoes ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
@@ -295,17 +317,28 @@ email_contato,descricao,valor_total,aceite_do_cliente,old_id
 	email_contato,descricao,valortotal,aceitedocliente,pvo.id FROM vivazul_lynkos.pv_oat pvo
 	JOIN vivazul_cso_root.cad_enderecos ce ON ce.old_id = pvo.id_cadastro_endereco
 	JOIN vivazul_cso_root.pv pv ON pv.old_id = pvo.id_pv
-); 
+);
 
 /*Importar pv_status*/
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.pv_status;
 ALTER TABLE vivazul_cso_root.pv_status AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1;
-INSERT INTO vivazul_cso_root.pv_status (evento,created_at,updated_at,STATUS,id_pv,status_pv
-) (SELECT 1,created_at,NULL updated_at,10,pv.id,0 FROM vivazul_cso_root.pv pv);
-INSERT INTO vivazul_cso_root.pv_status (evento,created_at,updated_at,STATUS,id_pv,status_pv
-) (SELECT 1,NOW() created_at,NULL updated_at,10,pv.id,pv.status FROM vivazul_cso_root.pv pv);
+INSERT INTO vivazul_cso_root.pv_status (evento,created_at,updated_at,STATUS,id_pv,status_pv) (SELECT 1,created_at,NULL updated_at,10,pv.id,0 FROM vivazul_cso_root.pv pv);
+INSERT INTO vivazul_cso_root.pv_status (evento,created_at,updated_at,STATUS,id_pv,status_pv) (SELECT 1,NOW() created_at,NULL updated_at,10,pv.id,pv.status FROM vivazul_cso_root.pv pv);
 UPDATE vivazul_cso_root.pv_status SET status_pv = 80 WHERE status_pv = 90;
+
+/*Importar pv_oat_status*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.pv_oat_status;
+ALTER TABLE vivazul_cso_root.pv_oat_status AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1;
+INSERT INTO vivazul_cso_root.pv_oat_status (evento,created_at,updated_at,STATUS,id_pv_oat,status_pv_oat) (SELECT 1,created_at,NULL updated_at,10,pv.id,pv.status FROM vivazul_cso_root.pv_oat pv);
+UPDATE vivazul_cso_root.pv_oat_status SET status_pv_oat = 98 WHERE status_pv_oat = 90;
+
+/*Inserir long_params*/
+/*Dizeres legais da Oat*/
+INSERT INTO `vivazul_cso_root`.`long_params` (`id`,`evento`,`created_at`,`updated_at`,`status`,`grupo`,`parametro`,`label`) 
+VALUES(NULL,1,NOW(),NULL,10,'lgl_os_01','Declaro, por meio deste que aceito o(s) produtos(s), serviço(s) e/ou montagem(ns) a que essa ordem de serviço se refere, e que os mesmos encontram-se nas condições contratadas, em perfeito estado de funcionamento, aparência geral, acabamentos e funcionamento assim como o treinamento de manuseio e utilização.','Dizeres legais do final da OAT');
 
 

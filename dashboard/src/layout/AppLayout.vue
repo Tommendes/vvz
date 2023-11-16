@@ -104,6 +104,7 @@ const changeToPortuguese = () => {
     primevue.config.locale.dayNamesMin = ['Do', 'Se', 'Te', 'Qa', 'Qi', 'Sx', 'Sa'];
     primevue.config.locale.monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     primevue.config.locale.monthNamesShort = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    primevue.config.locale.fileSizeTypes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 };
 onMounted(() => {
     applyScale();

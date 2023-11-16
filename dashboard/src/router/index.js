@@ -133,6 +133,12 @@ const routes = [
                 name: 'cli-password-reset',
                 component: () => import('@/views/pages/auth/UserPassReset.vue')
             },
+            // Upload de arquivos
+            {
+                path: '/:client/:domain/uploads',
+                name: 'uploads',
+                component: () => import('@/components/Uploads.vue')
+            },
             // Rotas de teste
             {
                 path: '/:client/:domain/uikit/formlayout',

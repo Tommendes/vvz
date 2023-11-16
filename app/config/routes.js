@@ -213,6 +213,9 @@ module.exports = app => {
         .put(app.api.protocolos.save)
         .get(app.api.protocolos.getById)
         .delete(app.api.protocolos.remove)
+    app.route('/protocolos/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.protocolos.getByFunction)
     app.route('/proto-docs/:id_protocolos')
         .all(app.config.passport.authenticate())
         .post(app.api.proto_docs.save)
@@ -317,6 +320,64 @@ module.exports = app => {
         .get(app.api.pv_oat.getById)
         .delete(app.api.pv_oat.remove)
 
+    /**
+     * Rotas para uploads de arquivos
+     */    
+    // app.route('/uploads')
+    //     // .all(app.config.passport.authenticate())
+    //     .post(app.api.uploads.hostFile)
+    app.route('/uploads/f-a/:func')
+        // .all(app.config.passport.authenticate())
+        .post(app.api.uploads.getByFunction)
+
+    // const multer = require('multer');
+    // const path = require('path');
+    // const fs = require('fs');
+
+    // const destinationPath = path.join(__dirname, '../../dashboard/public/assets/files');
+    // // Configurando o multer para lidar com o upload de arquivos
+    // const storage = multer.diskStorage({
+    //     //   destination: function (req, file, cb) {
+    //     //     cb(null, 'uploads/'); // Os arquivos serão armazenados na pasta 'uploads/'
+    //     //   },
+    //     destination: function (req, file, cb) {
+    //         const uploadDir = destinationPath;
+    //         if (!fs.existsSync(uploadDir)) {
+    //             fs.mkdirSync(uploadDir);
+    //         }
+    //         cb(null, uploadDir);
+    //     },
+
+    //     filename: function (req, file, cb) {
+    //         let nomeArquivo = file.originalname;
+    //         let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
+    //         let nomeSemExtensao = ultimaPosicaoPonto !== -1 ? nomeArquivo.substring(0, ultimaPosicaoPonto) : nomeArquivo;
+
+    //         cb(null, nomeSemExtensao + '-' + Date.now() + path.extname(file.originalname));
+    //     },
+    // });
+
+    // const upload = multer({ storage: storage });
+
+    // // Rota para lidar com o upload de arquivos
+    // app.post('/uploads', upload.array('arquivos'), (req, res) => {
+    //     res.send('Arquivos enviados com sucesso!');
+    // });
+
+    // app.post('/pv-oat/:id_pv/:id/f-a/:func', upload.array('file'), async (req, res) => {
+    //     console.log(req.files);
+    //     res.send({ upload: true, files: req.files });
+    // });
+    /**
+     * Rota de pv_oat_status
+     */
+    app.route('/pv-oat-status/:id_pv_oat')
+        .all(app.config.passport.authenticate())
+        .get(app.api.pv_oat_status.get)
+    app.route('/pv-oat-status/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.pv_oat_status.getByFunction)
+
 
     /**
      * Rota de empresa
@@ -334,7 +395,7 @@ module.exports = app => {
 
     /**
     * Rota de fin_cc
-   */
+    */
     app.route('/fin-cc')
         .all(app.config.passport.authenticate())
         .post(app.api.fin_cc.save)
@@ -348,7 +409,7 @@ module.exports = app => {
 
     /**
     * Rota de fin_lancamentos
-   */
+    */
     app.route('/fin-lancamentos')
         .all(app.config.passport.authenticate())
         .post(app.api.fin_lancamentos.save)
@@ -362,7 +423,7 @@ module.exports = app => {
 
     /**
     * Rota de fin_retencoes
-   */
+    */
     app.route('/fin-retencoes')
         .all(app.config.passport.authenticate())
         .post(app.api.fin_retencoes.save)
@@ -372,5 +433,12 @@ module.exports = app => {
         .put(app.api.fin_retencoes.save)
         .get(app.api.fin_retencoes.getById)
         .delete(app.api.fin_retencoes.remove)
+
+    /**
+     * Rota para impressão
+     */
+    app.route('/printing/:func')
+        .all(app.config.passport.authenticate())
+        .post(app.api.printing.getByFunction)
 
 }
