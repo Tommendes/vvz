@@ -3,7 +3,7 @@ import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { userKey } from '@/global';
+import { userKey, isValidEmail } from '@/global';
 import moment from 'moment';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -200,23 +200,42 @@ const dropdownPeriodo = ref([
     { value: 0, label: 'Manhã' },
     { value: 1, label: 'Tarde' }
 ]);
-// Validar email
-// const validateEmail = () => {
-//     if (itemData.value.contato && itemData.value.contato.trim().length > 0 && !isValidEmail(itemData.value.contato)) {
-//         errorMessages.value.contato = 'Formato de email inválido';
-//     } else errorMessages.value.contato = null;
-//     return !errorMessages.value.contato;
-// };
-// Validar telefone
-// const validateTelefone = () => {
-//     if (itemData.value.contato && itemData.value.contato.trim().length > 0 && ![10, 11].includes(masks.value.contato.unmasked(itemData.value.contato).length)) {
-//         errorMessages.value.contato = 'Formato de telefone inválido';
-//     } else errorMessages.value.contato = null;
-//     return !errorMessages.value.contato;
-// };
+
+// ATÉ AQUI
+
+// Validação do primeiro dígito do campo Contato
+const validarContato = () => {
+    const valorContato = itemData.value.contato;
+
+    // Verificar se o valor é um número ou letra
+    if (valorContato) {
+        const primeiroCaractere = valorContato.charAt(0);
+        if (!isNaN(primeiroCaractere)) {
+            // Aplicar a máscara de telefone
+            itemData.value.contato = valorContato.replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-$3');
+            
+            // Validação para Telefone
+            if (itemData.value.contato && itemData.value.contato.length > 0 && ![10, 11].includes(itemData.value.contato.replace(/([^\d])+/gim, '').length)) {
+                errorMessages.value.contato = 'Formato de telefone inválido';
+            } else errorMessages.value.contato = null;
+            return !errorMessages.value.contato;
+        } else {
+            // Validação para E-mail
+            if (itemData.value.contato && itemData.value.contato.trim().length > 0 && !isValidEmail(itemData.value.contato)) {
+                errorMessages.value.contato = 'Formato de email inválido';
+            } else errorMessages.value.contato = null;
+            return !errorMessages.value.contato;
+        }
+    } else {
+        // Se o campo foi esvaziado, resetar as mensagens de erro
+        errorMessages.value.contato = null;
+    }
+};
+
+
 // Validar formulário
 const formIsValid = () => {
-    return true;
+    return validarContato();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -297,8 +316,8 @@ watchEffect(() => {
                         <div class="col-12 md:col-2">
                             <label for="data_visita">Data da Visita</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" /> -->
-                            <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.data_visita" id="data_visita" :numberOfMonths="2" showIcon />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" />
+                            <!-- <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.data_visita" id="data_visita" :numberOfMonths="2" showIcon /> -->
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="id_cadastros">Cadastro</label>
@@ -332,7 +351,8 @@ watchEffect(() => {
                         <div class="col-12 md:col-6 contato">
                             <label for="contato">Contato</label> 
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validarContato()"/>
+                            <small id="text-error" class="p-error" if>{{ errorMessages.contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
                             <label for="observacoes">Observações</label>
