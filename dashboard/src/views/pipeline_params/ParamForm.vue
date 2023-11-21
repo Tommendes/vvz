@@ -1,9 +1,8 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { isValidEmail } from '@/global';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -34,19 +33,6 @@ const onUpload = (event) => {
 // Campos de formulário
 const itemData = ref({});
 const registroTipo = ref('pf');
-const labels = ref({
-    descricao: "Descrição abreviada do parâmetro",
-    bi_index: "Apresentação em BI",
-    doc_venda: "É documento de venda",
-    autom_nr: "Numeracao automatica  ",
-    gera_baixa: "Pode ser solicitado",
-    tipo_secundario: "Tipo secundário",
-    obrig_valor: "Obrigatorio declarar valor",
-    reg_agente: "Obrigatório agente",
-    id_logo: "logomarca representada",
-    gera_pasta: "Gera pasta", // (0=Não, 1=Documento, 2=documento_baixa)
-    proposta_interna: "Usa sistema interno"
-});
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -214,66 +200,65 @@ const items = ref([
     }
 ]);
 </script>
-
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/${userData.dominio}/pipeline_params` }, { label: itemData.registro + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/${userData.dominio}/pipeline_params` }, { label: itemData.descricao + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-12">
-                            <label for="descricao">{{ labels.descricao }}</label>
+                            <label for="descricao">Descrição abreviada do parâmetro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="bi_index">{{ labels.bi_index }}</label>
+                            <label for="bi_index">Apresentação em BI</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="bi_index" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.bi_index" :options="dropdownApresentacaoBi" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="doc_venda">{{ labels.doc_venda }}</label>
+                            <label for="doc_venda">É documento de venda</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="doc_venda" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.doc_venda" :options="dropdownDocVenda" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="autom_nr">{{ labels.autom_nr }}</label>
+                            <label for="autom_nr">Numeracao automatica</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="autom_nr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.autom_nr" :options="dropdownAutomNum" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="gera_baixa">{{ labels.gera_baixa }}</label>
+                            <label for="gera_baixa">Pode ser solicitado</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <Dropdown v-else id="gera_baixa" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gera_baixa" :options="dropdownGeraBaixa" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="tipo_secundario">{{ labels.tipo_secundario }}</label>
+                            <label for="tipo_secundario">Tipo secundário</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <Dropdown v-else id="tipo_secundario" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo_secundario" :options="dropdownTipoSec" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="obrig_valor">{{ labels.obrig_valor }}</label>
+                            <label for="obrig_valor">Obrigatorio declarar valor</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="obrig_valor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.obrig_valor" :options="dropdownObrigValor" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="reg_agente">{{ labels.reg_agente }}</label>
+                            <label for="reg_agente">Obrigatório agente</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="reg_agente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.reg_agente" :options="dropdownObrigAgente" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="gera_pasta">{{ labels.gera_pasta }}</label>
+                            <label for="gera_pasta">Gera pasta</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="gera_pasta" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gera_pasta" :options="dropdownGeraPasta" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="proposta_interna">{{ labels.proposta_interna }}</label>
+                            <label for="proposta_interna">Usa sistema interno</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="proposta_interna" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.proposta_interna" :options="dropdownPropInterna" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="id_logo">{{ labels.id_logo }}</label>
+                            <label for="id_logo">logomarca representada</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_logo" id="id_logo" type="text" />
                         </div>
