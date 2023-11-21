@@ -131,7 +131,7 @@ onMounted(() => {
 
 <template>
     <div class="card">
-        <div class="grid">
+        <div class="grid" v-if="userData.admin >= 2">
             <div class="col-12">
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-3">
