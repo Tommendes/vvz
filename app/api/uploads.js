@@ -110,6 +110,48 @@ module.exports = app => {
         }
     }
 
+    const saveNewFile = async (req, res) => {
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
+
+        let body = { ...req.body }
+
+        // Criação de um novo registro
+        app.db.transaction(async (trx) => {
+            // Variáveis da criação de um registro
+            const newRecord = {
+                status: STATUS_ACTIVE,
+                created_at: new Date(),
+                ...body, // Incluindo outros dados do corpo da solicitação
+            };
+
+            // Iniciar a transação e inserir na tabela principal
+            const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+            const [recordId] = await trx(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
+
+            // Registrar o evento na tabela de eventos
+            const eventPayload = {
+                notTo: ['created_at', 'evento'],
+                next: newRecord,
+                request: req,
+                evento: {
+                    evento: 'Novo registro',
+                    tabela_bd: tabelaDomain,
+                },
+                trx: trx
+            };
+            const { createEventIns } = app.api.sisEvents
+            await createEventIns(eventPayload);
+            const newRecordWithID = { ...newRecord, id: recordId }
+            return newRecordWithID;
+        }).catch((error) => {
+            // Se ocorrer um erro, faça rollback da transação
+            app.api.logger.logError({
+                log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+            });
+            return res.status(500).send(error);
+        });
+    }
+
     const get = async (req, res) => {
         let user = req.user
         let key = req.query.key
@@ -171,6 +213,7 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
+        const body = { ...req.body }
 
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
         const registro = { status: STATUS_DELETE }
@@ -196,22 +239,39 @@ module.exports = app => {
                 return res.status(400).send(error)
             }
             // Excluir o arquivo do servidor com o endereço contido em rowsUpdated.path
-            const fs = require('fs');
-            const path = require('path');
-            const { promisify } = require('util');
-            const unlink = promisify(fs.unlink);
-            await unlink(rowsUpdated.path);
-            rowsUpdated = await app.db(tabelaDomain)
+            try {
+                if (await removeFileFromServer(rowsUpdated) != true) throw 'Erro ao excluir arquivo do servidor'
+            } catch (error) {
+                return res.status(500).send(error)
+            }
+            app.db(tabelaDomain)
                 .update({
                     status: registro.status,
                     updated_at: new Date(),
                     evento: evento
                 })
-                .where({ id: req.params.id })
-
-            res.status(204).send()
+                .where({ id: req.params.id || body.uid })
+                .then((ret) => {
+                    if (ret > 0) res.status(204).send()
+                    else res.status(200).send('Registro não foi encontrado')
+                })
         } catch (error) {
-            res.status(400).send(error)
+            return res.status(400).send(error)
+        }
+    }
+
+    const removeFileFromServer = async (rowUpdated) => {
+        // Excluir o arquivo do servidor com o endereço contido em rowsUpdated.path
+        const fs = require('fs');
+        const path = require('path');
+        const { promisify } = require('util');
+        const unlink = promisify(fs.unlink);
+        try {
+            await unlink(rowUpdated.path);
+            return true
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });
+            return false
         }
     }
 
@@ -376,12 +436,47 @@ module.exports = app => {
         const owner = await app.db(tabelaOwnerDomain).where({ id: itemData.registro_id }).first()
         // last contém os dados do registro antes da alteração
         const last = { ...owner }
+        const { createEventUpd } = app.api.sisEvents
+        let evento = undefined
+        // Verificar se há um arquivo e registro no banco de dados referente registro anterior
+        // Se houver, excluir o arquivo do servidor e cancela o registro do banco de dados
+        try {
+            // const uploadBodyRemove = await app.db(tabelaDomain).where({ id: last[itemData.field] }).first()
+            // Recuperar em tabelaDomain o registro que será excluído de acordo com o last[itemData.field]
+            const uploadBodyRemove = await app.db(tabelaDomain).where({ id: last[itemData.field] }).first()
+            const uploadBodyRemoveBefore = { ...uploadBodyRemove }
+            if (uploadBodyRemove && uploadBodyRemove.id) {
+                if (await removeFileFromServer(uploadBodyRemove) != true) throw 'Erro ao excluir arquivo do servidor'
+                uploadBodyRemove.status = STATUS_DELETE
+
+                evento = await createEventUpd({
+                    "notTo": ['created_at', 'updated_at', 'evento'],
+                    "last": uploadBodyRemoveBefore,
+                    "next": uploadBodyRemove,
+                    "request": req,
+                    "evento": {
+                        "classevento": "Remove",
+                        "evento": `Exclusão de ${tabela}`,
+                        "tabela_bd": tabela,
+                    }
+                })
+                uploadBodyRemove.updated_at = new Date()
+                uploadBodyRemove.evento = evento
+                await app.db(tabelaDomain)
+                    .update(uploadBodyRemove)
+                    .where({ id: last[itemData.field] })
+            }
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send(error)
+        }
+
+        // Setar o id do arquivo no registro no field informado em itemData.field
         owner[itemData.field] = uploadBody.id
 
         // Variáveis da edição de um registro
         // registrar o evento na tabela de eventos
-        const { createEventUpd } = app.api.sisEvents
-        const evento = await createEventUpd({
+        evento = await createEventUpd({
             "notTo": ['created_at', 'updated_at', 'evento',],
             "last": last,
             "next": owner,
