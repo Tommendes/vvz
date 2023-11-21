@@ -198,25 +198,29 @@ const items = ref([
                             <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
-                        <div class="col-12 md:col-8">
-                            <label for="descricao">Descrição abreviada do parâmetro</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="bi_index">Apresentação em BI</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="bi_index" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.bi_index" :options="dropdownApresentacaoBi" />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="doc_venda">É documento de venda</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="doc_venda" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.doc_venda" :options="dropdownDocVenda" />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="autom_nr">Numeracao automatica</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="autom_nr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.autom_nr" :options="dropdownAutomNum" />
+                        <div class="col-8">
+                            <div class="p-fluid grid">
+                                <div class="col-12 md:col-12">
+                                    <label for="descricao">Descrição abreviada do parâmetro</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" />
+                                </div>
+                                <div class="col-12 md:col-4">
+                                    <label for="bi_index">Apresentação em BI</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <Dropdown v-else id="bi_index" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.bi_index" :options="dropdownApresentacaoBi" />
+                                </div>
+                                <div class="col-12 md:col-4">
+                                    <label for="doc_venda">É documento de venda</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <Dropdown v-else id="doc_venda" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.doc_venda" :options="dropdownDocVenda" />
+                                </div>
+                                <div class="col-12 md:col-4">
+                                    <label for="autom_nr">Numeracao automatica</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <Dropdown v-else id="autom_nr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.autom_nr" :options="dropdownAutomNum" />
+                                </div>
+                            </div>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="gera_baixa">Pode ser solicitado</label>
