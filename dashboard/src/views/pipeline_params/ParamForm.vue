@@ -15,21 +15,6 @@ const route = useRoute();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
-
-import { useToast } from "primevue/usetoast";
-const toast = useToast();
-
-// Envio da logo com componente PrimeVue
-const onUpload = (event) => {
-    const uploadedFile = event.files[0]; // Envio do arquivo URL
-    if (uploadedFile) {
-        // Atualize o campo id_logo com a URL do arquivo carregado
-        itemData.id_logo = uploadedFile.objectURL;
-    }
-};
 // Campos de formulário
 const itemData = ref({});
 const registroTipo = ref('pf');
@@ -68,16 +53,12 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                // if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.masked(itemData.value.cpf_cnpj_empresa);
-                // if (itemData.value.cep) itemData.value.cep = masks.value.cep.masked(itemData.value.cep);
-                // if (itemData.value.tel1) itemData.value.tel1 = masks.value.telefone.masked(itemData.value.tel1);
-                // if (itemData.value.tel2) itemData.value.tel2 = masks.value.telefone.masked(itemData.value.tel2);
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline_params` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline_params` });
             }
         });
     } else loading.value.form = false;
@@ -95,7 +76,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline_params/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline_params/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -201,13 +182,23 @@ const items = ref([
 ]);
 </script>
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/${userData.dominio}/pipeline_params` }, { label: itemData.descricao + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/${userData.dominio}/pipeline_params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-12">
+                        <!-- <div class="col-12 md:col-4">
+                            <label for="id_logo">Logomarca representada</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_logo" id="id_logo" type="text" />
+                        </div> -->
+                        <div class="col-4">
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                            <ContextMenu ref="menu" :model="items" />
+                        </div>
+                        <div class="col-12 md:col-8">
                             <label for="descricao">Descrição abreviada do parâmetro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" />
@@ -256,29 +247,7 @@ const items = ref([
                             <label for="proposta_interna">Usa sistema interno</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="proposta_interna" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.proposta_interna" :options="dropdownPropInterna" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="id_logo">logomarca representada</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_logo" id="id_logo" type="text" />
-                        </div>
-
-                        <!-- logo carregada -->
-                        <!-- <div class="col-12 md:col-4">
-                            <label for="id_logo">{{ labels.id_logo }}</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <FileUpload
-                                v-else
-                                mode="basic"
-                                name="logo"
-                                url="./upload.php"
-                                accept="image/*"
-                                :disabled="mode == 'view'"
-                                :maxFileSize="1000000"
-                                @upload="onUpload"
-                                chooseLabel="Carregar"
-                            />
-                        </div> -->
+                        </div>                        
                     </div>
                 </div>
                 <div class="col-12">

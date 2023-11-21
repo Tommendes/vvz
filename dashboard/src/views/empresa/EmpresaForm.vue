@@ -245,6 +245,7 @@ watch(
         }
     }
 );
+// daqui
 const menu = ref();
 const preview = ref(false);
 const items = ref([
@@ -263,7 +264,7 @@ import Uploads from '@/components/Uploads.vue';
 const showUploadForm = () => {
     dialog.open(Uploads, {
         data: {
-            tabela: 'empresa',
+            tabela: 'empresa', //pipeline_params
             registro_id: itemData.value.id,
             schema: userData.cliente + '_' + userData.dominio,
             field: 'id_uploads_logo'
@@ -291,6 +292,7 @@ const showUploadForm = () => {
 const onImageRightClick = (event) => {
     menu.value.show(event);
 };
+// ate aqui
 </script>
 
 <template>
