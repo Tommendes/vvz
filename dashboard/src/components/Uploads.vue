@@ -96,17 +96,7 @@ const saveData = async () => {
     const url = `${urlBase.value}/f-a/sown`;
     await axios
         .post(url, filesData.value)
-        .then((res) => {
-            const resp = res.data;
-            // const body = res.data;
-            // if (body && body.id) {
-            console.log('resp', resp);
-            defaultSuccess('Upload executado com sucesso');
-            //     itemData.value = body;
-            // } else {
-            //     defaultWarn('Erro ao executar upload');
-            // }
-        })
+        .then(() => defaultSuccess('Upload executado com sucesso'))
         .catch((err) => {
             console.log('err', err);
             defaultWarn(err.response.data);
@@ -211,9 +201,6 @@ onMounted(() => {
                                 rounded
                                 severity="danger"
                             />
-                            <p>file: {{ JSON.stringify(file) }}</p>
-                            <p>index: {{ index }}</p>
-                            <p>removeFileCallback: {{ removeFileCallback.toString() }}</p>
                         </div>
                     </div>
                 </div>
