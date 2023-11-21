@@ -51,7 +51,7 @@ const onTemplatedUpload = async (event) => {
     }
     filesData.value = resp.files[0];
     await saveData();
-    defaultSuccess(resp.message);
+    // defaultSuccess(resp.message);
 };
 const urlBase = ref(`${baseApiUrl}/uploads`);
 const itemData = ref({});

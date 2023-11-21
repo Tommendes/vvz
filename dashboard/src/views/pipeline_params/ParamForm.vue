@@ -58,7 +58,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline_params` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline-params` });
             }
         });
     } else loading.value.form = false;
@@ -76,7 +76,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline_params/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline-params/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -103,7 +103,7 @@ import Uploads from '@/components/Uploads.vue';
 const showUploadForm = () => {
     dialog.open(Uploads, {
         data: {
-            tabela: 'pipeline-params', //pipeline_params
+            tabela: 'pipeline_params',
             registro_id: itemData.value.id,
             schema: userData.cliente + '_' + userData.dominio,
             field: 'id_uploads_logo'
@@ -201,20 +201,6 @@ const menu = ref();
 const preview = ref(false);
 const items = ref([
     {
-        label: 'View',
-        icon: 'pi pi-fw pi-search',
-        command: () => {
-            alert('Enviar nova imagem');
-        }
-    },
-    {
-        label: 'Delete',
-        icon: 'pi pi-fw pi-trash',
-        command: () => {
-            alert('Excluir imagem');
-        }
-    },
-    {
         label: 'Alterar a logomarca',
         icon: 'pi pi-fw pi-cloud-upload',
         command: () => {
@@ -224,20 +210,15 @@ const items = ref([
 ]);
 </script>
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/${userData.dominio}/pipeline_params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/${userData.dominio}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <!-- <div class="col-12 md:col-4">
-                            <label for="id_logo">Logomarca representada</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_logo" id="id_logo" type="text" />
-                        </div> -->
                         <div class="col-4">
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Image v-else :src="`${itemData.id_uploads_logo ? itemData.id_uploads_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="id_uploads_logo" @contextmenu="onImageRightClick" />
+                            <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
                         <div class="col-8">
@@ -302,6 +283,10 @@ const items = ref([
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
+                </div>
+                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>mode: {{ mode }}</p>
+                    <p>itemData: {{ itemData }}</p>
                 </div>
             </div>
         </form>
