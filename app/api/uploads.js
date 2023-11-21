@@ -1,8 +1,7 @@
 const { log } = require("console")
-const { dbPrefix } = require("../.env")
+const { dbPrefix, uploadsRoot, baseFrontendUrl } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
-    const { baseFrontendUrl, uploadsRoot } = require("../config/params")
     const tabela = 'uploads'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
@@ -267,7 +266,10 @@ module.exports = app => {
         const { promisify } = require('util');
         const unlink = promisify(fs.unlink);
         try {
-            await unlink(rowUpdated.path);
+            // Identificar a existência do arquivo referenciado em rowUpdated.path antes de excluir
+            if (fs.existsSync(rowUpdated.path)) {
+                await unlink(rowUpdated.path);
+            }
             return true
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });

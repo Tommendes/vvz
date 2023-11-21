@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 
 import { usePrimeVue } from 'primevue/config';
 const primevue = usePrimeVue();
@@ -90,13 +90,20 @@ const props = defineProps({
         default: ''
     }
 });
+const dialogRef = inject('dialogRef');
+const closeDialog = () => {
+    dialogRef.value.close();
+};
 // Salvar dados dos arquivos
 const saveData = async () => {
     filesData.value.itemData = itemData.value;
     const url = `${urlBase.value}/f-a/sown`;
     await axios
         .post(url, filesData.value)
-        .then(() => defaultSuccess('Upload executado com sucesso'))
+        .then(() => {
+            defaultSuccess('Upload executado com sucesso');
+            closeDialog();
+        })
         .catch((err) => {
             console.log('err', err);
             defaultWarn(err.response.data);
@@ -120,10 +127,10 @@ const formatSize = (bytes) => {
 onMounted(() => {
     setTimeout(() => {
         itemData.value = {
-            registro_id: props.registro_id || 1,
-            tabela: props.tabela || 'empresa',
-            field: props.field || 'id_uploads_logo',
-            schema: props.schema || `${userData.cliente}_${userData.dominio}`
+            registro_id: props.registro_id || dialogRef.value.data.registro_id || 1,
+            tabela: props.tabela || dialogRef.value.data.tabela || 'empresa',
+            field: props.field || dialogRef.value.data.field || 'id_uploads_logo',
+            schema: props.schema || dialogRef.value.data.schema || `${userData.cliente}_${userData.dominio}`
         };
     }, Math.random() * 1000);
 });
@@ -131,28 +138,6 @@ onMounted(() => {
 
 <template>
     <div class="card">
-        <div class="grid" v-if="userData.admin >= 2">
-            <div class="col-12">
-                <div class="p-fluid formgrid grid">
-                    <div class="field col-12 md:col-3">
-                        <label for="tabela">Tabela</label>
-                        <InputText autocomplete="no" v-model="itemData.tabela" id="tabela" />
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="registro_id">Registro</label>
-                        <InputText autocomplete="no" v-model="itemData.registro_id" id="registro_id" />
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="field">Field</label>
-                        <InputText autocomplete="no" v-model="itemData.field" id="field" />
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="schema">Schema</label>
-                        <InputText autocomplete="no" v-model="itemData.schema" id="schema" />
-                    </div>
-                </div>
-            </div>
-        </div>
         <FileUpload name="arquivos" :url="`${urlBase}/f/hfl?tkn=${userData.id}_${userData.exp}`" @upload="onTemplatedUpload($event)" :multiple="props.multiple" :accept="props.accept" :maxFileSize="props.maxFileSize" @select="onSelectedFiles">
             <template #header="{ chooseCallback, uploadCallback, clearCallback, files }">
                 <div class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2">
@@ -212,5 +197,8 @@ onMounted(() => {
                 </div>
             </template>
         </FileUpload>
+        <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+            <p>itemData: {{ itemData }}</p>
+        </div>
     </div>
 </template>
