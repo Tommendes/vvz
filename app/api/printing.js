@@ -1,6 +1,5 @@
 const moment = require('moment')
 const { dbPrefix, jasperServerUrl, jasperServerU, jasperServerK } = require("../.env")
-const { baseFrontendUrl } = require("../config/params")
 const JSIntegration = require('../config/jSIntegration')
 const { cnpj } = require('cpf-cnpj-validator')
 const path = require('path')

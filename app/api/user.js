@@ -1,7 +1,7 @@
 
 const randomstring = require("randomstring")
-const { baseFrontendUrl, emailAdmin, appName } = require("../config/params")
-const { dbPrefix, jasperServerU, jasperServerK } = require("../.env")
+const { emailAdmin, appName } = require("../config/params")
+const { baseFrontendUrl, dbPrefix, jasperServerU, jasperServerK } = require("../.env")
 const { STATUS_INACTIVE, STATUS_WAITING, STATUS_PASS_EXPIRED, STATUS_SUSPENDED, STATUS_SUSPENDED_BY_TKN, STATUS_ACTIVE,
     STATUS_DELETE, MINIMUM_KEYS_BEFORE_CHANGE, TOKEN_VALIDE_MINUTES } = require("../config/userStatus")
 const axios = require('axios')
