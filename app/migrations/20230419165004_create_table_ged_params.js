@@ -16,7 +16,7 @@ exports.up = function(knex, Promise) {
         table.integer('tipo_secundario', 10).unsigned().comment('Tipo secundário')
         table.boolean('obrig_valor').default(0).comment('Obrigatorio declarar valor')
         table.boolean('reg_agente').default(0).comment('Obrigatório agente ')
-        table.string('id_logo',255).default(0).comment('URL logomarca representada')
+        table.string('id_uploads_logo',255).foreign('id_uploads_logo').references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('Cascade').comment('URL logomarca representada')
         table.tinyint('gera_pasta',1).default(0).comment('Gera pasta(0=Não, 1=Documento, 2=documento_baixa)')
         table.tinyint('proposta_interna',1).default(0).comment('Utiliza o sistema de proposta interna')
 
