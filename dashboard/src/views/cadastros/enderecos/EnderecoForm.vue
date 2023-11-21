@@ -13,8 +13,9 @@ const masks = ref({
     })
 });
 // Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 // Campos de formulário
 const itemData = inject('itemData');
 // Modo do formulário
@@ -41,7 +42,7 @@ const loadData = async () => {
                 itemData.value = body;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastros` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastros` });
             }
         });
     }
@@ -110,7 +111,7 @@ onBeforeMount(() => {
     <div class="grid">
         <form @submit.prevent="saveData">
             <div class="col-12">
-                <h5>{{ itemData.id && store.userStore.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
+                <h5>{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
                         <label for="id_params_tipo">Tipo</label>
@@ -154,6 +155,11 @@ onBeforeMount(() => {
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode = 'view'" />
+                </div>
+                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>mode: {{ mode }}</p>
+                    <p>itemData: {{ itemData }}</p>
+                    <p v-if="props.itemDataRoot">itemDataRoot: {{ props.itemDataRoot }}</p>
                 </div>
             </div>
         </form>

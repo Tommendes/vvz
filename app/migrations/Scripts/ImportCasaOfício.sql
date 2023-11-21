@@ -2,26 +2,27 @@
 DELETE FROM vivazul_api.knex_migrations WHERE id > 8;
 ALTER TABLE vivazul_api.knex_migrations AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=0; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`cad_contatos`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`cad_documentos`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`cad_enderecos`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`cadastros`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`com_agentes`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`com_prospeccoes`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`com_terceiros`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`empresa`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`fin_cc`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`fin_lancamentos`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`fin_retencoes`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`pipeline`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`pipeline_params`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`pipeline_status`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`proto_docs`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`protocolos`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`pv`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`pv_oat`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`pv_status`; 
-DROP TABLE IF EXISTS `vivazul_cso_root`.`pv_tecnicos`;
+DROP TABLE IF EXISTS vivazul_cso_root.cad_contatos; 
+DROP TABLE IF EXISTS vivazul_cso_root.cad_documentos; 
+DROP TABLE IF EXISTS vivazul_cso_root.cad_enderecos; 
+DROP TABLE IF EXISTS vivazul_cso_root.cadastros; 
+DROP TABLE IF EXISTS vivazul_cso_root.com_agentes; 
+DROP TABLE IF EXISTS vivazul_cso_root.com_prospeccoes; 
+DROP TABLE IF EXISTS vivazul_cso_root.com_terceiros; 
+DROP TABLE IF EXISTS vivazul_cso_root.empresa; 
+DROP TABLE IF EXISTS vivazul_cso_root.fin_cc; 
+DROP TABLE IF EXISTS vivazul_cso_root.fin_lancamentos; 
+DROP TABLE IF EXISTS vivazul_cso_root.fin_retencoes; 
+DROP TABLE IF EXISTS vivazul_cso_root.pipeline; 
+DROP TABLE IF EXISTS vivazul_cso_root.pipeline_params; 
+DROP TABLE IF EXISTS vivazul_cso_root.pipeline_status; 
+DROP TABLE IF EXISTS vivazul_cso_root.proto_docs; 
+DROP TABLE IF EXISTS vivazul_cso_root.protocolos; 
+DROP TABLE IF EXISTS vivazul_cso_root.pv; 
+DROP TABLE IF EXISTS vivazul_cso_root.pv_oat; 
+DROP TABLE IF EXISTS vivazul_cso_root.pv_status; 
+DROP TABLE IF EXISTS vivazul_cso_root.pv_tecnicos;
+TRUNCATE TABLE vivazul_api.uploads;
 SET FOREIGN_KEY_CHECKS=1; 
 
 /*Importar usuários*/
@@ -47,6 +48,8 @@ FROM vivazul_lynkos.user WHERE dominio = 'casaoficio' AND username NOT LIKE '%to
 /*Remove o tipo TESTE dentre as opções antes de inserir na tabela local_params*/
 UPDATE vivazul_lynkos.cadastros SET tipo = NULL WHERE LOWER(tipo) IN ('teste');
 /*Limpar a tabela local_params*/
+UPDATE vivazul_lynkos.cadastros_ofc o SET o.tipo = 'CELULAR' WHERE o.tipo IN('CLARO','VIVO','NEXTEL','OI','TIM');
+UPDATE vivazul_lynkos.cadastros_ofc o SET o.tipo = 'TELEFONE' WHERE o.tipo = 'FAX';
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.local_params;
 ALTER TABLE vivazul_cso_root.local_params AUTO_INCREMENT=0;
@@ -64,12 +67,8 @@ INSERT INTO vivazul_cso_root.local_params (
 /*tipo_contato*/
 INSERT INTO vivazul_cso_root.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
-) VALUES (0,1,NOW(),NULL,10,"tipo_contato","CELULAR","CELULAR"),(0,1,NOW(),NULL,10,"tipo_contato","CLARO","CLARO"),
-(0,1,NOW(),NULL,10,"tipo_contato","EMAIL","EMAIL"),(0,1,NOW(),NULL,10,"tipo_contato","FAX","FAX"),
-(0,1,NOW(),NULL,10,"tipo_contato","NEXTEL","NEXTEL"),(0,1,NOW(),NULL,10,"tipo_contato","OI","OI"),
-(0,1,NOW(),NULL,10,"tipo_contato","OUTROS","OUTROS"),(0,1,NOW(),NULL,10,"tipo_contato","SITE","SITE"),
-(0,1,NOW(),NULL,10,"tipo_contato","TELEFONE","TELEFONE"),(0,1,NOW(),NULL,10,"tipo_contato","TIM","TIM"),
-(0,1,NOW(),NULL,10,"tipo_contato","VIVO","VIVO");
+) VALUES (0,1,NOW(),NULL,10,"tipo_contato","Celular","Celular"),(0,1,NOW(),NULL,10,"tipo_contato","E-mail","E-mail"),
+(0,1,NOW(),NULL,10,"tipo_contato","Telefone","Telefone"),(0,1,NOW(),NULL,10,"tipo_contato","Site","Site"),(0,1,NOW(),NULL,10,"tipo_contato","Outro meio","Outro meio");
 /*tipo_endereco*/
 INSERT INTO vivazul_cso_root.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
@@ -338,7 +337,7 @@ UPDATE vivazul_cso_root.pv_oat_status SET status_pv_oat = 98 WHERE status_pv_oat
 
 /*Inserir long_params*/
 /*Dizeres legais da Oat*/
-INSERT INTO `vivazul_cso_root`.`long_params` (`id`,`evento`,`created_at`,`updated_at`,`status`,`grupo`,`parametro`,`label`) 
+INSERT INTO vivazul_cso_root.long_params (id,evento,created_at,updated_at,STATUS,grupo,parametro,label) 
 VALUES(NULL,1,NOW(),NULL,10,'lgl_os_01','Declaro, por meio deste que aceito o(s) produtos(s), serviço(s) e/ou montagem(ns) a que essa ordem de serviço se refere, e que os mesmos encontram-se nas condições contratadas, em perfeito estado de funcionamento, aparência geral, acabamentos e funcionamento assim como o treinamento de manuseio e utilização.','Dizeres legais do final da OAT');
 
 

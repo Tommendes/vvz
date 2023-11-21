@@ -4,10 +4,12 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRouter } from 'vue-router';
+import { isValidEmail } from '@/global';
 const router = useRouter();
 // Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 // Campos de formulário
 const itemData = inject('itemData');
 // Modo do formulário
@@ -18,6 +20,45 @@ const dropdownTipo = ref([]);
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 });
+
+import { Mask } from 'maska';
+const masks = ref({
+    telefone: new Mask({
+        mask: ['(##) ####-####', '(##) #####-####']
+    })
+});
+// Validar e-mail
+const validateEmail = () => {
+    if (itemData.value.meio && !isValidEmail(itemData.value.meio)) {
+        errorMessages.value.meio = 'Formato de e-mail inválido';
+    } else errorMessages.value.meio = null;
+    return !errorMessages.value.meio;
+};
+// Validar telefone
+const validateTelefone = () => {
+    if (itemData.value.meio && itemData.value.meio.length > 0 && ![10, 11].includes(itemData.value.meio.replace(/([^\d])+/gim, '').length)) {
+        errorMessages.value.meio = `Formato de ${getDropdownLabel(itemData.value.id_params_tipo)} inválido`;
+    } else errorMessages.value.meio = null;
+    return !errorMessages.value.meio;
+};
+// Validar formulário
+const formIsValid = () => {
+    // Se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'celular' ou 'telefone', então o campo itemData.meio deve ser validado pelo maska telefone
+    // Mas se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'e-mail', então o campo itemData.meio deve ser validado pelo isValidEmail
+    let label = getDropdownLabel(itemData.value.id_params_tipo);
+    if (label) label = label.toString().toLowerCase();
+    if (label == 'e-mail') return validateEmail();
+    else if (label == 'telefone' || label == 'celular') return validateTelefone();
+    else return true;
+};
+const getDropdownLabel = (value) => {
+    if (!value) return undefined;
+    const selectedOption = dropdownTipo.value.find((option) => option.value === value);
+    return selectedOption.label || undefined;
+};
+// Mensages de erro
+const errorMessages = ref({});
+
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
@@ -33,7 +74,7 @@ const loadData = async () => {
                 itemData.value = body;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/cadastros` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastros` });
             }
         });
     }
@@ -82,10 +123,10 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div class="grid">
-        <form @submit.prevent="saveData">
+    <form @submit.prevent="saveData">
+        <div class="grid">
             <div class="col-12">
-                <h5>{{ itemData.id && store.userStore.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
+                <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
                         <label for="id_params_tipo">Tipo de Contato</label>
@@ -99,8 +140,18 @@ onBeforeMount(() => {
                         <label for="departamento">Departamento</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.departamento" id="departamento" type="text" />
                     </div>
-                    <div class="field col-12 md:col-6">
-                        <label for="meio">Meio de Contato</label>
+                    <div class="field col-12 md:col-6" v-if="getDropdownLabel(itemData.id_params_tipo) && getDropdownLabel(itemData.id_params_tipo).toLowerCase() == 'e-mail'">
+                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" @input="validateEmail()" />
+                        <small id="text-error" class="p-error" if>{{ errorMessages.meio || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-6" v-else-if="getDropdownLabel(itemData.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(itemData.id_params_tipo).toLowerCase())">
+                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.meio" id="meio" type="text" @input="validateTelefone()" />
+                        <small id="text-error" class="p-error" if>{{ errorMessages.meio || '&nbsp;' }}</small>
+                    </div>
+                    <div class="field col-12 md:col-6" v-else>
+                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) || 'Meio' }} de contato</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" />
                     </div>
                     <div class="field col-12 md:col-12">
@@ -110,10 +161,15 @@ onBeforeMount(() => {
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode = 'view'" />
                 </div>
+                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>mode: {{ mode }}</p>
+                    <p>itemData: {{ itemData }}</p>
+                    <p v-if="props.itemDataRoot">itemDataRoot: {{ props.itemDataRoot }}</p>
+                </div>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </template>

@@ -107,7 +107,6 @@ const findUserSignUp = async () => {
                             Bem vindo ao {{ appName }}<small><sup>&copy;</sup></small>
                         </div>
                         <p class="text-600 font-medium">Informe a seguir os dados solicitados</p>
-                        <p v-if="!store.userStore.id && !isNewUser" class="text-center mt-2 text-xlg font-bold" style="color: chocolate; text-decoration: underline">Os dados pessoais só podem ser alterados<br />no RH/DP de seu município</p>
                     </div>
 
                     <form @submit.prevent="signup">

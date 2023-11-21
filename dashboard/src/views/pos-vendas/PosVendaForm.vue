@@ -367,7 +367,8 @@ const showPvOatForm = () => {
         data: {
             idPv: itemData.value.id,
             idPvOat: undefined,
-            idCadastro: itemData.value.id_cadastros
+            idCadastro: itemData.value.id_cadastros,
+            lastStatus: itemDataLastStatus.value.status_pv
         },
         props: {
             header: `Registrar OAT`,
@@ -420,10 +421,17 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-9">
                             <label for="id_cadastros">Cliente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="mode != 'expandedFormMode' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <AutoComplete
+                                v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
+                                v-model="selectedCadastro"
+                                optionLabel="name"
+                                :suggestions="filteredCadastros"
+                                @complete="searchCadastros"
+                                forceSelection
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                                <Button v-if="route.name != 'cadastro'" icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-3">
