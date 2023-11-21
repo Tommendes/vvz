@@ -141,7 +141,7 @@ module.exports = app => {
                     .andOn('u.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
-            ret.then(body => {
+            .then(body => {
                 return res.json(body)
             })
             .catch(error => {

@@ -1,75 +1,81 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import AppMenuItem from '.\/AppMenuItem.vue';
-import { useUserStore } from '@/stores/user';
-import { userKey } from '../global';
+// Cookies de usuário
+import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
-const user = JSON.parse(json);
+const userData = JSON.parse(json);
 
 const model = ref([
     {
         // label: 'Home',
-        items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: `/${user.cliente}/${user.dominio}` }]
+        items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: `/${userData.cliente}/${userData.dominio}` }]
     },
     {
         label: 'Clientes',
         items: [
-            { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros` },
-            // { label: 'Gestão de Cadastros Lazy', icon: 'pi pi-fw pi-id-card', to: `/${user.cliente}/${user.dominio}/cadastros-l` },
-            { label: 'Prospecção', icon: 'pi pi-fw pi-map-marker', to: `/${user.cliente}/${user.dominio}/prospeccoes` }
+            { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${userData.cliente}/${userData.dominio}/cadastros` },
+            // { label: 'Gestão de Cadastros Lazy', icon: 'pi pi-fw pi-id-card', to: `/${userData.cliente}/${userData.dominio}/cadastros-l` },
+            { label: 'Prospecção', icon: 'pi pi-fw pi-map-marker', to: `/${userData.cliente}/${userData.dominio}/prospeccoes` }
         ]
     },
     {
         label: 'Comercial e Documentos',
         items: [
-            { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Protocolos', icon: 'pi pi-fw pi-folder', to: `/${user.cliente}/${user.dominio}/protocolos` },
-            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${user.cliente}/${user.dominio}/pipeline` }
+            { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
+            { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
+            { label: 'Protocolos', icon: 'pi pi-fw pi-folder', to: `/${userData.cliente}/${userData.dominio}/protocolos` },
+            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${userData.cliente}/${userData.dominio}/pipeline` }
         ]
     },
     {
         label: 'Pós-vendas',
         items: [
-            { label: 'Gestão de Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${user.cliente}/${user.dominio}/pos-vendas` },
-            { label: 'Técnicos', icon: 'pi pi-fw pi-cog', to: `/${user.cliente}/${user.dominio}/tecnicos-pv` }
+            { label: 'Gestão de Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${userData.cliente}/${userData.dominio}/pos-vendas` },
+            { label: 'Técnicos', icon: 'pi pi-fw pi-cog', to: `/${userData.cliente}/${userData.dominio}/tecnicos-pv` }
         ]
     },
     {
         label: 'Financeiro',
         items: [
-            { label: 'Gestão de Financeiro', icon: 'pi pi-fw pi-money-bill', to: `/${user.cliente}/${user.dominio}/registros` },
-            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${user.cliente}/${user.dominio}/comissoes` },
-            { label: 'Retenção', icon: 'pi pi-fw pi-wallet', to: `/${user.cliente}/${user.dominio}/retencoes` }
+            { label: 'Gestão de Financeiro', icon: 'pi pi-fw pi-money-bill', to: `/${userData.cliente}/${userData.dominio}/registros` },
+            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${userData.cliente}/${userData.dominio}/comissoes` },
+            { label: 'Retenção', icon: 'pi pi-fw pi-wallet', to: `/${userData.cliente}/${userData.dominio}/retencoes` }
         ]
     },
     {
         label: 'Gestão',
         items: [
-            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${user.cliente}/${user.dominio}/empresa` },
-            { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${user.cliente}/${user.dominio}/pipeline_params` },
-            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${user.cliente}/${user.dominio}/pipeline` }
+            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
+            { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${userData.cliente}/${userData.dominio}/empresa` },
+            { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.cliente}/${userData.dominio}/pipeline_params` },
+            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${userData.cliente}/${userData.dominio}/pipeline` }
         ]
     },
     {
-        label: `${user.name.split(' ')[0]}${user.name.split(' ')[1] ? ' ' + user.name.split(' ')[1] : ''}`,
+        label: `${userData.name.split(' ')[0]}${userData.name.split(' ')[1] ? ' ' + userData.name.split(' ')[1] : ''}`,
         items: [
-            { label: 'Perfil', icon: 'pi pi-fw pi-user', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Trocar senha', icon: 'pi pi-fw pi-key', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Sair', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/pipeline` }
+            { label: 'Perfil', icon: 'pi pi-fw pi-user', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
+            { label: 'Trocar senha', icon: 'pi pi-fw pi-key', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
+            { label: 'Sair', icon: 'pi pi-fw pi-sync', to: `/${userData.cliente}/${userData.dominio}/pipeline` }
         ]
     },
     {
-        label: 'Administrar',
+        label: 'Suporte',
         items: [
-            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${user.cliente}/${user.dominio}/pipeline` },
-            { label: 'Uploads', icon: 'pi pi-fw pi-cloud-upload', to: `/${user.cliente}/${user.dominio}/uploads` }
+            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
+            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
+            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
+            // { label: 'Uploads', icon: 'pi pi-fw pi-cloud-upload', to: `/${userData.cliente}/${userData.dominio}/uploads` }
         ]
     }
 ]);
+onMounted(() => {
+    setTimeout(() => {
+        // Se userAdmin.admin < 2, remover a última propriedade de model
+        if (userData.admin < 2) model.value.pop();
+    }, Math.random() * 1000);
+});
 </script>
 
 <template>
