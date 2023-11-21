@@ -90,7 +90,6 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         let key = req.query.key
@@ -104,21 +103,19 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
-
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`        
+        const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-
-        ret.where({ status: STATUS_ACTIVE })
+            .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .leftJoin({ u: tabelaUploadsDomain }, function() {
+                this.on('tbl1.id_uploads_logo', '=', 'u.id')
+                    .andOn('u.status', '=', STATUS_ACTIVE)
+            })
+            .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
             .then(body => {
-                return res.json({ data: body, count: count, limit })
+                const count = body.length
+                return res.json({ data: body, count: count })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -139,9 +136,13 @@ module.exports = app => {
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, 'tbl1.id_uploads_logo', 'u.id')
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
-            .then(body => {
+            .leftJoin({ u: tabelaUploadsDomain }, function() {
+                this.on('tbl1.id_uploads_logo', '=', 'u.id')
+                    .andOn('u.status', '=', STATUS_ACTIVE)
+            })
+            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'u.status': STATUS_ACTIVE }).first()
+            console.log(ret.toString());
+            ret.then(body => {
                 return res.json(body)
             })
             .catch(error => {
