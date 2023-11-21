@@ -104,7 +104,7 @@ const routes = [
             {
                 path: '/:client/:domain/retencao/:id',
                 name: 'retencao',
-                component: () => import('@/views/comissoes/RetencaoForm.vue')
+                component: () => import('@/views/retencoes/RetencaoForm.vue')
             },
             // Seção Gestão
             {
