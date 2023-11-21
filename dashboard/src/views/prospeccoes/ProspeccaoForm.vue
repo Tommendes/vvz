@@ -186,7 +186,6 @@ const confirmEditAutoSuggest = (tipo) => {
 /**
  * Fim de autocomplete de cadastros
 */
-
 // Verifica se houve alteração nos dados do formulário
 const isItemDataChanged = () => {
     const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
@@ -200,16 +199,13 @@ const dropdownPeriodo = ref([
     { value: 0, label: 'Manhã' },
     { value: 1, label: 'Tarde' }
 ]);
-
-// ATÉ AQUI
-
 // Validação do primeiro dígito do campo Contato
 const validarContato = () => {
     const valorContato = itemData.value.contato;
 
     // Verificar se o valor é um número ou letra
     if (valorContato) {
-        const primeiroCaractere = valorContato.charAt(0);
+        const primeiroCaractere = valorContato.charAt(1);
         if (!isNaN(primeiroCaractere)) {
             // Aplicar a máscara de telefone
             itemData.value.contato = valorContato.replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-$3');
@@ -231,8 +227,6 @@ const validarContato = () => {
         errorMessages.value.contato = null;
     }
 };
-
-
 // Validar formulário
 const formIsValid = () => {
     return validarContato();
@@ -317,7 +311,6 @@ watchEffect(() => {
                             <label for="data_visita">Data da Visita</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" />
-                            <!-- <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.data_visita" id="data_visita" :numberOfMonths="2" showIcon /> -->
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="id_cadastros">Cadastro</label>
