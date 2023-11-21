@@ -42,6 +42,7 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
+    { field: 'id', label: 'Id do Prarâmetro', minWidth: '20rem' },
     { field: 'descricao', label: 'Descrição', minWidth: '30rem' }
 ]);
 // Inicializa os filtros do grid
@@ -51,15 +52,6 @@ const initFilters = () => {
         filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
     });
 };
-// import { Mask } from 'maska';
-// const masks = ref({
-//     cpf: new Mask({
-//         mask: '###.###.###-##'
-//     }),
-//     cnpj: new Mask({
-//         mask: '##.###.###/####-##'
-//     })
-// });
 initFilters();
 const clearFilter = () => {
     initFilters();
@@ -90,9 +82,7 @@ const loadData = () => {
     loading.value = true;
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        gridData.value.forEach((element) => {
-            // if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
-            // else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
+        gridData.value.forEach(() => {
         });
         loading.value = false;
     });
@@ -120,7 +110,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['descricao']"
+            :globalFilterFields="['id', 'descricao']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
