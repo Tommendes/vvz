@@ -1,5 +1,5 @@
 /*Recriar tabelas*/
-DELETE FROM vivazul_api.knex_migrations WHERE id > 8;
+DELETE FROM vivazul_api.knex_migrations WHERE id > 10;
 ALTER TABLE vivazul_api.knex_migrations AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=0; 
 DROP TABLE IF EXISTS vivazul_cso_root.cad_contatos; 
@@ -19,11 +19,17 @@ DROP TABLE IF EXISTS vivazul_cso_root.pipeline_status;
 DROP TABLE IF EXISTS vivazul_cso_root.proto_docs; 
 DROP TABLE IF EXISTS vivazul_cso_root.protocolos; 
 DROP TABLE IF EXISTS vivazul_cso_root.pv; 
-DROP TABLE IF EXISTS vivazul_cso_root.pv_oat; 
 DROP TABLE IF EXISTS vivazul_cso_root.pv_status; 
+DROP TABLE IF EXISTS vivazul_cso_root.pv_oat; 
+DROP TABLE IF EXISTS vivazul_cso_root.pv_oat_status; 
 DROP TABLE IF EXISTS vivazul_cso_root.pv_tecnicos;
+DROP TABLE IF EXISTS vivazul_cso_root.pv_tecnicos;
+TRUNCATE TABLE vivazul_cso_root.local_params;
+TRUNCATE TABLE vivazul_cso_root.long_params;
 TRUNCATE TABLE vivazul_api.uploads;
 SET FOREIGN_KEY_CHECKS=1; 
+
+/* Rodar a API para criação das tabelas */
 
 /*Importar usuários*/
 ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
@@ -84,7 +90,7 @@ UPDATE vivazul_lynkos.cadastros SET dominio = CONCAT(dominio,'_XDEL'), STATUS = 
 	HAVING COUNT(cpf_cnpj) > 1
 	ORDER BY cadas_nome,created_at);
 /*Remove caracteres !d do field cpf_cnpj*/
-UPDATE vivazul_lynkos.cadastros SET cpf_cnpj = FLOOR(RAND() * 9000000000 + 1000000000) WHERE NOT(LENGTH(SUBSTRING_INDEX(SUBSTRING_INDEX(cpf_cnpj, '[^0-9]+', -1),'[^0-9]+',1)) IN ('11','14'));
+UPDATE vivazul_lynkos.cadastros SET cpf_cnpj = FLOOR(RAND() * 90000000000 + 10000000000) WHERE NOT(LENGTH(SUBSTRING_INDEX(SUBSTRING_INDEX(cpf_cnpj, '[^0-9]+', -1),'[^0-9]+',1)) IN ('11','14'));
 /*Importa os cadastros*/
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.cadastros;
@@ -163,12 +169,12 @@ SET FOREIGN_KEY_CHECKS=1;
 INSERT INTO vivazul_cso_root.empresa (
   id,evento,created_at,updated_at,STATUS,razaosocial,
   fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,email_at,email_comercial,email_financeiro,email_rh,
-  id_cadas_resplegal,url_logo
+  id_cadas_resplegal,id_uploads_logo
 )(
 SELECT 
 NULL,1,FROM_UNIXTIME(e.created_at)created_at,FROM_UNIXTIME(e.updated_at)updated_at,10,razaosocial,
 fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,email,emailat,emailcomercial,emailfinanceiro,emailrh,
-(SELECT id FROM vivazul_cso_root.cadastros c WHERE c.old_id = e.id_cadas_resplegal)id_cadas_resplegal,url_logo 
+(SELECT id FROM vivazul_cso_root.cadastros c WHERE c.old_id = e.id_cadas_resplegal)id_cadas_resplegal,NULL 
 FROM vivazul_lynkos.empresa e WHERE e.dominio = 'casaoficio' 
   );
   
@@ -180,9 +186,9 @@ DELETE FROM vivazul_cso_root.pipeline_params;
 ALTER TABLE vivazul_cso_root.pipeline_params AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_cso_root.pipeline_params (
-  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,old_id
+  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_uploads_logo,gera_pasta,proposta_interna,old_id
 )(
-	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_logo,gera_pasta,proposta_interna,id 
+	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,NULL,gera_pasta,proposta_interna,id 
 	FROM vivazul_lynkos.ged_params
 	WHERE dominio = 'casaoficio'
 	ORDER BY descricao
@@ -225,10 +231,8 @@ data de criação anterior a 2000-01-01
 */
 UPDATE vivazul_cso_root.pipeline SET created_at = (SELECT MIN(created_at) FROM vivazul_cso_root.pipeline WHERE created_at > '2000-01-01') WHERE created_at < '2000-01-01';
 /*Garantir id_pai e id_filho em pipeline*/
-UPDATE vivazul_cso_root.pipeline pd
-SET pd.id_pai = NULL WHERE pd.id_pai = 0;
-UPDATE vivazul_cso_root.pipeline pd
-SET pd.id_filho = NULL WHERE pd.id_filho = 0;
+UPDATE vivazul_cso_root.pipeline pd SET pd.id_pai = NULL WHERE pd.id_pai = 0;
+UPDATE vivazul_cso_root.pipeline pd SET pd.id_filho = NULL WHERE pd.id_filho = 0;
 
 UPDATE vivazul_cso_root.pipeline pd
 JOIN vivazul_cso_root.pipeline po ON pd.id_pai = po.old_id
