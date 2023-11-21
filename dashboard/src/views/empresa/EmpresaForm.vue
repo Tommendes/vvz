@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -80,10 +80,6 @@ const loading = ref({
     email: null,
     telefone: null
 });
-// Props do template
-const props = defineProps({
-    mode: String
-});
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
@@ -129,10 +125,11 @@ const saveData = async () => {
                 const body = res.data;
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
-                    itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/empresa/${itemData.value.id}` });
-                    mode.value = 'view';
+                    reload();
+                    // itemData.value = body;
+                    // itemDataComparision.value = { ...itemData.value };
+                    // if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/empresa/${itemData.value.id}` });
+                    // mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
                 }
@@ -217,16 +214,10 @@ const reload = () => {
     emit('cancel');
 };
 // Carregar dados do formulário
-onBeforeMount(() => {
-    loadData();
-    // loadOptions();
-});
 onMounted(() => {
-    if (props.mode && props.mode != mode.value) mode.value = props.mode;
-    else {
-        if (itemData.value.id) mode.value = 'view';
-        else mode.value = 'new';
-    }
+    setTimeout(() => {
+        loadData();
+    }, Math.random() * 1000 + 250);
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {
@@ -258,20 +249,44 @@ const menu = ref();
 const preview = ref(false);
 const items = ref([
     {
-        label: 'View',
-        icon: 'pi pi-fw pi-search',
+        label: 'Alterar a logomarca',
+        icon: 'pi pi-fw pi-cloud-upload',
         command: () => {
-            alert('Enviar nova imagem');
-        }
-    },
-    {
-        label: 'Delete',
-        icon: 'pi pi-fw pi-trash',
-        command: () => {
-            alert('Excluir imagem');
+            showUploadForm();
         }
     }
 ]);
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
+import Uploads from '@/components/Uploads.vue';
+
+const showUploadForm = () => {
+    dialog.open(Uploads, {
+        data: {
+            tabela: 'empresa',
+            registro_id: itemData.value.id,
+            schema: userData.cliente + '_' + userData.dominio,
+            field: 'id_uploads_logo'
+        },
+        props: {
+            header: `Alterar a logomarca da empresa`,
+            style: {
+                width: '50rem'
+            },
+            breakpoints: {
+                '1199px': '75vw',
+                '575px': '90vw'
+            },
+            modal: true
+        },
+        // templates: {
+        //     footer: markRaw(FooterDemo)
+        // },
+        onClose: (options) => {
+            reload();
+        }
+    });
+};
 
 const onImageRightClick = (event) => {
     menu.value.show(event);
@@ -423,6 +438,10 @@ const onImageRightClick = (event) => {
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
+                </div>
+                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>mode: {{ mode }}</p>
+                    <p>itemData: {{ itemData }}</p>
                 </div>
             </div>
         </form>

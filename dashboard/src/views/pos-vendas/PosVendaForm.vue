@@ -22,7 +22,6 @@ const router = useRouter();
 
 import moment from 'moment';
 
-import { useDialog } from 'primevue/usedialog';
 import { Mask } from 'maska';
 const masks = ref({
     cpf_cnpj: new Mask({
@@ -361,6 +360,7 @@ const toGrid = () => {
 
 const oatsGrid = ref(null);
 
+import { useDialog } from 'primevue/usedialog';
 const dialog = useDialog();
 const showPvOatForm = () => {
     dialog.open(OatForm, {
