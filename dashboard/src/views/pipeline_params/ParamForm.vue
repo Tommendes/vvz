@@ -96,6 +96,41 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
+import Uploads from '@/components/Uploads.vue';
+
+const showUploadForm = () => {
+    dialog.open(Uploads, {
+        data: {
+            tabela: 'pipeline-params', //pipeline_params
+            registro_id: itemData.value.id,
+            schema: userData.cliente + '_' + userData.dominio,
+            field: 'id_uploads_logo'
+        },
+        props: {
+            header: `Alterar a logomarca da empresa`,
+            style: {
+                width: '50rem'
+            },
+            breakpoints: {
+                '1199px': '75vw',
+                '575px': '90vw'
+            },
+            modal: true
+        },
+        // templates: {
+        //     footer: markRaw(FooterDemo)
+        // },
+        onClose: (options) => {
+            reload();
+        }
+    });
+};
+
+const onImageRightClick = (event) => {
+    menu.value.show(event);
+};
 // Opções de DropDown do Form
 const dropdownApresentacaoBi = ref([
     { value: 0, label: 'Sim' },
@@ -178,6 +213,13 @@ const items = ref([
         command: () => {
             alert('Excluir imagem');
         }
+    },
+    {
+        label: 'Alterar a logomarca',
+        icon: 'pi pi-fw pi-cloud-upload',
+        command: () => {
+            showUploadForm();
+        }
     }
 ]);
 </script>
@@ -195,7 +237,7 @@ const items = ref([
                         </div> -->
                         <div class="col-4">
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                            <Image v-else :src="`${itemData.id_uploads_logo ? itemData.id_uploads_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="id_uploads_logo" @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
                         <div class="col-8">

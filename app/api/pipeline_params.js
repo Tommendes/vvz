@@ -140,8 +140,7 @@ module.exports = app => {
                 this.on('tbl1.id_uploads_logo', '=', 'u.id')
                     .andOn('u.status', '=', STATUS_ACTIVE)
             })
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'u.status': STATUS_ACTIVE }).first()
-            console.log(ret.toString());
+            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             ret.then(body => {
                 return res.json(body)
             })
