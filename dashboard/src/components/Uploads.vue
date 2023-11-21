@@ -56,10 +56,7 @@ const onTemplatedUpload = async (event) => {
 const urlBase = ref(`${baseApiUrl}/uploads`);
 const itemData = ref({});
 const filesData = ref([]);
-// Definir props do form upload. Valores Default
-// multiple: true
-// accept: 'image/*'
-// maxFileSize: 1000000
+
 const props = defineProps({
     multiple: {
         type: Boolean,
@@ -109,7 +106,7 @@ const saveData = async () => {
             defaultWarn(err.response.data);
         });
 };
-
+// Formatar tamanho do arquivo
 const formatSize = (bytes) => {
     const k = 1024;
     const dm = 3;
