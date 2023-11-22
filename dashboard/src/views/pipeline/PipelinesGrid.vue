@@ -2,12 +2,13 @@
 import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultError, defaultInfo, defaultSuccess } from '@/toast';
+import { defaultError } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
-import { removeHtmlTags } from '@/global';
+import { removeHtmlTags, formatCurrency } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import moment from 'moment';
 
+// Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -149,11 +150,11 @@ const loadLazyData = () => {
                         element.descricao = description.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim().substr(0, limitDescription);
                         if (description.length > limitDescription) element.descricao += ' ...';
                     }
-                    if (element.valor_bruto && element.valor_bruto >= 0)
-                        element.valor_bruto = element.valor_bruto.toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                        });
+                    if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
+                    // .toLocaleString('pt-BR', {
+                    //         style: 'currency',
+                    //         currency: 'BRL'
+                    //     });
                 });
                 loading.value = false;
             })

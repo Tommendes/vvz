@@ -1,8 +1,15 @@
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue';
-import { useLayout } from '@/layout/composables/layout';
+import moment from 'moment';
+import { onMounted, reactive, ref } from 'vue';
+import { formatCurrency } from '@/global';
+import axios from '@/axios-interceptor';
+import { baseApiUrl } from '@/env';
+import { useRouter } from 'vue-router';
 
-const { isDarkTheme } = useLayout();
+// Cookies do usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 const products = ref(null);
 const lineData = reactive({
@@ -32,83 +39,97 @@ const items = ref([
 ]);
 const lineOptions = ref(null);
 
-onMounted(() => {
-});
-
-const formatCurrency = (value) => {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' });
-};
-const applyLightTheme = () => {
-    lineOptions.value = {
-        plugins: {
-            legend: {
-                labels: {
-                    color: '#495057'
-                }
-            }
-        },
-        scales: {
-            x: {
-                ticks: {
-                    color: '#495057'
-                },
-                grid: {
-                    color: '#ebedef'
-                }
-            },
-            y: {
-                ticks: {
-                    color: '#495057'
-                },
-                grid: {
-                    color: '#ebedef'
-                }
-            }
-        }
-    };
+const biPeriod = ref();
+const applyBiParams = () => {
+    if (biPeriod.value === null) {
+        return;
+    }
+    const period = biPeriod.value.map((element, index) => {
+        const date = moment(element).format('YYYY-MM-DD');
+        return index === 0 ? { di: date } : { df: date };
+    });
+    localStorage.setItem('__biParams', JSON.stringify({ periodo: period }));
+    loadStats();
 };
 
-const applyDarkTheme = () => {
-    lineOptions.value = {
-        plugins: {
-            legend: {
-                labels: {
-                    color: '#ebedef'
-                }
+const getBiPeriod = () => {
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    if (biParams && moment(biParams.periodo[0].di, 'YYYY-MM-DD', true).isValid() && moment(biParams.periodo[1].df, 'YYYY-MM-DD', true).isValid()) {
+        const dateArray = [];
+        let datesPt = 'entre ';
+        let dataEn = { di: null, df: null };
+        biParams.periodo.forEach((element) => {
+            if (element.di) {
+                dateArray.push(moment(element.di).toDate());
+                datesPt += moment(element.di).format('DD/MM/YYYY');
+                dataEn.di = moment(element.di).format('YYYY-MM-DD');
             }
-        },
-        scales: {
-            x: {
-                ticks: {
-                    color: '#ebedef'
-                },
-                grid: {
-                    color: 'rgba(160, 167, 181, .3)'
-                }
-            },
-            y: {
-                ticks: {
-                    color: '#ebedef'
-                },
-                grid: {
-                    color: 'rgba(160, 167, 181, .3)'
-                }
+            if (element.df) {
+                dateArray.push(moment(element.df).toDate());
+                datesPt += ' e ' + moment(element.df).format('DD/MM/YYYY');
+                dataEn.df = moment(element.df).format('YYYY-MM-DD');
             }
-        }
-    };
+        });
+        biPeriod.value = dateArray;
+        biPeriod.value.dataPt = datesPt;
+        biPeriod.value.dataEn = dataEn;
+    }
 };
 
-watch(
-    isDarkTheme,
-    (val) => {
-        if (val) {
-            applyDarkTheme();
-        } else {
-            applyLightTheme();
-        }
+const biData = ref({
+    cadastros: {
+        total: 0,
+        novos: 0,
+        noPeriodo: 0,
+        loading: true
     },
-    { immediate: true }
-);
+    prospectos: {
+        total: 0,
+        novos: 0,
+        noPeriodo: 0,
+        loading: true
+    },
+    propostas: {
+        total: 0,
+        novos: 0,
+        noPeriodo: 0,
+        loading: true
+    }
+});
+const getCadastrosBi = async () => {
+    const url = `${baseApiUrl}/cadastros/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}`;
+    biData.value.cadastros.loading = true;
+    await axios.get(url).then((axiosRes) => {
+        const data = axiosRes.data;
+        biData.value.cadastros.total = data.total;
+        biData.value.cadastros.noPeriodo = data.noPeriodo;
+        biData.value.cadastros.novos = data.novos;
+    });
+    biData.value.cadastros.loading = false;
+};
+const getPropectosBi = async () => {
+    const url = `${baseApiUrl}/com-prospeccoes/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}`;
+    biData.value.prospectos.loading = true;
+    await axios.get(url).then((axiosRes) => {
+        const data = axiosRes.data;
+        biData.value.prospectos.total = data.total;
+        biData.value.prospectos.noPeriodo = data.noPeriodo;
+        biData.value.prospectos.novos = data.novos;
+    });
+    biData.value.prospectos.loading = false;
+};
+
+const loadStats = () => {
+    getBiPeriod();
+    setTimeout(async () => {
+        await getCadastrosBi();
+        await getPropectosBi();
+    }, Math.random() * 1000 + 250);
+};
+
+onMounted(() => {
+    loadStats();
+});
 </script>
 
 <template>
@@ -117,66 +138,94 @@ watch(
             <div class="card mb-0">
                 <div class="flex justify-content-between mb-3">
                     <div>
-                        <span class="block text-500 font-medium mb-3">Orders</span>
+                        <span class="block text-500 font-medium mb-3">
+                            <router-link :to="`/${userData.cliente}/${userData.dominio}/cadastros`" v-tooltip.top="'Clique para seguir'">Cadastros</router-link>
+                        </span>
+                        <Skeleton v-if="biData.cadastros.loading" width="20rem" height="2rem"></Skeleton>
+                        <div v-else class="text-900 font-medium text-xl">{{ biData.cadastros.total }}</div>
+                    </div>
+                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
+                        <i class="fa fa-users text-gray-500 text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <Skeleton v-if="biData.cadastros.loading" width="20rem" height="2rem"></Skeleton>
+                    <span v-else class="text-green-500 font-medium">{{ biData.cadastros.novos }} novos </span>
+                    <span v-if="!biData.cadastros.loading" class="text-500">neste mês</span>
+                </div>
+                <div>
+                    <Skeleton v-if="biData.cadastros.loading" width="20rem" height="1rem"></Skeleton>
+                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.cadastros.noPeriodo }} novos </span>
+                    <span v-if="!biData.cadastros.loading" class="text-500 font-ligth text-xs">no período {{ biPeriod.dataPt }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 lg:col-6 xl:col-3">
+            <div class="card mb-0">
+                <div class="flex justify-content-between mb-3">
+                    <div>
+                        <span class="block text-500 font-medium mb-3">
+                            <router-link :to="`/${userData.cliente}/${userData.dominio}/prospeccoes`" v-tooltip.top="'Clique para seguir'">Visitas</router-link>
+                        </span>
+                        <Skeleton v-if="biData.prospectos.loading" width="20rem" height="2rem"></Skeleton>
+                        <div v-else class="text-900 font-medium text-xl">{{ biData.prospectos.total }}</div>
+                    </div>
+                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
+                        <i class="fa fa-comments-o text-gray-500 text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <Skeleton v-if="biData.prospectos.loading" width="20rem" height="2rem"></Skeleton>
+                    <span v-else class="text-green-500 font-medium">{{ biData.prospectos.novos }} prospectos </span>
+                    <span v-if="!biData.prospectos.loading" class="text-500">neste mês</span>
+                </div>
+                <div>
+                    <Skeleton v-if="biData.prospectos.loading" width="20rem" height="1rem"></Skeleton>
+                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.prospectos.noPeriodo }} prospectos </span>
+                    <span v-if="!biData.prospectos.loading" class="text-500 font-ligth text-xs">no período {{ biPeriod.dataPt }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 lg:col-6 xl:col-3">
+            <div class="card mb-0">
+                <div class="flex justify-content-between mb-3">
+                    <div>
+                        <span class="block text-500 font-medium mb-3">Propostas</span>
                         <div class="text-900 font-medium text-xl">152</div>
                     </div>
-                    <div class="flex align-items-center justify-content-center bg-blue-100 border-round" style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-shopping-cart text-blue-500 text-xl"></i>
+                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
+                        <i class="pi pi-paperclip text-gray-500 text-xl"></i>
                     </div>
                 </div>
-                <span class="text-green-500 font-medium">24 new </span>
-                <span class="text-500">since last visit</span>
+                <span class="text-green-500 font-medium">24 propostas </span>
+                <span class="text-500">neste mês</span>
             </div>
         </div>
         <div class="col-12 lg:col-6 xl:col-3">
             <div class="card mb-0">
                 <div class="flex justify-content-between mb-3">
                     <div>
-                        <span class="block text-500 font-medium mb-3">Revenue</span>
-                        <div class="text-900 font-medium text-xl">$2.100</div>
+                        <span class="block text-500 font-medium mb-3">Pedidos</span>
+                        <div class="text-900 font-medium text-xl">152</div>
                     </div>
-                    <div class="flex align-items-center justify-content-center bg-orange-100 border-round" style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-map-marker text-orange-500 text-xl"></i>
-                    </div>
-                </div>
-                <span class="text-green-500 font-medium">%52+ </span>
-                <span class="text-500">since last week</span>
-            </div>
-        </div>
-        <div class="col-12 lg:col-6 xl:col-3">
-            <div class="card mb-0">
-                <div class="flex justify-content-between mb-3">
-                    <div>
-                        <span class="block text-500 font-medium mb-3">Customers</span>
-                        <div class="text-900 font-medium text-xl">28441</div>
-                    </div>
-                    <div class="flex align-items-center justify-content-center bg-cyan-100 border-round" style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-inbox text-cyan-500 text-xl"></i>
+                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
+                        <i class="fa fa-pie-chart text-gray-500 text-xl"></i>
                     </div>
                 </div>
-                <span class="text-green-500 font-medium">520 </span>
-                <span class="text-500">newly registered</span>
-            </div>
-        </div>
-        <div class="col-12 lg:col-6 xl:col-3">
-            <div class="card mb-0">
-                <div class="flex justify-content-between mb-3">
-                    <div>
-                        <span class="block text-500 font-medium mb-3">Comments</span>
-                        <div class="text-900 font-medium text-xl">152 Unread</div>
-                    </div>
-                    <div class="flex align-items-center justify-content-center bg-purple-100 border-round" style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-comment text-purple-500 text-xl"></i>
-                    </div>
-                </div>
-                <span class="text-green-500 font-medium">85 </span>
-                <span class="text-500">responded</span>
+                <span class="text-green-500 font-medium">24 pedidos </span>
+                <span class="text-500">neste mês</span>
             </div>
         </div>
 
         <div class="col-12 xl:col-6">
             <div class="card">
-                <h5>Recent Sales</h5>
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <h5>Vendas recentes</h5>
+                    <div>
+                        <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu4.toggle($event)"></Button>
+                        <Menu ref="menu4" :popup="true" :model="items"></Menu>
+                    </div>
+                </div>
                 <DataTable :value="products" :rows="5" :paginator="true" responsiveLayout="scroll">
                     <Column style="width: 15%">
                         <template #header> Image </template>
@@ -200,7 +249,7 @@ watch(
             </div>
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
-                    <h5>Best Selling Products</h5>
+                    <h5>Produtos mais vendidos</h5>
                     <div>
                         <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu2.toggle($event)"></Button>
                         <Menu ref="menu2" :popup="true" :model="items"></Menu>
@@ -281,15 +330,98 @@ watch(
                     </li>
                 </ul>
             </div>
+            <div class="card">
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <h5>Resultados por agente</h5>
+                    <div>
+                        <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu3.toggle($event)"></Button>
+                        <Menu ref="menu3" :popup="true" :model="items"></Menu>
+                    </div>
+                </div>
+                <ul class="list-none p-0 m-0">
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Space T-Shirt</span>
+                            <div class="mt-1 text-600">Clothing</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div class="bg-orange-500 h-full" style="width: 50%"></div>
+                            </div>
+                            <span class="text-orange-500 ml-3 font-medium">%50</span>
+                        </div>
+                    </li>
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Portal Sticker</span>
+                            <div class="mt-1 text-600">Accessories</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div class="bg-cyan-500 h-full" style="width: 16%"></div>
+                            </div>
+                            <span class="text-cyan-500 ml-3 font-medium">%16</span>
+                        </div>
+                    </li>
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Supernova Sticker</span>
+                            <div class="mt-1 text-600">Accessories</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div class="bg-pink-500 h-full" style="width: 67%"></div>
+                            </div>
+                            <span class="text-pink-500 ml-3 font-medium">%67</span>
+                        </div>
+                    </li>
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Wonders Notebook</span>
+                            <div class="mt-1 text-600">Office</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div class="bg-green-500 h-full" style="width: 35%"></div>
+                            </div>
+                            <span class="text-green-500 ml-3 font-medium">%35</span>
+                        </div>
+                    </li>
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Mat Black Case</span>
+                            <div class="mt-1 text-600">Accessories</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div class="bg-purple-500 h-full" style="width: 75%"></div>
+                            </div>
+                            <span class="text-purple-500 ml-3 font-medium">%75</span>
+                        </div>
+                    </li>
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Robots T-Shirt</span>
+                            <div class="mt-1 text-600">Clothing</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div class="bg-teal-500 h-full" style="width: 40%"></div>
+                            </div>
+                            <span class="text-teal-500 ml-3 font-medium">%40</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </div>
         <div class="col-12 xl:col-6">
             <div class="card">
-                <h5>Sales Overview</h5>
+                <h5>Visão geral de vendas</h5>
                 <Chart type="line" :data="lineData" :options="lineOptions" />
             </div>
             <div class="card">
                 <div class="flex align-items-center justify-content-between mb-4">
-                    <h5>Notifications</h5>
+                    <h5>Notificações</h5>
                     <div>
                         <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu1.toggle($event)"></Button>
                         <Menu ref="menu1" :popup="true" :model="items"></Menu>
@@ -299,7 +431,7 @@ watch(
                 <span class="block text-600 font-medium mb-3">TODAY</span>
                 <ul class="p-0 mx-0 mt-0 mb-4 list-none">
                     <li class="flex align-items-center py-2 border-bottom-1 surface-border">
-                        <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-blue-100 border-circle mr-3 flex-shrink-0">
+                        <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-100 border-circle mr-3 flex-shrink-0">
                             <i class="pi pi-dollar text-xl text-blue-500"></i>
                         </div>
                         <span class="text-900 line-height-3"
@@ -318,7 +450,7 @@ watch(
                 <span class="block text-600 font-medium mb-3">YESTERDAY</span>
                 <ul class="p-0 m-0 list-none">
                     <li class="flex align-items-center py-2 border-bottom-1 surface-border">
-                        <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-blue-100 border-circle mr-3 flex-shrink-0">
+                        <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-100 border-circle mr-3 flex-shrink-0">
                             <i class="pi pi-dollar text-xl text-blue-500"></i>
                         </div>
                         <span class="text-900 line-height-3"
@@ -337,18 +469,41 @@ watch(
                     </li>
                 </ul>
             </div>
-            <div
+            <div class="card">
+                <div class="flex align-items-center justify-content-between mb-4">
+                    <h5>Configurar Dashboard</h5>
+                </div>
+                <div class="flex justify-content-end mb-5">
+                    <div class="flex flex-column gap-2">
+                        <label for="biPeriod" style="text-align: end">Período de Exibição</label>
+                        <Calendar
+                            aria-describedby="username-help"
+                            showIcon
+                            dateFormat="dd/mm/yy"
+                            v-model="biPeriod"
+                            selectionMode="range"
+                            :numberOfMonths="2"
+                            :manualInput="true"
+                            showButtonBar
+                            class="custom-calendar"
+                            @update:modelValue="applyBiParams()"
+                        />
+                        <small id="username-help">Selecione acima o período desejado para apresentar os resultados nesta tela.</small>
+                    </div>
+                </div>
+            </div>
+            <!-- <div
                 class="px-4 py-5 shadow-2 flex flex-column md:flex-row md:align-items-center justify-content-between mb-3"
                 style="border-radius: 1rem; background: linear-gradient(0deg, rgba(0, 123, 255, 0.5), rgba(0, 123, 255, 0.5)), linear-gradient(92.54deg, #1c80cf 47.88%, #ffffff 100.01%)"
             >
                 <div>
-                    <div class="text-blue-100 font-medium text-xl mt-2 mb-3">TAKE THE NEXT STEP</div>
+                    <div class="text-gray-100 font-medium text-xl mt-2 mb-3">TAKE THE NEXT STEP</div>
                     <div class="text-white font-medium text-5xl">Try PrimeBlocks</div>
                 </div>
                 <div class="mt-4 mr-auto md:mt-0 md:mr-0">
                     <a href="https://www.primefaces.org/primeblocks-vue" class="p-button font-bold px-5 py-3 p-button-warning p-button-rounded p-button-raised"> Get Started </a>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 </template>

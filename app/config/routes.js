@@ -238,6 +238,9 @@ module.exports = app => {
         .put(app.api.com_prospeccoes.save)
         .get(app.api.com_prospeccoes.getById)
         .delete(app.api.com_prospeccoes.remove)
+    app.route('/com-prospeccoes/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.com_prospeccoes.getByFunction)
 
     /**
      * Rota de com_agentes

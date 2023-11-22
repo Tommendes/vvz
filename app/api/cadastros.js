@@ -286,6 +286,9 @@ module.exports = app => {
             case 'glf':
                 getListByField(req, res)
                 break;
+            case 'gbi':
+                getBIData(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
@@ -370,6 +373,35 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
+    }
+
+    // Recupera dados para index da plataforma BI
+    const getBIData = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+        const biPeriodDi = req.query.periodDi
+        const biPeriodDf = req.query.periodDf
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        try {
+            const ret = app.db(tabelaDomain)
+            const total = await ret.count('id as count').where({ status: STATUS_ACTIVE }).first()
+            let noPeriodo = { count: 0 }
+            if (biPeriodDi && biPeriodDf)
+                noPeriodo = await app.db(tabelaDomain).count('id as count').whereRaw(`created_at between "${biPeriodDi}" and "${biPeriodDf}"`).first()
+            const novos = await ret.count('id as count')
+                .whereRaw(`EXTRACT(YEAR FROM date(created_at)) = EXTRACT(YEAR FROM NOW())`)
+                .whereRaw(`EXTRACT(MONTH FROM date(created_at)) = EXTRACT(MONTH FROM NOW())`)
+            return res.send({ total: total.count, novos: novos.count, noPeriodo: noPeriodo.count })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
     }
 
     return { save, get, getById, remove, getByFunction }

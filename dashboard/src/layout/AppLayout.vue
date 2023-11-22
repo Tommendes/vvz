@@ -106,6 +106,7 @@ const changeToPortuguese = () => {
     primevue.config.locale.monthNamesShort = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     primevue.config.locale.fileSizeTypes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 };
+
 onMounted(() => {
     applyScale();
     applyMenuType();
@@ -130,4 +131,8 @@ onMounted(() => {
     </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style>
+.custom-calendar .p-inputtext {
+    text-align: end;
+}
+</style>

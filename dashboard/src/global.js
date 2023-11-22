@@ -93,6 +93,9 @@ export function validarDataPTBR(data) {
     }
 }
 
+export function formatCurrency(value) {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
 // Verifique o horario e informe: Bom dia, boa tarde ou boa noite
 export const saudation = () => {
     const hora = new Date().getHours();
@@ -233,6 +236,7 @@ export default {
     titleCase,
     stringToBoolean,
     validarDataPTBR,
+    formatCurrency,
     saudation,
     renderizarHTML,
     removeHtmlTags,

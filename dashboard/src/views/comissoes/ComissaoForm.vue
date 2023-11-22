@@ -1,27 +1,19 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { isValidEmail } from '@/global';
+
+// Cookies de usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
-
-import { useRouter } from 'vue-router';
 const router = useRouter();
-
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
-
-import { useToast } from "primevue/usetoast";
-const toast = useToast();
 
 // Campos de formulário
 const itemData = ref({});
@@ -53,7 +45,7 @@ const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-        
+
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -62,7 +54,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/comissoes` });
+                router.push({ path: `/${userData.cliente}/${userData.dominio}/comissoes` });
             }
         });
     } else loading.value.form = false;
@@ -80,7 +72,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/lancamento/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/lancamento/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -151,7 +143,7 @@ const items = ref([
 ]);
 </script>
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Registros', to: `/${userData.cliente}/${userData.dominio}/registros` }, { label: itemData.tecnico + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Registros', to: `/${userData.cliente}/${userData.dominio}/registros` }, { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">

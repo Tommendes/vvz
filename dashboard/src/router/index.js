@@ -118,12 +118,12 @@ const routes = [
                 component: () => import('@/views/empresa/EmpresaForm.vue')
             },
             {
-                path: '/:client/:domain/pipeline_params',
+                path: '/:client/:domain/pipeline-params',
                 name: 'pipeline-params',
                 component: () => import('@/views/pipeline_params/ParamsGrid.vue')
             },
             {
-                path: '/:client/:domain/pipeline_param/:id',
+                path: '/:client/:domain/pipeline-param/:id',
                 name: 'pipeline-param',
                 component: () => import('@/views/pipeline_params/ParamForm.vue')
             },
