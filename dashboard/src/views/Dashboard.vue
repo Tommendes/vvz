@@ -94,8 +94,15 @@ const biData = ref({
         novos: 0,
         noPeriodo: 0,
         loading: true
+    },
+    pedidos: {
+        total: 0,
+        novos: 0,
+        noPeriodo: 0,
+        loading: true
     }
 });
+
 const getCadastrosBi = async () => {
     const url = `${baseApiUrl}/cadastros/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}`;
     biData.value.cadastros.loading = true;
@@ -107,6 +114,7 @@ const getCadastrosBi = async () => {
     });
     biData.value.cadastros.loading = false;
 };
+
 const getPropectosBi = async () => {
     const url = `${baseApiUrl}/com-prospeccoes/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}`;
     biData.value.prospectos.loading = true;
@@ -119,11 +127,37 @@ const getPropectosBi = async () => {
     biData.value.prospectos.loading = false;
 };
 
+const getPropostasBi = async () => {
+    const url = `${baseApiUrl}/pipeline/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&periodDv=1`;
+    biData.value.propostas.loading = true;
+    await axios.get(url).then((axiosRes) => {
+        const data = axiosRes.data;
+        biData.value.propostas.total = data.total;
+        biData.value.propostas.noPeriodo = data.noPeriodo;
+        biData.value.propostas.novos = data.novos;
+    });
+    biData.value.propostas.loading = false;
+};
+
+const getPedidosBi = async () => {
+    const url = `${baseApiUrl}/pipeline/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&periodDv=2`;
+    biData.value.pedidos.loading = true;
+    await axios.get(url).then((axiosRes) => {
+        const data = axiosRes.data;
+        biData.value.pedidos.total = data.total;
+        biData.value.pedidos.noPeriodo = data.noPeriodo;
+        biData.value.pedidos.novos = data.novos;
+    });
+    biData.value.pedidos.loading = false;
+};
+
 const loadStats = () => {
     getBiPeriod();
     setTimeout(async () => {
         await getCadastrosBi();
         await getPropectosBi();
+        await getPropostasBi();
+        await getPedidosBi();
     }, Math.random() * 1000 + 250);
 };
 
@@ -135,7 +169,7 @@ onMounted(() => {
 <template>
     <div class="grid">
         <div class="col-12 lg:col-6 xl:col-3">
-            <div class="card mb-0">
+            <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
@@ -161,7 +195,7 @@ onMounted(() => {
             </div>
         </div>
         <div class="col-12 lg:col-6 xl:col-3">
-            <div class="card mb-0">
+            <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
@@ -187,33 +221,55 @@ onMounted(() => {
             </div>
         </div>
         <div class="col-12 lg:col-6 xl:col-3">
-            <div class="card mb-0">
+            <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
-                        <span class="block text-500 font-medium mb-3">Propostas</span>
-                        <div class="text-900 font-medium text-xl">152</div>
+                        <span class="block text-500 font-medium mb-3">
+                            <router-link :to="`/${userData.cliente}/${userData.dominio}/pipeline?tpd=1`" v-tooltip.top="'Clique para seguir'">Propostas</router-link>
+                        </span>
+                        <Skeleton v-if="biData.propostas.loading" width="20rem" height="2rem"></Skeleton>
+                        <div v-else class="text-900 font-medium text-xl">{{ biData.propostas.total }}</div>
                     </div>
                     <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-paperclip text-gray-500 text-xl"></i>
+                        <i class="fa fa-list-alt text-gray-500 text-xl"></i>
                     </div>
                 </div>
-                <span class="text-green-500 font-medium">24 propostas </span>
-                <span class="text-500">neste mês</span>
+                <div>
+                    <Skeleton v-if="biData.propostas.loading" width="20rem" height="2rem"></Skeleton>
+                    <span v-else class="text-green-500 font-medium">{{ biData.propostas.novos }} propostas </span>
+                    <span v-if="!biData.propostas.loading" class="text-500">neste mês</span>
+                </div>
+                <div>
+                    <Skeleton v-if="biData.propostas.loading" width="20rem" height="1rem"></Skeleton>
+                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.propostas.noPeriodo }} propostas </span>
+                    <span v-if="!biData.propostas.loading" class="text-500 font-ligth text-xs">no período {{ biPeriod.dataPt }}</span>
+                </div>
             </div>
         </div>
         <div class="col-12 lg:col-6 xl:col-3">
-            <div class="card mb-0">
+            <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
-                        <span class="block text-500 font-medium mb-3">Pedidos</span>
-                        <div class="text-900 font-medium text-xl">152</div>
+                        <span class="block text-500 font-medium mb-3">
+                            <router-link :to="`/${userData.cliente}/${userData.dominio}/pipeline?tpd=2`" v-tooltip.top="'Clique para seguir'">Pedidos</router-link>
+                        </span>
+                        <Skeleton v-if="biData.pedidos.loading" width="20rem" height="2rem"></Skeleton>
+                        <div v-else class="text-900 font-medium text-xl">{{ biData.pedidos.total }}</div>
                     </div>
                     <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
                         <i class="fa fa-pie-chart text-gray-500 text-xl"></i>
                     </div>
                 </div>
-                <span class="text-green-500 font-medium">24 pedidos </span>
-                <span class="text-500">neste mês</span>
+                <div>
+                    <Skeleton v-if="biData.pedidos.loading" width="20rem" height="2rem"></Skeleton>
+                    <span v-else class="text-green-500 font-medium">{{ biData.pedidos.novos }} pedidos </span>
+                    <span v-if="!biData.pedidos.loading" class="text-500">neste mês</span>
+                </div>
+                <div>
+                    <Skeleton v-if="biData.pedidos.loading" width="20rem" height="1rem"></Skeleton>
+                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.pedidos.noPeriodo }} pedidos </span>
+                    <span v-if="!biData.pedidos.loading" class="text-500 font-ligth text-xs">no período {{ biPeriod.dataPt }}</span>
+                </div>
             </div>
         </div>
 
