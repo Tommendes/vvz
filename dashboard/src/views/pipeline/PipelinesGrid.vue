@@ -208,6 +208,7 @@ const mountUrlFilters = () => {
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
+    console.log(url);
     urlFilters.value = url;
 };
 // Exporta os dados do grid para CSV
@@ -276,6 +277,13 @@ onBeforeMount(() => {
 onMounted(() => {
     // Limpa os filtros do grid
     clearFilter();
+    if (route.query.tpd) {
+        tipoDoc.value = route.query.tpd;
+
+        loadLazyData();
+        filtrarUnidades();
+    }
+    console.log(tipoDoc.value);
 });
 </script>
 
