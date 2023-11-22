@@ -61,7 +61,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline_param/${itemData.value.id}` });
+            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline-param/${itemData.value.id}` });
         }
     },
     {

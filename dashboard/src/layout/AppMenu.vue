@@ -48,7 +48,7 @@ const model = ref([
         items: [
             { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
             { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${userData.cliente}/${userData.dominio}/empresa` },
-            { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.cliente}/${userData.dominio}/pipeline_params` },
+            { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.cliente}/${userData.dominio}/pipeline-params` },
             { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${userData.cliente}/${userData.dominio}/pipeline` }
         ]
     },

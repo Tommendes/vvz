@@ -6,7 +6,8 @@ import { defaultSuccess, defaultError } from '@/toast';
 import moment from 'moment';
 import ProspeccaoForm from './ProspeccaoForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
-import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
+import { renderizarHTML, removeHtmlTags } from '@/global';
+import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
