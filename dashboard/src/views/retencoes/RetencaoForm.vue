@@ -26,11 +26,6 @@ const toast = useToast();
 // Campos de formulário
 const itemData = ref({});
 const registroTipo = ref('pf');
-const labels = ref({
-    id_fin_lanc: " ID Lançamentos",
-    valor: " Valor da Retenção",
-    valor_da_retencao: " Descrição da Retenção"
-});
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -164,17 +159,17 @@ const items = ref([
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-4">
-                            <label for="id_fin_lanc">{{ labels.id_fin_lanc }}</label>
+                            <label for="id_fin_lanc">ID Lançamentos</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_fin_lanc" id="id_fin_lanc" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor">{{ labels.valor }}</label>
+                            <label for="valor">Valor da Retenção</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor" id="valor" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_da_retencao">{{ labels.valor_da_retencao }}</label>
+                            <label for="valor_da_retencao">Descrição da Retenção</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_da_retencao" id="valor_da_retencao" type="text" />
                         </div>

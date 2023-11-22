@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -17,6 +17,10 @@ const masks = ref({
     }),
     telefone: new Mask({
         mask: ['(##) ####-####', '(##) #####-####']
+    }),
+    cpf_cnpj: new Mask({
+        // Defina a máscara adequada para CPF/CNPJ
+        mask: ['###.###.###-##', '##.###.###/####-##']
     })
 });
 
@@ -32,7 +36,6 @@ const store = useUserStore();
 
 // Campos de formulário
 const itemData = ref({
-    periodo: 0
 });
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
@@ -83,7 +86,7 @@ const loadData = async () => {
         });
     } else loading.value.form = false;
     await listAgentes();
-    // await loadEnderecos();
+    await loadEnderecos();
     await getNomeCliente();
 };
 const saveData = async () => {
@@ -225,11 +228,12 @@ const validarContato = () => {
     } else {
         // Se o campo foi esvaziado, resetar as mensagens de erro
         errorMessages.value.contato = null;
+        return !errorMessages.value.contato;
     }
 };
 // Validar formulário
 const formIsValid = () => {
-    return validarContato();
+        return validarContato();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -251,7 +255,7 @@ const listAgentes = async () => {
     });
 };
 const loadEnderecos = async () => {
-    const url = `${baseApiUrl}/cad-enderecos/${20}`;
+    const url = `${baseApiUrl}/cad-enderecos/${itemData.value.id_cadastros}`;
     await axios.get(url).then((res) => {
         res.data.data.map((item) => {
             const label = `${item.logradouro}${item.nr ? ', ' + item.nr : ''}${item.complnr ? ' ' + item.complnr : ''}${item.bairro ? ' - ' + item.bairro : ''}${userData.admin >= 2 ? ` (${item.id})` : ''}`;
@@ -259,9 +263,6 @@ const loadEnderecos = async () => {
         });
     });
 };
-if (selectedCadastro) {
-    loadEnderecos();
-}
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
@@ -277,6 +278,13 @@ onMounted(() => {
 // Observar alterações nos dados do formulário
 watchEffect(() => {
     isItemDataChanged();
+});
+// Observar alterações na propriedade selectedCadastro
+watch(selectedCadastro, (value) => {
+    if (value) {
+        itemData.value.id_cadastros = value.code;
+        loadEnderecos();
+    }
 });
 </script>
 
@@ -305,7 +313,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-2">
                             <label for="periodo">Período da Visita</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="periodo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.periodo" :options="dropdownPeriodo" />
+                            <Dropdown v-else id="periodo" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.periodo" :options="dropdownPeriodo" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="data_visita">Data da Visita</label>
@@ -321,6 +329,7 @@ watchEffect(() => {
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                             <p v-if="selectedCadastro">{{ selectedCadastro.code }}</p>
+                            <p v-if="selectedCadastro">{{ selectedCadastro }}</p>
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="id_cad_end">Endereço</label>
