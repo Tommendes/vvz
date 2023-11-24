@@ -74,8 +74,9 @@ const loadData = async () => {
             if (body && body.id) {
                 body.id = String(body.id);
                 itemData.value = body;
-                await getNomeCliente();
+                body.id_cad_end = String(body.id_cad_end);
                 if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
+                await getNomeCliente();
                 itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
@@ -203,7 +204,7 @@ const dropdownPeriodo = ref([
     { value: 1, label: 'Tarde' }
 ]);
 // Validação do primeiro dígito do campo Contato
-const validarContato = () => {
+const validateContato = () => {
     const valorContato = itemData.value.contato;
 
     // Verificar se o valor é um número ou letra
@@ -231,9 +232,20 @@ const validarContato = () => {
         return !errorMessages.value.contato;
     }
 };
+const validateDataVisita = () => {
+    errorMessages.value.data_visita = null;
+    // // Testa o formato da data
+    // if (itemData.value.data_visita && itemData.value.data_visita.length > 0 && !masks.value.data_visita.completed(itemData.value.data_visita)) errorMessages.value.data_visita = 'Formato de data inválido';
+    // if (!(moment(itemData.value.data_visita, 'DD/MM/YYYY').isValid() || moment(itemData.value.data_visita).isValid())) errorMessages.value.data_visita = 'Data inválida';
+    // return !errorMessages.value.data_visita;
+
+
+    if (!(moment(itemData.value.data_visita, 'DD/MM/YYYY').isValid() || moment(itemData.value.data_visita).isValid())) errorMessages.value.data_visita = 'Data inválida';
+
+};
 // Validar formulário
 const formIsValid = () => {
-        return validarContato();
+        return validateContato() && validateDataVisita();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -295,7 +307,7 @@ watch(selectedCadastro, (value) => {
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-8">
+                        <div class="col-12 md:col-4">
                             <label for="id_agente">Agente</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown 
@@ -311,16 +323,28 @@ watch(selectedCadastro, (value) => {
                         />
                         </div>
                         <div class="col-12 md:col-2">
+                            <label for="data_visita">Data da Visita</label>
+                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()"/>
+                            <small id="text-error" class="p-error" if>{{ errorMessages.data_visita || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-2">
                             <label for="periodo">Período da Visita</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="periodo" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.periodo" :options="dropdownPeriodo" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="data_visita">Data da Visita</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" />
+                            <label for="pessoa">Pessoa Contatada</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
                         </div>
-                        <div class="col-12 md:col-12">
+                        <div class="col-12 md:col-2 contato">
+                            <label for="contato">Contato</label> 
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()"/>
+                            <small id="text-error" class="p-error" if>{{ errorMessages.contato || '&nbsp;' }}</small>
+                        </div>
+                        <div class="col-12 md:col-6">
                             <label for="id_cadastros">Cadastro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
@@ -331,7 +355,7 @@ watch(selectedCadastro, (value) => {
                             <p v-if="selectedCadastro">{{ selectedCadastro.code }}</p>
                             <p v-if="selectedCadastro">{{ selectedCadastro }}</p>
                         </div>
-                        <div class="col-12 md:col-12">
+                        <div class="col-12 md:col-6">
                             <label for="id_cad_end">Endereço</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown
@@ -344,17 +368,6 @@ watch(selectedCadastro, (value) => {
                             optionValue="value"
                             v-model="itemData.id_cad_end"
                             :options="dropdownEnderecos" />
-                        </div>                        
-                        <div class="col-12 md:col-6">
-                            <label for="pessoa">Pessoa Contatada</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
-                        </div>
-                        <div class="col-12 md:col-6 contato">
-                            <label for="contato">Contato</label> 
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validarContato()"/>
-                            <small id="text-error" class="p-error" if>{{ errorMessages.contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
                             <label for="observacoes">Observações</label>
