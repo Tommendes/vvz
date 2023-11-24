@@ -19,7 +19,6 @@ const masks = ref({
         mask: ['(##) ####-####', '(##) #####-####']
     }),
     cpf_cnpj: new Mask({
-        // Defina a máscara adequada para CPF/CNPJ
         mask: ['###.###.###-##', '##.###.###/####-##']
     })
 });
@@ -234,14 +233,20 @@ const validateContato = () => {
 };
 const validateDataVisita = () => {
     errorMessages.value.data_visita = null;
-    // // Testa o formato da data
-    // if (itemData.value.data_visita && itemData.value.data_visita.length > 0 && !masks.value.data_visita.completed(itemData.value.data_visita)) errorMessages.value.data_visita = 'Formato de data inválido';
-    // if (!(moment(itemData.value.data_visita, 'DD/MM/YYYY').isValid() || moment(itemData.value.data_visita).isValid())) errorMessages.value.data_visita = 'Data inválida';
-    // return !errorMessages.value.data_visita;
+    // Testa o formato da data
+    if (itemData.value.data_visita && itemData.value.data_visita.length > 0 && !masks.value.data_visita.completed(itemData.value.data_visita)) {
+        errorMessages.value.data_visita = 'Formato de data inválido';
+    } else {
+        // Verifica se a data é válida
+        const momentDate = moment(itemData.value.data_visita, 'DD/MM/YYYY', true);
+        if (!momentDate.isValid()) {
+            errorMessages.value.data_visita = 'Data inválida';
+        }
+    }
+    // Atualiza o estado do botão "Salvar"
+    accept.value = !errorMessages.value.data_visita;
 
-
-    if (!(moment(itemData.value.data_visita, 'DD/MM/YYYY').isValid() || moment(itemData.value.data_visita).isValid())) errorMessages.value.data_visita = 'Data inválida';
-
+    return !errorMessages.value.data_visita;
 };
 // Validar formulário
 const formIsValid = () => {
@@ -307,7 +312,7 @@ watch(selectedCadastro, (value) => {
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-3">
                             <label for="id_agente">Agente</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown 
@@ -338,7 +343,7 @@ watch(selectedCadastro, (value) => {
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
                         </div>
-                        <div class="col-12 md:col-2 contato">
+                        <div class="col-12 md:col-3 contato">
                             <label for="contato">Contato</label> 
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()"/>
@@ -352,8 +357,6 @@ watch(selectedCadastro, (value) => {
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
-                            <p v-if="selectedCadastro">{{ selectedCadastro.code }}</p>
-                            <p v-if="selectedCadastro">{{ selectedCadastro }}</p>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="id_cad_end">Endereço</label>
