@@ -89,15 +89,17 @@ const getItem = (data) => {
     itemData.value = data;
 };
 const loadData = () => {
-    loading.value = true;
-    axios.get(`${urlBase.value}`).then((axiosRes) => {
-        gridData.value = axiosRes.data.data;
-        gridData.value.forEach((element) => {
-            if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
-            else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
+    setTimeout(() => {
+        loading.value = true;
+        axios.get(`${urlBase.value}`).then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            gridData.value.forEach((element) => {
+                if (element.cpf_cnpj_empresa && element.cpf_cnpj_empresa.length == 11) element.cpf_cnpj_empresa = masks.value.cpf.masked(element.cpf_cnpj_empresa);
+                else element.cpf_cnpj_empresa = masks.value.cnpj.masked(element.cpf_cnpj_empresa);
+            });
+            loading.value = false;
         });
-        loading.value = false;
-    });
+    }, Math.random() * 1000);
 };
 const mode = ref('grid');
 onBeforeMount(() => {

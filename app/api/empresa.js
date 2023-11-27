@@ -127,9 +127,10 @@ module.exports = app => {
                 this.on('tbl1.id_uploads_logo', '=', 'u.id')
                     .andOn('u.status', '=', STATUS_ACTIVE)
             })
-            .where({ 'tbl1.status': STATUS_ACTIVE, 'u.status': STATUS_ACTIVE })
+            .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .then(body => {
+            console.log(ret.toString());
+            ret.then(body => {
                 const count = body.length
                 return res.json({ data: body, count: count })
             })
@@ -157,7 +158,7 @@ module.exports = app => {
                 this.on('tbl1.id_uploads_logo', '=', 'u.id')
                     .andOn('u.status', '=', STATUS_ACTIVE)
             })
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'u.status': STATUS_ACTIVE }).first()
+            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 return res.json(body)
             })
