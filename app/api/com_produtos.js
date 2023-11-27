@@ -1,9 +1,11 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'empresa'
+    const tabela = 'com_produtos'
+    const tabelaAlias = 'Produtos'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+    const { removeAccents, titleCase } = app.api.facilities
 
     const save = async (req, res) => {
         let user = req.user
@@ -22,28 +24,19 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-            existsOrError(body.cpf_cnpj_empresa, 'CPF ou CNPJ não informado')
-            const cpfCnpjUnique = await app.db(tabelaDomain)
-                .where(function () {
-                    this.where({ cpf_cnpj_empresa: body.cpf_cnpj_empresa })
-                        .where(app.db.raw(`${body.id ? `id != ${body.id}` : '1=1'}`))
-                })
-                .first();
-            notExistsOrError(cpfCnpjUnique, `O ${body.cpf_cnpj_empresa.length == 11 ? 'CPF' : 'CNPJ' } informado já foi registrado. Por favor verifique!`)
-            // return res.send(cpfCnpjUnique.toString());
-            existsOrError(body.cep, 'CEP não encontrado')
-            if (body.cep.length = !8) throw "CEP inválido"
-            existsOrError(body.logradouro, 'Logradouro não encontrado')
-            existsOrError(body.nr, 'Número não encontrado')
-            existsOrError(body.cidade, 'Cidade não encontrada')
-            existsOrError(body.uf, 'UF não encontrada')
-            if (body.uf.length = !2) throw "UF inválido"
-
+            existsOrError(body.nome_comum, 'Nome curto(código) não informado')
+            existsOrError(body.descricao, 'Descrição longa não informada')
+            existsOrError(body.id_params_unidade, 'Unidade de medida não informada')
+            existsOrError(String(body.produto), 'Produto/Serviço não informado')
+            if (body.produto == 1) {
+                existsOrError(body.ncm, 'Nomenclatura comum Mercosul não informada')
+                existsOrError(body.cean, 'Código EAN não informado')
+            }
+            existsOrError(body.fornecedor, 'Fornecedor não informado')
         } catch (error) {
             return res.status(400).send(error)
         }
-
-        delete body.hash; delete body.tblName; delete body.url_logo;
+        delete body.hash; delete body.tblName; delete body.endereco; delete body.url_logo;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -61,6 +54,16 @@ module.exports = app => {
 
             body.evento = evento
             body.updated_at = new Date()
+            //body = JSON.parse(JSON.stringify(body).toUpperCase())
+            // Colocar cada campo em maiúsculo e remover acentos
+            Object.keys(body).forEach(function (key) {
+                if (typeof body[key] == 'string' && key != 'uf') {
+                    body[key] = removeAccents(titleCase(body[key]))
+                } else if (typeof body[key] == 'string' && key == 'uf') {
+                    body[key] = body[key].toUpperCase()
+                }
+            });
+
             let rowsUpdated = app.db(tabelaDomain)
                 .update(body)
                 .where({ id: body.id })
@@ -73,6 +76,14 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         } else {
+
+            try {
+                const unique = await app.db(tabelaDomain).where({ nome_comum: body.nome_comum, produto: body.produto, descricao: body.descricao }).first()
+                notExistsOrError(unique, 'Este produto já foi registrado')
+            } catch (error) {
+                console.log(error);
+                return res.status(400).send(error)
+            }
             // Criação de um novo registro
             const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
 
@@ -123,16 +134,16 @@ module.exports = app => {
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, u.url url_logo, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function() {
+            .leftJoin({ u: tabelaUploadsDomain }, function () {
                 this.on('tbl1.id_uploads_logo', '=', 'u.id')
                     .andOn('u.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            ret.then(body => {
-                const count = body.length
-                return res.json({ data: body, count: count })
-            })
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count: count })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
@@ -152,7 +163,7 @@ module.exports = app => {
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function() {
+            .leftJoin({ u: tabelaUploadsDomain }, function () {
                 this.on('tbl1.id_uploads_logo', '=', 'u.id')
                     .andOn('u.status', '=', STATUS_ACTIVE)
             })
@@ -208,6 +219,98 @@ module.exports = app => {
         }
     }
 
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'gbf':
+                getByField(req, res)
+                break;
+            case 'glf':
+                getListByField(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }
 
-    return { save, get, getById, remove }
+    const getByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.params.first == true
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} = '${value}'`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
+
+    const getListByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada para exibição
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.params.first == true
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
+
+    return { save, get, getById, remove, getByFunction }
 }

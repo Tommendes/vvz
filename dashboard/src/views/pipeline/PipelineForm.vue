@@ -569,7 +569,14 @@ watch(route, (value) => {
                         <div class="col-12">
                             <label for="id_cadastros">Cliente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <AutoComplete
+                                v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
+                                v-model="selectedCadastro"
+                                optionLabel="name"
+                                :suggestions="filteredCadastros"
+                                @complete="searchCadastros"
+                                forceSelection
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button v-if="route.name != 'cadastro' && !itemDataLastStatus.status_params >= 80" icon="pi pi-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
@@ -821,7 +828,9 @@ watch(route, (value) => {
                                 :disabled="![andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
                                 type="button"
                                 class="w-full mb-3"
-                                :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''}`"
+                                :icon="`fa-solid fa-cart-shopping ${
+                                    itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''
+                                }`"
                                 severity="danger"
                                 text
                                 raised

@@ -243,6 +243,22 @@ module.exports = app => {
         .get(app.api.com_prospeccoes.getByFunction)
 
     /**
+     * Rota de com_produtos
+     */
+    app.route('/com-produtos')
+        .all(app.config.passport.authenticate())
+        .post(app.api.com_produtos.save)
+        .get(app.api.com_produtos.get)
+    app.route('/com-produtos/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.com_produtos.save)
+        .get(app.api.com_produtos.getById)
+        .delete(app.api.com_produtos.remove)
+    app.route('/com-produtos/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.com_produtos.getByFunction)
+
+    /**
      * Rota de com_agentes
      */
     app.route('/com-agentes')

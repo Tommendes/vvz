@@ -33,6 +33,9 @@ const router = useRouter();
 import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
+
 // Campos de formulário
 const itemData = ref({});
 // Modelo de dados usado para comparação
@@ -44,12 +47,7 @@ const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
-const loading = ref({
-    form: true,
-    accepted: null,
-    email: null,
-    telefone: null
-});
+const loading = ref(true);
 // DropDown
 const dropdownAgentes = ref([]);
 const dropdownEnderecos = ref([]);
@@ -77,14 +75,17 @@ const loadData = async () => {
                     if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
                     await getNomeCliente();
                     itemDataComparision.value = { ...itemData.value };
-
-                    loading.value.form = false;
+                    selectedCadastro.value = {
+                        code: itemData.value.id_cadastros,
+                        name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+                    };
+                    loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
                     router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccoes` });
                 }
             });
-        } else loading.value.form = false;
+        } else loading.value = false;
         await listAgentes();
         await loadEnderecos();
         await getNomeCliente();
@@ -97,21 +98,37 @@ const saveData = async () => {
         const url = `${urlBase.value}${id}`;
         if (itemData.value.data_visita) itemData.value.data_visita = moment(itemData.value.data_visita, 'DD/MM/YYYY').format('YYYY-MM-DD');
         axios[method](url, itemData.value)
-            .then((res) => {
+            .then(async (res) => {
                 const body = res.data;
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    if (itemData.value.data_visita) itemData.value.data_visita = moment(itemData.value.data_visita).format('DD/MM/YYYY');
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}prospeccao/${itemData.value.id}` });
+                    emit('changed');
+                    if (route.name != 'cadastro' && mode.value == 'new') {
+                        router.push({
+                            path: `/${userData.cliente}/${userData.dominio}/prospeccao/${itemData.value.id}`
+                        });
+                        loadData();
+                    } else if (route.name != 'cadastro' && id != itemData.value.id) {
+                        router.push({
+                            path: `/${userData.cliente}/${userData.dominio}/prospeccao/${itemData.value.id}`
+                        });
+                        loadData();
+                    } else reload();
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
                 }
             })
-            .catch((err) => {
-                defaultWarn(err.response.data);
+            .catch((error) => {
+                if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+                else if (typeof error.response == 'string') defaultWarn(error.response);
+                else if (typeof error == 'string') defaultWarn(error);
+                else {
+                    console.log(error);
+                    defaultWarn('Erro ao carregar dados!');
+                }
             });
     }
 };
@@ -122,6 +139,8 @@ const cadastros = ref([]);
 const filteredCadastros = ref([]);
 const selectedCadastro = ref();
 const nomeCliente = ref();
+// Editar cadastro no autocomplete
+const editCadastro = ref(false);
 const getNomeCliente = async () => {
     try {
         const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&slct=nome,cpf_cnpj`;
@@ -135,6 +154,7 @@ const getNomeCliente = async () => {
 };
 const searchCadastros = (event) => {
     setTimeout(async () => {
+        itemData.value.id_cad_end = undefined;
         // Verifique se o campo de pesquisa não está vazio
         if (!event.query.trim().length) {
             // Se estiver vazio, exiba todas as sugestões
@@ -274,6 +294,7 @@ const listAgentes = async () => {
 };
 const loadEnderecos = async () => {
     const url = `${baseApiUrl}/cad-enderecos/${itemData.value.id_cadastros}`;
+    dropdownEnderecos.value = [];
     await axios.get(url).then((res) => {
         res.data.data.map((item) => {
             const label = `${item.logradouro}${item.nr ? ', ' + item.nr : ''}${item.complnr ? ' ' + item.complnr : ''}${item.bairro ? ' - ' + item.bairro : ''}${userData.admin >= 2 ? ` (${item.id})` : ''}`;
@@ -288,10 +309,6 @@ onBeforeMount(() => {
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
-    else {
-        if (itemData.value.id) mode.value = 'view';
-        else mode.value = 'new';
-    }
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {
@@ -303,6 +320,7 @@ watch(selectedCadastro, (value) => {
         itemData.value.id_cadastros = value.code;
         loadEnderecos();
     }
+    console.log(itemData.value.id_cadastros);
 });
 </script>
 
@@ -315,7 +333,7 @@ watch(selectedCadastro, (value) => {
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-3">
                             <label for="id_agente">Agente</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown
                                 v-else
                                 id="id_agente"
@@ -330,30 +348,37 @@ watch(selectedCadastro, (value) => {
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="data_visita">Data da Visita</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()"/>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.data_visita">{{ errorMessages.data_visita || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="periodo">Período da Visita</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown v-else id="periodo" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.periodo" :options="dropdownPeriodo" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pessoa">Pessoa Contatada</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
                         </div>
                         <div class="col-12 md:col-3 contato">
                             <label for="contato">Contato</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()"/>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.contato">{{ errorMessages.contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="id_cadastros">Cadastro</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <AutoComplete
+                                v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
+                                v-model="selectedCadastro"
+                                optionLabel="name"
+                                :suggestions="filteredCadastros"
+                                @complete="searchCadastros"
+                                forceSelection
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
@@ -361,7 +386,7 @@ watch(selectedCadastro, (value) => {
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="id_cad_end">Endereço</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown
                                 v-else
                                 id="id_cad_end"
@@ -376,10 +401,17 @@ watch(selectedCadastro, (value) => {
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
                             <label for="observacoes">Observações</label>
-                            <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacoes" class="p-inputtext p-component p-filled"></p>
                         </div>
+                    </div>
+                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                        <p>route.name {{ route.name }}</p>
+                        <p>editCadastro {{ editCadastro }}</p>
+                        <p>mode: {{ mode }}</p>
+                        <p>itemData: {{ itemData }}</p>
+                        <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
                     </div>
                 </div>
                 <div class="col-12">
