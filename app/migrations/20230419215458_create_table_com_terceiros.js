@@ -7,7 +7,7 @@ exports.up = function (knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_pipeline', 10).unsigned().notNull().comment('Documento relacionado ')
         table.integer('id_com_agentes', 10).unsigned().notNull().comment('Agente')
         table.boolean('terceiro').comment('Se um terceiro')

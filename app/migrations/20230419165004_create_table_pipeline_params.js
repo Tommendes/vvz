@@ -7,7 +7,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.string('descricao',50).comment('Descrição abreviada do parâmetro')
         table.boolean('bi_index').default(0).comment('Apresentação em BI')
         table.boolean('doc_venda').default(0).comment('É documento de venda (0: Não; 1: Proposta; 2: Pedido)')

@@ -7,7 +7,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.string('status').notNull().default(0)
+        table.integer('status').notNull().default(0)
         table.string('tkn_api')
         table.string('name').notNull()
         table.string('cpf').notNull().unique()

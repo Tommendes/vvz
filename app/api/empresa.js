@@ -129,7 +129,6 @@ module.exports = app => {
             })
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            console.log(ret.toString());
             ret.then(body => {
                 const count = body.length
                 return res.json({ data: body, count: count })

@@ -12,7 +12,7 @@ exports.up = function (knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.string('status').notNull().default(0)
+        table.integer('status').notNull().default(0)
         table.string('grupo').comment('Grupo do parâmetro')
         table.specificType('parametro', 'text').comment('Parâmetro')
         table.string('label', 1000).comment('Label')

@@ -11,7 +11,7 @@ exports.up = function (knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_agente', 10).unsigned().notNull().references('id').inTable('vivazul_api.users').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela users')
         table.integer('id_cadastros', 10).unsigned().notNull().references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela cadastros')
         table.integer('id_cad_end', 10).unsigned().notNull().references('id').inTable('cad_enderecos').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela cad_enderecos')

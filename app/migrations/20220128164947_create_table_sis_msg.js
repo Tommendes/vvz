@@ -5,7 +5,7 @@ exports.up = function(knex) {
         table.collate('utf8mb4_general_ci')
         table.increments('id').primary()
         table.integer('id_user').comment('Se não informado então todos verão a mensagem')
-        table.string('status').notNull().default(10).comment('Se status = 10, exibe .title e .msg enquanto não atingir valid from')
+        table.integer('status').notNull().default(10).comment('Se status = 10, exibe .title e .msg enquanto não atingir valid from')
         table.string('status_user').notNull().default(10).comment('Se informado, tem prioridade sobre DBuser.status')
         table.string('evento').notNull().default(10)
         table.string('created_at').notNull()

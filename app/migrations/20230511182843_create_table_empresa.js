@@ -7,7 +7,7 @@ exports.up = function (knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.string('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.string('razaosocial', 255).comment('Razão social do cadastro')
         table.string('fantasia', 255).comment('Nome fantasia da empresa')
         table.string('cpf_cnpj_empresa', 255).comment('CNPJ do cadastro')
