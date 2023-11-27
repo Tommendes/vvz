@@ -34,8 +34,7 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 
 // Campos de formulário
-const itemData = ref({
-});
+const itemData = ref({});
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -64,30 +63,32 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/com-prospeccoes`);
 // Carragamento de dados do form
 const loadData = async () => {
-    if (route.params.id || itemData.value.id) {
-        if (route.params.id) itemData.value.id = route.params.id;
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        
-        await axios.get(url).then(async (res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                itemData.value = body;
-                body.id_cad_end = String(body.id_cad_end);
-                if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
-                await getNomeCliente();
-                itemDataComparision.value = { ...itemData.value };
+    setTimeout(async () => {
+        if (route.params.id || itemData.value.id) {
+            if (route.params.id) itemData.value.id = route.params.id;
+            const url = `${urlBase.value}/${itemData.value.id}`;
 
-                loading.value.form = false;
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}prospeccao` });
-            }
-        });
-    } else loading.value.form = false;
-    await listAgentes();
-    await loadEnderecos();
-    await getNomeCliente();
+            await axios.get(url).then(async (res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    itemData.value = body;
+                    body.id_cad_end = String(body.id_cad_end);
+                    if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
+                    await getNomeCliente();
+                    itemDataComparision.value = { ...itemData.value };
+
+                    loading.value.form = false;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccoes` });
+                }
+            });
+        } else loading.value.form = false;
+        await listAgentes();
+        await loadEnderecos();
+        await getNomeCliente();
+    }, Math.random() * 1000 + 250);
 };
 const saveData = async () => {
     if (formIsValid()) {
@@ -117,7 +118,7 @@ const saveData = async () => {
 /**
  * Autocomplete de cadastros e pipeline
  */
- const cadastros = ref([]);
+const cadastros = ref([]);
 const filteredCadastros = ref([]);
 const selectedCadastro = ref();
 const nomeCliente = ref();
@@ -188,7 +189,7 @@ const confirmEditAutoSuggest = (tipo) => {
 };
 /**
  * Fim de autocomplete de cadastros
-*/
+ */
 // Verifica se houve alteração nos dados do formulário
 const isItemDataChanged = () => {
     const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
@@ -212,7 +213,7 @@ const validateContato = () => {
         if (!isNaN(primeiroCaractere)) {
             // Aplicar a máscara de telefone
             itemData.value.contato = valorContato.replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-$3');
-            
+
             // Validação para Telefone
             if (itemData.value.contato && itemData.value.contato.length > 0 && ![10, 11].includes(itemData.value.contato.replace(/([^\d])+/gim, '').length)) {
                 errorMessages.value.contato = 'Formato de telefone inválido';
@@ -250,7 +251,7 @@ const validateDataVisita = () => {
 };
 // Validar formulário
 const formIsValid = () => {
-        return validateContato() && validateDataVisita();
+    return validateContato() && validateDataVisita();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -315,22 +316,22 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-3">
                             <label for="id_agente">Agente</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown 
-                            v-else
-                            id="id_agente"
-                            :disabled="mode == 'view'"
-                            :showClear="!!itemData.id_agente"
-                            optionLabel="label"
-                            placeholder="Selecione um agente"
-                            optionValue="value"
-                            v-model="itemData.id_agente"
-                            :options="dropdownAgentes"
-                        />
+                            <Dropdown
+                                v-else
+                                id="id_agente"
+                                :disabled="mode == 'view'"
+                                :showClear="!!itemData.id_agente"
+                                optionLabel="label"
+                                placeholder="Selecione um agente"
+                                optionValue="value"
+                                v-model="itemData.id_agente"
+                                :options="dropdownAgentes"
+                            />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="data_visita">Data da Visita</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()"/>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()" />
                             <small id="text-error" class="p-error" if>{{ errorMessages.data_visita || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-2">
@@ -344,9 +345,9 @@ watch(selectedCadastro, (value) => {
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
                         </div>
                         <div class="col-12 md:col-3 contato">
-                            <label for="contato">Contato</label> 
+                            <label for="contato">Contato</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()"/>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()" />
                             <small id="text-error" class="p-error" if>{{ errorMessages.contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-6">
@@ -362,15 +363,16 @@ watch(selectedCadastro, (value) => {
                             <label for="id_cad_end">Endereço</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown
-                            v-else
-                            id="id_cad_end"
-                            :disabled="mode == 'view'"
-                            :showClear="!!itemData.id_cad_end"
-                            optionLabel="label"
-                            placeholder="Selecione um endereço"
-                            optionValue="value"
-                            v-model="itemData.id_cad_end"
-                            :options="dropdownEnderecos" />
+                                v-else
+                                id="id_cad_end"
+                                :disabled="mode == 'view'"
+                                :showClear="!!itemData.id_cad_end"
+                                optionLabel="label"
+                                placeholder="Selecione um endereço"
+                                optionValue="value"
+                                v-model="itemData.id_cad_end"
+                                :options="dropdownEnderecos"
+                            />
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
                             <label for="observacoes">Observações</label>

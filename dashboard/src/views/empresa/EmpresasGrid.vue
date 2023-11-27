@@ -3,43 +3,20 @@ import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess } from '@/toast';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
-import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import EmpresaForm from './EmpresaForm.vue';
-const confirm = useConfirm();
 
-const store = useUserStore();
+// Cookies do usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
 const router = useRouter();
 const filters = ref(null);
-const menu = ref();
 const gridData = ref(null);
-const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/empresa`);
-// Exlui um registro
-const deleteRow = () => {
-    confirm.require({
-        group: 'templating',
-        header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
-                defaultSuccess('Registro excluído com sucesso!');
-                loadData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
 // Itens do grid
 const listaNomes = ref([
     { field: 'razaosocial', label: 'Razão Social', minWidth: '35rem' },
@@ -65,28 +42,6 @@ const masks = ref({
 initFilters();
 const clearFilter = () => {
     initFilters();
-};
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/empresa/${itemData.value.id}` });
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-const toggle = (event) => {
-    menu.value.toggle(event);
-};
-const getItem = (data) => {
-    itemData.value = data;
 };
 const loadData = () => {
     setTimeout(() => {
@@ -154,8 +109,7 @@ onBeforeMount(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/empresa/${data.id}` })" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                 </template>
             </Column>
         </DataTable>

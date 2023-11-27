@@ -2,20 +2,16 @@
 import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultError } from '@/toast';
+import { defaultError } from '@/toast';
 import moment from 'moment';
 import ProspeccaoForm from './ProspeccaoForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { renderizarHTML, removeHtmlTags } from '@/global';
+
+// Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
-
-import { useConfirm } from 'primevue/useconfirm';
-const confirm = useConfirm();
-
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
 
 import { useRouter } from 'vue-router';
 const router = useRouter();
@@ -40,33 +36,11 @@ onMounted(() => {
     clearFilter();
 });
 
-const deleteRow = () => {
-    confirm.require({
-        group: 'templating',
-        header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
-                defaultSuccess('Registro excluído com sucesso!');
-                loadLazyData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
-
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
-const itemData = ref(null);
 // Lista de períodos
 const dropdownPeriodo = ref([
     { value: '0', label: 'Manhã' },
@@ -179,28 +153,6 @@ const exportCSV = () => {
     });
     toExport.exportCSV();
 };
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccao/${itemData.value.id}` });
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-const toggle = (event) => {
-    menu.value.toggle(event);
-};
-const getItem = (data) => {
-    itemData.value = data;
-};
 watchEffect(() => {
     mountUrlFilters();
 });
@@ -292,7 +244,7 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/prospeccao/${data.id}` })" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>
