@@ -57,7 +57,7 @@ const getBiPeriod = () => {
     if (biParams && moment(biParams.periodo[0].di, 'YYYY-MM-DD', true).isValid() && moment(biParams.periodo[1].df, 'YYYY-MM-DD', true).isValid()) {
         const dateArray = [];
         let datesPt = 'entre ';
-        let dataEn = { di: null, df: null };
+        let dataEn = { di: new Date(), df: new Date() };
         biParams.periodo.forEach((element) => {
             if (element.di) {
                 dateArray.push(moment(element.di).toDate());
