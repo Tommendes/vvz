@@ -331,7 +331,7 @@ watch(selectedCadastro, (value) => {
                             <label for="data_visita">Data da Visita</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()"/>
-                            <small id="text-error" class="p-error" if>{{ errorMessages.data_visita || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.data_visita">{{ errorMessages.data_visita || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="periodo">Período da Visita</label>
@@ -347,7 +347,7 @@ watch(selectedCadastro, (value) => {
                             <label for="contato">Contato</label> 
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()"/>
-                            <small id="text-error" class="p-error" if>{{ errorMessages.contato || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.contato">{{ errorMessages.contato || '&nbsp;' }}</small>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="id_cadastros">Cadastro</label>
