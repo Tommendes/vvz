@@ -4,7 +4,6 @@ import { onMounted, reactive, ref } from 'vue';
 import { formatCurrency } from '@/global';
 import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
-import { useRouter } from 'vue-router';
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -41,15 +40,21 @@ const lineOptions = ref(null);
 
 const biPeriod = ref();
 const applyBiParams = () => {
-    if (biPeriod.value === null) {
-        return;
-    }
-    const period = biPeriod.value.map((element, index) => {
-        const date = moment(element).format('YYYY-MM-DD');
-        return index === 0 ? { di: date } : { df: date };
-    });
-    localStorage.setItem('__biParams', JSON.stringify({ periodo: period }));
-    loadStats();
+    if (biPeriod.value) {
+        const period = biPeriod.value.map((element, index) => {
+            const date = moment(element).format('YYYY-MM-DD');
+            return index === 0 ? { di: date } : { df: date };
+        });
+        localStorage.setItem('__biParams', JSON.stringify({ periodo: period }));
+    } else setDefaultBiParams();
+    if (biPeriod.value) loadStats();
+};
+
+const setDefaultBiParams = () => {
+    biPeriod.value = [moment().subtract(1, 'month').toDate(), moment().toDate()];
+    biPeriod.value.dataPt = 'entre ' + moment().subtract(1, 'month').format('DD/MM/YYYY') + ' e ' + moment().format('DD/MM/YYYY');
+    biPeriod.value.dataEn = { di: moment().subtract(1, 'month').format('YYYY-MM-DD'), df: moment().format('YYYY-MM-DD') };
+    localStorage.setItem('__biParams', JSON.stringify({ periodo: [{ di: biPeriod.value.dataEn.di }, { df: biPeriod.value.dataEn.df }] }));
 };
 
 const getBiPeriod = () => {
@@ -73,6 +78,8 @@ const getBiPeriod = () => {
         biPeriod.value = dateArray;
         biPeriod.value.dataPt = datesPt;
         biPeriod.value.dataEn = dataEn;
+    } else {
+        applyBiParams();
     }
 };
 
