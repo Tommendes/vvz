@@ -7,7 +7,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_cadastros',10).unsigned().notNull().comment('Registro do Destinatário no cadastro')
         table.string('email_destinatario',255).comment('Destinatário(email)')
         table.string('registro',255).comment('Número do protocolos')

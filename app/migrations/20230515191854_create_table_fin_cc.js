@@ -7,7 +7,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.string('codigo',255).notNull().comment('Código da despesa ou receita')
         table.specificType('tipo','char(1)').notNull().comment('Despesa ou receita')
         table.string('descricao',50).notNull().comment('Descrição do centro de custo')

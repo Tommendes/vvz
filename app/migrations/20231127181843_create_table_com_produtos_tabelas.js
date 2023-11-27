@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-    return knex.schema.createTable('vivazul_cso_root.pv_oat_status', table => {
+    return knex.schema.createTable('vivazul_cso_root.com_prod_tabelas', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -12,9 +12,10 @@ exports.up = function (knex) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
-        table.integer('id_pv_oat', 10).unsigned().comment('Documento pai')
-        table.integer('status_pv_oat', 10).unsigned().notNull().comment('Status do PV')
-        table.foreign('id_pv_oat').references('id').inTable('pv_oat').onUpdate('Cascade').onDelete('NO ACTION')
+        table.integer('id_com_produtos').unsigned().references('id').inTable('com_produtos').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela com_produtos')
+        table.string('ini_validade', 10).notNull().comment('Início da validade')
+        table.double('valor_compra', 11,2).defaultTo(0.00).comment('Valor de compra do produto')
+        table.double('valor_venda', 11,2).defaultTo(0.00).comment('Valor de venda')
     })
 };
 
@@ -23,5 +24,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-    return knex.schema.dropTable('vivazul_cso_root.pv_oat_status')
+    return knex.schema.dropTable('vivazul_cso_root.com_prod_tabelas')
 };

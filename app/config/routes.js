@@ -259,6 +259,22 @@ module.exports = app => {
         .get(app.api.com_produtos.getByFunction)
 
     /**
+     * Rota de com_propostas
+     */
+    app.route('/com-propostas')
+        .all(app.config.passport.authenticate())
+        .post(app.api.com_propostas.save)
+        .get(app.api.com_propostas.get)
+    app.route('/com-propostas/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.com_propostas.save)
+        .get(app.api.com_propostas.getById)
+        .delete(app.api.com_propostas.remove)
+    app.route('/com-propostas/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.com_propostas.getByFunction)
+
+    /**
      * Rota de com_agentes
      */
     app.route('/com-agentes')
