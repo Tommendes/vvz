@@ -54,6 +54,16 @@ const routes = [
                 name: 'protocolo',
                 component: () => import('@/views/protocolos/ProtocoloForm.vue')
             },
+            {
+                path: '/:client/:domain/produtos',
+                name: 'produtos',
+                component: () => import('@/views/produtos/ProdutosGrid.vue')
+            },
+            {
+                path: '/:client/:domain/produto/:id',
+                name: 'produto',
+                component: () => import('@/views/produtos/ProdutoForm.vue')
+            },
             // Seção Pós-Vendas
             {
                 path: '/:client/:domain/pos-vendas',

@@ -25,7 +25,7 @@ const model = ref([
             { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
             { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${userData.cliente}/${userData.dominio}/pipeline` },
             { label: 'Protocolos', icon: 'pi pi-fw pi-folder', to: `/${userData.cliente}/${userData.dominio}/protocolos` },
-            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${userData.cliente}/${userData.dominio}/pipeline` }
+            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${userData.cliente}/${userData.dominio}/produtos` }
         ]
     },
     {
