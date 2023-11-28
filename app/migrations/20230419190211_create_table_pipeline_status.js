@@ -7,7 +7,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').default(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_pipeline',10).unsigned().comment('Documento pai')
         table.integer('status_params',10).unsigned().notNull().comment('Status do documento')
         table.foreign('id_pipeline').references('id').inTable('pipeline').onUpdate('Cascade').onDelete('NO ACTION')

@@ -24,6 +24,11 @@ DROP TABLE IF EXISTS vivazul_cso_root.pv_oat;
 DROP TABLE IF EXISTS vivazul_cso_root.pv_oat_status; 
 DROP TABLE IF EXISTS vivazul_cso_root.pv_tecnicos;
 DROP TABLE IF EXISTS vivazul_cso_root.pv_tecnicos;
+DROP TABLE IF EXISTS vivazul_cso_root.com_prop_itens;
+DROP TABLE IF EXISTS vivazul_cso_root.com_prop_compos;
+DROP TABLE IF EXISTS vivazul_cso_root.com_propostas;
+DROP TABLE IF EXISTS vivazul_cso_root.com_prod_tabelas;
+DROP TABLE IF EXISTS vivazul_cso_root.com_produtos;
 TRUNCATE TABLE vivazul_cso_root.local_params;
 TRUNCATE TABLE vivazul_cso_root.long_params;
 TRUNCATE TABLE vivazul_api.uploads;
@@ -79,6 +84,10 @@ INSERT INTO vivazul_cso_root.local_params (
 INSERT INTO vivazul_cso_root.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
 )(SELECT  0,1,NOW(),NULL,10,'tipo_endereco',tipo,tipo FROM vivazul_lynkos.cadastros_enderecos ce WHERE tipo IS NOT NULL GROUP BY tipo ORDER BY tipo);
+/*com_produtos_unidade*/
+INSERT INTO vivazul_cso_root.local_params (
+  id,evento,created_at,updated_at,STATUS,grupo,parametro,label
+)(SELECT  0,1,NOW(),NULL,10,'com_unidade',id,CONCAT(parametro,label) FROM vivazul_lynkos.params WHERE grupo = 'prod_tps' ORDER BY parametro);
 
 /*Adiciona coluna de referência entre BDs*/
 ALTER TABLE vivazul_cso_root.cadastros ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
@@ -186,9 +195,9 @@ DELETE FROM vivazul_cso_root.pipeline_params;
 ALTER TABLE vivazul_cso_root.pipeline_params AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_cso_root.pipeline_params (
-  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_uploads_logo,gera_pasta,proposta_interna,old_id
+  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_uploads_logo,id_uploads_rodape,gera_pasta,proposta_interna,old_id
 )(
-	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,NULL,gera_pasta,proposta_interna,id 
+	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,NULL,NULL,gera_pasta,proposta_interna,id 
 	FROM vivazul_lynkos.ged_params
 	WHERE dominio = 'casaoficio'
 	ORDER BY descricao
@@ -344,4 +353,92 @@ UPDATE vivazul_cso_root.pv_oat_status SET status_pv_oat = 98 WHERE status_pv_oat
 INSERT INTO vivazul_cso_root.long_params (id,evento,created_at,updated_at,STATUS,grupo,parametro,label) 
 VALUES(NULL,1,NOW(),NULL,10,'lgl_os_01','Declaro, por meio deste que aceito o(s) produtos(s), serviço(s) e/ou montagem(ns) a que essa ordem de serviço se refere, e que os mesmos encontram-se nas condições contratadas, em perfeito estado de funcionamento, aparência geral, acabamentos e funcionamento assim como o treinamento de manuseio e utilização.','Dizeres legais do final da OAT');
 
+/*Importar com_produtos*/
+ALTER TABLE vivazul_cso_root.com_produtos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.com_produtos;
+ALTER TABLE vivazul_cso_root.com_produtos AUTO_INCREMENT=0;
+INSERT INTO vivazul_cso_root.com_produtos (
+  id,evento,created_at,updated_at,STATUS,id_uploads_image,nome_comum,descricao,id_params_unidade,produto,ncm,cean,id_fornecedor,old_id
+)(
+	SELECT 0,1,NOW(),NULL,10,NULL,cpo.nome_comum,cpo.descricao,
+	lp.id id_params_unidade,produto,ncm,cean,c.id id_fornecedor,cpo.id
+	FROM vivazul_lynkos.com_produtos cpo 
+	LEFT JOIN vivazul_cso_root.local_params lp ON lp.parametro = cpo.produto AND lp.grupo = 'com_unidade'
+	LEFT JOIN vivazul_cso_root.cadastros c ON c.old_id = cpo.fornecedor
+	WHERE cpo.dominio = 'casaoficio' AND cpo.status = 10
+);
+SET FOREIGN_KEY_CHECKS=1;
 
+/*Importar com_prod_tabelas*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.com_prod_tabelas;
+ALTER TABLE vivazul_cso_root.com_prod_tabelas AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1;
+INSERT INTO vivazul_cso_root.com_prod_tabelas (
+  id,evento,created_at,updated_at,STATUS,id_com_produtos,ini_validade,valor_compra,valor_venda
+)(
+	SELECT 0,1,NOW(),NULL,10,cp.id,NOW(),cpo.valorcompra,cpo.valorvenda
+	FROM vivazul_cso_root.com_produtos cp
+	JOIN vivazul_lynkos.com_produtos cpo ON cp.old_id = cpo.id
+);
+
+/*Importar com_propostas*/
+ALTER TABLE vivazul_cso_root.com_propostas ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.com_propostas;
+ALTER TABLE vivazul_cso_root.com_propostas AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1;
+INSERT INTO vivazul_cso_root.com_propostas (
+  id,evento,created_at,updated_at,STATUS,id_pipeline,id_pv,
+  pessoa_contato,telefone_contato,email_contato,
+  saudacao_inicial,conclusao,garantia,desconto_ativo,desconto_total,
+  observacoes_finais,prz_entrega,forma_pagto,validade_prop,assinatura,old_id
+)(
+	SELECT 0,1,NOW(),NULL,10,p.id,pv.id,
+	pessoa_contato,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(telefone_contato,' ',''),'(',''),')',''),'-',''),' ','')telefone_contato,email_contato,
+	corpo_saudacao_inicial,corpo_conclusao,corpo_garantia,desconto_ativo,desconto_total,
+	observacoes_finais,prz_entrega,forma_pagto,validade_prop,assinatura,prop.id
+	FROM vivazul_lynkos.com_proposta prop
+	JOIN vivazul_cso_root.pipeline p ON p.old_id = prop.id_ged
+	LEFT JOIN vivazul_cso_root.pv ON pv.old_id = prop.id_pv
+	WHERE prop.dominio = 'casaoficio' AND prop.status = 10
+);
+
+/*Importar com_prop_compos*/
+ALTER TABLE vivazul_cso_root.com_prop_compos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.com_prop_compos;
+ALTER TABLE vivazul_cso_root.com_prop_compos AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1;
+INSERT INTO vivazul_cso_root.com_prop_compos (
+  id,evento,created_at,updated_at,STATUS,
+  id_com_propostas,compoe_valor,ordem,compos_nr,localizacao,tombamento,old_id
+)(
+	SELECT 0,1,NOW(),NULL,10,
+	cp.id id_com_proposta,compoe_valor,ordem,compos_nr,localizacao,tombamento,co.id
+	FROM vivazul_lynkos.com_proposta_compos co
+	JOIN vivazul_cso_root.com_propostas cp ON cp.old_id = co.id_com_proposta
+	WHERE co.dominio = 'casaoficio' AND co.status = 10
+);
+
+/*Importar com_prop_itens*/
+ALTER TABLE vivazul_cso_root.com_prop_itens ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.com_prop_itens;
+ALTER TABLE vivazul_cso_root.com_prop_itens AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1;
+INSERT INTO vivazul_cso_root.com_prop_itens (
+  id,evento,created_at,updated_at,STATUS,
+  id_com_propostas,id_com_prop_compos,id_com_produtos,
+  ordem,item,compoe_valor,descricao,quantidade,valor_unitario,desconto_ativo,desconto_total,old_id
+)(
+	SELECT 0,1,NOW(),NULL,10,
+	cp.id id_com_propostas,comps.id id_com_prop_compos,prods.id id_com_produtos,
+	it.ordem,it.item_nr,it.compoe_valor,it.descricao,it.quantidade,it.valor_unitario,it.desconto_ativo,it.desconto_total,it.id
+	FROM vivazul_lynkos.com_proposta_item it
+	JOIN vivazul_cso_root.com_propostas cp ON cp.old_id = it.id_com_proposta
+	LEFT JOIN vivazul_cso_root.com_prop_compos comps ON comps.old_id = it.id_compos
+	JOIN vivazul_cso_root.com_produtos prods ON prods.old_id = it.id_com_produtos
+	WHERE it.dominio = 'casaoficio' AND it.status = 10
+);

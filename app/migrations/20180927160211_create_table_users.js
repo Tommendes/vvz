@@ -7,7 +7,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').notNull().default(0)
+        table.integer('status').notNull().defaultTo(0)
         table.string('tkn_api')
         table.string('name').notNull()
         table.string('cpf').notNull().unique()
@@ -30,7 +30,7 @@ exports.up = function(knex, Promise) {
         table.boolean('agente_v').notNull().defaultTo(0).comment("Agente vendedor")
         table.boolean('agente_arq').notNull().defaultTo(0).comment("Agente arquiteto")
         table.boolean('agente_at').notNull().defaultTo(0).comment("Agente at")
-        table.integer('time_to_pas_expires').notNull().default(99999).comment("Tempo para expirar a senha")
+        table.integer('time_to_pas_expires').notNull().defaultTo(99999).comment("Tempo para expirar a senha")
     })
 };
 
