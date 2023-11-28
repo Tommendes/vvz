@@ -68,12 +68,12 @@ const routes = [
             {
                 path: '/:client/:domain/pos-vendas',
                 name: 'pos-vendas',
-                component: () => import('@/views/pos-vendas/PosVendasGrid.vue')
+                component: () => import('@/views/posVendas/PosVendasGrid.vue')
             },
             {
                 path: '/:client/:domain/pos-venda/:id',
                 name: 'pos-venda',
-                component: () => import('@/views/pos-vendas/PosVendaForm.vue')
+                component: () => import('@/views/posVendas/PosVendaForm.vue')
             },
             {
                 path: '/:client/:domain/tecnicos-pv',
@@ -130,12 +130,12 @@ const routes = [
             {
                 path: '/:client/:domain/pipeline-params',
                 name: 'pipeline-params',
-                component: () => import('@/views/pipeline_params/ParamsGrid.vue')
+                component: () => import('@/views/pipelineParams/ParamsGrid.vue')
             },
             {
                 path: '/:client/:domain/pipeline-param/:id',
                 name: 'pipeline-param',
-                component: () => import('@/views/pipeline_params/ParamForm.vue')
+                component: () => import('@/views/pipelineParams/ParamForm.vue')
             },
             // Password
             {
