@@ -141,7 +141,7 @@ const showUploadForm = () => {
             tabela: 'pipeline_params',
             registro_id: itemData.value.id,
             schema: userData.cliente + '_' + userData.dominio,
-            field: 'id_uploads_logo'
+            field: 'id_uploads_image'
         },
         props: {
             header: `Alterar a logomarca da empresa`,
@@ -187,7 +187,7 @@ const items = ref([
                     <div class="p-fluid grid">
                         <div class="col-3">
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Image v-else :src="`${itemData.id_uploads_logo ? itemData.id_uploads_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="id_uploads_logo" @contextmenu="onImageRightClick" />
+                            <Image v-else :src="`${itemData.id_uploads_image ? itemData.id_uploads_image : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="id_uploads_image" @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
                         <div class="col-9">

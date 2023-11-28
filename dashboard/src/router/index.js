@@ -45,6 +45,16 @@ const routes = [
                 component: () => import('@/views/pipeline/PipelineForm.vue')
             },
             {
+                path: '/:client/:domain/propostas',
+                name: 'propostas',
+                component: () => import('@/views/propostas/PropostasGrid.vue')
+            },
+            {
+                path: '/:client/:domain/proposta/:id',
+                name: 'proposta',
+                component: () => import('@/views/propostas/PropostaForm.vue')
+            },
+            {
                 path: '/:client/:domain/protocolos',
                 name: 'protocolos',
                 component: () => import('@/views/protocolos/ProtocolosGrid.vue')
