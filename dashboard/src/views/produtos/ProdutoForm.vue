@@ -223,9 +223,9 @@ const onImageRightClick = (event) => {
                                     <Dropdown v-else id="produto" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.produto" :options="dropdownProduto" />
                                 </div>
                                 <div class="col-12 md:col-3">
-                                    <label for="fornecedor">Fornecedor</label>
+                                    <label for="id_fornecedor">Fornecedor</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.fornecedor" id="fornecedor" type="text"/>
+                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_fornecedor" id="id_fornecedor" type="text"/>
                                 </div>
                                 <div class="col-12 md:col-3" v-if="itemData.produto == 1">
                                     <label for="ncm">NCM</label>

@@ -32,7 +32,7 @@ module.exports = app => {
                 existsOrError(body.ncm, 'Nomenclatura comum Mercosul não informada')
                 existsOrError(body.cean, 'Código EAN não informado')
             }
-            existsOrError(body.fornecedor, 'Fornecedor não informado')
+            existsOrError(body.id_fornecedor, 'Fornecedor não informado')
         } catch (error) {
             return res.status(400).send(error)
         }
