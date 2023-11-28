@@ -1,27 +1,13 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { userKey, isValidEmail } from '@/global';
-import moment from 'moment';
+import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
-
-import { Mask } from 'maska';
-const masks = ref({
-    data_visita: new Mask({
-        mask: '##/##/####'
-    }),
-    telefone: new Mask({
-        mask: ['(##) ####-####', '(##) #####-####']
-    }),
-    cpf_cnpj: new Mask({
-        mask: ['###.###.###-##', '##.###.###/####-##']
-    })
-});
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -72,7 +58,7 @@ const loadData = async () => {
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccoes` });
+                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/produtos` });
                 }
             });
         } else loading.value = false;
@@ -145,17 +131,6 @@ onMounted(() => {
 watchEffect(() => {
     isItemDataChanged();
 });
-const menu = ref();
-const preview = ref(false);
-const items = ref([
-    {
-        label: 'Alterar a logomarca',
-        icon: 'pi pi-fw pi-cloud-upload',
-        command: () => {
-            showUploadForm();
-        }
-    }
-]);
 import { useDialog } from 'primevue/usedialog';
 const dialog = useDialog();
 import Uploads from '@/components/Uploads.vue';
@@ -163,7 +138,7 @@ import Uploads from '@/components/Uploads.vue';
 const showUploadForm = () => {
     dialog.open(Uploads, {
         data: {
-            tabela: 'empresa',
+            tabela: 'pipeline_params',
             registro_id: itemData.value.id,
             schema: userData.cliente + '_' + userData.dominio,
             field: 'id_uploads_logo'
@@ -187,10 +162,20 @@ const showUploadForm = () => {
         }
     });
 };
-
 const onImageRightClick = (event) => {
     menu.value.show(event);
 };
+const menu = ref();
+const preview = ref(false);
+const items = ref([
+    {
+        label: 'Alterar a logomarca',
+        icon: 'pi pi-fw pi-cloud-upload',
+        command: () => {
+            showUploadForm();
+        }
+    }
+]);
 </script>
 
 <template>
@@ -202,7 +187,7 @@ const onImageRightClick = (event) => {
                     <div class="p-fluid grid">
                         <div class="col-3">
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                            <Image v-else :src="`${itemData.id_uploads_logo ? itemData.id_uploads_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="id_uploads_logo" @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
                         <div class="col-9">
