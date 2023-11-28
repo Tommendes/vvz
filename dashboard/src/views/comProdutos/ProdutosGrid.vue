@@ -13,8 +13,9 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -44,9 +45,9 @@ const gridData = ref([]); // Seus dados iniciais
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'nome_comum', label: 'Nome', minWidth: '15rem' },
-    { field: 'produto', label: 'Produto ou Serviço', minWidth: '11rem' },
-    { field: 'fornecedor', label: 'Fornecedor', minWidth: '12rem' }
+    { field: 'fornecedor', label: 'Fornecedor', minWidth: '15rem' },
+    { field: 'nome_comum', label: 'Nome Comum', minWidth: '10rem' },
+    { field: 'descricao', label: 'Descrição', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -149,7 +150,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Produtos' }]" />
-    <div class="card" style="min-width: 100rem">
+    <div class="card" :style="'min-width: ' + (!route.name == 'produtos' ? '100%' : '100rem')">
         <ProdutoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
@@ -233,7 +234,16 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/produto/${data.id}` })" aria-haspopup="true" v-tooltip.left="'Clique para mais opções'" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button
+                        type="button"
+                        icon="pi pi-bars"
+                        rounded
+                        @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/produto/${data.id}` })"
+                        aria-haspopup="true"
+                        v-tooltip.left="'Clique para mais opções'"
+                        aria-controls="overlay_menu"
+                        class="p-button-outlined"
+                    />
                     <Menu ref="menu" id="overlay_menu" :popup="true" />
                 </template>
             </Column>

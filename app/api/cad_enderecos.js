@@ -14,13 +14,12 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         if (req.params.id_cadastros) body.id_cadastros = req.params.id_cadastros
         try {
-            // Alçada para edição
-            if (body.id)
-                isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-            // Alçada para inclusão
-            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+            // Alçada do usuário
+            if (body.id) isMatchOrError(uParams && uParams.cadastros >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && uParams.cadastros >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
@@ -59,7 +58,7 @@ module.exports = app => {
             //body = JSON.parse(JSON.stringify(body).toUpperCase())
             // Colocar cada campo em maiúsculo e remover acentos
             Object.keys(body).forEach(function (key) {
-                if (typeof body[key] == 'string' && key != 'uf') {                    
+                if (typeof body[key] == 'string' && key != 'uf') {
                     body[key] = removeAccents(titleCase(body[key]))
                 } else if (typeof body[key] == 'string' && key == 'uf') {
                     body[key] = body[key].toUpperCase()
@@ -80,7 +79,7 @@ module.exports = app => {
         } else {
 
             try {
-                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, cep: body.cep, logradouro: body.logradouro, nr: body.nr, complnr: body.complnr || ''}).first()
+                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, cep: body.cep, logradouro: body.logradouro, nr: body.nr, complnr: body.complnr || '' }).first()
                 notExistsOrError(unique, 'Este endereço já foi registrado')
             } catch (error) {
                 console.log(error);
@@ -128,11 +127,13 @@ module.exports = app => {
         }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
+
         const id_cadastros = req.params.id_cadastros
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const page = req.query.page || 1
@@ -160,10 +161,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -187,10 +189,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.cadastros >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -244,7 +247,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
+            // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -283,7 +286,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
+            // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })

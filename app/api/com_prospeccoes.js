@@ -15,13 +15,12 @@ module.exports = app => {
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
         try {
-            // Alçada para edição
-            if (body.id)
-                isMatchOrError(uParams && (uParams.comercial >= 3 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            // Alçada para inclusão
-            else isMatchOrError(uParams && (uParams.comercial >= 2 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            // Alçada do usuário
+            if (body.id) isMatchOrError(uParams && (uParams.agente_v >= 3 || uParams.prospeccoes >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.agente_v >= 2 || uParams.prospeccoes >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
@@ -108,10 +107,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && (uParams.comercial >= 1 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.agente_v >= 1 || uParams.prospeccoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
@@ -228,15 +228,15 @@ module.exports = app => {
         })
     }
 
-
     const getById = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && (uParams.comercial >= 1 || (uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.agente_v >= 1 || uParams.prospeccoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
@@ -263,10 +263,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && ((uParams.agente_v + uParams.agente_arq) >= 1 || (uParams.admin + uParams.gestor) >= 1), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.agente_v >= 4 || uParams.prospeccoes >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -319,7 +320,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
+            // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -342,7 +343,6 @@ module.exports = app => {
             return res.status(500).send(error)
         }
     }
-
 
     return { save, get, getById, remove, getByFunction }
 }

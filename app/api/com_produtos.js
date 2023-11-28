@@ -1,7 +1,9 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const { removeFileFromServer } = app.api.uploads
     const tabela = 'com_produtos'
+    const tabelaCadastros = 'cadastros'
     const tabelaAlias = 'Produtos'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
@@ -13,37 +15,76 @@ module.exports = app => {
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
         try {
-            // Alçada para edição
-            if (body.id)
-                isMatchOrError(uParams, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-            // Alçada para inclusão
-            else isMatchOrError(uParams, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
+            // Alçada do usuário
+            if (body.id) isMatchOrError(uParams && (uParams.at >= 3 || uParams.comercial >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.at >= 2 || uParams.comercial >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
-        try {
-            existsOrError(body.nome_comum, 'Nome curto(código) não informado')
-            existsOrError(body.descricao, 'Descrição longa não informada')
-            existsOrError(body.id_params_unidade, 'Unidade de medida não informada')
-            existsOrError(String(body.produto), 'Produto/Serviço não informado')
-            if (body.produto == 1) {
-                existsOrError(body.ncm, 'Nomenclatura comum Mercosul não informada')
-                existsOrError(body.cean, 'Código EAN não informado')
+        // Para o caso de exclusão de imagem, dispensar a validação dos campos
+        if (!body.delete_imagem)
+            try {
+                existsOrError(body.nome_comum, 'Nome curto(código) não informado')
+                existsOrError(body.descricao, 'Descrição longa não informada')
+                existsOrError(body.id_params_unidade, 'Unidade de medida não informada')
+                existsOrError(String(body.produto), 'Produto/Serviço não informado')
+                if (body.produto == 1) {
+                    existsOrError(body.ncm, 'Nomenclatura comum Mercosul não informada')
+                    existsOrError(body.cean, 'Código EAN não informado')
+                }
+                existsOrError(body.id_fornecedor, 'Fornecedor não informado')
+            } catch (error) {
+                return res.status(400).send(error)
             }
-            existsOrError(body.id_fornecedor, 'Fornecedor não informado')
-        } catch (error) {
-            return res.status(400).send(error)
-        }
-        delete body.hash; delete body.tblName; delete body.endereco; delete body.url_logo;
+        const delete_imagem = body.delete_imagem
+        delete body.hash; delete body.tblName; delete body.endereco; delete body.url_logo; delete body.delete_imagem;
         if (body.id) {
+            const { createEventUpd } = app.api.sisEvents
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
+            const last = await app.db(tabelaDomain).where({ id: body.id }).first()
+            if (delete_imagem) {
+                const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
+                const uploadBodyRemove = await app.db(tabelaUploadsDomain).where({ id: body.id_uploads_imagem }).first()
+                const uploadBodyRemoveBefore = { ...uploadBodyRemove }
+                if (uploadBodyRemove && uploadBodyRemove.id) {
+                    if (await removeFileFromServer(uploadBodyRemove) != true) throw 'Erro ao excluir arquivo do servidor'
+                    uploadBodyRemove.status = STATUS_DELETE
+
+                    let evento = await createEventUpd({
+                        "notTo": ['created_at', 'updated_at', 'evento'],
+                        "last": uploadBodyRemoveBefore,
+                        "next": uploadBodyRemove,
+                        "request": req,
+                        "evento": {
+                            "classevento": "Remove",
+                            "evento": `Exclusão de imagem de ${tabela}`,
+                            "tabela_bd": 'uploads',
+                        }
+                    })
+                    uploadBodyRemove.updated_at = new Date()
+                    uploadBodyRemove.evento = evento
+                    await app.db(tabelaUploadsDomain)
+                        .update(uploadBodyRemove)
+                        .where({ id: body.id_uploads_imagem })
+                }
+
+                try {
+                    if (await removeFileFromServer(uploadBodyRemove) != true) throw 'Erro ao excluir arquivo do servidor'
+                    // Remove a referência de upload da tabela
+                    body.id_uploads_imagem = null
+                } catch (error) {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                }
+            }
+
+            evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento',],
-                "last": await app.db(tabelaDomain).where({ id: body.id }).first(),
+                "last": last,
                 "next": body,
                 "request": req,
                 "evento": {
@@ -67,10 +108,10 @@ module.exports = app => {
             let rowsUpdated = app.db(tabelaDomain)
                 .update(body)
                 .where({ id: body.id })
-            rowsUpdated.then((ret) => {
-                if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Endereço não encontrado')
-            })
+                .then((ret) => {
+                    if (ret > 0) res.status(200).send(body)
+                    else res.status(200).send('Endereço não encontrado')
+                })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
@@ -118,32 +159,83 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.at >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
+
+        let queryes = undefined
+        let query = undefined
+        let page = 0
+        let rows = 10
+        let sortField = app.db.raw('tbl1.nome_comum,tbl1.descricao')
+        let sortOrder = 'asc'
+        if (req.query) {
+            queryes = req.query
+            query = ''
+            for (const key in queryes) {
+                let operator = queryes[key].split(':')[0]
+                let value = queryes[key].split(':')[1]
+                if (key.split(':')[0] == 'field') {
+                    switch (operator) {
+                        case 'startsWith': operator = `like '${value}%'`
+                            break;
+                        case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                            break;
+                        case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                            break;
+                        case 'endsWith': operator = `like '%${value}'`
+                            break;
+                        case 'notEquals': operator = `!= '${value}'`
+                            break;
+                        default: operator = `= '${value}'`
+                            break;
+                    }
+                    let queryField = key.split(':')[1]
+                    if (queryField == 'fornecedor') queryField = 'c.nome'
+                    query += `${queryField} ${operator} AND `
+                } else if (key.split(':')[0] == 'params') {
+                    switch (key.split(':')[1]) {
+                        case 'page': page = Number(queryes[key]);
+                            break;
+                        case 'rows': rows = Number(queryes[key]);
+                            break;
+                    }
+                } else if (key.split(':')[0] == 'sort') {
+                    sortField = key.split(':')[1].split('=')[0]
+                    sortOrder = queryes[key]
+                }
+            }
+            query = query.slice(0, -5).trim()
+        }
+        let filter = req.query.filter
+        if (filter) {
+            filter = filter.trim()
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
-            })
+        const totalRecords = await app.db({ tbl1: tabelaDomain })
+            .countDistinct('tbl1.id as count').first()
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_fornecedor')
             .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
+
+        const ret = app.db({ tbl1: tabelaDomain })
+            .select(app.db.raw(`tbl1.*,c.nome fornecedor,c.cpf_cnpj,TO_BASE64('${tabela}') tblName,SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_fornecedor')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
             .groupBy('tbl1.id')
-        ret.then(body => {
-            const count = body.length
-            return res.json({ data: body, count: count })
-        })
+            .orderBy(sortField, sortOrder)
+            .limit(rows).offset((page + 1) * rows - rows)
+            .then(body => {
+                return res.json({ data: body, totalRecords: totalRecords.count })
+            })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
@@ -153,10 +245,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.at >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -164,7 +257,7 @@ module.exports = app => {
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
+                this.on('tbl1.id_uploads_imagem', '=', 'u.id')
                     .andOn('u.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
@@ -181,10 +274,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.at >= 4 || uParams.comercial >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -238,10 +332,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
+            // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const fieldName = req.query.fld
@@ -277,10 +372,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
+            // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const fieldName = req.query.fld

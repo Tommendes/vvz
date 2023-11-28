@@ -27,6 +27,7 @@ exports.up = function(knex, Promise) {
         table.boolean('fiscal').notNull().defaultTo(0).comment("Gestão do fiscal")
         table.boolean('financeiro').notNull().defaultTo(0).comment("Gestão do financeiro")
         table.boolean('comissoes').notNull().defaultTo(0).comment("Gestão de comissoes")
+        table.boolean('prospeccoes').notNull().defaultTo(0).comment("Gestão de prospecções")
         table.boolean('agente_v').notNull().defaultTo(0).comment("Agente vendedor")
         table.boolean('agente_arq').notNull().defaultTo(0).comment("Agente arquiteto")
         table.boolean('agente_at').notNull().defaultTo(0).comment("Agente at")

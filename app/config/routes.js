@@ -50,9 +50,6 @@ module.exports = app => {
     app.route('/users-cpf/:cpf')
         .all(app.config.passport.authenticate())
         .get(app.api.user.getByCpf)
-    app.route('/users/locate-servidor-on-client')
-        .all(app.config.passport.authenticate())
-        .post(app.api.user.locateServidorOnClient)
 
     /**
      * Rotas administrativas

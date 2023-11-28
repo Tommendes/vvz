@@ -25,8 +25,8 @@ module.exports = app => {
     const getReportOat = async (req, res) => {
         const uParams = await app.db('users').where({ id: req.user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && uParams.id && uParams.pv >= 1, `${noAccessMsg} "Impressão de OAT"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de OAT"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
@@ -81,7 +81,6 @@ module.exports = app => {
                 res.send(error)
             });
     }
-
 
     return { getByFunction }
 }

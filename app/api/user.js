@@ -905,16 +905,17 @@ module.exports = app => {
     const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        const page = req.query.page || 1
-        const key = req.query.key ? req.query.key : undefined
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
+            // Alçada do usuário
             if (!(uParams && (uParams.admin + uParams.gestor) >= 1)) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
+        const page = req.query.page || 1
+        const key = req.query.key ? req.query.key : undefined
         const sql = app.db({ us: tabela }).select(app.db.raw('count(*) as count'))
             .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
         if (key)
@@ -1039,7 +1040,15 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
-        const user = { status: STATUS_DELETE }
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.admin >= 2, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
         try {
             // registrar o evento na tabela de eventos
             const last = await app.db(tabela).where({ id: req.params.id }).first()
@@ -1057,7 +1066,7 @@ module.exports = app => {
             })
             const rowsUpdated = await app.db(tabela)
                 .update({
-                    status: user.status,
+                    status: STATUS_DELETE,
                     evento: evento
                 })
                 .where({ id: req.params.id })
@@ -1068,83 +1077,6 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
-    }
-
-    /**
-     * Função utilizadao para identificar os usuários do istema desk MGFolha
-     * @param {*} req 
-     * @param {*} res 
-     */
-    const getDeskUser = async (req, res) => {
-        const sisReviews = await app.db('sis_reviews')
-            .select('versao', 'lancamento', 'revisao', 'descricao')
-            .orderBy('versao', 'desc')
-            .orderBy('lancamento', 'desc')
-            .orderBy('revisao', 'desc')
-            .first()
-        const cli_nome_comput = req.query.cli_nome_comput || undefined
-        const cli_nome_user = req.query.cli_nome_user || undefined
-        const deskUsers = app.db('desk_users')
-            .select('status_desk')
-        if (cli_nome_comput && cli_nome_user)
-            deskUsers.where({ cli_nome_comput: req.query.cli_nome_comput, cli_nome_user: req.query.cli_nome_user })
-        deskUsers.first()
-            .then(ret => {
-                const rev = `${sisReviews.versao}.${sisReviews.lancamento}.${sisReviews.revisao.toString().padStart(3, '0')}`
-                return res.json({
-                    ...ret, 'versao': rev, 'razao': sisReviews.descricao, "body": "",
-                    "link": "",
-                    "id_msgs": ""
-                })
-            })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                return res.status(500).send({ msg: error })
-            })
-    }
-
-    const locateServidorOnClient = async (req, res) => {
-        const clientName = req.user.cliente
-        try {
-            existsOrError(req.body.cpf, 'CPF não informado')
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename}.${__function} ${error}`, sConsole: true } })
-            return res.status(400).send(error)
-        }
-        const cpf = req.body.cpf.toString().replace(/([^\d])+/gim, "")
-        const domainNames = await app.db(tabelaParams)
-            .where({ dominio: clientName, meta: 'domainName', status: 10 })
-            .whereNot({ value: 'root' })
-        let clientServidor = []
-        for (let domain = 0; domain < domainNames.length; domain++) {
-            const domainName = domainNames[domain].value;
-            const tabelaCadServidoresDomain = `${dbPrefix}_${clientName}_${domainName}.cad_servidores`
-            const tabelaFinSFuncionalDomain = `${dbPrefix}_${clientName}_${domainName}.fin_sfuncional`
-            const cad_servidores = await app.db({ cs: tabelaCadServidoresDomain })
-                .select('cs.id', 'cs.matricula')
-                .join({ ff: `${tabelaFinSFuncionalDomain}` }, function () {
-                    this.on(`ff.id_cad_servidores`, `=`, `cs.id`)
-                })
-                .where({ 'cs.cpf': cpf })
-                .andWhere(app.db.raw(`ff.situacaofuncional is not null and ff.situacaofuncional > 0 and ff.mes < 13`))
-                .groupBy('cs.id')
-                .orderBy('cs.matricula')
-            cad_servidores.forEach(element => {
-                const registro = {
-                    ...element,
-                    cliente: clientName,
-                    dominio: domainName,
-                    clientName: domainNames[domain].label,
-                }
-                clientServidor.push({
-                    id: element.id,
-                    value: `${element.id}_${registro.cliente}_${registro.dominio}`,
-                    text: `${element.matricula.toString().padStart(8, '0')} (${registro.clientName})`
-                })
-            });
-        }
-        if (clientServidor) return res.send({ data: clientServidor })
-        else return res.send('Servidor não localizado')
     }
 
     const getByFunction = async (req, res) => {
@@ -1168,12 +1100,11 @@ module.exports = app => {
         }
     }
 
-
     const getByField = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
+            // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -1349,6 +1280,6 @@ module.exports = app => {
     return {
         signup, requestPasswordReset, passwordReset, TOKEN_VALIDE_MINUTES, showRandomMessage, showRandomKeyPassMessage,
         showUnconcludedRegistrationMessage, save, get, getById, getByCpf, getByToken, smsToken, mailyToken, remove, getByFunction,
-        unlock, getDeskUser, locateServidorOnClient, showWelcomeUserMessage
+        unlock, showWelcomeUserMessage
     }
 }

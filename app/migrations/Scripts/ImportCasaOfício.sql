@@ -85,9 +85,10 @@ INSERT INTO vivazul_cso_root.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
 )(SELECT  0,1,NOW(),NULL,10,'tipo_endereco',tipo,tipo FROM vivazul_lynkos.cadastros_enderecos ce WHERE tipo IS NOT NULL GROUP BY tipo ORDER BY tipo);
 /*com_produtos_unidade*/
-INSERT INTO vivazul_cso_root.local_params (
-  id,evento,created_at,updated_at,STATUS,grupo,parametro,label
-)(SELECT  0,1,NOW(),NULL,10,'com_unidade',id,CONCAT(parametro,label) FROM vivazul_lynkos.params WHERE grupo = 'prod_tps' ORDER BY parametro);
+INSERT INTO vivazul_api.params (
+  id,evento,created_at,updated_at,STATUS,dominio,meta,VALUE,label
+)(SELECT  0,1,NOW(),NULL,10,'root','com_unidade',id,CONCAT(parametro,label) FROM vivazul_lynkos.params WHERE grupo = 'prod_tps' ORDER BY parametro);
+UPDATE `vivazul_api`.`params` SET `label` = 'Mão de Obra' WHERE `id` = '9';
 
 /*Adiciona coluna de referência entre BDs*/
 ALTER TABLE vivazul_cso_root.cadastros ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
@@ -359,15 +360,17 @@ SET FOREIGN_KEY_CHECKS=0;
 DELETE FROM vivazul_cso_root.com_produtos;
 ALTER TABLE vivazul_cso_root.com_produtos AUTO_INCREMENT=0;
 INSERT INTO vivazul_cso_root.com_produtos (
-  id,evento,created_at,updated_at,STATUS,id_uploads_image,nome_comum,descricao,id_params_unidade,produto,ncm,cean,id_fornecedor,old_id
+  id,evento,created_at,updated_at,STATUS,id_uploads_imagem,nome_comum,descricao,id_params_unidade,produto,ncm,cean,id_fornecedor,old_id
 )(
 	SELECT 0,1,NOW(),NULL,10,NULL,cpo.nome_comum,cpo.descricao,
 	lp.id id_params_unidade,produto,ncm,cean,c.id id_fornecedor,cpo.id
 	FROM vivazul_lynkos.com_produtos cpo 
-	LEFT JOIN vivazul_cso_root.local_params lp ON lp.parametro = cpo.produto AND lp.grupo = 'com_unidade'
+	LEFT JOIN vivazul_api.params lp ON lp.value = cpo.unidade AND lp.meta = 'com_unidade'
 	LEFT JOIN vivazul_cso_root.cadastros c ON c.old_id = cpo.fornecedor
-	WHERE cpo.dominio = 'casaoficio' AND cpo.status = 10
+	WHERE cpo.dominio = 'casaoficio' AND cpo.status = 10 LIMIT 999999
 );
+UPDATE vivazul_api.params lp SET VALUE = SUBSTRING(label,1,2) WHERE meta = 'com_unidade';
+UPDATE vivazul_api.params lp SET label = SUBSTRING(label,3) WHERE meta = 'com_unidade';
 SET FOREIGN_KEY_CHECKS=1;
 
 /*Importar com_prod_tabelas*/

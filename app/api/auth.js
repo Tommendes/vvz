@@ -210,7 +210,7 @@ module.exports = app => {
             }
         } catch (error) {
             let errorString = error.toString();
-            
+
             // Use uma expressão regular para verificar a mensagem de erro em relação às opções
             if (/Signature verification failed/.test(errorString)) {
                 errorString = 'Falha na verificação da assinatura';
@@ -222,9 +222,9 @@ module.exports = app => {
                 errorString = 'Nenhum token fornecido';
             } else if (/Not enough or too many segments/.test(errorString)) {
                 errorString = 'Número insuficiente ou excessivo de segmentos';
-            }        
+            }
             app.api.logger.logInfo({ log: { line: errorString, sConsole: true } });
-        }      
+        }
         res.send(false)
     }
 

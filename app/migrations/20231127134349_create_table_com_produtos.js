@@ -12,7 +12,7 @@ exports.up = function (knex) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
-        table.integer('id_uploads_image').unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela uploads')
+        table.integer('id_uploads_imagem').unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela uploads')
         table.string('nome_comum').notNull().comment('Nome curto')
         table.string('descricao', 1000).notNull().comment('Descrição longa')
         table.integer('id_params_unidade').unsigned().notNull().comment('Unidade de medida (Chave estrangeira com a tabela local_params)')

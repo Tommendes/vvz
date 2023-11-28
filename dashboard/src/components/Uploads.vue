@@ -85,6 +85,10 @@ const props = defineProps({
     field: {
         type: String,
         default: ''
+    },
+    footerMsg: {
+        type: String,
+        default: ''
     }
 });
 const dialogRef = inject('dialogRef');
@@ -194,6 +198,9 @@ onMounted(() => {
                 </div>
             </template>
         </FileUpload>
+        <div class="card bg-green-200 mt-3">
+            <p>{{ dialogRef.data.footerMsg }}</p>
+        </div>
         <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
             <p>itemData: {{ itemData }}</p>
         </div>

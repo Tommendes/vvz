@@ -11,8 +11,8 @@ module.exports = app => {
         const extension = body.extension || undefined
         const uParams = await app.db('users').where({ id: req.user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && uParams.id, `${noAccessMsg} "Exibição de arquivo do sistema"`)
+            // Alçada do usuário
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de arquivo do sistema"`)
             existsOrError(root, "Endereço do arquivo não informado")
             existsOrError(asset, "Nome do arquivo não informado")
             existsOrError(extension, "Extensão do arquivo não informado")

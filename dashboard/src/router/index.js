@@ -57,12 +57,12 @@ const routes = [
             {
                 path: '/:client/:domain/produtos',
                 name: 'produtos',
-                component: () => import('@/views/produtos/ProdutosGrid.vue')
+                component: () => import('@/views/comProdutos/ProdutosGrid.vue')
             },
             {
                 path: '/:client/:domain/produto/:id',
                 name: 'produto',
-                component: () => import('@/views/produtos/ProdutoForm.vue')
+                component: () => import('@/views/comProdutos/ProdutoForm.vue')
             },
             // Seção Pós-Vendas
             {

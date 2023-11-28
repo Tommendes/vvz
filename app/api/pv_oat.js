@@ -1,8 +1,8 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
-    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
-    const { STATUS_OS, STATUS_PROPOSTA, STATUS_PEDIDO, STATUS_EXECUTANDO, STATUS_FATURADO, STATUS_FINALIZADO, STATUS_CANCELADO, INTERNO, EXTERNO, GARANTIA_INDEFINIDO, GARANTIA_NAO, GARANTIA_SIM } = require('./pv_oat_status.js')(app)
+    const { existsOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pv_oat'
+    const tabelaAlias = 'OAT'
     const tabelaStatus = 'pv_oat_status'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
@@ -10,18 +10,17 @@ module.exports = app => {
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (body.id) isMatchOrError(uParams && (uParams.pv >= 3 || uParams.at >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.pv >= 2 || uParams.at >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
-        try {
-            // Alçada para edição
-            if (body.id)
-                isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-            // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-        } catch (error) {
-            console.log(error);
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-        }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
         const tabelaPvOatStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
 
@@ -147,16 +146,18 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.pv >= 1 || uParams.at >= 1), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
         let key = req.query.key
         if (key) {
             key = key.trim()
-        }
-        const uParams = await app.db('users').where({ id: user.id }).first();
-        try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const id_pv = req.params.id_pv
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -179,10 +180,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.pv >= 1 || uParams.at >= 1), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const id_pv = req.params.id_pv
@@ -202,14 +204,15 @@ module.exports = app => {
     const remove = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
-        const registro = { status: req.query.st || STATUS_DELETE }
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && !((registro.status == STATUS_DELETE && uParams.pv < 4) || uParams.pv < 3), `${noAccessMsg} "Exclusão/liquidação de Pós-venda"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.pv >= 4 || uParams.at >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
+        const registro = { status: req.query.st || STATUS_DELETE }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaPvOatStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
         try {
@@ -264,54 +267,5 @@ module.exports = app => {
         }
     }
 
-    const getByFunction = async (req, res) => {
-        const func = req.params.func
-        switch (func) {
-            case 'hfl':
-                hostFile(req, res)
-                break;
-            default:
-                res.status(404).send('Função inexitente')
-                break;
-        }
-    }
-
-    const hostFile = async (req, res) => {
-        const fs = require('fs');
-        const multer = require('multer')
-        const path = require('path')
-        // Caminho de destino
-        const destinationPath = path.join(__dirname, '../../dashboard/public/assets/files');
-        // Crie o diretório se não existir
-        if (!fs.existsSync(destinationPath)) {
-            fs.mkdirSync(destinationPath);
-        }
-        console.log(process.cwd() + '/public/', 'destinationPath');
-        return res.send('Arquivo enviado com sucesso.');
-        // Configuração do multer
-        const storage = multer.diskStorage({
-            destination: (req, file, cb) => {
-                console.log(file);
-                cb(null, destinationPath)
-            },
-            filename: (req, file, cb) => {
-                console.log(file);
-                cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
-            }
-        })
-        // Instância do multer
-        const upload = multer({ storage: storage }).single('file')
-        
-        // Executa o upload
-        upload(req, res, (err) => {
-            if (err) {
-                console.log(err);
-                return res.status(400).send(err)
-            }
-            return res.send('Arquivo enviado com sucesso.');
-        })
-    }
-
-
-    return { save, get, getById, remove, getByFunction }
+    return { save, get, getById, remove }
 }

@@ -3,10 +3,10 @@ import { ref, onBeforeMount, provide } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultWarn, defaultSuccess } from '@/toast';
+import { defaultSuccess } from '@/toast';
 import ContatoForm from './ContatoForm.vue';
-import { useConfirm } from 'primevue/useconfirm';
 import { renderizarHTML } from '@/global';
+import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
 const filters = ref(null);
@@ -75,7 +75,7 @@ const loadData = async () => {
         loading.value = false;
     });
 };
-//
+// Exclui o registro
 const deleteRow = () => {
     confirm.require({
         group: 'templating',

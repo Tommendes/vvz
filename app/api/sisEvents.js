@@ -5,6 +5,7 @@ module.exports = app => {
     const STATUS_TRASH = 20
     const { envLocalhost, dbPrefix } = require("../.env")
     const tabelaSisEvents = 'sis_events'
+    const tabelaAlias = 'Eventos do Sistema'
 
     const createEventUpd = async (req, res) => {
         const evento = req.evento
@@ -183,7 +184,14 @@ module.exports = app => {
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
-        if (!uParams || !uParams.siap >= 1) return res.status(401).send('Unauthorized')
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
         const page = req.query.page || 1
         const key = req.query.key ? req.query.key : ''
         let tabelas_bd = req.query.tabelas_bd ? req.query.tabelas_bd : ''
@@ -240,7 +248,17 @@ module.exports = app => {
             })
     }
 
-    const getById = (req, res) => {
+    const getById = async (req, res) => {        
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
         app.db(tabelaSisEvents)
             .where({ id: req.params.id })
             .first()

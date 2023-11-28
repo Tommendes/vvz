@@ -1,9 +1,9 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
-    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
-    const { STATUS_PENDENTE, STATUS_REATIVADO, STATUS_EM_ANDAMENTO, STATUS_LIQUIDADO, STATUS_CANCELADO, STATUS_FINALIZADO, STATUS_EXCLUIDO,
-        MOTIVO_AT, MOTIVO_MONTAGEM, MOTIVO_VENDA } = require('./pv_status.js')(app)
+    const { existsOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
+    const { STATUS_PENDENTE, STATUS_EM_ANDAMENTO } = require('./pv_status.js')(app)
     const tabela = 'pv'
+    const tabelaAlias = 'Pós-vendas'
     const tabelaStatus = 'pv_status'
     const tabelaPipeline = 'pipeline'
     const tabelaParams = 'pipeline_params'
@@ -14,18 +14,17 @@ module.exports = app => {
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (body.id) isMatchOrError(uParams && (uParams.pv >= 3 || uParams.at >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.pv >= 2 || uParams.at >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
-        try {
-            // Alçada para edição
-            if (body.id)
-                isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-            // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-        } catch (error) {
-            console.log(error);
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-        }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
         const tabelaPvStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
 
@@ -64,7 +63,7 @@ module.exports = app => {
                     evento: {
                         "evento": `Alteração de cadastro de ${tabela}`,
                         "tabela_bd": tabela,
-                    }, 
+                    },
                     trx: trx
                 };
                 const { createEventUpd } = app.api.sisEvents
@@ -114,7 +113,7 @@ module.exports = app => {
                     evento: {
                         evento: 'Novo registro',
                         tabela_bd: tabelaDomain,
-                    }, 
+                    },
                     trx: trx
                 };
                 const { createEventIns } = app.api.sisEvents
@@ -150,11 +149,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de pós-vendas"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.pv >= 1 || uParams.at >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            console.log(error);
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -272,16 +271,15 @@ module.exports = app => {
         })
     }
 
-
     const getById = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.pv >= 1 || uParams.at >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            console.log(error);
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -297,18 +295,19 @@ module.exports = app => {
                 return res.status(500).send(error)
             })
     }
-    
+
     const remove = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
-        const registro = { status: req.query.st || STATUS_DELETE }
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && !((registro.status == STATUS_DELETE && uParams.pv < 4) || uParams.pv < 3), `${noAccessMsg} "Exclusão/liquidação de Pós-venda"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.pv >= 4 || uParams.at >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
+        const registro = { status: req.query.st || STATUS_DELETE }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaPvStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
         try {

@@ -370,11 +370,6 @@ watch(selectedCadastro, (value) => {
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
-                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
-                        <p>{{ route.name }}</p>
-                        <p>mode: {{ mode }}</p>
-                        <p>itemData: {{ itemData }}</p>
-                    </div>
                 </div>
             </div>
         </form>
@@ -416,6 +411,11 @@ watch(selectedCadastro, (value) => {
                     </Card>
                 </div>
             </div>
-        </form>
+        </form>        
+        <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+            <p>{{ route.name }}</p>
+            <p>mode: {{ mode }}</p>
+            <p>itemData: {{ itemData }}</p>
+        </div>
     </div>
 </template>

@@ -289,7 +289,7 @@ onMounted(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline' }]" />
-    <div class="card" :style="!route.name == 'pipeline' ? 'min-width: 100%' : ''">
+    <div class="card" :style="'min-width: ' + (!route.name == 'pipeline' ? '100%' : '100rem')">
         <PipelineForm
             :mode="mode"
             :idCadastro="props.idCadastro"

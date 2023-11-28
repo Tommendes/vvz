@@ -1,26 +1,28 @@
 const { log } = require("console")
 const { dbPrefix, uploadsRoot, baseFrontendUrl } = require("../.env")
+const sharp = require('sharp');
 module.exports = app => {
-    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
+    const { existsOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'uploads'
+    const tabelaAlias = 'Uploads'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (body.id) isMatchOrError(uParams && uParams.uploads >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
-        try {
-            // Alçada para edição
-            if (body.id)
-                isMatchOrError(uParams && uParams.uploads >= 3, `${noAccessMsg} "Edição de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-            // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Inclusão de ${tabela.charAt(0).toUpperCase() + tabela.slice(1).replaceAll('_', ' ')}"`)
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-        }
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
 
         if (body.id && body.id > 0) {
@@ -153,16 +155,18 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
         let key = req.query.key
         if (key) {
             key = key.trim()
-        }
-        const uParams = await app.db('users').where({ id: user.id }).first();
-        try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
 
@@ -184,10 +188,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de Uploads de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
@@ -207,11 +212,13 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para exibição
-            isMatchOrError(uParams && uParams.uploads >= 4, `${noAccessMsg} "Exclusão de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.uploads >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
+
         const body = { ...req.body }
 
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
@@ -267,8 +274,10 @@ module.exports = app => {
         const unlink = promisify(fs.unlink);
         try {
             // Identificar a existência do arquivo referenciado em rowUpdated.path antes de excluir
-            if (fs.existsSync(rowUpdated.path)) {
-                await unlink(rowUpdated.path);
+            // Receber o caminho do arquivo a ser excluído ou um objeto contendo uma proprieadade path
+            const pathTo = rowUpdated.path || rowUpdated
+            if (fs.existsSync(pathTo)) {
+                await unlink(pathTo);
             }
             return true
         } catch (error) {
@@ -292,6 +301,7 @@ module.exports = app => {
         }
     }
 
+    // Função para hospedar arquivos
     const hostFile = async (req, res) => {
         const multer = require('multer');
         const fs = require('fs');
@@ -313,10 +323,9 @@ module.exports = app => {
         let user = req.user || tknQueryId
         // return res.send(user);
         const uParams = await app.db('users').where({ id: user.id }).first();
-        // return res.send({tknQueryTime, now})
         try {
             if (timeExpired) throw 'Token expirado'
-            isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Upload de arquivos"`)
+            isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Upload de arquivos"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -346,7 +355,7 @@ module.exports = app => {
             let files = req.files;
             req.user = uParams;
             try {
-                isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Upload de arquivos"`)
+                isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Upload de arquivos"`)
             } catch (error) {
                 // Se Não tiver permissão, faça rollback da transação
                 app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -362,16 +371,28 @@ module.exports = app => {
                 return res.status(500).send({ message: 'Erro ao enviar arquivos', err });
             }
             files.forEach(async (file) => {
+                // Caminho do arquivo original
+                const inputPath = path.join(destinationPath, file.filename);
+                // Caminho do arquivo redimensionado
+                file.filename = `reduced_${file.filename}`;
+                const outputPath = path.join(destinationPath, file.filename);
+                file.path = outputPath;
+                // Atualiza a URL para apontar para a versão redimensionada
                 file.url = `${baseFrontendUrl}/assets/files/${uParams.cliente}/${uParams.dominio}/${file.filename}`;
                 // Adicione a propriedade file.label contendo o file.originalname sem a extensão
                 let nomeArquivo = file.originalname;
                 let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
                 let nomeSemExtensao = ultimaPosicaoPonto !== -1 ? nomeArquivo.substring(0, ultimaPosicaoPonto) : nomeArquivo;
                 file.label = nomeSemExtensao;
-                // Da propriedade/valor filename: 'WIN_20230615_10_17_11_Pro-1700489374395.jpg', extraia o valor 1700489374395 e atribua à propriedade file.uid.
+                // Da propriedade/valor filename: '?????????-1700489374395.jpg', extraia o valor 1700489374395 e atribua à propriedade file.uid.
                 // Esse valor estará sempre após o último traço (-) do nome do arquivo.
                 let nomeArquivoUid = file.filename.split('-');
                 file.uid = nomeArquivoUid[nomeArquivoUid.length - 1].split('.')[0];
+
+                // Redimensiona a imagem para 250x250
+                await resizeImage(inputPath, outputPath, 250, 250);
+                // Exclui o arquivo original
+                await removeFileFromServer(inputPath)
             });
             req.body = files
             files = await registerFileInDb(req)
@@ -413,10 +434,11 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            // Alçada para edição
-            isMatchOrError(uParams && uParams.uploads >= 3, `${noAccessMsg} "Exibição de Uploads de ${tabela}"`)
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const body = { ...req.body }
@@ -443,8 +465,6 @@ module.exports = app => {
         // Verificar se há um arquivo e registro no banco de dados referente registro anterior
         // Se houver, excluir o arquivo do servidor e cancela o registro do banco de dados
         try {
-            // const uploadBodyRemove = await app.db(tabelaDomain).where({ id: last[itemData.field] }).first()
-            // Recuperar em tabelaDomain o registro que será excluído de acordo com o last[itemData.field]
             const uploadBodyRemove = await app.db(tabelaDomain).where({ id: last[itemData.field] }).first()
             const uploadBodyRemoveBefore = { ...uploadBodyRemove }
             if (uploadBodyRemove && uploadBodyRemove.id) {
@@ -505,5 +525,23 @@ module.exports = app => {
             })
     }
 
-    return { save, get, getById, remove, getByFunction }
+    /**
+     * Função para redimensionar uma imagem para um tamanho máximo
+     * @param {*} inputPath 
+     * @param {*} outputPath 
+     * @param {*} maxWidth 
+     * @param {*} maxHeight 
+     */
+    const resizeImage = async (inputPath, outputPath, maxWidth, maxHeight) => {
+        await sharp(inputPath)
+            .resize({
+                width: maxWidth,
+                height: maxHeight,
+                fit: 'inside', // ou 'cover' dependendo do comportamento desejado
+                withoutEnlargement: true,
+            })
+            .toFile(outputPath);
+    };
+
+    return { save, get, getById, remove, getByFunction, removeFileFromServer }
 }
