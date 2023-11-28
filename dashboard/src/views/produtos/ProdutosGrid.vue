@@ -4,7 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
 import moment from 'moment';
-import ProspeccaoForm from './ProspeccaoForm.vue';
+import ProdutoForm from './ProdutoForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { renderizarHTML, removeHtmlTags } from '@/global';
 
@@ -26,7 +26,7 @@ const masks = ref({
     })
 });
 
-const urlBase = ref(`${baseApiUrl}/com-prospeccoes`);
+const urlBase = ref(`${baseApiUrl}/com-produtos`);
 
 onBeforeMount(() => {
     // Inicializa os filtros do grid
@@ -41,19 +41,12 @@ const totalRecords = ref(0); // O total de registros (deve ser atualizado com o 
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
-// Lista de períodos
-const dropdownPeriodo = ref([
-    { value: '0', label: 'Manhã' },
-    { value: '1', label: 'Tarde' }
-]);
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'nome', label: 'Cliente', minWidth: '15rem' },
-    { field: 'pessoa', label: 'Pessoa contatada', minWidth: '11rem' },
-    { field: 'contato', label: 'Forma de Contato', minWidth: '12rem' },
-    { field: 'periodo', label: 'Período da visita', minWidth: '8rem', list: dropdownPeriodo.value },
-    { field: 'data_visita', label: 'Data da visita', minWidth: '8rem', type: 'date' }
+    { field: 'nome_comum', label: 'Nome', minWidth: '15rem' },
+    { field: 'produto', label: 'Produto ou Serviço', minWidth: '11rem' },
+    { field: 'fornecedor', label: 'Fornecedor', minWidth: '12rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -95,10 +88,6 @@ const loadLazyData = () => {
                 gridData.value.forEach((element) => {
                     // Exibe dado com máscara
                     // Converte data en para pt
-                    if (element.data_visita) element.data_visita = moment(element.data_visita).format('DD/MM/YYYY');
-                    if (element.contato) element.contato = renderizarHTML(element.contato);
-                    element.periodo = String(element.periodo);
-                    if (element.periodo) element.periodo = dropdownPeriodo.value.find((x) => x.value == element.periodo).label;
                 });
                 loading.value = false;
             })
@@ -159,9 +148,9 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Registros' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Produtos' }]" />
     <div class="card" style="min-width: 100rem">
-        <ProspeccaoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <ProdutoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -244,8 +233,8 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/prospeccao/${data.id}` })" aria-haspopup="true" v-tooltip.left="'Clique para mais opções'" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/produto/${data.id}` })" aria-haspopup="true" v-tooltip.left="'Clique para mais opções'" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Menu ref="menu" id="overlay_menu" :popup="true" />
                 </template>
             </Column>
         </DataTable>
