@@ -1,5 +1,5 @@
 <script setup>
-import { markRaw, onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -65,7 +65,7 @@ const loadData = async () => {
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccoes` });
+                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/produtos` });
                 }
             });
         } else loading.value = false;
