@@ -16,15 +16,17 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
+        delete body.id;
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada para edição
             if (body.id)
-                isMatchOrError(uParams && uParams.cadastros >= 3, `${noAccessMsg} "Edição de ${tabelaAlias.charAt(0).toUpperCase() + tabelaAlias.slice(1).replaceAll('_', ' ')}"`)
+                isMatchOrError(uParams && uParams.at >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
             // Alçada para inclusão
-            else isMatchOrError(uParams && uParams.cadastros >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias.charAt(0).toUpperCase() + tabelaAlias.slice(1).replaceAll('_', ' ')}"`)
+            else isMatchOrError(uParams && uParams.at >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
@@ -81,6 +83,13 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         } else {
+
+            try {
+                const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_pv: body.id_pv }).first()
+                notExistsOrError(unique, 'Já há uma proposta para este Cliente com este Pipeline e este PV')
+            } catch (error) {
+                return res.status(400).send(error)
+            }
             // Criação de um novo registro
             const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
 
@@ -118,14 +127,13 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabela}"`)
+            isMatchOrError(uParams && uParams.at >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaUsers = `${dbPrefix}_api.users`
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
         const tabelaPipelineDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaPipeline}`
         const tabelaPvDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaPv}`
@@ -134,7 +142,7 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('p.documento')
+        let sortField = app.db.raw('p.documento, p.versao')
         let sortOrder = 'asc'
         if (req.query) {
             queryes = req.query
@@ -193,19 +201,15 @@ module.exports = app => {
             .join({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'p.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'p.id_cadastros')
-            .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'p.id_com_agentes')
             .leftJoin({ pv: tabelaPvDomain }, 'pv.id', '=', 'tbl1.id_pv')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, p.documento, p.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
-            (SELECT DATE_FORMAT(SUBSTRING_INDEX(MAX(ps.created_at),' ',1),'%d/%m/%Y') FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id)status_created_at, 
-            SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .select(app.db.raw(`pp.descricao,p.documento,p.versao,pv.pv_nr,c.nome,c.cpf_cnpj,tbl1.pessoa_contato,tbl1.telefone_contato,tbl1.email_contato,TO_BASE64('${tabela}') tblName,SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .join({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'p.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'p.id_cadastros')
-            .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'p.id_com_agentes')
             .leftJoin({ pv: tabelaPvDomain }, 'pv.id', '=', 'tbl1.id_pv')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
@@ -225,9 +229,10 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabela}"`)
+            isMatchOrError(uParams && uParams.at >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -248,9 +253,10 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada para exibição
-            isMatchOrError(uParams && uParams.cadastros >= 4, `${noAccessMsg} "Exclusão de ${tabela}"`)
+            isMatchOrError(uParams && uParams.at >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
@@ -312,6 +318,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const fieldName = req.query.fld
@@ -352,6 +359,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const fieldName = req.query.fld
@@ -392,19 +400,30 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaPipeline}`
         try {
-            const ret = app.db(tabelaDomain)
-            const total = await ret.count('id as count').where({ status: STATUS_ACTIVE }).first()
+            const total = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+                .join({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
+                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .first()
             let noPeriodo = { count: 0 }
             if (biPeriodDi && biPeriodDf)
-                noPeriodo = await app.db(tabelaDomain).count('id as count').whereRaw(`created_at between "${biPeriodDi}" and "${biPeriodDf}"`).first()
-            const novos = await ret.count('id as count')
-                .whereRaw(`EXTRACT(YEAR FROM date(created_at)) = EXTRACT(YEAR FROM NOW())`)
-                .whereRaw(`EXTRACT(MONTH FROM date(created_at)) = EXTRACT(MONTH FROM NOW())`)
+                noPeriodo = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+                    .join({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
+                    .where({ 'tbl1.status': STATUS_ACTIVE })
+                    .whereRaw(`p.created_at between "${biPeriodDi}" and "${biPeriodDf}"`)
+                    .first()
+            const novos = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+                .join({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
+                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .whereRaw(`EXTRACT(YEAR FROM date(p.created_at)) = EXTRACT(YEAR FROM NOW())`)
+                .whereRaw(`EXTRACT(MONTH FROM date(p.created_at)) = EXTRACT(MONTH FROM NOW())`)
+                .first()
             return res.send({ total: total.count, novos: novos.count, noPeriodo: noPeriodo.count })
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
@@ -537,7 +556,7 @@ module.exports = app => {
 //         const uParams = await app.db('users').where({ id: user.id }).first();
 //         try {
 //             // Alçada para exibição
-//             isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabela}"`)
+//             isMatchOrError(uParams, `${noAccessMsg} "Exibição de cadastro de ${tabelaAlias}"`)
 //         } catch (error) {
 //             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
 //         }
@@ -570,7 +589,7 @@ module.exports = app => {
 //         const uParams = await app.db('users').where({ id: user.id }).first();
 //         try {
 //             // Alçada para exibição
-//             isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabela}"`)
+//             isMatchOrError(uParams, `${noAccessMsg} "Exibição de Endereços de ${tabelaAlias}"`)
 //         } catch (error) {
 //             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
 //         }
@@ -598,7 +617,7 @@ module.exports = app => {
 //         const uParams = await app.db('users').where({ id: user.id }).first();
 //         try {
 //             // Alçada para exibição
-//             isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabela}"`)
+//             isMatchOrError((uParams && uParams.admin >= 1), `${noAccessMsg} "Exclusão de Endereço de ${tabelaAlias}"`)
 //         } catch (error) {
 //             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
 //         }

@@ -16,9 +16,10 @@ exports.up = function(knex, Promise) {
         table.integer('tipo_secundario', 10).unsigned().comment('Tipo secundário')
         table.boolean('obrig_valor').defaultTo(0).comment('Obrigatorio declarar valor')
         table.boolean('reg_agente').defaultTo(0).comment('Obrigatório agente ')
-        table.integer('id_uploads_logo',255).unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('Cascade').comment('URL logomarca representada')
-        table.tinyint('gera_pasta',1).defaultTo(0).comment('Gera pasta(0=Não, 1=Documento, 2=documento_baixa)')
-        table.tinyint('proposta_interna',1).defaultTo(0).comment('Utiliza o sistema de proposta interna')
+        table.boolean('gera_pasta').defaultTo(0).comment('Gera pasta(0=Não, 1=Documento, 2=documento_baixa)')
+        table.boolean('proposta_interna').defaultTo(0).comment('Utiliza o sistema de proposta interna')
+        table.integer('id_uploads_logo').unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('Cascade').comment('URL logomarca representada')
+        table.integer('id_uploads_rodape').unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela uploads')
     })
 };
 

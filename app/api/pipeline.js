@@ -267,6 +267,8 @@ module.exports = app => {
                             query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
                             sortField = 'status_created_at'
                             sortOrder = 'DESC'
+                        } else if (['documento'].includes(key.split(':')[1])) {
+                            query += `cast(tbl1.documento as unsigned) = cast('${value}' as unsigned) AND `
                         } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
                             query += `pp.descricao = '${value}' AND `
                             sortField = 'status_created_at'

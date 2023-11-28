@@ -27,8 +27,6 @@ exports.up = function (knex) {
         table.string('prz_entrega', 50).notNull().comment('Prazo de entrega')
         table.string('forma_pagto', 50).notNull().comment('Forma de pagamento')
         table.string('validade_prop', 50).notNull().comment('Validade da proposta')
-        table.integer('id_uploads_logo').unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela uploads')
-        table.integer('id_uploads_rodape').unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela uploads')
         table.specificType('assinatura', 'tinytext').notNull().comment('Assinatura da proposta')        
     })
 };

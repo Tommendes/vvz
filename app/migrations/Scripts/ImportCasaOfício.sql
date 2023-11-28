@@ -195,9 +195,9 @@ DELETE FROM vivazul_cso_root.pipeline_params;
 ALTER TABLE vivazul_cso_root.pipeline_params AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_cso_root.pipeline_params (
-  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_uploads_logo,gera_pasta,proposta_interna,old_id
+  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_uploads_logo,id_uploads_rodape,gera_pasta,proposta_interna,old_id
 )(
-	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,NULL,gera_pasta,proposta_interna,id 
+	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,NULL,NULL,gera_pasta,proposta_interna,id 
 	FROM vivazul_lynkos.ged_params
 	WHERE dominio = 'casaoficio'
 	ORDER BY descricao
@@ -359,7 +359,7 @@ SET FOREIGN_KEY_CHECKS=0;
 DELETE FROM vivazul_cso_root.com_produtos;
 ALTER TABLE vivazul_cso_root.com_produtos AUTO_INCREMENT=0;
 INSERT INTO vivazul_cso_root.com_produtos (
-  id,evento,created_at,updated_at,STATUS,id_uploads_logo,nome_comum,descricao,id_params_unidade,produto,ncm,cean,id_fornecedor,old_id
+  id,evento,created_at,updated_at,STATUS,id_uploads_image,nome_comum,descricao,id_params_unidade,produto,ncm,cean,id_fornecedor,old_id
 )(
 	SELECT 0,1,NOW(),NULL,10,NULL,cpo.nome_comum,cpo.descricao,
 	lp.id id_params_unidade,produto,ncm,cean,c.id id_fornecedor,cpo.id
@@ -393,14 +393,14 @@ INSERT INTO vivazul_cso_root.com_propostas (
   id,evento,created_at,updated_at,STATUS,id_pipeline,id_pv,
   pessoa_contato,telefone_contato,email_contato,
   saudacao_inicial,conclusao,garantia,desconto_ativo,desconto_total,
-  observacoes_finais,prz_entrega,forma_pagto,validade_prop,id_uploads_logo,id_uploads_rodape,assinatura,old_id
+  observacoes_finais,prz_entrega,forma_pagto,validade_prop,assinatura,old_id
 )(
 	SELECT 0,1,NOW(),NULL,10,p.id,pv.id,
-	pessoa_contato,telefone_contato,email_contato,
+	pessoa_contato,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(telefone_contato,' ',''),'(',''),')',''),'-',''),' ','')telefone_contato,email_contato,
 	corpo_saudacao_inicial,corpo_conclusao,corpo_garantia,desconto_ativo,desconto_total,
-	observacoes_finais,prz_entrega,forma_pagto,validade_prop,NULL,NULL,assinatura,prop.id
+	observacoes_finais,prz_entrega,forma_pagto,validade_prop,assinatura,prop.id
 	FROM vivazul_lynkos.com_proposta prop
-	LEFT JOIN vivazul_cso_root.pipeline p ON p.old_id = prop.id_ged
+	JOIN vivazul_cso_root.pipeline p ON p.old_id = prop.id_ged
 	LEFT JOIN vivazul_cso_root.pv ON pv.old_id = prop.id_pv
 	WHERE prop.dominio = 'casaoficio' AND prop.status = 10
 );
