@@ -445,3 +445,18 @@ INSERT INTO vivazul_cso_root.com_prop_itens (
 	JOIN vivazul_cso_root.com_produtos prods ON prods.old_id = it.id_com_produtos
 	WHERE it.dominio = 'casaoficio' AND it.status = 10
 );
+
+/*Importar com_agentes*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_cso_root.com_agentes;
+ALTER TABLE vivazul_cso_root.com_agentes AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1;
+INSERT INTO vivazul_cso_root.com_agentes (
+id,evento,created_at,updated_at,STATUS,ordem,id_users,id_cadastros,dsr,observacao) 
+(
+SELECT 0,1,NOW(),NULL,10,LPAD(c.id,3,'0'),u.id,c.id,0,c.nome
+FROM vivazul_cso_root.cadastros c
+JOIN vivazul_api.users u ON c.nome REGEXP REPLACE(LOWER(u.NAME), ' ', '.+')
+WHERE u.STATUS = 10 AND u.agente_v = 1 AND u.name LIKE CONCAT(SUBSTRING_INDEX(c.nome, ' ', 1), '%')
+GROUP BY u.name
+ORDER BY u.name, c.id);

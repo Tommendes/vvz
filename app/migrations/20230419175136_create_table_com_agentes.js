@@ -9,10 +9,10 @@ exports.up = function(knex, Promise) {
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.string('ordem',3).comment('Número identificador próprio')
-        table.integer('id_cadastros',10).unsigned().notNull().comment('Registro no cadastro')
+        table.integer('id_users').unsigned().references('id').inTable('vivazul_api.users').onUpdate('Cascade').onDelete('NO ACTION').comment('Registro no cadastro')
+        table.integer('id_cadastros').unsigned().notNull().references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Registro no cadastro')
         table.tinyint('dsr',1).notNull().defaultTo(0).comment('Recebe DSR')
-        table.decimal('observacao',10,2).comment('Observação do registro')
-        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+        table.string('observacao').comment('Observação do registro')
     })
 };
 

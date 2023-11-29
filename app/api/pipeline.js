@@ -487,6 +487,9 @@ module.exports = app => {
             case 'gbi':
                 getBIData(req, res)
                 break;
+            case 'grs':
+                getRecentSales(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
@@ -545,6 +548,48 @@ module.exports = app => {
 
     // Recupera dados para index da plataforma BI
     const getBIData = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+        const biPeriodDi = req.query.periodDi
+        const biPeriodDf = req.query.periodDf
+        const biPeriodDv = req.query.periodDv || 2
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.pipeline_params`
+        try {
+            const total = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+                .join({ pp: tabelaParamsDomain }, function () {
+                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                }).where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` }).first()
+            let noPeriodo = { count: 0 }
+            if (biPeriodDi && biPeriodDf)
+                noPeriodo = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+                    .join({ pp: tabelaParamsDomain }, function () {
+                        this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                    })
+                    .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                    .andWhere({ 'pp.doc_venda': `${biPeriodDv}` }).first()
+            const novos = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+                .join({ pp: tabelaParamsDomain }, function () {
+                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                })
+                .whereRaw(`EXTRACT(YEAR FROM date(tbl1.created_at)) = EXTRACT(YEAR FROM NOW())`)
+                .whereRaw(`EXTRACT(MONTH FROM date(tbl1.created_at)) = EXTRACT(MONTH FROM NOW())`)
+                .andWhere({ 'pp.doc_venda': `${biPeriodDv}` }).first()
+            return res.send({ total: total.count, novos: novos.count, noPeriodo: noPeriodo.count })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+    }
+
+    // Recupera dados para index da plataforma BI
+    const getRecentSales = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
