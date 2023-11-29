@@ -169,8 +169,8 @@ module.exports = app => {
                                 break;
                         }
                         let queryField = key.split(':')[1]
-                        if (queryField == 'atuacao') queryField = 'lp.label'
-                        else if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
+
+                        if (queryField == 'descricao') queryField = 'pp.descricao'
                         query += `${queryField} ${operator} AND `
                     }
                 } else if (key.split(':')[0] == 'params') {
@@ -214,7 +214,8 @@ module.exports = app => {
             .groupBy('tbl1.id')
             .orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-            .then(body => {
+            console.log(ret.toString());
+            ret.then(body => {
                 return res.json({ data: body, totalRecords: totalRecords.count })
             })
             .catch(error => {
