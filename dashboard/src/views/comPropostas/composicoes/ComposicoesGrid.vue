@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, watchEffect } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -17,7 +17,7 @@ const filters = ref(null);
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/prop-composicoes`);
+const urlBase = ref(`${baseApiUrl}/com-prop-compos/35`);
 const urlBaseProtoDocs = ref(`${baseApiUrl}/com-prop-compos`);
 // Itens do grid
 const listaNomes = ref([
@@ -36,7 +36,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.cliente}/${userData.dominio}/prop-composicao/${itemData.value.id}` });
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/com-prop-compos/35/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;

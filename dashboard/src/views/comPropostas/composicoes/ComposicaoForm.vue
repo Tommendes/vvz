@@ -1,9 +1,8 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { isValidEmail } from '@/global';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -16,18 +15,10 @@ const router = useRouter();
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
-
-import { Mask } from 'maska';
 import moment from 'moment';
-const masks = ref({
-    cpf_cnpj: new Mask({
-        mask: ['###.###.###-##', '##.###.###/####-##']
-    })
-});
 
 // Campos de formulário
 const itemData = ref({
-    e_s: 's'
 });
 const dataRegistro = ref('');
 const gridDatProtoDocs = ref([]);
@@ -46,7 +37,7 @@ const props = defineProps({
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/prop-composicoes`);
+const urlBase = ref(`${baseApiUrl}/com-prop-compos`);
 const urlBaseProtoDocs = ref(`${baseApiUrl}/com-prop-compos`);
 // Carragamento de dados do form
 const loadData = async () => {
@@ -135,6 +126,11 @@ const saveDataProtDocs = async () => {
         });
     if (itemDataProtDocs.value.descricao) itemDataProtDocs.value.descricao = itemDataProtDocs.value.descricao.split(',');
 };
+//DropDown
+const dropdownCompValor = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
 // Validar formulário
 const formIsValid = () => {
     return true;
@@ -192,22 +188,32 @@ onMounted(() => {
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-6">
-                            <label for="id_com_propostas">id_com_propostas</label>
+                            <label for="id_com_propostas">Proposta</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_com_propostas" id="id_com_propostas" type="text" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="compoe_valor">Email do Destinatário</label>
+                            <label for="compoe_valor">Compõe Valor</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.compoe_valor" id="compoe_valor" type="text" />
+                            <Dropdown v-else id="compoe_valor" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.compoe_valor" :options="dropdownCompValor" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="ordem">Email do Destinatário</label>
+                            <label for="ordem">Ordem de composições</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="ordem" type="text" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="compos_nr">Email do Destinatário</label>
+                            <label for="compos_nr">Número da composição</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.compos_nr" id="compos_nr" type="text" />
+                        </div>
+                        <div class="col-12 md:col-6">
+                            <label for="localizacao">Localização do produto</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.localizacao" id="localizacao" type="text" />
+                        </div>
+                        <div class="col-12 md:col-6">
+                            <label for="tombamento">Tombamento do produto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.compos_nr" id="compos_nr" type="text" />
                         </div>
