@@ -8,7 +8,7 @@ import CadastroForm from './CadastroForm.vue';
 import ContatosGrid from './contatos/ContatosGrid.vue';
 import EnderecosGrid from './enderecos/EnderecosGrid.vue';
 import PipelinesGrid from '../pipeline/PipelinesGrid.vue';
-import PosVendasGrid from '../pos-vendas/PosVendasGrid.vue';
+import PosVendasGrid from '../posVendas/PosVendasGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
