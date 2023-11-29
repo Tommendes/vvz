@@ -4,13 +4,13 @@ import { onMounted, reactive, ref } from 'vue';
 import { formatCurrency } from '@/global';
 import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
+import { defaultSuccess, defaultWarn } from '@/toast';
 
 // Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-const products = ref(null);
 const lineData = reactive({
     labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
     datasets: [
@@ -54,7 +54,7 @@ const setDefaultBiParams = () => {
     biPeriod.value = [moment().subtract(1, 'month').toDate(), moment().toDate()];
     biPeriod.value.dataPt = 'entre ' + moment().subtract(1, 'month').format('DD/MM/YYYY') + ' e ' + moment().format('DD/MM/YYYY');
     biPeriod.value.dataEn = { di: moment().subtract(1, 'month').format('YYYY-MM-DD'), df: moment().format('YYYY-MM-DD') };
-    localStorage.setItem('__biParams', JSON.stringify({ periodo: [{ di: biPeriod.value.dataEn.di }, { df: biPeriod.value.dataEn.df }] }));
+    localStorage.setItem('__biParams', JSON.stringify({ periodo: [{ di: biPeriod.value.dataEn.di }, { df: biPeriod.value.dataEn.df }], qrs: 10 }));
 };
 
 const getBiPeriod = () => {
@@ -107,6 +107,9 @@ const biData = ref({
         novos: 0,
         noPeriodo: 0,
         loading: true
+    },
+    recentSales: {
+        loading: true
     }
 });
 
@@ -158,6 +161,18 @@ const getPedidosBi = async () => {
     biData.value.pedidos.loading = false;
 };
 
+const recentSales = ref(null);
+const getPedidosLastBi = async () => {
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    const url = `${baseApiUrl}/pipeline/f-a/grs?q=${biParams.qrs || 10}`;
+    biData.value.pedidos.loading = true;
+    await axios.get(url).then((axiosRes) => {
+        const data = axiosRes.data;
+        recentSales.value = data.total;
+    });
+    biData.value.recentSales.loading = false;
+};
+
 const loadStats = () => {
     getBiPeriod();
     setTimeout(async () => {
@@ -165,6 +180,7 @@ const loadStats = () => {
         await getPropectosBi();
         await getPropostasBi();
         await getPedidosBi();
+        await getPedidosLastBi();
     }, Math.random() * 1000 + 250);
 };
 
@@ -285,25 +301,32 @@ onMounted(() => {
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h5>Vendas recentes</h5>
                     <div>
-                        <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu4.toggle($event)"></Button>
-                        <Menu ref="menu4" :popup="true" :model="items"></Menu>
+                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="defaultWarn('Reduzir')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="defaultSuccess('Adicionar')" v-tooltip.top="'Clique para adicionar'" />
                     </div>
                 </div>
-                <DataTable :value="products" :rows="5" :paginator="true" responsiveLayout="scroll">
-                    <Column style="width: 15%">
-                        <template #header> Image </template>
+                <DataTable :value="recentSales" :rows="5" :paginator="true" responsiveLayout="scroll">
+                    <Column style="width: 25%">
+                        <template #header> Representação </template>
                         <template #body="slotProps">
                             <img :src="'demo/images/product/' + slotProps.data.image" :alt="slotProps.data.image" width="50" class="shadow-2" />
                         </template>
                     </Column>
-                    <Column field="name" header="Name" :sortable="true" style="width: 35%"></Column>
-                    <Column field="price" header="Price" :sortable="true" style="width: 35%">
+                    <Column field="documento" header="Documento" style="width: 10%"></Column>
+                    <Column style="width: 20%">
+                        <template #header> Bruto </template>
                         <template #body="slotProps">
-                            {{ formatCurrency(slotProps.data.price) }}
+                            {{ formatCurrency(slotProps.data.valor_bruto) }}
+                        </template>
+                    </Column>
+                    <Column style="width: 40%">
+                        <template #header> Agente </template>
+                        <template #body>
+                            <Button icon="pi pi-search" type="button" class="p-button-text"></Button>
                         </template>
                     </Column>
                     <Column style="width: 15%">
-                        <template #header> View </template>
+                        <template #header> Ir </template>
                         <template #body>
                             <Button icon="pi pi-search" type="button" class="p-button-text"></Button>
                         </template>

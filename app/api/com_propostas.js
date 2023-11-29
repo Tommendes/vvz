@@ -140,8 +140,8 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('p.documento, p.versao')
-        let sortOrder = 'asc'
+        let sortField = app.db.raw('p.documento')
+        let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
             query = ''
@@ -214,8 +214,7 @@ module.exports = app => {
             .groupBy('tbl1.id')
             .orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-            console.log(ret.toString());
-            ret.then(body => {
+            .then(body => {
                 return res.json({ data: body, totalRecords: totalRecords.count })
             })
             .catch(error => {
