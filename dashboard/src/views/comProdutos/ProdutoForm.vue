@@ -651,3 +651,9 @@ watch(selectedCadastro, (value) => {
         </form>
     </div>
 </template>
+<style scoped>
+.image-on {
+    border: dashed;
+    border-radius: 5%;
+}
+</style>
