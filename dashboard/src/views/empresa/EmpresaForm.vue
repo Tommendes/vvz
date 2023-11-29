@@ -252,7 +252,8 @@ const showUploadForm = () => {
             tabela: 'empresa',
             registro_id: itemData.value.id,
             schema: userData.cliente + '_' + userData.dominio,
-            field: 'id_uploads_logo'
+            field: 'id_uploads_logo',
+            footerMsg: 'O tamanho máximo do arquivo é de 1MB e 250 x 250px.'
         },
         props: {
             header: `Alterar a logomarca da empresa`,
