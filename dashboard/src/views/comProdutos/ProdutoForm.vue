@@ -547,10 +547,10 @@ watch(selectedCadastro, (value) => {
                         <div class="grid">
                             <div class="col-12">
                                 <Card class="bg-blue-200">
-                                    <template #title> Preços do produto </template>
                                     <template #content>
                                         <div class="grid">
                                             <div class="col-6">
+                                                <h3>Preços do produto</h3>
                                                 <div class="grid">
                                                     <div class="col-4">
                                                         <label for="valor_compra">Valor de Compra</label>
@@ -625,7 +625,7 @@ watch(selectedCadastro, (value) => {
                                                     <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">
                                                         Início de validade: {{ item.ini_validade }} - Valor de compra: R$ {{ item.valor_compra }} - Valor de venda: R$ {{ item.valor_venda }}
                                                         <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
-                                                        <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir toda a lista'"></i>
+                                                        <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir'"></i>
                                                     </li>
                                                 </ol>
                                             </div>
