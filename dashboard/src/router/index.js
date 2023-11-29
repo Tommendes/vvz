@@ -47,12 +47,32 @@ const routes = [
             {
                 path: '/:client/:domain/propostas',
                 name: 'propostas',
-                component: () => import('@/views/propostas/PropostasGrid.vue')
+                component: () => import('@/views/comPropostas/PropostasGrid.vue')
             },
             {
                 path: '/:client/:domain/proposta/:id',
                 name: 'proposta',
-                component: () => import('@/views/propostas/PropostaForm.vue')
+                component: () => import('@/views/comPropostas/PropostaForm.vue')
+            },
+            {
+                path: '/:client/:domain/prop-composicoes/:id_com_propostas',
+                name: 'prop-composicoes',
+                component: () => import('@/views/comPropostas/composicoes/ComposicoesGrid.vue')
+            },
+            {
+                path: '/:client/:domain/prop-composicao/:id_com_propostas/:id',
+                name: 'prop-composicao',
+                component: () => import('@/views/comPropostas/composicoes/ComposicaoForm.vue')
+            },
+            {
+                path: '/:client/:domain/prop-itens/:id_com_propostas',
+                name: 'prop-itens',
+                component: () => import('@/views/comPropostas/itens/ItensGrid.vue')
+            },
+            {
+                path: '/:client/:domain/prop-item/:id_com_propostas/:id',
+                name: 'prop-item',
+                component: () => import('@/views/comPropostas/itens/ItemForm.vue')
             },
             {
                 path: '/:client/:domain/protocolos',

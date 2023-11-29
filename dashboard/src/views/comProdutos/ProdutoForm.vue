@@ -82,6 +82,7 @@ const loadData = async () => {
                     };
                     await getNomeCliente();
                     await loadDataProdTabelas();
+                    editCadastro.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
                     router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/produtos` });
@@ -114,8 +115,8 @@ const saveData = async () => {
         const url = `${urlBase.value}${id}`;
         // Se o tipo for serviço, limpa os campos ncm e cean
         if (itemData.value.produto == 0) {
-            delete itemData.value.ncm;
-            delete itemData.value.cean;
+            itemData.value.ncm = null;
+            itemData.value.cean = null;
         }
         axios[method](url, itemData.value)
             .then(async (res) => {
@@ -517,7 +518,7 @@ watch(selectedCadastro, (value) => {
                                     <label for="ncm">NCM</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
                                     <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ncm" id="ncm" type="text" />
-                                    <p v-else v-html="itemData.ncm" class="p-inputtext p-component p-filled disabled"></p>
+                                    <p v-else v-html="itemData.ncm || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="cean">cEAN</label>

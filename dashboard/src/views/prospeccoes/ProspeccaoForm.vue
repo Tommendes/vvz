@@ -320,7 +320,6 @@ watch(selectedCadastro, (value) => {
         itemData.value.id_cadastros = value.code;
         loadEnderecos();
     }
-    console.log(itemData.value.id_cadastros);
 });
 </script>
 

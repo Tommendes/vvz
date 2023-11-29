@@ -70,12 +70,7 @@ const showPvOatForm = (data) => {
             },
             modal: true
         },
-        // templates: {
-        //     footer: markRaw(FooterDemo)
-        // },
-        onClose: (options) => {
-            const data = options;
-            if (data) console.log(data);
+        onClose: () => {
             loadData();
         }
     });

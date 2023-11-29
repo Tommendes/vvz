@@ -83,7 +83,7 @@ module.exports = app => {
         } else {
 
             try {
-                const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_pv: body.id_pv }).first()
+                const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_pv: body.id_pv, status: STATUS_ACTIVE }).first()
                 notExistsOrError(unique, 'Já há uma proposta para este Cliente com este Pipeline e este PV')
             } catch (error) {
                 return res.status(400).send(error)
@@ -95,7 +95,7 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-
+            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {

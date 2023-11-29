@@ -177,9 +177,9 @@ const findUserSignUp = async () => {
                         <small v-if="!store.userStore.id && !isNewUser" id="username-help">Informe seu CPF para começar</small>
 
                         <div class="flex align-items-center justify-content-between mb-2">
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')">Acessar plataforma&nbsp;<i class="pi pi-sign-in"></i></Button>
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')">Início</Button>
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')">Trocar/Recuperar a senha?</Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')"> Esqueceu a senha? </Button>
                         </div>
                         <Button rounded label="Registrar" icon="pi pi-sign-in" :loading="click" :disabled="!cpf" type="submit" class="w-full p-3 text-xl"></Button>
                     </form>

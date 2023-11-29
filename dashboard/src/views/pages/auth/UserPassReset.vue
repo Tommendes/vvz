@@ -170,8 +170,8 @@ const moveToNextInput = (index) => {
                         </div>
 
                         <div class="flex align-items-center justify-content-between mb-2" v-if="!route.params.client">
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')">Acessar plataforma&nbsp;<i class="pi pi-sign-in"></i></Button>
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')">Início</Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button>
                         </div>
 
                         <Button

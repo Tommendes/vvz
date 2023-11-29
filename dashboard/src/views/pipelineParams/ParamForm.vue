@@ -120,10 +120,7 @@ const showUploadForm = () => {
             },
             modal: true
         },
-        // templates: {
-        //     footer: markRaw(FooterDemo)
-        // },
-        onClose: (options) => {
+        onClose: () => {
             reload();
         }
     });

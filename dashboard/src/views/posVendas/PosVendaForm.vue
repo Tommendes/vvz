@@ -381,12 +381,7 @@ const showPvOatForm = () => {
             },
             modal: true
         },
-        // templates: {
-        //     footer: markRaw(FooterDemo)
-        // },
-        onClose: (options) => {
-            const data = options.data;
-            if (data) console.log(data);
+        onClose: () => {
             oatsGrid.value.loadData();
         }
     });

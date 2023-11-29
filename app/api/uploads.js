@@ -86,7 +86,7 @@ module.exports = app => {
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
             body.uid = Math.floor(Date.now())
-
+            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {

@@ -23,7 +23,6 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-
             existsOrError(body.id_cadastros, 'Id_cadastros não encontrada ')
             if (body.id_cadastros < 0) throw "Id_cadastros inválido"
             existsOrError(body.dsr, '  DSR não encontrado')
@@ -70,7 +69,7 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-
+            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {

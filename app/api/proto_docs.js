@@ -31,6 +31,7 @@ module.exports = app => {
         else if (typeof body.descricao === 'object') {
             body.descricao = JSON.stringify(body.descricao)
         }
+        body.tp_documento = body.tp_documento.code
 
         try {
             existsOrError(body.tp_documento, 'Tipo do documento não informado')
@@ -82,7 +83,7 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-
+            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {

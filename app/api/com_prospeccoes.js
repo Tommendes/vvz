@@ -31,7 +31,7 @@ module.exports = app => {
             existsOrError(body.id_agente, 'Agente não selecionado')
             existsOrError(body.id_cad_end, 'Endereço não selecionado')
             if (!body.id) {
-                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, id_cad_end: body.id_cad_end, data_visita: body.data_visita, periodo: body.periodo }).first()
+                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, id_cad_end: body.id_cad_end, data_visita: body.data_visita, periodo: body.periodo , status: STATUS_ACTIVE}).first()
                 if (unique) {
                     return res.status(400).send('Prospecção já cadastrada')
                 }
@@ -79,7 +79,7 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-
+            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {

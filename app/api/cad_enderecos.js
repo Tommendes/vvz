@@ -80,7 +80,7 @@ module.exports = app => {
         } else {
 
             try {
-                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, cep: body.cep, logradouro: body.logradouro, nr: body.nr, complnr: body.complnr || '' }).first()
+                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, cep: body.cep, logradouro: body.logradouro, nr: body.nr, complnr: body.complnr || '', status: STATUS_ACTIVE }).first()
                 notExistsOrError(unique, 'Este endereço já foi registrado')
             } catch (error) {
                 return res.status(400).send(error)
@@ -93,7 +93,7 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-
+            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {

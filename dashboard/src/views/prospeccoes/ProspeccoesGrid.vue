@@ -108,7 +108,6 @@ const loadLazyData = () => {
                     defaultError(error.response.data);
                 } catch (error) {
                     defaultError('Erro ao carregar dados!');
-                    console.log(error, typeof logTo, logTo);
                 }
             });
     }, Math.random() * 1000 + 250);

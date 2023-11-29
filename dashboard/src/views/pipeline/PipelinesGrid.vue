@@ -164,7 +164,6 @@ const loadLazyData = () => {
                     defaultError(error.response.data);
                 } catch (error) {
                     defaultError('Erro ao carregar dados!');
-                    console.log(typeof logTo, logTo);
                 }
                 router.push({ path: '/' });
             });
@@ -208,7 +207,6 @@ const mountUrlFilters = () => {
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
-    console.log(url);
     urlFilters.value = url;
 };
 // Exporta os dados do grid para CSV
@@ -283,7 +281,6 @@ onMounted(() => {
         loadLazyData();
         filtrarUnidades();
     }
-    console.log(tipoDoc.value);
 });
 </script>
 

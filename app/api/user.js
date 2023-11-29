@@ -168,7 +168,7 @@ module.exports = app => {
                 delete body.clientName
                 delete body.confirmPassword
                 delete body.password
-
+                delete body.old_id;
                 app.db(tabela)
                     .insert(body)
                     .then(async (ret) => {

@@ -75,7 +75,7 @@ module.exports = app => {
                 .where({ status: STATUS_ACTIVE }).first()
             body.registro = nextDocumentNr.registro || '1'
             body.registro = body.registro.toString().padStart(6, '0')
-
+            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {

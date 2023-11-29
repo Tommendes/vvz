@@ -288,6 +288,23 @@ module.exports = app => {
         .get(app.api.com_propostas.getByFunction)
 
     /**
+     * Rota de com_prop_compos
+     */
+    app.route('/com-prop-compos/:id_com_propostas')
+        .all(app.config.passport.authenticate())
+        .post(app.api.com_prop_compos.save)
+        .get(app.api.com_prop_compos.get)
+    app.route('/com-prop-compos/:id_com_propostas/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.com_prop_compos.save)
+        .get(app.api.com_prop_compos.getById)
+        .delete(app.api.com_prop_compos.remove)
+    app.route('/com-prop-compos/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.com_prop_compos.getByFunction)
+        .post(app.api.com_prop_compos.getByFunction)
+
+    /**
      * Rota de com_agentes
      */
     app.route('/com-agentes')

@@ -122,7 +122,7 @@ module.exports = app => {
         } else {
 
             try {
-                const unique = await app.db(tabelaDomain).where({ nome_comum: body.nome_comum, produto: body.produto, descricao: body.descricao }).first()
+                const unique = await app.db(tabelaDomain).where({ nome_comum: body.nome_comum, produto: body.produto, descricao: body.descricao, status: STATUS_ACTIVE }).first()
                 notExistsOrError(unique, 'Este produto já foi registrado')
             } catch (error) {
                 return res.status(400).send(error)
@@ -134,7 +134,7 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-
+            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {
