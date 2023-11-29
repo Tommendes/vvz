@@ -33,9 +33,11 @@ const gridData = ref([]); // Seus dados iniciais
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'pessoa_contato', label: 'Pessoa de contato', minWidth: '15rem' },
-    { field: 'email_contato', label: 'E-mail de contato ', minWidth: '11rem' },
-    { field: 'prz_entrega', label: 'Prazo de entrega', minWidth: '12rem' }
+    { field: 'descricao', label: 'Representada', minWidth: '15rem' },
+    { field: 'documento', label: 'Proposta', minWidth: '11rem' },
+    { field: 'nome', label: 'Cliente', minWidth: '12rem' },
+    { field: 'pessoa_contato', label: 'Contato', minWidth: '12rem' },
+    { field: 'email_contato', label: 'Email', minWidth: '12rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -75,6 +77,7 @@ const loadLazyData = () => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
+                    if (element.descricao) element.descricao = element.descricao.replaceAll('_', ' ');
                 });
                 loading.value = false;
             })

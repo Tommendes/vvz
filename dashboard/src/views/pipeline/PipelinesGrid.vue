@@ -346,7 +346,7 @@ onMounted(() => {
                     />
                     <Dropdown
                         filter
-                        placeholder="Filtrar por Unidade..."
+                        placeholder="Filtrar por Representada..."
                         :showClear="!!unidade"
                         style="min-width: 150px"
                         id="unidades"
