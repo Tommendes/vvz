@@ -60,7 +60,7 @@ module.exports = app => {
                 .where({ id: body.id })
             rowsUpdated.then((ret) => {
                 if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Endereço não encontrado')
+                else res.status(200).send(`${tabelaAlias} não encontrado`)
             })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })

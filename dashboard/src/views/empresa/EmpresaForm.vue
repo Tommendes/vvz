@@ -295,7 +295,7 @@ const onImageRightClick = (event) => {
                             <label for="razaosocial">{{ labels.razaosocial }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.razaosocial" id="razaosocial" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.razaosocial">{{ errorMessages.razaosocial || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.razaosocial">{{ errorMessages.razaosocial }}</small>
                         </div>
                         <div class="col-12 md:col-5">
                             <label for="fantasia">{{ labels.fantasia }}</label>
@@ -306,19 +306,19 @@ const onImageRightClick = (event) => {
                             <label for="cpf_cnpj_empresa">{{ labels.cpf_cnpj_empresa }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['###.###.###-##', '##.###.###/####-##']" v-model="itemData.cpf_cnpj_empresa" id="cpf_cnpj_empresa" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj_empresa">{{ errorMessages.cpf_cnpj_empresa || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj_empresa">{{ errorMessages.cpf_cnpj_empresa }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="cep">CEP</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="#####-###" v-model="itemData.cep" id="cep" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="nr">Número</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.nr">{{ errorMessages.nr || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.nr">{{ errorMessages.nr }}</small>
                         </div>
                     </div>
                 </div>
@@ -378,43 +378,43 @@ const onImageRightClick = (event) => {
                             <label for="tel1">Telefone 1</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel1" id="tel1" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.tel1">{{ errorMessages.tel1 || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.tel1">{{ errorMessages.tel1 }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="tel2">Telefone 2</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel2" id="tel2" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.tel2">{{ errorMessages.tel2 || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.tel2">{{ errorMessages.tel2 }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="email">Email</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                         </div>
                         <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="email_at">Email da Assistência Técnica</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_at" id="email_at" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_at">{{ errorMessages.email_at || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_at">{{ errorMessages.email_at }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="email_comercial">Email Comercial</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_comercial" id="email_comercial" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_comercial">{{ errorMessages.email_comercial || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_comercial">{{ errorMessages.email_comercial }}</small>
                         </div>
                         <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="email_financeiro">Email Financeiro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_financeiro" id="email_financeiro" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_financeiro">{{ errorMessages.email_financeiro || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_financeiro">{{ errorMessages.email_financeiro }}</small>
                         </div>
                         <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="email_rh">Email do RH</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_rh" id="email_rh" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_rh">{{ errorMessages.email_rh || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_rh">{{ errorMessages.email_rh }}</small>
                         </div>
                     </div>
                 </div>

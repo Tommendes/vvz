@@ -17,8 +17,8 @@ exports.up = function (knex) {
         table.string('descricao', 1000).notNull().comment('Descrição longa')
         table.integer('id_params_unidade').unsigned().notNull().comment('Unidade de medida (Chave estrangeira com a tabela local_params)')
         table.boolean('produto').defaultTo(0).notNull().comment('Produto/Serviço (Produto:0; Serviço: 1)')
-        table.string('ncm').notNull().comment('Nomenclatura comum Mercosul')
-        table.string('cean').notNull().comment('Código EAN')
+        table.string('ncm').comment('Nomenclatura comum Mercosul')
+        table.string('cean').comment('Código EAN')
         table.integer('id_fornecedor').notNull().unsigned().references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela cadastros')
     })
 };

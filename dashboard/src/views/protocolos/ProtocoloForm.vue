@@ -355,7 +355,7 @@ watch(selectedCadastro, (value) => {
                             <label for="email_destinatario">Email do Destinatário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_destinatario" id="email_destinatario" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_destinatario">{{ errorMessages.email_destinatario || '&nbsp;' }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_destinatario">{{ errorMessages.email_destinatario }}</small>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="e_s">Movimento</label>
@@ -377,7 +377,6 @@ watch(selectedCadastro, (value) => {
             <div class="grid">
                 <div class="col-12">
                     <Card class="bg-blue-200">
-                        <!-- v-if="['edit'].includes(mode)" -->
                         <template #title> Documentos do protocolo </template>
                         <template #content>
                             <div class="col-12">
@@ -411,7 +410,7 @@ watch(selectedCadastro, (value) => {
                     </Card>
                 </div>
             </div>
-        </form>        
+        </form>
         <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
             <p>{{ route.name }}</p>
             <p>mode: {{ mode }}</p>

@@ -1,27 +1,12 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
-    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'pv_oat_status'
-    const tabelaAlias = 'Status de Oats'
+    const { existsOrError, notExistsOrError, valueOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const { removeFileFromServer } = app.api.uploads
+    const tabela = 'com_prod_tabelas'
+    const tabelaProdutos = 'com_produtos'
+    const tabelaAlias = 'Tabelas dos Produtos'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
-    // Andamento do registro    
-
-
-    const STATUS_OS = 10;
-    const STATUS_PROPOSTA = 30;
-    const STATUS_PEDIDO = 40;
-    const STATUS_EXECUTANDO = 60;
-    const STATUS_FATURADO = 80;
-    const STATUS_FINALIZADO = 90;
-    const STATUS_REATIVADO = 97;
-    const STATUS_CANCELADO = 98;
-    const STATUS_EXCLUIDO = 99;
-    const INTERNO = 0;
-    const EXTERNO = 1;
-    const GARANTIA_INDEFINIDO = -1;
-    const GARANTIA_NAO = 0;
-    const GARANTIA_SIM = 1;
 
     const save = async (req, res) => {
         let user = req.user
@@ -31,8 +16,8 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && (uParams.pv >= 3 || uParams.at >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && (uParams.pv >= 2 || uParams.at >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            if (body.id) isMatchOrError(uParams && (uParams.at >= 3 || uParams.comercial >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.at >= 2 || uParams.comercial >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -40,36 +25,55 @@ module.exports = app => {
         
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
+        // Para o caso de exclusão de imagem, dispensar a validação dos campos
+        if (!body.delete_imagem)
+            try {
+                existsOrError(body.ini_validade, 'Início da validade não informado')
+                valueOrError(body.valor_compra, 'Valor de compra não informada')
+                valueOrError(body.valor_venda, 'Valor de venda não informado')
+            } catch (error) {
+                return res.status(400).send(error)
+            }
         delete body.hash; delete body.tblName
         if (body.id) {
+            const { createEventUpd } = app.api.sisEvents
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
-            const { createEventUpd } = app.api.sisEvents
+            const last = await app.db(tabelaDomain).where({ id: body.id }).first()
+
             const evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento',],
-                "last": await app.db(tabelaDomain).where({ id: body.id }).first(),
+                "last": last,
                 "next": body,
                 "request": req,
                 "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
+                    "evento": `Alteração de ${tabelaAlias}`,
                     "tabela_bd": tabela,
                 }
             })
 
             body.evento = evento
             body.updated_at = new Date()
+
             let rowsUpdated = app.db(tabelaDomain)
                 .update(body)
                 .where({ id: body.id })
-            rowsUpdated.then((ret) => {
-                if (ret > 0) res.status(200).send(body)
-                else res.status(200).send(`${tabelaAlias} não encontrado`)
-            })
+                .then((ret) => {
+                    if (ret > 0) res.status(200).send(body)
+                    else res.status(200).send(`${tabelaAlias} não encontrado`)
+                })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         } else {
+
+            try {
+                const unique = await app.db(tabelaDomain).where({ id_com_produtos: body.id_com_produtos, ini_validade: body.ini_validade }).first()
+                notExistsOrError(unique, 'Esta tabela/validade já foi registrada. Informe outra data de início de validade')
+            } catch (error) {
+                return res.status(400).send(error)
+            }
             // Criação de um novo registro
             const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
 
@@ -101,32 +105,27 @@ module.exports = app => {
                 })
         }
     }
-
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.pv >= 1 || uParams.at >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.at >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
-        const id_pv_oat = req.params.id_pv_oat
-        // Enviar apenas o último registro de cada pós-venda
-        const last = req.query.last || false
+        const id_com_produtos = req.params.id_com_produtos
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .where({ id_pv_oat: id_pv_oat })
-        ret.where({ status: STATUS_ACTIVE })
-            .groupBy('tbl1.id')
-        if (last) ret.orderBy('created_at', 'desc').first()
-        else ret.orderBy('created_at')
-        ret.then(body => {
-            const quantidade = body.length
-            return res.json({ data: body, count: quantidade })
-        })
+            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_com_produtos': id_com_produtos })
+            .orderBy('tbl1.ini_validade', 'desc')
+            .then(body => {
+                const count = body.length
+                return res.json({ data: body, count: count })
+            })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
@@ -137,13 +136,14 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.pv >= 1 || uParams.at >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
@@ -161,7 +161,7 @@ module.exports = app => {
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.pv >= 4 || uParams.at >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -202,6 +202,9 @@ module.exports = app => {
     const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
+            case 'gbf':
+                getByField(req, res)
+                break;
             case 'glf':
                 getListByField(req, res)
                 break;
@@ -211,8 +214,7 @@ module.exports = app => {
         }
     }
 
-    // Lista de registros por campo
-    const getListByField = async (req, res) => {
+    const getByField = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
@@ -220,6 +222,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const fieldName = req.query.fld
@@ -236,13 +239,12 @@ module.exports = app => {
             ret.select(selectArr)
         }
 
-        ret.where(app.db.raw(`${fieldName} = ${value}`))
+        ret.where(app.db.raw(`${fieldName} = '${value}'`))
             .where({ status: STATUS_ACTIVE })
 
         if (first) {
             ret.first()
         }
-        ret.orderBy('created_at')
         ret.then(body => {
             const count = body.length
             return res.json({ data: body, count })
@@ -252,22 +254,45 @@ module.exports = app => {
         })
     }
 
+    const getListByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
 
-    return {
-        save, get, getById, remove, getByFunction,
-        STATUS_OS,
-        STATUS_PROPOSTA,
-        STATUS_PEDIDO,
-        STATUS_EXECUTANDO,
-        STATUS_FATURADO,
-        STATUS_FINALIZADO,
-        STATUS_REATIVADO,
-        STATUS_CANCELADO,
-        STATUS_EXCLUIDO,
-        INTERNO,
-        EXTERNO,
-        GARANTIA_INDEFINIDO,
-        GARANTIA_NAO,
-        GARANTIA_SIM
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.params.first == true
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
     }
+
+    return { save, get, getById, remove, getByFunction }
 }

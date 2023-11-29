@@ -10,6 +10,9 @@ module.exports = app => {
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
+        let body = { ...req.body }
+        delete body.id;
+        if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && uParams.protocolo >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
@@ -18,9 +21,6 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
-        let body = { ...req.body }
-        if (req.params.id) body.id = req.params.id
         body.id_protocolos = req.params.id_protocolos
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
         const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
@@ -68,7 +68,7 @@ module.exports = app => {
                 .where({ id: body.id })
             rowsUpdated.then((ret) => {
                 if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Endereço não encontrado')
+                else res.status(200).send(`${tabelaAlias} não encontrado`)
             })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
@@ -117,13 +117,8 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
+        
         const id_protocolos = req.params.id_protocolos
-
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
 

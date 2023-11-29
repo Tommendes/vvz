@@ -13,6 +13,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
+        delete body.id;
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
@@ -22,6 +23,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
+
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         // Para o caso de exclusão de imagem, dispensar a validação dos campos
@@ -33,13 +35,14 @@ module.exports = app => {
                 existsOrError(String(body.produto), 'Produto/Serviço não informado')
                 if (body.produto == 1) {
                     existsOrError(body.ncm, 'Nomenclatura comum Mercosul não informada')
-                    existsOrError(body.cean, 'Código EAN não informado')
+                    // existsOrError(body.cean, 'cEAN não informado')
                 }
                 existsOrError(body.id_fornecedor, 'Fornecedor não informado')
             } catch (error) {
                 return res.status(400).send(error)
             }
         const delete_imagem = body.delete_imagem
+        const url_logo = body.url_logo
         delete body.hash; delete body.tblName; delete body.endereco; delete body.url_logo; delete body.delete_imagem;
         if (body.id) {
             const { createEventUpd } = app.api.sisEvents
@@ -110,7 +113,7 @@ module.exports = app => {
                 .where({ id: body.id })
                 .then((ret) => {
                     if (ret > 0) res.status(200).send(body)
-                    else res.status(200).send('Endereço não encontrado')
+                    else res.status(200).send(`${tabelaAlias} não encontrado`)
                 })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -122,7 +125,6 @@ module.exports = app => {
                 const unique = await app.db(tabelaDomain).where({ nome_comum: body.nome_comum, produto: body.produto, descricao: body.descricao }).first()
                 notExistsOrError(unique, 'Este produto já foi registrado')
             } catch (error) {
-                console.log(error);
                 return res.status(400).send(error)
             }
             // Criação de um novo registro

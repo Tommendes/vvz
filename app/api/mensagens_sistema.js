@@ -97,11 +97,9 @@ module.exports = app => {
     const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        let keyCnpj = undefined
         let key = req.query.key
         if (key) {
             key = key.trim()
-            keyCnpj = (key.replace(/([^\d])+/gim, "").length <= 14) ? key.replace(/([^\d])+/gim, "") : undefined
         }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
@@ -116,24 +114,14 @@ module.exports = app => {
         let count = app.db({ tbl1: tabelaDomain }).count('* as count')
             .where({ status: STATUS_ACTIVE })
 
-        if (key)
-            if (keyCnpj) count.where(function () {
-                this.where(app.db.raw(`tbl1.expira like '%${keyCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.mensagem regexp('${key.toString().replace(' ', '.+')}')`))
-            })
-            else count.where(app.db.raw(`tbl1.mensagem regexp('${key.toString().replace(' ', '.+')}')`))
+        if (key) count.where(app.db.raw(`tbl1.mensagem regexp('${key.toString().replace(' ', '.+')}')`))
 
         count = await app.db.raw(count.toString())
         count = count[0][0].count
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-        if (key)
-            if (keyCnpj) ret.where(function () {
-                this.where(app.db.raw(`tbl1.expira like '%${keyCnpj}%'`))
-                    .orWhere(app.db.raw(`tbl1.mensagem regexp('${key.toString().replace(' ', '.+')}')`))
-            })
-            else ret.where(app.db.raw(`tbl1.mensagem regexp('${key.toString().replace(' ', '.+')}')`))
+        if (key) ret.where(app.db.raw(`tbl1.mensagem regexp('${key.toString().replace(' ', '.+')}')`))
 
         ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')

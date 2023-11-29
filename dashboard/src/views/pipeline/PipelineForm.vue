@@ -4,7 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-import { userKey } from '@/global';
+import { userKey, formatValor } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -99,16 +99,6 @@ const loadData = async () => {
         await getNomeCliente();
     }
     loading.value = false;
-};
-// Formatar valor 0.00 para 0,00
-const formatValor = (value, result = 'pt') => {
-    if (result == 'pt') {
-        if (value && result == 'pt') return value.toString().replace('.', ',');
-        else return '0,00';
-    } else {
-        if (value && result == 'en') return value.toString().replace(',', '.');
-        else return '0.00';
-    }
 };
 // Salvar dados do formulário
 const saveData = async () => {

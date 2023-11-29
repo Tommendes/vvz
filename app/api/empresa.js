@@ -66,7 +66,7 @@ module.exports = app => {
                 .where({ id: body.id })
             rowsUpdated.then((ret) => {
                 if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Endereço não encontrado')
+                else res.status(200).send(`${tabelaAlias} não encontrado`)
             })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -107,10 +107,6 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada do usuário
@@ -119,7 +115,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
+        
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
@@ -210,7 +206,6 @@ module.exports = app => {
             res.status(400).send(error)
         }
     }
-
 
     return { save, get, getById, remove }
 }

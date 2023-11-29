@@ -94,10 +94,6 @@ module.exports = app => {
     const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada do usuário

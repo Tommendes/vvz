@@ -12,6 +12,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
+        delete body.id;
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário

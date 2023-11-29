@@ -143,12 +143,12 @@ onBeforeMount(() => {
                     <div class="field col-12 md:col-6" v-if="getDropdownLabel(itemData.id_params_tipo) && getDropdownLabel(itemData.id_params_tipo).toLowerCase() == 'e-mail'">
                         <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" @input="validateEmail()" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.meio || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
                     </div>
                     <div class="field col-12 md:col-6" v-else-if="getDropdownLabel(itemData.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(itemData.id_params_tipo).toLowerCase())">
                         <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.meio" id="meio" type="text" @input="validateTelefone()" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.meio || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
                     </div>
                     <div class="field col-12 md:col-6" v-else>
                         <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) || 'Meio' }} de contato</label>

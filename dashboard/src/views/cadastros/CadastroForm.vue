@@ -259,7 +259,7 @@ watchEffect(() => {
                         <label for="cpf_cnpj">CPF/CNPJ</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.cpf_cnpj || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj">{{ errorMessages.cpf_cnpj }}</small>
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="nome">{{ labels.nome }}</label>
@@ -280,7 +280,7 @@ watchEffect(() => {
                         <label for="aniversario">{{ labels.aniversario }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" @input="validateDtNascto()" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.aniversario || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.aniversario">{{ errorMessages.aniversario }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="id_params_p_nascto">País de Origem</label>
@@ -296,13 +296,13 @@ watchEffect(() => {
                         <label for="telefone">Telefone</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" @input="validateTelefone()" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.telefone || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="email">E-mail</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.email || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="inss">INSS (Para comissionamento)</label>

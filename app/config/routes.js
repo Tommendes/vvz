@@ -256,6 +256,22 @@ module.exports = app => {
         .get(app.api.com_produtos.getByFunction)
 
     /**
+     * Rota de com_prod_tabelas
+     */
+    app.route('/com-prod-tabelas/:id_com_produtos')
+        .all(app.config.passport.authenticate())
+        .post(app.api.com_prod_tabelas.save)
+        .get(app.api.com_prod_tabelas.get)
+    app.route('/com-prod-tabelas/:id_com_produtos/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.com_prod_tabelas.save)
+        .get(app.api.com_prod_tabelas.getById)
+        .delete(app.api.com_prod_tabelas.remove)
+    app.route('/com-prod-tabelas/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.com_prod_tabelas.getByFunction)
+
+    /**
      * Rota de com_propostas
      */
     app.route('/com-propostas')

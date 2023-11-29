@@ -137,6 +137,17 @@ export function removeHtmlTags(str) {
             .replace(/\r?\n|\r/g, '');
 }
 
+// Formatar valor 0.00 para 0,00
+export function formatValor(value, result = 'pt') {
+    if (result == 'pt') {
+        if (value && result == 'pt') return value.toString().replace('.', ',');
+        else return '0,00';
+    } else {
+        if (value && result == 'en') return value.toString().replace(',', '.');
+        else return '0.00';
+    }
+}
+
 // Um array com todos os estados do Brasil
 export const UFS = [
     { value: 'AC', label: 'Acre' },
@@ -240,6 +251,7 @@ export default {
     saudation,
     renderizarHTML,
     removeHtmlTags,
+    formatValor,
     STATUS_INACTIVE,
     STATUS_WAITING,
     STATUS_SUSPENDED_BY_TKN,

@@ -9,6 +9,9 @@ module.exports = app => {
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
+        let body = { ...req.body }
+        delete body.id;
+        if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && uParams.gestor >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
@@ -17,9 +20,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
-        let body = { ...req.body }
-        if (req.params.id) body.id = req.params.id
+        
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
@@ -102,10 +103,6 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })

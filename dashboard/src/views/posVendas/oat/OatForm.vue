@@ -389,13 +389,13 @@ const onAdvancedUpload = async (comp) => {
                         <label for="telefone_contato">Telefone do contato</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato }}</small>
                     </div>
                     <div class="col-12 md:col-3">
                         <label for="email_contato">Email do contato</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato }}</small>
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="valor_total">Valor dos serviços</label>

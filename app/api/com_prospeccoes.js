@@ -13,6 +13,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
+        delete body.id;
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
@@ -22,10 +23,10 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
+
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
 
         try {
-
             existsOrError(body.id_cadastros, 'Cadastro não informado')
             existsOrError(body.id_agente, 'Agente não selecionado')
             existsOrError(body.id_cad_end, 'Endereço não selecionado')

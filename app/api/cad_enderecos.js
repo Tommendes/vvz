@@ -11,6 +11,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
+        delete body.id;
         if (req.params.id) body.id = req.params.id
         if (req.params.id_cadastros) body.id_cadastros = req.params.id_cadastros
         try {
@@ -70,7 +71,7 @@ module.exports = app => {
                 .where({ id: body.id })
             rowsUpdated.then((ret) => {
                 if (ret > 0) res.status(200).send(body)
-                else res.status(200).send('Endereço não encontrado')
+                else res.status(200).send(`${tabelaAlias} não encontrado`)
             })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -82,7 +83,6 @@ module.exports = app => {
                 const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, cep: body.cep, logradouro: body.logradouro, nr: body.nr, complnr: body.complnr || '' }).first()
                 notExistsOrError(unique, 'Este endereço já foi registrado')
             } catch (error) {
-                console.log(error);
                 return res.status(400).send(error)
             }
             // Criação de um novo registro
@@ -121,10 +121,6 @@ module.exports = app => {
     const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        let key = req.query.key
-        if (key) {
-            key = key.trim()
-        }
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
             // Alçada do usuário

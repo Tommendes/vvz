@@ -120,7 +120,7 @@ onBeforeMount(() => {
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" />
-                        <small id="text-error" class="p-error" if>{{ errorMessages.cep || '&nbsp;' }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
                         <label for="logradouro">Logradouro</label>
