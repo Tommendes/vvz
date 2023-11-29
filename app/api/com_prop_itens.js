@@ -1,9 +1,9 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, valueOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const { removeFileFromServer } = app.api.uploads
-    const tabela = 'com_prop_compos'
-    const tabelaAlias = 'Composição de item'
+    const tabela = 'com_prop_itens'
+    const tabelaComposicoes = 'com_prop_compos'
+    const tabelaAlias = 'Item'
     const STATUS_INACTIVE = 0
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
@@ -24,14 +24,30 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaComposicoesDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaComposicoes}`
         body.id_com_propostas = req.params.id_com_propostas
         body.compoe_valor = String(body.compoe_valor) || 1
+        body.desconto_total = body.desconto_total || 0
+        body.desconto_ativo = String(body.desconto_ativo) || 0
 
-        if (body.status == 0) delete body.compos_nr
+        try {
+            existsOrError(body.id_com_produtos, 'Produto não selecionado')
+            existsOrError(body.descricao, 'Descrição não informada')
+            valueOrError(body.quantidade, 'Quantidade não informada')
+            valueOrError(body.valor_unitario, 'Valor unitário não informado')
+            if (body.id_com_prop_compos) {
+                const compos = await app.db(tabelaComposicoesDomain).where({ id_com_propostas: body.id_com_propostas, id: body.id_com_prop_compos, status: STATUS_ACTIVE }).first()
+                existsOrError(compos, 'Composição não encontrada ou não pertence a esta proposta')
+            }
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+
+        if (body.status == 0) delete body.item
         delete body.hash; delete body.tblName
         if (body.id) {
             try {
-                if (body.status == 10) existsOrError(body.compos_nr, 'Número da composição não informado')
+                if (body.status == 10) existsOrError(body.item, 'Item não informado')
             } catch (error) {
                 return res.status(400).send(error)
             }
@@ -55,6 +71,7 @@ module.exports = app => {
             body.updated_at = new Date()
             const ordem = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas }).select(app.db.raw('count(*) as count')).first()
             body.ordem = body.ordem || ordem.count + 1 || 1
+
             try {
                 const ret = await app.db(tabelaDomain)
                     .update(body)
@@ -65,7 +82,7 @@ module.exports = app => {
                     if (body.status == 0 || body.status != last.status) {
                         const method = req.method
                         req.method = 'BOOLEAN'
-                        await setReorderComposNr(req, res)
+                        await setReorderItemNr(req, res)
                         req.method = method
                         body = await app.db(tabelaDomain).where({ id: body.id }).first()
                     }
@@ -80,12 +97,11 @@ module.exports = app => {
 
             try {
                 const unique = await app.db(tabelaDomain)
-                    .where({ id_com_propostas: body.id_com_propostas, compos_nr: body.compos_nr, localizacao: body.localizacao, tombamento: body.tombamento })
+                    .where({ id_com_propostas: body.id_com_propostas, item: body.item, id_com_produtos: body.id_com_produtos })
                     .whereIn('status', [STATUS_ACTIVE, STATUS_INACTIVE])
                     .first()
-                notExistsOrError(unique, 'Esta combinação de composição, localização e tombamento já existe')
+                notExistsOrError(unique, 'Este produto já foi adicionado a este item')
             } catch (error) {
-                console.log(error);
                 return res.status(400).send(error)
             }
             // Criação de um novo registro
@@ -97,8 +113,8 @@ module.exports = app => {
             body.created_at = new Date()
             const ordem = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas }).select(app.db.raw('count(*) as count')).first()
             body.ordem = ordem.count + 1 || 1
-            const compos_nr = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, status: STATUS_ACTIVE }).select(app.db.raw('count(*) as count')).first()
-            body.compos_nr = compos_nr.count + 1 || 1
+            const item = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, status: STATUS_ACTIVE }).select(app.db.raw('count(*) as count')).first()
+            body.item = item.count + 1 || 1
             delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
@@ -229,7 +245,7 @@ module.exports = app => {
                 getListByField(req, res)
                 break;
             case 'rcn':
-                setReorderComposNr(req, res)
+                setReorderItemNr(req, res)
                 break;
             default:
                 res.status(404).send('Função inexitente')
@@ -317,7 +333,7 @@ module.exports = app => {
         })
     }
 
-    const setReorderComposNr = async (req, res) => {
+    const setReorderItemNr = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         let body = { ...req.body }
@@ -336,17 +352,17 @@ module.exports = app => {
             return res.status(400).send(error)
         }
         // Localizar no BD todas as composições do item de body.id_com_propostas ordenadas por body.ordem
-        // executar um laço forEach para atualizar o campo compos_nr começando do 1
+        // executar um laço forEach para atualizar o campo item começando do 1
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
-        // Primeiro seta todas as composições inativas como compos_nr = 0 (zero) para depois reordenar
-        await app.db(tabelaDomain).update({ compos_nr: 0 }).where({ id_com_propostas: body.id_com_propostas, status: STATUS_INACTIVE })
+        // Primeiro seta todas as composições inativas como item = 0 (zero) para depois reordenar
+        await app.db(tabelaDomain).update({ item: 0 }).where({ id_com_propostas: body.id_com_propostas, status: STATUS_INACTIVE })
         // Localiza todas as composições ativas
         const compos = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, status: STATUS_ACTIVE }).orderBy('ordem', 'asc').orderBy('created_at', 'asc')
         // Inicia o contador de composições ativas
-        let compos_nr = 1
+        let item = 1
         // Reordena as composições ativas
         compos.forEach(async (c) => {
-            await app.db(tabelaDomain).update({ compos_nr: compos_nr++ }).where({ id: c.id })
+            await app.db(tabelaDomain).update({ item: item++ }).where({ id: c.id })
         })
         // Retorna true ou mensagem de sucesso
         if (req.method == 'BOOLEAN') return true

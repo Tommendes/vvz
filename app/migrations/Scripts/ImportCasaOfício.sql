@@ -37,7 +37,7 @@ SET FOREIGN_KEY_CHECKS=1;
 /* Rodar a API para criação das tabelas */
 
 /*Importar usuários*/
-ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_api.users WHERE admin != 2;
 ALTER TABLE vivazul_api.users AUTO_INCREMENT=0;
@@ -91,7 +91,7 @@ INSERT INTO vivazul_api.params (
 UPDATE `vivazul_api`.`params` SET `label` = 'Mão de Obra' WHERE `id` = '9';
 
 /*Adiciona coluna de referência entre BDs*/
-ALTER TABLE vivazul_cso_root.cadastros ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.cadastros ADD COLUMN old_id INT(10) UNSIGNED;
 /*Remover duplicatas em cadastros. Executar até o resultado da execução ser igual a zero*/
 UPDATE vivazul_lynkos.cadastros SET dominio = CONCAT(dominio,'_XDEL'), STATUS = 99
 	WHERE id IN(SELECT id FROM vivazul_lynkos.cadastros 
@@ -134,7 +134,7 @@ INSERT INTO vivazul_cso_root.cadastros (
  /*Remover espaços extras em nomes de cadastros*/
 UPDATE cadastros SET nome = TRIM(nome);
 /*Importa os contatos dos cadastros*/  
-ALTER TABLE vivazul_cso_root.cad_contatos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.cad_contatos ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.cad_contatos;
 ALTER TABLE vivazul_cso_root.cad_contatos AUTO_INCREMENT=0;
@@ -153,7 +153,7 @@ INSERT INTO vivazul_cso_root.cad_contatos (
 ) ;
 
 /*Importa os endereços dos cadastros*/  
-ALTER TABLE vivazul_cso_root.cad_enderecos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.cad_enderecos ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.cad_enderecos;
 ALTER TABLE vivazul_cso_root.cad_enderecos AUTO_INCREMENT=0;
@@ -189,7 +189,7 @@ FROM vivazul_lynkos.empresa e WHERE e.dominio = 'casaoficio'
   );
   
 /*Importa os documentos(ged_params x pipeline_params)*/
-ALTER TABLE vivazul_cso_root.pipeline_params ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.pipeline_params ADD COLUMN old_id INT(10) UNSIGNED;
 UPDATE vivazul_lynkos.ged_params gp SET gp.tipo_secundario = NULL WHERE gp.tipo_secundario = 0;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.pipeline_params;
@@ -208,7 +208,7 @@ UPDATE vivazul_cso_root.pipeline_params pp SET
 	pp.tipo_secundario = (SELECT gp.id FROM vivazul_cso_root.pipeline_params gp WHERE gp.old_id = pp.tipo_secundario);
 
 /*Importa os documentos(ged x pipeline)*/
-ALTER TABLE vivazul_cso_root.pipeline ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.pipeline ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.pipeline;
 ALTER TABLE vivazul_cso_root.pipeline AUTO_INCREMENT=0;
@@ -278,7 +278,7 @@ UPDATE vivazul_cso_root.pipeline_status ps
 	WHERE ps.updated_at NOT LIKE '20%' LIMIT 9999999;
 
 /*Importar prospecções*/
-ALTER TABLE vivazul_cso_root.com_prospeccoes ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.com_prospeccoes ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.com_prospeccoes;
 ALTER TABLE vivazul_cso_root.com_prospeccoes AUTO_INCREMENT=0;
@@ -300,7 +300,7 @@ INSERT INTO vivazul_cso_root.com_prospeccoes (
   ) ;
   
 /*Importar pv*/
-ALTER TABLE vivazul_cso_root.pv ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.pv ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.pv;
 ALTER TABLE vivazul_cso_root.pv AUTO_INCREMENT=0;
@@ -316,7 +316,7 @@ INSERT INTO vivazul_cso_root.pv (evento,created_at,updated_at,STATUS,id_cadastro
 ); 
   
 /*Importar pv_oat*/
-ALTER TABLE vivazul_cso_root.pv_oat ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.pv_oat ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.pv_oat;
 ALTER TABLE vivazul_cso_root.pv_oat AUTO_INCREMENT=0;
@@ -355,7 +355,7 @@ INSERT INTO vivazul_cso_root.long_params (id,evento,created_at,updated_at,STATUS
 VALUES(NULL,1,NOW(),NULL,10,'lgl_os_01','Declaro, por meio deste que aceito o(s) produtos(s), serviço(s) e/ou montagem(ns) a que essa ordem de serviço se refere, e que os mesmos encontram-se nas condições contratadas, em perfeito estado de funcionamento, aparência geral, acabamentos e funcionamento assim como o treinamento de manuseio e utilização.','Dizeres legais do final da OAT');
 
 /*Importar com_produtos*/
-ALTER TABLE vivazul_cso_root.com_produtos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.com_produtos ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.com_produtos;
 ALTER TABLE vivazul_cso_root.com_produtos AUTO_INCREMENT=0;
@@ -387,7 +387,7 @@ INSERT INTO vivazul_cso_root.com_prod_tabelas (
 );
 
 /*Importar com_propostas*/
-ALTER TABLE vivazul_cso_root.com_propostas ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.com_propostas ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.com_propostas;
 ALTER TABLE vivazul_cso_root.com_propostas AUTO_INCREMENT=0;
@@ -409,7 +409,7 @@ INSERT INTO vivazul_cso_root.com_propostas (
 );
 
 /*Importar com_prop_compos*/
-ALTER TABLE vivazul_cso_root.com_prop_compos ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.com_prop_compos ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.com_prop_compos;
 ALTER TABLE vivazul_cso_root.com_prop_compos AUTO_INCREMENT=0;
@@ -426,7 +426,7 @@ INSERT INTO vivazul_cso_root.com_prop_compos (
 );
 
 /*Importar com_prop_itens*/
-ALTER TABLE vivazul_cso_root.com_prop_itens ADD COLUMN old_id INT(10) UNSIGNED NOT NULL;
+ALTER TABLE vivazul_cso_root.com_prop_itens ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_cso_root.com_prop_itens;
 ALTER TABLE vivazul_cso_root.com_prop_itens AUTO_INCREMENT=0;

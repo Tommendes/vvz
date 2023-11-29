@@ -305,6 +305,23 @@ module.exports = app => {
         .post(app.api.com_prop_compos.getByFunction)
 
     /**
+     * Rota de com_prop_itens
+     */
+    app.route('/com-prop-itens/:id_com_propostas')
+        .all(app.config.passport.authenticate())
+        .post(app.api.com_prop_itens.save)
+        .get(app.api.com_prop_itens.get)
+    app.route('/com-prop-itens/:id_com_propostas/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.com_prop_itens.save)
+        .get(app.api.com_prop_itens.getById)
+        .delete(app.api.com_prop_itens.remove)
+    app.route('/com-prop-itens/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.com_prop_itens.getByFunction)
+        .post(app.api.com_prop_itens.getByFunction)
+
+    /**
      * Rota de com_agentes
      */
     app.route('/com-agentes')
