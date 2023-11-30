@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -49,7 +49,6 @@ const loadData = async () => {
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    await getNomeCliente();
                     await loadDataProtoDocs();
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     loading.value = false;
@@ -293,7 +292,7 @@ onMounted(() => {
                     </Card>
                 </div>
             </div>
-        </form>
+        </form> -->
         <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
             <p>{{ route.name }}</p>
             <p>mode: {{ mode }}</p>

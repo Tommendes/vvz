@@ -21,8 +21,9 @@ const urlBase = ref(`${baseApiUrl}/com-prop-itens/35`);
 const urlBaseProtoDocs = ref(`${baseApiUrl}/com-prop-itens`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'id_com_prop_compos', label: 'id_com_prop_compos', minWidth: '15rem' },
-    { field: 'descricao', label: 'descricao', minWidth: '15rem' }
+    { field: 'id_com_propostas', label: 'Proposta', minWidth: '15rem' },
+    { field: 'id_com_produtos', label: 'Produto', minWidth: '15rem' },
+    { field: 'item', label: 'Item', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -36,7 +37,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.cliente}/${userData.dominio}/prop-item/${itemData.value.id}` });
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/com-prop-itens/35/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;

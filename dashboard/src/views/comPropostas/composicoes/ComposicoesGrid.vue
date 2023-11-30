@@ -21,8 +21,9 @@ const urlBase = ref(`${baseApiUrl}/com-prop-compos/35`);
 const urlBaseProtoDocs = ref(`${baseApiUrl}/com-prop-compos`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'localizacao', label: 'localizacao', minWidth: '15rem' },
-    { field: 'tombamento', label: 'tombamento', minWidth: '15rem' }
+    { field: 'compos_nr', label: 'Número da composição', minWidth: '15rem' },
+    { field: 'localizacao', label: 'Localizacao', minWidth: '15rem' },    
+    { field: 'tombamento', label: 'Tombamento', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
