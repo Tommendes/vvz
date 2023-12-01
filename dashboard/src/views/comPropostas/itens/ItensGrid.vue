@@ -4,7 +4,7 @@ import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import Breadcrumb from '../../../components/Breadcrumb.vue';
-import ProtocoloForm from './ProtocoloForm.vue';
+import ItemForm from './ItemForm.vue';
 
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
@@ -17,14 +17,13 @@ const filters = ref(null);
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/protocolos`);
-const urlBaseProtoDocs = ref(`${baseApiUrl}/proto-docs`);
+const urlBase = ref(`${baseApiUrl}/com-prop-itens/35`);
+const urlBaseProtoDocs = ref(`${baseApiUrl}/com-prop-itens`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'nome', label: 'Destinatário', minWidth: '15rem' },
-    { field: 'titulo', label: 'Título', minWidth: '15rem' },
-    { field: 'descricao', label: 'Descrição', minWidth: '30rem' },
-    { field: 'registro', label: 'Protocolo', minWidth: '10rem' }
+    { field: 'id_com_propostas', label: 'Proposta', minWidth: '15rem' },
+    { field: 'id_com_produtos', label: 'Produto', minWidth: '15rem' },
+    { field: 'item', label: 'Item', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -38,7 +37,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.cliente}/${userData.dominio}/protocolo/${itemData.value.id}` });
+    router.push({ path: `/${userData.cliente}/${userData.dominio}/com-prop-itens/35/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -92,9 +91,9 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Itens' }]" />
     <div class="card" :style="'min-width: ' + (!route.name == 'protocolos' ? '100%' : '100rem')">
-        <ProtocoloForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <ItemForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -107,7 +106,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['nome', 'titulo', 'descricao', 'registro']"
+            :globalFilterFields="['id_com_prop_compos', 'descricao']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
