@@ -14,8 +14,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && uParams.gestor >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && uParams.gestor >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -30,7 +29,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
+        delete body.hash; delete body.tblName; delete body.url_logo;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos

@@ -23,6 +23,18 @@ const applyBiParams = () => {
     } else setDefaultBiParams();
     if (biPeriod.value) loadStats();
 };
+const biPeriodVG = ref();
+const applyBiParamsVG = () => {
+    if (biPeriodVG.value) {
+        const period = biPeriodVG.value.map((element, index) => {
+            const date = moment(element).format('YYYY-MM-DD');
+            return index === 0 ? { di: date } : { df: date };
+        });
+        let biParams = JSON.parse(localStorage.getItem('__biParams'));
+        localStorage.setItem('__biParams', JSON.stringify({ ...biParams, periodoVG: period }));
+    } else setDefaultBiParams();
+    if (biPeriodVG.value) loadStats();
+};
 
 const setDefaultBiParams = () => {
     biPeriod.value = [moment().subtract(1, 'month').toDate(), moment().toDate()];
@@ -32,6 +44,7 @@ const setDefaultBiParams = () => {
         '__biParams',
         JSON.stringify({
             periodo: [{ di: biPeriod.value.dataEn.di }, { df: biPeriod.value.dataEn.df }],
+            periodoVG: [{ di: biPeriod.value.dataEn.di }, { df: biPeriod.value.dataEn.df }],
             recentSales: { rows: biData.value.recentSales.rows },
             topSellings: { rows: biData.value.topSellings.rows },
             topSellers: { rows: biData.value.topSellers.rows },
@@ -64,6 +77,32 @@ const getBiPeriod = () => {
         biPeriod.value.dataEn = dataEn;
     } else {
         applyBiParams();
+    }
+};
+
+const getBiPeriodVG = () => {
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    if (biParams && moment(biParams.periodoVG[0].di, 'YYYY-MM-DD', true).isValid() && moment(biParams.periodoVG[1].df, 'YYYY-MM-DD', true).isValid()) {
+        const dateArray = [];
+        let datesPt = 'entre ';
+        let dataEn = { di: new Date(), df: new Date() };
+        biParams.periodoVG.forEach((element) => {
+            if (element.di) {
+                dateArray.push(moment(element.di).toDate());
+                datesPt += moment(element.di).format('DD/MM/YYYY');
+                dataEn.di = moment(element.di).format('YYYY-MM-DD');
+            }
+            if (element.df) {
+                dateArray.push(moment(element.df).toDate());
+                datesPt += ' e ' + moment(element.df).format('DD/MM/YYYY');
+                dataEn.df = moment(element.df).format('YYYY-MM-DD');
+            }
+        });
+        biPeriodVG.value = dateArray;
+        biPeriodVG.value.dataPt = datesPt;
+        biPeriodVG.value.dataEn = dataEn;
+    } else {
+        applyBiParamsVG();
     }
 };
 
@@ -102,6 +141,7 @@ const biData = ref({
         totalSell: 0,
         totalSellQuantity: 0,
         data: [],
+        dataRepresentacoes: [],
         loading: true
     },
     topSellers: {
@@ -198,12 +238,13 @@ const applyBiRecentSales = (moreOrLess) => {
     getPedidosLastBi();
 };
 
-const applyBiTopSeilling = (moreOrLess) => {
+const applyBiTopSeilling = async (moreOrLess) => {
     if (moreOrLess === 'plus') biData.value.topSellings.rows++;
     else if (moreOrLess === 'less' && biData.value.topSellings.rows > 1) biData.value.topSellings.rows--;
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellings: { rows: biData.value.topSellings.rows } }));
-    getTopSellingBi();
+    await getTopSellingBi();
+    getSalesOverviewBi();
 };
 
 const applyBiTopSellers = (moreOrLess) => {
@@ -234,6 +275,10 @@ const getTopSellingBi = async () => {
             element.color = colorsDashboard[Math.floor(Math.random() * colorsDashboard.length)];
         });
         biData.value.topSellings.data = data.data;
+        biData.value.topSellings.dataRepresentacoes = [];
+        biData.value.topSellings.data.forEach((element) => {
+            biData.value.topSellings.dataRepresentacoes.push(element.id);
+        });
         biData.value.topSellings.totalSell = data.totalSell;
         biData.value.topSellings.totalSellQuantity = data.totalSellQuantity;
     });
@@ -277,10 +322,11 @@ const getTopProposalsBi = async () => {
 };
 
 const getSalesOverviewBi = async () => {
-    if (biPeriod.value.dataEn.di && biPeriod.value.dataEn.df) {
+    if (biPeriodVG.value.dataEn.di && biPeriodVG.value.dataEn.df) {
         let biParams = JSON.parse(localStorage.getItem('__biParams'));
         biData.value.salesOverview.rows = biParams.salesOverview.rows || biData.value.salesOverview.rows;
-        const url = `${baseApiUrl}/pipeline/f-a/gso?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${biData.value.salesOverview.rows}`;
+        const url = `${baseApiUrl}/pipeline/f-a/gso?periodDi=${biPeriodVG.value.dataEn.di}&periodDf=${biPeriodVG.value.dataEn.df}&rows=${biData.value.topSellings.dataRepresentacoes.join(',')}`;
+        console.log(url);
         biData.value.salesOverview.loading = true;
         await axios.get(url).then((axiosRes) => {
             const data = axiosRes.data;
@@ -298,16 +344,17 @@ const lineOptions = ref(null);
 
 const loadStats = () => {
     getBiPeriod();
+    getBiPeriodVG();
     setTimeout(async () => {
-        await getCadastrosBi();
-        await getPropectosBi();
-        await getPropostasBi();
-        await getPedidosBi();
-        await getPedidosLastBi();
+        getCadastrosBi();
+        getPropectosBi();
+        getPropostasBi();
+        getPedidosBi();
+        getPedidosLastBi();
+        getTopSellersBi();
+        getTopProposalsBi();
         await getTopSellingBi();
-        await getTopSellersBi();
-        await getTopProposalsBi();
-        await getSalesOverviewBi();
+        getSalesOverviewBi();
     }, Math.random() * 1000 + 250);
 };
 
@@ -571,7 +618,21 @@ onMounted(() => {
         </div>
         <div class="col-12" v-if="lineData.labels.length > 0">
             <div class="card">
-                <h5>Visão geral de vendas</h5>
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <h5>Visão geral de vendas sobre os produtos mais vendidos</h5>
+                    <Calendar
+                        aria-describedby="username-help"
+                        showIcon
+                        dateFormat="dd/mm/yy"
+                        v-model="biPeriodVG"
+                        selectionMode="range"
+                        :numberOfMonths="2"
+                        :manualInput="true"
+                        showButtonBar
+                        class="custom-calendar"
+                        @update:modelValue="applyBiParamsVG()"
+                    />
+                </div>
                 <Chart type="line" :data="lineData" :options="lineOptions" />
             </div>
         </div>
@@ -633,7 +694,7 @@ onMounted(() => {
                 </div>
                 <div class="flex justify-content-end mb-5">
                     <div class="flex flex-column gap-2">
-                        <label for="biPeriod" style="text-align: end">Período de Exibição</label>
+                        <label for="biPeriod" style="text-align: end">Período de Exibição Geral</label>
                         <Calendar
                             aria-describedby="username-help"
                             showIcon
@@ -647,6 +708,24 @@ onMounted(() => {
                             @update:modelValue="applyBiParams()"
                         />
                         <small id="username-help">Selecione acima o período desejado para apresentar os resultados nesta tela.</small>
+                    </div>
+                </div>
+                <div class="flex justify-content-end mb-5" v-if="lineData.labels.length == 0">
+                    <div class="flex flex-column gap-2">
+                        <label for="biPeriodVG" style="text-align: end">Período de Exibição do Gráfico</label>
+                        <Calendar
+                            aria-describedby="username-help"
+                            showIcon
+                            dateFormat="dd/mm/yy"
+                            v-model="biPeriodVG"
+                            selectionMode="range"
+                            :numberOfMonths="2"
+                            :manualInput="true"
+                            showButtonBar
+                            class="custom-calendar"
+                            @update:modelValue="applyBiParamsVG()"
+                        />
+                        <small id="username-help">Selecione acima o período desejado para apresentar os resultados no gráfico.</small>
                     </div>
                 </div>
                 <!-- <div class="flex justify-content-end mb-5">

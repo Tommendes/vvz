@@ -847,6 +847,7 @@ module.exports = app => {
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
+        const rows = req.query.rows || undefined
         try {
             existsOrError(biPeriodDi, 'Período inicial não informado')
             existsOrError(biPeriodDf, 'Período final não informado')
@@ -869,6 +870,7 @@ module.exports = app => {
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
                 .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
                 .orderBy(app.db.raw('representacao, mes'))
             const formatData = await formatDataForChart(biSalesOverview)
@@ -886,7 +888,9 @@ module.exports = app => {
             const dataPoints = result.filter((item) => item.representacao === representacao).map((item) => item.valor_bruto);
             const backgroundColor = generateColors();
             // Setar em representacaoNome removendo a última posição de representação
-            const representacaoNome = representacao.split('_').slice(0, -1).join(' ');
+            let representacaoNome = representacao.split('_');
+            if (representacaoNome.length > 1) representacaoNome.pop();
+            // .slice(0, -1).join(' ');
             datasets.push({
                 label: representacaoNome,
                 data: dataPoints,
