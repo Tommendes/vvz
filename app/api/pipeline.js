@@ -2,13 +2,13 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_REATIVADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
-    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
+    const { existsOrError, integerOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pipeline'
     const tabelaAlias = 'Pipeline'
     const tabelaStatus = 'pipeline_status'
     const tabelaParams = 'pipeline_params'
-    const tabelaLocalParams = 'local_params'
     const tabelaCadastros = 'cadastros'
+    const tabelaUsers = 'users'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -26,7 +26,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
 
@@ -490,6 +490,18 @@ module.exports = app => {
             case 'grs':
                 getRecentSales(req, res)
                 break;
+            case 'gts':
+                getTopSelling(req, res)
+                break;
+            case 'gtss':
+                getTopSellers(req, res)
+                break;
+            case 'gtp':
+                getTopProposals(req, res)
+                break;
+            case 'gso':
+                getSalesOverview(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
@@ -598,37 +610,307 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
-        const biPeriodDi = req.query.periodDi
-        const biPeriodDf = req.query.periodDf
-        const biPeriodDv = req.query.periodDv || 2
+        const rows = req.query.rows || 5
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.pipeline_params`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
+        const tabelaUsers = `${dbPrefix}_api.users`
         try {
-            const total = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
-                .join({ pp: tabelaParamsDomain }, function () {
-                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
-                }).where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` }).first()
-            let noPeriodo = { count: 0 }
-            if (biPeriodDi && biPeriodDf)
-                noPeriodo = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
-                    .join({ pp: tabelaParamsDomain }, function () {
-                        this.on('pp.id', '=', 'tbl1.id_pipeline_params')
-                    })
-                    .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                    .andWhere({ 'pp.doc_venda': `${biPeriodDv}` }).first()
-            const novos = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+            const biRows = await app.db({ tbl1: tabelaDomain })
+                .select(app.db.raw(`tbl1.id,upl.url url_logo,replace(pp.descricao,'_',' ') representacao,tbl1.documento,ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .whereRaw(`EXTRACT(YEAR FROM date(tbl1.created_at)) = EXTRACT(YEAR FROM NOW())`)
-                .whereRaw(`EXTRACT(MONTH FROM date(tbl1.created_at)) = EXTRACT(MONTH FROM NOW())`)
-                .andWhere({ 'pp.doc_venda': `${biPeriodDv}` }).first()
-            return res.send({ total: total.count, novos: novos.count, noPeriodo: noPeriodo.count })
+                .join({ ps: tabelaStatusDomain }, function () {
+                    this.on('ps.id_pipeline', '=', 'tbl1.id')
+                })
+                .join({ u: tabelaUsers }, function () {
+                    this.on('u.id', '=', 'tbl1.id_com_agentes')
+                })
+                .leftJoin({ upl: tabelaUploadsDomain }, function () {
+                    this.on('upl.id', '=', 'pp.id_uploads_logo')
+                })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
+                .groupBy('ps.id_pipeline')
+                .orderBy('ps.created_at', 'desc')
+                .limit(rows)
+            return res.send(biRows)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
     }
+
+    // Recupera dados para index da plataforma BI
+    const getTopSelling = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+        const biPeriodDi = req.query.periodDi
+        const biPeriodDf = req.query.periodDf
+        const rows = req.query.rows
+        try {
+            existsOrError(biPeriodDi, 'Período inicial não informado')
+            existsOrError(biPeriodDf, 'Período final não informado')
+            existsOrError(rows, 'Quantidade de registros não informada')
+            if (rows < 1) throw 'Quantidade de registros não informada'
+            if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
+            if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        try {
+            const biTopSelling = await app.db({ tbl1: tabelaDomain })
+                .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
+                .join({ pp: tabelaParamsDomain }, function () {
+                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                })
+                .join({ ps: tabelaStatusDomain }, function () {
+                    this.on('ps.id_pipeline', '=', 'tbl1.id')
+                })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
+                .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .groupBy('pp.id')
+                .orderBy('valor_bruto', 'desc')
+                .limit(rows)
+            let totalSell = 0;
+            let totalSellQuantity = 0;
+            // Calcular o total geral para depois calcular o percentual de cada item
+            biTopSelling.forEach(element => {
+                totalSell = totalSell + element.valor_bruto
+                totalSellQuantity = totalSellQuantity + element.quantidade
+            });
+            // Agora calcule o total para cada item e adicione o percentual em cada item
+            biTopSelling.forEach(element => {
+                element.percentual = Math.round((element.valor_bruto / totalSell) * 100)
+                element.percentualQuantity = Math.round((element.quantidade / totalSellQuantity) * 100)
+            });
+            totalSell = Math.round(totalSell * 100) / 100
+            // Ordene biTopSelling por percentual
+            biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
+
+            return res.send({ data: biTopSelling, totalSell, totalSellQuantity })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+    }
+
+    // Recupera dados para index da plataforma BI
+    const getTopSellers = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+        const biPeriodDi = req.query.periodDi
+        const biPeriodDf = req.query.periodDf
+        const rows = req.query.rows
+        try {
+            existsOrError(biPeriodDi, 'Período inicial não informado')
+            existsOrError(biPeriodDf, 'Período final não informado')
+            existsOrError(rows, 'Quantidade de registros não informada')
+            if (rows < 1) throw 'Quantidade de registros não informada'
+            if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
+            if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaUsers = `${dbPrefix}_api.users`
+        try {
+            const biTopSelling = await app.db({ tbl1: tabelaDomain })
+                .select(app.db.raw(`pp.id,u.name agente,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade `))
+                .join({ pp: tabelaParamsDomain }, function () {
+                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                })
+                .join({ ps: tabelaStatusDomain }, function () {
+                    this.on('ps.id_pipeline', '=', 'tbl1.id')
+                })
+                .join({ u: tabelaUsers }, function () {
+                    this.on('u.id', '=', 'tbl1.id_com_agentes')
+                })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
+                .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .groupBy('tbl1.id_com_agentes')
+                .orderBy('valor_bruto', 'desc')
+                .limit(rows)
+            let totalSell = 0;
+            let totalSellQuantity = 0;
+            // Calcular o total geral para depois calcular o percentual de cada item
+            biTopSelling.forEach(element => {
+                totalSell = totalSell + element.valor_bruto
+                totalSellQuantity = totalSellQuantity + element.quantidade
+            });
+            // Agora calcule o total para cada item e adicione o percentual em cada item
+            biTopSelling.forEach(element => {
+                element.percentual = Math.round((element.valor_bruto / totalSell) * 100)
+                element.percentualQuantity = Math.round((element.quantidade / totalSellQuantity) * 100)
+            });
+            totalSell = Math.round(totalSell * 100) / 100
+            // Ordene biTopSelling por percentual
+            biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
+
+            return res.send({ data: biTopSelling, totalSell, totalSellQuantity })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+    }
+
+    // Recupera dados para index da plataforma BI
+    const getTopProposals = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+        const biPeriodDi = req.query.periodDi
+        const biPeriodDf = req.query.periodDf
+        const rows = req.query.rows
+        try {
+            existsOrError(biPeriodDi, 'Período inicial não informado')
+            existsOrError(biPeriodDf, 'Período final não informado')
+            existsOrError(rows, 'Quantidade de registros não informada')
+            if (rows < 1) throw 'Quantidade de registros não informada'
+            if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
+            if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        try {
+            const biTopSelling = await app.db({ tbl1: tabelaDomain })
+                .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
+                .join({ pp: tabelaParamsDomain }, function () {
+                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                })
+                .join({ ps: tabelaStatusDomain }, function () {
+                    this.on('ps.id_pipeline', '=', 'tbl1.id')
+                })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PENDENTE })
+                .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .groupBy('pp.id')
+                .orderBy('valor_bruto', 'desc')
+                .limit(rows)
+            let totalProposed = 0;
+            let totalProposedQuantity = 0;
+            // Calcular o total geral para depois calcular o percentual de cada item
+            biTopSelling.forEach(element => {
+                totalProposed = totalProposed + element.valor_bruto
+                totalProposedQuantity = totalProposedQuantity + element.quantidade
+            });
+            // Agora calcule o total para cada item e adicione o percentual em cada item
+            biTopSelling.forEach(element => {
+                element.percentual = Math.round((element.valor_bruto / totalProposed) * 100)
+                element.percentualQuantity = Math.round((element.quantidade / totalProposedQuantity) * 100)
+            });
+            totalProposed = Math.round(totalProposed * 100) / 100
+            // Ordene biTopSelling por percentual
+            biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
+
+            return res.send({ data: biTopSelling, totalProposed, totalProposedQuantity })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+    }
+
+    // Recupera dados para index da plataforma BI
+    const getSalesOverview = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db('users').where({ id: user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+        const biPeriodDi = req.query.periodDi
+        const biPeriodDf = req.query.periodDf
+        try {
+            existsOrError(biPeriodDi, 'Período inicial não informado')
+            existsOrError(biPeriodDf, 'Período final não informado')
+            if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
+            if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        try {
+            const biSalesOverview = await app.db({ tbl1: tabelaDomain })
+                .select(app.db.raw(`DATE_FORMAT(ps.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
+                .join({ pp: tabelaParamsDomain }, function () {
+                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                })
+                .join({ ps: tabelaStatusDomain }, function () {
+                    this.on('ps.id_pipeline', '=', 'tbl1.id')
+                })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
+                .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .groupBy(app.db.raw('mes, representacao'))
+                .orderBy(app.db.raw('representacao, mes'))
+            const formatData = await formatDataForChart(biSalesOverview)
+            return res.send(formatData)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+    }
+
+    const formatDataForChart = async (result) => {
+        const datasets = [];
+        const distinctRepresentacoes = [...new Set(result.map((item) => item.representacao))];
+        distinctRepresentacoes.forEach((representacao, index) => {
+            const dataPoints = result.filter((item) => item.representacao === representacao).map((item) => item.valor_bruto);
+            const backgroundColor = generateColors();
+            // Setar em representacaoNome removendo a última posição de representação
+            const representacaoNome = representacao.split('_').slice(0, -1).join(' ');
+            datasets.push({
+                label: representacaoNome,
+                data: dataPoints,
+                fill: false,
+                backgroundColor: backgroundColor,
+                borderColor: backgroundColor,
+                tension: 0.4
+            });
+        });
+        const labels = [...new Set(result.map((item) => item.mes))];
+        return {
+            labels: labels,
+            datasets: datasets
+        };
+    };
+
+    function generateColors() {
+        let color = '';
+          let red = Math.floor((Math.random() * 256));
+          let green = Math.floor((Math.random() * 256));
+          let blue = Math.floor((Math.random() * 256));
+          color = `rgb(${red},${green},${blue})`;
+        return color;
+      }
 
     return { save, get, getById, remove, getByFunction }
 }

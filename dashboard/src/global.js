@@ -95,7 +95,7 @@ export function validarDataPTBR(data) {
 
 export function formatCurrency(value) {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
+}
 // Verifique o horario e informe: Bom dia, boa tarde ou boa noite
 export const saudation = () => {
     const hora = new Date().getHours();
@@ -233,6 +233,81 @@ export const andamentoRegistroPipeline = {
     STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
 };
 
+export const colorsDashboard = [
+    'blue-400',
+    'blue-500',
+    'blue-600',
+    'blue-700',
+    'blue-800',
+    'blue-900',
+    'green-400',
+    'green-500',
+    'green-600',
+    'green-700',
+    'green-800',
+    'green-900',
+    'yellow-400',
+    'yellow-500',
+    'yellow-600',
+    'yellow-700',
+    'yellow-800',
+    'yellow-900',
+    'cyan-400',
+    'cyan-500',
+    'cyan-600',
+    'cyan-700',
+    'cyan-800',
+    'cyan-900',
+    'pink-400',
+    'pink-500',
+    'pink-600',
+    'pink-700',
+    'pink-800',
+    'pink-900',
+    'indigo-400',
+    'indigo-500',
+    'indigo-600',
+    'indigo-700',
+    'indigo-800',
+    'indigo-900',
+    'teal-400',
+    'teal-500',
+    'teal-600',
+    'teal-700',
+    'teal-800',
+    'teal-900',
+    'orange-400',
+    'orange-500',
+    'orange-600',
+    'orange-700',
+    'orange-800',
+    'orange-900',
+    'bluegray-400',
+    'bluegray-500',
+    'bluegray-600',
+    'bluegray-700',
+    'bluegray-800',
+    'bluegray-900',
+    'purple-400',
+    'purple-500',
+    'purple-600',
+    'purple-700',
+    'purple-800',
+    'purple-900',
+    'red-400',
+    'red-500',
+    'red-600',
+    'red-700',
+    'red-800',
+    'red-900',
+    'primary-400',
+    'primary-500',
+    'primary-600',
+    'primary-700',
+    'primary-800',
+    'primary-900'
+];
+
 export default {
     userKey,
     glKey,
@@ -264,5 +339,6 @@ export default {
     UFS,
     andamentoRegistroPv,
     andamentoRegistroPvOat,
-    andamentoRegistroPipeline
+    andamentoRegistroPipeline,
+    colorsDashboard
 };

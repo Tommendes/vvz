@@ -4,39 +4,12 @@ import { onMounted, reactive, ref } from 'vue';
 import { formatCurrency } from '@/global';
 import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
-import { defaultSuccess, defaultWarn } from '@/toast';
+import { colorsDashboard } from '@/global';
 
 // Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
-
-const lineData = reactive({
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-    datasets: [
-        {
-            label: 'First Dataset',
-            data: [65, 59, 80, 81, 56, 55, 40],
-            fill: false,
-            backgroundColor: '#2f4860',
-            borderColor: '#2f4860',
-            tension: 0.4
-        },
-        {
-            label: 'Second Dataset',
-            data: [28, 48, 40, 19, 86, 27, 90],
-            fill: false,
-            backgroundColor: '#00bb7e',
-            borderColor: '#00bb7e',
-            tension: 0.4
-        }
-    ]
-});
-const items = ref([
-    { label: 'Add New', icon: 'pi pi-fw pi-plus' },
-    { label: 'Remove', icon: 'pi pi-fw pi-minus' }
-]);
-const lineOptions = ref(null);
 
 const biPeriod = ref();
 const applyBiParams = () => {
@@ -45,7 +18,8 @@ const applyBiParams = () => {
             const date = moment(element).format('YYYY-MM-DD');
             return index === 0 ? { di: date } : { df: date };
         });
-        localStorage.setItem('__biParams', JSON.stringify({ periodo: period }));
+        let biParams = JSON.parse(localStorage.getItem('__biParams'));
+        localStorage.setItem('__biParams', JSON.stringify({ ...biParams, periodo: period }));
     } else setDefaultBiParams();
     if (biPeriod.value) loadStats();
 };
@@ -54,7 +28,17 @@ const setDefaultBiParams = () => {
     biPeriod.value = [moment().subtract(1, 'month').toDate(), moment().toDate()];
     biPeriod.value.dataPt = 'entre ' + moment().subtract(1, 'month').format('DD/MM/YYYY') + ' e ' + moment().format('DD/MM/YYYY');
     biPeriod.value.dataEn = { di: moment().subtract(1, 'month').format('YYYY-MM-DD'), df: moment().format('YYYY-MM-DD') };
-    localStorage.setItem('__biParams', JSON.stringify({ periodo: [{ di: biPeriod.value.dataEn.di }, { df: biPeriod.value.dataEn.df }], qrs: 10 }));
+    localStorage.setItem(
+        '__biParams',
+        JSON.stringify({
+            periodo: [{ di: biPeriod.value.dataEn.di }, { df: biPeriod.value.dataEn.df }],
+            recentSales: { rows: biData.value.recentSales.rows },
+            topSellings: { rows: biData.value.topSellings.rows },
+            topSellers: { rows: biData.value.topSellers.rows },
+            topProposals: { rows: biData.value.topProposals.rows },
+            salesOverview: { rows: biData.value.salesOverview.rows }
+        })
+    );
 };
 
 const getBiPeriod = () => {
@@ -109,6 +93,35 @@ const biData = ref({
         loading: true
     },
     recentSales: {
+        rows: 5,
+        data: [],
+        loading: true
+    },
+    topSellings: {
+        rows: 5,
+        totalSell: 0,
+        totalSellQuantity: 0,
+        data: [],
+        loading: true
+    },
+    topSellers: {
+        rows: 5,
+        totalSell: 0,
+        totalSellQuantity: 0,
+        data: [],
+        loading: true
+    },
+    topProposals: {
+        rows: 5,
+        totalProposed: 0,
+        totalProposedQuantity: 0,
+        data: [],
+        loading: true
+    },
+    salesOverview: {
+        rows: 5,
+        labels: [],
+        datasets: [],
         loading: true
     }
 });
@@ -161,17 +174,127 @@ const getPedidosBi = async () => {
     biData.value.pedidos.loading = false;
 };
 
-const recentSales = ref(null);
 const getPedidosLastBi = async () => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
-    const url = `${baseApiUrl}/pipeline/f-a/grs?q=${biParams.qrs || 10}`;
-    biData.value.pedidos.loading = true;
+    biData.value.recentSales.rows = biParams.recentSales.rows || biData.value.recentSales.rows;
+    const url = `${baseApiUrl}/pipeline/f-a/grs?rows=${biData.value.recentSales.rows}`;
+    biData.value.recentSales.loading = true;
     await axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
-        recentSales.value = data.total;
+        biData.value.recentSales.data = data;
     });
     biData.value.recentSales.loading = false;
 };
+
+const irRecentSale = (id) => {
+    window.open(`/${userData.cliente}/${userData.dominio}/pipeline/${id}`, '_blank');
+};
+
+const applyBiRecentSales = (moreOrLess) => {
+    if (moreOrLess === 'plus' && biData.value.recentSales.rows < 10) biData.value.recentSales.rows++;
+    else if (moreOrLess === 'less' && biData.value.recentSales.rows > 1) biData.value.recentSales.rows--;
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    localStorage.setItem('__biParams', JSON.stringify({ ...biParams, recentSales: { rows: biData.value.recentSales.rows } }));
+    getPedidosLastBi();
+};
+
+const applyBiTopSeilling = (moreOrLess) => {
+    if (moreOrLess === 'plus') biData.value.topSellings.rows++;
+    else if (moreOrLess === 'less' && biData.value.topSellings.rows > 1) biData.value.topSellings.rows--;
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellings: { rows: biData.value.topSellings.rows } }));
+    getTopSellingBi();
+};
+
+const applyBiTopSellers = (moreOrLess) => {
+    if (moreOrLess === 'plus') biData.value.topSellers.rows++;
+    else if (moreOrLess === 'less' && biData.value.topSellers.rows > 1) biData.value.topSellers.rows--;
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellers: { rows: biData.value.topSellers.rows } }));
+    getTopSellersBi();
+};
+
+const applyBiTopProposals = (moreOrLess) => {
+    if (moreOrLess === 'plus') biData.value.topProposals.rows++;
+    else if (moreOrLess === 'less' && biData.value.topProposals.rows > 1) biData.value.topProposals.rows--;
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topProposals: { rows: biData.value.topProposals.rows } }));
+    getTopProposalsBi();
+};
+
+const getTopSellingBi = async () => {
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    biData.value.topSellings.rows = biParams.topSellings.rows || biData.value.topSellings.rows;
+    const url = `${baseApiUrl}/pipeline/f-a/gts?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${biData.value.topSellings.rows}`;
+    biData.value.topSellings.loading = true;
+    await axios.get(url).then((axiosRes) => {
+        const data = axiosRes.data;
+        // colorsDashboard é um array de cores. Adicione a cada elemento uma cor utilizando a propriedade element.color
+        data.data.forEach((element) => {
+            element.color = colorsDashboard[Math.floor(Math.random() * colorsDashboard.length)];
+        });
+        biData.value.topSellings.data = data.data;
+        biData.value.topSellings.totalSell = data.totalSell;
+        biData.value.topSellings.totalSellQuantity = data.totalSellQuantity;
+    });
+    biData.value.topSellings.loading = false;
+};
+
+const getTopSellersBi = async () => {
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    biData.value.topSellers.rows = biParams.topSellers.rows || biData.value.topSellers.rows;
+    const url = `${baseApiUrl}/pipeline/f-a/gtss?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${biData.value.topSellers.rows}`;
+    biData.value.topSellers.loading = true;
+    await axios.get(url).then((axiosRes) => {
+        const data = axiosRes.data;
+        // colorsDashboard é um array de cores. Adicione a cada elemento uma cor utilizando a propriedade element.color
+        data.data.forEach((element) => {
+            element.color = colorsDashboard[Math.floor(Math.random() * colorsDashboard.length)];
+        });
+        biData.value.topSellers.data = data.data;
+        biData.value.topSellers.totalSell = data.totalSell;
+        biData.value.topSellers.totalSellQuantity = data.totalSellQuantity;
+    });
+    biData.value.topSellers.loading = false;
+};
+
+const getTopProposalsBi = async () => {
+    let biParams = JSON.parse(localStorage.getItem('__biParams'));
+    biData.value.topProposals.rows = biParams.topProposals.rows || biData.value.topProposals.rows;
+    const url = `${baseApiUrl}/pipeline/f-a/gtp?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${biData.value.topProposals.rows}`;
+    biData.value.topProposals.loading = true;
+    await axios.get(url).then((axiosRes) => {
+        const data = axiosRes.data;
+        // colorsDashboard é um array de cores. Adicione a cada elemento uma cor utilizando a propriedade element.color
+        data.data.forEach((element) => {
+            element.color = colorsDashboard[Math.floor(Math.random() * colorsDashboard.length)];
+        });
+        biData.value.topProposals.data = data.data;
+        biData.value.topProposals.totalProposed = data.totalProposed;
+        biData.value.topProposals.totalProposedQuantity = data.totalProposedQuantity;
+    });
+    biData.value.topProposals.loading = false;
+};
+
+const getSalesOverviewBi = async () => {
+    if (biPeriod.value.dataEn.di && biPeriod.value.dataEn.df) {
+        let biParams = JSON.parse(localStorage.getItem('__biParams'));
+        biData.value.salesOverview.rows = biParams.salesOverview.rows || biData.value.salesOverview.rows;
+        const url = `${baseApiUrl}/pipeline/f-a/gso?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${biData.value.salesOverview.rows}`;
+        biData.value.salesOverview.loading = true;
+        await axios.get(url).then((axiosRes) => {
+            const data = axiosRes.data;
+            lineData.labels = data.labels;
+            lineData.datasets = data.datasets;
+        });
+        biData.value.salesOverview.loading = false;
+    }
+};
+const lineData = reactive({
+    labels: [],
+    datasets: []
+});
+const lineOptions = ref(null);
 
 const loadStats = () => {
     getBiPeriod();
@@ -181,6 +304,10 @@ const loadStats = () => {
         await getPropostasBi();
         await getPedidosBi();
         await getPedidosLastBi();
+        await getTopSellingBi();
+        await getTopSellersBi();
+        await getTopProposalsBi();
+        await getSalesOverviewBi();
     }, Math.random() * 1000 + 250);
 };
 
@@ -207,7 +334,7 @@ onMounted(() => {
                 </div>
                 <div>
                     <Skeleton v-if="biData.cadastros.loading" width="20rem" height="2rem"></Skeleton>
-                    <span v-else class="text-green-500 font-medium">{{ biData.cadastros.novos }} novos </span>
+                    <span v-else class="text-green-500 font-medium">{{ biData.cadastros.novos }} cadastros </span>
                     <span v-if="!biData.cadastros.loading" class="text-500">neste mês</span>
                 </div>
                 <div>
@@ -238,7 +365,7 @@ onMounted(() => {
                 </div>
                 <div>
                     <Skeleton v-if="biData.prospectos.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.prospectos.noPeriodo }} prospectos </span>
+                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.prospectos.noPeriodo }} novos </span>
                     <span v-if="!biData.prospectos.loading" class="text-500 font-ligth text-xs">no período {{ biPeriod.dataPt }}</span>
                 </div>
             </div>
@@ -264,7 +391,7 @@ onMounted(() => {
                 </div>
                 <div>
                     <Skeleton v-if="biData.propostas.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.propostas.noPeriodo }} propostas </span>
+                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.propostas.noPeriodo }} novos </span>
                     <span v-if="!biData.propostas.loading" class="text-500 font-ligth text-xs">no período {{ biPeriod.dataPt }}</span>
                 </div>
             </div>
@@ -290,274 +417,219 @@ onMounted(() => {
                 </div>
                 <div>
                     <Skeleton v-if="biData.pedidos.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.pedidos.noPeriodo }} pedidos </span>
+                    <span v-else class="text-green-500 font-ligth text-xs">{{ biData.pedidos.noPeriodo }} novos </span>
                     <span v-if="!biData.pedidos.loading" class="text-500 font-ligth text-xs">no período {{ biPeriod.dataPt }}</span>
                 </div>
             </div>
         </div>
-
-        <div class="col-12 xl:col-6">
+        <div class="col-12 xl:col-6 xl:col-3">
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
-                    <h5>Vendas recentes</h5>
+                    <h5>
+                        Vendas recentes<br /><span v-if="!biData.recentSales.loading" class="text-green-500 font-ligth text-xs"> Últimas {{ biData.recentSales.rows }} vendas</span>
+                    </h5>
                     <div>
-                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="defaultWarn('Reduzir')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="defaultSuccess('Adicionar')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('less')" v-tooltip.top="'Clique para reduzir'" v-if="biData.recentSales.rows > 1" />
+                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('plus')" v-tooltip.top="'Clique para adicionar'" v-if="biData.recentSales.rows < 10" />
                     </div>
                 </div>
-                <DataTable :value="recentSales" :rows="5" :paginator="true" responsiveLayout="scroll">
-                    <Column style="width: 25%">
+                <DataTable :value="biData.recentSales.data" :rows="biData.recentSales.rows" :paginator="false" responsiveLayout="scroll">
+                    <Column style="width: 10%">
                         <template #header> Representação </template>
                         <template #body="slotProps">
-                            <img :src="'demo/images/product/' + slotProps.data.image" :alt="slotProps.data.image" width="50" class="shadow-2" />
+                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/AddressBook.jpg'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
                         </template>
                     </Column>
-                    <Column field="documento" header="Documento" style="width: 10%"></Column>
-                    <Column style="width: 20%">
+                    <Column style="width: 45%">
+                        <template #header> Documento </template>
+                        <template #body="slotProps"> {{ slotProps.data.representacao }} {{ slotProps.data.documento }} </template>
+                    </Column>
+                    <Column style="width: 15%">
                         <template #header> Bruto </template>
                         <template #body="slotProps">
                             {{ formatCurrency(slotProps.data.valor_bruto) }}
                         </template>
                     </Column>
-                    <Column style="width: 40%">
-                        <template #header> Agente </template>
-                        <template #body>
-                            <Button icon="pi pi-search" type="button" class="p-button-text"></Button>
-                        </template>
-                    </Column>
-                    <Column style="width: 15%">
+                    <Column field="agente" header="Agente" style="width: 25%"></Column>
+                    <Column style="width: 5%">
                         <template #header> Ir </template>
-                        <template #body>
-                            <Button icon="pi pi-search" type="button" class="p-button-text"></Button>
+                        <template #body="slotProps">
+                            <Button icon="pi pi-search" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para seguir'" />
                         </template>
                     </Column>
                 </DataTable>
             </div>
+        </div>
+        <div class="col-12 xl:col-6 xl:col-3">
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
-                    <h5>Produtos mais vendidos</h5>
+                    <h5>
+                        Resultados por agente
+                        <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-xs"> No período {{ biPeriod.dataPt }}</span> <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-xs">
+                            {{ biData.topSellers.rows }} primeiro{{ `${biData.topSellers.rows > 1 ? 's' : ''}` }} no rancking</span
+                        >
+                    </h5>
                     <div>
-                        <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu2.toggle($event)"></Button>
-                        <Menu ref="menu2" :popup="true" :model="items"></Menu>
+                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('plus')" v-tooltip.top="'Clique para adicionar'" />
                     </div>
                 </div>
-                <ul class="list-none p-0 m-0">
+                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellers.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Space T-Shirt</span>
-                            <div class="mt-1 text-600">Clothing</div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">{{ item.agente }}</span>
+                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
                         </div>
                         <div class="mt-2 md:mt-0 flex align-items-center">
                             <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-orange-500 h-full" style="width: 50%"></div>
+                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
                             </div>
-                            <span class="text-orange-500 ml-3 font-medium">%50</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Portal Sticker</span>
-                            <div class="mt-1 text-600">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-cyan-500 h-full" style="width: 16%"></div>
-                            </div>
-                            <span class="text-cyan-500 ml-3 font-medium">%16</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Supernova Sticker</span>
-                            <div class="mt-1 text-600">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-pink-500 h-full" style="width: 67%"></div>
-                            </div>
-                            <span class="text-pink-500 ml-3 font-medium">%67</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Wonders Notebook</span>
-                            <div class="mt-1 text-600">Office</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-green-500 h-full" style="width: 35%"></div>
-                            </div>
-                            <span class="text-green-500 ml-3 font-medium">%35</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Mat Black Case</span>
-                            <div class="mt-1 text-600">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-purple-500 h-full" style="width: 75%"></div>
-                            </div>
-                            <span class="text-purple-500 ml-3 font-medium">%75</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Robots T-Shirt</span>
-                            <div class="mt-1 text-600">Clothing</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-teal-500 h-full" style="width: 40%"></div>
-                            </div>
-                            <span class="text-teal-500 ml-3 font-medium">%40</span>
+                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
                         </div>
                     </li>
                 </ul>
-            </div>
-            <div class="card">
-                <div class="flex justify-content-between align-items-center mb-5">
-                    <h5>Resultados por agente</h5>
-                    <div>
-                        <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu3.toggle($event)"></Button>
-                        <Menu ref="menu3" :popup="true" :model="items"></Menu>
-                    </div>
+                <div class="flex justify-content-end align-items-center mb-5">
+                    <span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-base">
+                        Fechamento total no período: {{ formatCurrency(biData.topSellers.totalSell) }}, proveniente de {{ biData.topSellers.totalSellQuantity }} venda{{ `${biData.topSellers.totalSellQuantity > 1 ? 's' : ''}` }}</span
+                    >
                 </div>
-                <ul class="list-none p-0 m-0">
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Space T-Shirt</span>
-                            <div class="mt-1 text-600">Clothing</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-orange-500 h-full" style="width: 50%"></div>
-                            </div>
-                            <span class="text-orange-500 ml-3 font-medium">%50</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Portal Sticker</span>
-                            <div class="mt-1 text-600">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-cyan-500 h-full" style="width: 16%"></div>
-                            </div>
-                            <span class="text-cyan-500 ml-3 font-medium">%16</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Supernova Sticker</span>
-                            <div class="mt-1 text-600">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-pink-500 h-full" style="width: 67%"></div>
-                            </div>
-                            <span class="text-pink-500 ml-3 font-medium">%67</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Wonders Notebook</span>
-                            <div class="mt-1 text-600">Office</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-green-500 h-full" style="width: 35%"></div>
-                            </div>
-                            <span class="text-green-500 ml-3 font-medium">%35</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Mat Black Case</span>
-                            <div class="mt-1 text-600">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-purple-500 h-full" style="width: 75%"></div>
-                            </div>
-                            <span class="text-purple-500 ml-3 font-medium">%75</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Robots T-Shirt</span>
-                            <div class="mt-1 text-600">Clothing</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-8 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div class="bg-teal-500 h-full" style="width: 40%"></div>
-                            </div>
-                            <span class="text-teal-500 ml-3 font-medium">%40</span>
-                        </div>
-                    </li>
-                </ul>
             </div>
         </div>
-        <div class="col-12 xl:col-6">
+        <div class="col-12 xl:col-6 xl:col-3">
+            <div class="card">
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <h5>
+                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows : 'Único' }} produto{{ `${biData.topSellings.rows > 1 ? 's mais' : ''}` }} vendido{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }} <br /><span
+                            v-if="!biData.topSellings.loading"
+                            class="text-green-500 font-ligth text-xs"
+                        >
+                            No período {{ biPeriod.dataPt }}</span
+                        >
+                    </h5>
+                    <div>
+                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
+                    </div>
+                </div>
+                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">{{ item.representacao }}</span>
+                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
+                            </div>
+                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="flex justify-content-end align-items-center mb-5">
+                    <span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-base">
+                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de {{ biData.topSellings.totalSellQuantity }} venda{{ `${biData.topSellings.totalSellQuantity > 1 ? 's' : ''}` }}</span
+                    >
+                </div>
+            </div>
+        </div>
+        <div class="col-12 xl:col-6 xl:col-3">
+            <div class="card">
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <h5>
+                        {{ biData.topProposals.rows > 1 ? biData.topProposals.rows : 'Único' }} produto{{ `${biData.topProposals.rows > 1 ? 's mais' : ''}` }} proposto{{ `${biData.topProposals.rows > 1 ? 's' : ''}` }} <br /><span
+                            v-if="!biData.topProposals.loading"
+                            class="text-green-500 font-ligth text-xs"
+                        >
+                            No período {{ biPeriod.dataPt }}</span
+                        >
+                    </h5>
+                    <div>
+                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('plus')" v-tooltip.top="'Clique para adicionar'" />
+                    </div>
+                </div>
+                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topProposals.data" :key="item.id">
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">{{ item.representacao }}</span>
+                            <div class="mt-1 text-600">{{ item.quantidade }} propostas ({{ formatCurrency(item.valor_bruto) }})</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
+                            </div>
+                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="flex justify-content-end align-items-center mb-5">
+                    <span v-if="!biData.topProposals.loading" class="text-green-500 font-ligth text-base">
+                        Total no período: {{ formatCurrency(biData.topProposals.totalProposed) }}, proveniente de {{ biData.topProposals.totalProposedQuantity }} proposta{{ `${biData.topProposals.totalProposedQuantity > 1 ? 's' : ''}` }}</span
+                    >
+                </div>
+            </div>
+        </div>
+        <div class="col-12" v-if="lineData.labels.length > 0">
             <div class="card">
                 <h5>Visão geral de vendas</h5>
                 <Chart type="line" :data="lineData" :options="lineOptions" />
             </div>
-            <div class="card">
-                <div class="flex align-items-center justify-content-between mb-4">
-                    <h5>Notificações</h5>
-                    <div>
-                        <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu1.toggle($event)"></Button>
-                        <Menu ref="menu1" :popup="true" :model="items"></Menu>
-                    </div>
+        </div>
+
+        <div class="col-12 xl:col-6 xl:col-3">
+            <!-- <div class="card">
+            <div class="flex align-items-center justify-content-between mb-4">
+                <h5>Notificações</h5>
+                <div>
+                    <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu1.toggle($event)"></Button>
+                    <Menu ref="menu1" :popup="true" :model="items"></Menu>
                 </div>
-
-                <span class="block text-600 font-medium mb-3">TODAY</span>
-                <ul class="p-0 mx-0 mt-0 mb-4 list-none">
-                    <li class="flex align-items-center py-2 border-bottom-1 surface-border">
-                        <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-100 border-circle mr-3 flex-shrink-0">
-                            <i class="pi pi-dollar text-xl text-blue-500"></i>
-                        </div>
-                        <span class="text-900 line-height-3"
-                            >Richard Jones
-                            <span class="text-700">has purchased a blue t-shirt for <span class="text-blue-500">79$</span></span>
-                        </span>
-                    </li>
-                    <li class="flex align-items-center py-2">
-                        <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-orange-100 border-circle mr-3 flex-shrink-0">
-                            <i class="pi pi-download text-xl text-orange-500"></i>
-                        </div>
-                        <span class="text-700 line-height-3">Your request for withdrawal of <span class="text-blue-500 font-medium">2500$</span> has been initiated.</span>
-                    </li>
-                </ul>
-
-                <span class="block text-600 font-medium mb-3">YESTERDAY</span>
-                <ul class="p-0 m-0 list-none">
-                    <li class="flex align-items-center py-2 border-bottom-1 surface-border">
-                        <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-100 border-circle mr-3 flex-shrink-0">
-                            <i class="pi pi-dollar text-xl text-blue-500"></i>
-                        </div>
-                        <span class="text-900 line-height-3"
-                            >Keyser Wick
-                            <span class="text-700">has purchased a black jacket for <span class="text-blue-500">59$</span></span>
-                        </span>
-                    </li>
-                    <li class="flex align-items-center py-2 border-bottom-1 surface-border">
-                        <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-pink-100 border-circle mr-3 flex-shrink-0">
-                            <i class="pi pi-question text-xl text-pink-500"></i>
-                        </div>
-                        <span class="text-900 line-height-3"
-                            >Jane Davis
-                            <span class="text-700">has posted a new questions about your product.</span>
-                        </span>
-                    </li>
-                </ul>
             </div>
+
+            <span class="block text-600 font-medium mb-3">TODAY</span>
+            <ul class="p-0 mx-0 mt-0 mb-4 list-none">
+                <li class="flex align-items-center py-2 border-bottom-1 surface-border">
+                    <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-100 border-circle mr-3 flex-shrink-0">
+                        <i class="pi pi-dollar text-xl text-blue-500"></i>
+                    </div>
+                    <span class="text-900 line-height-3"
+                        >Richard Jones
+                        <span class="text-700">has purchased a blue t-shirt for <span class="text-blue-500">79$</span></span>
+                    </span>
+                </li>
+                <li class="flex align-items-center py-2">
+                    <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-orange-100 border-circle mr-3 flex-shrink-0">
+                        <i class="pi pi-download text-xl text-orange-500"></i>
+                    </div>
+                    <span class="text-700 line-height-3">Your request for withdrawal of <span class="text-blue-500 font-medium">2500$</span> has been initiated.</span>
+                </li>
+            </ul>
+
+            <span class="block text-600 font-medium mb-3">YESTERDAY</span>
+            <ul class="p-0 m-0 list-none">
+                <li class="flex align-items-center py-2 border-bottom-1 surface-border">
+                    <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-100 border-circle mr-3 flex-shrink-0">
+                        <i class="pi pi-dollar text-xl text-blue-500"></i>
+                    </div>
+                    <span class="text-900 line-height-3"
+                        >Keyser Wick
+                        <span class="text-700">has purchased a black jacket for <span class="text-blue-500">59$</span></span>
+                    </span>
+                </li>
+                <li class="flex align-items-center py-2 border-bottom-1 surface-border">
+                    <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-pink-100 border-circle mr-3 flex-shrink-0">
+                        <i class="pi pi-question text-xl text-pink-500"></i>
+                    </div>
+                    <span class="text-900 line-height-3"
+                        >Jane Davis
+                        <span class="text-700">has posted a new questions about your product.</span>
+                    </span>
+                </li>
+            </ul>
+        </div> -->
             <div class="card">
                 <div class="flex align-items-center justify-content-between mb-4">
-                    <h5>Configurar Dashboard</h5>
+                    <h5>Padrões do Dashboard</h5>
                 </div>
                 <div class="flex justify-content-end mb-5">
                     <div class="flex flex-column gap-2">
@@ -577,19 +649,29 @@ onMounted(() => {
                         <small id="username-help">Selecione acima o período desejado para apresentar os resultados nesta tela.</small>
                     </div>
                 </div>
-            </div>
-            <!-- <div
-                class="px-4 py-5 shadow-2 flex flex-column md:flex-row md:align-items-center justify-content-between mb-3"
-                style="border-radius: 1rem; background: linear-gradient(0deg, rgba(0, 123, 255, 0.5), rgba(0, 123, 255, 0.5)), linear-gradient(92.54deg, #1c80cf 47.88%, #ffffff 100.01%)"
-            >
-                <div>
-                    <div class="text-gray-100 font-medium text-xl mt-2 mb-3">TAKE THE NEXT STEP</div>
-                    <div class="text-white font-medium text-5xl">Try PrimeBlocks</div>
+                <!-- <div class="flex justify-content-end mb-5">
+                <div class="flex flex-column gap-2">
+                    <label for="recent_sales_rows" style="text-align: end">Vendas Recentes</label>
+                    <div class="p-inputgroup justify-content-end">
+                        <Button icon="pi pi-minus" outlined severity="warning" @click="applyBiRecentSales('less')" />
+                        <span disabled v-html="biData.recentSales.rows" class="p-inputtext p-component max-w-max" />
+                        <Button icon="pi pi-plus" outlined severity="success" @click="applyBiRecentSales('plus')" />
+                    </div>
+                    <small id="username-help">Selecione acima a quantidade de vendas recentes a serem apresentadas nesta tela.</small>
                 </div>
-                <div class="mt-4 mr-auto md:mt-0 md:mr-0">
-                    <a href="https://www.primefaces.org/primeblocks-vue" class="p-button font-bold px-5 py-3 p-button-warning p-button-rounded p-button-raised"> Get Started </a>
+            </div>
+            <div class="flex justify-content-end mb-5">
+                <div class="flex flex-column gap-2">
+                    <label for="recent_sales_rows" style="text-align: end">Produtos mais vendidos</label>
+                    <div class="p-inputgroup justify-content-end">
+                        <Button icon="pi pi-minus" outlined severity="warning" @click="applyBiTopSeilling('less')" />
+                        <span disabled v-html="biData.recentSales.rows" class="p-inputtext p-component max-w-max" />
+                        <Button icon="pi pi-plus" outlined severity="success" @click="applyBiTopSeilling('plus')" />
+                    </div>
+                    <small id="username-help">Selecione acima a quantidade de produtos mais vendidos a serem apresentadas nesta tela.</small>
                 </div>
             </div> -->
+            </div>
         </div>
     </div>
 </template>

@@ -29,7 +29,7 @@ module.exports = app => {
         if (value < 0.01) throw msg
     }
 
-    function IntegerOrError(value, msg) {
+    function integerOrError(value, msg) {
         if (!value) throw msg
         if (value.isNan) throw msg
         if (!Number.isInteger(value)) throw msg
@@ -38,14 +38,14 @@ module.exports = app => {
     function valueMinorOrError(valueMinor, value, msg) {
         valueOrError(value, msg)
         valueOrError(valueMinor, msg)
-        IntegerOrError(value, msg)
+        integerOrError(value, msg)
         if (valueMinor > value) throw msg
     }
 
     function valueMajorOrError(valueMajor, value, msg) {
         valueOrError(value, msg)
         valueOrError(valueMajor, msg)
-        IntegerOrError(value, msg)
+        integerOrError(value, msg)
         if (valueMajor < value) throw msg
     }
 
@@ -78,7 +78,7 @@ module.exports = app => {
     const noAccessMsg = 'Ops!!! Parece que seu perfil não dá acesso a essa operação'
 
     return {
-        cpfOrError, cnpjOrError, lengthOrError, existsOrError, booleanOrError, valueOrError, IntegerOrError,
+        cpfOrError, cnpjOrError, lengthOrError, existsOrError, booleanOrError, valueOrError, integerOrError,
         valueMinorOrError, valueMajorOrError,
         notExistsOrError, equalsOrError, diffOrError, isMatchOrError, emailOrError, noAccessMsg
     }
