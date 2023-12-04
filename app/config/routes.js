@@ -10,7 +10,7 @@ module.exports = app => {
      */
     app.route('/s-c/sncs')
         .all(app.config.passport.authenticate())
-        .post(app.api.control_db_schemas.creatClientSchema)
+        .post(app.api.controll_db_schemas.creatClientSchema)
 
     /**
      * Exibição ou captura de ativos do sistema
