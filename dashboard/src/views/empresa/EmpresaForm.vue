@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
+// Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -28,10 +29,6 @@ const route = useRoute();
 
 import { useRouter } from 'vue-router';
 const router = useRouter();
-
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
 
 // Validar o cpf_cnpj
 import { cpf, cnpj } from 'cpf-cnpj-validator';
@@ -91,7 +88,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/empresa` });
+                router.push({ path: `/${userData.cliente}/empresa` });
             }
         });
     } else loading.value.form = false;
@@ -112,10 +109,6 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     reload();
-                    // itemData.value = body;
-                    // itemDataComparision.value = { ...itemData.value };
-                    // if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/empresa/${itemData.value.id}` });
-                    // mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
                 }
@@ -278,7 +271,7 @@ const onImageRightClick = (event) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.cliente}/${userData.dominio}/empresa` }, { label: itemData.razaosocial + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.cliente}/empresa` }, { label: itemData.razaosocial + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

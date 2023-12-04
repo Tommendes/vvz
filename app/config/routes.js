@@ -6,6 +6,13 @@ module.exports = app => {
     app.post('/validateToken', app.api.auth.validateToken)
 
     /**
+     * Schemas Controll
+     */
+    app.route('/s-c/sncs')
+        .all(app.config.passport.authenticate())
+        .post(app.api.control_db_schemas.creatClientSchema)
+
+    /**
      * Exibição ou captura de ativos do sistema
      */
     app.route('/asset')

@@ -5,13 +5,16 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import RegistroForm from './RegistroForm.vue';
 const confirm = useConfirm();
 
-const store = useUserStore();
+// Cookies do usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
 const router = useRouter();
 const filters = ref(null);
 const menu = ref();
@@ -42,10 +45,9 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-	{ field: 'tipoDocumento', label:'Tipo de Documento', minWidth: '25rem' },
-	{ field: 'doc_fiscal', label:'Nota fiscal', minWidth: '25rem' },
-	{ field: 'situacao', label:'Situacao do Registro', minWidth: '25rem' }
-
+    { field: 'tipoDocumento', label: 'Tipo de Documento', minWidth: '25rem' },
+    { field: 'doc_fiscal', label: 'Nota fiscal', minWidth: '25rem' },
+    { field: 'situacao', label: 'Situacao do Registro', minWidth: '25rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -63,7 +65,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/registro/${itemData.value.id}` });
+            router.push({ path: `/${userData.cliente}/registro/${itemData.value.id}` });
         }
     },
     {
@@ -84,8 +86,7 @@ const loadData = () => {
     loading.value = true;
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        gridData.value.forEach((element) => {
-        });
+        gridData.value.forEach((element) => {});
         loading.value = false;
     });
 };

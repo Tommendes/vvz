@@ -237,7 +237,7 @@ watchEffect(() => {
                         type="button"
                         icon="pi pi-bars"
                         rounded
-                        @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/produto/${data.id}` })"
+                        @click="router.push({ path: `/${userData.cliente}/produto/${data.id}` })"
                         aria-haspopup="true"
                         v-tooltip.left="'Clique para mais opções'"
                         aria-controls="overlay_menu"

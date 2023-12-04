@@ -5,13 +5,16 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import ParamForm from './ParamForm.vue';
 const confirm = useConfirm();
 
-const store = useUserStore();
+// Cookies do usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
 const router = useRouter();
 const filters = ref(null);
 const menu = ref();
@@ -61,7 +64,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pipeline-param/${itemData.value.id}` });
+            router.push({ path: `/${userData.cliente}/pipeline-param/${itemData.value.id}` });
         }
     },
     {

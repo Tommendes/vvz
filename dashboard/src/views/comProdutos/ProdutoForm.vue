@@ -15,10 +15,6 @@ import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
-
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
@@ -85,7 +81,7 @@ const loadData = async () => {
                     editCadastro.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/produtos` });
+                    router.push({ path: `/${userData.cliente}/produtos` });
                 }
             });
         }
@@ -467,7 +463,7 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os produtos', to: `/${userData.cliente}/${userData.dominio}/produtos` }, { label: itemData.nome_comum + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os produtos', to: `/${userData.cliente}/produtos` }, { label: itemData.nome_comum + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

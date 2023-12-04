@@ -6,7 +6,7 @@ const userData = JSON.parse(json);
 
 const home = ref({
     icon: 'pi pi-home',
-    to: `/${userData.cliente}/${userData.dominio}`
+    to: `/${userData.cliente}`
 });
 const pilha = defineProps(['items']);
 </script>

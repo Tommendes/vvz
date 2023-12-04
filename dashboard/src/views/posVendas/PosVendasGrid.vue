@@ -5,12 +5,12 @@ import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
 import PosVendaForm from './PosVendaForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
-import { removeHtmlTags, userKey } from '@/global';
+import { removeHtmlTags } from '@/global';
+
+// Cookies do usuário
+import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
-
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
 
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
@@ -163,7 +163,7 @@ const exportCSV = () => {
 };
 const goField = (data) => {
     idPv.value = data.id;
-    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pos-venda/${data.id}` });
+    router.push({ path: `/${userData.cliente}/pos-venda/${data.id}` });
 };
 watchEffect(() => {
     mountUrlFilters();

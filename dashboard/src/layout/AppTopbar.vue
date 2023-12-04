@@ -47,7 +47,7 @@ const items = ref([
                 .post(urlRequestRequestPassReset.value, { cpf: userData.cpf })
                 .then((body) => {
                     if (body.data.id) {
-                        router.push({ path: `/${userData.cliente}/${userData.dominio}/password-reset`, query: { q: body.data.id } });
+                        router.push({ path: `/${userData.cliente}/password-reset`, query: { q: body.data.id } });
                         defaultSuccess(body.data.msg);
                     } else defaultWarn('Ops! Parece que houve um erro ao executar sua solicitação. Por favor tente de novo');
                 })

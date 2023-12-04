@@ -3,10 +3,8 @@ import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { userKey, isValidEmail } from '@/global';
+import { isValidEmail } from '@/global';
 import moment from 'moment';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
@@ -29,9 +27,10 @@ const route = useRoute();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+// Cookies do usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -82,7 +81,7 @@ const loadData = async () => {
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/prospeccoes` });
+                    router.push({ path: `/${userData.cliente}/prospeccoes` });
                 }
             });
         } else loading.value = false;
@@ -107,12 +106,12 @@ const saveData = async () => {
                     emit('changed');
                     if (route.name != 'cadastro' && mode.value == 'new') {
                         router.push({
-                            path: `/${userData.cliente}/${userData.dominio}/prospeccao/${itemData.value.id}`
+                            path: `/${userData.cliente}/prospeccao/${itemData.value.id}`
                         });
                         loadData();
                     } else if (route.name != 'cadastro' && id != itemData.value.id) {
                         router.push({
-                            path: `/${userData.cliente}/${userData.dominio}/prospeccao/${itemData.value.id}`
+                            path: `/${userData.cliente}/prospeccao/${itemData.value.id}`
                         });
                         loadData();
                     } else reload();
@@ -324,7 +323,7 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Prospecções', to: `/${userData.cliente}/${userData.dominio}/prospeccoes` }, { label: itemData.nome + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Prospecções', to: `/${userData.cliente}/prospeccoes` }, { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

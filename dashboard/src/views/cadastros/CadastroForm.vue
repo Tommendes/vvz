@@ -88,7 +88,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastros` });
+                router.push({ path: `/${userData.cliente}/cadastros` });
             }
         });
     } else loading.value.form = false;
@@ -113,8 +113,8 @@ const saveData = async () => {
                     itemDataComparision.value = { ...itemData.value };
                     emit('changed');
                     // if (mode.value != 'new') reload();
-                    // else router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastro/${itemData.value.id}` });
-                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastro/${itemData.value.id}` });
+                    // else router.push({ path: `/${userData.cliente}/cadastro/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/cadastro/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');

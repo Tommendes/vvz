@@ -299,7 +299,7 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastro/${data.id}` })" title="Clique para mais opções" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="router.push({ path: `/${userData.cliente}/cadastro/${data.id}` })" title="Clique para mais opções" />
                 </template>
             </Column>
         </DataTable>

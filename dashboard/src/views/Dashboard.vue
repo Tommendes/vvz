@@ -227,7 +227,7 @@ const getPedidosLastBi = async () => {
 };
 
 const irRecentSale = (id) => {
-    window.open(`/${userData.cliente}/${userData.dominio}/pipeline/${id}`, '_blank');
+    window.open(`/${userData.cliente}/pipeline/${id}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
@@ -370,7 +370,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.cliente}/${userData.dominio}/cadastros`" v-tooltip.top="'Clique para seguir'">Cadastros</router-link>
+                            <router-link :to="`/${userData.cliente}/cadastros`" v-tooltip.top="'Clique para seguir'">Cadastros</router-link>
                         </span>
                         <Skeleton v-if="biData.cadastros.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.cadastros.total }}</div>
@@ -396,7 +396,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.cliente}/${userData.dominio}/prospeccoes`" v-tooltip.top="'Clique para seguir'">Visitas</router-link>
+                            <router-link :to="`/${userData.cliente}/prospeccoes`" v-tooltip.top="'Clique para seguir'">Visitas</router-link>
                         </span>
                         <Skeleton v-if="biData.prospectos.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.prospectos.total }}</div>
@@ -422,7 +422,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.cliente}/${userData.dominio}/pipeline?tpd=1`" v-tooltip.top="'Clique para seguir'">Propostas</router-link>
+                            <router-link :to="`/${userData.cliente}/pipeline?tpd=1`" v-tooltip.top="'Clique para seguir'">Propostas</router-link>
                         </span>
                         <Skeleton v-if="biData.propostas.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.propostas.total }}</div>
@@ -448,7 +448,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.cliente}/${userData.dominio}/pipeline?tpd=2`" v-tooltip.top="'Clique para seguir'">Pedidos</router-link>
+                            <router-link :to="`/${userData.cliente}/pipeline?tpd=2`" v-tooltip.top="'Clique para seguir'">Pedidos</router-link>
                         </span>
                         <Skeleton v-if="biData.pedidos.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.pedidos.total }}</div>

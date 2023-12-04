@@ -37,7 +37,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.cliente}/${userData.dominio}/com-prop-compos/35/${itemData.value.id}` });
+    router.push({ path: `/${userData.cliente}/com-prop-compos/35/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;

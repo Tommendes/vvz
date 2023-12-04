@@ -58,7 +58,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline-params` });
+                router.push({ path: `/${userData.cliente}/pipeline-params` });
             }
         });
     } else loading.value.form = false;
@@ -76,7 +76,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/${userData.dominio}/pipeline-params/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/pipeline-params/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -208,7 +208,7 @@ const items = ref([
 ]);
 </script>
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/${userData.dominio}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

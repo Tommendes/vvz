@@ -74,7 +74,7 @@ const loadData = async () => {
                 itemData.value = body;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/${userData.dominio}/cadastros` });
+                router.push({ path: `/${userData.cliente}/cadastros` });
             }
         });
     }

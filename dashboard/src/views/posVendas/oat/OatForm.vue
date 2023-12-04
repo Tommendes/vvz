@@ -66,7 +66,7 @@ const loadData = async () => {
                 await listStatusRegistro();
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/${userData.dominio}/pos-venda` });
+                router.push({ path: `/${userData.cliente}/pos-venda` });
             }
         });
     } else {
@@ -432,7 +432,7 @@ onMounted(() => {
                             style="color: #a97328"
                             text
                             raised
-                            @click="openInNewTab(`/${userData.cliente}/${userData.dominio}/cadastro/${dialogRef.data.idCadastro}`)"
+                            @click="openInNewTab(`/${userData.cliente}/cadastro/${dialogRef.data.idCadastro}`)"
                         />
                         <Button
                             label="Finalizar Oat"

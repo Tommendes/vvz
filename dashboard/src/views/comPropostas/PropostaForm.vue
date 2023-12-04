@@ -3,6 +3,8 @@ import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
+
+// Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -14,10 +16,6 @@ const route = useRoute();
 
 import { useRouter } from 'vue-router';
 const router = useRouter();
-
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -54,11 +52,11 @@ const loadData = async () => {
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };            
+                    itemDataComparision.value = { ...itemData.value };
                     loading.value = false;
                 } else {
                     defaultWarn('Proposta não localizada');
-                    router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/propostas` });
+                    router.push({ path: `/${userData.cliente}/propostas` });
                 }
             });
         } else loading.value = false;
@@ -76,7 +74,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    emit('changed');                    
+                    emit('changed');
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -129,57 +127,57 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as propostas', to: `/${userData.cliente}/${userData.dominio}/propostas` }, { label: itemData.pessoa_contato + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as propostas', to: `/${userData.cliente}/propostas` }, { label: itemData.pessoa_contato + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
-            <div class="grid">  
+            <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-3">
                             <label for="id_pipeline">Tipo</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pipeline" id="id_pipeline" type="text"/>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pipeline" id="id_pipeline" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="pessoa_contato">Contato</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text"/>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="telefone_contato">Telefone</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.telefone_contato" id="telefone_contato" type="text"/>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="email_contato">Email</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text"/>
-                        </div>                        
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
+                        </div>
                         <div class="col-12 md:col-3">
                             <label for="desconto_ativo">Desconto Ativo</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_ativo" id="desconto_ativo" type="text"/>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_ativo" id="desconto_ativo" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="desconto_total">Desconto Total</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text"/>
-                        </div>                        
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text" />
+                        </div>
                         <div class="col-12 md:col-3">
                             <label for="prz_entrega">Prazo de Entrega</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.prz_entrega" id="prz_entrega" type="text"/>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.prz_entrega" id="prz_entrega" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="forma_pagto">Forma de Pagamento</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.forma_pagto" id="forma_pagto" type="text"/>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.forma_pagto" id="forma_pagto" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="validade_prop">Validade da Proposta</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.validade_prop" id="validade_prop" type="text"/>
-                        </div>                        
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.validade_prop" id="validade_prop" type="text" />
+                        </div>
                         <!-- <div class="col-12 md:col-3">
                             <label for="old_id">old_id</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>

@@ -4,9 +4,6 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
@@ -23,9 +20,10 @@ const route = useRoute();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
-// Cookies de usuário
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
+// Cookies do usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 // Campos de formulário
 const itemData = ref({});
@@ -52,7 +50,7 @@ const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-        
+
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -65,7 +63,7 @@ const loadData = async () => {
                 loading.value = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/pv-tecnicos` });
+                router.push({ path: `/${userData.cliente}/pv-tecnicos` });
             }
         });
     } else loading.value = false;
@@ -84,7 +82,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${store.userStore.cliente}/${store.userStore.dominio}/tecnico-pv/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/tecnico-pv/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -131,8 +129,7 @@ const reload = () => {
     emit('cancel');
 };
 // Carregar dados do formulário
-onBeforeMount(() => {
-});
+onBeforeMount(() => {});
 onMounted(() => {
     loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -148,7 +145,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: `/${userData.cliente}/${userData.dominio}/tecnicos-pv` }, { label: itemData.tecnico + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: `/${userData.cliente}/tecnicos-pv` }, { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
