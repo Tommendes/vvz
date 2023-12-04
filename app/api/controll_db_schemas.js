@@ -7,8 +7,8 @@ module.exports = app => {
 
     const dbConfig = {
         host: db.host,
-        user: 'vivazul_ger3nci1d0r',
-        password: 's3nh@ 1t1lizad@ pa4a gerenciar',
+        user: db.user,
+        password: db.password,
         database: db.database,
     };
 
@@ -37,10 +37,8 @@ module.exports = app => {
             await queryAsync(connection, `CREATE DATABASE ${schemaNameAndUser};`);
             // Conecte-se ao novo banco de dados
             await queryAsync(connection, `USE ${schemaNameAndUser};`);
-            // Crie um novo usuário para o banco de dados
-            await queryAsync(connection, `CREATE USER '${schemaNameAndUser}'@'${dbConfig.publicIp}' IDENTIFIED BY '${dbConfig.password}';`);
             // Conceda privilégios CRUD ao usuário no banco de dados
-            await queryAsync(connection, `GRANT SELECT, INSERT, UPDATE, DELETE ON ${schemaNameAndUser}.* TO '${schemaNameAndUser}'@'${dbConfig.publicIp}';`);
+            await queryAsync(connection, `GRANT SELECT, INSERT, UPDATE, DELETE ON ${dbConfig.user}.* TO '${schemaNameAndUser}'@'${dbConfig.publicIp}';`);
             await queryAsync(connection, `FLUSH PRIVILEGES;`);
 
             return res.send(`Schema and user created with name ${schemaNameAndUser}`);
