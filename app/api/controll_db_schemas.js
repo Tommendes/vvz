@@ -30,8 +30,7 @@ module.exports = app => {
 
         const schemaNameAndUser = body.schema_name || dbPrefix + '_' + crypto.randomBytes(3).toString('hex');
         dbConfig.publicIp = req.socket.remoteAddress || req.connection.remoteAddress || req.headers['x-forwarded-for'] || req.connection.socket.remoteAddress;
-        dbConfig.publicIp = body.userHost || dbConfig.publicIp || '162.214.208.90';
-        console.log('dbConfig: ', dbConfig);
+        dbConfig.publicIp = body.userHost || dbConfig.publicIp;
 
         try {
             // Crie um banco de dados
