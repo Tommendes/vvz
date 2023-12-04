@@ -854,7 +854,7 @@ module.exports = app => {
 
         const f_folha = new Date()
 
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         // Variáveis da edição de um registro
         // registrar o evento na tabela de eventos
         const { createEventUpd } = app.api.sisEvents
@@ -905,7 +905,7 @@ module.exports = app => {
     const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             if (!(uParams && (uParams.admin + uParams.gestor) >= 1)) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
@@ -980,7 +980,7 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         if (req.user.id != req.params.id || !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         app.db({ us: tabela })
             .select("us.name", "us.cpf", "us.email", "us.telefone", "us.cliente", "us.dominio",
@@ -1041,7 +1041,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.admin >= 2, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
@@ -1102,7 +1102,7 @@ module.exports = app => {
 
     const getByField = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`

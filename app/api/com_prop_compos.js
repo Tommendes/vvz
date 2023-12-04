@@ -10,7 +10,7 @@ module.exports = app => {
 
     const save = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
@@ -126,7 +126,7 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.at >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
@@ -153,7 +153,7 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.at >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
@@ -178,7 +178,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.at >= 4 || uParams.comercial >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
@@ -239,7 +239,7 @@ module.exports = app => {
 
     const getByField = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
@@ -279,7 +279,7 @@ module.exports = app => {
 
     const getListByField = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
@@ -319,7 +319,7 @@ module.exports = app => {
 
     const setReorderComposNr = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let body = { ...req.body }
 
         try {

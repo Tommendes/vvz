@@ -8,7 +8,7 @@ module.exports = app => {
 
     const save = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
         try {
@@ -107,7 +107,7 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
@@ -137,7 +137,7 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
@@ -166,7 +166,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)

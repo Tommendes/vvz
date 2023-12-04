@@ -9,7 +9,7 @@ module.exports = app => {
 
     const save = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
@@ -110,7 +110,7 @@ module.exports = app => {
 
     const getByField = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
@@ -149,7 +149,7 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
@@ -199,7 +199,7 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
@@ -222,7 +222,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
