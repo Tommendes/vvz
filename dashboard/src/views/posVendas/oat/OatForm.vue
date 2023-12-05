@@ -425,7 +425,7 @@ onMounted(() => {
                     <div v-if="mode != 'edit'">
                         <hr />
                         <Button
-                            label="Ir para o Cadastro"
+                            label="Ir ao Cadastro"
                             type="button"
                             class="w-full mb-3"
                             :icon="`fa-regular fa-address-card fa-shake`"

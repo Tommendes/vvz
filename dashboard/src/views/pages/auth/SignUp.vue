@@ -30,7 +30,11 @@ const logoUrl = computed(() => {
 const signup = async () => {
     if (cpf.value) {
         click.value = true;
-        const userFound = await findUserSignUp(cpf.value);
+        const userFound =
+            (await findUserSignUp(cpf.value).catch((error) => {
+                defaultWarn(error.response.data.msg);
+                click.value = false;
+            })) || undefined;
         // Se preencheu todos os dados obrigatórios
         if (!!cpf.value && !!name.value && !!celular.value && !!password.value && !!confirmPassword.value) {
             axios
@@ -52,11 +56,11 @@ const signup = async () => {
                     }
                 })
                 .catch((error) => {
-                    return defaultWarn(error.response.data.msg);
+                    defaultWarn(error.response.data.msg);
                 });
         }
         // #3 - Se não tem perfil e não é localizado nos schemas dos clientes todos os dados tornam-se obrigatórios exceto o id
-        else if (userFound.data.isNewUser) {
+        else if (userFound & userFound.data && userFound.data.isNewUser) {
             isNewUser.value = true;
             canEditData.value = true;
             defaultInfo(userFound.data.msg);
@@ -178,8 +182,8 @@ const findUserSignUp = async () => {
 
                         <div class="flex align-items-center justify-content-between mb-2">
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button>
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')"> Esqueceu a senha? </Button>
+                            <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')"> Recuperar a senha? </Button>
                         </div>
                         <Button rounded label="Registrar" icon="pi pi-sign-in" :loading="click" :disabled="!cpf" type="submit" class="w-full p-3 text-xl"></Button>
                     </form>

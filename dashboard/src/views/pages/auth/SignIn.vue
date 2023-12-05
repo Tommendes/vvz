@@ -85,8 +85,8 @@ const signin = async () => {
 
                         <div class="flex align-items-center justify-content-between mb-2">
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signup')"> Acessar </Button>
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button>
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')"> Esqueceu a senha? </Button>
+                            <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')"> Recuperar a senha? </Button>
                         </div>
                         <Button rounded label="Acessar" icon="pi pi-sign-in" :loading="click" :disabled="!email" type="submit" class="w-full p-3 text-xl"></Button>
                     </form>

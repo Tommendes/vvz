@@ -51,20 +51,20 @@ const loading = ref(true);
 const dropdownAgentes = ref([]);
 const dropdownEnderecos = ref([]);
 // Props do template
-const props = defineProps({
-    mode: String
-});
+const props = defineProps(['mode', 'idRegs', 'idCadastro']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/com-prospeccoes`);
+// Itens do breadcrumb
+const breadItems = ref([{ label: 'Todas as Prospecções', to: `/${userData.schema_description}/prospeccoes` }]);
 // Carragamento de dados do form
 const loadData = async () => {
-    setTimeout(async () => {
-        if (route.params.id || itemData.value.id) {
-            if (route.params.id) itemData.value.id = route.params.id;
-            const url = `${urlBase.value}/${itemData.value.id}`;
-
+    loading.value = true;
+    const id = props.idRegs || route.params.id;
+    const url = `${urlBase.value}/${id}`;
+    if (mode.value != 'new') {
+        setTimeout(async () => {
             await axios.get(url).then(async (res) => {
                 const body = res.data;
                 if (body && body.id) {
@@ -72,23 +72,33 @@ const loadData = async () => {
                     itemData.value = body;
                     body.id_cad_end = String(body.id_cad_end);
                     if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
+                    breadItems.value.push({ label: itemData.value.nome + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
+                    if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
+                    await listAgentes();
+                    await loadEnderecos();
                     await getNomeCliente();
-                    itemDataComparision.value = { ...itemData.value };
+                    editCadastro.value = false;
                     selectedCadastro.value = {
                         code: itemData.value.id_cadastros,
                         name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
                     };
-                    loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
                     router.push({ path: `/${userData.schema_description}/prospeccoes` });
                 }
             });
-        } else loading.value = false;
+        }, Math.random() * 1000 + 250);
+    } else if (props.idCadastro) {
+        itemData.value.id_cadastros = props.idCadastro;
+        selectedCadastro.value = {
+            code: itemData.value.id_cadastros,
+            name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+        };
         await listAgentes();
         await loadEnderecos();
         await getNomeCliente();
-    }, Math.random() * 1000 + 250);
+    }
+    loading.value = false;
 };
 const saveData = async () => {
     if (formIsValid()) {
@@ -323,7 +333,7 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Prospecções', to: `/${userData.schema_description}/prospeccoes` }, { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="breadItems" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -332,75 +342,64 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-3">
                             <label for="id_agente">Agente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown
-                                v-else
-                                id="id_agente"
-                                :disabled="mode == 'view'"
-                                :showClear="!!itemData.id_agente"
-                                optionLabel="label"
-                                placeholder="Selecione um agente"
-                                optionValue="value"
-                                v-model="itemData.id_agente"
-                                :options="dropdownAgentes"
-                            />
+                            <Dropdown v-else id="id_agente" :disabled="mode == 'view'" :showClear="!!itemData.id_agente"
+                                optionLabel="label" placeholder="Selecione um agente" optionValue="value"
+                                v-model="itemData.id_agente" :options="dropdownAgentes" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="data_visita">Data da Visita</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.data_visita">{{ errorMessages.data_visita }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####"
+                                v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.data_visita">{{
+                                errorMessages.data_visita }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="periodo">Período da Visita</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="periodo" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.periodo" :options="dropdownPeriodo" />
+                            <Dropdown v-else id="periodo" :disabled="mode == 'view'" placeholder="Selecione o período"
+                                optionLabel="label" optionValue="value" v-model="itemData.periodo"
+                                :options="dropdownPeriodo" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pessoa">Pessoa Contatada</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa"
+                                id="pessoa" type="text" />
                         </div>
                         <div class="col-12 md:col-3 contato">
                             <label for="contato">Contato</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.contato">{{ errorMessages.contato }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato"
+                                id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.contato">{{ errorMessages.contato
+                            }}</small>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="id_cadastros">Cadastro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete
                                 v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
-                                v-model="selectedCadastro"
-                                optionLabel="name"
-                                :suggestions="filteredCadastros"
-                                @complete="searchCadastros"
-                                forceSelection
-                            />
+                                v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros"
+                                @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')"
+                                    :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="id_cad_end">Endereço</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown
-                                v-else
-                                id="id_cad_end"
-                                :disabled="mode == 'view'"
-                                :showClear="!!itemData.id_cad_end"
-                                optionLabel="label"
-                                placeholder="Selecione um endereço"
-                                optionValue="value"
-                                v-model="itemData.id_cad_end"
-                                :options="dropdownEnderecos"
-                            />
+                            <Dropdown v-else id="id_cad_end" :disabled="mode == 'view'" :showClear="!!itemData.id_cad_end"
+                                optionLabel="label" placeholder="Selecione um endereço" optionValue="value"
+                                v-model="itemData.id_cad_end" :options="dropdownEnderecos" />
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
                             <label for="observacoes">Observações</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes" id="observacoes"
+                                editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacoes" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
@@ -414,9 +413,12 @@ watch(selectedCadastro, (value) => {
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar"
+                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text
+                            raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text
+                            raised @click="reload" />
                     </div>
                 </div>
             </div>

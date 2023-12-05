@@ -13,8 +13,9 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -27,8 +28,12 @@ const masks = ref({
 });
 
 const urlBase = ref(`${baseApiUrl}/com-prospeccoes`);
+const props = defineProps(['idCadastro']);
+const idRegs = ref(null); // Id do registro selecionado
 
 onBeforeMount(() => {
+    // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
+    if (props.idCadastro) listaNomes.value.shift();
     // Inicializa os filtros do grid
     initFilters();
 });
@@ -139,9 +144,9 @@ const mountUrlFilters = () => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
+    if (props.idCadastro) url += `field:tbl1.id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = url;
 };
-const menu = ref();
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
     const toExport = dt.value;
@@ -152,15 +157,29 @@ const exportCSV = () => {
     });
     toExport.exportCSV();
 };
+const goField = (data) => {
+    idRegs.value = data.id;
+    router.push({ path: `/${userData.schema_description}/prospeccao/${data.id}` });
+};
 watchEffect(() => {
     mountUrlFilters();
 });
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Registros' }]" />
-    <div class="card" style="min-width: 100rem">
-        <ProspeccaoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções' }]" />
+    <div class="card" :style="route.name == 'prospeccoes' ? 'min-width: 100rem' : ''">
+        <ProspeccaoForm
+            :mode="mode"
+            :idCadastro="props.idCadastro"
+            :idRegs="idRegs"
+            @changed="loadLazyData()"
+            @cancel="
+                mode = 'grid';
+                idRegs = undefined;
+            "
+            v-if="mode == 'new' || idRegs"
+        />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -183,21 +202,8 @@ watchEffect(() => {
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
         >
-            <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <!-- <Dropdown
-                        filter
-                        placeholder="Filtrar por Área de Atuação..."
-                        :showClear="areaAtuacao"
-                        style="min-width: 200px"
-                        id="areaAtuacao"
-                        optionLabel="label"
-                        optionValue="value"
-                        v-model="areaAtuacao"
-                        :options="dropdownAtuacao"
-                        @change="loadLazyData()"
-                    /> -->
                     <Button v-if="userData.gestor" icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
@@ -243,8 +249,7 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.schema_description}/prospeccao/${data.id}` })" aria-haspopup="true" v-tooltip.left="'Clique para mais opções'" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>
