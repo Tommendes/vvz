@@ -27,8 +27,8 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
 
         const pipeline_params_force = body.pipeline_params_force
 
@@ -245,10 +245,10 @@ module.exports = app => {
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
-        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
 
         let queryes = undefined
         let query = undefined
@@ -384,7 +384,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id })
@@ -410,8 +410,8 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const registro = { status: req.query.st || STATUS_DELETE }
         try {
             // Variáveis da edição de um registro            
@@ -525,8 +525,8 @@ module.exports = app => {
         const doc_venda = req.query.doc_venda
 
         const first = req.query.first && req.params.first == true
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const ret = app.db({ tbl1: tabelaDomain })
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
 
@@ -571,8 +571,8 @@ module.exports = app => {
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
         const biPeriodDv = req.query.periodDv || 2
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.pipeline_params`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
         try {
             const total = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
                 .join({ pp: tabelaParamsDomain }, function () {
@@ -611,9 +611,9 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
         const rows = req.query.rows || 5
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
@@ -665,9 +665,9 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
@@ -728,9 +728,9 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
@@ -795,9 +795,9 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
@@ -856,9 +856,9 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biSalesOverview = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`DATE_FORMAT(ps.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))

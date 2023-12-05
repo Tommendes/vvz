@@ -201,7 +201,8 @@ module.exports = app => {
 
         const sql = app.db({ se: tabelaSisEvents }).select(app.db.raw('count(*) as count'))
             .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
-            .where({ 'us.dominio': uParams.dominio, 'us.cliente': uParams.cliente })
+            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+            .where({ 'sc.schema_description': user.cliente })
             .where(function () {
                 this.where('se.evento', 'like', `%${key}%`)
                     .orWhere('us.name', 'like', `%${key}%`)
@@ -216,8 +217,9 @@ module.exports = app => {
         const ret = app.db({ se: tabelaSisEvents })
             .select({ id: 'se.id' }, { evento: 'se.evento' }, { created_at: 'se.created_at' }, { classevento: 'se.classevento' }, { tabela_bd: 'se.tabela_bd' }, { id_registro: 'se.id_registro' }, { user: 'us.name' },)
             .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
-            .limit(limit).offset(page * limit - limit)
-            .where({ 'us.dominio': uParams.dominio, 'us.cliente': uParams.cliente })
+            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+            .where({ 'sc.schema_description': user.cliente })
             .where(function () {
                 this.where('se.evento', 'like', `%${key}%`)
                     .orWhere('us.name', 'like', `%${key}%`)

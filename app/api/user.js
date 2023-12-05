@@ -124,6 +124,7 @@ module.exports = app => {
                     }
 
                 try {
+                    existsOrError(body.schema_id, 'Empresa não informada')
                     existsOrError(body.name, 'Nome não informado')
                     existsOrError(body.password, 'Senha não informada')
                     existsOrError(body.confirmPassword, 'Confirmação de Senha inválida')
@@ -145,8 +146,7 @@ module.exports = app => {
                 body.status = STATUS_WAITING
                 body.created_at = new Date()
                 body.telefone = body.celular
-                body.cliente = body.client
-                body.dominio = body.domain
+                body.schema_id = body.schema_id
 
                 try {
                     if (typeof isValidPassword(body.password) === 'string') throw isValidPassword(body.password)
@@ -871,7 +871,7 @@ module.exports = app => {
 
         app.api.logger.logInfo({ log: { line: `Alteração de perfil de usuário! Usuário: ${user.name}`, sConsole: true } })
 
-        const tabelaFinParamsDomain = `${dbPrefix}_${uParams.cliente}.${tabelaFinParametros}`
+        const tabelaFinParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFinParametros}`
         const mesAtual = f_folha.getMonth().toString().padStart(2, "0")
         let isMonth = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano, mes: user.f_mes }).first()
         if (!isMonth)
@@ -924,11 +924,7 @@ module.exports = app => {
             })
         if (uParams.multiCliente == 0) {
             // Não troca cliente nem domínio
-            sql.where({ 'us.cliente': uParams.cliente, 'us.dominio': uParams.dominio })
-        }
-        if (uParams.multiCliente >= 1) {
-            // Não troca cliente mas troca domínio
-            sql.where({ 'us.cliente': uParams.cliente })
+            sql.where({ 'us.schema_id': uParams.schema_id })
         }
         if (uParams.gestor < 1) {
             // Se não for gestor vÊ apenas seus registros
@@ -954,11 +950,7 @@ module.exports = app => {
             })
         if (uParams.multiCliente == 0) {
             // Não troca cliente nem domínio
-            ret.where({ 'us.cliente': uParams.cliente, 'us.dominio': uParams.dominio })
-        }
-        if (uParams.multiCliente >= 1) {
-            // Não troca cliente mas troca domínio
-            ret.where({ 'us.cliente': uParams.cliente })
+            ret.where({ 'us.schema_id': uParams.schema_id })
         }
         if (uParams.gestor < 1) {
             // Se não for gestor vÊ apenas seus registros

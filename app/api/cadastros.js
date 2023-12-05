@@ -22,7 +22,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
             existsOrError(body.cpf_cnpj, 'CNPJ ou CPF não informado')
@@ -389,7 +389,7 @@ module.exports = app => {
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         try {
             const ret = app.db(tabelaDomain)
             const total = await ret.count('id as count').where({ status: STATUS_ACTIVE }).first()

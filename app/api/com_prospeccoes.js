@@ -24,7 +24,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
             existsOrError(body.id_cadastros, 'Cadastro não informado')
@@ -116,9 +116,9 @@ module.exports = app => {
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
-        const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadEnderecos}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
+        const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadEnderecos}`
         let queryes = undefined
         let query = undefined
         let page = 0
@@ -241,9 +241,9 @@ module.exports = app => {
         }
 
         const tabelaUsers = `${dbPrefix}_api.users`
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
-        const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadEnderecos}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
+        const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadEnderecos}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.periodo, tbl1.pessoa, tbl1.contato, tbl1.data_visita,
                                  SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
@@ -271,7 +271,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
@@ -328,7 +328,7 @@ module.exports = app => {
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         try {
             const total = await app.db(tabelaDomain).count('id as count').where({ status: STATUS_ACTIVE }).first()
             let noPeriodo = { count: 0 }

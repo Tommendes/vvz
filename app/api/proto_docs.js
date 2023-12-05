@@ -22,8 +22,8 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         body.id_protocolos = req.params.id_protocolos
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
-        const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaProtocoloDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProtocolo}`
 
         if (typeof body.descricao === 'array') {
             body.descricao = body.descricao.join()
@@ -120,8 +120,8 @@ module.exports = app => {
         }
         
         const id_protocolos = req.params.id_protocolos
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaProtocoloDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProtocolo}`
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, tbl1.tp_documento, tbl1.descricao, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
@@ -149,7 +149,7 @@ module.exports = app => {
         }
 
         const id_protocolos = req.params.id_protocolos
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_protocolos': id_protocolos }).first()
@@ -173,7 +173,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
