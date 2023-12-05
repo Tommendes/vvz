@@ -60,6 +60,7 @@ module.exports = app => {
                                 return res.send(`Schema and user created with name ${schemaNameAndUser}`);
                             })
                             .catch((error) => {
+                                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                                 return res.status(500).send(error)
                             })
                     })
