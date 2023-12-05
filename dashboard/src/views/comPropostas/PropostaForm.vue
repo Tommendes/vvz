@@ -2,6 +2,7 @@
 import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
+import { isValidEmail } from '@/global';
 import { defaultSuccess, defaultWarn } from '@/toast';
 
 // Cookies do usuário
@@ -10,6 +11,13 @@ const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
+
+import { Mask } from 'maska';
+const masks = ref({
+    telefone: new Mask({
+        mask: ['(##) ####-####', '(##) #####-####']
+    })
+});
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -52,6 +60,7 @@ const loadData = async () => {
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
+                    if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.masked(itemData.value.telefone_contato);
                     itemDataComparision.value = { ...itemData.value };
                     loading.value = false;
                 } else {
@@ -67,6 +76,7 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
+        if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
         axios[method](url, itemData.value)
             .then(async (res) => {
                 const body = res.data;
@@ -100,9 +110,28 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
+// DropDown Desconto Ativo
+const dropdownDescontoAtivo = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+// Validar email
+const validateEmail = () => {
+    if (itemData.value.email_contato && itemData.value.email_contato.trim().length > 0 && !isValidEmail(itemData.value.email_contato)) {
+        errorMessages.value.email_contato = 'Formato de email inválido';
+    } else errorMessages.value.email_contato = null;
+    return !errorMessages.value.email_contato;
+};
+// Validar telefone
+const validateTelefone = () => {
+    if (itemData.value.telefone_contato && itemData.value.telefone_contato.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone_contato).length)) {
+        errorMessages.value.telefone_contato = 'Formato de telefone inválido';
+    } else errorMessages.value.telefone_contato = null;
+    return !errorMessages.value.telefone_contato;
+};
 // Validar formulário
 const formIsValid = () => {
-    return true;
+    return validateEmail() && validateTelefone();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -146,17 +175,19 @@ watchEffect(() => {
                         <div class="col-12 md:col-3">
                             <label for="telefone_contato">Telefone</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="email_contato">Email</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="desconto_ativo">Desconto Ativo</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_ativo" id="desconto_ativo" type="text" />
+                            <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescontoAtivo" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="desconto_total">Desconto Total</label>

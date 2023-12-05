@@ -100,8 +100,8 @@ const saveData = async () => {
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
         if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-        if (itemData.value.te1) itemData.value.tel1 = masks.value.telefone.unmasked(itemData.value.tel1);
-        if (itemData.value.te2) itemData.value.tel2 = masks.value.telefone.unmasked(itemData.value.tel2);
+        if (itemData.value.tel1) itemData.value.tel1 = masks.value.telefone.unmasked(itemData.value.tel1);
+        if (itemData.value.tel2) itemData.value.tel2 = masks.value.telefone.unmasked(itemData.value.tel2);
         if (itemData.value.cep) itemData.value.cep = masks.value.cep.unmasked(itemData.value.cep);
         axios[method](url, itemData.value)
             .then((res) => {
