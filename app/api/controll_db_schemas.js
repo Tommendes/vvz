@@ -43,8 +43,7 @@ module.exports = app => {
 
         app.db.raw(`CREATE DATABASE ${schemaNameAndUser};`)
             .then(() => {
-                app.db.raw(`GRANT ALTER, ALTER ROUTINE, CREATE, CREATE ROUTINE, CREATE TEMPORARY TABLES, CREATE VIEW, DELETE, DROP, EVENT, EXECUTE, INDEX, ` +
-                    `INSERT, LOCK TABLES, REFERENCES, SELECT, SHOW VIEW, TRIGGER, UPDATE ON ${schemaNameAndUser}.* TO '${dbConfig.user}'@'${dbConfig.host}';`)
+                app.db.raw(`GRANT ALTER, ALTER ROUTINE, CREATE, CREATE ROUTINE, CREATE TEMPORARY TABLES, CREATE VIEW, DELETE, DROP, EVENT, EXECUTE, INDEX, INSERT, LOCK TABLES, REFERENCES, SELECT, SHOW VIEW, TRIGGER, UPDATE ON ${schemaNameAndUser}.* TO '${dbConfig.user}'@'${dbConfig.host}';`)
                     .then(() => {
                         app.db.raw(`FLUSH PRIVILEGES;`)
                             .then(() => {
