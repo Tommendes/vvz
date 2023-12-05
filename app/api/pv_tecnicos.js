@@ -21,7 +21,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
 
         try {
             existsOrError(body.telefone_contato, 'Telefone de contato não encontrado')

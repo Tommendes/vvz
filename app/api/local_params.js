@@ -19,7 +19,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
 
         try {
 
@@ -216,7 +216,7 @@ module.exports = app => {
         const select = req.query.slct
 
         const first = req.query.first && req.params.first == true
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
         const ret = app.db(tabelaDomain)
 
         if (select) {

@@ -23,7 +23,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
         body.id_com_propostas = req.params.id_com_propostas
         body.compoe_valor = String(body.compoe_valor) || 1
 
@@ -337,7 +337,7 @@ module.exports = app => {
         }
         // Localizar no BD todas as composições do item de body.id_com_propostas ordenadas por body.ordem
         // executar um laço forEach para atualizar o campo compos_nr começando do 1
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
         // Primeiro seta todas as composições inativas como compos_nr = 0 (zero) para depois reordenar
         await app.db(tabelaDomain).update({ compos_nr: 0 }).where({ id_com_propostas: body.id_com_propostas, status: STATUS_INACTIVE })
         // Localiza todas as composições ativas

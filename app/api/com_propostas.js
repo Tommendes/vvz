@@ -26,7 +26,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
 
         try {
             existsOrError(body.id_pipeline, 'Registro no Pipeline não informado')

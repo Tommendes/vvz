@@ -32,7 +32,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
 
         delete body.hash; delete body.tblName
         if (body.id) {

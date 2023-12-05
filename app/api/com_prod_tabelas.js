@@ -23,7 +23,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
 
         // Para o caso de exclusão de imagem, dispensar a validação dos campos
         if (!body.delete_imagem)

@@ -27,7 +27,7 @@ module.exports = app => {
 
         let body = { ...req.body }
         if (req.params.id) body.id = req.params.id
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
 
         try {
             existsOrError(body.status_params, 'Status_params não encontrado ')

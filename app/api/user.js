@@ -871,7 +871,7 @@ module.exports = app => {
 
         app.api.logger.logInfo({ log: { line: `Alteração de perfil de usuário! Usuário: ${user.name}`, sConsole: true } })
 
-        const tabelaFinParamsDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaFinParametros}`
+        const tabelaFinParamsDomain = `${dbPrefix}_${uParams.cliente}.${tabelaFinParametros}`
         const mesAtual = f_folha.getMonth().toString().padStart(2, "0")
         let isMonth = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano, mes: user.f_mes }).first()
         if (!isMonth)

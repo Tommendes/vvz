@@ -27,8 +27,8 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}.${tabelaStatus}`
 
         const pipeline_params_force = body.pipeline_params_force
 
@@ -411,7 +411,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaStatus}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.cliente}.${tabelaStatus}`
         const registro = { status: req.query.st || STATUS_DELETE }
         try {
             // Variáveis da edição de um registro            

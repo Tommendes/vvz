@@ -22,7 +22,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         body.id_protocolos = req.params.id_protocolos
-        const tabelaDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
         const tabelaProtocoloDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaProtocolo}`
 
         if (typeof body.descricao === 'array') {
