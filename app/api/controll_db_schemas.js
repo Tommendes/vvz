@@ -43,11 +43,13 @@ module.exports = app => {
 
         app.db.raw(`CREATE DATABASE ${schemaNameAndUser};`)
             .then(() => {
-                app.db.raw(`GRANT ALTER, ALTER ROUTINE, CREATE, CREATE ROUTINE, CREATE TEMPORARY TABLES, CREATE VIEW, DELETE, DROP, EVENT, EXECUTE, INDEX, INSERT, LOCK TABLES, REFERENCES, SELECT, SHOW VIEW, TRIGGER, UPDATE ON ${schemaNameAndUser}.* TO '${dbConfig.user}'@'${dbConfig.host}';`)
-                    .then(() => {
-                        app.db.raw(`FLUSH PRIVILEGES;`)
-                            .then(() => {
+                // app.db.raw(`GRANT ALTER, ALTER ROUTINE, CREATE, CREATE ROUTINE, CREATE TEMPORARY TABLES, CREATE VIEW, DELETE, DROP, EVENT, EXECUTE, INDEX, INSERT, LOCK TABLES, REFERENCES, SELECT, SHOW VIEW, TRIGGER, UPDATE ON ${schemaNameAndUser}.* TO '${dbConfig.user}'@'${dbConfig.host}';`)
+                //     .then(() => {
+                        // app.db.raw(`FLUSH PRIVILEGES;`)
+                        //     .then(() => {
                                 req.body = {
+                                    'created_at': new Date(),
+                                    'status': 10,
                                     'schema_name': schemaName,
                                     'schema_version': '1.0.0',
                                     'schema_description': body.schema_description,
@@ -57,16 +59,16 @@ module.exports = app => {
                                 const setNewDb = setNewSchemaOnDB(req, res)
                                 if (!setNewDb) throw setNewDb
                                 return res.send(`Schema and user created with name ${schemaNameAndUser}`);
-                            })
-                            .catch((error) => {
-                                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                                return res.status(500).send(error)
-                            })
-                    })
-                    .catch((error) => {
-                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                        return res.status(500).send(error)
-                    })
+                            // })
+                            // .catch((error) => {
+                            //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                            //     return res.status(500).send(error)
+                            // })
+                    // })
+                    // .catch((error) => {
+                    //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                    //     return res.status(500).send(error)
+                    // })
             })
     }
 
