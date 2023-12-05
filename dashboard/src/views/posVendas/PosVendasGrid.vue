@@ -25,7 +25,7 @@ const masks = ref({
 
 const urlBase = ref(`${baseApiUrl}/pv`);
 const props = defineProps(['idCadastro']);
-const idPv = ref(null); // Id do registro selecionado
+const idRegs = ref(null); // Id do registro selecionado
 
 onBeforeMount(() => {
     // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
@@ -162,7 +162,7 @@ const exportCSV = () => {
     toExport.exportCSV();
 };
 const goField = (data) => {
-    idPv.value = data.id;
+    idRegs.value = data.id;
     router.push({ path: `/${userData.schema_description}/pos-venda/${data.id}` });
 };
 watchEffect(() => {
@@ -176,13 +176,13 @@ watchEffect(() => {
         <PosVendaForm
             :mode="mode"
             :idCadastro="props.idCadastro"
-            :idPv="idPv"
+            :idRegs="idRegs"
             @changed="loadLazyData()"
             @cancel="
                 mode = 'grid';
-                idPv = undefined;
+                idRegs = undefined;
             "
-            v-if="mode == 'new' || idPv"
+            v-if="mode == 'new' || idRegs"
         />
         <DataTable
             style="font-size: 0.9rem"

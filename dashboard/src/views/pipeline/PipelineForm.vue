@@ -50,6 +50,8 @@ const props = defineProps(['mode', 'idPipeline', 'idCadastro']);
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pipeline`);
+// Itens do breadcrumb
+const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]);
 const calcTypeRepres = ref('R$');
 const calcTypeAgente = ref('R$');
 
@@ -85,6 +87,10 @@ const loadData = async () => {
                 await getNomeCliente();
                 // Lista o andamento do registro
                 await listStatusRegistro();
+                // Unidades de negócio
+                await listUnidadesDescricao();
+                if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
+                if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
             } else {
                 defaultWarn('Registro não localizado');
                 toGrid();
@@ -540,7 +546,7 @@ onMounted(async () => {
 watch(selectedCadastro, (value) => {
     if (value) {
         itemData.value.id_cadastros = value.code;
-    }
+    } 
 });
 watch(route, (value) => {
     if (value !== itemData.value.id) {
@@ -550,7 +556,7 @@ watch(route, (value) => {
 </script>
 
 <template>
-    <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }, { label: itemData.documento }]" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
+    <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
     <div class="card" :style="route.name == 'pipeline-one' ? 'min-width: 100rem' : ''">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -771,6 +777,7 @@ watch(route, (value) => {
                         <p v-if="props.idPipeline">idPipeline: {{ props.idPipeline }}</p>
                         <p>itemDataParam: {{ itemDataParam }}</p>
                         <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
+                        <p>{{ unidadeLabel }}</p>
                     </div>
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
@@ -791,7 +798,7 @@ watch(route, (value) => {
                             <hr class="w-full mb-3" v-if="!itemData.id_filho" />
                             <Button
                                 v-if="route.name == 'pipeline-one'"
-                                label="Ir para o Cadastro"
+                                label="Ir ao Cadastro"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-regular fa-address-card fa-shake`"

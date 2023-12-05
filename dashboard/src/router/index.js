@@ -1,10 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import AppLayout from '@/layout/AppLayout.vue';
 import { userKey } from '../global';
 
 const routes = [
     {
         path: '/',
+        name: 'home',
         component: AppLayout,
         children: [
             {
@@ -218,17 +219,16 @@ const routes = [
     }
 ];
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes: routes
 });
 
 router.beforeEach((to, from, next) => {
-    const nameUnblockedRoutes = ['welcome', 'signin', 'signup', 'u-token', 'not-found', 'request-password-reset', 'password-reset'];
+    const nameUnblockedRoutes = ['/welcome', '/signin', '/signup', '/u-token', '/not-found', '/request-password-reset', '/password-reset'];
     const json = localStorage.getItem(userKey);
     const user = JSON.parse(json);
     const paths = [];
     routes.forEach((element) => {
-        // console.log(element.path);
         if (element.children)
             element.children.forEach((element) => {
                 paths.push(element.path);
@@ -240,8 +240,9 @@ router.beforeEach((to, from, next) => {
     else if (user && user.id && (to.path == '/signin' || !to.path.startsWith(`/${user.schema_description}`))) {
         next({ path: `/${user.schema_description}` });
     } else {
-        if (!nameUnblockedRoutes.includes(to.name) && !(user && user.id)) next({ path: '/welcome' });
-        else next();
+        if (!nameUnblockedRoutes.includes(to.path) && !(user && user.id)) {
+            next({ path: '/welcome' });
+        } else next();
     }
 });
 

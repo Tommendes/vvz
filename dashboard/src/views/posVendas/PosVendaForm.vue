@@ -48,11 +48,13 @@ const loading = ref(true);
 // Editar cadastro no autocomplete
 const editCadastro = ref(false);
 // Props do template
-const props = defineProps(['mode', 'idPv', 'idCadastro']);
+const props = defineProps(['mode', 'idRegs', 'idCadastro']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pv`);
+// Itens do breadcrumb
+const breadItems = ref([{ label: 'Pós-venda', to: `/${userData.schema_description}/pos-vendas` }]);
 // Dropdown de tipos de pós-venda
 const dropdownPipelineByCadastro = ref([]);
 const dropdownTiposPv = ref([
@@ -63,9 +65,8 @@ const dropdownTiposPv = ref([
 ]);
 // Carragamento de dados do form
 const loadData = async () => {
-    // mode.value = 'view';
     loading.value = true;
-    const id = props.idPv || route.params.id;
+    const id = props.idRegs || route.params.id;
     const url = `${urlBase.value}/${id}`;
     if (mode.value != 'new') {
         setTimeout(async () => {
@@ -79,6 +80,8 @@ const loadData = async () => {
                         await getNomeCliente();
                         await listPipeline();
                         editCadastro.value = false;
+                        breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
+                        if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
                         // Lista o andamento do registro
                         await listStatusRegistro();
                     } else {
@@ -365,7 +368,7 @@ const dialog = useDialog();
 const showPvOatForm = () => {
     dialog.open(OatForm, {
         data: {
-            idPv: itemData.value.id,
+            idRegs: itemData.value.id,
             idPvOat: undefined,
             idCadastro: itemData.value.id_cadastros,
             lastStatus: itemDataLastStatus.value.status_pv
@@ -404,7 +407,7 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="!['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :items="[{ label: 'Pós-venda', to: `/${userData.schema_description}/pos-vendas` }, { label: nomeCliente }]" />
+    <Breadcrumb v-if="!['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :items="breadItems" />
     <div class="card" :style="route.name == 'pos-venda' ? 'min-width: 100rem' : ''">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -477,7 +480,7 @@ watch(selectedCadastro, (value) => {
                             <hr />
                             <Button
                                 v-if="route.name == 'pos-venda'"
-                                label="Ir para o Cadastro"
+                                label="Ir ao Cadastro"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-regular fa-address-card fa-shake`"

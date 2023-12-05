@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watchEffect } from 'vue';
 import { appName } from '@/global';
 import { useRoute, useRouter } from 'vue-router';
 import { baseApiUrl } from '@/env';
@@ -51,6 +51,7 @@ const passReset = async () => {
                 })
                 .then((body) => {
                     const user = body.data;
+                    if (!user.isValidPassword) return defaultError(user.msg);
                     router.push({ path: '/signin' });
                     defaultSuccess(user.msg);
                 })
@@ -118,6 +119,19 @@ const moveToNextInput = (index) => {
         nextInput.focus();
     }
 };
+watchEffect(() => {
+    if (route.query.tkn) {
+        token1.value = route.query.tkn[0];
+        token2.value = route.query.tkn[1];
+        token3.value = route.query.tkn[2];
+        token4.value = route.query.tkn[3];
+        token5.value = route.query.tkn[4];
+        token6.value = route.query.tkn[5];
+        token7.value = route.query.tkn[6];
+        token8.value = route.query.tkn[7];
+        moveToNextInput(`password`);
+    }
+});
 </script>
 
 <template>
@@ -171,7 +185,7 @@ const moveToNextInput = (index) => {
 
                         <div class="flex align-items-center justify-content-between mb-2" v-if="!route.params.client">
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button>
+                            <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
                         </div>
 
                         <Button

@@ -13,11 +13,11 @@ exports.up = function (knex) {
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
 
-        table.string('schema_name').notNull().comment('Nome do esquema')
-        table.string('schema_version').notNull().comment('Versão do esquema')
-        table.string('schema_description').notNull().comment('Descrição do esquema')
-        table.string('schema_author').notNull().comment('Autor do esquema')
-        table.string('schema_author_email').notNull().comment('Email do autor do esquema')
+        table.string('schema_name').unique().comment('Nome do esquema')
+        table.string('schema_version').notNull().comment('Versão do esquema').defaultTo('1.0.0')
+        table.string('schema_description').notNull().comment('Descrição do esquema(nome do cliente)')
+        table.string('schema_author').notNull().comment('Autor do esquema').defaultTo('Vivazul')
+        table.string('schema_author_email').notNull().comment('Email do autor do esquema').defaultTo('contato@vivazul.com.br')
     })
 };
 

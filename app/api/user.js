@@ -479,6 +479,7 @@ module.exports = app => {
             })
             .then(_ => {
                 return res.status(200).send({
+                    isValidPassword: true,
                     msg: 'Senha criada/alterada com sucesso!'
                 })
             })
@@ -594,7 +595,7 @@ module.exports = app => {
             const url = "https://sms.comtele.com.br/api/v2/send"
             moment().locale('pt-br')
             const data = {
-                "Sender": "Vivazul.com.br",
+                "Sender": "vivazul.com.br",
                 "Receivers": userFromDB.telefone,
                 "Content": `Para liberar seu acesso ao vivazul.com.br, utilize o código: ${token}${userFromDB.email ? ' ou o link que também foi enviado para o email de registro' : ''}`
             }
@@ -716,7 +717,8 @@ module.exports = app => {
             const user = await app.db(tabela)
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
-            await transporter.sendMail({
+            const urlTo = `${baseFrontendUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
+            const bodyEmail = {
                 from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                 to: `${user.email}`, // list of receivers
                 subject: `Alteração de senha ${appName}`, // Subject line
@@ -729,11 +731,11 @@ module.exports = app => {
                 <p>Para atualizar/criar sua senha, por favor acesse o link abaixo.</p>
                 <p>Lembre-se de que esse link tem validade de ${TOKEN_VALIDE_MINUTES} minutos.</p>
                 ${user.password_reset_token ? `<p>Você necessitará informar o token a seguir para liberar sua nova senha: <strong>${user.password_reset_token.split('_')[0]}</strong></p>` : ''}
-                <a href="${baseFrontendUrl}/password-reset/${user.id}?tkn=${user.password_reset_token}">${baseFrontendUrl}/password-reset/${user.id}?tkn=${user.password_reset_token}</a>
+                <a href="${urlTo}">${urlTo}</a>
                 <p>Atenciosamente,</p>
                 <p><b>Time ${appName}</b></p>`,
-            }).then(_ => {
-            })
+            }
+            await transporter.sendMail(bodyEmail).then(() => app.api.logger.logInfo({ log: { line: `Email password-reset enviado com sucesso para ${user.email}`, sConsole: true } }))
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
@@ -765,8 +767,7 @@ module.exports = app => {
                 <p>Caso seja necessário, por favor, solicite ao seu administrador para liberar acesso aos dados.</p>
                 <p>Atenciosamente,</p>
                 <p><b>Time ${appName}</b></p>`,
-            }).then(_ => {
-            })
+            }).then(() => app.api.logger.logInfo({ log: { line: `Email mailyUnlocked enviado com sucesso para ${user.email}`, sConsole: true } }))
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
