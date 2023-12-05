@@ -81,7 +81,7 @@ const loadData = async () => {
                     editCadastro.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.cliente}/produtos` });
+                    router.push({ path: `/${userData.schema_description}/produtos` });
                 }
             });
         }
@@ -222,7 +222,7 @@ const showUploadForm = () => {
         data: {
             tabela: 'com_produtos',
             registro_id: itemData.value.id,
-            schema: userData.cliente + '_' + userData.dominio,
+            schema: userData.schema_name,
             field: 'id_uploads_imagem',
             footerMsg: 'O tamanho máximo do arquivo é de 1MB e 250 x 250px.'
         },
@@ -463,7 +463,7 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os produtos', to: `/${userData.cliente}/produtos` }, { label: itemData.nome_comum + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os produtos', to: `/${userData.schema_description}/produtos` }, { label: itemData.nome_comum + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

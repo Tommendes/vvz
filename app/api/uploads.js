@@ -10,7 +10,7 @@ module.exports = app => {
 
     const save = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
@@ -155,7 +155,7 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
@@ -182,7 +182,7 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.uploads >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
@@ -206,7 +206,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.uploads >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
@@ -318,7 +318,7 @@ module.exports = app => {
         }
         let user = req.user || tknQueryId
         // return res.send(user);
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             if (timeExpired) throw 'Token expirado'
             isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Upload de arquivos"`)
@@ -327,7 +327,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         // Configurando o multer para lidar com o upload de arquivos
-        const destinationPath = path.join(__dirname, uploadsRoot, uParams.cliente, uParams.dominio);
+        const destinationPath = path.join(__dirname, uploadsRoot, uParams.schema_description);
         const storage = multer.diskStorage({
             destination: function (req, file, cb) {
                 if (!fs.existsSync(destinationPath)) {
@@ -345,8 +345,8 @@ module.exports = app => {
         });
 
         const upload = multer({ storage: storage }).array('arquivos');
-        upload(req, res, async (err) => {
-            const uParams = await app.db('users').where({ id: user.id }).first();
+        upload(req, res, async (error) => {
+            const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
             // Verifica se tem alçada para upload
             let files = req.files;
             req.user = uParams;
@@ -362,9 +362,9 @@ module.exports = app => {
                 });
                 return res.status(401).send(error)
             }
-            if (err) {
-                console.log(err);
-                return res.status(500).send({ message: 'Erro ao enviar arquivos', err });
+            if (error) {
+                console.log(error);
+                return res.status(500).send({ message: 'Erro ao enviar arquivos', error });
             }
             files.forEach(async (file) => {
                 // Caminho do arquivo original
@@ -374,7 +374,7 @@ module.exports = app => {
                 const outputPath = path.join(destinationPath, file.filename);
                 file.path = outputPath;
                 // Atualiza a URL para apontar para a versão redimensionada
-                file.url = `${baseFrontendUrl}/assets/files/${uParams.cliente}/${uParams.dominio}/${file.filename}`;
+                file.url = `${baseFrontendUrl}/assets/files/${uParams.schema_description}/${file.filename}`;
                 // Adicione a propriedade file.label contendo o file.originalname sem a extensão
                 let nomeArquivo = file.originalname;
                 let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
@@ -428,7 +428,7 @@ module.exports = app => {
      */
     const setFileOwnerInSchemaData = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)

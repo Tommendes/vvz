@@ -66,7 +66,7 @@ const loadData = async () => {
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.cliente}/protocolos` });
+                    router.push({ path: `/${userData.schema_description}/protocolos` });
                 }
             });
         } else loading.value = false;
@@ -94,7 +94,7 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/protocolo/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/protocolo/${itemData.value.id}` });
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     mode.value = 'view';
                 } else {
@@ -326,7 +326,7 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.cliente}/protocolos` }, { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.schema_description}/protocolos` }, { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

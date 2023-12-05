@@ -43,25 +43,27 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/pipeline-params`);
 // Carragamento de dados do form
 const loadData = async () => {
-    if (route.params.id || itemData.value.id) {
-        if (route.params.id) itemData.value.id = route.params.id;
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        
-        await axios.get(url).then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
+    setTimeout(async () => {
+        if (route.params.id || itemData.value.id) {
+            if (route.params.id) itemData.value.id = route.params.id;
+            const url = `${urlBase.value}/${itemData.value.id}`;
+            await axios.get(url).then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
 
-                itemData.value = body;
-                itemDataComparision.value = { ...itemData.value };
+                    itemData.value = body;
+                    itemDataComparision.value = { ...itemData.value };
 
-                loading.value.form = false;
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/pipeline-params` });
-            }
-        });
-    } else loading.value.form = false;
+                    loading.value.form = false;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${userData.schema_description}/pipeline-params` });
+                }
+            });
+        }
+    }, Math.random() * 1000 + 250);
+    loading.value.form = false;
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -76,7 +78,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/pipeline-params/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/pipeline-params/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -105,7 +107,7 @@ const showUploadForm = () => {
         data: {
             tabela: 'pipeline_params',
             registro_id: itemData.value.id,
-            schema: userData.cliente + '_' + userData.dominio,
+            schema: userData.schema_name,
             field: 'id_uploads_logo',
             footerMsg: 'O tamanho máximo do arquivo é de 1MB e 250 x 250px.'
         },
@@ -132,40 +134,38 @@ const onImageRightClick = (event) => {
 // Opções de DropDown do Form
 const dropdownApresentacaoBi = ref([
     { value: 0, label: 'Sim' },
-    { value: 1, label: 'Não'}
+    { value: 1, label: 'Não' }
 ]);
 const dropdownDocVenda = ref([
     { value: 0, label: 'Não' },
-    { value: 1, label: 'É proposta'},
-    { value: 2, label: 'É pedido'}
+    { value: 1, label: 'É proposta' },
+    { value: 2, label: 'É pedido' }
 ]);
 const dropdownAutomNum = ref([
     { value: 0, label: 'Sim' },
-    { value: 1, label: 'Não'}
+    { value: 1, label: 'Não' }
 ]);
 const dropdownGeraBaixa = ref([
     { value: 0, label: 'Sim' },
-    { value: 1, label: 'Não'}
+    { value: 1, label: 'Não' }
 ]);
-const dropdownTipoSec = ref([
-    { value: 0, label: 'Não há' }
-]);
+const dropdownTipoSec = ref([{ value: 0, label: 'Não há' }]);
 const dropdownObrigValor = ref([
     { value: 0, label: 'Sim' },
-    { value: 1, label: 'Não'}
+    { value: 1, label: 'Não' }
 ]);
 const dropdownObrigAgente = ref([
     { value: 0, label: 'Sim' },
-    { value: 1, label: 'Não'}
+    { value: 1, label: 'Não' }
 ]);
 const dropdownGeraPasta = ref([
     { value: 0, label: 'Não' },
-    { value: 1, label: 'Para o documento'},
-    { value: 2, label: "Para o pedido"}
+    { value: 1, label: 'Para o documento' },
+    { value: 2, label: 'Para o pedido' }
 ]);
 const dropdownPropInterna = ref([
     { value: 0, label: 'Sim' },
-    { value: 1, label: 'Não'}
+    { value: 1, label: 'Não' }
 ]);
 // Validar formulário
 const formIsValid = () => {
@@ -208,7 +208,7 @@ const items = ref([
 ]);
 </script>
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.cliente}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.schema_description}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -272,7 +272,7 @@ const items = ref([
                             <label for="proposta_interna">Usa sistema interno</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="proposta_interna" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.proposta_interna" :options="dropdownPropInterna" />
-                        </div>                        
+                        </div>
                     </div>
                 </div>
                 <div class="col-12">

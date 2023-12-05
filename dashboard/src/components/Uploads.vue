@@ -131,7 +131,7 @@ onMounted(() => {
             registro_id: props.registro_id || dialogRef.value.data.registro_id || 1,
             tabela: props.tabela || dialogRef.value.data.tabela || 'empresa',
             field: props.field || dialogRef.value.data.field || 'id_uploads_logo',
-            schema: props.schema || dialogRef.value.data.schema || `${userData.cliente}_${userData.dominio}`
+            schema: props.schema || dialogRef.value.data.schema || `${userData.schema_name}`
         };
     }, Math.random() * 1000);
 });

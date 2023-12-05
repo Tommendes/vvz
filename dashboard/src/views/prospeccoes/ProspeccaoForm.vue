@@ -81,7 +81,7 @@ const loadData = async () => {
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.cliente}/prospeccoes` });
+                    router.push({ path: `/${userData.schema_description}/prospeccoes` });
                 }
             });
         } else loading.value = false;
@@ -106,12 +106,12 @@ const saveData = async () => {
                     emit('changed');
                     if (route.name != 'cadastro' && mode.value == 'new') {
                         router.push({
-                            path: `/${userData.cliente}/prospeccao/${itemData.value.id}`
+                            path: `/${userData.schema_description}/prospeccao/${itemData.value.id}`
                         });
                         loadData();
                     } else if (route.name != 'cadastro' && id != itemData.value.id) {
                         router.push({
-                            path: `/${userData.cliente}/prospeccao/${itemData.value.id}`
+                            path: `/${userData.schema_description}/prospeccao/${itemData.value.id}`
                         });
                         loadData();
                     } else reload();
@@ -323,7 +323,7 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Prospecções', to: `/${userData.cliente}/prospeccoes` }, { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Prospecções', to: `/${userData.schema_description}/prospeccoes` }, { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

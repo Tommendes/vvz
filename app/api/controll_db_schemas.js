@@ -1,14 +1,22 @@
-const { dbPrefix } = require("../.env")
+const { dbPrefix, db } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabelaSchemas = 'schemas_control'    
+    const tabelaSchemas = 'schemas_control'
     const crypto = require("crypto");
-    
+    const mysql = require('mysql');
+
+    const dbConfig = {
+        host: db.host,
+        user: db.user,
+        password: db.password,
+        database: db.database,
+    };
+
     const creatClientSchema = async (req, res) => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            isMatchOrError(uParams && uParams.admin >= 2, `${noAccessMsg} "Inclusão de Schema de cliente"`)
+            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Inclusão de Empresa"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -16,44 +24,64 @@ module.exports = app => {
 
         const body = { ...req.body }
 
-        const schemaName = body.schema_name || 'vivazul_' + crypto.randomBytes(3).toString('hex');
-        const userName = schemaName;
-        const publicIp = req.socket.remoteAddress || req.connection.remoteAddress || req.headers['x-forwarded-for'] || req.connection.socket.remoteAddress;
-        const userHost = body.userHost || publicIp || '162.214.208.90';
-        console.log('userHost: ', userHost);
-
         try {
-            await app.db.raw(`CREATE DATABASE ${schemaName};`)
-            await app.db.raw(`CREATE USER '${userName}'@'${userHost}';`)
-            await app.db.raw(`GRANT ALTER, CREATE, CREATE TEMPORARY TABLES, DELETE, EXECUTE, INSERT, LOCK TABLES, REFERENCES, SELECT, SHOW VIEW, UPDATE ON \`${schemaName}\`.* TO '${userName}'@'${userHost}';`)
-            return res.send(`Schema and user created with name ${schemaName}`);
+            existsOrError(body.schema_description, 'Descrição do esquema não informada')
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-            return res.status(500).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(400).send(error)
         }
+
+        // Conecta ao banco de dados
+        const connection = mysql.createConnection(dbConfig);
+        connection.connect();
+
+        dbConfig.schema_name = body.schema_name || crypto.randomBytes(3).toString('hex');
+        dbConfig.host = body.host || dbConfig.host;
+        dbConfig.host = body.host || dbConfig.host;
+        dbConfig.user = body.user || dbConfig.user;
+        const schemaNameAndUser = dbPrefix + '_' + dbConfig.schema_name
+
+        app.db.raw(`CREATE DATABASE ${schemaNameAndUser};`)
+            .then(async () => {
+                const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+                req.body = {
+                    'created_at': new Date(),
+                    'status': 10,
+                    'evento': nextEventID.count + 1,
+                    'schema_name': dbConfig.schema_name,
+                    'schema_version': '1.0.0',
+                    'schema_description': body.schema_description,
+                    'schema_author': 'suporte@vivazul.com.br',
+                    'schema_author_email': 'suporte@vivazul.com.br'
+                }
+                // registrar o evento na tabela de eventos
+                const { createEventIns } = app.api.sisEvents
+                createEventIns({
+                    "notTo": ['created_at', 'evento'],
+                    "next": req.body,
+                    "request": req,
+                    "evento": {
+                        "evento": `Novo schema de BD criado`,
+                        "tabela_bd": tabelaSchemas,
+                    }
+                })
+                const setNewDb = setNewSchemaOnDB(req, res)
+                if (!setNewDb) throw setNewDb
+                return res.send(`Schema and user created with name ${schemaNameAndUser}`);
+            }).catch((error) => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                return res.status(500).send(error)
+            })
     }
 
-    // const setNewSchemaOnDB = async (req, res) => {
-    //     const schemaName = req.params.schemaName;
-
-    //     try {
-
-    //     } catch (error) {
-
-    //     }
-
-    //     const body = {
-
-    //         'schema_name':
-    //             'schema_version'                :
-    //         'schema_description':
-    //             'schema_author'                 :
-    //         'schema_author_email': 
-
-    //     }
-
-    //     app.db()
-    // }
+    const setNewSchemaOnDB = async (req, res) => {
+        try {
+            return await app.db(tabelaSchemas).insert(req.body)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return error
+        }
+    }
 
     return { creatClientSchema }
 }

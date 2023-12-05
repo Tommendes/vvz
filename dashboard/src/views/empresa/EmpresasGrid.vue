@@ -109,7 +109,7 @@ onBeforeMount(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.cliente}/empresa/${data.id}` })" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.schema_description}/empresa/${data.id}` })" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                 </template>
             </Column>
         </DataTable>

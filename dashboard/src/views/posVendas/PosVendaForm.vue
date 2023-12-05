@@ -83,7 +83,7 @@ const loadData = async () => {
                         await listStatusRegistro();
                     } else {
                         defaultWarn('Registro não localizado');
-                        router.push({ path: `/${userData.cliente}/pos-vendas` });
+                        router.push({ path: `/${userData.schema_description}/pos-vendas` });
                     }
                 });
             }
@@ -112,7 +112,7 @@ const saveData = async () => {
             .then(async (res) => {
                 const body = res.data;
                 defaultSuccess('Registro salvo com sucesso');
-                if (mode.value == 'new') window.location.href = `/${userData.cliente}/pos-venda/${body.id}`;
+                if (mode.value == 'new') window.location.href = `/${userData.schema_description}/pos-venda/${body.id}`;
                 else reload();
             })
             .catch((error) => {
@@ -355,7 +355,7 @@ const statusRecord = async (status) => {
 const toGrid = () => {
     mode.value = 'grid';
     emit('cancel');
-    router.push({ path: `/${userData.cliente}/pos-vendas` });
+    router.push({ path: `/${userData.schema_description}/pos-vendas` });
 };
 
 const oatsGrid = ref(null);
@@ -404,7 +404,7 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="!['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :items="[{ label: 'Pós-venda', to: `/${userData.cliente}/pos-vendas` }, { label: nomeCliente }]" />
+    <Breadcrumb v-if="!['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :items="[{ label: 'Pós-venda', to: `/${userData.schema_description}/pos-vendas` }, { label: nomeCliente }]" />
     <div class="card" :style="route.name == 'pos-venda' ? 'min-width: 100rem' : ''">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -484,7 +484,7 @@ watch(selectedCadastro, (value) => {
                                 style="color: #a97328"
                                 text
                                 raised
-                                @click="router.push(`/${userData.cliente}/cadastro/${itemData.id_cadastros}`)"
+                                @click="router.push(`/${userData.schema_description}/cadastro/${itemData.id_cadastros}`)"
                             />
                             <Button
                                 label="Criar OAT"

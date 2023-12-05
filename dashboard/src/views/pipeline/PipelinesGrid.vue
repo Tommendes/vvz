@@ -244,7 +244,7 @@ const getSeverity = (status_created_at) => {
 };
 const goField = (data) => {
     idPipeline.value = data.id;
-    router.push({ path: `/${userData.cliente}/pipeline/${data.id}` });
+    router.push({ path: `/${userData.schema_description}/pipeline/${data.id}` });
 };
 const onRowExpand = (event) => {
     // defaultInfo('Product Expanded: ' + event.data.documento);

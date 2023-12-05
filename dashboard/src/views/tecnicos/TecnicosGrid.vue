@@ -66,7 +66,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${userData.cliente}/tecnico-pv/${itemData.value.id}` });
+            router.push({ path: `/${userData.schema_description}/tecnico-pv/${itemData.value.id}` });
         }
     },
     {

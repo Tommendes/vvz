@@ -124,6 +124,7 @@ module.exports = app => {
                     }
 
                 try {
+                    existsOrError(body.schema_id, 'Empresa não informada')
                     existsOrError(body.name, 'Nome não informado')
                     existsOrError(body.password, 'Senha não informada')
                     existsOrError(body.confirmPassword, 'Confirmação de Senha inválida')
@@ -145,8 +146,7 @@ module.exports = app => {
                 body.status = STATUS_WAITING
                 body.created_at = new Date()
                 body.telefone = body.celular
-                body.cliente = body.client
-                body.dominio = body.domain
+                body.schema_id = body.schema_id
 
                 try {
                     if (typeof isValidPassword(body.password) === 'string') throw isValidPassword(body.password)
@@ -854,7 +854,7 @@ module.exports = app => {
 
         const f_folha = new Date()
 
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         // Variáveis da edição de um registro
         // registrar o evento na tabela de eventos
         const { createEventUpd } = app.api.sisEvents
@@ -871,7 +871,7 @@ module.exports = app => {
 
         app.api.logger.logInfo({ log: { line: `Alteração de perfil de usuário! Usuário: ${user.name}`, sConsole: true } })
 
-        const tabelaFinParamsDomain = `${dbPrefix}_${user.cliente}_${user.dominio}.${tabelaFinParametros}`
+        const tabelaFinParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFinParametros}`
         const mesAtual = f_folha.getMonth().toString().padStart(2, "0")
         let isMonth = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano, mes: user.f_mes }).first()
         if (!isMonth)
@@ -905,7 +905,7 @@ module.exports = app => {
     const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             if (!(uParams && (uParams.admin + uParams.gestor) >= 1)) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
@@ -924,11 +924,7 @@ module.exports = app => {
             })
         if (uParams.multiCliente == 0) {
             // Não troca cliente nem domínio
-            sql.where({ 'us.cliente': uParams.cliente, 'us.dominio': uParams.dominio })
-        }
-        if (uParams.multiCliente >= 1) {
-            // Não troca cliente mas troca domínio
-            sql.where({ 'us.cliente': uParams.cliente })
+            sql.where({ 'us.schema_id': uParams.schema_id })
         }
         if (uParams.gestor < 1) {
             // Se não for gestor vÊ apenas seus registros
@@ -942,8 +938,8 @@ module.exports = app => {
         count = parseInt(result[0][0].count) || 0
 
         const ret = app.db({ us: tabela })
-
-            .select("us.name", "us.cpf", "us.email", "us.telefone", "us.cliente", "us.dominio",
+            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+            .select("us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description", 
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
@@ -954,11 +950,7 @@ module.exports = app => {
             })
         if (uParams.multiCliente == 0) {
             // Não troca cliente nem domínio
-            ret.where({ 'us.cliente': uParams.cliente, 'us.dominio': uParams.dominio })
-        }
-        if (uParams.multiCliente >= 1) {
-            // Não troca cliente mas troca domínio
-            ret.where({ 'us.cliente': uParams.cliente })
+            ret.where({ 'us.schema_id': uParams.schema_id })
         }
         if (uParams.gestor < 1) {
             // Se não for gestor vÊ apenas seus registros
@@ -980,10 +972,11 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         if (req.user.id != req.params.id || !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         app.db({ us: tabela })
-            .select("us.name", "us.cpf", "us.email", "us.telefone", "us.cliente", "us.dominio",
+            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+            .select("us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description",
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
@@ -1041,7 +1034,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.admin >= 2, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
@@ -1102,7 +1095,7 @@ module.exports = app => {
 
     const getByField = async (req, res) => {
         let user = req.user
-        const uParams = await app.db('users').where({ id: user.id }).first();
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`

@@ -163,7 +163,7 @@ const exportCSV = () => {
 };
 const goField = (data) => {
     idPv.value = data.id;
-    router.push({ path: `/${userData.cliente}/pos-venda/${data.id}` });
+    router.push({ path: `/${userData.schema_description}/pos-venda/${data.id}` });
 };
 watchEffect(() => {
     mountUrlFilters();
