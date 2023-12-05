@@ -73,7 +73,8 @@ module.exports = app => {
     const setNewSchemaOnDB = async (req, res) => {
         try {
             return await app.db(tabelaSchemas).insert(req.body)
-        } catch (error) {
+        } catch (error) {            
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return error
         }
     }
