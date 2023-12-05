@@ -35,11 +35,11 @@ module.exports = app => {
         const connection = mysql.createConnection(dbConfig);
         connection.connect();
 
-        const schemaName = crypto.randomBytes(3).toString('hex');
-        const schemaNameAndUser = body.schema_name || dbPrefix + '_' + schemaName
+        dbConfig.schema_name = body.schema_name || crypto.randomBytes(3).toString('hex');;
         dbConfig.host = body.host || dbConfig.host;
         dbConfig.host = body.host || dbConfig.host;
         dbConfig.user = body.user || dbConfig.user;
+        const schemaNameAndUser = dbPrefix + '_' + dbConfig.schema_name
 
         app.db.raw(`CREATE DATABASE ${schemaNameAndUser};`)
             .then(() => {
@@ -50,7 +50,7 @@ module.exports = app => {
                                 req.body = {
                                     'created_at': new Date(),
                                     'status': 10,
-                                    'schema_name': schemaName,
+                                    'schema_name': dbConfig.schema_name,
                                     'schema_version': '1.0.0',
                                     'schema_description': body.schema_description,
                                     'schema_author': 'suporte@vivazul.com.br',
