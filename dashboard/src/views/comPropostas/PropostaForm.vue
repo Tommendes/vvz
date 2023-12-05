@@ -56,7 +56,7 @@ const loadData = async () => {
                     loading.value = false;
                 } else {
                     defaultWarn('Proposta não localizada');
-                    router.push({ path: `/${userData.cliente}/propostas` });
+                    router.push({ path: `/${userData.schema_description}/propostas` });
                 }
             });
         } else loading.value = false;
@@ -127,7 +127,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as propostas', to: `/${userData.cliente}/propostas` }, { label: itemData.pessoa_contato + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }, { label: itemData.pessoa_contato + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

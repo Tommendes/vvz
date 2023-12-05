@@ -938,8 +938,8 @@ module.exports = app => {
         count = parseInt(result[0][0].count) || 0
 
         const ret = app.db({ us: tabela })
-
-            .select("us.name", "us.cpf", "us.email", "us.telefone", "us.cliente", "us.dominio",
+            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+            .select("us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description", 
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
@@ -975,7 +975,8 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         if (req.user.id != req.params.id || !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         app.db({ us: tabela })
-            .select("us.name", "us.cpf", "us.email", "us.telefone", "us.cliente", "us.dominio",
+            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+            .select("us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description",
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")

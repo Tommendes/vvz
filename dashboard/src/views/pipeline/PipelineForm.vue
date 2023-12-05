@@ -124,12 +124,12 @@ const saveData = async () => {
                     emit('changed');
                     if (route.name != 'cadastro' && mode.value == 'new') {
                         router.push({
-                            path: `/${userData.cliente}/pipeline/${itemData.value.id}`
+                            path: `/${userData.schema_description}/pipeline/${itemData.value.id}`
                         });
                         loadData();
                     } else if (route.name != 'cadastro' && id != itemData.value.id) {
                         router.push({
-                            path: `/${userData.cliente}/pipeline/${itemData.value.id}`
+                            path: `/${userData.schema_description}/pipeline/${itemData.value.id}`
                         });
                         const animation = animationDocNr.value;
                         animationDocNr.value = '';
@@ -440,10 +440,10 @@ const itemsComiss = [
     }
 ];
 const toPai = async () => {
-    window.location.href = `/${userData.cliente}/pipeline/${itemData.value.id_pai}`;
+    window.location.href = `/${userData.schema_description}/pipeline/${itemData.value.id_pai}`;
 };
 const toFilho = async () => {
-    window.location.href = `/${userData.cliente}/pipeline/${itemData.value.id_filho}`;
+    window.location.href = `/${userData.schema_description}/pipeline/${itemData.value.id_filho}`;
 };
 /**
  * Ferramentas do registro
@@ -495,7 +495,7 @@ const statusRecord = async (status) => {
                 await axios.put(url, preparedBody).then(async (body) => {
                     defaultError(`Registro convertido com sucesso`);
                     router.push({
-                        path: `/${userData.cliente}/pipeline/${body.data.id}`
+                        path: `/${userData.schema_description}/pipeline/${body.data.id}`
                     });
                     loading.value = true;
                     loadData();
@@ -519,7 +519,7 @@ const statusRecord = async (status) => {
 const toGrid = () => {
     mode.value = 'grid';
     emit('cancel');
-    router.push({ path: `/${userData.cliente}/pipeline` });
+    router.push({ path: `/${userData.schema_description}/pipeline` });
 };
 // Carregar dados do formulário
 onMounted(async () => {
@@ -550,7 +550,7 @@ watch(route, (value) => {
 </script>
 
 <template>
-    <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.cliente}/pipeline` }, { label: itemData.documento }]" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
+    <Breadcrumb :items="[{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }, { label: itemData.documento }]" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
     <div class="card" :style="route.name == 'pipeline-one' ? 'min-width: 100rem' : ''">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -798,7 +798,7 @@ watch(route, (value) => {
                                 style="color: #a97328"
                                 text
                                 raised
-                                @click="router.push(`/${userData.cliente}/cadastro/${itemData.id_cadastros}`)"
+                                @click="router.push(`/${userData.schema_description}/cadastro/${itemData.id_cadastros}`)"
                             />
                             <SplitButton label="Novo Registro Idêntico" v-if="!itemData.id_pai" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
                             <Button

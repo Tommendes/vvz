@@ -35,7 +35,7 @@ module.exports = app => {
         const connection = mysql.createConnection(dbConfig);
         connection.connect();
 
-        dbConfig.schema_name = body.schema_name || crypto.randomBytes(3).toString('hex');;
+        dbConfig.schema_name = body.schema_name || crypto.randomBytes(3).toString('hex');
         dbConfig.host = body.host || dbConfig.host;
         dbConfig.host = body.host || dbConfig.host;
         dbConfig.user = body.user || dbConfig.user;

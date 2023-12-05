@@ -88,7 +88,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.cliente}/empresa` });
+                router.push({ path: `/${userData.schema_description}/empresa` });
             }
         });
     } else loading.value.form = false;
@@ -244,7 +244,7 @@ const showUploadForm = () => {
         data: {
             tabela: 'empresa',
             registro_id: itemData.value.id,
-            schema: userData.cliente + '_' + userData.dominio,
+            schema: userData.schema_name,
             field: 'id_uploads_logo',
             footerMsg: 'O tamanho máximo do arquivo é de 1MB e 250 x 250px.'
         },
@@ -271,7 +271,7 @@ const onImageRightClick = (event) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.cliente}/empresa` }, { label: itemData.razaosocial + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.schema_description}/empresa` }, { label: itemData.razaosocial + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

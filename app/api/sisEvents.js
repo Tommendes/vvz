@@ -202,7 +202,7 @@ module.exports = app => {
         const sql = app.db({ se: tabelaSisEvents }).select(app.db.raw('count(*) as count'))
             .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-            .where({ 'sc.schema_description': user.cliente })
+            .where({ 'sc.schema_description': user.schema_description })
             .where(function () {
                 this.where('se.evento', 'like', `%${key}%`)
                     .orWhere('us.name', 'like', `%${key}%`)
@@ -219,7 +219,7 @@ module.exports = app => {
             .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-            .where({ 'sc.schema_description': user.cliente })
+            .where({ 'sc.schema_description': user.schema_description })
             .where(function () {
                 this.where('se.evento', 'like', `%${key}%`)
                     .orWhere('us.name', 'like', `%${key}%`)

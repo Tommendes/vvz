@@ -9,64 +9,64 @@ const userData = JSON.parse(json);
 const model = ref([
     {
         // label: 'Home',
-        items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: `/${userData.cliente}` }]
+        items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: `/${userData.schema_description}` }]
     },
     {
         label: 'Clientes',
         items: [
-            { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${userData.cliente}/cadastros` },
-            // { label: 'Gestão de Cadastros Lazy', icon: 'pi pi-fw pi-id-card', to: `/${userData.cliente}/cadastros-l` },
-            { label: 'Prospecção', icon: 'pi pi-fw pi-map-marker', to: `/${userData.cliente}/prospeccoes` }
+            { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${userData.schema_description}/cadastros` },
+            // { label: 'Gestão de Cadastros Lazy', icon: 'pi pi-fw pi-id-card', to: `/${userData.schema_description}/cadastros-l` },
+            { label: 'Prospecção', icon: 'pi pi-fw pi-map-marker', to: `/${userData.schema_description}/prospeccoes` }
         ]
     },
     {
         label: 'Comercial e Documentos',
         items: [
-            { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${userData.cliente}/pipeline` },
-            { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${userData.cliente}/propostas` },
-            { label: 'Protocolos', icon: 'pi pi-fw pi-folder', to: `/${userData.cliente}/protocolos` },
-            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${userData.cliente}/produtos` }
+            { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${userData.schema_description}/pipeline` },
+            { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${userData.schema_description}/propostas` },
+            { label: 'Protocolos', icon: 'pi pi-fw pi-folder', to: `/${userData.schema_description}/protocolos` },
+            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${userData.schema_description}/produtos` }
         ]
     },
     {
         label: 'Pós-vendas',
         items: [
-            { label: 'Gestão de Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${userData.cliente}/pos-vendas` },
-            { label: 'Técnicos', icon: 'pi pi-fw pi-cog', to: `/${userData.cliente}/tecnicos-pv` }
+            { label: 'Gestão de Pós-vendas', icon: 'pi pi-fw pi-briefcase', to: `/${userData.schema_description}/pos-vendas` },
+            { label: 'Técnicos', icon: 'pi pi-fw pi-cog', to: `/${userData.schema_description}/tecnicos-pv` }
         ]
     },
     {
         label: 'Financeiro',
         items: [
-            { label: 'Gestão de Financeiro', icon: 'pi pi-fw pi-money-bill', to: `/${userData.cliente}/registros` },
-            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${userData.cliente}/comissoes` },
-            { label: 'Retenção', icon: 'pi pi-fw pi-wallet', to: `/${userData.cliente}/retencoes` }
+            { label: 'Gestão de Financeiro', icon: 'pi pi-fw pi-money-bill', to: `/${userData.schema_description}/registros` },
+            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${userData.schema_description}/comissoes` },
+            { label: 'Retenção', icon: 'pi pi-fw pi-wallet', to: `/${userData.schema_description}/retencoes` }
         ]
     },
     {
         label: 'Gestão',
         items: [
-            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${userData.cliente}/pipeline` },
-            { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${userData.cliente}/empresa` },
-            { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.cliente}/pipeline-params` },
-            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${userData.cliente}/pipeline` }
+            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${userData.schema_description}/pipeline` },
+            { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${userData.schema_description}/empresa` },
+            { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.schema_description}/pipeline-params` },
+            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${userData.schema_description}/pipeline` }
         ]
     },
     {
         label: `${userData.name.split(' ')[0]}${userData.name.split(' ')[1] ? ' ' + userData.name.split(' ')[1] : ''}`,
         items: [
-            { label: 'Perfil', icon: 'pi pi-fw pi-user', to: `/${userData.cliente}/pipeline` },
-            { label: 'Trocar senha', icon: 'pi pi-fw pi-key', to: `/${userData.cliente}/pipeline` },
-            { label: 'Sair', icon: 'pi pi-fw pi-sync', to: `/${userData.cliente}/pipeline` }
+            { label: 'Perfil', icon: 'pi pi-fw pi-user', to: `/${userData.schema_description}/pipeline` },
+            { label: 'Trocar senha', icon: 'pi pi-fw pi-key', to: `/${userData.schema_description}/pipeline` },
+            { label: 'Sair', icon: 'pi pi-fw pi-sync', to: `/${userData.schema_description}/pipeline` }
         ]
     },
     {
         label: 'Suporte',
         items: [
-            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${userData.cliente}/pipeline` },
-            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.cliente}/pipeline` },
-            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${userData.cliente}/pipeline` },
-            // { label: 'Uploads', icon: 'pi pi-fw pi-cloud-upload', to: `/${userData.cliente}/uploads` }
+            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${userData.schema_description}/pipeline` },
+            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.schema_description}/pipeline` },
+            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${userData.schema_description}/pipeline` },
+            // { label: 'Uploads', icon: 'pi pi-fw pi-cloud-upload', to: `/${userData.schema_description}/uploads` }
         ]
     }
 ]);

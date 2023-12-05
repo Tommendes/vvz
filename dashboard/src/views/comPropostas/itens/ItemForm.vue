@@ -54,7 +54,7 @@ const loadData = async () => {
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.cliente}/prop-itens` });
+                    router.push({ path: `/${userData.schema_description}/prop-itens` });
                 }
             });
         } else loading.value = false;
@@ -82,7 +82,7 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    if (mode.value == 'new') router.push({ path: `/${userData.cliente}/prop-item/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/prop-item/${itemData.value.id}` });
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     mode.value = 'view';
                 } else {
@@ -181,7 +181,7 @@ onMounted(() => {
 </script> 
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Itens', to: `/${userData.cliente}/prop-itens` }, { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Itens', to: `/${userData.schema_description}/prop-itens` }, { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

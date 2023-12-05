@@ -237,8 +237,8 @@ router.beforeEach((to, from, next) => {
     });
     const matchSize = to.matched.length - 1;
     if (matchSize < 0 || !paths.includes(to.matched[matchSize].path)) next({ path: '/not-found' });
-    else if (user && user.id && (to.path == '/signin' || !to.path.startsWith(`/${user.cliente}`))) {
-        next({ path: `/${user.cliente}` });
+    else if (user && user.id && (to.path == '/signin' || !to.path.startsWith(`/${user.schema_description}`))) {
+        next({ path: `/${user.schema_description}` });
     } else {
         if (!nameUnblockedRoutes.includes(to.name) && !(user && user.id)) next({ path: '/welcome' });
         else next();

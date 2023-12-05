@@ -243,7 +243,7 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.cliente}/prospeccao/${data.id}` })" aria-haspopup="true" v-tooltip.left="'Clique para mais opções'" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.schema_description}/prospeccao/${data.id}` })" aria-haspopup="true" v-tooltip.left="'Clique para mais opções'" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>

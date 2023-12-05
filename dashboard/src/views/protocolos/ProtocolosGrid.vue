@@ -38,7 +38,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.cliente}/protocolo/${itemData.value.id}` });
+    router.push({ path: `/${userData.schema_description}/protocolo/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;

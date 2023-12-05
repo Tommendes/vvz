@@ -8,7 +8,7 @@ export const guide = `
     <p><strong>Funcionalidades Principais:</strong></p>
     <ul>
         <li><strong>Cadastro:</strong> Você pode selecionar um cadastro associado ao registro. Se não houver cadastro
-            registrado, você deve adicioná-lo. A criação do cadastro está disponível <i class="fa-solid fa-angles-right fa-fade"></i> <a href="/${userData.cliente}/cadastros" class="font-bold">aqui</a> e depois clicando no botão <span class="text-xs p-button p-button-sm p-button-info p-button-outlined"><i class="pi pi-plus"></i> Novo Registro</span>.</li>
+            registrado, você deve adicioná-lo. A criação do cadastro está disponível <i class="fa-solid fa-angles-right fa-fade"></i> <a href="/${userData.schema_description}/cadastros" class="font-bold">aqui</a> e depois clicando no botão <span class="text-xs p-button p-button-sm p-button-info p-button-outlined"><i class="pi pi-plus"></i> Novo Registro</span>.</li>
         <li><strong>Tipo:</strong> Escolha o tipo de registro do pipeline a partir da lista.</li>
         <li><strong>Agente:</strong> Selecione um agente associado ao registro.</li>
         <li><strong>Documento:</strong> Insira ou visualize o documento relacionado ao registro.</li>

@@ -345,7 +345,7 @@ module.exports = app => {
         });
 
         const upload = multer({ storage: storage }).array('arquivos');
-        upload(req, res, async (err) => {
+        upload(req, res, async (error) => {
             const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
             // Verifica se tem alçada para upload
             let files = req.files;
@@ -362,9 +362,9 @@ module.exports = app => {
                 });
                 return res.status(401).send(error)
             }
-            if (err) {
-                console.log(err);
-                return res.status(500).send({ message: 'Erro ao enviar arquivos', err });
+            if (error) {
+                console.log(error);
+                return res.status(500).send({ message: 'Erro ao enviar arquivos', error });
             }
             files.forEach(async (file) => {
                 // Caminho do arquivo original

@@ -65,7 +65,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${userData.cliente}/comissao/${itemData.value.id}` });
+            router.push({ path: `/${userData.schema_description}/comissao/${itemData.value.id}` });
         }
     },
     {
