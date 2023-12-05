@@ -512,7 +512,7 @@ onMounted(() => {
                     <h5>
                         Resultados por agente
                         <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-xs"> No período {{ biPeriod.dataPt }}</span> <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-xs">
-                            {{ biData.topSellers.rows }} primeiro{{ `${biData.topSellers.rows > 1 ? 's' : ''}` }} no rancking</span
+                            {{ biData.topSellers.rows }} primeiro{{ `${biData.topSellers.rows > 1 ? 's' : ''}` }} no ranking</span
                         >
                     </h5>
                     <div>

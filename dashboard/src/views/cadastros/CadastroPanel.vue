@@ -25,7 +25,8 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/cadastros/${route.params.id}`);
 
 const loadData = async () => {
-    await axios.get(urlBase.value).then((res) => {
+    setTimeout(async () => {
+        await axios.get(urlBase.value).then((res) => {
         const body = res.data;
         if (body && body.id) {
             body.id = String(body.id);
@@ -36,6 +37,7 @@ const loadData = async () => {
             router.push(urlBase.value);
         }
     });
+    }, Math.random() * 1000 + 250);
 };
 
 onBeforeMount(() => {
