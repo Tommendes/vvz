@@ -16,7 +16,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db('users').where({ id: user.id }).first();
         try {
-            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Inclusão de Schema de cliente"`)
+            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Inclusão de Empresa"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
