@@ -22,8 +22,8 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
-        const tabelaPvOatStatusDomain = `${dbPrefix}_${uParams.cliente}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPvOatStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
 
         const pipeline_params_force = body.pipeline_params_force
 
@@ -157,7 +157,7 @@ module.exports = app => {
         }
         
         const id_pv = req.params.id_pv
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
@@ -185,7 +185,7 @@ module.exports = app => {
         }
 
         const id_pv = req.params.id_pv
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pv': id_pv }).first()
@@ -210,8 +210,8 @@ module.exports = app => {
         }
 
         const registro = { status: req.query.st || STATUS_DELETE }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPvOatStatusDomain = `${dbPrefix}_${uParams.cliente}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPvOatStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             // Variáveis da edição de um registro            
             let updateRecord = {

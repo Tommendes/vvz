@@ -36,12 +36,12 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        const dbSchema = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}`
+        const dbSchema = `${dbPrefix}_${uParams.schema_name}`
         const usuario = uParams.name
         const idEmpresa = 1
         const idOat = req.body.idOat
-        const tabelaPvOatDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.pv_oat`
-        const tabelaPvDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.pv`
+        const tabelaPvOatDomain = `${dbPrefix}_${uParams.schema_name}.pv_oat`
+        const tabelaPvDomain = `${dbPrefix}_${uParams.schema_name}.pv`
         const oat = await app.db({ oat: tabelaPvOatDomain })
             .join({ pv: tabelaPvDomain }, 'pv.id', 'oat.id_pv')
             .select(app.db.raw(`pv.pv_nr, oat.nr_oat`))

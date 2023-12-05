@@ -26,8 +26,8 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
-        const tabelaPvStatusDomain = `${dbPrefix}_${uParams.cliente}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPvStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
 
         const pipeline_params_force = body.pipeline_params_force
 
@@ -157,10 +157,10 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPipelineDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaPipeline}`
-        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaParams}`
-        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaCadastros}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaPipeline}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
 
         let queryes = undefined
         let query = undefined
@@ -283,7 +283,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id })
@@ -309,8 +309,8 @@ module.exports = app => {
         }
 
         const registro = { status: req.query.st || STATUS_DELETE }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
-        const tabelaPvStatusDomain = `${dbPrefix}_${uParams.cliente}.${tabelaStatus}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPvStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             // Variáveis da edição de um registro            
             let updateRecord = {

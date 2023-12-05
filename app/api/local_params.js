@@ -19,7 +19,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
 
@@ -103,7 +103,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const page = req.query.page || 1
         let count = app.db({ tbl1: tabelaDomain }).count('* as count')
             .where({ status: STATUS_ACTIVE })
@@ -135,7 +135,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
@@ -158,7 +158,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
@@ -216,7 +216,7 @@ module.exports = app => {
         const select = req.query.slct
 
         const first = req.query.first && req.params.first == true
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}.${tabela}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db(tabelaDomain)
 
         if (select) {

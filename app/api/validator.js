@@ -37,15 +37,15 @@ module.exports = app => {
                 dominio: tk[4],
             }
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaContratos}`
-        const tabelaServidores = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.cad_servidores`
-        const tabelaConEventos = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.con_eventos`
-        const tabelaEventos = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.fin_eventos`
-        const tabelaConsignatarios = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.consignatarios`
-        const tabelaBancos = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.cad_bancos`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaContratos}`
+        const tabelaServidores = `${dbPrefix}_${uParams.schema_name}.cad_servidores`
+        const tabelaConEventos = `${dbPrefix}_${uParams.schema_name}.con_eventos`
+        const tabelaEventos = `${dbPrefix}_${uParams.schema_name}.fin_eventos`
+        const tabelaConsignatarios = `${dbPrefix}_${uParams.schema_name}.consignatarios`
+        const tabelaBancos = `${dbPrefix}_${uParams.schema_name}.cad_bancos`
         let ret = app.db({ tb1: `${tabelaDomain}` })
             .select('tb1.*', `fe.id_evento`, `fe.evento_nome`,
-                app.db.raw(`(SELECT COALESCE(MAX(prazo), 0) FROM ${dbPrefix}_${uParams.cliente}_${uParams.dominio}.fin_rubricas fr WHERE fr.id_con_contratos = tb1.id) as parcelasQuitadas`),
+                app.db.raw(`(SELECT COALESCE(MAX(prazo), 0) FROM ${dbPrefix}_${uParams.schema_name}.fin_rubricas fr WHERE fr.id_con_contratos = tb1.id) as parcelasQuitadas`),
                 app.db.raw(`${dbPrefix}_app.getStatusLabel(tb1.status) as status_label`))
             .leftJoin({ ce: `${tabelaConEventos}` }, `ce.id`, `=`, `tb1.id_con_eventos`)
             .leftJoin({ fe: `${tabelaEventos}` }, `fe.id`, `=`, `ce.id_fin_eventos`)
@@ -101,8 +101,8 @@ module.exports = app => {
             valorLiquido = tk[5]
             uid = Buffer.from(`${id_cad_servidor}_${valorLiquido}`).toString("base64")
         }
-        const tabelaDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaServidores}`
-        const tabelaOrgaoDomain = `${dbPrefix}_${uParams.cliente}_${uParams.dominio}.${tabelaOrgao}`
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaServidores}`
+        const tabelaOrgaoDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaOrgao}`
         const orgao = await app.db({ o: tabelaOrgaoDomain }).first()
         let ret = app.db({ tb1: `${tabelaDomain}` })
             .select('tb1.*')
