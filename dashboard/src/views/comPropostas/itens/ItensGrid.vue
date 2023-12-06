@@ -1,24 +1,22 @@
 <script setup>
-import { ref, onBeforeMount, watchEffect } from 'vue';
+import { ref, onBeforeMount, inject } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import Breadcrumb from '../../../components/Breadcrumb.vue';
 import ItemForm from './ItemForm.vue';
 
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 const router = useRouter();
-const route = useRoute();
+// Cookies e dados do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
 const filters = ref(null);
 const gridData = ref(null);
-const itemData = ref(null);
+const itemData = inject('itemData');
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/com-prop-itens/35`);
-const urlBaseProtoDocs = ref(`${baseApiUrl}/com-prop-itens`);
+const urlBase = ref(`${baseApiUrl}/com-prop-itens`);
 // Itens do grid
 const listaNomes = ref([
     { field: 'id_com_propostas', label: 'Proposta', minWidth: '15rem' },
@@ -37,7 +35,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.schema_description}/com-prop-itens/35/${itemData.value.id}` });
+    router.push({ path: `/${userData.schema_description}/com-prop-itens/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -45,19 +43,10 @@ const getItem = (data) => {
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
-        axios.get(`${urlBase.value}`).then((axiosRes) => {
+        const url = `${urlBase.value}/${itemData.value.id}`;
+        console.log(url);
+        axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
-            gridData.value.forEach(async (element) => {
-                const url = `${urlBaseProtoDocs.value}/${element.id}`;
-                element.descricao = '';
-                await axios.get(url).then((axiosRes) => {
-                    const items = axiosRes.data.data;
-                    items.forEach((protoDocs) => {
-                        if (protoDocs.descricao) element.descricao += `${protoDocs.descricao.split(',')},`;
-                    });
-                });
-                element.descricao = element.descricao.replaceAll(',', ', ').trim().slice(0, -1);
-            });
             loading.value = false;
         });
     }, Math.random() * 1000 + 250);
@@ -91,8 +80,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Itens' }]" />
-    <div class="card" :style="'min-width: ' + (!route.name == 'protocolos' ? '100%' : '100rem')">
+    <div :style="'min-width: 100%'">
         <ItemForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"

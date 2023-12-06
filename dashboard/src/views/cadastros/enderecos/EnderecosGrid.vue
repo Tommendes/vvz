@@ -3,15 +3,11 @@ import { ref, onBeforeMount, provide } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn } from '@/toast';
+import { defaultSuccess } from '@/toast';
 import EnderecoForm from './EnderecoForm.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
-import moment from 'moment';
-
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
@@ -19,7 +15,6 @@ const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
 const mode = ref('grid');
-const visible = ref(false);
 // Props do template
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro

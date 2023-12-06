@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useLayout } from '@/layout/composables/layout';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useToast } from 'primevue/usetoast';
 import { appName } from '@/global';
@@ -13,7 +13,6 @@ const { onMenuToggle } = useLayout();
 const outsideClickListener = ref(null);
 const topbarMenuActive = ref(false);
 const router = useRouter();
-const route = useRoute();
 
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError, defaultWarn } from '@/toast';

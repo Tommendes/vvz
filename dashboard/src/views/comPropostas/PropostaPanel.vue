@@ -1,0 +1,134 @@
+<script setup>
+import { onBeforeMount, provide, ref } from 'vue';
+import { baseApiUrl } from '@/env';
+import axios from '@/axios-interceptor';
+import router from '../../router';
+import { defaultWarn } from '@/toast';
+import PropostaForm from './PropostaForm.vue';
+import ComposicoesGrid from './composicoes/ComposicoesGrid.vue';
+import ItensGrid from './itens/ItensGrid.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
+import { useRoute } from 'vue-router';
+const route = useRoute();
+
+import { Mask } from 'maska';
+const masks = ref({
+    cpf_cnpj: new Mask({
+        mask: ['###.###.###-##', '##.###.###/####-##']
+    }),
+    valor: new Mask({
+        mask: '0,99'
+    })
+});
+
+const itemData = ref({});
+const itemDataPipeline = ref({});
+const loading = ref(true);
+const urlBase = ref(`${baseApiUrl}/com-propostas`);
+const urlBasePipeline = ref(`${baseApiUrl}/pipeline`);
+const mode = ref('view');
+// Carrega os dados do formulário
+provide('itemData', itemData);
+// Dados do pipeline
+provide('itemDataPipeline', itemDataPipeline);
+// Carrega o modo do formulário
+provide('mode', mode);
+// Carragamento de dados do form
+const loadData = async () => {
+    setTimeout(async () => {
+        const url = `${urlBase.value}/${route.params.id}`;
+        await axios.get(url).then(async (res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                itemData.value = body;
+                if (itemData.value.id_pipeline) await loadDataPipeline();
+                loading.value = false;
+                mode.value = 'view';
+            } else {
+                defaultWarn('Proposta não localizada');
+                router.push({ path: `/${userData.schema_description}/propostas` });
+            }
+        });
+        loading.value = false;
+    }, Math.random() * 1000 + 250);
+};
+
+const loadDataPipeline = async () => {
+    loading.value = true;
+    const id = itemData.value.id_pipeline;
+    const url = `${urlBasePipeline.value}/${id}`;
+    await axios.get(url).then(async (res) => {
+        const body = res.data;
+        if (body && body.id) {
+            body.id = String(body.id);
+            itemDataPipeline.value = body;
+            await getNomeCliente();
+        } else {
+            defaultWarn('Pipeline não localizado');
+        }
+    });
+    loading.value = false;
+};
+
+const nomeCliente = ref();
+const getNomeCliente = async () => {
+    if (itemDataPipeline.value.id_cadastros) {
+        try {
+            const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemDataPipeline.value.id_cadastros}&slct=nome,cpf_cnpj`;
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar cadastros:', error);
+        }
+    }
+};
+
+onBeforeMount(() => {
+    loadData();
+});
+</script>
+
+<template>
+    <Breadcrumb :items="[{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }, { label: nomeCliente + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <div class="grid">
+        <div class="col-12">
+            <div class="card" style="min-width: 100rem">
+                <TabView>
+                    <TabPanel :disabled="!itemData.id">
+                        <template #header>
+                            <i class="fa-regular fa-address-card mr-2"></i>
+                            <span>Dados básicos</span>
+                        </template>
+                        <PropostaForm @changed="loadData()" />
+                    </TabPanel>
+                    <TabPanel :disabled="!itemData.id">
+                        <template #header>
+                            <i class="fa-solid fa-sitemap mr-2"></i>
+                            <span>Composições</span>
+                        </template>
+                        <ComposicoesGrid />
+                    </TabPanel>
+                    <TabPanel :disabled="!itemData.id">
+                        <template #header>
+                            <i class="fa-solid fa-list-ol mr-2"></i>
+                            <span>Itens</span>
+                        </template>
+                        <ItensGrid />
+                    </TabPanel>
+                </TabView>
+            </div>
+            <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                <p>route.name {{ route.name }}</p>
+                <p>itemData: {{ itemData }}</p>
+                <p>itemDataPipeline: {{ itemDataPipeline }}</p>
+            </div>
+        </div>
+    </div>
+</template>

@@ -18,9 +18,6 @@ const userData = JSON.parse(json);
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
-import { useUserStore } from '@/stores/user';
-const store = useUserStore();
-
 const itemData = ref({});
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/cadastros/${route.params.id}`);
@@ -45,7 +42,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="itemData.id" :items="[{ label: 'Todos os cadastros', to: `/${userData.schema_description}/cadastros` }, { label: itemData.nome + (store.userStore.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="itemData.id" :items="[{ label: 'Todos os cadastros', to: `/${userData.schema_description}/cadastros` }, { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="grid">
         <div class="col-12">
             <div class="card" style="min-width: 100rem">

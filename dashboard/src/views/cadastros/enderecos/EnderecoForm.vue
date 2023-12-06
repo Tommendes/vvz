@@ -2,7 +2,7 @@
 import { onBeforeMount, ref, inject } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
+import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 // Máscaras dos campos
