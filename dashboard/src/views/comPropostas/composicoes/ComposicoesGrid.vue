@@ -21,6 +21,7 @@ const urlBase = ref(`${baseApiUrl}/com-prop-compos/35`);
 const urlBaseProtoDocs = ref(`${baseApiUrl}/com-prop-compos`);
 // Itens do grid
 const listaNomes = ref([
+    { field: 'id', label: 'id', minWidth: '15rem' },
     { field: 'compos_nr', label: 'Número da composição', minWidth: '15rem' },
     { field: 'localizacao', label: 'Localizacao', minWidth: '15rem' },    
     { field: 'tombamento', label: 'Tombamento', minWidth: '15rem' }
@@ -37,7 +38,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.schema_description}/com-prop-compos/35/${itemData.value.id}` });
+    router.push({ path: `/${userData.schema_description}/prop-composicao/35/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -92,7 +93,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as as Composições' }]" />
-    <div class="card" :style="'min-width: ' + (!route.name == 'protocolos' ? '100%' : '100rem')">
+    <div class="card" :style="'min-width: ' + (!route.name == 'com-prop-compos' ? '100%' : '100rem')">
         <ComposicaoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
@@ -106,7 +107,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['localizacao', 'tombamento']"
+            :globalFilterFields="[ 'id', 'Número da composição', 'localizacao', 'tombamento']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
