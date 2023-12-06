@@ -167,11 +167,6 @@ watchEffect(() => {
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.validade_prop" id="validade_prop" type="text" />
                     </div>
-                    <!-- <div class="col-12 md:col-3">
-                            <label for="old_id">old_id</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.old_id" id="old_id" type="text"/>
-                        </div> -->
                     <div class="col-12 md:col-12">
                         <label for="saudacao_inicial">Sudação Inicial</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>

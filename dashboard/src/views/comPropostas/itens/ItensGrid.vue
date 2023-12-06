@@ -5,8 +5,9 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import ItemForm from './ItemForm.vue';
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 // Cookies e dados do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -43,7 +44,7 @@ const getItem = (data) => {
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
-        const url = `${urlBase.value}/${itemData.value.id}`;
+        const url = `${urlBase.value}/${route.params.id}`;
         console.log(url);
         axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
