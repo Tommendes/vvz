@@ -70,7 +70,8 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/cadastros`);
 // Carragamento de dados do form
 const loadData = async () => {
-    if (route.params.id || itemData.value.id) {
+    setTimeout(async () => {
+        if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
         await axios.get(url).then((res) => {
@@ -92,6 +93,7 @@ const loadData = async () => {
             }
         });
     } else loading.value.form = false;
+    }, Math.random() * 1000 + 250);
 };
 // Salvar dados do formulário
 const saveData = async () => {

@@ -19,6 +19,7 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-prop-compos`);
 // Itens do grid
 const listaNomes = ref([
+    { field: 'id', label: 'id', minWidth: '15rem' },
     { field: 'compos_nr', label: 'Número da composição', minWidth: '15rem' },
     { field: 'localizacao', label: 'Localizacao', minWidth: '15rem' },    
     { field: 'tombamento', label: 'Tombamento', minWidth: '15rem' }
@@ -35,7 +36,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.schema_description}/com-prop-compos/35/${itemData.value.id}` });
+    router.push({ path: `/${userData.schema_description}/prop-composicao/35/${itemData.value.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -94,7 +95,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['localizacao', 'tombamento']"
+            :globalFilterFields="[ 'id', 'Número da composição', 'localizacao', 'tombamento']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">

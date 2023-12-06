@@ -33,7 +33,8 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
-    if (itemData && itemData.id) {
+    setTimeout(async () => {
+        if (itemData && itemData.id) {
         const url = `${urlBase.value}/${itemData.value.id}`;
         await axios.get(url).then((res) => {
             const body = res.data;
@@ -46,7 +47,24 @@ const loadData = async () => {
             }
         });
     }
+    }, Math.random() * 1000 + 250);
 };
+
+// const loadData = async () => {
+//     if (itemData && itemData.id) {
+//         const url = `${urlBase.value}/${itemData.value.id}`;
+//         await axios.get(url).then((res) => {
+//             const body = res.data;
+//             if (body && body.id) {
+//                 body.id = String(body.id);
+//                 itemData.value = body;
+//             } else {
+//                 defaultWarn('Registro não localizado');
+//                 router.push({ path: `/${userData.schema_description}/cadastros` });
+//             }
+//         });
+//     }
+// };
 // Salvar dados do formulário
 const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';

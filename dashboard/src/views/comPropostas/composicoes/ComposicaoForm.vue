@@ -51,13 +51,12 @@ const loadData = async () => {
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    await getNomeCliente();
                     await loadDataProtoDocs();
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/prop-composicoes` });
+                    router.push({ path: `/${userData.schema_description}/prop-composicoes/35` });
                 }
             });
         } else loading.value = false;
@@ -215,7 +214,7 @@ onMounted(() => {
                         <div class="col-12 md:col-6">
                             <label for="tombamento">Tombamento do produto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.compos_nr" id="compos_nr" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tombamento" id="tombamento" type="text" />
                         </div>
                     </div>
                 </div>
