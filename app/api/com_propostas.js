@@ -149,30 +149,34 @@ module.exports = app => {
                 let operator = queryes[key].split(':')[0]
                 let value = queryes[key].split(':')[1]
                 if (key.split(':')[0] == 'field') {
-                    if (['aniversario'].includes(key.split(':')[1])) {
-                        query += `EXTRACT(MONTH FROM ${key.split(':')[1]}) = '${value}' AND `
-                    } else {
-                        if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
 
-                        switch (operator) {
-                            case 'startsWith': operator = `like '${value}%'`
-                                break;
-                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
-                                break;
-                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
-                                break;
-                            case 'endsWith': operator = `like '%${value}'`
-                                break;
-                            case 'notEquals': operator = `!= '${value}'`
-                                break;
-                            default: operator = `= '${value}'`
-                                break;
-                        }
-                        let queryField = key.split(':')[1]
-
-                        if (queryField == 'descricao') queryField = 'pp.descricao'
-                        query += `${queryField} ${operator} AND `
+                    if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
+                    // Se o campo for documento, fazer cast do valor desejado para inteiro removendo zeros a esquerda
+                    if (['documento'].includes(key.split(':')[1])) {
+                        value = Number(value.replace(/([^\d])+/gim, ""))
+                        operator = null
                     }
+                    switch (operator) {
+                        case 'startsWith': operator = `like '${value}%'`
+                            break;
+                        case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                            break;
+                        case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                            break;
+                        case 'endsWith': operator = `like '%${value}'`
+                            break;
+                        case 'notEquals': operator = `!= '${value}'`
+                            break;
+                        default: operator = `= '${value}'`
+                            break;
+                    }
+                    let queryField = key.split(':')[1]
+
+                    if (queryField == 'descricao') queryField = 'pp.descricao'
+                    // Se o campo for documento fazer cast para inteiro removendo zeros a esquerda
+                    if (queryField == 'documento') queryField = 'cast(documento as unsigned)'
+                    query += `${queryField} ${operator} AND `
+
                 } else if (key.split(':')[0] == 'params') {
                     switch (key.split(':')[1]) {
                         case 'page': page = Number(queryes[key]);
