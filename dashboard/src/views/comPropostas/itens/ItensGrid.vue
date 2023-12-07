@@ -5,8 +5,10 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import ItemForm from './ItemForm.vue';
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
+
 // Cookies e dados do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -35,7 +37,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.schema_description}/com-prop-itens/${itemData.value.id}` });
+    router.push({ path: `/${userData.schema_description}/com-prop-itens/${route.params.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -43,8 +45,7 @@ const getItem = (data) => {
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        console.log(url);
+        const url = `${urlBase.value}/${route.params.id}`;
         axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
             loading.value = false;

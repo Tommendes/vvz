@@ -15,7 +15,6 @@ const model = ref([
         label: 'Clientes',
         items: [
             { label: 'Gestão de Cadastros', icon: 'pi pi-fw pi-id-card', to: `/${userData.schema_description}/cadastros` },
-            // { label: 'Gestão de Cadastros Lazy', icon: 'pi pi-fw pi-id-card', to: `/${userData.schema_description}/cadastros-l` },
             { label: 'Prospecção', icon: 'pi pi-fw pi-map-marker', to: `/${userData.schema_description}/prospeccoes` }
         ]
     },
@@ -35,38 +34,29 @@ const model = ref([
             { label: 'Técnicos', icon: 'pi pi-fw pi-cog', to: `/${userData.schema_description}/tecnicos-pv` }
         ]
     },
-    {
-        label: 'Financeiro',
-        items: [
-            { label: 'Gestão de Financeiro', icon: 'pi pi-fw pi-money-bill', to: `/${userData.schema_description}/registros` },
-            { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${userData.schema_description}/comissoes` },
-            { label: 'Retenção', icon: 'pi pi-fw pi-wallet', to: `/${userData.schema_description}/retencoes` }
-        ]
-    },
+    // {
+    //     label: 'Financeiro',
+    //     items: [
+    //         { label: 'Gestão de Financeiro', icon: 'pi pi-fw pi-money-bill', to: `/${userData.schema_description}/registros` },
+    //         { label: 'Comissões', icon: 'pi pi-fw pi-dollar', to: `/${userData.schema_description}/comissoes` },
+    //         { label: 'Retenção', icon: 'pi pi-fw pi-wallet', to: `/${userData.schema_description}/retencoes` }
+    //     ]
+    // },
     {
         label: 'Gestão',
         items: [
-            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${userData.schema_description}/pipeline` },
+            { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${userData.schema_description}/usuarios` },
             { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${userData.schema_description}/empresa` },
             { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.schema_description}/pipeline-params` },
-            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${userData.schema_description}/pipeline` }
-        ]
-    },
-    {
-        label: `${userData.name.split(' ')[0]}${userData.name.split(' ')[1] ? ' ' + userData.name.split(' ')[1] : ''}`,
-        items: [
-            { label: 'Perfil', icon: 'pi pi-fw pi-user', to: `/${userData.schema_description}/pipeline` },
-            { label: 'Trocar senha', icon: 'pi pi-fw pi-key', to: `/${userData.schema_description}/pipeline` },
-            { label: 'Sair', icon: 'pi pi-fw pi-sync', to: `/${userData.schema_description}/pipeline` }
+            { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${userData.schema_description}/eventos` }
         ]
     },
     {
         label: 'Suporte',
         items: [
-            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${userData.schema_description}/pipeline` },
-            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.schema_description}/pipeline` },
-            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${userData.schema_description}/pipeline` },
-            // { label: 'Uploads', icon: 'pi pi-fw pi-cloud-upload', to: `/${userData.schema_description}/uploads` }
+            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${userData.schema_description}/suporte/articles` },
+            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.schema_description}/suporte/messages` },
+            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${userData.schema_description}/suporte/reviews` }
         ]
     }
 ]);

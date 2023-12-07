@@ -33,10 +33,10 @@ const gridData = ref([]); // Seus dados iniciais
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'descricao', label: 'Representada', minWidth: '15rem' },
-    { field: 'documento', label: 'Proposta', minWidth: '11rem' },
+    { field: 'descricao', label: 'Representada', minWidth: '11rem' },
+    { field: 'documento', label: 'Proposta', minWidth: '8rem' },
     { field: 'nome', label: 'Cliente', minWidth: '12rem' },
-    { field: 'pessoa_contato', label: 'Contato', minWidth: '12rem' },
+    // { field: 'pessoa_contato', label: 'Contato', minWidth: '12rem' },
     { field: 'email_contato', label: 'Email', minWidth: '12rem' }
 ]);
 // Inicializa os filtros do grid
@@ -82,7 +82,6 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                const logTo = error;
                 try {
                     defaultError(error.response.data);
                 } catch (error) {
@@ -138,7 +137,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Propostas' }]" />
-    <div class="card" style="min-width: 100rem">
+    <div class="card" style="max-width: 100rem">
         <PropostaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"

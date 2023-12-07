@@ -5,8 +5,11 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import ComposicaoForm from './ComposicaoForm.vue';
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
+
+// Cookies e dados do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -21,7 +24,7 @@ const urlBase = ref(`${baseApiUrl}/com-prop-compos`);
 const listaNomes = ref([
     { field: 'id', label: 'id', minWidth: '15rem' },
     { field: 'compos_nr', label: 'Número da composição', minWidth: '15rem' },
-    { field: 'localizacao', label: 'Localizacao', minWidth: '15rem' },    
+    { field: 'localizacao', label: 'Localizacao', minWidth: '15rem' },
     { field: 'tombamento', label: 'Tombamento', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
@@ -36,7 +39,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.schema_description}/prop-composicao/35/${itemData.value.id}` });
+    router.push({ path: `/${userData.schema_description}/prop-composicao/35/${route.params.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -44,8 +47,7 @@ const getItem = (data) => {
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        console.log(url);
+        const url = `${urlBase.value}/${route.params.id}`;
         axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
             loading.value = false;
@@ -95,7 +97,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="[ 'id', 'Número da composição', 'localizacao', 'tombamento']"
+            :globalFilterFields="['id', 'Número da composição', 'localizacao', 'tombamento']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">

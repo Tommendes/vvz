@@ -99,7 +99,7 @@ onBeforeMount(() => {
     <Breadcrumb :items="[{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }, { label: nomeCliente + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="grid">
         <div class="col-12">
-            <div class="card" style="min-width: 100rem">
+            <div class="card" :style="'min-width: ' + (!route.name == 'propostas' ? '100%' : '100rem')" >
                 <TabView>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
@@ -119,6 +119,14 @@ onBeforeMount(() => {
                         <template #header>
                             <i class="fa-solid fa-list-ol mr-2"></i>
                             <span>Itens</span>
+                        </template>
+                        <ItensGrid />
+                    </TabPanel>
+                    <TabPanel :disabled="!itemData.id">
+                        <template #header>
+                            <i class="fa-solid fa-cog mr-2"></i>
+                            <i class="fa-solid fa-print mr-2"></i>
+                            <span>Padrões e Impressão</span>
                         </template>
                         <ItensGrid />
                     </TabPanel>
