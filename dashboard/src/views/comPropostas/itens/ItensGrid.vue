@@ -21,6 +21,7 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-prop-itens`);
 // Itens do grid
 const listaNomes = ref([
+    { field: 'compoe_valor', label: 'Ativo', minWidth: '15rem' },
     { field: 'id_com_propostas', label: 'Proposta', minWidth: '15rem' },
     { field: 'id_com_produtos', label: 'Produto', minWidth: '15rem' },
     { field: 'item', label: 'Item', minWidth: '15rem' }
