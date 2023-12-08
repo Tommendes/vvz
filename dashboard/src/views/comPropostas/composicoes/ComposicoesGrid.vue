@@ -39,7 +39,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.schema_description}/prop-composicao/35/${route.params.id}` });
+    router.push({ path: `/${userData.schema_description}/proposta/${route.params.id}/` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -56,27 +56,34 @@ const loadData = () => {
     }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
-const searchInPage = () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const contentElement = document.getElementByTagName('tbody');
 
-    if (searchTerm) {
-        const contentText = contentElement.innerText.toLowerCase();
-
-        if (contentText.includes(searchTerm)) {
-            // Criamos uma expressão regular global (g) para encontrar todas as correspondências
-            const regex = new RegExp(searchTerm, 'g');
-
-            // Usamos o método replace para envolver as correspondências com uma tag de destaque
-            contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
-
-            // Definimos o foco de volta no campo de input
-            document.getElementById('searchInput').focus();
-        } else {
-            alert('Nenhuma correspondência encontrada.');
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
+const showComposicaoForm = () => {
+    dialog.open(ComposicaoForm, {
+        data: {
+            idRegs: itemData.value.id,
+            idPvOat: undefined,
+            idCadastro: itemData.value.id_cadastros,
+            lastStatus: itemDataLastStatus.value.status_pv
+        },
+        props: {
+            header: `Registrar OAT`,
+            style: {
+                width: '100rem'
+            },
+            breakpoints: {
+                '1199px': '75vw',
+                '575px': '90vw'
+            },
+            modal: true
+        },
+        onClose: () => {
+            oatsGrid.value.loadData();
         }
-    }
+    });
 };
+
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -98,7 +105,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="[ 'compoe_valor', 'compos_nr', 'localizacao', 'tombamento']"
+            :globalFilterFields="['compos_nr', 'localizacao', 'tombamento']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
@@ -106,7 +113,7 @@ onBeforeMount(() => {
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
-                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
+                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>

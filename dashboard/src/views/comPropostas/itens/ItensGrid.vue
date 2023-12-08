@@ -22,8 +22,10 @@ const urlBase = ref(`${baseApiUrl}/com-prop-itens`);
 // Itens do grid
 const listaNomes = ref([
     { field: 'compoe_valor', label: 'Ativo', minWidth: '15rem' },
-    { field: 'id_com_propostas', label: 'Proposta', minWidth: '15rem' },
-    { field: 'id_com_produtos', label: 'Produto', minWidth: '15rem' },
+    { field: 'id_com_prop_compos', label: 'Proposta', minWidth: '15rem' },
+    { field: 'descricao', label: 'Descrição', minWidth: '15rem' },
+    { field: 'quantidade', label: 'Quantidade', minWidth: '15rem' },
+    { field: 'valor_unitario', label: 'Valor Unitário', minWidth: '15rem' },
     { field: 'item', label: 'Item', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
@@ -38,7 +40,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.schema_description}/com-prop-itens/${route.params.id}` });
+    router.push({ path: `/${userData.schema_description}/proposta/${route.params.id}` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -96,7 +98,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id_com_prop_compos', 'descricao']"
+            :globalFilterFields="['id_com_prop_compos', 'descricao', 'quantidade', 'valor_unitario', 'item']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
