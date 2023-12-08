@@ -39,7 +39,7 @@ const clearFilter = () => {
     initFilters();
 };
 const goField = () => {
-    router.push({ path: `/${userData.schema_description}/prop-composicao/35/${route.params.id}` });
+    router.push({ path: `/${userData.schema_description}/proposta/${route.params.id}/` });
 };
 const getItem = (data) => {
     itemData.value = data;
@@ -98,7 +98,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="[ 'compoe_valor', 'compos_nr', 'localizacao', 'tombamento']"
+            :globalFilterFields="['compos_nr', 'localizacao', 'tombamento']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
