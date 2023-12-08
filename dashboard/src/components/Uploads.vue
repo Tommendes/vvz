@@ -97,6 +97,8 @@ const closeDialog = () => {
 };
 // Salvar dados dos arquivos
 const saveData = async () => {
+    // itemData.value.width = filesData.value.width;
+    // itemData.value.height = filesData.value.height;
     filesData.value.itemData = itemData.value;
     const url = `${urlBase.value}/f-a/sown`;
     await axios

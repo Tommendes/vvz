@@ -22,7 +22,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
 
         if (body.id && body.id > 0) {
@@ -163,7 +163,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
 
         const ret = app.db({ tbl1: tabelaDomain })
@@ -374,7 +374,9 @@ module.exports = app => {
                 const outputPath = path.join(destinationPath, file.filename);
                 file.path = outputPath;
                 // Atualiza a URL para apontar para a versão redimensionada
-                file.url = `${baseFrontendUrl}/assets/files/${uParams.schema_description}/${file.filename}`;
+                // remover # de baseFrontendUrl
+                const baseUrlSemHash = baseFrontendUrl.split('#')[0];
+                file.url = `${baseUrlSemHash}/assets/files/${uParams.schema_description}/${file.filename}`;
                 // Adicione a propriedade file.label contendo o file.originalname sem a extensão
                 let nomeArquivo = file.originalname;
                 let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
@@ -386,7 +388,7 @@ module.exports = app => {
                 file.uid = nomeArquivoUid[nomeArquivoUid.length - 1].split('.')[0];
 
                 // Redimensiona a imagem para 250x250
-                await resizeImage(inputPath, outputPath, 250, 250);
+                await resizeImage(inputPath, outputPath); //, 250, 250
                 // Exclui o arquivo original
                 await removeFileFromServer(inputPath)
             });
@@ -529,13 +531,14 @@ module.exports = app => {
      * @param {*} maxHeight 
      */
     const resizeImage = async (inputPath, outputPath, maxWidth, maxHeight) => {
-        await sharp(inputPath)
-            .resize({
-                width: maxWidth,
-                height: maxHeight,
-                fit: 'inside', // ou 'cover' dependendo do comportamento desejado
-                withoutEnlargement: true,
-            })
+        const image = sharp(inputPath)
+        const metadata = await image.metadata()
+        await image.resize({
+            width: maxWidth || metadata.width,
+            height: maxHeight || metadata.height,
+            fit: 'inside', // ou 'cover' dependendo do comportamento desejado
+            withoutEnlargement: true,
+        })
             .toFile(outputPath);
     };
 

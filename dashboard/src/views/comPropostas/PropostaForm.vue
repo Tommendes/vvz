@@ -174,6 +174,12 @@ watchEffect(() => {
                         <p v-else v-html="itemData.saudacao_inicial" class="p-inputtext p-component p-filled"></p>
                     </div>
                     <div class="col-12 md:col-12">
+                        <label for="observacoes_finais">Observacoes Finais</label>
+                        <Skeleton v-if="loading" height="2rem"></Skeleton>
+                        <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes_finais" id="observacoes_finais" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <p v-else v-html="itemData.observacoes_finais" class="p-inputtext p-component p-filled"></p>
+                    </div>
+                    <div class="col-12 md:col-12">
                         <label for="garantia">Garantia</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.garantia" id="garantia" editorStyle="height: 160px" aria-describedby="editor-error" />
@@ -190,12 +196,6 @@ watchEffect(() => {
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.assinatura" id="assinatura" editorStyle="height: 160px" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.assinatura" class="p-inputtext p-component p-filled"></p>
-                    </div>
-                    <div class="col-12 md:col-12">
-                        <label for="observacoes_finais">Observacoes Finais</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes_finais" id="observacoes_finais" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.observacoes_finais" class="p-inputtext p-component p-filled"></p>
                     </div>
                 </div>
             </div>

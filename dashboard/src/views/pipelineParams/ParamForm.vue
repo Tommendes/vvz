@@ -127,9 +127,37 @@ const showUploadForm = () => {
         }
     });
 };
+const showUploadFooterForm = () => {
+    dialog.open(Uploads, {
+        data: {
+            tabela: 'pipeline_params',
+            registro_id: itemData.value.id,
+            schema: userData.schema_name,
+            field: 'id_uploads_rodape',
+            footerMsg: 'O tamanho máximo do arquivo é de 1MB e 1090 x 160px.'
+        },
+        props: {
+            header: `Alterar o rodapé do timbrado`,
+            style: {
+                width: '50rem'
+            },
+            breakpoints: {
+                '1199px': '75vw',
+                '575px': '90vw'
+            },
+            modal: true
+        },
+        onClose: () => {
+            reload();
+        }
+    });
+};
 
 const onImageRightClick = (event) => {
     menu.value.show(event);
+};
+const onImageFooterRightClick = (event) => {
+    menuFooter.value.show(event);
 };
 // Opções de DropDown do Form
 const dropdownApresentacaoBi = ref([
@@ -206,6 +234,16 @@ const items = ref([
         }
     }
 ]);
+const menuFooter = ref();
+const itemsFooter = ref([
+    {
+        label: 'Alterar o rodapé',
+        icon: 'pi pi-fw pi-cloud-upload',
+        command: () => {
+            showUploadFooterForm();
+        }
+    }
+]);
 </script>
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.schema_description}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
@@ -274,6 +312,11 @@ const items = ref([
                             <Dropdown v-else id="proposta_interna" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.proposta_interna" :options="dropdownPropInterna" />
                         </div>
                     </div>
+                </div>
+                <div class="col-12">
+                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                    <Image v-else :src="`${itemData.url_rodape ? itemData.url_rodape : '/assets/images/AddressBook.jpg'}`" alt="Rodapé" :preview="preview" id="url_rodape" @contextmenu="onImageFooterRightClick" />
+                    <ContextMenu ref="menuFooter" :model="itemsFooter" />
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">

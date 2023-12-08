@@ -9,7 +9,8 @@ module.exports = app => {
         const root = body.root || undefined
         const asset = body.asset || undefined
         const extension = body.extension || undefined
-        const uParams = await app.db('users').where({ id: req.user.id }).first();
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de arquivo do sistema"`)

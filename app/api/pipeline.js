@@ -58,7 +58,6 @@ module.exports = app => {
         const status_params_force = body.status_params_force; // Status forçado para edição
         const status_params = body.status_params; // Último status do registro
         delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force; delete body.hash; delete body.tblName;
-        if (body.documento) body.documento = body.documento.toString().padStart(6, '0')
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -100,10 +99,9 @@ module.exports = app => {
                 if (status_params_force == STATUS_CONVERTIDO) {
 
                     // Gerar um número de documento baseado no pipeline_params_force.tipo_secundario
-                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento'))
+                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(documento) + 1 AS documento'))
                         .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
                     body.documento = nextDocumentNr.documento || '1'
-                    body.documento = body.documento.toString().padStart(6, '0')
                     // Informa o id do registro pai
                     const idPai = body.id
                     // Limpa os dados do corpo da solicitação
@@ -170,10 +168,9 @@ module.exports = app => {
             app.db.transaction(async (trx) => {
                 // Se autom_nr = 1, gerar um novo número de documento
                 if (pipeline_params_force.autom_nr == 1) {
-                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS INT)) + 1 AS documento'))
+                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(documento) + 1 AS documento'))
                         .where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
                     body.documento = nextDocumentNr.documento || '1'
-                    body.documento = body.documento.toString().padStart(6, '0')
                 }
 
                 // Variáveis da criação de um registro
@@ -269,7 +266,7 @@ module.exports = app => {
                             sortField = 'status_created_at'
                             sortOrder = 'DESC'
                         } else if (['documento'].includes(key.split(':')[1])) {
-                            query += `cast(tbl1.documento as unsigned) = cast('${value}' as unsigned) AND `
+                            query += `tbl1.documento = cast('${value}' as unsigned) AND `
                         } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
                             query += `pp.descricao = '${value}' AND `
                             sortField = 'status_created_at'
@@ -330,7 +327,6 @@ module.exports = app => {
                     if (element == 'sort') {
                         sortField = key.split(':')[1].split('=')[0]
                         if (sortField == 'status_created_at') sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
-                        if (sortField == 'documento') sortField = 'cast(documento as int)'
                         sortOrder = queryes[key]
                     }
 
@@ -354,7 +350,7 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, tbl1.documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, lpad(tbl1.documento,8,'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
             (SELECT DATE_FORMAT(SUBSTRING_INDEX(MAX(ps.created_at),' ',1),'%d/%m/%Y') FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id)status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
@@ -391,6 +387,7 @@ module.exports = app => {
             .whereNot({ 'tbl1.status': STATUS_DELETE })
             .first()
             .then(body => {
+                body.documento = body.documento.toString().padStart(8, '0')
                 return res.json(body)
             })
             .catch(error => {
