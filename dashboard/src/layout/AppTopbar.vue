@@ -135,11 +135,14 @@ const getUserMessages = async () => {
         const url = `${baseApiUrl}/sis-messages/f-a/gbf?fld=id_user&vl=${userData.id}&slct=id,title,msg,status`;
         await axios.get(url).then((res) => {
             const body = res.data.data;
+            itemsMessages.value = [];
+            newMessages.value = 0;
             if (body && body.length) {
-                itemsMessages.value = [];
-                newMessages.value = 0;
                 body.forEach((element) => {
                     if (element.status == 10) ++newMessages.value;
+                    // element.msg = element.msg.replaceAll('[userName]', userData.name.split(' ')[0]);
+                    // Substitua [userName] pelos dois primeiros nomes do usuário com o cuidade de que o usuário pode ter apenas um nome registrado
+                    element.msg = element.msg.replace('[userName]', userData.name.split(' ').slice(0, 2).join(' '));
                     itemsMessages.value.push({
                         icon: element.status == 10 ? 'fa-solid fa-asterisk fa-fade' : 'fa-solid fa-check',
                         status: element.status,
@@ -162,17 +165,19 @@ const getUserMessages = async () => {
                 });
             }
         });
-    }, Math.floor(Math.random() * 1000) + 1);
+    }, Math.floor(Math.random() * 1000) + 250);
 };
 const dialogRef = ref(null);
 const messagesButtoms = ref([
     {
         label: 'Ok',
-        icon: 'fa-solid fa-check'
+        icon: 'fa-solid fa-check',
+        severity: 'success'
     },
     {
         label: 'Excluir',
-        icon: 'fa-regular fa-trash-can'
+        icon: 'fa-regular fa-trash-can',
+        severity: 'danger'
     }
 ]);
 const showMessage = (body) => {
@@ -199,20 +204,23 @@ const showMessage = (body) => {
                     msg: options.data.message,
                     status: 11
                 };
-                await axios.put(`${baseApiUrl}/sis-messages/${options.data.id}`, bodyTo).catch((error) => {
-                    defaultError(error);
-                });
+                await axios
+                    .put(`${baseApiUrl}/sis-messages/${options.data.id}`, bodyTo)
+                    .then(async () => await getUserMessages())
+                    .catch((error) => {
+                        defaultError(error);
+                    });
             } else if (options.data.label == messagesButtoms.value[1].label) {
                 await axios
                     .delete(`${baseApiUrl}/sis-messages/${options.data.id}`)
-                    .then(() => {
+                    .then(async () => {
+                        await getUserMessages();
                         defaultSuccess('Mensagem excluída com sucesso!');
                     })
                     .catch((error) => {
                         defaultError(error);
                     });
             }
-            await getUserMessages();
         }
     });
 };
@@ -249,7 +257,7 @@ onBeforeMount(() => {
                 aria-haspopup="true"
                 @click="toggleMenuMessages"
             />
-            <Button v-else type="button" label="Toggle" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages" class="p-link layout-topbar-button">
+            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages" class="p-link layout-topbar-button">
                 <i class="fa-regular fa-bell"></i>
             </Button>
             <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />

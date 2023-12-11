@@ -16,6 +16,6 @@ const action = (itemData) => {
     <!-- <h3 class="text-center mb-5">{{ itemData.label }}</h3> -->
     <p class="text-xl text-center" v-html="itemData.message" />
     <div class="flex justify-content-center flex-wrap gap-3">
-        <Button :label="item.label" @click="action(item)" v-for="item in itemData.buttons" :key="item.id"></Button>
+        <Button :label="item.label" @click="action(item)" v-for="item in itemData.buttons" :key="item.id" text raised :severity="item.severity" />
     </div>
 </template>
