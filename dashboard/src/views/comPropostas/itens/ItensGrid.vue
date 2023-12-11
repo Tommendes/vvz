@@ -16,12 +16,13 @@ const userData = JSON.parse(json);
 
 const filters = ref(null);
 const gridData = ref(null);
+// Campos de formulário
 const itemData = inject('itemData');
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-prop-itens`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'compoe_valor', label: 'Ativo', minWidth: '15rem' },
+    { field: 'compoe', label: 'Ativo', minWidth: '15rem' },
     { field: 'id_com_prop_compos', label: 'Proposta', minWidth: '15rem' },
     { field: 'descricao', label: 'Descrição', minWidth: '15rem' },
     { field: 'quantidade', label: 'Quantidade', minWidth: '15rem' },
@@ -39,43 +40,31 @@ initFilters();
 const clearFilter = () => {
     initFilters();
 };
-const goField = () => {
-    router.push({ path: `/${userData.schema_description}/proposta/${route.params.id}` });
+const goField = (data) => {
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = data;
+        mode.value = 'view';
+    }, 100);
 };
-const getItem = (data) => {
-    itemData.value = data;
-};
+
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
         const url = `${urlBase.value}/${route.params.id}`;
         axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
+            gridData.value.forEach((element) => {
+                element.compoe = element.compoe_valor == 1 ? 'Sim' : 'Não';
+                element.ativo = element.status == 10 ? 'Sim' : 'Não';
+            });
             loading.value = false;
         });
     }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
-const searchInPage = () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const contentElement = document.getElementByTagName('tbody');
-
-    if (searchTerm) {
-        const contentText = contentElement.innerText.toLowerCase();
-
-        if (contentText.includes(searchTerm)) {
-            // Criamos uma expressão regular global (g) para encontrar todas as correspondências
-            const regex = new RegExp(searchTerm, 'g');
-
-            // Usamos o método replace para envolver as correspondências com uma tag de destaque
-            contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
-
-            // Definimos o foco de volta no campo de input
-            document.getElementById('searchInput').focus();
-        } else {
-            alert('Nenhuma correspondência encontrada.');
-        }
-    }
+const getSeverity = (value) => {
+    return value == 'Sim' ? 'success' : 'danger';
 };
 onBeforeMount(() => {
     initFilters();
@@ -85,7 +74,7 @@ onBeforeMount(() => {
 
 <template>
     <div :style="'min-width: 100%'">
-        <ItemForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <ItemForm :mode="mode" :idItens="' ' + itemData.id" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit'].includes(mode)" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -106,7 +95,7 @@ onBeforeMount(() => {
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
-                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
+                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
@@ -123,13 +112,14 @@ onBeforeMount(() => {
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
                         <span v-else v-html="data[nome.field]"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="goField" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" icon="pi pi-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>
