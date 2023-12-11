@@ -5,6 +5,9 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useToast } from 'primevue/usetoast';
 import { appName } from '@/global';
+import Prompts from '@/components/Prompts.vue';
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
 
 const toast = useToast();
 
@@ -23,6 +26,14 @@ const userData = JSON.parse(json);
 
 import { baseApiUrl } from '@/env';
 const urlRequestRequestPassReset = ref(`${baseApiUrl}/request-password-reset/`);
+const itemsMessages = ref([
+    {
+        label: 'Título da mensagem',
+        command: () => {
+            router.push({ path: `/${userData.schema_description}/message`, query: { q: '[id_da mensagem aqui]' } });
+        }
+    }
+]);
 const items = ref([
     {
         label: 'Ver perfil',
@@ -111,6 +122,10 @@ const isOutsideClicked = (event) => {
 
     return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
 };
+const menuMessages = ref();
+const toggleMenuMessages = (event) => {
+    menuMessages.value.toggle(event);
+};
 const menu = ref();
 const toggle = (event) => {
     menu.value.toggle(event);
@@ -121,6 +136,55 @@ const toggleAppConfig = () => {
         btn.click();
     }
 };
+const getUserMessages = async () => {
+    const url = `${baseApiUrl}/sis-messages/f-a/gbf?fld=id_user&vl=${userData.id}&slct=id,title,msg`;
+    console.log(url);
+    await axios.get(url).then((res) => {
+        const body = res.data.data;
+        if (body && body.length) {
+            itemsMessages.value = [];
+            body.forEach((element) => {
+                itemsMessages.value.push({
+                    label: element.title,
+                    message: element.msg,
+                    command: () => {
+                        showMessage({
+                            label: element.title,
+                            message: element.msg
+                        });
+                    }
+                });
+            });
+        }
+    });
+};
+
+const showMessage = (body) => {
+    dialog.open(Prompts, {
+        data: {
+            message: body
+        },
+        props: {
+            header: body.label,
+            style: {
+                width: '50vw'
+            },
+            breakpoints: {
+                '960px': '75vw',
+                '640px': '90vw'
+            },
+            modal: true
+        },
+        onClose: (options) => {
+            console.log('onClose');
+            console.log(options);
+        }
+    });
+};
+
+onMounted(() => {
+    getUserMessages();
+});
 </script>
 
 <template>
@@ -139,6 +203,11 @@ const toggleAppConfig = () => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
+            <Button type="button" label="Notifications" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
+                <i class="fa-regular fa-bell fa-shake"></i>
+                <span>Notificações</span>
+            </Button>
+            <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
             <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
                 <i class="pi pi-user"></i>
                 <span>Perfil</span>

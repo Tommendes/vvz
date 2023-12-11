@@ -140,6 +140,7 @@ module.exports = app => {
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
+                if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
             })
             .catch(error => {

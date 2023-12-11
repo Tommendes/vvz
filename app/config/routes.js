@@ -116,6 +116,34 @@ module.exports = app => {
         .delete(app.api.local_params.remove)
 
     /**
+     * Rota de long_params
+     */
+    app.route('/long-params/f-a/:func').all(app.config.passport.authenticate()).get(app.api.long_params.getByFunction)
+    app.route('/long-params')
+        .all(app.config.passport.authenticate())
+        .post(app.api.long_params.save)
+        .get(app.api.long_params.get)
+    app.route('/long-params/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.long_params.save)
+        .get(app.api.long_params.getById)
+        .delete(app.api.long_params.remove)
+
+    /**
+     * Rota de sis_messages
+     */
+    app.route('/sis-messages/f-a/:func').all(app.config.passport.authenticate()).get(app.api.sis_messages.getByFunction)
+    app.route('/sis-messages')
+        .all(app.config.passport.authenticate())
+        .post(app.api.sis_messages.save)
+        .get(app.api.sis_messages.get)
+    app.route('/sis-messages/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.sis_messages.save)
+        .get(app.api.sis_messages.getById)
+        .delete(app.api.sis_messages.remove)
+
+    /**
      * Rota de cad_endereços
     */
     app.route('/cad-enderecos/f-a/:func')

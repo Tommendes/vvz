@@ -13,7 +13,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Inclusão/Edição de ${tabelaAlias}"`)            
+            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Inclusão/Edição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -106,7 +106,7 @@ module.exports = app => {
                 res.status(404).send('Função inexitente')
                 break;
         }
-    }    
+    }
 
     const getByField = async (req, res) => {
         let user = req.user
@@ -114,7 +114,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)            
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -140,6 +140,7 @@ module.exports = app => {
         }
 
         ret.then(body => {
+            if (!body) return res.status(404).send('Registro não encontrado')
             return res.json({ data: body })
         }).catch(error => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
@@ -153,7 +154,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exibição Geral de ${tabelaAlias}"`)            
+            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exibição Geral de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -190,7 +191,10 @@ module.exports = app => {
             .select('id', { 'cliente': 'dominio' }, { 'dominio': 'value' }, 'label')
             .where({ 'meta': 'domainName' })
             .orderBy('label')
-            .then(ret => res.status(200).send({ data: ret }))
+            .then((body) => {
+                if (!body) return res.status(404).send('Registro não encontrado')
+                return res.status(200).send({ data: body })
+            })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });
                 res.status(500).send(error)
@@ -203,7 +207,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exibição Individual de ${tabelaAlias}"`)            
+            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exibição Individual de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -211,7 +215,8 @@ module.exports = app => {
         const ret = app.db(tabela)
             .where({ id: req.params.id })
             .first()
-            .then(body => {
+            .then((body) => {
+                if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json({ data: body })
             })
             .catch(error => {
@@ -226,7 +231,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)            
+            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)

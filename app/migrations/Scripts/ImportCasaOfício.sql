@@ -1,5 +1,5 @@
 /*Recriar tabelas*/
-DELETE FROM vivazul_api.knex_migrations WHERE id > 10;
+DELETE FROM vivazul_api.knex_migrations WHERE id > 11;
 ALTER TABLE vivazul_api.knex_migrations AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=0; 
 DROP TABLE IF EXISTS vivazul_bceaa5.cad_contatos; 
@@ -89,6 +89,10 @@ INSERT INTO vivazul_api.params (
   id,evento,created_at,updated_at,STATUS,dominio,meta,VALUE,label
 )(SELECT  0,1,NOW(),NULL,10,'root','com_unidade',id,CONCAT(parametro,label) FROM vivazul_lynkos.params WHERE grupo = 'prod_tps' ORDER BY parametro);
 UPDATE `vivazul_api`.`params` SET `label` = 'Mão de Obra' WHERE `id` = '9';
+/*parâmetros comerciais das propostas*/
+INSERT INTO vivazul_bceaa5.local_params (
+  id,evento,created_at,updated_at,STATUS,grupo,parametro,label
+)SELECT NULL,1,NOW(),NULL,10,grupo,parametro,label FROM vivazul_lynkos.params WHERE dominio = 'casaoficio' AND grupo LIKE 'com_pr%' AND grupo NOT IN('com_pr01','com_pr02','com_pr03','com_pr04','com_pr08','com_pr09') ORDER BY grupo;
 
 /*Adiciona coluna de referência entre BDs*/
 ALTER TABLE vivazul_bceaa5.cadastros ADD COLUMN old_id INT(10) UNSIGNED;
@@ -350,10 +354,20 @@ INSERT INTO vivazul_bceaa5.pv_oat_status (evento,created_at,updated_at,STATUS,id
 UPDATE vivazul_bceaa5.pv_oat_status SET status_pv_oat = 98 WHERE status_pv_oat = 90;
 
 /*Inserir long_params*/
-/*Dizeres legais da Oat*/
+-- Dizeres legais da Oat*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_bceaa5.long_params;
+ALTER TABLE vivazul_bceaa5.long_params AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1;
 INSERT INTO vivazul_bceaa5.long_params (id,evento,created_at,updated_at,STATUS,grupo,parametro,label) 
 VALUES(NULL,1,NOW(),NULL,10,'lgl_os_01','Declaro, por meio deste que aceito o(s) produtos(s), serviço(s) e/ou montagem(ns) a que essa ordem de serviço se refere, e que os mesmos encontram-se nas condições contratadas, em perfeito estado de funcionamento, aparência geral, acabamentos e funcionamento assim como o treinamento de manuseio e utilização.','Dizeres legais do final da OAT');
+-- Parâmetros comerciais padrão
+INSERT INTO vivazul_bceaa5.long_params (id,evento,created_at,updated_at,STATUS,grupo,parametro,label) 
+SELECT NULL,1,NOW(),NULL,10,grupo,parametro,label FROM vivazul_lynkos.params WHERE dominio = 'casaoficio' AND grupo IN('com_pr01','com_pr02','com_pr03','com_pr04','com_pr09') ORDER BY grupo;
 
+INSERT INTO vivazul_bceaa5.local_params (
+  id,evento,created_at,updated_at,STATUS,grupo,parametro,label
+)(SELECT  0,1,NOW(),NULL,10,'tipo_endereco',tipo,tipo FROM vivazul_lynkos.cadastros_enderecos ce WHERE tipo IS NOT NULL GROUP BY tipo ORDER BY tipo);
 /*Importar com_produtos*/
 ALTER TABLE vivazul_bceaa5.com_produtos ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 

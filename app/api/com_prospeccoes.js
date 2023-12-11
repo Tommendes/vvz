@@ -252,6 +252,7 @@ module.exports = app => {
             .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
+                if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
             })
             .catch(error => {

@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { inject, onBeforeMount, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { isValidEmail } from '@/global';
@@ -105,6 +105,16 @@ const reload = () => {
     loadData();
     emit('cancel');
 };
+
+// Obter parâmetros do BD
+const optionLocalParams = async (query) => {
+    const selects = query.select ? `&slct=${query.select}` : undefined;
+    const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
+    return await axios.get(url);
+};
+
+// http://localhost:55596/local-params/f-a/gbf?fld=grupo&vl=com_pr05&slct=id,parametro,label
+
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();

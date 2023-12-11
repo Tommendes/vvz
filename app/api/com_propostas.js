@@ -27,9 +27,21 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaPipeline}`
 
         try {
             existsOrError(body.id_pipeline, 'Registro no Pipeline não informado')
+            // cast body.id_pipeline para inteiro
+            const cadastro = await app.db({ c: tabelaCadastrosDomain })
+                .join({ p: tabelaPipelineDomain }, function () {
+                    this.on('p.id_cadastros', '=', 'c.id')
+                })
+                .where({ 'p.id': body.id_pipeline }).first()
+            console.log(cadastro);
+            body.pessoa_contato = body.pessoa_contato || cadastro.nome
+            body.telefone_contato = body.telefone_contato || cadastro.telefone
+            body.email_contato = body.email_contato || cadastro.email
             existsOrError(body.pessoa_contato, 'Pessoa de contato não informada')
             existsOrError(body.telefone_contato, 'Telefone de contato não informado')
             existsOrError(body.email_contato, 'E-mail de contato não informado')
@@ -242,6 +254,7 @@ module.exports = app => {
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
+                if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
             })
             .catch(error => {

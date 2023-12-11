@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
 import Breadcrumb from '../../components/Breadcrumb.vue';
+import Prompts from '../../components/Prompts.vue';
 import { userKey, formatValor } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -58,6 +59,10 @@ const calcTypeAgente = ref('R$');
 // Andamento do registro
 import { andamentoRegistroPipeline } from '@/global';
 
+// Importação de componentes
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
+
 const convertFloatFields = (result = 'pt') => {
     itemData.value.valor_bruto = formatValor(itemData.value.valor_bruto, result);
     itemData.value.valor_liq = formatValor(itemData.value.valor_liq, result);
@@ -69,42 +74,46 @@ const convertFloatFields = (result = 'pt') => {
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    const id = props.idPipeline || route.params.id;
-    const url = `${urlBase.value}/${id}`;
-    if (mode.value != 'new')
-        await axios.get(url).then(async (res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
+    setTimeout(async () => {
+        const id = props.idPipeline || route.params.id;
+        const url = `${urlBase.value}/${id}`;
+        if (mode.value != 'new')
+            axios.get(url).then(async (res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
 
-                itemData.value = body;
-                convertFloatFields();
-                itemDataComparision.value = { ...itemData.value };
-                selectedCadastro.value = {
-                    code: itemData.value.id_cadastros,
-                    name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
-                };
-                await getNomeCliente();
-                // Lista o andamento do registro
-                await listStatusRegistro();
-                // Unidades de negócio
-                await listUnidadesDescricao();
-                breadItems.value = [{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }];
-                if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
-                if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
-            } else {
-                defaultWarn('Registro não localizado');
-                toGrid();
-            }
-        });
-    else if (props.idCadastro) {
-        itemData.value.id_cadastros = props.idCadastro;
-        selectedCadastro.value = {
-            code: itemData.value.id_cadastros,
-            name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
-        };
-        await getNomeCliente();
-    }
+                    itemData.value = body;
+                    convertFloatFields();
+                    itemDataComparision.value = { ...itemData.value };
+                    selectedCadastro.value = {
+                        code: itemData.value.id_cadastros,
+                        name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+                    };
+                    // Retorna os parâmetros do registro
+                    await getPipelineParam();
+                    await getNomeCliente();
+                    // Lista o andamento do registro
+                    await listStatusRegistro();
+                    // Unidades de negócio
+                    await listUnidadesDescricao();
+                    breadItems.value = [{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }];
+                    if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
+                    if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
+                } else {
+                    defaultWarn('Registro não localizado');
+                    toGrid();
+                }
+            });
+        else if (props.idCadastro) {
+            itemData.value.id_cadastros = props.idCadastro;
+            selectedCadastro.value = {
+                code: itemData.value.id_cadastros,
+                name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+            };
+            await getNomeCliente();
+        }
+    }, Math.floor(Math.random() * 2000) + 1000);
     loading.value = false;
 };
 // Salvar dados do formulário
@@ -452,6 +461,56 @@ const toPai = async () => {
 const toFilho = async () => {
     window.location.href = `/${userData.schema_description}/pipeline/${itemData.value.id_filho}`;
 };
+const toProposal = async () => {
+    const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
+    if (propostaInterna && propostaInterna.data && propostaInterna.data.data[0]) window.location.href = `#/${userData.schema_description}/proposta/${propostaInterna.data.data[0].id}`;
+    else {
+        // Criar um objeto para representar o registro de uma nova proposta interna com os seguintes fields preenchidos: id_pipeline
+        const newPropostaInterna = {
+            id_pipeline: itemData.value.id
+        };
+        // buscar em BD.long_params os termos grupo.[com_pr01,com_pr02,com_pr03,com_pr04 e com_pr09]
+        const com_pr01 = await optionLongParams({ field: 'grupo', value: 'com_pr01', select: 'id,parametro,label' });
+        const com_pr02 = await optionLongParams({ field: 'grupo', value: 'com_pr02', select: 'id,parametro,label' });
+        const com_pr03 = await optionLongParams({ field: 'grupo', value: 'com_pr03', select: 'id,parametro,label' });
+        const com_pr04 = await optionLongParams({ field: 'grupo', value: 'com_pr04', select: 'id,parametro,label' });
+        const com_pr09 = await optionLongParams({ field: 'grupo', value: 'com_pr09', select: 'id,parametro,label' });
+        newPropostaInterna.saudacao_inicial = com_pr01.data.data[0].parametro;
+        newPropostaInterna.conclusao = com_pr02.data.data[0].parametro;
+        newPropostaInterna.garantia = com_pr03.data.data[0].parametro;
+        newPropostaInterna.observacoes_finais = com_pr04.data.data[0].parametro;
+        newPropostaInterna.assinatura = com_pr09.data.data[0].parametro;
+        showPrompt(newPropostaInterna);
+        // newPropostaInterna.pessoa_contato = newPropostaInterna.telefone_contato;
+        // newPropostaInterna.email_contato =
+        //     // console.log(newPropostaInterna);
+        //     // Salvar o objeto no endpoint de propostas internas na rota [baseApiUrl]/com-propostas utilizando o método POST e retornar o ID da proposta interna criada
+        //     // A seguir, direcione o usuário à proposta recém criada utilizando a rota `/${userData.schema_description}/pipeline/${[ID DA PROPOSTA INTERNA CRIADA]}`]}`;
+        //     await axios
+        //         .post(`${baseApiUrl}/com-propostas`, newPropostaInterna)
+        //         .then((res) => {
+        //             const urlTo = `#/${userData.schema_description}/proposta/${res.data.id}`;
+        //             console.log(urlTo);
+        //             window.location.href = urlTo;
+        //         })
+        //         .catch((err) => {
+        //             console.log(err.response.data);
+        //             defaultError(err.response.data);
+        //         });
+    }
+};
+// Obter parâmetros do BD
+const optionLongParams = async (query) => {
+    const selects = query.select ? `&slct=${query.select}` : undefined;
+    const url = `${baseApiUrl}/long-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
+    return await axios.get(url);
+};
+const optionLocalParams = async (query) => {
+    const selects = query.select ? `&slct=${query.select}` : undefined;
+    const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
+    return await axios.get(url);
+};
+
 /**
  * Ferramentas do registro
  */
@@ -528,6 +587,43 @@ const toGrid = () => {
     emit('cancel');
     router.push({ path: `/${userData.schema_description}/pipeline` });
 };
+
+const promptMessage = ref('');
+const showPrompt = (body) => {
+    if (body) promptMessage.value = body;
+    else promptMessage.value = 'Você tem certeza?';
+    dialog.open(Prompts, {
+        data: {
+            message: promptMessage
+        },
+        props: {
+            header: `Detalhes da nova proposta. Estes dados poderão ser ajustados posteriormente`,
+            style: {
+                width: '100rem'
+            },
+            breakpoints: {
+                '1199px': '75vw',
+                '575px': '90vw'
+            },
+            modal: true,
+            closable: false
+        },
+        onClose: (options) => {
+            console.log(options.data);
+            if (options.data && options.data.id_pipeline) onPromptConfirm();
+            else onPromptCancel();
+        },
+    });
+};
+
+const onPromptConfirm = () => {
+    defaultSuccess('Registro salvo com sucesso');
+};
+
+const onPromptCancel = () => {
+    defaultWarn('Você não pode prosseguir sem informar os dados solicitados');
+};
+
 // Carregar dados do formulário
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -535,8 +631,6 @@ onMounted(async () => {
     setTimeout(async () => {
         // Carrega os dados do formulário
         await loadData();
-        // Retorna os parâmetros do registro
-        await getPipelineParam();
         // Unidades de negócio
         await listUnidadesDescricao();
         // Agentes de negócio
@@ -547,7 +641,7 @@ onMounted(async () => {
 watch(selectedCadastro, (value) => {
     if (value) {
         itemData.value.id_cadastros = value.code;
-    } 
+    }
 });
 watch(route, (value) => {
     if (value !== itemData.value.id) {
@@ -833,6 +927,18 @@ watch(route, (value) => {
                                 text
                                 raised
                                 @click="statusRecord(andamentoRegistroPipeline.STATUS_CONVERTIDO)"
+                            />
+                            <Button
+                                label="Exibir/Editar Proposta"
+                                v-if="itemDataParam.proposta_interna == 1"
+                                :disabled="![andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-file-pen ${itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''}`"
+                                severity="success"
+                                text
+                                raised
+                                @click="toProposal()"
                             />
                             <SplitButton
                                 label="Comissionar"

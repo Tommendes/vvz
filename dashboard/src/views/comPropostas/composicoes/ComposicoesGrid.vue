@@ -22,10 +22,11 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-prop-compos`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'compoe_valor', label: 'Ativo', minWidth: '15rem' },
-    { field: 'compos_nr', label: 'Número da composição', minWidth: '15rem' },
-    { field: 'localizacao', label: 'Localizacao', minWidth: '15rem' },
-    { field: 'tombamento', label: 'Tombamento', minWidth: '15rem' }
+    { field: 'ativo', label: 'Ativo', minWidth: '5rem', tagged: true },
+    { field: 'compoe', label: 'Compõe', minWidth: '5rem', tagged: true },
+    { field: 'compos_nr', label: 'Número', minWidth: '5rem' },
+    { field: 'localizacao', label: 'Descrição um', minWidth: '15rem' },
+    { field: 'tombamento', label: 'Descrição dois', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -38,52 +39,32 @@ initFilters();
 const clearFilter = () => {
     initFilters();
 };
-const goField = () => {
-    router.push({ path: `/${userData.schema_description}/proposta/${route.params.id}/` });
+const goField = (data) => {
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = data;
+        mode.value = 'view';
+    }, 100);
 };
-const getItem = (data) => {
-    itemData.value = data;
-};
+
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
         const url = `${urlBase.value}/${route.params.id}`;
-        console.log(url);
         axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
+            gridData.value.forEach((element) => {
+                element.compoe = element.compoe_valor == 1 ? 'Sim' : 'Não';
+                element.ativo = element.status == 10 ? 'Sim' : 'Não';
+            });
             loading.value = false;
         });
     }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
-
-import { useDialog } from 'primevue/usedialog';
-const dialog = useDialog();
-const showComposicaoForm = () => {
-    dialog.open(ComposicaoForm, {
-        data: {
-            idRegs: itemData.value.id,
-            idPvOat: undefined,
-            idCadastro: itemData.value.id_cadastros,
-            lastStatus: itemDataLastStatus.value.status_pv
-        },
-        props: {
-            header: `Registrar OAT`,
-            style: {
-                width: '100rem'
-            },
-            breakpoints: {
-                '1199px': '75vw',
-                '575px': '90vw'
-            },
-            modal: true
-        },
-        onClose: () => {
-            oatsGrid.value.loadData();
-        }
-    });
+const getSeverity = (value) => {
+    return value == 'Sim' ? 'success' : 'danger';
 };
-
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -92,7 +73,7 @@ onBeforeMount(() => {
 
 <template>
     <div :style="'min-width: 100%'">
-        <ComposicaoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <ComposicaoForm :mode="mode" :idComposicao="itemData.id" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit'].includes(mode)" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -130,13 +111,14 @@ onBeforeMount(() => {
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
                         <span v-else v-html="data[nome.field]"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="goField" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" icon="pi pi-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

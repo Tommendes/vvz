@@ -37,6 +37,8 @@ provide('itemData', itemData);
 provide('itemDataPipeline', itemDataPipeline);
 // Carrega o modo do formulário
 provide('mode', mode);
+// Itens do breadcrumb
+const breadItems = ref([]);
 // Carragamento de dados do form
 const loadData = async () => {
     setTimeout(async () => {
@@ -47,8 +49,11 @@ const loadData = async () => {
                 body.id = String(body.id);
                 itemData.value = body;
                 if (itemData.value.id_pipeline) await loadDataPipeline();
-                loading.value = false;
+                breadItems.value = [{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }];
+                if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 1 ? `: (${itemData.value.id})` : '') });
+                if (itemDataPipeline.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemDataPipeline.value.id_cadastros}` });
                 mode.value = 'view';
+                loading.value = false;
             } else {
                 defaultWarn('Proposta não localizada');
                 router.push({ path: `/${userData.schema_description}/propostas` });
@@ -96,7 +101,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb :items="[{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }, { label: nomeCliente + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb :items="breadItems" />
     <div class="grid">
         <div class="col-12">
             <div class="card" :style="'min-width: ' + (!route.name == 'propostas' ? '100%' : '100rem')" >
@@ -128,7 +133,7 @@ onBeforeMount(() => {
                             <i class="fa-solid fa-print mr-2"></i>
                             <span>Padrões e Impressão</span>
                         </template>
-                        <ItensGrid />
+                        <p>Aqui será o painel de padrões e configuraçõs da proposta</p>
                     </TabPanel>
                 </TabView>
             </div>

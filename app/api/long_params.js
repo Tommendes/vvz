@@ -1,8 +1,8 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'empresa'
-    const tabelaAlias = 'Empresa'
+    const tabela = 'long_params'
+    const tabelaAlias = 'Parâmetro do Cliente'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -13,7 +13,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Inclusão/Edição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.admin + uParams.gestor) >= 1, `${noAccessMsg} "Inclusão/Edição de ${tabelaAlias}"`)            
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -22,28 +22,14 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-            existsOrError(body.cpf_cnpj_empresa, 'CPF ou CNPJ não informado')
-            const cpfCnpjUnique = await app.db(tabelaDomain)
-                .where(function () {
-                    this.where({ cpf_cnpj_empresa: body.cpf_cnpj_empresa })
-                        .where(app.db.raw(`${body.id ? `id != ${body.id}` : '1=1'}`))
-                })
-                .first();
-            notExistsOrError(cpfCnpjUnique, `O ${body.cpf_cnpj_empresa.length == 11 ? 'CPF' : 'CNPJ'} informado já foi registrado. Por favor verifique!`)
-            // return res.send(cpfCnpjUnique.toString());
-            existsOrError(body.cep, 'CEP não encontrado')
-            if (body.cep.length = !8) throw "CEP inválido"
-            existsOrError(body.logradouro, 'Logradouro não encontrado')
-            existsOrError(body.nr, 'Número não encontrado')
-            existsOrError(body.cidade, 'Cidade não encontrada')
-            existsOrError(body.uf, 'UF não encontrada')
-            if (body.uf.length = !2) throw "UF inválido"
 
+            if (!body.grupo && !body.parametro && !body.label)
+                throw new Exception("Necessário informar ao menos um dos campos: grupo, parâmeto ou label");
         } catch (error) {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName; delete body.url_logo;
+        delete body.hash; delete body.tblName
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -66,7 +52,7 @@ module.exports = app => {
                 .where({ id: body.id })
             rowsUpdated.then((ret) => {
                 if (ret > 0) res.status(200).send(body)
-                else res.status(200).send(`${tabelaAlias} não encontrado`)
+                else res.status(200).send('Parametro não encontrado')
             })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
@@ -105,31 +91,34 @@ module.exports = app => {
         }
     }
 
+    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.admin + uParams.gestor) >= 1, `${noAccessMsg} "Exibição geral de ${tabelaAlias}"`)            
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
+        const page = req.query.page || 1
+        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
+            .where({ status: STATUS_ACTIVE })
+        count = await app.db.raw(count.toString())
+        count = count[0][0].count
+
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
-            })
-            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
+
+        ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
-        ret.then(body => {
-            const count = body.length
-            return res.json({ data: body, count: count })
-        })
+            .limit(limit).offset(page * limit - limit)
+            .then(body => {
+                return res.json({ data: body, count: count, limit })
+            })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
@@ -140,20 +129,15 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição individual de ${tabelaAlias}"`)            
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
-            })
+            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
@@ -170,12 +154,11 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)            
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const registro = { status: STATUS_DELETE }
         try {
@@ -189,7 +172,7 @@ module.exports = app => {
                 "request": req,
                 "evento": {
                     "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
+                    "evento": `Exclusão de cadastro de ${tabela}`,
                     "tabela_bd": tabela,
                 }
             })
@@ -206,7 +189,57 @@ module.exports = app => {
         } catch (error) {
             res.status(400).send(error)
         }
+    } 
+
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'gbf':
+                getByField(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }     
+
+    const getByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de parâmetros"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.params.first == true
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} = '${value}'`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+
+        ret.then(body => {
+            return res.json({ data: body })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
     }
 
-    return { save, get, getById, remove }
+    return { save, get, getById, remove, getByFunction }
 }

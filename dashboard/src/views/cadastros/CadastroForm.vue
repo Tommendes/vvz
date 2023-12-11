@@ -72,27 +72,27 @@ const urlBase = ref(`${baseApiUrl}/cadastros`);
 const loadData = async () => {
     setTimeout(async () => {
         if (route.params.id || itemData.value.id) {
-        if (route.params.id) itemData.value.id = route.params.id;
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        await axios.get(url).then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                body.prospect = isTrue(body.prospect);
+            if (route.params.id) itemData.value.id = route.params.id;
+            const url = `${urlBase.value}/${itemData.value.id}`;
+            await axios.get(url).then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    body.prospect = isTrue(body.prospect);
 
-                itemData.value = body;
-                if (itemData.value.cpf_cnpj) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj);
-                if (itemData.value.aniversario) itemData.value.aniversario = masks.value.aniversario.masked(moment(itemData.value.aniversario).format('DD/MM/YYYY'));
-                if (itemData.value.telefone) itemData.value.telefone = masks.value.telefone.masked(itemData.value.telefone);
-                itemDataComparision.value = { ...itemData.value };
+                    itemData.value = body;
+                    if (itemData.value.cpf_cnpj) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj);
+                    if (itemData.value.aniversario) itemData.value.aniversario = masks.value.aniversario.masked(moment(itemData.value.aniversario).format('DD/MM/YYYY'));
+                    if (itemData.value.telefone) itemData.value.telefone = masks.value.telefone.masked(itemData.value.telefone);
+                    itemDataComparision.value = { ...itemData.value };
 
-                loading.value.form = false;
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.schema_description}/cadastros` });
-            }
-        });
-    } else loading.value.form = false;
+                    loading.value.form = false;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                }
+            });
+        } else loading.value.form = false;
     }, Math.random() * 1000 + 250);
 };
 // Salvar dados do formulário

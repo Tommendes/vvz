@@ -387,6 +387,7 @@ module.exports = app => {
             .whereNot({ 'tbl1.status': STATUS_DELETE })
             .first()
             .then(body => {
+                if (!body) return res.status(404).send('Registro não encontrado')
                 body.documento = body.documento.toString().padStart(8, '0')
                 return res.json(body)
             })

@@ -14,37 +14,35 @@ const router = useRouter();
 import moment from 'moment';
 
 // Campos de formulário
-const itemData = ref({
-});
+const itemData = ref({});
 const dataRegistro = ref('');
 // Modo do formulário
 const mode = ref('view');
-// Mensages de erro
-const errorMessages = ref({});
 // Loadings
 const loading = ref(false);
-// Editar cadastro no autocomplete
-const editCadastro = ref(false);
 // Props do template
 const props = defineProps({
-    mode: String
+    mode: String,
+    idComposicao: String
 });
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/com-prop-compos`);
+const urlBase = ref(`${baseApiUrl}/com-prop-compos/${route.params.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
-    loading.value = true;
-    setTimeout(async () => {
-        if (route.params.id || itemData.value.id) {
-            if (route.params.id) itemData.value.id = route.params.id;
-            const url = `${urlBase.value}/${itemData.value.id}`;
+    if (props.idComposicao) {
+        loading.value = true;
+        setTimeout(async () => {
+            const url = `${urlBase.value}/${props.idComposicao}`;
             await axios.get(url).then(async (res) => {
                 const body = res.data;
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
+                    console.log(itemData.value);
+                    itemData.value.status = isTrue(itemData.value.status);
+                    itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     loading.value = false;
                 } else {
@@ -52,8 +50,17 @@ const loadData = async () => {
                     router.push({ path: `/${userData.schema_description}/proposta/${route.params.id}` });
                 }
             });
-        } else loading.value = false;
-    }, Math.random() * 1000 + 250);
+            loading.value = false;
+        }, Math.random() * 1000 + 250);
+    } else {
+        itemData.value = {
+            id_com_propostas: route.params.id,
+            status: true,
+            compoe_valor: true
+        };
+        mode.value = 'new';
+        loading.value = false;
+    }
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -67,9 +74,10 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/proposta/${itemData.value.id}` });
-                    dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
+                    itemData.value.status = isTrue(itemData.value.status);
+                    itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                     mode.value = 'view';
+                    emit('changed');
                 } else {
                     defaultWarn('Erro ao salvar registro');
                 }
@@ -80,20 +88,15 @@ const saveData = async () => {
     }
 };
 
-//DropDown
-const dropdownCompValor = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
+// Verifica se o valor é 1
+const isTrue = (value) => [1, 10].includes(value);
+
 // Validar formulário
 const formIsValid = () => {
     return true;
 };
 // Recarregar dados do formulário
 const reload = () => {
-    mode.value = 'view';
-    errorMessages.value = {};
-    loadData();
     emit('cancel');
 };
 // Carregar dados do formulário
@@ -106,61 +109,51 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="card" style="min-width: 100rem">
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-6">
-                            <label for="id_com_propostas">Proposta</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'"
-                                v-model="itemData.id_com_propostas" id="id_com_propostas" type="text" />
+                        <div class="col-12 md:col-8">
+                            <div class="flex justify-content-start gap-5">
+                                <div class="switch-label" v-if="itemData.compos_nr">Número da composição: {{ itemData.compos_nr }}</div>
+                                <div class="switch-label">Composição ativa <InputSwitch id="status" :disabled="mode == 'view'" v-model="itemData.status" /></div>
+                                <div class="switch-label">Compõe valor <InputSwitch id="compoe_valor" :disabled="mode == 'view'" v-model="itemData.compoe_valor" /></div>
+                            </div>
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="compoe_valor">Compõe Valor</label>
+                            <label for="localizacao">Descrição um</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="compoe_valor" :disabled="mode == 'view'" placeholder="Selecione o período"
-                                optionLabel="label" optionValue="value" v-model="itemData.compoe_valor"
-                                :options="dropdownCompValor" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.localizacao" id="localizacao" type="text" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="ordem">Ordem de composições</label>
+                            <label for="tombamento">Descrição dois</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem"
-                                id="ordem" type="text" />
-                        </div>
-                        <div class="col-12 md:col-6">
-                            <label for="compos_nr">Número da composição</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.compos_nr"
-                                id="compos_nr" type="text" />
-                        </div>
-                        <div class="col-12 md:col-6">
-                            <label for="localizacao">Localização do produto</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.localizacao"
-                                id="localizacao" type="text" />
-                        </div>
-                        <div class="col-12 md:col-6">
-                            <label for="tombamento">Tombamento do produto</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tombamento"
-                                id="tombamento" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tombamento" id="tombamento" type="text" />
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar"
-                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text
-                            raised :disabled="!formIsValid()" />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text
-                        raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="button" label="Fechar" icon="fa-solid fa-xmark" severity="secondary" text raised @click="reload" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode = 'view'" />
+                    </div>
+                </div>
+                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>itemData: {{ itemData }}</p>
                 </div>
             </div>
-        </div>
-    </form>
+        </form>
     </div>
 </template>
+<style scoped>
+.switch-label {
+    font-size: 1.75rem;
+    font-family: inherit;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--surface-900);
+}
+</style>

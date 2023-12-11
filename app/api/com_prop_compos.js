@@ -24,14 +24,18 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        body.id_com_propostas = req.params.id_com_propostas
-        body.compoe_valor = String(body.compoe_valor) || 1
-
+        body.id_com_propostas = body.id_com_propostas || req.params.id_com_propostas
+        body.compoe_valor = body.compoe_valor == true ? 1 : 0
+        
         if (body.status == 0) delete body.compos_nr
-        delete body.hash; delete body.tblName
+        delete body.hash; delete body.tblName; delete body.old_id;
+
+        // Se status == true, então status = 10. Se não, status = 0
+        body.status = body.status == true ? STATUS_ACTIVE : STATUS_INACTIVE
+
         if (body.id) {
             try {
-                if (body.status == 10) existsOrError(body.compos_nr, 'Número da composição não informado')
+                if (body.status == 10) existsOrError(String(body.compos_nr), 'Número da composição não informado')
             } catch (error) {
                 return res.status(400).send(error)
             }
@@ -61,7 +65,7 @@ module.exports = app => {
                     .where({ id: body.id })
 
                 if (ret > 0) {
-                    // Reordena as composições ativas
+                    // Reordena os itens
                     if (body.status == 0 || body.status != last.status) {
                         const method = req.method
                         req.method = 'BOOLEAN'
@@ -77,10 +81,9 @@ module.exports = app => {
                 return res.status(500).send(error)
             }
         } else {
-
             try {
                 const unique = await app.db(tabelaDomain)
-                    .where({ id_com_propostas: body.id_com_propostas, compos_nr: body.compos_nr, localizacao: body.localizacao, tombamento: body.tombamento })
+                    .where({ id_com_propostas: body.id_com_propostas, localizacao: body.localizacao, tombamento: body.tombamento })
                     .whereIn('status', [STATUS_ACTIVE, STATUS_INACTIVE])
                     .first()
                 notExistsOrError(unique, 'Esta combinação de composição, localização e tombamento já existe')
@@ -168,6 +171,7 @@ module.exports = app => {
             .where({ 'tbl1.id': req.params.id })
             .whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_INACTIVE]).first()
             .then(body => {
+                if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
             })
             .catch(error => {
