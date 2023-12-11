@@ -55,7 +55,7 @@ const model = ref([
         label: 'Suporte',
         items: [
             { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${userData.schema_description}/suporte/articles` },
-            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.schema_description}/suporte/messages` },
+            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.schema_description}/messages` },
             { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${userData.schema_description}/suporte/reviews` }
         ]
     }
