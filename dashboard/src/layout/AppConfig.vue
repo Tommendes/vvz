@@ -54,24 +54,24 @@ const incrementScale = () => {
     applyScale(scale);
 };
 const applyScale = (scale) => {
-    let layoutCfg = localStorage.getItem('layoutCfg');
-    layoutCfg = JSON.parse(layoutCfg);
-    if (layoutCfg) {
-        layoutCfg.screenScale = scale;
+    let __layoutCfg = localStorage.getItem('__layoutCfg');
+    __layoutCfg = JSON.parse(__layoutCfg);
+    if (__layoutCfg) {
+        __layoutCfg.screenScale = scale;
         document.documentElement.style.fontSize = scale + 'px';
-        localStorage.setItem('layoutCfg', JSON.stringify(layoutCfg));
+        localStorage.setItem('__layoutCfg', JSON.stringify(__layoutCfg));
     } else {
-        localStorage.setItem('layoutCfg', JSON.stringify({ screenScale: scale }));
+        localStorage.setItem('__layoutCfg', JSON.stringify({ screenScale: scale }));
     }
 };
 const applyMenuType = (value) => {
-    let layoutCfg = localStorage.getItem('layoutCfg');
-    layoutCfg = JSON.parse(layoutCfg);
-    if (layoutCfg) {
-        layoutCfg.menuType = value;
-        localStorage.setItem('layoutCfg', JSON.stringify(layoutCfg));
+    let __layoutCfg = localStorage.getItem('__layoutCfg');
+    __layoutCfg = JSON.parse(__layoutCfg);
+    if (__layoutCfg) {
+        __layoutCfg.menuType = value;
+        localStorage.setItem('__layoutCfg', JSON.stringify(__layoutCfg));
     } else {
-        localStorage.setItem('layoutCfg', JSON.stringify({ menuType: value }));
+        localStorage.setItem('__layoutCfg', JSON.stringify({ menuType: value }));
     }
 };
 const center = ref({ lat: userGL.geolocation.latitude, lng: userGL.geolocation.longitude });

@@ -24,6 +24,9 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+const jsonLayer = localStorage.getItem('__layoutCfg');
+const userLayer = JSON.parse(jsonLayer);
+
 import { baseApiUrl } from '@/env';
 const urlRequestRequestPassReset = ref(`${baseApiUrl}/request-password-reset/`);
 const itemsMessages = ref([
@@ -203,10 +206,7 @@ onMounted(() => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <Button type="button" label="Notifications" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
-                <i class="fa-regular fa-bell fa-shake"></i>
-                <span>Notificações</span>
-            </Button>
+            <Button type="button" icon="fa-regular fa-bell fa-2xl fa-shake" severity="info" rounded size="large" :badge="itemsMessages.length" aria-haspopup="true" @click="toggleMenuMessages" />
             <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
             <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
                 <i class="pi pi-user"></i>
@@ -214,7 +214,7 @@ onMounted(() => {
             </Button>
             <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
             <button @click="toggleAppConfig()" class="p-link layout-topbar-button">
-                <i class="pi pi-cog"></i>
+                <i :class="`fa-solid fa-user-gear ${userLayer ? '' : 'fa-shake'}`"></i>
                 <span>Configurações</span>
             </button>
         </div>
@@ -223,4 +223,8 @@ onMounted(() => {
     </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style scoped>
+.fa-regular .fa-bell .fa-shake {
+    font-size: 1.5rem;
+}
+</style>

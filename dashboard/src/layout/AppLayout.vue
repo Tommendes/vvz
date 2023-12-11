@@ -57,18 +57,18 @@ const isOutsideClicked = (event) => {
     return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
 };
 const applyScale = () => {
-    let layoutCfg = localStorage.getItem('layoutCfg');
-    layoutCfg = JSON.parse(layoutCfg);
-    if (layoutCfg && layoutCfg.screenScale) {
-        setScale(layoutCfg.screenScale);
-        document.documentElement.style.fontSize = layoutCfg.screenScale + 'px';
+    let __layoutCfg = localStorage.getItem('__layoutCfg');
+    __layoutCfg = JSON.parse(__layoutCfg);
+    if (__layoutCfg && __layoutCfg.screenScale) {
+        setScale(__layoutCfg.screenScale);
+        document.documentElement.style.fontSize = __layoutCfg.screenScale + 'px';
     }
 };
 const applyMenuType = () => {
-    let layoutCfg = localStorage.getItem('layoutCfg');
-    layoutCfg = JSON.parse(layoutCfg);
-    if (layoutCfg && layoutCfg.menuType) {
-        layoutConfig.menuMode.value = layoutCfg.menuType;
+    let __layoutCfg = localStorage.getItem('__layoutCfg');
+    __layoutCfg = JSON.parse(__layoutCfg);
+    if (__layoutCfg && __layoutCfg.menuType) {
+        layoutConfig.menuMode.value = __layoutCfg.menuType;
     }
 };
 const changeToPortuguese = () => {
