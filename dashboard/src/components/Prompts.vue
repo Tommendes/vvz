@@ -4,17 +4,18 @@ import { inject, onBeforeMount, ref } from 'vue';
 const dialogRef = inject('dialogRef');
 const itemData = ref({});
 onBeforeMount(() => {
-    itemData.value = dialogRef.value.data.message;
+    itemData.value = dialogRef.value.data.body;
 });
-const closeDialog = () => {
-    dialogRef.value.close();
+const action = (itemData) => {
+    // Devolve o itemData para o componente que chamou o dialog
+    dialogRef.value.close(itemData);
 };
 </script>
 
 <template>
     <!-- <h3 class="text-center mb-5">{{ itemData.label }}</h3> -->
     <p class="text-xl text-center" v-html="itemData.message" />
-    <div class="flex align-items-center gap-2 mt-4">
-        <Button label="Ok" @click="closeDialog()"></Button>
+    <div class="flex justify-content-center flex-wrap gap-3">
+        <Button :label="item.label" @click="action(item)" v-for="item in itemData.buttons" :key="item.id"></Button>
     </div>
 </template>

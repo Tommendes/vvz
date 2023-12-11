@@ -5,6 +5,7 @@ module.exports = app => {
     const tabela = 'sis_messages'
     const tabelaAlias = 'Mensagens ao cliente'
     const STATUS_ACTIVE = 10
+    const STATUS_READ = 11
     const STATUS_DELETE = 99
 
     const save = async (req, res) => {
@@ -14,7 +15,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.admin + uParams.gestor) >= 1, `${noAccessMsg} "Inclusão/Edição de ${tabelaAlias}"`)            
+            isMatchOrError(uParams && (uParams.admin + uParams.gestor) >= 1, `${noAccessMsg} "Inclusão/Edição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -25,7 +26,7 @@ module.exports = app => {
         if (!body.body_variant) body.body_variant = 'info'
         if (!body.severity) body.severity = 0
         if (!body.valid_from) body.valid_from = new Date()
-        
+
         try {
             existsOrError(body.title, 'Título não informado')
             existsOrError(body.msg, 'Mensagem não informada')
@@ -108,7 +109,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.admin + uParams.gestor) >= 1, `${noAccessMsg} "Exibição geral de ${tabelaAlias}"`)            
+            isMatchOrError(uParams && (uParams.admin + uParams.gestor) >= 1, `${noAccessMsg} "Exibição geral de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -134,7 +135,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams, `${noAccessMsg} "Exibição individual de ${tabelaAlias}"`)            
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição individual de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -159,7 +160,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)            
+            isMatchOrError(uParams && uParams.admin >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -194,7 +195,7 @@ module.exports = app => {
         } catch (error) {
             res.status(400).send(error)
         }
-    } 
+    }
 
     const getByFunction = async (req, res) => {
         const func = req.params.func
@@ -206,7 +207,7 @@ module.exports = app => {
                 res.status(404).send('Função inexitente')
                 break;
         }
-    }     
+    }
 
     const getByField = async (req, res) => {
         let user = req.user
@@ -232,7 +233,7 @@ module.exports = app => {
         }
 
         ret.where(app.db.raw(`${fieldName} = '${value}'`))
-            .where({ status: STATUS_ACTIVE })
+            .whereIn('status', [STATUS_ACTIVE, STATUS_READ])
 
         if (first) {
             ret.first()
