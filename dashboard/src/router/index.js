@@ -148,6 +148,17 @@ const routes = [
                 name: 'pipeline-param',
                 component: () => import('@/views/pipelineParams/ParamForm.vue')
             },
+            // Seção Suporte
+            {
+                path: '/:client/messages',
+                name: 'messages',
+                component: () => import('@/views/messages/MensagensGrid.vue')
+            },
+            {
+                path: '/:client/message/:id',
+                name: 'message',
+                component: () => import('@/views/messages/MensagemForm.vue')
+            },
             // Password
             {
                 path: '/:client/password-reset',
