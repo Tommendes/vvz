@@ -25,16 +25,16 @@ const urlBase = ref(`${baseApiUrl}/cadastros/${route.params.id}`);
 const loadData = async () => {
     setTimeout(async () => {
         await axios.get(urlBase.value).then((res) => {
-        const body = res.data;
-        if (body && body.id) {
-            body.id = String(body.id);
-            itemData.value = body;
-            loading.value = false;
-        } else {
-            defaultWarn('Registro não localizado');
-            router.push(urlBase.value);
-        }
-    });
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                itemData.value = body;
+                loading.value = false;
+            } else {
+                defaultWarn('Registro não localizado');
+                router.push(urlBase.value);
+            }
+        });
     }, Math.random() * 1000 + 250);
 };
 

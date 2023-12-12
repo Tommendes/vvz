@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, onBeforeMount } from 'vue';
 import { useLayout } from '@/layout/composables/layout';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
@@ -29,14 +29,7 @@ const userLayer = JSON.parse(jsonLayer);
 
 import { baseApiUrl } from '@/env';
 const urlRequestRequestPassReset = ref(`${baseApiUrl}/request-password-reset/`);
-const itemsMessages = ref([
-    {
-        label: 'Título da mensagem',
-        command: () => {
-            router.push({ path: `/${userData.schema_description}/message`, query: { q: '[id_da mensagem aqui]' } });
-        }
-    }
-]);
+const itemsMessages = ref([]);
 const items = ref([
     {
         label: 'Ver perfil',
@@ -91,10 +84,7 @@ const logoUrl = computed(() => {
 const onTopBarMenuButton = () => {
     topbarMenuActive.value = !topbarMenuActive.value;
 };
-const onSettingsClick = () => {
-    topbarMenuActive.value = false;
-    router.push('/documentation');
-};
+
 const topbarMenuClasses = computed(() => {
     return {
         'layout-topbar-menu-mobile-active': topbarMenuActive.value
@@ -139,33 +129,61 @@ const toggleAppConfig = () => {
         btn.click();
     }
 };
+const newMessages = ref(0);
 const getUserMessages = async () => {
-    const url = `${baseApiUrl}/sis-messages/f-a/gbf?fld=id_user&vl=${userData.id}&slct=id,title,msg`;
-    console.log(url);
-    await axios.get(url).then((res) => {
-        const body = res.data.data;
-        if (body && body.length) {
+    setTimeout(async () => {
+        const url = `${baseApiUrl}/sis-messages/f-a/gbf?fld=id_user&vl=${userData.id}&slct=id,title,msg,status`;
+        await axios.get(url).then((res) => {
+            const body = res.data.data;
             itemsMessages.value = [];
-            body.forEach((element) => {
-                itemsMessages.value.push({
-                    label: element.title,
-                    message: element.msg,
-                    command: () => {
-                        showMessage({
-                            label: element.title,
-                            message: element.msg
-                        });
-                    }
+            newMessages.value = 0;
+            if (body && body.length) {
+                body.forEach((element) => {
+                    if (element.status == 10) ++newMessages.value;
+                    // element.msg = element.msg.replaceAll('[userName]', userData.name.split(' ')[0]);
+                    // Substitua [userName] pelos dois primeiros nomes do usuário com o cuidade de que o usuário pode ter apenas um nome registrado
+                    element.msg = element.msg.replace('[userName]', userData.name.split(' ').slice(0, 2).join(' '));
+                    itemsMessages.value.push({
+                        icon: element.status == 10 ? 'fa-solid fa-asterisk fa-fade' : 'fa-solid fa-check',
+                        status: element.status,
+                        label: element.title,
+                        message: element.msg,
+                        command: () => {
+                            messagesButtoms.value.forEach((elementButton) => {
+                                // Adicionar ao elementButton o id da mensagem
+                                elementButton.id = element.id;
+                                elementButton.message = element.msg;
+                                elementButton.title = element.title;
+                            });
+                            showMessage({
+                                label: element.title,
+                                message: element.msg,
+                                buttons: messagesButtoms.value
+                            });
+                        }
+                    });
                 });
-            });
-        }
-    });
+            }
+        });
+    }, Math.floor(Math.random() * 1000) + 250);
 };
-
+const dialogRef = ref(null);
+const messagesButtoms = ref([
+    {
+        label: 'Ok',
+        icon: 'fa-solid fa-check',
+        severity: 'success'
+    },
+    {
+        label: 'Excluir',
+        icon: 'fa-regular fa-trash-can',
+        severity: 'danger'
+    }
+]);
 const showMessage = (body) => {
-    dialog.open(Prompts, {
+    dialogRef.value = dialog.open(Prompts, {
         data: {
-            message: body
+            body: body
         },
         props: {
             header: body.label,
@@ -178,14 +196,36 @@ const showMessage = (body) => {
             },
             modal: true
         },
-        onClose: (options) => {
-            console.log('onClose');
-            console.log(options);
+        onClose: async (options) => {
+            if (options.data.label == messagesButtoms.value[0].label) {
+                console.log(options.data);
+                const bodyTo = {
+                    title: options.data.title,
+                    msg: options.data.message,
+                    status: 11
+                };
+                await axios
+                    .put(`${baseApiUrl}/sis-messages/${options.data.id}`, bodyTo)
+                    .then(async () => await getUserMessages())
+                    .catch((error) => {
+                        defaultError(error);
+                    });
+            } else if (options.data.label == messagesButtoms.value[1].label) {
+                await axios
+                    .delete(`${baseApiUrl}/sis-messages/${options.data.id}`)
+                    .then(async () => {
+                        await getUserMessages();
+                        defaultSuccess('Mensagem excluída com sucesso!');
+                    })
+                    .catch((error) => {
+                        defaultError(error);
+                    });
+            }
         }
     });
 };
 
-onMounted(() => {
+onBeforeMount(() => {
     getUserMessages();
 });
 </script>
@@ -206,7 +246,20 @@ onMounted(() => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <Button type="button" icon="fa-regular fa-bell fa-2xl fa-shake" severity="info" rounded size="large" :badge="itemsMessages.length" aria-haspopup="true" @click="toggleMenuMessages" />
+            <Button
+                v-if="newMessages > 0"
+                type="button"
+                :icon="`fa-regular fa-bell fa-2xl ${newMessages ? 'fa-shake' : ''}`"
+                :severity="`${newMessages > 0 ? 'info' : ''}`"
+                rounded
+                size="large"
+                :badge="newMessages"
+                aria-haspopup="true"
+                @click="toggleMenuMessages"
+            />
+            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages" class="p-link layout-topbar-button">
+                <i class="fa-regular fa-bell"></i>
+            </Button>
             <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
             <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
                 <i class="pi pi-user"></i>
