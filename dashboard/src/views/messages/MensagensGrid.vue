@@ -1,30 +1,54 @@
 <script setup>
-import { ref, onBeforeMount, watchEffect } from 'vue';
+import { ref, onBeforeMount, onMounted } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
+import { defaultSuccess } from '@/toast';
+import { useRouter } from 'vue-router';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-import ProtocoloForm from './ProtocoloForm.vue';
+import { renderizarHTML } from '@/global';
+import MensagemForm from './MensagemForm.vue';
 
-import { useRouter, useRoute } from 'vue-router';
-const router = useRouter();
-const route = useRoute();
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
+
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+const router = useRouter();
 const filters = ref(null);
+const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/protocolos`);
-const urlBaseProtoDocs = ref(`${baseApiUrl}/proto-docs`);
+const urlBase = ref(`${baseApiUrl}/sis-messages`);
+// Exlui um registro
+const deleteRow = () => {
+    confirm.require({
+        group: 'templating',
+        header: 'Confirmar exclusão',
+        message: 'Você tem certeza que deseja excluir este registro?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
+                defaultSuccess('Registro excluído com sucesso!');
+                loadData();
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
 // Itens do grid
 const listaNomes = ref([
-    { field: 'nome', label: 'Destinatário', minWidth: '15rem' },
-    { field: 'titulo', label: 'Título', minWidth: '15rem' },
-    { field: 'descricao', label: 'Descrição', minWidth: '30rem' },
-    { field: 'registro', label: 'Protocolo', minWidth: '10rem' }
+    { field: 'title', label: 'Título', minWidth: '15rem' },
+    { field: 'msg', label: 'Mensagem', minWidth: '11rem' },
+    { field: 'id_user', label: 'Id do usuário', minWidth: '11rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -37,54 +61,43 @@ initFilters();
 const clearFilter = () => {
     initFilters();
 };
-const goField = () => {
-    router.push({ path: `/${userData.schema_description}/protocolo/${itemData.value.id}` });
+const itemsButtons = ref([
+    {
+        label: 'Ver',
+        icon: 'fa-regular fa-eye fa-beat-fade',
+        command: () => {
+            router.push({ path: `/${userData.schema_description}/message/${itemData.value.id}` });
+        }
+    },
+    {
+        label: 'Excluir',
+        icon: 'fa-solid fa-fire fa-fade',
+        command: ($event) => {
+            deleteRow($event);
+        }
+    }
+]);
+const toggle = (event) => {
+    menu.value.toggle(event);
 };
 const getItem = (data) => {
     itemData.value = data;
 };
 const loadData = () => {
     setTimeout(() => {
+        gridData.value = null;
         loading.value = true;
         axios.get(`${urlBase.value}`).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
-            gridData.value.forEach(async (element) => {
-                const url = `${urlBaseProtoDocs.value}/${element.id}`;
-                element.descricao = '';
-                await axios.get(url).then((axiosRes) => {
-                    const items = axiosRes.data.data;
-                    items.forEach((protoDocs) => {
-                        if (protoDocs.descricao) element.descricao += `${protoDocs.descricao.split(',')},`;
-                    });
-                });
-                element.descricao = element.descricao.replaceAll(',', ', ').trim().slice(0, -1);
+            gridData.value.forEach((element) => {
+                if (element.telefone_contato) element.telefone_contato = renderizarHTML(element.telefone_contato, { to: element.tecnico, from: userData.name });
+                if (element.email_contato) element.email_contato = renderizarHTML(element.email_contato);
             });
             loading.value = false;
         });
     }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
-const searchInPage = () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const contentElement = document.getElementByTagName('tbody');
-
-    if (searchTerm) {
-        const contentText = contentElement.innerText.toLowerCase();
-
-        if (contentText.includes(searchTerm)) {
-            // Criamos uma expressão regular global (g) para encontrar todas as correspondências
-            const regex = new RegExp(searchTerm, 'g');
-
-            // Usamos o método replace para envolver as correspondências com uma tag de destaque
-            contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
-
-            // Definimos o foco de volta no campo de input
-            document.getElementById('searchInput').focus();
-        } else {
-            alert('Nenhuma correspondência encontrada.');
-        }
-    }
-};
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -92,9 +105,9 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos' }]" />
-    <div class="card" :style="'min-width: ' + (!route.name == 'protocolos' ? '100%' : '100rem')">
-        <ProtocoloForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Mensagens' }]" />
+    <div class="card" style="min-width: 100rem">
+        <MensagemForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -107,7 +120,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['nome', 'titulo', 'descricao', 'registro']"
+            :globalFilterFields="['title', 'msg', 'id_user']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
@@ -115,7 +128,7 @@ onBeforeMount(() => {
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="pi pi-search" />
-                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
+                        <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
@@ -131,22 +144,16 @@ onBeforeMount(() => {
                         <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else v-html="data[nome.field]"></span>
+                        <span v-html="data[nome.field]"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="goField" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>
         </DataTable>
     </div>
 </template>
-<style scoped>
-.foundMark {
-    background-color: yellow;
-    padding: 0;
-}
-</style>

@@ -125,9 +125,3 @@ onBeforeMount(() => {
         </DataTable>
     </div>
 </template>
-<style scoped>
-.foundMark {
-    background-color: yellow;
-    padding: 0;
-}
-</style>
