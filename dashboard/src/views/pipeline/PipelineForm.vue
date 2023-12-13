@@ -652,7 +652,7 @@ watch(route, (value) => {
 
 <template>
     <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
-    <div class="card" :style="route.name == 'pipeline-one' ? 'min-width: 100rem' : ''">
+    <div class="card" :style="route.name == 'pipeline-one' ? 'max-width: 100rem' : ''">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div :class="`${['new', 'expandedFormMode'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">

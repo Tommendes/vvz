@@ -88,14 +88,14 @@ const filtrarUnidadesDescricao = async () => {
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'documento', label: 'Documento', minWidth: '5rem' },
+    { field: 'documento', label: 'Documento', maxWidth: '4rem' },
     { field: 'descricao', label: 'Descrição', minWidth: '8rem' },
-    { field: 'valor_bruto', label: 'R$ bruto', minWidth: '5rem' },
+    // { field: 'valor_bruto', label: 'R$ bruto', minWidth: '5rem' },
     {
         field: 'status_created_at',
         label: 'Data',
         type: 'date',
-        minWidth: '5rem',
+        maxWidth: '4rem',
         tagged: true
     }
 ]);
@@ -144,8 +144,14 @@ const loadLazyData = () => {
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
                     if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' '); //dropdownStatusParams.value.find((item) => item.value == element.tipo_doc).label;
-                    const limitDescription = 100;
+                    const limitDescription = 50;
+                    const limitNome = 25;
                     const description = element.descricao || undefined;
+                    const nome = element.nome || undefined;
+                    if (nome) {
+                        element.nome = nome.trim().substr(0, limitNome);
+                        if (nome.length > limitNome) element.nome += ' ...';
+                    }
                     if (description) {
                         element.descricao = description.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim().substr(0, limitDescription);
                         if (description.length > limitDescription) element.descricao += ' ...';
@@ -380,9 +386,25 @@ onMounted(() => {
             </template>
             <Column expander style="width: 5rem" />
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column
+                    :field="nome.field"
+                    :header="nome.label"
+                    :filterField="nome.field"
+                    :filterMatchMode="'contains'"
+                    sortable
+                    :dataType="nome.type"
+                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <Dropdown
+                            :id="nome.field"
+                            optionLabel="label"
+                            optionValue="value"
+                            v-model="filterModel.value"
+                            :options="nome.list"
+                            @change="filterCallback()"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                        />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                         <Calendar
@@ -393,11 +415,18 @@ onMounted(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '2rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '2rem'}; overflow: hidden`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText
+                            type="text"
+                            v-model="filterModel.value"
+                            @keydown.enter="filterCallback()"
+                            class="p-column-filter"
+                            placeholder="Pesquise..."
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                        />
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />

@@ -247,7 +247,7 @@ const itemsFooter = ref([
 </script>
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.schema_description}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card" style="min-width: 100rem">
+    <div class="card" style="max-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">

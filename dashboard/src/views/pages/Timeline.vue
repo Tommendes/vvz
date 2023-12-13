@@ -35,7 +35,7 @@ const horizontalEvents = ref(['2020', '2021', '2022', '2023']);
 <template>
     <div class="grid">
         <div class="col-6">
-            <div class="card" style="min-width: 100rem">
+            <div class="card" style="max-width: 100rem">
                 <h5>Left Align</h5>
                 <Timeline :value="customEvents">
                     <template #content="slotProps">
@@ -45,7 +45,7 @@ const horizontalEvents = ref(['2020', '2021', '2022', '2023']);
             </div>
         </div>
         <div class="col-6">
-            <div class="card" style="min-width: 100rem">
+            <div class="card" style="max-width: 100rem">
                 <h5>Right Align</h5>
                 <Timeline :value="customEvents" align="right">
                     <template #content="slotProps">
@@ -55,7 +55,7 @@ const horizontalEvents = ref(['2020', '2021', '2022', '2023']);
             </div>
         </div>
         <div class="col-6">
-            <div class="card" style="min-width: 100rem">
+            <div class="card" style="max-width: 100rem">
                 <h5>Alternate Align</h5>
                 <Timeline :value="customEvents" align="alternate">
                     <template #content="slotProps">
@@ -65,7 +65,7 @@ const horizontalEvents = ref(['2020', '2021', '2022', '2023']);
             </div>
         </div>
         <div class="col-6">
-            <div class="card" style="min-width: 100rem">
+            <div class="card" style="max-width: 100rem">
                 <h5>Opposite Content</h5>
                 <Timeline :value="customEvents">
                     <template #opposite="slotProps">
@@ -78,7 +78,7 @@ const horizontalEvents = ref(['2020', '2021', '2022', '2023']);
             </div>
         </div>
     </div>
-    <div class="card" style="min-width: 100rem">
+    <div class="card" style="max-width: 100rem">
         <h5>Custom Timeline</h5>
         <Timeline :value="customEvents" align="alternate" class="customized-timeline">
             <template #marker="slotProps">
