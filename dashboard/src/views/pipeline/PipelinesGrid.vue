@@ -165,7 +165,6 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                const logTo = error;
                 try {
                     defaultError(error.response.data);
                 } catch (error) {
@@ -252,12 +251,12 @@ const goField = (data) => {
     idPipeline.value = data.id;
     router.push({ path: `/${userData.schema_description}/pipeline/${data.id}` });
 };
-const onRowExpand = (event) => {
-    // defaultInfo('Product Expanded: ' + event.data.documento);
-};
-const onRowCollapse = (event) => {
-    // defaultSuccess('Product Collapsed: ' + event.data.documento);
-};
+// const onRowExpand = (event) => {
+//     // defaultInfo('Product Expanded: ' + event.data.documento);
+// };
+// const onRowCollapse = (event) => {
+//     // defaultSuccess('Product Collapsed: ' + event.data.documento);
+// };
 const expanded = ref(false);
 const expandAll = () => {
     expanded.value = true;
@@ -327,9 +326,9 @@ onMounted(() => {
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
             v-model:expandedRows="expandedRows"
-            @rowExpand="onRowExpand"
-            @rowCollapse="onRowCollapse"
         >
+            <!-- @rowExpand="onRowExpand" -->
+            <!-- @rowCollapse="onRowCollapse" -->
             <!-- scrollHeight="600px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3 mb-3">
