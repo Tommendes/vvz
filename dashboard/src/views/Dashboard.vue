@@ -391,7 +391,7 @@ import html2pdf from 'html2pdf.js';
 const exportToPDF = () => {
     const divToExport = document.getElementById('divChart');
     const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [0, 0, 0, 0],
         filename: 'Visão_produtos_mais_vendidos.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
