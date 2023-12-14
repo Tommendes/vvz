@@ -1,15 +1,23 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import Breadcrumb from '@/components/Breadcrumb.vue';
+import moment from 'moment';
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
 import { useRouter } from 'vue-router';
 const router = useRouter();
+
+import { Mask } from 'maska';
+const masks = ref({
+    valid_from: new Mask({
+        mask: '##/##/####'
+    })
+});
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -46,6 +54,7 @@ const loadData = async () => {
             const body = res.data;
             if (body && body.id) {
                 body.id = String(body.id);
+                if (itemData.value.valid_from) itemData.value.valid_from = masks.value.valid_from.masked(moment(itemData.value.valid_from).format('DD/MM/YYYY'));
                 itemData.value = body;
                 loading.value = false;
             } else {
@@ -60,7 +69,10 @@ const saveData = async () => {
     if (formIsValid()) {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`;        
+        const url = `${urlBase.value}${id}`; 
+        if (itemData.value.valid_from) itemData.value.valid_from = moment(itemData.value.valid_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
+        axios[method](url, itemData.value)
+        axios[method](url, itemData.value)       
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -88,9 +100,27 @@ const isItemDataChanged = () => {
     }
     return ret;
 };
+// Validar Data
+const validateDate = () => {
+    errorMessages.value.valid_from = null;
+    // Testa o formato da data
+    if (itemData.value.valid_from && itemData.value.valid_from.length > 0 && !masks.value.valid_from.completed(itemData.value.valid_from)) {
+        errorMessages.value.valid_from = 'Formato de data inválido';
+    } else {
+        // Verifica se a data é válida
+        const momentDate = moment(itemData.value.valid_from, 'DD/MM/YYYY', true);
+        if (!momentDate.isValid()) {
+            errorMessages.value.valid_from = 'Data inválida';
+        }
+    }
+    // Atualiza o estado do botão "Salvar"
+    accept.value = !errorMessages.value.valid_from;
+
+    return !errorMessages.value.valid_from;
+};
 // Validar formulário
 const formIsValid = () => {
-    return true;
+    return validateDate();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -117,28 +147,41 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: `/${userData.schema_description}/tecnicos-pv` }, { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Mensagens', to: `/${userData.schema_description}/messages` }, { label: itemData.id + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card" style="min-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-5">
                             <label for="id_user">Id do usuário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_user" id="id_user" type="text" />
                         </div>
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-3">
                             <label for="status_user">Status do Usuário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.status_user" id="status_user" type="text" />
-                        </div>
-                        <div class="col-12 md:col-4">
+                        </div>  
+                                              
+                        <!-- <div class="col-12 md:col-2">
                             <label for="valid_from">Válido de</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valid_from" id="valid_from" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_from" id="valid_from" type="text" @input="validateDate()"/>
+                            <small id="text-error" class="p-error" v-if="errorMessages.valid_from">{{ errorMessages.valid_from }}</small>
+                        </div> -->
+
+                        <div class="col-12 md:col-2">
+                            <label for="valid_from">Válido de</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####"
+                                v-model="itemData.valid_from" id="valid_from" type="text" @input="validateDate()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.valid_from">{{
+                                errorMessages.valid_from }}</small>
                         </div>
-                        <div class="col-12 md:col-4">
+
+
+                        <div class="col-12 md:col-2">
                             <label for="valid_to">Válido até</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valid_to" id="valid_to" type="text" />
@@ -147,22 +190,6 @@ watchEffect(() => {
                             <label for="title">Título da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title" id="title" type="text" />
-                        </div>
-                        <div class="col-12 md:col-12" v-if="itemData.msg || ['edit', 'new'].includes(mode)">
-                            <label for="msg">Mensagem</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg" editorStyle="height: 160px" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.msg" class="p-inputtext p-component p-filled"></p>
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="title_future">Futuro Título</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title_future" id="title_future" type="text" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="msg_future">Mensagem Futura</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.msg_future" id="msg_future" type="text" />
                         </div>
                         <div class="col-12 md:col-4">
                             <label for="body_variant">Cor da Mensagem</label>
@@ -174,6 +201,24 @@ watchEffect(() => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.severity" id="severity" type="text" />
                         </div>
+                        <div class="col-12 md:col-12" v-if="itemData.msg || ['edit', 'new'].includes(mode)">
+                            <label for="msg">Mensagem</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.msg" class="p-inputtext p-component p-filled"></p>
+                        </div>
+                        <div class="col-12 md:col-12" v-if="itemData.msg_future || ['edit', 'new'].includes(mode)">
+                            <label for="msg_future">Mensagem Futura</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future" id="msg_future" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.msg_future" class="p-inputtext p-component p-filled"></p>
+                        </div>
+
+                        <div class="col-12 md:col-4">
+                            <label for="title_future">Futuro Título</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title_future" id="title_future" type="text" />
+                        </div>                        
                     </div>
                     <div class="col-12" v-if="userData.admin >= 2">
                         <div class="card bg-green-200 mt-3">
