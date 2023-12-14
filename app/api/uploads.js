@@ -377,7 +377,7 @@ module.exports = app => {
                 // Atualiza a URL para apontar para a versão redimensionada
                 // remover # de baseFrontendUrl
                 const baseUrlSemHash = baseFrontendUrl.split('#')[0];
-                file.url = `${baseUrlSemHash}/assets/files/${uParams.schema_description}/${file.filename}`;
+                file.url = `${baseUrlSemHash}assets/files/${uParams.schema_description}/${file.filename}`;
                 // Adicione a propriedade file.label contendo o file.originalname sem a extensão
                 let nomeArquivo = file.originalname;
                 let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");

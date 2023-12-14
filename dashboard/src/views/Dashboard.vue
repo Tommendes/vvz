@@ -227,7 +227,7 @@ const getPedidosLastBi = async () => {
 };
 
 const irRecentSale = (id) => {
-    window.open(`/${userData.schema_description}/pipeline/${id}`, '_blank');
+    window.open(`#/${userData.schema_description}/pipeline/${id}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
@@ -483,7 +483,7 @@ onMounted(() => {
                     <Column style="width: 10%">
                         <template #header> Representação </template>
                         <template #body="slotProps">
-                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/AddressBook.jpg'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
+                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/DefaultLogomarca.png'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
                         </template>
                     </Column>
                     <Column style="width: 45%">

@@ -18,9 +18,7 @@ const initFilters = () => {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
         nr_oat: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         int_ext: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        garantia: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        descricao: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        valor_total: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
+        descricao: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
     };
 };
 // Cookies de usuário
@@ -39,9 +37,10 @@ const loadData = async () => {
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
+            element.nr_oat = element.nr_oat.toString().padStart(3, '0');
             if (element.int_ext == 0) element.int_ext = 'Interno';
             else element.int_ext = 'Externo';
-            const maxStringLength = 150;
+            const maxStringLength = 100;
             if (element.descricao && element.descricao.length > maxStringLength) element.descricao = element.descricao.substring(0, maxStringLength).trim() + ' ...';
         });
         loading.value = false;
@@ -62,7 +61,7 @@ const showPvOatForm = (data) => {
         props: {
             header: `OAT ${props.itemDataRoot.pv_nr}.${itemData.value.nr_oat ? itemData.value.nr_oat.toString().padStart(3, '0') : ''}${userData.admin >= 2 ? ` (${itemData.value.id})` : ''}`,
             style: {
-                width: '100rem',
+                width: Math.floor(window.innerWidth * 0.9) + 'px'
             },
             breakpoints: {
                 '1199px': '75vw',
@@ -88,7 +87,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="card" style="min-width: 100%">
+    <div class="card">
         <div class="col-12" v-if="gridData && gridData.length == 0">
             <div class="card bg-green-200 mt-3">
                 <div class="flex flex-wrap align-items-center justify-content-center">
@@ -105,7 +104,6 @@ onMounted(() => {
             :value="gridData"
             :paginator="true"
             :rowsPerPageOptions="[5, 10, 20, 50]"
-            tableStyle="min-width: 50rem"
             :rows="5"
             dataKey="id"
             :rowHover="true"
@@ -116,7 +114,7 @@ onMounted(() => {
             currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
             scrollable
             scrollHeight="415px"
-            :globalFilterFields="['nr_oat', 'int_ext', 'garantia', 'descricao', 'valor_total']"
+            :globalFilterFields="['nr_oat', 'int_ext', 'descricao']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
@@ -127,28 +125,21 @@ onMounted(() => {
                     </span>
                 </div>
             </template>
-            <Column field="nr_oat" header="OAT" sortable style="min-width: 120px">
+            <Column field="nr_oat" header="OAT" sortable>
                 <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.nr_oat.toString().padStart(3, '0') }}
+                    <div class="flex flex-wrap gap-2">
+                        {{ data.nr_oat }}
                     </div>
                 </template>
             </Column>
-            <Column field="int_ext" header="Atendimento" sortable style="min-width: 120px">
+            <Column field="int_ext" header="Atendimento">
                 <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">{{ data.int_ext }}</div>
+                    <div class="flex flex-wrap gap-2">{{ data.int_ext }}</div>
                 </template>
             </Column>
-            <Column field="garantia" header="Garantia" sortable style="min-width: 120px">
+            <Column field="descricao" header="Descricao" sortable>
                 <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.garantia == 1 ? 'Sim' : 'Não' }}
-                    </div>
-                </template>
-            </Column>
-            <Column field="descricao" header="Descricao" sortable style="min-width: 120px">
-                <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
+                    <div class="flex flex-wrap gap-2">
                         <span v-html="data.descricao"></span>
                     </div>
                 </template>

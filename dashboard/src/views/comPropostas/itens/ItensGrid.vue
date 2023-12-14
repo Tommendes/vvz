@@ -22,12 +22,13 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-prop-itens`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'compoe', label: 'Ativo', minWidth: '15rem' },
-    { field: 'id_com_prop_compos', label: 'Proposta', minWidth: '15rem' },
+    { field: 'item', label: 'Item', minWidth: '5rem' },
+    { field: 'ativo', label: 'Ativo', minWidth: '5rem', tagged: true },
+    { field: 'compoe', label: 'Compõe', minWidth: '5rem', tagged: true },
+    { field: 'id_com_produtos', label: 'Produto', minWidth: '8rem' },
     { field: 'descricao', label: 'Descrição', minWidth: '15rem' },
-    { field: 'quantidade', label: 'Quantidade', minWidth: '15rem' },
-    { field: 'valor_unitario', label: 'Valor Unitário', minWidth: '15rem' },
-    { field: 'item', label: 'Item', minWidth: '15rem' }
+    { field: 'quantidade', label: 'Quantidade', minWidth: '15rem' }
+    // { field: 'valor_unitario', label: 'Valor Unitário', minWidth: '15rem' },
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -73,7 +74,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div :style="'min-width: 100%'">
+    <div>
         <ItemForm :mode="mode" :idItens="' ' + itemData.id" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit'].includes(mode)" />
         <DataTable
             style="font-size: 0.9rem"

@@ -104,7 +104,7 @@ onBeforeMount(() => {
     <Breadcrumb :items="breadItems" />
     <div class="grid">
         <div class="col-12">
-            <div class="card" :style="'min-width: ' + (!route.name == 'propostas' ? '100%' : '100rem')" >
+            <div class="card">
                 <TabView>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>

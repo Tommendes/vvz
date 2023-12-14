@@ -4,7 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-import Prompts from '../../components/Prompts.vue';
+import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
 import { userKey, formatValor } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -592,27 +592,26 @@ const promptMessage = ref('');
 const showPrompt = (body) => {
     if (body) promptMessage.value = body;
     else promptMessage.value = 'Você tem certeza?';
-    dialog.open(Prompts, {
+    dialog.open(PropostaNewPromptForm, {
         data: {
             message: promptMessage
         },
         props: {
             header: `Detalhes da nova proposta. Estes dados poderão ser ajustados posteriormente`,
             style: {
-                width: '100rem'
+                width: Math.floor(window.innerWidth * 0.5) + 'px'
             },
             breakpoints: {
                 '1199px': '75vw',
                 '575px': '90vw'
             },
-            modal: true,
-            closable: false
+            modal: true
         },
         onClose: (options) => {
             console.log(options.data);
             if (options.data && options.data.id_pipeline) onPromptConfirm();
             else onPromptCancel();
-        },
+        }
     });
 };
 
@@ -652,7 +651,7 @@ watch(route, (value) => {
 
 <template>
     <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
-    <div class="card" :style="route.name == 'pipeline-one' ? 'max-width: 100rem' : ''">
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div :class="`${['new', 'expandedFormMode'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">

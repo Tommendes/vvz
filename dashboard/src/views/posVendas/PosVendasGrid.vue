@@ -29,7 +29,7 @@ const idRegs = ref(null); // Id do registro selecionado
 
 onBeforeMount(() => {
     // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
-    if (props.idCadastro) listaNomes.value.shift();
+    if (props.idCadastro) listaNomes.value = listaNomes.value.filter((item) => !['nome'].includes(item.field));
     // Inicializa os filtros do grid
     initFilters();
 });
@@ -53,8 +53,8 @@ const dropdownTipos = ref([
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente', minWidth: '18rem' },
     { field: 'pipeline', label: 'Pipeline', minWidth: '6rem' },
-    { field: 'tipo', label: 'Tipo', minWidth: '1rem', list: dropdownTipos.value },
-    { field: 'pv_nr', label: 'Número', minWidth: '1rem' }
+    { field: 'tipo', label: 'Tipo', maxWidth: '1rem', list: dropdownTipos.value },
+    { field: 'pv_nr', label: 'Número', maxWidth: '1rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -172,7 +172,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas' }]" />
-    <div class="card" :style="route.name == 'pos-vendas' ? 'max-width: 100rem' : ''">
+    <div class="card">
         <PosVendaForm
             :mode="mode"
             :idCadastro="props.idCadastro"
@@ -215,7 +215,15 @@ watchEffect(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column
+                    :field="nome.field"
+                    :header="nome.label"
+                    :filterField="nome.field"
+                    :filterMatchMode="'contains'"
+                    sortable
+                    :dataType="nome.type"
+                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
                             :id="nome.field"
@@ -225,7 +233,7 @@ watchEffect(() => {
                             :options="nome.list"
                             @change="filterCallback()"
                             :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                             placeholder="Pesquise..."
                         />
                     </template>
@@ -239,11 +247,18 @@ watchEffect(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText
+                            type="text"
+                            v-model="filterModel.value"
+                            @keydown.enter="filterCallback()"
+                            class="p-column-filter"
+                            placeholder="Pesquise..."
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                        />
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />

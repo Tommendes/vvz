@@ -244,17 +244,31 @@ const itemsFooter = ref([
         }
     }
 ]);
+const windowWidth = ref(window.innerWidth);
+const windowHeight = ref(window.innerHeight);
+window.addEventListener('resize', () => {
+    windowWidth.value = window.innerWidth;
+    windowHeight.value = window.innerHeight;
+});
 </script>
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.schema_description}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card" style="max-width: 100rem">
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-4">
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                            <Image
+                                v-else
+                                :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultLogomarca.png'}`"
+                                :width="Math.floor(windowWidth * 0.2)"
+                                alt="Logomarca"
+                                :preview="preview"
+                                id="url_logo"
+                                @contextmenu="onImageRightClick"
+                            />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
                         <div class="col-8">
@@ -315,7 +329,15 @@ const itemsFooter = ref([
                 </div>
                 <div class="col-12">
                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                    <Image v-else :src="`${itemData.url_rodape ? itemData.url_rodape : '/assets/images/AddressBook.jpg'}`" alt="Rodapé" :preview="preview" id="url_rodape" @contextmenu="onImageFooterRightClick" />
+                    <Image
+                        v-else
+                        :src="`${itemData.url_rodape ? itemData.url_rodape : '/assets/images/DefaultRodape.png'}`"
+                        alt="Rodapé"
+                        :preview="preview"
+                        id="url_rodape"
+                        @contextmenu="onImageFooterRightClick"
+                        :width="Math.floor(windowWidth * 0.65)"
+                    />
                     <ContextMenu ref="menuFooter" :model="itemsFooter" />
                 </div>
                 <div class="col-12">

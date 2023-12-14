@@ -108,7 +108,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas' }]" />
-    <div class="card" style="max-width: 100rem">
+    <div class="card">
         <TecnicoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"

@@ -272,12 +272,12 @@ const onImageRightClick = (event) => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.schema_description}/empresa` }, { label: itemData.razaosocial + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card" style="max-width: 100rem">
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-3">
                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                    <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/AddressBook.jpg'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                    <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultLogomarca.png'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
                     <ContextMenu ref="menu" :model="items" />
                 </div>
                 <div class="col-9">

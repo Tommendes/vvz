@@ -60,7 +60,7 @@ const saveData = async () => {
     if (formIsValid()) {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`;        
+        const url = `${urlBase.value}${id}`;
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
@@ -117,17 +117,12 @@ watchEffect(() => {
 </script>
 
 <template>
-<<<<<<< HEAD
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.schema_description}/protocolos` }, { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card" style="max-width: 100rem">
-=======
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: `/${userData.schema_description}/tecnicos-pv` }, { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card" style="min-width: 100rem">
->>>>>>> 680d367b376e183d0523534a69a9c7307a81cfba
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
-                    <div class="p-fluid grid">
+                    <div class="grid">
                         <div class="col-12 md:col-4">
                             <label for="id_user">Id do usuário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
@@ -179,19 +174,19 @@ watchEffect(() => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.severity" id="severity" type="text" />
                         </div>
-                    </div>
-                    <div class="col-12" v-if="userData.admin >= 2">
-                        <div class="card bg-green-200 mt-3">
-                            <p>Mode: {{ mode }}</p>
-                            <p>itemData: {{ itemData }}</p>
+                        <div class="col-12">
+                            <div class="card flex justify-content-center flex-wrap gap-3">
+                                <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                                <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                                <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-12">
-                    <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                <div class="col-12" v-if="userData.admin >= 2">
+                    <div class="card bg-green-200 mt-3">
+                        <p>Mode: {{ mode }}</p>
+                        <p>itemData: {{ itemData }}</p>
                     </div>
                 </div>
             </div>

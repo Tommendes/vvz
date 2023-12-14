@@ -102,7 +102,7 @@ module.exports = app => {
             // Colocar cada campo em maiúsculo e remover acentos
             Object.keys(body).forEach(function (key) {
                 if (typeof body[key] == 'string' && key != 'uf') {
-                    body[key] = removeAccents(titleCase(body[key]))
+                    body[key] = removeAccents(body[key])
                 } else if (typeof body[key] == 'string' && key == 'uf') {
                     body[key] = body[key].toUpperCase()
                 }

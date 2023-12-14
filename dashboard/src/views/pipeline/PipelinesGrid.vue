@@ -88,9 +88,9 @@ const filtrarUnidadesDescricao = async () => {
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'documento', label: 'Documento', maxWidth: '4rem' },
-    { field: 'descricao', label: 'Descrição', minWidth: '8rem' },
-    // { field: 'valor_bruto', label: 'R$ bruto', minWidth: '5rem' },
+    { field: 'documento', label: 'Documento', maxWidth: '3rem' },
+    { field: 'descricao', label: 'Descrição', maxWidth: '6rem' },
+    // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
         label: 'Data',
@@ -272,8 +272,8 @@ watchEffect(() => {
     mountUrlFilters();
 });
 onBeforeMount(() => {
-    // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
-    if (props.idCadastro) listaNomes.value.shift();
+    // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente e a descrição pois ficará muito largo
+    if (props.idCadastro) listaNomes.value = listaNomes.value.filter((item) => !['descricao', 'nome'].includes(item.field));
     // Inicializa os filtros do grid
     initFilters();
     loadOptions();
@@ -292,7 +292,7 @@ onMounted(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline' }]" />
-    <div class="card" :style="'min-width: ' + (!route.name == 'pipeline' ? '100%' : '100rem')">
+    <div class="card">
         <PipelineForm
             :mode="mode"
             :idCadastro="props.idCadastro"

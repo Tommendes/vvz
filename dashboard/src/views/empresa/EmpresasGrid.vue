@@ -19,8 +19,8 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/empresa`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'razaosocial', label: 'Razão Social', minWidth: '35rem' },
-    { field: 'fantasia', label: 'Nome Fantasia', minWidth: '30rem' },
+    { field: 'razaosocial', label: 'Razão Social', minWidth: '30rem' },
+    { field: 'fantasia', label: 'Nome Fantasia', minWidth: '25rem' },
     { field: 'cpf_cnpj_empresa', label: 'CNPJ / CPF', minWidth: '12rem' }
 ]);
 // Inicializa os filtros do grid
@@ -65,7 +65,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros de empresas' }]" />
-    <div class="card" style="max-width: 100rem">
+    <div class="card">
         <EmpresaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
