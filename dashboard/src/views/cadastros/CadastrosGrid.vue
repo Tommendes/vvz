@@ -67,7 +67,7 @@ const listaNomes = ref([
     { field: 'cpf_cnpj', label: 'CPF/CNPJ', showDefault: true },
     { field: 'nome', label: 'Nome', minWidth: '10rem', showDefault: true },
     { field: 'atuacao', label: 'Área de atuação', showDefault: false },
-    { field: 'email', label: 'Email', showDefault: true },
+    // { field: 'email', label: 'Email', showDefault: true },
     { field: 'telefone', label: 'Telefone', showDefault: true, mask: 'telefone' },
     { field: 'aniversario', label: 'Aniv/Fundação', showDefault: true, list: dropdownMes.value }
 ]);

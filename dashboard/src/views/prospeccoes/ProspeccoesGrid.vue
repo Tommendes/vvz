@@ -56,8 +56,8 @@ const dropdownPeriodo = ref([
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente', minWidth: '15rem' },
     { field: 'pessoa', label: 'Pessoa contatada', minWidth: '11rem' },
-    { field: 'contato', label: 'Forma de Contato', minWidth: '12rem' },
-    { field: 'periodo', label: 'Período da visita', minWidth: '8rem', list: dropdownPeriodo.value },
+    // { field: 'contato', label: 'Forma de Contato', minWidth: '12rem' },
+    // { field: 'periodo', label: 'Período da visita', minWidth: '8rem', list: dropdownPeriodo.value },
     { field: 'data_visita', label: 'Data da visita', minWidth: '8rem', type: 'date' }
 ]);
 // Inicializa os filtros do grid
@@ -108,7 +108,6 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                const logTo = error;
                 try {
                     defaultError(error.response.data);
                 } catch (error) {
@@ -168,7 +167,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções' }]" />
-    <div class="card" :style="route.name == 'prospeccoes' ? 'min-width: 100rem' : ''">
+    <div class="card">
         <ProspeccaoForm
             :mode="mode"
             :idCadastro="props.idCadastro"

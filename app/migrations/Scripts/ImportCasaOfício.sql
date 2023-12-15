@@ -103,6 +103,8 @@ UPDATE vivazul_lynkos.cadastros SET dominio = CONCAT(dominio,'_XDEL'), STATUS = 
 	GROUP BY cpf_cnpj 
 	HAVING COUNT(cpf_cnpj) > 1
 	ORDER BY cadas_nome,created_at);
+/*Remover o primeiro 0 do número de telefone. Executar várias vezes para garantir a remoção total do 0*/
+UPDATE vivazul_bceaa5.cadastros SET telefone = SUBSTRING(TRIM(telefone),2) WHERE SUBSTRING(TRIM(telefone),1,1) = '0';
 /*Remove caracteres !d do field cpf_cnpj*/
 UPDATE vivazul_lynkos.cadastros SET cpf_cnpj = FLOOR(RAND() * 90000000000 + 10000000000) WHERE NOT(LENGTH(SUBSTRING_INDEX(SUBSTRING_INDEX(cpf_cnpj, '[^0-9]+', -1),'[^0-9]+',1)) IN ('11','14'));
 /*Importa os cadastros*/

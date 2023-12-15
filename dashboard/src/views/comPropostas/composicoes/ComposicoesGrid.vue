@@ -72,7 +72,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div :style="'min-width: 100%'">
+    <div>
         <ComposicaoForm :mode="mode" :idComposicao="itemData.id" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit'].includes(mode)" />
         <DataTable
             style="font-size: 0.9rem"

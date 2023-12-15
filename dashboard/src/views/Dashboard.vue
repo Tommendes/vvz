@@ -5,6 +5,8 @@ import { formatCurrency } from '@/global';
 import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
 import { colorsDashboard } from '@/global';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -227,7 +229,7 @@ const getPedidosLastBi = async () => {
 };
 
 const irRecentSale = (id) => {
-    window.open(`/${userData.schema_description}/pipeline/${id}`, '_blank');
+    window.open(`#/${userData.schema_description}/pipeline/${id}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
@@ -340,6 +342,22 @@ const lineData = reactive({
     datasets: []
 });
 const lineOptions = ref(null);
+const chartExportItems = ref([
+    {
+        label: 'Imagem',
+        icon: 'fa-regular fa-image',
+        command: () => {
+            exportToPNG();
+        }
+    },
+    {
+        label: 'PDF',
+        icon: 'fa-regular fa-file-pdf',
+        command: () => {
+            exportToPDF();
+        }
+    }
+]);
 
 const loadStats = () => {
     getBiPeriod();
@@ -355,6 +373,31 @@ const loadStats = () => {
         await getTopSellingBi();
         getSalesOverviewBi();
     }, Math.random() * 1000 + 250);
+};
+
+const exportToPNG = () => {
+    const divToExport = document.getElementById('divChart');
+    html2canvas(divToExport).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = 'Visão_produtos_mais_vendidos.png';
+        link.click();
+    });
+};
+
+import html2pdf from 'html2pdf.js';
+
+const exportToPDF = () => {
+    const divToExport = document.getElementById('divChart');
+    const opt = {
+        margin: [0, 0, 0, 0],
+        filename: 'Visão_produtos_mais_vendidos.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+    html2pdf().set(opt).from(divToExport).save();
 };
 
 onMounted(() => {
@@ -483,7 +526,7 @@ onMounted(() => {
                     <Column style="width: 10%">
                         <template #header> Representação </template>
                         <template #body="slotProps">
-                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/AddressBook.jpg'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
+                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/DefaultLogomarca.png'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
                         </template>
                     </Column>
                     <Column style="width: 45%">
@@ -616,9 +659,10 @@ onMounted(() => {
             </div>
         </div>
         <div class="col-12" v-if="lineData.labels.length > 0">
-            <div class="card">
+            <div class="card" id="divChart">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h5>Visão geral de vendas sobre os produtos mais vendidos</h5>
+                    <SplitButton label="Exportar" :model="chartExportItems" icon="fa-solid fa-ellipsis-vertical" @click="exportToPNG" text severity="info"></SplitButton>
                     <Calendar
                         aria-describedby="username-help"
                         showIcon

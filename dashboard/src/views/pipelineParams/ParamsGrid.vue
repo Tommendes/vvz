@@ -17,36 +17,14 @@ const userData = JSON.parse(json);
 
 const router = useRouter();
 const filters = ref(null);
-const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/pipeline-params`);
-// Exlui um registro
-const deleteRow = () => {
-    confirm.require({
-        group: 'templating',
-        header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
-                defaultSuccess('Registro excluído com sucesso!');
-                loadData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
 // Itens do grid
 const listaNomes = ref([
-    { field: 'id', label: 'Id do Prarâmetro', minWidth: '20rem' },
-    { field: 'descricao', label: 'Descrição', minWidth: '30rem' }
+    // { field: 'id', label: 'Id do Prarâmetro', minWidth: '20rem' },
+    { field: 'descricao', label: 'Descrição', minWidth: '60rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -59,33 +37,16 @@ initFilters();
 const clearFilter = () => {
     initFilters();
 };
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            router.push({ path: `/${userData.schema_description}/pipeline-param/${itemData.value.id}` });
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-const toggle = (event) => {
-    menu.value.toggle(event);
-};
 const getItem = (data) => {
     itemData.value = data;
+    router.push({ path: `/${userData.schema_description}/pipeline-param/${data.id}` })
 };
 const loadData = () => {
     loading.value = true;
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        gridData.value.forEach(() => {
+        gridData.value.forEach((element) => {
+            element.descricao = element.descricao.replaceAll('_', ' ');
         });
         loading.value = false;
     });
@@ -99,7 +60,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros' }]" />
-    <div class="card" style="min-width: 100rem">
+    <div class="card">
         <ParamForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
@@ -143,8 +104,7 @@ onBeforeMount(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <Button type="button" icon="pi pi-bars" rounded @click="getItem(data)" class="p-button-outlined" />
                 </template>
             </Column>
         </DataTable>

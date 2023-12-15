@@ -108,7 +108,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div class="card" style="min-width: 100%">
+    <div class="card">
         <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
             style="font-size: 0.9rem"
@@ -159,13 +159,6 @@ onBeforeMount(() => {
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.pessoa }}
-                    </div>
-                </template>
-            </Column>
-            <Column field="departamento" header="Departamento" sortable style="min-width: 20rem">
-                <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.departamento }}
                     </div>
                 </template>
             </Column>

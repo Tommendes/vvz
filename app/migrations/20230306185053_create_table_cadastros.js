@@ -17,7 +17,6 @@ exports.up = function(knex, Promise) {
         table.integer('id_params_sexo').unsigned().comment('Sexo(apenas PF) (Masc: 0; Fem: 1; Outro: 2)')
         table.string('aniversario').comment('Nascimento(PF) | Fundação(PJ)')
         table.integer('id_params_p_nascto').unsigned().comment('Nacionalidade')
-        table.string('inss').comment('INSS')
         table.string('cim').comment('CIM')
         table.string('doc_esp').comment('Doc. Especial')
         table.boolean('mala').comment('Aceita Mala')

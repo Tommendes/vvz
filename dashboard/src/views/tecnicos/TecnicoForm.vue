@@ -146,7 +146,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: `/${userData.schema_description}/tecnicos-pv` }, { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card" style="min-width: 100rem">
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">

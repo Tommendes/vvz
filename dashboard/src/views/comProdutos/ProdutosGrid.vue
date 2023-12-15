@@ -149,7 +149,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Produtos' }]" />
-    <div class="card" :style="'min-width: ' + (!route.name == 'produtos' ? '100%' : '100rem')">
+    <div class="card">
         <ProdutoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"

@@ -75,9 +75,7 @@ const saveData = async () => {
         const url = `${urlBase.value}${id}`; 
         if (itemData.value.valid_from) itemData.value.valid_from = moment(itemData.value.valid_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
         if (itemData.value.valid_to) itemData.value.valid_to = moment(itemData.value.valid_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
-        axios[method](url, itemData.value)
-        axios[method](url, itemData.value)       
-        axios[method](url, itemData.value)
+        await axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
                 if (body && body.id) {
@@ -182,7 +180,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Mensagens', to: `/${userData.schema_description}/messages` }, { label: itemData.title + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
-    <div class="card" style="min-width: 100rem">
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
@@ -241,20 +239,35 @@ watchEffect(() => {
                             <label for="title_future">Futuro Título</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title_future" id="title_future" type="text" />
-                        </div>                        
-                    </div>
-                    <div class="col-12" v-if="userData.admin >= 2">
-                        <div class="card bg-green-200 mt-3">
-                            <p>Mode: {{ mode }}</p>
-                            <p>itemData: {{ itemData }}</p>
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <label for="msg_future">Mensagem Futura</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.msg_future" id="msg_future" type="text" />
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <label for="body_variant">Cor da Mensagem</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.body_variant" id="body_variant" type="text" />
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <label for="severity">Severidade da Mensagem </label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.severity" id="severity" type="text" />
+                        </div>
+                        <div class="col-12">
+                            <div class="card flex justify-content-center flex-wrap gap-3">
+                                <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                                <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                                <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-12">
-                    <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                <div class="col-12" v-if="userData.admin >= 2">
+                    <div class="card bg-green-200 mt-3">
+                        <p>Mode: {{ mode }}</p>
+                        <p>itemData: {{ itemData }}</p>
                     </div>
                 </div>
             </div>

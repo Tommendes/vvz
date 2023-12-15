@@ -54,7 +54,7 @@ const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pv`);
 // Itens do breadcrumb
-const breadItems = ref([{ label: 'Pós-venda', to: `/${userData.schema_description}/pos-vendas` }]);
+const breadItems = ref([]);
 // Dropdown de tipos de pós-venda
 const dropdownPipelineByCadastro = ref([]);
 const dropdownTiposPv = ref([
@@ -80,6 +80,7 @@ const loadData = async () => {
                         await getNomeCliente();
                         await listPipeline();
                         editCadastro.value = false;
+                        breadItems.value = [{ label: 'Pós-vendas', to: `/${userData.schema_description}/pos-vendas` }];
                         breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
                         if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
                         // Lista o andamento do registro
@@ -376,7 +377,7 @@ const showPvOatForm = () => {
         props: {
             header: `Registrar OAT`,
             style: {
-                width: '100rem'
+                width: Math.floor(window.innerWidth * 0.9) + 'px'
             },
             breakpoints: {
                 '1199px': '75vw',
@@ -408,7 +409,7 @@ watch(selectedCadastro, (value) => {
 
 <template>
     <Breadcrumb v-if="!['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :items="breadItems" />
-    <div class="card" :style="route.name == 'pos-venda' ? 'min-width: 100rem' : ''">
+    <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
