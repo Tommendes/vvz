@@ -148,16 +148,26 @@ const routes = [
                 name: 'pipeline-param',
                 component: () => import('@/views/pipelineParams/ParamForm.vue')
             },
+            {
+                path: '/:client/eventos',
+                name: 'eventos',
+                component: () => import('@/views/events/EventsGrid.vue')
+            },
+            {
+                path: '/:client/evento/:id',
+                name: 'evento',
+                component: () => import('@/views/events/EventForm.vue')
+            },
             // Seção Suporte
             {
                 path: '/:client/messages',
                 name: 'messages',
-                component: () => import('@/views/messages/MensagensGrid.vue')
+                component: () => import('@/views/messages/MessagesGrid.vue')
             },
             {
                 path: '/:client/message/:id',
                 name: 'message',
-                component: () => import('@/views/messages/MensagemForm.vue')
+                component: () => import('@/views/messages/MessageForm.vue')
             },
             // Password
             {

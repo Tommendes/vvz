@@ -7,7 +7,7 @@ import { defaultSuccess } from '@/toast';
 import { useRouter } from 'vue-router';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import { renderizarHTML } from '@/global';
-import MensagemForm from './MensagemForm.vue';
+import MenssageForm from './MessageForm.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -107,7 +107,7 @@ onBeforeMount(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Mensagens' }]" />
     <div class="card">
-        <MensagemForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <MenssageForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"

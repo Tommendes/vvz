@@ -4,7 +4,7 @@ import { inject, onBeforeMount, ref } from 'vue';
 const dialogRef = inject('dialogRef');
 const itemData = ref({});
 onBeforeMount(() => {
-    itemData.value = dialogRef.value.data.body;
+    itemData.value = { ...dialogRef.value.data.body };
 });
 const action = (itemData) => {
     // Devolve o itemData para o componente que chamou o dialog

@@ -190,14 +190,14 @@ watchEffect(() => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_user" id="id_user" type="text" />
                         </div>
-                        <div class="col-12 md:col-2">
+                        <div class="col-12 md:col-3">
                             <label for="status_user">Status do Usuário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown v-else id="status_user" :disabled="mode == 'view'" placeholder="Selecione o status" optionLabel="label" optionValue="value" v-model="itemData.status_user" :options="dropdownStatusUser" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="valid_from">Válido de</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_from" id="valid_from" type="text" @input="validateDate()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.valid_from">{{errorMessages.valid_from }}</small>
                         </div>
@@ -207,12 +207,12 @@ watchEffect(() => {
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_to" id="valid_to" type="text" @input="validateDate()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.valid_to">{{errorMessages.valid_to }}</small>
                         </div>
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-5">
                             <label for="title">Título da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title" id="title" type="text" />
                         </div>
-                        <div class="col-12 md:col-2">
+                        <div class="col-12 md:col-3">
                             <label for="body_variant">Cor da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown v-else id="body_variant" :disabled="mode == 'view'" placeholder="Selecione o status" optionLabel="label" optionValue="value" v-model="itemData.body_variant" :options="dropdownCorDaMensagem" />
@@ -234,26 +234,10 @@ watchEffect(() => {
                             <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future" id="msg_future" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg_future" class="p-inputtext p-component p-filled"></p>
                         </div>
-
                         <div class="col-12 md:col-4" v-if="itemData.valid_to && !errorMessages.valid_to">
-                            <label for="title_future">Futuro Título</label>
+                            <label for="title_future">Título Futuro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title_future" id="title_future" type="text" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="msg_future">Mensagem Futura</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.msg_future" id="msg_future" type="text" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="body_variant">Cor da Mensagem</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.body_variant" id="body_variant" type="text" />
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <label for="severity">Severidade da Mensagem </label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.severity" id="severity" type="text" />
                         </div>
                         <div class="col-12">
                             <div class="card flex justify-content-center flex-wrap gap-3">
@@ -274,3 +258,8 @@ watchEffect(() => {
         </form>
     </div>
 </template>
+<style scoped>
+.p-fluid{
+    width: auto;
+}
+</style>

@@ -1,6 +1,7 @@
 const axios = require('axios')
 
 module.exports = app => {
+    const { isMatchOrError, noAccessMsg } = app.api.validation
     const STATUS_ACTIVE = 10
     const STATUS_TRASH = 20
     const { envLocalhost, dbPrefix } = require("../.env")
@@ -217,7 +218,6 @@ module.exports = app => {
         const ret = app.db({ se: tabelaSisEvents })
             .select({ id: 'se.id' }, { evento: 'se.evento' }, { created_at: 'se.created_at' }, { classevento: 'se.classevento' }, { tabela_bd: 'se.tabela_bd' }, { id_registro: 'se.id_registro' }, { user: 'us.name' },)
             .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
-            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
             .where({ 'sc.schema_description': user.schema_description })
             .where(function () {
