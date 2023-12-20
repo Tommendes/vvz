@@ -5,7 +5,7 @@ import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
 import moment from 'moment';
 import Breadcrumb from '@/components/Breadcrumb.vue';
-import { renderizarHTML, removeHtmlTags } from '@/global';
+import { removeHtmlTags } from '@/global';
 import Dialog from 'primevue/dialog';
 import Prompts from '@/components/Prompts.vue';
 import { useDialog } from 'primevue/usedialog';
@@ -23,9 +23,6 @@ const masks = ref({
     })
 });
 const visible = ref(false);
-const onConfigButtonClick = () => {
-    visible.value = !visible.value;
-};
 const itemsMessages = ref([]);
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
@@ -86,8 +83,7 @@ const loadLazyData = () => {
 
     setTimeout(() => {
         const url = `${urlBase.value}${urlFilters.value}`;    
-        const maxStringLength = 100;
-        console.log(maxStringLength);    
+        const maxStringLength = 100;   
         axios
             .get(url)
             .then((axiosRes) => {
@@ -95,7 +91,7 @@ const loadLazyData = () => {
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
                     if (element.created_at) element.created_at = moment(element.created_at).format('DD/MM/YYYY H:mm:ss');                    
-                    if (element.evento && element.evento.lenght > maxStringLength) element.evento = element.evento.substring(0, maxStringLength).trim() + ' ...';
+                    if (element.evento && element.evento.length > maxStringLength) element.evento = element.evento.substring(0, maxStringLength).trim() + ' ...';
                 });
                 loading.value = false;
             })
@@ -361,15 +357,6 @@ watchEffect(() => {
                         aria-controls="overlay_menu"
                         class="p-button-outlined"
                     />
-                    <!-- <Button 
-                        type="button" 
-                        label="Toggle" 
-                        @click="toggleMenuMessages" 
-                        aria-haspopup="true" 
-                        aria-controls="overlay_menumessages" 
-                        class="p-link layout-topbar-button">
-                        <i class="fa-regular fa-bell"></i>
-                    </Button> -->
                     <Menu 
                     ref="menuMessages" 
                     id="overlay_messages" 

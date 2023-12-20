@@ -215,12 +215,12 @@ watchEffect(() => {
                         <div class="col-12 md:col-3">
                             <label for="body_variant">Cor da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="body_variant" :disabled="mode == 'view'" placeholder="Selecione o status" optionLabel="label" optionValue="value" v-model="itemData.body_variant" :options="dropdownCorDaMensagem" />
+                            <Dropdown v-else id="body_variant" :disabled="mode == 'view'" placeholder="Selecione uma opção" optionLabel="label" optionValue="value" v-model="itemData.body_variant" :options="dropdownCorDaMensagem" />
                         </div>
                         <div class="col-12 md:col-4">
                             <label for="severity">Severidade da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="severity" :disabled="mode == 'view'" placeholder="Selecione o status" optionLabel="label" optionValue="value" v-model="itemData.severity" :options="dropdownSeveridade" />
+                            <Dropdown v-else id="severity" :disabled="mode == 'view'" placeholder="Selecione uma opção" optionLabel="label" optionValue="value" v-model="itemData.severity" :options="dropdownSeveridade" />
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.msg || ['edit', 'new'].includes(mode)">
                             <label for="msg">Mensagem</label>
@@ -259,7 +259,7 @@ watchEffect(() => {
     </div>
 </template>
 <style scoped>
-.p-fluid{
+.p-fluid .p-button {
     width: auto;
 }
 </style>

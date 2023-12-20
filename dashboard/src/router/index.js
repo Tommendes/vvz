@@ -153,11 +153,6 @@ const routes = [
                 name: 'eventos',
                 component: () => import('@/views/events/EventsGrid.vue')
             },
-            {
-                path: '/:client/evento/:id',
-                name: 'evento',
-                component: () => import('@/views/events/EventForm.vue')
-            },
             // Seção Suporte
             {
                 path: '/:client/messages',
