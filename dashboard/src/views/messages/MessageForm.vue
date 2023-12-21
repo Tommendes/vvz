@@ -228,16 +228,16 @@ watchEffect(() => {
                             <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg" class="p-inputtext p-component p-filled"></p>
                         </div>
+                        <div class="col-12 md:col-5" v-if="itemData.valid_to && !errorMessages.valid_to">
+                            <label for="title_future">Título Futuro</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title_future" id="title_future" type="text" />
+                        </div>
                         <div class="col-12 md:col-12" v-if="itemData.valid_to && !errorMessages.valid_to">
                             <label for="msg_future">Mensagem Futura</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future" id="msg_future" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg_future" class="p-inputtext p-component p-filled"></p>
-                        </div>
-                        <div class="col-12 md:col-4" v-if="itemData.valid_to && !errorMessages.valid_to">
-                            <label for="title_future">Título Futuro</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title_future" id="title_future" type="text" />
                         </div>
                         <div class="col-12">
                             <div class="card flex justify-content-center flex-wrap gap-3">

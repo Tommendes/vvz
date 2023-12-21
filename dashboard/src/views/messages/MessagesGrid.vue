@@ -46,8 +46,8 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-{ field: 'id_user', label: 'Id do usuário', minWidth: '10rem' },
-    { field: 'title', label: 'Título', minWidth: '15rem' },
+    { field: 'id_user', label: 'Usuário destinado', minWidth: '20rem' },
+    { field: 'title', label: 'Título', minWidth: '20rem' },
     { field: 'msg', label: 'Mensagem', minWidth: '20rem' }    
 ]);
 // Inicializa os filtros do grid

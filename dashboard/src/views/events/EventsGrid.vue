@@ -45,10 +45,10 @@ const gridData = ref([]); // Seus dados iniciais
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'created_at', label: 'Criado em', minWidth: '15rem' },
-    { field: 'evento', label: 'Evento', minWidth: '15rem' },
-    { field: 'classevento', label: 'Classe', minWidth: '15rem' },
-    { field: 'tabela_bd ', label: 'Tabela', minWidth: '15rem' }
+    { field: 'created_at', label: 'Criação', minWidth: '15rem' },
+    { field: 'evento', label: 'Tipo do evento', minWidth: '10rem' },
+    { field: 'classevento', label: 'Classe', minWidth: '5rem' },
+    { field: 'tabela_bd ', label: 'Descrição do evento', minWidth: '20rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -353,7 +353,7 @@ watchEffect(() => {
                         rounded
                         @click="toggleMenuMessages"
                         aria-haspopup="true"
-                        v-tooltip.left="'Clique para mais opções'"
+                        v-tooltip.left="'Clique para ver completo'"
                         aria-controls="overlay_menu"
                         class="p-button-outlined"
                     />
