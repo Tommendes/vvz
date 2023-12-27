@@ -82,7 +82,7 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     itemDataComparision.value = { ...itemData.value };
-                    if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/tecnico-pv/${itemData.value.id}` });
+                    if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/message/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
                     defaultWarn('Erro ao salvar registro');

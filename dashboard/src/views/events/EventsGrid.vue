@@ -45,7 +45,7 @@ const gridData = ref([]); // Seus dados iniciais
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'created_at', label: 'Criação', minWidth: '15rem' },
+    { field: 'created_at', label: 'Data de criação', minWidth: '15rem' },
     { field: 'evento', label: 'Tipo do evento', minWidth: '10rem' },
     { field: 'classevento', label: 'Classe', minWidth: '5rem' },
     { field: 'tabela_bd ', label: 'Descrição do evento', minWidth: '20rem' }
