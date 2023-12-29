@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, onMounted } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -133,18 +133,55 @@ onBeforeMount(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column
+                    :field="nome.field"
+                    :header="nome.label"
+                    :filterField="nome.field"
+                    :filterMatchMode="'contains'"
+                    sortable
+                    :dataType="nome.type"
+                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
+                        <Dropdown
+                            :id="nome.field"
+                            optionLabel="label"
+                            optionValue="value"
+                            v-model="filterModel.value"
+                            :options="nome.list"
+                            @change="filterCallback()"
+                            :class="nome.class"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            placeholder="Pesquise..."
+                        />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
+                        <Calendar
+                            v-model="filterModel.value"
+                            dateFormat="dd/mm/yy"
+                            selectionMode="range"
+                            showButtonBar
+                            :numberOfMonths="2"
+                            placeholder="dd/mm/aaaa"
+                            mask="99/99/9999"
+                            @input="filterCallback()"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                        />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
+                        <InputText
+                            type="text"
+                            v-model="filterModel.value"
+                            @keydown.enter="filterCallback()"
+                            class="p-column-filter"
+                            placeholder="Pesquise..."
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                        />
                     </template>
                     <template #body="{ data }">
-                        <span v-html="data[nome.field]"></span>
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
+                        <span v-else v-html="data[nome.field]"></span>
                     </template>
                 </Column>
             </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -108,7 +108,7 @@ const dropdownStatusUser = ref([
     { value: 10, label: 'Ativo' },
     { value: 99, label: 'Excluído' }
 ]);
-// O dropdown abaixo está com valores literais para não causar possíveis problemas na API
+// O dropdown abaixo está com valores literais para não causar possíveis problemas de integração
 const dropdownCorDaMensagem = ref([
     { value: 'success', label: 'Success'},
     { value: 'info', label: 'Info'},
@@ -147,7 +147,6 @@ const validateDate = (fields) => {
 
     // Atualiza o estado do botão "Salvar"
     accept.value = isValid;
-
     return isValid;
 };
 // Validar formulário
