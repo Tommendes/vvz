@@ -172,8 +172,28 @@ onMounted(() => {
     }
 });
 // Observar alterações nos dados do formulário
+var title_color;
 watchEffect(() => {
     isItemDataChanged();
+    // Adiciona um watcher para o campo 'body_variant'
+    if (itemData.value.body_variant) {
+    switch (itemData.value.body_variant) {
+        case 'success':
+            title_color = '#22C55E';
+            break;
+            case 'info':
+                title_color = '#0EA5E9';
+                break;
+            case 'warning':
+                title_color = '#F97316';
+                break;
+            case 'danger':
+                title_color = '#EF4444';
+                break;
+            default:
+                break;
+        }
+    }
 });
 </script>
 
@@ -203,13 +223,29 @@ watchEffect(() => {
                         <div class="col-12 md:col-2">
                             <label for="valid_to">Válido até</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_to" id="valid_to" type="text" @input="validateDate()" />
+                            <InputText
+                                v-else
+                                autocomplete="no"
+                                :disabled="mode == 'view'"
+                                v-maska data-maska="##/##/####"
+                                v-model="itemData.valid_to"
+                                id="valid_to"
+                                type="text"
+                                @input="validateDate()"
+                            />
                             <small id="text-error" class="p-error" v-if="errorMessages.valid_to">{{errorMessages.valid_to }}</small>
                         </div>
                         <div class="col-12 md:col-5">
                             <label for="title">Título da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title" id="title" type="text" />
+                            <InputText
+                                v-else
+                                autocomplete="no"
+                                :disabled="mode == 'view'"
+                                v-model="itemData.title"
+                                :style="{ color: title_color }"
+                                id="title" type="text"
+                            />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="body_variant">Cor da Mensagem</label>

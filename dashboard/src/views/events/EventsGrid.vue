@@ -131,7 +131,6 @@ const getUserMessages = async () => {
             if (body && body.length) {
                 body.forEach((element) => {
                     if (element.status == 10) ++newMessages.value;
-                    // element.msg = element.msg.replaceAll('[userName]', userData.name.split(' ')[0]);
                     // Substitua [userName] pelos dois primeiros nomes do usuário com o cuidade de que o usuário pode ter apenas um nome registrado
                     element.msg = element.msg.replace('[userName]', userData.name.split(' ').slice(0, 2).join(' '));
                     itemsMessages.value.push({
@@ -291,18 +290,6 @@ watchEffect(() => {
                             Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
                         </p>
                     </Dialog>
-                    <!-- <Dropdown
-                        filter
-                        placeholder="Filtrar por Área de Atuação..."
-                        :showClear="areaAtuacao"
-                        style="min-width: 200px"
-                        id="areaAtuacao"
-                        optionLabel="label"
-                        optionValue="value"
-                        v-model="areaAtuacao"
-                        :options="dropdownAtuacao"
-                        @change="loadLazyData()"
-                    /> -->
                     <Button v-if="userData.gestor" icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                 </div>
