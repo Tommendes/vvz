@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('vivazul_cso_root.proto_docs', table => {
+    return knex.schema.createTable('vivazul_bceaa5.proto_docs', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -16,5 +16,5 @@ exports.up = function(knex, Promise) {
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('vivazul_cso_root.proto_docs')
+    return knex.schema.dropTable('vivazul_bceaa5.proto_docs')
 };

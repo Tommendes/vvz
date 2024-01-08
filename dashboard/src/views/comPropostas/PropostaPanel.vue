@@ -27,14 +27,18 @@ const masks = ref({
 
 const itemData = ref({});
 const itemDataPipeline = ref({});
+const itemDataPipelineParams = ref({});
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-propostas`);
 const urlBasePipeline = ref(`${baseApiUrl}/pipeline`);
+const urlBasePipelineParams = ref(`${baseApiUrl}/pipeline-params`);
 const mode = ref('view');
 // Carrega os dados do formulário
 provide('itemData', itemData);
 // Dados do pipeline
 provide('itemDataPipeline', itemDataPipeline);
+// Dados do parametros do pipeline
+provide('itemDataPipelineParams', itemDataPipelineParams);
 // Carrega o modo do formulário
 provide('mode', mode);
 // Itens do breadcrumb
@@ -49,6 +53,7 @@ const loadData = async () => {
                 body.id = String(body.id);
                 itemData.value = body;
                 if (itemData.value.id_pipeline) await loadDataPipeline();
+                if (itemDataPipeline.value.id_pipeline_params) await loadPipelineParamsData();
                 breadItems.value = [{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }];
                 if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 1 ? `: (${itemData.value.id})` : '') });
                 if (itemDataPipeline.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemDataPipeline.value.id_cadastros}` });
@@ -80,6 +85,17 @@ const loadDataPipeline = async () => {
     loading.value = false;
 };
 
+const loadPipelineParamsData = async () => {
+    loading.value = true;
+    const id = itemDataPipeline.value.id_pipeline_params;
+    const url = `${urlBasePipelineParams.value}/${id}`;
+    await axios.get(url).then(async (res) => {
+        const body = res.data;
+        itemDataPipelineParams.value = body;
+    });
+    loading.value = false;
+};
+
 const nomeCliente = ref();
 const getNomeCliente = async () => {
     if (itemDataPipeline.value.id_cadastros) {
@@ -105,6 +121,7 @@ onBeforeMount(() => {
     <div class="grid">
         <div class="col-12">
             <div class="card">
+                <h3 v-if="itemDataPipelineParams && itemDataPipelineParams.descricao && itemDataPipeline && itemDataPipeline.documento">{{ itemDataPipelineParams.descricao.replaceAll('_', ' ') }} {{ itemDataPipeline.documento }}</h3>
                 <TabView>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
@@ -141,6 +158,7 @@ onBeforeMount(() => {
                 <p>route.name {{ route.name }}</p>
                 <p>itemData: {{ itemData }}</p>
                 <p>itemDataPipeline: {{ itemDataPipeline }}</p>
+                <p>itemDataPipelineParams: {{ itemDataPipelineParams }}</p>
             </div>
         </div>
     </div>

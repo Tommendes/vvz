@@ -1,8 +1,8 @@
 <script setup>
-import { inject, onBeforeMount, ref, watchEffect } from 'vue';
+import { inject, onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { isValidEmail } from '@/global';
+import { isValidEmail, formatCurrency } from '@/global';
 import { defaultSuccess, defaultWarn } from '@/toast';
 
 // Cookies do usuário
@@ -14,15 +14,18 @@ import { Mask } from 'maska';
 const masks = ref({
     telefone: new Mask({
         mask: ['(##) ####-####', '(##) #####-####']
+    }),
+    valor: new Mask({
+        mask: '0,99'
     })
 });
 
 // Campos de formulário
 const itemData = inject('itemData');
+const itemDataPipeline = inject('itemDataPipeline');
+const itemDataPipelineParams = inject('itemDataPipelineParams');
 // Modo do formulário
 const mode = inject('mode');
-// Dados do pipeline
-const itemDataPipeline = inject('itemDataPipeline');
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Mensages de erro
@@ -34,9 +37,9 @@ const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/com-propostas`);
 // Carragamento de dados do form
-const loadData = () => {
+const loadData = async () => {
     loading.value = true;
-    if (itemData.id) {
+    if (itemData && itemData.id) {
         if (itemData.telefone_contato) itemData.telefone_contato = masks.value.telefone.masked(itemData.telefone_contato);
         itemDataComparision.value = { ...itemData };
     }
@@ -112,11 +115,36 @@ const optionLocalParams = async (query) => {
     const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
     return await axios.get(url);
 };
+// Carregar opções do formulário
+const dropdownPrazo = ref([]);
+const dropdownFormaPagto = ref([]);
+const dropdownValidade = ref([]);
+const loadOptions = async () => {
+    // Prazo de entrega da proposta
+    await optionLocalParams({ field: 'grupo', value: 'com_pr05', select: 'id,parametro' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownPrazo.value.push({ value: item.id, label: item.parametro });
+        });
+    });
+    // Forma de pagamento da proposta
+    await optionLocalParams({ field: 'grupo', value: 'com_pr06', select: 'id,parametro' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownFormaPagto.value.push({ value: item.id, label: item.parametro });
+        });
+    });
+    // Validade da proposta
+    await optionLocalParams({ field: 'grupo', value: 'com_pr07', select: 'id,parametro' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownValidade.value.push({ value: item.id, label: item.parametro });
+        });
+    });
+};
 
 // http://localhost:55596/local-params/f-a/gbf?fld=grupo&vl=com_pr05&slct=id,parametro,label
 
 // Carregar dados do formulário
-onBeforeMount(() => {
+onBeforeMount(async () => {
+    await loadOptions();
     loadData();
 });
 // Observar alterações nos dados do formulário
@@ -131,11 +159,6 @@ watchEffect(() => {
             <div class="col-12">
                 <div class="p-fluid grid">
                     <div class="col-12 md:col-3">
-                        <label for="id_pipeline">Tipo</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_pipeline" id="id_pipeline" type="text" />
-                    </div>
-                    <div class="col-12 md:col-3">
                         <label for="pessoa_contato">Contato</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
@@ -146,66 +169,72 @@ watchEffect(() => {
                         <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
                         <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato }}</small>
                     </div>
-                    <div class="col-12 md:col-3">
+                    <div class="col-12 md:col-4">
                         <label for="email_contato">Email</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" class="lowercase" />
                         <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato }}</small>
                     </div>
-                    <div class="col-12 md:col-3">
+                    <div class="col-12 md:col-2">
+                        <label for="prz_entrega">Prazo de Entrega</label>
+                        <Skeleton v-if="loading" height="2rem"></Skeleton>
+                        <Dropdown v-else id="prz_entrega" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.prz_entrega" :options="dropdownPrazo" placeholder="Selecione..."> </Dropdown>
+                    </div>
+                    <div class="col-12 md:col-4">
+                        <label for="forma_pagto">Forma de Pagamento</label>
+                        <Skeleton v-if="loading" height="2rem"></Skeleton>
+                        <Dropdown v-else id="forma_pagto" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.forma_pagto" :options="dropdownFormaPagto" placeholder="Selecione..."> </Dropdown>
+                    </div>
+                    <div class="col-12 md:col-4">
+                        <label for="validade_prop">Validade da Proposta</label>
+                        <Skeleton v-if="loading" height="2rem"></Skeleton>
+                        <Dropdown v-else id="validade_prop" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.validade_prop" :options="dropdownValidade" placeholder="Selecione..."> </Dropdown>
+                    </div>
+                    <div class="col-12 md:col-2">
+                        <label for="desconto_total">Desconto Total</label>
+                        <Skeleton v-if="loading" height="2rem"></Skeleton>
+                        <div v-else-if="!['view'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                        </div>
+                        <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                            <span class="p-inputgroup-addon">R$</span>
+                            <span disabled v-html="formatCurrency(itemData.desconto_total || 0)" id="desconto_total" class="p-inputtext p-component disabled" />
+                        </div>
+                    </div>
+                    <div class="col-12 md:col-2">
                         <label for="desconto_ativo">Desconto Ativo</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescontoAtivo" />
-                    </div>
-                    <div class="col-12 md:col-3">
-                        <label for="desconto_total">Desconto Total</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text" />
-                    </div>
-                    <div class="col-12 md:col-3">
-                        <label for="prz_entrega">Prazo de Entrega</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.prz_entrega" id="prz_entrega" type="text" />
-                    </div>
-                    <div class="col-12 md:col-3">
-                        <label for="forma_pagto">Forma de Pagamento</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.forma_pagto" id="forma_pagto" type="text" />
-                    </div>
-                    <div class="col-12 md:col-3">
-                        <label for="validade_prop">Validade da Proposta</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.validade_prop" id="validade_prop" type="text" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="saudacao_inicial">Sudação Inicial</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.saudacao_inicial" id="saudacao_inicial" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.saudacao_inicial" class="p-inputtext p-component p-filled"></p>
+                        <p v-else v-html="itemData.saudacao_inicial" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="observacoes_finais">Observacoes Finais</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes_finais" id="observacoes_finais" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.observacoes_finais" class="p-inputtext p-component p-filled"></p>
+                        <p v-else v-html="itemData.observacoes_finais" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="garantia">Garantia</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.garantia" id="garantia" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.garantia" class="p-inputtext p-component p-filled"></p>
+                        <p v-else v-html="itemData.garantia" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="conclusao">Conclusão</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.conclusao" id="conclusao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.conclusao" class="p-inputtext p-component p-filled"></p>
+                        <p v-else v-html="itemData.conclusao" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="assinatura">Assinatura</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.assinatura" id="assinatura" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.assinatura" class="p-inputtext p-component p-filled"></p>
+                        <p v-else v-html="itemData.assinatura" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                 </div>
             </div>
@@ -221,7 +250,13 @@ watchEffect(() => {
                 <p>mode: {{ mode }}</p>
                 <p>itemData: {{ itemData }}</p>
                 <p>itemDataPipeline: {{ itemDataPipeline }}</p>
+                <p>itemDataPipelineParams: {{ itemDataPipelineParams }}</p>
             </div>
         </div>
     </form>
 </template>
+<style>
+.disabled {
+    opacity: 0.6;
+}
+</style>

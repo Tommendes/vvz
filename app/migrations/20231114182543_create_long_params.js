@@ -4,7 +4,7 @@
  * @returns 
  */
 exports.up = function (knex, Promise) {
-    return knex.schema.createTable('vivazul_cso_root.long_params', table => {
+    return knex.schema.createTable('vivazul_bceaa5.long_params', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -27,5 +27,5 @@ exports.up = function (knex, Promise) {
  * @returns 
  */
 exports.down = function (knex, Promise) {
-    return knex.schema.dropTable('vivazul_cso_root.long_params')
+    return knex.schema.dropTable('vivazul_bceaa5.long_params')
 };

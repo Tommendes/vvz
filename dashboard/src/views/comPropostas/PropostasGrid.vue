@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, provide, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
@@ -30,10 +30,11 @@ const totalRecords = ref(0); // O total de registros (deve ser atualizado com o 
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
+const itemData = ref({});
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'descricao', label: 'Representada', minWidth: '11rem' },
+    { field: 'descricao', label: 'Proponente', minWidth: '11rem' },
     { field: 'documento', label: 'Proposta', minWidth: '8rem' },
     { field: 'nome', label: 'Cliente', minWidth: '12rem' },
     // { field: 'pessoa_contato', label: 'Contato', minWidth: '12rem' },
@@ -104,6 +105,10 @@ const onFilter = () => {
     loadLazyData();
 };
 const mode = ref('grid');
+// Carrega os dados do formulário
+provide('itemData', itemData);
+provide('mode', 'new');
+
 const mountUrlFilters = () => {
     let url = '?';
     Object.keys(filters.value).forEach((key) => {
@@ -119,7 +124,6 @@ const mountUrlFilters = () => {
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
     urlFilters.value = url;
 };
-const menu = ref();
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
     const toExport = dt.value;
@@ -138,7 +142,7 @@ watchEffect(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Propostas' }]" />
     <div class="card">
-        <PropostaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <PropostaForm @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"
@@ -164,18 +168,6 @@ watchEffect(() => {
             <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <!-- <Dropdown
-                        filter
-                        placeholder="Filtrar por Área de Atuação..."
-                        :showClear="areaAtuacao"
-                        style="min-width: 200px"
-                        id="areaAtuacao"
-                        optionLabel="label"
-                        optionValue="value"
-                        v-model="areaAtuacao"
-                        :options="dropdownAtuacao"
-                        @change="loadLazyData()"
-                    /> -->
                     <Button v-if="userData.gestor" icon="pi pi-external-link" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="pi pi-plus" label="Novo Registro" outlined @click="mode = 'new'" />
@@ -221,11 +213,18 @@ watchEffect(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="router.push({ path: `/${userData.schema_description}/proposta/${data.id}` })" aria-haspopup="true" v-tooltip.left="'Clique para mais opções'" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :popup="true" />
+                    <Button
+                        type="button"
+                        icon="pi pi-bars"
+                        rounded
+                        @click="router.push({ path: `/${userData.schema_description}/proposta/${data.id}` })"
+                        aria-haspopup="true"
+                        v-tooltip.left="'Clique para mais opções'"
+                        aria-controls="overlay_menu"
+                        class="p-button-outlined"
+                    />
                 </template>
             </Column>
         </DataTable>
     </div>
 </template>
-

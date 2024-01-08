@@ -6,7 +6,6 @@ import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
 import { colorsDashboard } from '@/global';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 // Cookies do usuário
 import { userKey } from '@/global';

@@ -44,13 +44,13 @@ ALTER TABLE vivazul_api.users AUTO_INCREMENT=0;
 ALTER TABLE vivazul_api.users DROP COLUMN IF EXISTS PASSWORD;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_api.users (
-  id,evento,created_at,updated_at,STATUS,tkn_api,NAME,cpf,
-  email,telefone,password_reset_token,cliente,dominio,admin,gestor,multiCliente,
+  id,evento,created_at,updated_at,STATUS,schema_id,tkn_api,NAME,cpf,
+  email,telefone,password_reset_token,admin,gestor,multiCliente,
   cadastros,pipeline,pv,comercial,fiscal,financeiro,comissoes,agente_v,agente_arq,agente_at,time_to_pas_expires,old_id
 )(
 SELECT 
-  0,1,NOW(),NULL,STATUS,NULL,username,(SELECT FLOOR(RAND() * 9000000000 + 1000000000) AS numero_aleatorio),
-  email,tel_contato,NULL,'cso','root',administrador,gestor,0, 
+  0,1,NOW(),NULL,STATUS,1,NULL,username,(SELECT FLOOR(RAND() * 9000000000 + 1000000000) AS numero_aleatorio),
+  email,tel_contato,NULL,administrador,gestor,0, 
   cadastros,ged,0,comercial,0,financeiro,0,agente_comercial,agente_arq,agente_at,99999,id
 FROM vivazul_lynkos.user WHERE dominio = 'casaoficio' AND username NOT LIKE '%tom mendes%'
 );
@@ -119,7 +119,7 @@ INSERT INTO vivazul_bceaa5.cadastros (
   cpf_cnpj,rg_ie,nome,
   id_params_sexo,
   aniversario,id_params_p_nascto,observacao,
-  telefone,email,inss,cim,doc_esp,old_id
+  telefone,email,cim,doc_esp,old_id
 ) ( 
 	SELECT 
 	  0,1,FROM_UNIXTIME(created_at)created_at,updated_at,STATUS,
@@ -130,7 +130,7 @@ INSERT INTO vivazul_bceaa5.cadastros (
 	  COALESCE((SELECT id FROM vivazul_api.params WHERE LOWER(label) = LOWER(sexo) AND meta = 'sexo'), 3)id_params_sexo,
 	  aniversario,4,obs,
 	  REGEXP_REPLACE(COALESCE(telefone1,telefone2), '[^0-9]', '')telefone,email,
-	  inss,cim,doc_esp,id 
+	  cim,doc_esp,id 
 	FROM vivazul_lynkos.cadastros 
 	WHERE STATUS = 10 AND dominio = 'casaoficio' AND cadas_nome IS NOT NULL AND LENGTH(TRIM(cadas_nome)) > 0
 	GROUP BY IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
@@ -423,6 +423,20 @@ INSERT INTO vivazul_bceaa5.com_propostas (
 	LEFT JOIN vivazul_bceaa5.pv ON pv.old_id = prop.id_pv
 	WHERE prop.dominio = 'casaoficio' AND prop.status = 10
 );
+UPDATE vivazul_bceaa5.com_propostas cp SET forma_pagto = (SELECT id FROM local_params WHERE LOWER(parametro) = LOWER(cp.forma_pagto) GROUP BY LOWER(cp.forma_pagto));
+UPDATE vivazul_bceaa5.com_propostas cp SET validade_prop = (SELECT id FROM local_params WHERE LOWER(parametro) = LOWER(cp.validade_prop) GROUP BY LOWER(cp.validade_prop));
+UPDATE vivazul_bceaa5.com_propostas cp SET prz_entrega = (SELECT id FROM local_params WHERE LOWER(parametro) = LOWER(cp.prz_entrega) GROUP BY LOWER(cp.prz_entrega));
+ALTER TABLE `vivazul_bceaa5`.`com_propostas`   
+  CHANGE `prz_entrega` `prz_entrega` INT(10) UNSIGNED NOT NULL   COMMENT 'Prazo de entrega',
+  CHANGE `forma_pagto` `forma_pagto` INT(10) UNSIGNED NOT NULL   COMMENT 'Forma de pagamento',
+  CHANGE `validade_prop` `validade_prop` INT(10) UNSIGNED NOT NULL   COMMENT 'Validade da proposta';
+SET FOREIGN_KEY_CHECKS=0; 
+ALTER TABLE `vivazul_bceaa5`.`com_propostas`  
+  ADD CONSTRAINT `vivazul_bceaa5_com_propostas_prz_entrega_foreign` FOREIGN KEY (`prz_entrega`) REFERENCES `vivazul_bceaa5`.`local_params`(`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+  ADD CONSTRAINT `vivazul_bceaa5_com_propostas_forma_pagto_foreign` FOREIGN KEY (`forma_pagto`) REFERENCES `vivazul_bceaa5`.`local_params`(`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+  ADD CONSTRAINT `vivazul_bceaa5_com_propostas_validade_prop_foreign` FOREIGN KEY (`validade_prop`) REFERENCES `vivazul_bceaa5`.`local_params`(`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+SET FOREIGN_KEY_CHECKS=1; 
+
 
 /*Importar com_prop_compos*/
 ALTER TABLE vivazul_bceaa5.com_prop_compos ADD COLUMN old_id INT(10) UNSIGNED;

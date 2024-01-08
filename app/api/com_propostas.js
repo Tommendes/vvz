@@ -38,7 +38,6 @@ module.exports = app => {
                     this.on('p.id_cadastros', '=', 'c.id')
                 })
                 .where({ 'p.id': body.id_pipeline }).first()
-            console.log(cadastro);
             body.pessoa_contato = body.pessoa_contato || cadastro.nome
             body.telefone_contato = body.telefone_contato || cadastro.telefone
             body.email_contato = body.email_contato || cadastro.email
@@ -48,7 +47,7 @@ module.exports = app => {
             existsOrError(body.saudacao_inicial, 'Saudação inicial não informada')
             existsOrError(body.conclusao, 'Conclusão não informada')
             existsOrError(body.garantia, 'Garantia não informada')
-            if (body.desconto_total > 0) existsOrError(body.desconto_ativo, 'Desconto ativo não informado')
+            existsOrError(String(body.desconto_ativo), 'Desconto ativo não informado')
             existsOrError(body.observacoes_finais, 'Observações finais não informadas')
             existsOrError(body.prz_entrega, 'Prazo de entrega não informado')
             existsOrError(body.forma_pagto, 'Forma de pagamento não informada')

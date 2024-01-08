@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('vivazul_cso_root.cad_documentos', table => {
+    return knex.schema.createTable('vivazul_bceaa5.cad_documentos', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -20,5 +20,5 @@ exports.up = function(knex, Promise) {
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('vivazul_cso_root.cad_documentos')
+    return knex.schema.dropTable('vivazul_bceaa5.cad_documentos')
 };

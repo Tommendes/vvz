@@ -940,7 +940,7 @@ module.exports = app => {
 
         const ret = app.db({ us: tabela })
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-            .select("us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description", 
+            .select("us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description",
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
@@ -1088,6 +1088,9 @@ module.exports = app => {
             case 'gbf':
                 getByField(req, res)
                 break;
+            case 'glf':
+                getListByField(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
@@ -1132,11 +1135,56 @@ module.exports = app => {
             return res.status(500).send(error)
         })
     }
+    
+
+    // Lista de registros por campo
+    const getListByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+        const orderBy = req.query.order
+
+        const first = req.query.first && req.params.first == true
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} = ${value}`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+
+        if (orderBy) ret.orderBy(orderBy)
+        else ret.orderBy('created_at')
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
 
     const getSisMessages = async (req, res) => {
         const user = req.user
         if (user.id) {
-            app.db('sis_msg').where({ status: STATUS_ACTIVE, id_user: user.id })
+            app.db('sis_messages').where({ status: STATUS_ACTIVE, id_user: user.id })
                 .then(msgs => {
                     res.send(msgs)
                 })
@@ -1146,7 +1194,7 @@ module.exports = app => {
     const getSisStatus = async (req, res) => {
         const user = req.user
         if (user.id) {
-            app.db('sis_msg').where({ status: STATUS_ACTIVE, status_user: STATUS_SUSPENDED, id_user: user.id }).first()
+            app.db('sis_messages').where({ status: STATUS_ACTIVE, status_user: STATUS_SUSPENDED, id_user: user.id }).first()
                 .then(msgs => {
                     let status_user = true
                     if (msgs && moment().format() >= msgs.valid_from && moment().format() <= msgs.valid_to) status_user = false
@@ -1170,7 +1218,7 @@ module.exports = app => {
             if (userFromDB.password_reset_token) expirationTimOk = Number(userFromDB.password_reset_token.split('_')[1]) > now
             if (!expirationTimOk) {
                 return res.status(200).send({
-                    name: userFromDB.name, 
+                    name: userFromDB.name,
                     isTokenValid: false,
                     gtt: 0,
                     msg: 'O token informado ultrapassou o tempo máximo para ser utilizado'

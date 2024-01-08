@@ -181,60 +181,145 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
+        const tabelaDomain = `${dbPrefix}_api.sis_events`
 
-        const page = req.query.page || 1
-        const key = req.query.key ? req.query.key : ''
-        let tabelas_bd = req.query.tabelas_bd ? req.query.tabelas_bd : ''
-        let arrayOfTabelas = tabelas_bd.split(",")
-        let classevento = req.query.classevento ? req.query.classevento : ''
-        let arrayOfClasses = classevento.split(",")
+        let queryes = undefined
+        let query = undefined
+        let page = 0
+        let rows = 10
+        let sortField = app.db.raw('tbl1.created_at')
+        let sortOrder = 'desc'
+        if (req.query) {
+            queryes = req.query
+            query = ''
+            for (const key in queryes) {
+                let operator = queryes[key].split(':')[0]
+                let value = queryes[key].split(':')[1]
+                if (key.split(':')[0] == 'field') {
+                    if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
 
-        const sql = app.db({ se: tabelaSisEvents }).select(app.db.raw('count(*) as count'))
-            .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
+                    switch (operator) {
+                        case 'startsWith': operator = `like '${value}%'`
+                            break;
+                        case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                            break;
+                        case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                            break;
+                        case 'endsWith': operator = `like '%${value}'`
+                            break;
+                        case 'notEquals': operator = `!= '${value}'`
+                            break;
+                        default: operator = `= '${value}'`
+                            break;
+                    }
+                    let queryField = key.split(':')[1]
+                    query += `${queryField} ${operator} AND `
+                } else if (key.split(':')[0] == 'params') {
+                    switch (key.split(':')[1]) {
+                        case 'page': page = Number(queryes[key]);
+                            break;
+                        case 'rows': rows = Number(queryes[key]);
+                            break;
+                    }
+                } else if (key.split(':')[0] == 'sort') {
+                    sortField = key.split(':')[1].split('=')[0]
+                    sortOrder = queryes[key]
+                }
+            }
+            query = query.slice(0, -5).trim()
+        }
+        let filterCnpj = undefined
+        let filter = req.query.filter
+        if (filter) {
+            filter = filter.trim()
+            filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
+        }
+
+        const totalRecords = await app.db({ tbl1: tabelaDomain })
+            .countDistinct('tbl1.id as count').first()
+            .whereRaw(query ? query : '1=1')
+
+        const ret = app.db({ tbl1: tabelaDomain })
+            .select({ id: 'tbl1.id' }, { evento: 'tbl1.evento' }, { created_at: 'tbl1.created_at' }, { classevento: 'tbl1.classevento' }, { tabela_bd: 'tbl1.tabela_bd' }, { id_registro: 'tbl1.id_registro' }, { user: 'us.name' },)
+            .join({ us: 'users' }, 'tbl1.id_user', '=', 'us.id')
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
             .where({ 'sc.schema_description': user.schema_description })
-            .where(function () {
-                this.where('se.evento', 'like', `%${key}%`)
-                    .orWhere('us.name', 'like', `%${key}%`)
+            .whereRaw(query ? query : '1=1')
+            .groupBy('tbl1.id')
+            .orderBy(sortField, sortOrder)
+            .limit(rows).offset((page + 1) * rows - rows)
+            .then(body => {
+                return res.json({ data: body, totalRecords: totalRecords.count })
             })
-        if (tabelas_bd)
-            sql.whereIn("tabela_bd", arrayOfTabelas)
-        if (classevento)
-            sql.whereIn("classevento", arrayOfClasses)
-        const result = await app.db.raw(sql.toString())
-        const count = result[0][0] ? parseInt(result[0][0].count) : 0
-
-        const ret = app.db({ se: tabelaSisEvents })
-            .select({ id: 'se.id' }, { evento: 'se.evento' }, { created_at: 'se.created_at' }, { classevento: 'se.classevento' }, { tabela_bd: 'se.tabela_bd' }, { id_registro: 'se.id_registro' }, { user: 'us.name' },)
-            .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
-            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-            .where({ 'sc.schema_description': user.schema_description })
-            .where(function () {
-                this.where('se.evento', 'like', `%${key}%`)
-                    .orWhere('us.name', 'like', `%${key}%`)
-            })
-        if (tabelas_bd)
-            ret.whereIn("tabela_bd", arrayOfTabelas)
-        if (classevento)
-            ret.whereIn("classevento", arrayOfClasses)
-        ret.orderBy("se.created_at", "desc")
-        ret.then(sis_events => res.json({ data: sis_events, count, limit }))
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
             })
     }
+
+    // const limit = 20 // usado para paginação
+    // const get = async (req, res) => {
+    //     let user = req.user
+    //     const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+    //     try {
+    //         // Alçada do usuário
+    //         isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+    //     } catch (error) {
+    //         app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+    //         return res.status(401).send(error)
+    //     }
+
+    //     const page = req.query.page || 1
+    //     const key = req.query.key ? req.query.key : ''
+    //     let tabelas_bd = req.query.tabelas_bd ? req.query.tabelas_bd : ''
+    //     let arrayOfTabelas = tabelas_bd.split(",")
+    //     let classevento = req.query.classevento ? req.query.classevento : ''
+    //     let arrayOfClasses = classevento.split(",")
+
+    //     const sql = app.db({ se: tabelaSisEvents }).select(app.db.raw('count(*) as count'))
+    //         .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
+    //         .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+    //         .where({ 'sc.schema_description': user.schema_description })
+    //         .where(function () {
+    //             this.where('se.evento', 'like', `%${key}%`)
+    //                 .orWhere('us.name', 'like', `%${key}%`)
+    //         })
+    //     if (tabelas_bd)
+    //         sql.whereIn("tabela_bd", arrayOfTabelas)
+    //     if (classevento)
+    //         sql.whereIn("classevento", arrayOfClasses)
+    //     const result = await app.db.raw(sql.toString())
+    //     const count = result[0][0] ? parseInt(result[0][0].count) : 0
+
+    //     const ret = app.db({ se: tabelaSisEvents })
+    //         .select({ id: 'se.id' }, { evento: 'se.evento' }, { created_at: 'se.created_at' }, { classevento: 'se.classevento' }, { tabela_bd: 'se.tabela_bd' }, { id_registro: 'se.id_registro' }, { user: 'us.name' },)
+    //         .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
+    //         .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+    //         .where({ 'sc.schema_description': user.schema_description })
+    //         .where(function () {
+    //             this.where('se.evento', 'like', `%${key}%`)
+    //                 .orWhere('us.name', 'like', `%${key}%`)
+    //         })
+    //     if (tabelas_bd)
+    //         ret.whereIn("tabela_bd", arrayOfTabelas)
+    //     if (classevento)
+    //         ret.whereIn("classevento", arrayOfClasses)
+    //     ret.orderBy("se.created_at", "desc")
+    //     ret.then(sis_events => res.json({ data: sis_events, count, limit }))
+    //         .catch(error => {
+    //             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+    //             return res.status(500).send(error)
+    //         })
+    // }
 
     const getByField = async (req, res) => {
         const field = req.params.field
@@ -250,7 +335,7 @@ module.exports = app => {
             })
     }
 
-    const getById = async (req, res) => {        
+    const getById = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {

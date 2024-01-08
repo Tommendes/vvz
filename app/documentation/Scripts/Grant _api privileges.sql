@@ -9,3 +9,21 @@ Para dar ao usuário _api direito para a criação de schemas...
 5: GRANT DELETE, INSERT, SELECT, UPDATE ON *.* TO 'vivazul_api'@'181.223.214.%' WITH GRANT OPTION;
 6: FLUSH PRIVILEGES;
 7: Reiniciar mysql
+
+Mais opções testadas
+
+DROP USER IF EXISTS 'vivazul_ger3nci1d0r'@'85.31.231.103';
+DROP USER IF EXISTS 'vivazul_dff975'@'85.31.231.103';
+DROP DATABASE IF EXISTS vivazul_dff975;
+-- Acesse o MySQL como usuário com privilégios administrativos (root ou equivalente).
+-- (Você já fez isso antes de executar os comandos abaixo.)
+
+-- Crie um usuário.
+CREATE USER 'vivazul_ger3nci1d0r'@'85.31.231.103' IDENTIFIED BY 's3nh@ 1t1lizad@ pa4a gerenciar';
+CREATE USER 'vivazul_ger3nci1d0r'@'170.82.121.14' IDENTIFIED BY 's3nh@ 1t1lizad@ pa4a gerenciar';
+
+-- Conceda privilégios administrativos.
+-- GRANT CREATE, GRANT OPTION, CREATE USER, RELOAD, SUPER ON *.* TO 'vivazul_ger3nci1d0r'@'85.31.231.103';
+GRANT ALTER, CREATE, CREATE USER, DELETE, INSERT, RELOAD, SELECT, SUPER, TRIGGER, UPDATE ON *.* TO 'vivazul_ger3nci1d0r'@'85.31.231.103' WITH GRANT OPTION;  
+GRANT ALTER, CREATE, CREATE USER, DELETE, INSERT, RELOAD, SELECT, SUPER, TRIGGER, UPDATE ON *.* TO 'vivazul_ger3nci1d0r'@'170.82.121.14' WITH GRANT OPTION;  
+FLUSH PRIVILEGES;
