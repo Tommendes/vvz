@@ -122,36 +122,52 @@ const dropdownSeveridade = ref([
     { value: 3, label: 'Perigo' }
 ]);
 // Validar datas
-const validateDate = (fields) => {
-    let isValid = true;
-
-    fields.forEach((field) => {
-        errorMessages.value[field] = null;
-
-        // Verifica se o campo não está vazio
-        if (itemData.value[field] && itemData.value[field].length > 0) {
-            // Testa o formato da data
-            if (!masks.value.date.completed(itemData.value[field])) {
-                errorMessages.value[field] = 'Formato de data inválido';
-                isValid = false;
-            } else {
-                // Verifica se a data é válida
-                const momentDate = moment(itemData.value[field], 'DD/MM/YYYY', true);
-                if (!momentDate.isValid()) {
-                    errorMessages.value[field] = 'Data inválida';
-                    isValid = false;
-                }
+const validateDateFrom = () => {
+    errorMessages.value.valid_from = null;
+    // Verifica se o campo está preenchido
+    if (itemData.value.valid_from && itemData.value.valid_from.length > 0) {
+        // Testa o formato da data
+        if (!masks.value.date.completed(itemData.value.valid_from)) {
+            errorMessages.value.valid_from = 'Formato de data inválido';
+        } else {
+            // Verifica se a data é válida
+            const momentDate = moment(itemData.value.valid_from, 'DD/MM/YYYY', true);
+            if (!momentDate.isValid()) {
+                errorMessages.value.valid_from = 'Data inválida';
             }
         }
-    });
+    } else {
+        // Se o campo estiver vazio, a data será inválida
+        errorMessages.value.valid_from = 'Campo obrigatório';
+    }
 
     // Atualiza o estado do botão "Salvar"
-    accept.value = isValid;
-    return isValid;
+    accept.value = !errorMessages.value.valid_from;
+
+    return !errorMessages.value.valid_from;
+};
+const validateDateTo = () => {
+    errorMessages.value.valid_to = null;
+    // Verifica se o campo está preenchido
+    if (itemData.value.valid_to && itemData.value.valid_to.length > 0) {
+        // Testa o formato da data
+        if (!masks.value.date.completed(itemData.value.valid_to)) {
+            errorMessages.value.valid_to = 'Formato de data inválido';
+        } else {
+            // Verifica se a data é válida
+            const momentDate = moment(itemData.value.valid_to, 'DD/MM/YYYY', true);
+            if (!momentDate.isValid()) {
+                errorMessages.value.valid_to = 'Data inválida';
+            }
+        }
+    }
+    // Atualiza o estado do botão "Salvar"
+    accept.value = !errorMessages.value.valid_to;
+    return !errorMessages.value.valid_to;
 };
 // Validar formulário
 const formIsValid = () => {
-    return validateDate(['valid_from', 'valid_to']);
+    return validateDateFrom() && validateDateTo();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -217,7 +233,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-2">
                             <label for="valid_from">Válido de</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_from" id="valid_from" type="text" @input="validateDate()" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_from" id="valid_from" type="text" @input="validateDateFrom()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.valid_from">{{errorMessages.valid_from }}</small>
                         </div>
                         <div class="col-12 md:col-2">
@@ -231,7 +247,7 @@ watchEffect(() => {
                                 v-model="itemData.valid_to"
                                 id="valid_to"
                                 type="text"
-                                @input="validateDate()"
+                                @input="validateDateTo()"
                             />
                             <small id="text-error" class="p-error" v-if="errorMessages.valid_to">{{errorMessages.valid_to }}</small>
                         </div>
