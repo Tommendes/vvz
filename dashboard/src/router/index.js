@@ -139,6 +139,16 @@ const routes = [
                 component: () => import('@/views/empresa/EmpresaForm.vue')
             },
             {
+                path: '/:client/usuarios',
+                name: 'usuarios',
+                component: () => import('@/views/usuario/UsuariosGrid.vue')
+            },
+            {
+                path: '/:client/usuario/:id',
+                name: 'usuario',
+                component: () => import('@/views/usuario/UsuarioForm.vue')
+            },
+            {
                 path: '/:client/pipeline-params',
                 name: 'pipeline-params',
                 component: () => import('@/views/pipelineParams/ParamsGrid.vue')
