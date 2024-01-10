@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, watchEffect } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -51,12 +51,13 @@ const getItem = (data) => {
 };
 const loadData = () => {
     setTimeout(() => {
+        gridData.value = null;
         loading.value = true;
         axios.get(`${urlBase.value}`).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
             gridData.value.forEach((element) => {
                 if (element.cpf && element.cpf.trim().length >= 8) element.cpf = masks.value.cpf_cnpj.masked(element.cpf);
-            });            
+            });
             loading.value = false;
         });
     }, Math.random() * 1000 + 250);

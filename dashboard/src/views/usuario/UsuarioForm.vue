@@ -165,26 +165,26 @@ watchEffect(() => {
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-6">
                             <label for="name">Nome</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.name" id="name" type="text" />
                         </div>
 
-                        <div class="field col-12 md:col-2">
+                        <div class="field col-12 md:col-6">
                             <label for="cpf">CPF/CNPJ</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
                         </div>
 
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-6">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="tecnico" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                         </div>
-                        <div class="col-12 md:col-4">
+                        <div class="col-12 md:col-6">
                             <label for="telefone">Telefone</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" />
