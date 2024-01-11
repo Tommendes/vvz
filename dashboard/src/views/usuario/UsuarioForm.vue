@@ -170,14 +170,12 @@ watchEffect(() => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.name" id="name" type="text" />
                         </div>
-
-                        <div class="field col-12 md:col-6">
+                        <div class="col-12 md:col-6">
                             <label for="cpf">CPF/CNPJ</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
                         </div>
-
                         <div class="col-12 md:col-6">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
