@@ -177,8 +177,28 @@ const reload = () => {
     loadData();
     emit('cancel');
 };
+// Obter parâmetros do BD
+const optionLocalParams = async (query) => {
+    const selects = query.select ? `&slct=${query.select}` : undefined;
+    const url = `${baseApiUrl}/users/f-a/glf?fld=${query.field}&vl=${query.value}${selects}`;
+    return await axios.get(url);
+};
+// Carregar opções do formulário
+const dropdownUsers = ref([]);
+const loadOptions = async () => {
+    // Forma de pagamento da proposta
+    await optionLocalParams({ field: 'status', value: '10', select: 'id,name' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownUsers.value.push({ value: item.id, label: item.name });
+        });
+    });
+};
 // Carregar dados do formulário
 onBeforeMount(() => {});
+onBeforeMount(async () => {
+    await loadOptions();
+    loadData();
+});
 onMounted(() => {
     loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -223,7 +243,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-5">
                             <label for="id_user">Usuário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_user" id="id_user" type="text" />
+                            <Dropdown v-else id="id_user" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_user" :options="dropdownUsers" placeholder="Selecione..."> </Dropdown>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="status_user">Status do Usuário</label>

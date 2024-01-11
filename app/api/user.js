@@ -14,7 +14,7 @@ const incorrectKeyPassMsgs = require('../config/ia-models/incorrectKeyPassMsgs.j
 const noUserFoundMessages = require('../config/ia-models/noUserFoundMessages.js')
 
 module.exports = app => {
-    const { existsOrError, notExistsOrError, equalsOrError, isValidEmail, isEmailOrError, isCelPhoneOrError, cpfOrError, isValue, isBooleanOrError, booleanOrError } = app.api.validation
+    const { existsOrError, notExistsOrError, equalsOrError, isValidEmail, isEmailOrError, noAccessMsg, isCelPhoneOrError, cpfOrError, isValue, isBooleanOrError, booleanOrError } = app.api.validation
     const { titleCase, encryptPassword, comparePassword } = app.api.facilities
     const { transporter } = app.api.mailer
     const tabela = `users`
