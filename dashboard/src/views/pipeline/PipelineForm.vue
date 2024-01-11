@@ -32,6 +32,10 @@ import moment from 'moment';
 const animationDocNr = ref('animation-color animation-fill-forwards ');
 // Campos de formulário
 const itemData = ref({});
+// Listagem de arquivos na pasta do registro
+const listFolder = ref([]);
+// O registro tem pasta?
+const hasFolder = ref(false);
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -91,7 +95,7 @@ const loadData = async () => {
                         name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
                     };
                     // Retorna os parâmetros do registro
-                    await getPipelineParam();
+                    getPipelineParam();
                     await getNomeCliente();
                     // Lista o andamento do registro
                     await listStatusRegistro();
@@ -113,7 +117,7 @@ const loadData = async () => {
             };
             await getNomeCliente();
         }
-    }, Math.floor(Math.random() * 2000) + 1000);
+    }, Math.random() * 1000 + 250);
     loading.value = false;
 };
 // Salvar dados do formulário
@@ -367,6 +371,20 @@ const getPipelineParam = async () => {
         const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
         await axios.get(url).then((res) => {
             if (res.data && res.data.id) itemDataParam.value = res.data;
+            if (itemDataParam.value.gera_pasta == 1)
+                setTimeout(async () => {
+                    const id = props.idPipeline || route.params.id;
+                    const url = `${baseApiUrl}/pipeline/f-a/lfd`;
+                    await axios.post(url, { id_pipeline: id }).then((res) => {
+                        const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
+                        listFolder.value = res.data;
+                        // remover de listFolder os itensToNotList
+                        listFolder.value = listFolder.value.filter((item) => {
+                            return !itensToNotList.includes(item.name);
+                        });
+                        hasFolder.value = listFolder.value.length > 0;
+                    });
+                }, Math.random() * 100);
         });
     }
 };
@@ -456,10 +474,10 @@ const itemsComiss = [
     }
 ];
 const toPai = async () => {
-    window.location.href = `/${userData.schema_description}/pipeline/${itemData.value.id_pai}`;
+    window.location.href = `#/${userData.schema_description}/pipeline/${itemData.value.id_pai}`;
 };
 const toFilho = async () => {
-    window.location.href = `/${userData.schema_description}/pipeline/${itemData.value.id_filho}`;
+    window.location.href = `#/${userData.schema_description}/pipeline/${itemData.value.id_filho}`;
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
@@ -481,22 +499,6 @@ const toProposal = async () => {
         newPropostaInterna.observacoes_finais = com_pr04.data.data[0].parametro;
         newPropostaInterna.assinatura = com_pr09.data.data[0].parametro;
         showPrompt(newPropostaInterna);
-        // newPropostaInterna.pessoa_contato = newPropostaInterna.telefone_contato;
-        // newPropostaInterna.email_contato =
-        //     // console.log(newPropostaInterna);
-        //     // Salvar o objeto no endpoint de propostas internas na rota [baseApiUrl]/com-propostas utilizando o método POST e retornar o ID da proposta interna criada
-        //     // A seguir, direcione o usuário à proposta recém criada utilizando a rota `/${userData.schema_description}/pipeline/${[ID DA PROPOSTA INTERNA CRIADA]}`]}`;
-        //     await axios
-        //         .post(`${baseApiUrl}/com-propostas`, newPropostaInterna)
-        //         .then((res) => {
-        //             const urlTo = `#/${userData.schema_description}/proposta/${res.data.id}`;
-        //             console.log(urlTo);
-        //             window.location.href = urlTo;
-        //         })
-        //         .catch((err) => {
-        //             console.log(err.response.data);
-        //             defaultError(err.response.data);
-        //         });
     }
 };
 // Obter parâmetros do BD
@@ -634,7 +636,7 @@ onMounted(async () => {
         await listUnidadesDescricao();
         // Agentes de negócio
         await listAgentesNegocio();
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
@@ -1011,9 +1013,20 @@ watch(route, (value) => {
                                 raised
                                 @click="statusRecord(andamentoRegistroPipeline.STATUS_EXCLUIDO)"
                             />
+                            <Button
+                                v-if="itemDataParam.gera_pasta == 1 && !hasFolder"
+                                label="Criar Pasta"
+                                type="button"
+                                class="w-full mt-3 mb-3"
+                                icon="fa-solid fa-folder fa-shake"
+                                severity="success"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_LIQUIDADO)"
+                            />
                         </div>
                     </Fieldset>
-                    <Fieldset :toggleable="true">
+                    <Fieldset :toggleable="true" class="mb-3">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="pi pi-clock mr-2"></span>
@@ -1034,6 +1047,17 @@ watch(route, (value) => {
                                 {{ slotProps.item.status }}
                             </template>
                         </Timeline>
+                    </Fieldset>
+                    <Fieldset :toggleable="true" v-if="listFolder.length">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="pi pi-clock mr-2"></span>
+                                <span class="font-bold text-lg">Conteúdo da Pasta</span>
+                            </div>
+                        </template>
+                        <ul class="list-decimal">
+                            <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
+                        </ul>
                     </Fieldset>
                 </div>
             </div>

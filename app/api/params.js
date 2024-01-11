@@ -123,7 +123,7 @@ module.exports = app => {
         const value = req.query.vl
         const select = req.query.slct
 
-        const first = req.query.first && req.params.first == true
+        const first = req.query.first && req.query.first == true
         const ret = app.db(tabela)
 
         if (select) {

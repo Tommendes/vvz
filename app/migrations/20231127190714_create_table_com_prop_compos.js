@@ -14,6 +14,7 @@ exports.up = function (knex) {
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
 
         table.integer('id_com_propostas').unsigned().references('id').inTable('com_propostas').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela com_propostas')
+        table.boolean('comp_ativa').defaultTo(1).notNull().comment('Composição ativa (Não:0; Sim:1)')
         table.boolean('compoe_valor').defaultTo(1).notNull().comment('Compõe valor (Não:0; Sim:1)')
         table.integer('ordem').unsigned().notNull().comment('Ordem em que as composições foram criados. Utilizado para o caso de reordenar a coluna item')
         table.integer('compos_nr').unsigned().notNull().comment('Número da composição')

@@ -40,8 +40,7 @@ const loadData = async () => {
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    console.log(itemData.value);
-                    itemData.value.status = isTrue(itemData.value.status);
+                    itemData.value.comp_ativa = isTrue(itemData.value.comp_ativa);
                     itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     loading.value = false;
@@ -55,7 +54,7 @@ const loadData = async () => {
     } else {
         itemData.value = {
             id_com_propostas: route.params.id,
-            status: true,
+            comp_ativa: true,
             compoe_valor: true
         };
         mode.value = 'new';
@@ -74,7 +73,7 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    itemData.value.status = isTrue(itemData.value.status);
+                    itemData.value.comp_ativa = isTrue(itemData.value.comp_ativa);
                     itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                     mode.value = 'view';
                     emit('changed');
@@ -89,7 +88,7 @@ const saveData = async () => {
 };
 
 // Verifica se o valor é 1
-const isTrue = (value) => [1, 10].includes(value);
+const isTrue = (value) => [1].includes(value);
 
 // Validar formulário
 const formIsValid = () => {
@@ -116,20 +115,20 @@ onMounted(() => {
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-8">
                             <div class="flex justify-content-start gap-5">
-                                <div class="switch-label" v-if="itemData.compos_nr">Número da composição: {{ itemData.compos_nr }}</div>
-                                <div class="switch-label">Composição ativa <InputSwitch id="status" :disabled="mode == 'view'" v-model="itemData.status" /></div>
+                                <div class="switch-label" v-if="String(itemData.compos_nr)">Número da composição: {{ itemData.compos_nr }}</div>
+                                <div class="switch-label">Composição ativa <InputSwitch id="comp_ativa" :disabled="mode == 'view'" v-model="itemData.comp_ativa" /></div>
                                 <div class="switch-label">Compõe valor <InputSwitch id="compoe_valor" :disabled="mode == 'view'" v-model="itemData.compoe_valor" /></div>
                             </div>
                         </div>
-                        <div class="col-12 md:col-6">
-                            <label for="localizacao">Descrição um</label>
+                        <div class="col-12 md:col-5">
+                            <label for="localizacao">Descrição curta(60 caracteres)</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.localizacao" id="localizacao" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.localizacao" id="localizacao" type="text" maxlength="60" />
                         </div>
-                        <div class="col-12 md:col-6">
-                            <label for="tombamento">Descrição dois</label>
+                        <div class="col-12 md:col-7">
+                            <label for="tombamento">Descrição longa(90 caracteres)</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tombamento" id="tombamento" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tombamento" id="tombamento" type="text" maxlength="90" />
                         </div>
                     </div>
                 </div>
@@ -142,6 +141,7 @@ onMounted(() => {
                     </div>
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>mode: {{ mode }}</p>
                     <p>itemData: {{ itemData }}</p>
                 </div>
             </div>

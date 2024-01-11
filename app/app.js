@@ -15,7 +15,6 @@ app.use(cors())
 app.db = db
 app.assets = assets
 
-
 Object.defineProperty(global, '__stack', {
     get: function () {
         var orig = Error.prepareStackTrace;

@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref } from 'vue';
+import { onBeforeMount, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -10,6 +10,7 @@ const userData = JSON.parse(json);
 import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
 const router = useRouter();
+import { formatValor } from '@/global';
 
 import moment from 'moment';
 
@@ -22,8 +23,7 @@ const mode = ref('view');
 const loading = ref(false);
 // Props do template
 const props = defineProps({
-    mode: String,
-    idItens: String
+    idItem: String
 });
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
@@ -31,19 +31,20 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/com-prop-itens/${route.params.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
-    if (props.idItens) {
+    if (props.idItem) {
         loading.value = true;
         setTimeout(async () => {
-            const url = `${urlBase.value}/${props.idItens}`;
+            const url = `${urlBase.value}/${props.idItem}`;
             await axios.get(url).then(async (res) => {
                 const body = res.data;
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    console.log(itemData.value);
-                    itemData.value.status = isTrue(itemData.value.status);
+                    convertFloatFields();
+                    itemData.value.item_ativo = isTrue(itemData.value.item_ativo);
                     itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
+                    await getNomeProduto();
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
@@ -55,6 +56,7 @@ const loadData = async () => {
     } else {
         itemData.value = {
             id_com_propostas: route.params.id,
+            item_ativo: true,
             compoe_valor: true
         };
         mode.value = 'new';
@@ -68,13 +70,16 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
+        // Importante para o backend
+        convertFloatFields('en');
         axios[method](url, itemData.value)
             .then((res) => {
                 const body = res.data;
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    itemData.value.status = isTrue(itemData.value.status);
+                    convertFloatFields();
+                    itemData.value.item_ativo = isTrue(itemData.value.item_ativo);
                     itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                     mode.value = 'view';
                     emit('changed');
@@ -89,12 +94,38 @@ const saveData = async () => {
 };
 
 // Verifica se o valor é 1
-const isTrue = (value) => [1, 10].includes(value);
+const isTrue = (value) => [1].includes(value);
 //DropDown
 const dropdownDescAtivo = ref([
     { value: 0, label: 'Não' },
     { value: 1, label: 'Sim' }
 ]);
+const dropdownComposicoes = ref([]);
+
+// Composições da proposta
+const getComposicoes = async () => {
+    setTimeout(async () => {
+        loading.value = true;
+        const url = `${baseApiUrl}/com-prop-compos/f-a/glf?fld=id_com_propostas&vl=${route.params.id}&slct=id,comp_ativa,localizacao,tombamento&order=comp_ativa,localizacao,tombamento`;
+        await axios
+            .post(url)
+            .then((res) => {
+                const itensAtivos = [];
+                const itensInativos = [];
+                res.data.data.map((item) => {
+                    if (item.comp_ativa == 1) itensAtivos.push({ value: item.id, label: `${item.localizacao}${item.tombamento ? ' - ' + item.tombamento : ''}` });
+                    else itensInativos.push({ value: item.id, label: `${item.localizacao}${item.tombamento ? ' - ' + item.tombamento : ''}` });
+                });
+                if (itensAtivos.length > 0) dropdownComposicoes.value.push({ label: 'Ativas ', comp_ativa: 1, items: itensAtivos });
+                if (itensInativos.length > 0) dropdownComposicoes.value.push({ label: 'Inativas ', comp_ativa: 0, items: itensInativos });
+            })
+            .catch((err) => {
+                console.log(err);
+                defaultWarn(err.response.data);
+            });
+        loading.value = false;
+    }, Math.random() * 1000 + 250);
+};
 // Validar formulário
 const formIsValid = () => {
     return true;
@@ -103,12 +134,92 @@ const formIsValid = () => {
 const reload = () => {
     emit('cancel');
 };
+
+/**
+ * Autocomplete de produto
+ */
+// Editar cadastro no autocomplete
+const editProduto = ref(false);
+const produto = ref([]);
+const filteredProdutos = ref([]);
+const selectedProduto = ref();
+const nomeProduto = ref();
+const getNomeProduto = async () => {
+    if (itemData.value.id_com_produtos) {
+        try {
+            const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=id&vl=${itemData.value.id_com_produtos}&slct=id,nome_comum,descricao`;
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                // remover tags html de descricao
+                nomeProduto.value = response.data.data[0].nome_comum;
+            }
+        } catch (error) {
+            console.error('Erro ao buscar produto:', error);
+        }
+    }
+};
+const searchProdutos = (event) => {
+    setTimeout(async () => {
+        // Verifique se o campo de pesquisa não está vazio
+        if (!event.query.trim().length) {
+            // Se estiver vazio, exiba todas as sugestões
+            filteredProdutos.value = [...produto.value];
+        } else {
+            // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
+            if (produto.value.length === 0) {
+                // Carregue os produto da API (ou de onde quer que você os obtenha)
+                getProdutoBySearchedId();
+            }
+            // Filtrar os produto com base na consulta do usuário
+            filteredProdutos.value = produto.value.filter((cadastro) => {
+                return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
+            });
+        }
+    }, 250);
+};
+const getProdutoBySearchedId = async (idProduto) => {
+    const qry = idProduto ? `fld=id&vl=${idProduto}` : 'fld=1&vl=1';
+    try {
+        const url = `${baseApiUrl}/com-produtos/f-a/glf?${qry}&slct=id,nome_comum,descricao`;
+        const response = await axios.get(url);
+        produto.value = response.data.data.map((element) => {
+            return {
+                code: element.id,
+                name:
+                    element.nome_comum +
+                    ' - ' +
+                    element.descricao
+                        .replace(/(<([^>]+)>)/gi, '')
+                        .replace('&nbsp;', ' ')
+                        .trim()
+            };
+        });
+    } catch (error) {
+        console.error('Erro ao buscar produto:', error);
+    }
+};
+const confirmEditProduto = () => {
+    selectedProduto.value = nomeProduto.value;
+    editProduto.value = true;
+};
+/**
+ * Fim de autocomplete de produto
+ */
+const convertFloatFields = (result = 'pt') => {
+    itemData.value.valor_unitario = formatValor(itemData.value.valor_unitario, result);
+    itemData.value.desconto_total = formatValor(itemData.value.desconto_total, result);
+};
+
+// Observar alterações na propriedade selectedProduto
+watch(selectedProduto, (value) => {
+    if (value) {
+        itemData.value.id_com_produtos = value.code;
+    }
+});
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
-});
-onMounted(() => {
-    if (props.mode && props.mode != mode.value) mode.value = props.mode;
+    getComposicoes();
 });
 </script>
 
@@ -120,45 +231,78 @@ onMounted(() => {
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-8">
                             <div class="flex justify-content-start gap-5">
-                                <div class="switch-label" v-if="itemData.compos_nr">Número do item: {{ itemData.item }}</div>
-                                <div class="switch-label">Composição ativa <InputSwitch id="status" :disabled="mode == 'view'" v-model="itemData.status" /></div>
+                                <div class="switch-label" v-if="itemData.item">Número do item: {{ itemData.item }}</div>
+                                <div class="switch-label">Item ativo <InputSwitch id="item_ativo" :disabled="mode == 'view'" v-model="itemData.item_ativo" /></div>
                                 <div class="switch-label">Compõe valor <InputSwitch id="compoe_valor" :disabled="mode == 'view'" v-model="itemData.compoe_valor" /></div>
                             </div>
                         </div>
-                        <!-- <div class="col-12 md:col-6">
-                            <label for="id_com_propostas">Proposta</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_com_propostas" id="id_com_propostas" type="text" />
-                        </div> -->
-                        <!-- <div class="col-12 md:col-6">
+                        <div class="col-12">
                             <label for="id_com_prop_compos">Composição</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.id_com_prop_compos" id="id_com_prop_compos" type="text" />
-                        </div> -->
-                        <div class="col-12 md:col-6">
-                            <label for="item">Item</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.item" id="item" type="text" />
+                            <Dropdown
+                                v-else
+                                v-model="itemData.id_com_prop_compos"
+                                :options="dropdownComposicoes"
+                                id="id_com_prop_compos"
+                                showClear
+                                filter
+                                :disabled="mode == 'view'"
+                                placeholder="Selecione a composição"
+                                optionLabel="label"
+                                optionValue="value"
+                                optionGroupLabel="label"
+                                optionGroupChildren="items"
+                                :loading="loading"
+                            >
+                                <template #optiongroup="slotProps">
+                                    <div class="flex align-items-center">
+                                        <i v-if="slotProps.option.comp_ativa == 10" class="fa-solid fa-toggle-on"> </i>
+                                        <i v-else class="fa-solid fa-toggle-off"> </i>
+                                        <div>{{ slotProps.option.label }}</div>
+                                    </div>
+                                </template>
+                            </Dropdown>
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-10">
+                            <label for="id_com_produtos">Produto</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <AutoComplete v-else-if="editProduto || mode == 'new'" v-model="selectedProduto" optionLabel="name" :suggestions="filteredProdutos" @complete="searchProdutos" forceSelection />
+                            <div class="p-inputgroup flex-1" v-else>
+                                <InputText disabled v-model="nomeProduto" />
+                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditProduto()" :disabled="mode == 'view'" />
+                            </div>
+                            <p>{{ selectedProduto }}</p>
+                        </div>
+                        <div class="col-12 md:col-2">
                             <label for="quantidade">Quantidade</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade" id="quantidade" type="text" />
+                            <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade" id="quantidade" type="text" /> -->
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon" @click="['new', 'edit'].includes(mode) ? itemData.quantidade++ : true">+</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade" id="quantidade" type="number" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                <span class="p-inputgroup-addon" @click="['new', 'edit'].includes(mode) && itemData.quantidade > 0 ? itemData.quantidade-- : true">-</span>
+                            </div>
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-4">
                             <label for="valor_unitario">Valor Unitário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_unitario" id="valor_unitario" type="text" />
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_unitario" id="valor_unitario" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                            </div>
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-4">
+                            <label for="desconto_total">Desconto Item</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-4">
                             <label for="desconto_ativo">Desconto Ativo</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescAtivo" />
-                        </div>
-                        <div class="col-12 md:col-6">
-                            <label for="desconto_total">Desconto Total</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text" />
+                            <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" placeholder="Selecione ..." optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescAtivo" />
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="descricao">Descrição</label>
@@ -177,6 +321,7 @@ onMounted(() => {
                     </div>
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>mode: {{ mode }}</p>
                     <p>itemData: {{ itemData }}</p>
                 </div>
             </div>
@@ -192,4 +337,3 @@ onMounted(() => {
     color: var(--surface-900);
 }
 </style>
-

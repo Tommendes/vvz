@@ -5,6 +5,7 @@ module.exports = app => {
     const tabela = 'com_prop_compos'
     const tabelaAlias = 'Composição de item'
     const STATUS_INACTIVE = 0
+    const STATUS_COMP_ACTIVE = 1
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -25,13 +26,20 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         body.id_com_propostas = body.id_com_propostas || req.params.id_com_propostas
+        body.comp_ativa = body.comp_ativa == true ? 1 : 0
         body.compoe_valor = body.compoe_valor == true ? 1 : 0
-        
+
         if (body.status == 0) delete body.compos_nr
         delete body.hash; delete body.tblName; delete body.old_id;
 
         // Se status == true, então status = 10. Se não, status = 0
         body.status = body.status == true ? STATUS_ACTIVE : STATUS_INACTIVE
+
+        try {
+            existsOrError(String(body.localizacao), 'Descrição curta não informada')
+        } catch (error) {
+            return res.status(400).send(error)
+        }
 
         if (body.id) {
             try {
@@ -256,7 +264,7 @@ module.exports = app => {
         const value = req.query.vl
         const select = req.query.slct
 
-        const first = req.query.first && req.params.first == true
+        const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db(tabelaDomain)
 
@@ -295,8 +303,10 @@ module.exports = app => {
         const fieldName = req.query.fld
         const value = req.query.vl
         const select = req.query.slct
+        const order = req.query.order
+        const comp_ativa = req.query.comp_ativa
 
-        const first = req.query.first && req.params.first == true
+        const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db(tabelaDomain)
 
@@ -307,11 +317,16 @@ module.exports = app => {
         }
 
         ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
-            .where({ status: STATUS_ACTIVE })
-
-        if (first) {
-            ret.first()
+        if (comp_ativa) ret.where({ comp_ativa: comp_ativa })
+        
+        if (order) {
+            // separar os campos e retirar os espaços
+            const orderArr = order.split(',').map(s => s.trim())
+            ret.orderBy(orderArr)
         }
+
+        if (first) ret.first()
+
         ret.then(body => {
             const count = body.length
             return res.json({ data: body, count })
@@ -343,9 +358,9 @@ module.exports = app => {
         // executar um laço forEach para atualizar o campo compos_nr começando do 1
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         // Primeiro seta todas as composições inativas como compos_nr = 0 (zero) para depois reordenar
-        await app.db(tabelaDomain).update({ compos_nr: 0 }).where({ id_com_propostas: body.id_com_propostas, status: STATUS_INACTIVE })
+        await app.db(tabelaDomain).update({ compos_nr: 0 }).where({ id_com_propostas: body.id_com_propostas, comp_ativa: STATUS_INACTIVE })
         // Localiza todas as composições ativas
-        const compos = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, status: STATUS_ACTIVE }).orderBy('ordem', 'asc').orderBy('created_at', 'asc')
+        const compos = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, comp_ativa: STATUS_COMP_ACTIVE }).orderBy('ordem', 'asc').orderBy('created_at', 'asc')
         // Inicia o contador de composições ativas
         let compos_nr = 1
         // Reordena as composições ativas
@@ -357,5 +372,5 @@ module.exports = app => {
         else return res.status(200).send('Reordenação de composições realizada com sucesso')
     }
 
-    return { save, get, getById, remove, getByFunction }
+    return { save, get, getById, remove, getByFunction, STATUS_COMP_ACTIVE }
 }

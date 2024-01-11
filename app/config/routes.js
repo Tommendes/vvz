@@ -195,6 +195,7 @@ module.exports = app => {
     app.route('/pipeline-params/f-a/:func')
         .all(app.config.passport.authenticate())
         .get(app.api.pipeline_params.getByFunction)
+        .post(app.api.pipeline_params.getByFunction)
     app.route('/pipeline-params/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.pipeline_params.save)
@@ -216,6 +217,7 @@ module.exports = app => {
     app.route('/pipeline/f-a/:func')
         .all(app.config.passport.authenticate())
         .get(app.api.pipeline.getByFunction)
+        .post(app.api.pipeline.getByFunction)
 
     /**
      * Rota de pipeline_status

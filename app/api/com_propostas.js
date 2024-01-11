@@ -339,7 +339,7 @@ module.exports = app => {
         const value = req.query.vl
         const select = req.query.slct
 
-        const first = req.query.first && req.params.first == true
+        const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db(tabelaDomain)
 
@@ -380,7 +380,7 @@ module.exports = app => {
         const value = req.query.vl
         const select = req.query.slct
 
-        const first = req.query.first && req.params.first == true
+        const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db(tabelaDomain)
 

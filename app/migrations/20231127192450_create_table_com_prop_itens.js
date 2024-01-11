@@ -18,6 +18,7 @@ exports.up = function (knex) {
         table.integer('id_com_produtos').notNull().unsigned().references('id').inTable('com_produtos').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela com_produtos')
         table.integer('ordem').unsigned().notNull().comment('Ordem em que o item foi criado. Utilizado para o caso de reordenar a coluna item')
         table.integer('item').unsigned().notNull().comment('Item')
+        table.boolean('item_ativo').defaultTo(1).notNull().comment('Item ativo (Não:0; Sim:1)')
         table.boolean('compoe_valor').defaultTo(1).notNull().comment('Compõe valor (Não:0; Sim:1)')
         table.string('descricao').notNull().comment('Descrição')
         table.double('quantidade', 11,2).notNull().defaultTo(0.00).comment('Quantidade')

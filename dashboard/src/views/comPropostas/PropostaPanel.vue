@@ -111,8 +111,8 @@ const getNomeCliente = async () => {
     }
 };
 
-onBeforeMount(() => {
-    loadData();
+onBeforeMount(async () => {
+    await loadData();
 });
 </script>
 
@@ -122,7 +122,7 @@ onBeforeMount(() => {
         <div class="col-12">
             <div class="card">
                 <h3 v-if="itemDataPipelineParams && itemDataPipelineParams.descricao && itemDataPipeline && itemDataPipeline.documento">{{ itemDataPipelineParams.descricao.replaceAll('_', ' ') }} {{ itemDataPipeline.documento }}</h3>
-                <TabView>
+                <TabView lazy>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-regular fa-address-card mr-2"></i>

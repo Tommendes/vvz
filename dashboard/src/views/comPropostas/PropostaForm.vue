@@ -120,24 +120,26 @@ const dropdownPrazo = ref([]);
 const dropdownFormaPagto = ref([]);
 const dropdownValidade = ref([]);
 const loadOptions = async () => {
+    setTimeout(async () => {
     // Prazo de entrega da proposta
-    await optionLocalParams({ field: 'grupo', value: 'com_pr05', select: 'id,parametro' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownPrazo.value.push({ value: item.id, label: item.parametro });
+        await optionLocalParams({ field: 'grupo', value: 'com_pr05', select: 'id,parametro' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownPrazo.value.push({ value: item.id, label: item.parametro });
+            });
         });
-    });
-    // Forma de pagamento da proposta
-    await optionLocalParams({ field: 'grupo', value: 'com_pr06', select: 'id,parametro' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownFormaPagto.value.push({ value: item.id, label: item.parametro });
+        // Forma de pagamento da proposta
+        await optionLocalParams({ field: 'grupo', value: 'com_pr06', select: 'id,parametro' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownFormaPagto.value.push({ value: item.id, label: item.parametro });
+            });
         });
-    });
-    // Validade da proposta
-    await optionLocalParams({ field: 'grupo', value: 'com_pr07', select: 'id,parametro' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownValidade.value.push({ value: item.id, label: item.parametro });
+        // Validade da proposta
+        await optionLocalParams({ field: 'grupo', value: 'com_pr07', select: 'id,parametro' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownValidade.value.push({ value: item.id, label: item.parametro });
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 
 // http://localhost:55596/local-params/f-a/gbf?fld=grupo&vl=com_pr05&slct=id,parametro,label

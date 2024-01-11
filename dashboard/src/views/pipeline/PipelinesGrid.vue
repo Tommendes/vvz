@@ -84,12 +84,14 @@ const filtrarUnidadesDescricao = async () => {
 };
 
 // Itens do grid
+const limitDescription = 250;
+const limitNome = 25;
 // { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
     { field: 'documento', label: 'Documento', maxWidth: '3rem' },
-    { field: 'descricao', label: 'Descrição', maxWidth: '6rem' },
+    { field: 'descricao', label: 'Descrição', maxWidth: '6rem', maxlength: limitDescription },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
@@ -144,8 +146,6 @@ const loadLazyData = () => {
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
                     if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' '); //dropdownStatusParams.value.find((item) => item.value == element.tipo_doc).label;
-                    const limitDescription = 50;
-                    const limitNome = 25;
                     const description = element.descricao || undefined;
                     const nome = element.nome || undefined;
                     if (nome) {
@@ -429,7 +429,7 @@ onMounted(() => {
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else v-html="data[nome.field]"></span>
+                        <span v-else v-html="data[nome.maxlength] ? String(data[nome.field]).trim().substring(0, data[nome.maxlength]) : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>

@@ -242,7 +242,7 @@ watchEffect(() => {
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                         <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="data[nome.field]"></span>
+                        <span v-else v-html="data[nome.maxlength] ? String(data[nome.field]).trim().substring(0, data[nome.maxlength]) : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>

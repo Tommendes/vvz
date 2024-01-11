@@ -226,7 +226,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
-        const first = req.query.first && req.params.first == true
+        const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaDocs}`
         const ret = app.db(tabelaDomain)
             .select('tp_documento').groupBy('tp_documento').orderBy('tp_documento')

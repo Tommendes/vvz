@@ -193,6 +193,13 @@ fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cida
 (SELECT id FROM vivazul_bceaa5.cadastros c WHERE c.old_id = e.id_cadas_resplegal)id_cadas_resplegal,NULL 
 FROM vivazul_lynkos.empresa e WHERE e.dominio = 'casaoficio' 
   );
+
+/*Adiciona o ftp_param 1 de CasaOficio*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_bceaa5.pipeline_ftp;
+ALTER TABLE vivazul_bceaa5.pipeline_ftp AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_bceaa5.pipeline_ftp (evento, created_at, updated_at, STATUS, descricao, HOST, USER, pass) VALUES ('1', NOW(), NULL, '10', 'gnt', 'gnt.casaoficio.com.br', 'lynkos', 'a5a54dcd93'); 
   
 /*Importa os documentos(ged_params x pipeline_params)*/
 ALTER TABLE vivazul_bceaa5.pipeline_params ADD COLUMN old_id INT(10) UNSIGNED;
@@ -202,9 +209,9 @@ DELETE FROM vivazul_bceaa5.pipeline_params;
 ALTER TABLE vivazul_bceaa5.pipeline_params AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_bceaa5.pipeline_params (
-  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_uploads_logo,id_uploads_rodape,gera_pasta,proposta_interna,old_id
+  evento,created_at,updated_at,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,id_uploads_logo,id_uploads_rodape,gera_pasta,id_ftp,proposta_interna,old_id
 )(
-	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,NULL,NULL,gera_pasta,proposta_interna,id 
+	SELECT 1,NOW(),NULL,STATUS,descricao,bi_index,doc_venda,autom_nr,gera_baixa,tipo_secundario,obrig_valor,reg_agente,NULL,NULL,gera_pasta,1,proposta_interna,id 
 	FROM vivazul_lynkos.ged_params
 	WHERE dominio = 'casaoficio'
 	ORDER BY descricao
@@ -446,10 +453,10 @@ ALTER TABLE vivazul_bceaa5.com_prop_compos AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1;
 INSERT INTO vivazul_bceaa5.com_prop_compos (
   id,evento,created_at,updated_at,STATUS,
-  id_com_propostas,compoe_valor,ordem,compos_nr,localizacao,tombamento,old_id
+  id_com_propostas,comp_ativa,compoe_valor,ordem,compos_nr,localizacao,tombamento,old_id
 )(
 	SELECT 0,1,NOW(),NULL,10,
-	cp.id id_com_proposta,compoe_valor,ordem,compos_nr,localizacao,tombamento,co.id
+	cp.id id_com_proposta,compoe_valor,compoe_valor,ordem,compos_nr,localizacao,tombamento,co.id
 	FROM vivazul_lynkos.com_proposta_compos co
 	JOIN vivazul_bceaa5.com_propostas cp ON cp.old_id = co.id_com_proposta
 	WHERE co.dominio = 'casaoficio' AND co.status = 10
@@ -464,11 +471,11 @@ SET FOREIGN_KEY_CHECKS=1;
 INSERT INTO vivazul_bceaa5.com_prop_itens (
   id,evento,created_at,updated_at,STATUS,
   id_com_propostas,id_com_prop_compos,id_com_produtos,
-  ordem,item,compoe_valor,descricao,quantidade,valor_unitario,desconto_ativo,desconto_total,old_id
+  ordem,item,item_ativo,compoe_valor,descricao,quantidade,valor_unitario,desconto_ativo,desconto_total,old_id
 )(
 	SELECT 0,1,NOW(),NULL,10,
 	cp.id id_com_propostas,comps.id id_com_prop_compos,prods.id id_com_produtos,
-	it.ordem,it.item_nr,it.compoe_valor,it.descricao,it.quantidade,it.valor_unitario,it.desconto_ativo,it.desconto_total,it.id
+	it.ordem,it.item_nr,it.compoe_valor,it.compoe_valor,it.descricao,it.quantidade,it.valor_unitario,it.desconto_ativo,it.desconto_total,it.id
 	FROM vivazul_lynkos.com_proposta_item it
 	JOIN vivazul_bceaa5.com_propostas cp ON cp.old_id = it.id_com_proposta
 	LEFT JOIN vivazul_bceaa5.com_prop_compos comps ON comps.old_id = it.id_compos

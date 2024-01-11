@@ -1,14 +1,17 @@
 const { dbPrefix } = require("../.env")
 const moment = require('moment')
+const ftp = require('basic-ftp');
+const path = require('path')
+
 module.exports = app => {
     const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_REATIVADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
-    const { existsOrError, integerOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
+    const { existsOrError, booleanOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pipeline'
     const tabelaAlias = 'Pipeline'
     const tabelaStatus = 'pipeline_status'
     const tabelaParams = 'pipeline_params'
+    const tabelaFtp = 'pipeline_ftp'
     const tabelaCadastros = 'cadastros'
-    const tabelaUsers = 'users'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -500,6 +503,12 @@ module.exports = app => {
             case 'gso':
                 getSalesOverview(req, res)
                 break;
+            case 'mfd':
+                mkFolder(req, res)
+                break;
+            case 'lfd':
+                lstFolder(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
@@ -522,7 +531,7 @@ module.exports = app => {
         const select = req.query.slct
         const doc_venda = req.query.doc_venda
 
-        const first = req.query.first && req.params.first == true
+        const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const ret = app.db({ tbl1: tabelaDomain })
@@ -879,6 +888,131 @@ module.exports = app => {
         }
     }
 
+    // Cria pasta no servidor ftp
+    const mkFolder = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de pastas de documentos"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const client = new ftp.Client();
+        let body = { ...req.body }
+
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
+
+        const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
+        const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
+        const ftpParam = await app.db({ ftp: tabelaFtpDomain })
+            .select('host', 'port', 'user', 'pass', 'ssl')
+            .where({ id: pipelineParam.id_ftp }).first()
+        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento)
+        body.ftp = ftpParam
+        body.ftp.path = pathDoc
+
+        body.ssl = body.ssl == 1 ? true : false
+
+        try {
+            existsOrError(body.ftp, 'Dados de FTP não informados')
+            body = body.ftp
+            existsOrError(body.host, 'Host não informado')
+            existsOrError(body.port, 'Porta não informada')
+            existsOrError(body.user, 'Usuário não informado')
+            existsOrError(body.pass, 'Senha não informada')
+            booleanOrError(body.ssl, 'SSL não informado')
+            existsOrError(body.path, 'Caminho não informado')
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+
+        try {
+            await client.access({
+                host: body.host,
+                port: body.port,
+                user: body.user,
+                password: body.pass,
+                secure: body.ssl == 1 ? true : false
+            });
+
+            await client.ensureDir(body.path);
+            return res.send(`Pasta criada com sucesso no caminho: ${body.path}`);
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        } finally {
+            client.close();
+        }
+    }
+
+    // Lista arquivos da pasta no servidor ftp
+    const lstFolder = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de pastas de documentos"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const client = new ftp.Client();
+        let body = { ...req.body }
+
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
+
+        const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
+        const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
+        const ftpParam = await app.db({ ftp: tabelaFtpDomain })
+            .select('host', 'port', 'user', 'pass', 'ssl')
+            .where({ id: pipelineParam.id_ftp }).first()
+        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento)
+        body.ftp = ftpParam
+        body.ftp.path = pathDoc
+
+        body.ssl = body.ssl == 1 ? true : false
+
+        try {
+            existsOrError(body.ftp, 'Dados de FTP não informados')
+            body = body.ftp
+            existsOrError(body.host, 'Host não informado')
+            existsOrError(body.port, 'Porta não informada')
+            existsOrError(body.user, 'Usuário não informado')
+            existsOrError(body.pass, 'Senha não informada')
+            booleanOrError(body.ssl, 'SSL não informado')
+            existsOrError(body.path, 'Caminho não informado')
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+
+        try {
+            await client.access({
+                host: body.host,
+                port: body.port,
+                user: body.user,
+                password: body.pass,
+                secure: body.ssl == 1 ? true : false
+            });
+
+            const list = await client.list('/' + body.path);
+
+            return res.send(list);
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        } finally {
+            client.close();
+        }
+    }
+
     const formatDataForChart = async (result) => {
         const datasets = [];
         const distinctRepresentacoes = [...new Set(result.map((item) => item.representacao))];
@@ -907,12 +1041,12 @@ module.exports = app => {
 
     function generateColors() {
         let color = '';
-          let red = Math.floor((Math.random() * 256));
-          let green = Math.floor((Math.random() * 256));
-          let blue = Math.floor((Math.random() * 256));
-          color = `rgb(${red},${green},${blue})`;
+        let red = Math.floor((Math.random() * 256));
+        let green = Math.floor((Math.random() * 256));
+        let blue = Math.floor((Math.random() * 256));
+        color = `rgb(${red},${green},${blue})`;
         return color;
-      }
+    }
 
     return { save, get, getById, remove, getByFunction }
 }
