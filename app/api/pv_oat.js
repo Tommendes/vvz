@@ -67,11 +67,12 @@ module.exports = app => {
                     trx: trx
                 };
                 const { createEventUpd } = app.api.sisEvents
-                await createEventUpd(eventPayload);
+                const evento = await createEventUpd(eventPayload);
                 await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
                 if (status_pv_oat_force && status_pv_oat && status_pv_oat_force != status_pv_oat) {
                     // Inserir na tabela de status apenas se o status for diferente
                     await trx(tabelaPvOatStatusDomain).insert({
+                        evento: evento,
                         status: STATUS_ACTIVE,
                         status_pv_oat: status_pv_oat_force,
                         created_at: new Date(),
@@ -117,10 +118,11 @@ module.exports = app => {
                     trx: trx
                 };
                 const { createEventIns } = app.api.sisEvents
-                await createEventIns(eventPayload);
+                const evento = await createEventIns(eventPayload);
 
                 // Inserir na tabela de status um registro de criação
                 await trx(tabelaPvOatStatusDomain).insert({
+                    evento: evento,
                     status: STATUS_ACTIVE,
                     created_at: new Date(),
                     id_pv: recordId,
@@ -128,6 +130,7 @@ module.exports = app => {
                 });
                 // Inserir na tabela de status um registro de criação
                 await trx(tabelaPvOatStatusDomain).insert({
+                    evento: evento,
                     status: STATUS_ACTIVE,
                     created_at: new Date(),
                     id_pv: recordId,
@@ -241,6 +244,7 @@ module.exports = app => {
                 const evento = await createEventUpd(eventPayload);
                 updateRecord = { ...updateRecord, evento: evento }
                 await trx(tabelaPvOatStatusDomain).insert({
+                    evento: evento,
                     status: STATUS_ACTIVE,
                     status_pv_oat: registro.status,
                     created_at: new Date(),
