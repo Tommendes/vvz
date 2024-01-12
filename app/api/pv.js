@@ -73,6 +73,7 @@ module.exports = app => {
                 if (status_pv_force && status_pv && status_pv_force != status_pv) {
                     // Inserir na tabela de status apenas se o status for diferente
                     await trx(tabelaPvStatusDomain).insert({
+                        evento: eventPayload,
                         status: STATUS_ACTIVE,
                         status_pv: status_pv_force,
                         created_at: new Date(),
