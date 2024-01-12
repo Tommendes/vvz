@@ -1,6 +1,6 @@
 module.exports = {
     appName: 'Vivazul',
-    emailRobot: 'naoresponda@vivazul.com.br',
+    emailRobot: 'contato@vivazul.com.br',
     emailAdmin: 'contato@vivazul.com.br',
     daysBeforeLeave: 30
 }

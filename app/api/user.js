@@ -715,7 +715,7 @@ module.exports = app => {
     const mailyPasswordReset = async (req, res) => {
         try {
             const user = await app.db(tabela)
-                .where({ email: req.email }).first()
+            .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
             const urlTo = `${baseFrontendUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
             const bodyEmail = {
@@ -767,7 +767,9 @@ module.exports = app => {
                 <p>Caso seja necessário, por favor, solicite ao seu administrador para liberar acesso aos dados.</p>
                 <p>Atenciosamente,</p>
                 <p><b>Time ${appName}</b></p>`,
-            }).then(() => app.api.logger.logInfo({ log: { line: `Email mailyUnlocked enviado com sucesso para ${user.email}`, sConsole: true } }))
+            })
+            .then(() => app.api.logger.logInfo({ log: { line: `Email mailyUnlocked enviado com sucesso para ${user.email}`, sConsole: true } }))
+            .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
