@@ -52,7 +52,7 @@ module.exports = app => {
 
             app.db.transaction(async (trx) => {
                 // Iniciar a transação e editar na tabela principal
-                const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+                const nextEventID = await app.db(`${dbPrefix}_api.sis_events`, trx).select(app.db.raw('count(*) as count')).first()
                 updateRecord = { ...updateRecord, evento: nextEventID.count + 1 }
                 // Registrar o evento na tabela de eventos
                 const eventPayload = {
@@ -102,7 +102,7 @@ module.exports = app => {
                 };
 
                 // Iniciar a transação e inserir na tabela principal
-                const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+                const nextEventID = await app.db(`${dbPrefix}_api.sis_events`, trx).select(app.db.raw('count(*) as count')).first()
                 const [recordId] = await trx(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
 
                 // Registrar o evento na tabela de eventos

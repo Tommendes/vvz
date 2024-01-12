@@ -60,7 +60,7 @@ module.exports = app => {
                 })
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro

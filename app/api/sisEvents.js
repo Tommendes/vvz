@@ -5,7 +5,7 @@ module.exports = app => {
     const STATUS_ACTIVE = 10
     const STATUS_TRASH = 20
     const { envLocalhost, dbPrefix } = require("../.env")
-    const tabelaSisEvents = 'sis_events'
+    const tabelaSisEvents = `${dbPrefix}_api.sis_events`
     const tabelaAlias = 'Eventos do Sistema'
 
     const createEventUpd = async (req, res) => {

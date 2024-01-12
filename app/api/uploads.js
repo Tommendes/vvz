@@ -79,7 +79,7 @@ module.exports = app => {
                 })
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -126,7 +126,7 @@ module.exports = app => {
             };
 
             // Iniciar a transação e inserir na tabela principal
-            const nextEventID = await app.db('sis_events', trx).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`, trx).select(app.db.raw('count(*) as count')).first()
             const [recordId] = await trx(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
 
             // Registrar o evento na tabela de eventos
@@ -402,7 +402,7 @@ module.exports = app => {
     const registerFileInDb = async (req) => {
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
         let body = req.body
-        const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+        const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
         const { createEventIns } = app.api.sisEvents
         createEventIns({
             "notTo": ['created_at', 'evento'],

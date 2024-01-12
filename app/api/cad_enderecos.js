@@ -86,7 +86,7 @@ module.exports = app => {
                 return res.status(400).send(error)
             }
             // Criação de um novo registro
-            const nextEventID = await app.db('sis_events').select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
 
             body.id_cadastros = req.params.id_cadastros
             body.evento = nextEventID.count + 1
