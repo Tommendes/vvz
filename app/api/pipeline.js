@@ -85,12 +85,13 @@ module.exports = app => {
                     trx: trx
                 };
                 const { createEventUpd } = app.api.sisEvents
-                await createEventUpd(eventPayload)
+                const evento = await createEventUpd(eventPayload)
                 updateRecord.updated_at = new Date();
                 await trx(tabelaDomain).update(updateRecord).where({ id: body.id });
                 if (status_params_force != status_params) {
                     // Inserir na tabela de status apenas se o status for diferente
                     await trx(tabelaPipelineStatusDomain).insert({
+                        evento: evento,
                         status: STATUS_ACTIVE,
                         status_params: status_params_force,
                         created_at: new Date(),
@@ -139,10 +140,11 @@ module.exports = app => {
                         trx: trx
                     };
                     const { createEventIns } = app.api.sisEvents
-                    await createEventIns(eventPayload);
+                    const evento = await createEventIns(eventPayload);
 
                     // Inserir na tabela de status um registro de criação
                     await trx(tabelaPipelineStatusDomain).insert({
+                        evento: evento,
                         status: STATUS_ACTIVE,
                         created_at: new Date(),
                         id_pipeline: recordId,
@@ -150,6 +152,7 @@ module.exports = app => {
                     });
                     // Inserir na tabela de status um registro de pedido                    
                     await trx(tabelaPipelineStatusDomain).insert({
+                        evento: evento,
                         status: STATUS_ACTIVE,
                         created_at: new Date(),
                         id_pipeline: recordId,
@@ -199,10 +202,11 @@ module.exports = app => {
                     trx: trx
                 };
                 const { createEventIns } = app.api.sisEvents
-                await createEventIns(eventPayload);
+                const evento = await createEventIns(eventPayload);
 
                 // Inserir na tabela de status um registro de criação
                 await trx(tabelaPipelineStatusDomain).insert({
+                    evento: evento,
                     status: STATUS_ACTIVE,
                     created_at: new Date(),
                     id_pipeline: recordId,
@@ -448,6 +452,7 @@ module.exports = app => {
                 const evento = await createEventUpd(eventPayload);
                 updateRecord = { ...updateRecord, evento: evento }
                 await trx(tabelaPipelineStatusDomain).insert({
+                    evento: evento,
                     status: STATUS_ACTIVE,
                     status_params: registro.status,
                     created_at: new Date(),
@@ -456,6 +461,7 @@ module.exports = app => {
                 // Se o registro tiver um filho, e a mudança for para cancelado, reativado ou convertido(no caso do registro filho), também muda o status do filho
                 if (last.id_filho && [STATUS_CANCELADO, STATUS_REATIVADO, /*STATUS_CONVERTIDO*/].includes(Number(registro.status))) {
                     await trx(tabelaPipelineStatusDomain).insert({
+                        evento: evento,
                         status: STATUS_ACTIVE,
                         status_params: registro.status,
                         created_at: new Date(),
