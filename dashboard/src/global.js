@@ -94,6 +94,7 @@ export function validarDataPTBR(data) {
 }
 
 export function formatCurrency(value) {
+    value = value || 0;
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 // Verifique o horario e informe: Bom dia, boa tarde ou boa noite
