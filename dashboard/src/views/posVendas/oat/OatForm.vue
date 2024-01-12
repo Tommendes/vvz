@@ -120,7 +120,7 @@ const saveData = async () => {
     // Se body.valor_total então antes de salvar formate o valor com duas casas decimais em inglês
     if (itemData.value.valor_total) itemData.value.valor_total = Number(itemData.value.valor_total.replace(',', '.')).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     axios[method](url, itemData.value)
-        .then((res) => {
+        .then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
@@ -128,6 +128,7 @@ const saveData = async () => {
                 if (itemData.value.valor_total) itemData.value.valor_total = Number(itemData.value.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 mode.value = 'view';
                 emit('changed');
+                await listStatusRegistro();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -238,7 +239,8 @@ const itemDataStatusPreload = ref([
 ]);
 // Listar status do registro
 const listStatusRegistro = async () => {
-    const url = `${baseApiUrl}/pv-oat-status/${dialogRef.value.data.idPvOat}`;
+    const url = `${baseApiUrl}/pv-oat-status/${itemData.value.id}`;
+    console.log(url);
     await axios.get(url).then((res) => {
         if (res.data && res.data.data.length > 0) {
             itemDataLastStatus.value = res.data.data[res.data.data.length - 1];

@@ -50,14 +50,14 @@ const model = ref([
             { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.schema_description}/pipeline-params` },
             { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${userData.schema_description}/eventos` }
         ]
-    },
-    {
-        label: 'Suporte',
-        items: [
-            { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${userData.schema_description}/suporte/articles` },
-            { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.schema_description}/messages` },
-            { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${userData.schema_description}/suporte/reviews` }
-        ]
+    // },
+    // {
+    //     label: 'Suporte',
+    //     items: [
+    //         { label: 'Artigos', icon: 'pi pi-fw pi-bookmark', to: `/${userData.schema_description}/suporte/articles` },
+    //         { label: 'Mensagens', icon: 'pi pi-fw pi-envelope', to: `/${userData.schema_description}/messages` },
+    //         { label: 'Reviews', icon: 'pi pi-fw pi-sync', to: `/${userData.schema_description}/suporte/reviews` }
+    //     ]
     }
 ]);
 onMounted(() => {

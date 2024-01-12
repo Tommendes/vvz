@@ -253,7 +253,7 @@ onBeforeMount(() => {
                 :severity="`${newMessages > 0 ? 'info' : ''}`"
                 rounded
                 size="large"
-                :badge="newMessages"
+                :badge="String(newMessages) || '0'"
                 aria-haspopup="true"
                 @click="toggleMenuMessages"
             />

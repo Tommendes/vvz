@@ -19,12 +19,8 @@ const userData = JSON.parse(json);
 
 // Campos de formulário
 const itemData = ref({});
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
@@ -54,7 +50,6 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
             } else {
@@ -76,7 +71,6 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };
                     if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/retencao/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
@@ -88,15 +82,6 @@ const saveData = async () => {
             });
     }
 };
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        // errorMessages.value = {};
-    }
-    return ret;
-};
 // Validar formulário
 const formIsValid = () => {
     return true;
@@ -104,7 +89,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
     errorMessages.value = {};
     loadData();
     emit('cancel');
@@ -122,9 +106,7 @@ onMounted(() => {
     }
 });
 // Observar alterações nos dados do formulário
-watchEffect(() => {
-    isItemDataChanged();
-});
+watchEffect(() => {});
 const menu = ref();
 const preview = ref(false);
 const items = ref([
@@ -171,7 +153,7 @@ const items = ref([
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>

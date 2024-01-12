@@ -22,12 +22,10 @@ const masks = ref({
 
 // Campos de formulário
 const itemData = inject('itemData');
-const itemDataPipeline = inject('itemDataPipeline');
-const itemDataPipelineParams = inject('itemDataPipelineParams');
+// const itemDataPipeline = inject('itemDataPipeline');
+// const itemDataPipelineParams = inject('itemDataPipelineParams');
 // Modo do formulário
 const mode = inject('mode');
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
@@ -41,7 +39,6 @@ const loadData = async () => {
     loading.value = true;
     if (itemData && itemData.id) {
         if (itemData.telefone_contato) itemData.telefone_contato = masks.value.telefone.masked(itemData.telefone_contato);
-        itemDataComparision.value = { ...itemData };
     }
     loading.value = false;
 };
@@ -56,7 +53,6 @@ const saveData = async () => {
                 const body = res.data;
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
-                    itemDataComparision.value = { ...itemData };
                     emit('changed');
                 } else {
                     defaultWarn('Erro ao salvar registro');
@@ -72,11 +68,6 @@ const saveData = async () => {
                 }
             });
     }
-};
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData) !== JSON.stringify(itemDataComparision.value);
-    return ret;
 };
 // DropDown Desconto Ativo
 const dropdownDescontoAtivo = ref([
@@ -151,7 +142,6 @@ onBeforeMount(async () => {
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {
-    isItemDataChanged();
 });
 </script>
 
@@ -209,7 +199,7 @@ watchEffect(() => {
                         <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescontoAtivo" />
                     </div>
                     <div class="col-12 md:col-12">
-                        <label for="saudacao_inicial">Sudação Inicial</label>
+                        <label for="saudacao_inicial">Saudação Inicial</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.saudacao_inicial" id="saudacao_inicial" editorStyle="height: 160px" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.saudacao_inicial" class="p-inputtext p-component p-filled disabled"></p>
@@ -243,7 +233,7 @@ watchEffect(() => {
             <div class="col-12">
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                 </div>
             </div>
@@ -251,8 +241,6 @@ watchEffect(() => {
                 <h5>FormData</h5>
                 <p>mode: {{ mode }}</p>
                 <p>itemData: {{ itemData }}</p>
-                <p>itemDataPipeline: {{ itemDataPipeline }}</p>
-                <p>itemDataPipelineParams: {{ itemDataPipelineParams }}</p>
             </div>
         </div>
     </form>

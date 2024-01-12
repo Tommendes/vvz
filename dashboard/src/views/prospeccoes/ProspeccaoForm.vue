@@ -37,12 +37,8 @@ const confirm = useConfirm();
 
 // Campos de formulário
 const itemData = ref({});
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
@@ -63,7 +59,7 @@ const loadData = async () => {
     loading.value = true;
     const id = props.idRegs || route.params.id;
     const url = `${urlBase.value}/${id}`;
-    if (mode.value != 'new') {
+    if (mode.value != 'new' && id) {
         setTimeout(async () => {
             await axios.get(url).then(async (res) => {
                 const body = res.data;
@@ -112,7 +108,6 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };
                     emit('changed');
                     if (route.name != 'cadastro' && mode.value == 'new') {
                         router.push({
@@ -219,15 +214,6 @@ const confirmEditAutoSuggest = (tipo) => {
 /**
  * Fim de autocomplete de cadastros
  */
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        // errorMessages.value = {};
-    }
-    return ret;
-};
 const dropdownPeriodo = ref([
     { value: 0, label: 'Manhã' },
     { value: 1, label: 'Tarde' }
@@ -273,8 +259,6 @@ const validateDataVisita = () => {
             errorMessages.value.data_visita = 'Data inválida';
         }
     }
-    // Atualiza o estado do botão "Salvar"
-    accept.value = !errorMessages.value.data_visita;
 
     return !errorMessages.value.data_visita;
 };
@@ -285,7 +269,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
     errorMessages.value = {};
     loadData();
     emit('cancel');
@@ -320,9 +303,7 @@ onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
 // Observar alterações nos dados do formulário
-watchEffect(() => {
-    isItemDataChanged();
-});
+watchEffect(() => {});
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
     if (value) {
@@ -425,7 +406,7 @@ watch(selectedCadastro, (value) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>

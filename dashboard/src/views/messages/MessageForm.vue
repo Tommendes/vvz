@@ -26,12 +26,8 @@ const userData = JSON.parse(json);
 
 // Campos de formulário
 const itemData = ref({});
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
@@ -81,7 +77,6 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };
                     if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/message/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
@@ -92,15 +87,6 @@ const saveData = async () => {
                 defaultWarn(err.response.data);
             });
     }
-};
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        // errorMessages.value = {};
-    }
-    return ret;
 };
 // DropDowns
 const dropdownStatusUser = ref([
@@ -141,9 +127,6 @@ const validateDateFrom = () => {
         errorMessages.value.valid_from = 'Campo obrigatório';
     }
 
-    // Atualiza o estado do botão "Salvar"
-    accept.value = !errorMessages.value.valid_from;
-
     return !errorMessages.value.valid_from;
 };
 const validateDateTo = () => {
@@ -161,8 +144,6 @@ const validateDateTo = () => {
             }
         }
     }
-    // Atualiza o estado do botão "Salvar"
-    accept.value = !errorMessages.value.valid_to;
     return !errorMessages.value.valid_to;
 };
 // Validar formulário
@@ -172,7 +153,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
     errorMessages.value = {};
     loadData();
     emit('cancel');

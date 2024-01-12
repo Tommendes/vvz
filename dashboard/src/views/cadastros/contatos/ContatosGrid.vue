@@ -86,9 +86,9 @@ const deleteRow = () => {
         rejectIcon: 'pi pi-times',
         acceptClass: 'p-button-danger',
         accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
+            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(async () => {
                 defaultSuccess('Registro excluído com sucesso!');
-                loadData();
+                await loadData();
             });
         },
         reject: () => {

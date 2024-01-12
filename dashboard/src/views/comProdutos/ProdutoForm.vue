@@ -34,8 +34,6 @@ const masks = ref({
 // Campos de formulário
 const itemData = ref({});
 const gridDataProdTabelas = ref([]);
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
 const modeTabelas = ref('view');
@@ -71,7 +69,6 @@ const loadData = async () => {
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };
                     selectedCadastro.value = {
                         code: itemData.value.id_fornecedor,
                         name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
@@ -134,11 +131,6 @@ const saveData = async () => {
                 }
             });
     }
-};
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    return ret;
 };
 // Validar formulário
 const formIsValid = () => {
@@ -448,7 +440,6 @@ onMounted(() => {
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {
-    isItemDataChanged();
     // Se o label de DropdownProduto for selecionado == 0, DropdownUnidades deve ser mapeado com find e recebe o valor do label 'Mão de Obra'
     if (itemData.value.produto == 0) {
         itemData.value.id_params_unidade = dropdownUnidades.value.find((item) => item.label == 'Mão de Obra').value;
@@ -535,7 +526,7 @@ watch(selectedCadastro, (value) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>

@@ -91,7 +91,7 @@ module.exports = app => {
         } else {
             // Criação de um novo registro
             app.db.transaction(async (trx) => {
-                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr AS INT)) + 1 AS pv_nr'))
+                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(nr_oat AS INT)) + 1 AS nr_oat'))
                     .where({ status: STATUS_ACTIVE }).first()
                 body.pv_nr = nextDocumentNr.pv_nr || '1'
                 body.pv_nr = body.pv_nr.toString().padStart(6, '0')

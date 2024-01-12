@@ -173,8 +173,8 @@ onBeforeMount(() => {
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" />
                     </div>
                     <div class="field col-12 md:col-12">
-                        <label for="obs">Observação</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.obs" id="obs" type="text" />
+                        <label for="observacao">Observação</label>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">

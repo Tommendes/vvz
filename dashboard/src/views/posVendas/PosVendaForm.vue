@@ -116,7 +116,7 @@ const saveData = async () => {
             .then(async (res) => {
                 const body = res.data;
                 defaultSuccess('Registro salvo com sucesso');
-                if (mode.value == 'new') window.location.href = `/${userData.schema_description}/pos-venda/${body.id}`;
+                if (mode.value == 'new') window.location.href = `#/${userData.schema_description}/pos-venda/${body.id}`;
                 else reload();
             })
             .catch((error) => {
@@ -202,18 +202,19 @@ const confirmEditAutoSuggest = (tipo) => {
  */
 // Listar pipelines do cadastro
 const listPipeline = async () => {
-    try {
-        const url = `${baseApiUrl}/pipeline/f-a/glf?doc_venda=2&fld=tbl1.id_cadastros&vl=${itemData.value.id_cadastros}&slct=tbl1.id,tbl1.documento,pp.descricao,pp.id idPipelineParams`;
-        await axios.get(url).then((res) => {
-            dropdownPipelineByCadastro.value = [];
-            res.data.data.map((item) => {
-                const label = `${item.descricao.toString().replaceAll(/_/g, ' ')} - ${item.documento}${userData.admin >= 1 ? ` (${item.idPipelineParams})` : ''}`;
-                dropdownPipelineByCadastro.value.push({ value: item.id, label: label });
+    if (itemData.value.id_cadastros)
+        try {
+            const url = `${baseApiUrl}/pipeline/f-a/glf?doc_venda=2&fld=tbl1.id_cadastros&vl=${itemData.value.id_cadastros}&slct=tbl1.id,tbl1.documento,pp.descricao,pp.id idPipelineParams`;
+            await axios.get(url).then((res) => {
+                dropdownPipelineByCadastro.value = [];
+                res.data.data.map((item) => {
+                    const label = `${item.descricao.toString().replaceAll(/_/g, ' ')} - ${item.documento}${userData.admin >= 1 ? ` (${item.idPipelineParams})` : ''}`;
+                    dropdownPipelineByCadastro.value.push({ value: item.id, label: label });
+                });
             });
-        });
-    } catch (error) {
-        console.error('Erro ao buscar pipeline:', error);
-    }
+        } catch (error) {
+            console.error('Erro ao buscar pipeline:', error);
+        }
 };
 // Validar formulário
 const formIsValid = () => {
@@ -369,7 +370,7 @@ const dialog = useDialog();
 const showPvOatForm = () => {
     dialog.open(OatForm, {
         data: {
-            idRegs: itemData.value.id,
+            idPv: itemData.value.id,
             idPvOat: undefined,
             idCadastro: itemData.value.id_cadastros,
             lastStatus: itemDataLastStatus.value.status_pv

@@ -40,12 +40,8 @@ const labels = ref({
     aniversario: 'Nascimento',
     rg_ie: 'RG'
 });
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Dropdowns
@@ -84,8 +80,6 @@ const loadData = async () => {
                     if (itemData.value.cpf_cnpj) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj);
                     if (itemData.value.aniversario) itemData.value.aniversario = masks.value.aniversario.masked(moment(itemData.value.aniversario).format('DD/MM/YYYY'));
                     if (itemData.value.telefone) itemData.value.telefone = masks.value.telefone.masked(itemData.value.telefone);
-                    itemDataComparision.value = { ...itemData.value };
-
                     loading.value.form = false;
                 } else {
                     defaultWarn('Registro não localizado');
@@ -112,7 +106,6 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     if (itemData.value.aniversario) itemData.value.aniversario = moment(itemData.value.aniversario).format('DD/MM/YYYY');
-                    itemDataComparision.value = { ...itemData.value };
                     emit('changed');
                     // if (mode.value != 'new') reload();
                     // else router.push({ path: `/${userData.schema_description}/cadastro/${itemData.value.id}` });
@@ -129,15 +122,6 @@ const saveData = async () => {
 };
 // Converte 1 ou 0 para boolean
 const isTrue = (value) => value === 1;
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        errorMessages.value = {};
-    }
-    return ret;
-};
 // Validar CPF
 const validateCPF = () => {
     if (cpf.isValid(itemData.value.cpf_cnpj) || cnpj.isValid(itemData.value.cpf_cnpj)) errorMessages.value.cpf_cnpj = null;
@@ -173,7 +157,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
     errorMessages.value = {};
     loadData();
     emit('cancel');
@@ -229,7 +212,6 @@ onMounted(() => {
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {
-    isItemDataChanged();
     validateCPF();
     if (itemData.value.cpf_cnpj && itemData.value.cpf_cnpj.replace(/([^\d])+/gim, '').length == 14) {
         labels.value.pfpj = 'pj';
@@ -325,7 +307,7 @@ watchEffect(() => {
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                 </div>
             </div>

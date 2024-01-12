@@ -33,12 +33,8 @@ const userData = JSON.parse(json);
 
 // Campos de formulário
 const itemData = ref({});
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
@@ -51,6 +47,10 @@ const props = defineProps({
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/users`);
+
+// Converte 1 ou 0 para boolean
+const isTrue = (value) => value === 1;
+
 // Carragamento de dados do form
 const loadData = async () => {
     setTimeout(async () => {
@@ -65,7 +65,6 @@ const loadData = async () => {
 
                     itemData.value = body;
                     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
-                    itemDataComparision.value = { ...itemData.value };
 
                     loading.value.form = false;
                 } else {
@@ -89,7 +88,6 @@ const saveData = async () => {
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
-                    itemDataComparision.value = { ...itemData.value };
                     if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
                     mode.value = 'view';
                 } else {
@@ -100,15 +98,6 @@ const saveData = async () => {
                 defaultWarn(err.response.data);
             });
     }
-};
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        // errorMessages.value = {};
-    }
-    return ret;
 };
 // Validar CPF
 const validateCPF = () => {
@@ -137,7 +126,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
     errorMessages.value = {};
     loadData();
     emit('cancel');
@@ -153,9 +141,7 @@ onMounted(() => {
     }
 });
 // Observar alterações nos dados do formulário
-watchEffect(() => {
-    isItemDataChanged();
-});
+watchEffect(() => {});
 </script>
 
 <template>
@@ -199,7 +185,7 @@ watchEffect(() => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>

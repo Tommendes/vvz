@@ -142,7 +142,7 @@ watchEffect(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Propostas' }]" />
     <div class="card">
-        <PropostaForm @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <PropostaForm @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 0.9rem"
             :value="gridData"

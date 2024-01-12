@@ -48,12 +48,8 @@ const labels = ref({
     id_cadas_resplegal: 'Responsável legal perante a Receita Federal',
     url_logo: 'Logomarca da Empresa'
 });
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
-// Aceite do formulário
-const accept = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
@@ -83,7 +79,6 @@ const loadData = async () => {
                 if (itemData.value.cep) itemData.value.cep = masks.value.cep.masked(itemData.value.cep);
                 if (itemData.value.tel1) itemData.value.tel1 = masks.value.telefone.masked(itemData.value.tel1);
                 if (itemData.value.tel2) itemData.value.tel2 = masks.value.telefone.masked(itemData.value.tel2);
-                itemDataComparision.value = { ...itemData.value };
 
                 loading.value.form = false;
             } else {
@@ -117,15 +112,6 @@ const saveData = async () => {
                 defaultWarn(err.response.data);
             });
     }
-};
-// Verifica se houve alteração nos dados do formulário
-const isItemDataChanged = () => {
-    const ret = JSON.stringify(itemData.value) !== JSON.stringify(itemDataComparision.value);
-    if (!ret) {
-        accept.value = false;
-        // errorMessages.value = {};
-    }
-    return ret;
 };
 // Validar a existência do nome do cliente
 const validateRazaoSocial = () => {
@@ -187,7 +173,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
-    accept.value = false;
     errorMessages.value = {};
     loadData();
     emit('cancel');
@@ -200,7 +185,6 @@ onMounted(() => {
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {
-    isItemDataChanged();
     validateRazaoSocial();
     validator();
     validateCep();
@@ -412,7 +396,7 @@ const onImageRightClick = (event) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>

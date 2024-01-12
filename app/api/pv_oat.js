@@ -4,6 +4,8 @@ module.exports = app => {
     const tabela = 'pv_oat'
     const tabelaAlias = 'OAT'
     const tabelaStatus = 'pv_oat_status'
+    const STATUS_PENDENTE = 10
+    const STATUS_EM_ANDAMENTO = 60
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -42,7 +44,7 @@ module.exports = app => {
         const status_pv_oat_force = body.status_pv_oat_force; // Status forçado para edição
         const status_pv_oat = body.status_pv_oat; // Último status do registro
         delete body.status_pv_oat; delete body.pipeline_params_force; delete body.status_pv_oat_force; delete body.hash; delete body.tblName;
-        if (body.pv_nr) body.pv_nr = body.pv_nr.toString().padStart(6, '0')
+        if (body.nr_oat) body.nr_oat = body.nr_oat.toString().padStart(6, '0')
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -76,7 +78,7 @@ module.exports = app => {
                         status: STATUS_ACTIVE,
                         status_pv_oat: status_pv_oat_force,
                         created_at: new Date(),
-                        id_pv: body.id,
+                        id_pv_oat: body.id,
                     });
                 }
                 return res.json(updateRecord);
@@ -90,10 +92,10 @@ module.exports = app => {
         } else {
             // Criação de um novo registro
             app.db.transaction(async (trx) => {
-                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr AS INT)) + 1 AS pv_nr'))
+                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(nr_oat AS INT)) + 1 AS nr_oat'))
                     .where({ status: STATUS_ACTIVE }).first()
-                body.pv_nr = nextDocumentNr.pv_nr || '1'
-                body.pv_nr = body.pv_nr.toString().padStart(6, '0')
+                body.nr_oat = nextDocumentNr.nr_oat || '1'
+                body.nr_oat = body.nr_oat.toString().padStart(6, '0')
 
                 // Variáveis da criação de um registro
                 const newRecord = {
@@ -125,7 +127,7 @@ module.exports = app => {
                     evento: evento,
                     status: STATUS_ACTIVE,
                     created_at: new Date(),
-                    id_pv: recordId,
+                    id_pv_oat: recordId,
                     status_pv_oat: STATUS_PENDENTE,
                 });
                 // Inserir na tabela de status um registro de criação
@@ -133,7 +135,7 @@ module.exports = app => {
                     evento: evento,
                     status: STATUS_ACTIVE,
                     created_at: new Date(),
-                    id_pv: recordId,
+                    id_pv_oat: recordId,
                     status_pv_oat: STATUS_EM_ANDAMENTO,
                 });
                 const newRecordWithID = { ...newRecord, id: recordId }

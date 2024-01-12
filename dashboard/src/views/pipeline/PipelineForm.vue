@@ -38,8 +38,6 @@ const listFolder = ref([]);
 const hasFolder = ref(false);
 // O servidor está acessível?
 const hostAccessible = ref(false);
-// Modelo de dados usado para comparação
-const itemDataComparision = ref({});
 // Modo do formulário
 const mode = ref('view');
 // Loadings
@@ -91,7 +89,6 @@ const loadData = async () => {
 
                     itemData.value = body;
                     convertFloatFields();
-                    itemDataComparision.value = { ...itemData.value };
                     selectedCadastro.value = {
                         code: itemData.value.id_cadastros,
                         name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
@@ -142,7 +139,6 @@ const saveData = async () => {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
                     convertFloatFields();
-                    itemDataComparision.value = { ...itemData.value };
                     emit('changed');
                     if (route.name != 'cadastro' && mode.value == 'new') {
                         router.push({
@@ -519,11 +515,6 @@ const toProposal = async () => {
 const optionLongParams = async (query) => {
     const selects = query.select ? `&slct=${query.select}` : undefined;
     const url = `${baseApiUrl}/long-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-    return await axios.get(url);
-};
-const optionLocalParams = async (query) => {
-    const selects = query.select ? `&slct=${query.select}` : undefined;
-    const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
     return await axios.get(url);
 };
 
