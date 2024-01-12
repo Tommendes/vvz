@@ -87,7 +87,7 @@ const getTokenTime = async () => {
             .catch((error) => {
                 const data = error.response.data;
                 if (data.isToken == false || data.isTokenValid == false) defaultError(data.msg);
-                if (data.isToken == false) return router.push({ path: '/' });
+                // if (data.isToken == false) return router.push({ path: '/' });
             });
     } else {
         return defaultError('Token de validação não informado');
