@@ -61,7 +61,7 @@ module.exports = app => {
         // body.nascimento = moment(body.nascimento).format("DD/MM/YYYY")
         const { changeUpperCase, removeAccentsObj } = app.api.facilities
         body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
-        body = (JSON.parse(JSON.stringify(body), changeUpperCase));
+        // body = (JSON.parse(JSON.stringify(body), changeUpperCase));
 
         if (body.id) {
             // Variáveis da edição de um registro

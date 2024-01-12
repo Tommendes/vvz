@@ -92,6 +92,7 @@ const changeToPortuguese = () => {
     primevue.config.locale.dateIsNot = 'Data não é';
     primevue.config.locale.dateBefore = 'Date é anterior';
     primevue.config.locale.dateAfter = 'Data é posterior';
+    primevue.config.locale.dateBeetween = 'Data é entre';
     primevue.config.locale.today = 'Hoje';
     primevue.config.locale.emptyFilterMessage = 'Nenhum resultado encontrado';
     primevue.config.locale.searchMessage = '{0} resultados disponíveis';

@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS vivazul_bceaa5.empresa;
 DROP TABLE IF EXISTS vivazul_bceaa5.fin_cc; 
 DROP TABLE IF EXISTS vivazul_bceaa5.fin_lancamentos; 
 DROP TABLE IF EXISTS vivazul_bceaa5.fin_retencoes; 
+DROP TABLE IF EXISTS vivazul_bceaa5.pipeline_ftp; 
 DROP TABLE IF EXISTS vivazul_bceaa5.pipeline; 
 DROP TABLE IF EXISTS vivazul_bceaa5.pipeline_params; 
 DROP TABLE IF EXISTS vivazul_bceaa5.pipeline_status; 
@@ -37,7 +38,7 @@ SET FOREIGN_KEY_CHECKS=1;
 /* Rodar a API para criação das tabelas */
 
 /*Importar usuários*/
-ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED;
+-- ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_api.users WHERE admin != 2;
 ALTER TABLE vivazul_api.users AUTO_INCREMENT=0;
@@ -235,7 +236,7 @@ INSERT INTO vivazul_bceaa5.pipeline (
   status_comissao,documento,versao,descricao,valor_bruto,valor_liq,valor_representacao,perc_represent,valor_agente,old_id
 )(
 	SELECT 
-	  NULL,1,FROM_UNIXTIME(g.created_at)created_at,FROM_UNIXTIME(g.updated_at)updated_at,g.status,
+	  NULL,1,g.data_registro created_at,NULL,g.status,
 	  pp.id id_pipeline_params,
 	  id_ged_pai,id_ged_filho, /*Executar edição num próximo update*/
 	  c.id id_cadastro,
@@ -289,6 +290,15 @@ UPDATE vivazul_bceaa5.pipeline_status ps
 	JOIN vivazul_bceaa5.pipeline p ON p.id = ps.id_pipeline
 	SET ps.updated_at = p.created_at
 	WHERE ps.updated_at NOT LIKE '20%' LIMIT 9999999;
+/*Garantir que todos os pipeline tenham um pipeline_status*/
+INSERT INTO vivazul_bceaa5.pipeline_status (
+  id,evento,created_at,updated_at,STATUS,id_pipeline,status_params
+)(
+	SELECT NULL,1,p.created_at,NULL updated_at,10,p.id,0
+	FROM vivazul_bceaa5.pipeline AS p  
+	LEFT JOIN vivazul_bceaa5.pipeline_status AS ps ON ps.id_pipeline = p.id
+	WHERE ps.id IS NULL
+);
 
 /*Importar prospecções*/
 ALTER TABLE vivazul_bceaa5.com_prospeccoes ADD COLUMN old_id INT(10) UNSIGNED;
@@ -374,9 +384,6 @@ VALUES(NULL,1,NOW(),NULL,10,'lgl_os_01','Declaro, por meio deste que aceito o(s)
 INSERT INTO vivazul_bceaa5.long_params (id,evento,created_at,updated_at,STATUS,grupo,parametro,label) 
 SELECT NULL,1,NOW(),NULL,10,grupo,parametro,label FROM vivazul_lynkos.params WHERE dominio = 'casaoficio' AND grupo IN('com_pr01','com_pr02','com_pr03','com_pr04','com_pr09') ORDER BY grupo;
 
-INSERT INTO vivazul_bceaa5.local_params (
-  id,evento,created_at,updated_at,STATUS,grupo,parametro,label
-)(SELECT  0,1,NOW(),NULL,10,'tipo_endereco',tipo,tipo FROM vivazul_lynkos.cadastros_enderecos ce WHERE tipo IS NOT NULL GROUP BY tipo ORDER BY tipo);
 /*Importar com_produtos*/
 ALTER TABLE vivazul_bceaa5.com_produtos ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
@@ -414,7 +421,6 @@ ALTER TABLE vivazul_bceaa5.com_propostas ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_bceaa5.com_propostas;
 ALTER TABLE vivazul_bceaa5.com_propostas AUTO_INCREMENT=0;
-SET FOREIGN_KEY_CHECKS=1;
 INSERT INTO vivazul_bceaa5.com_propostas (
   id,evento,created_at,updated_at,STATUS,id_pipeline,id_pv,
   pessoa_contato,telefone_contato,email_contato,
@@ -437,13 +443,11 @@ ALTER TABLE `vivazul_bceaa5`.`com_propostas`
   CHANGE `prz_entrega` `prz_entrega` INT(10) UNSIGNED NOT NULL   COMMENT 'Prazo de entrega',
   CHANGE `forma_pagto` `forma_pagto` INT(10) UNSIGNED NOT NULL   COMMENT 'Forma de pagamento',
   CHANGE `validade_prop` `validade_prop` INT(10) UNSIGNED NOT NULL   COMMENT 'Validade da proposta';
-SET FOREIGN_KEY_CHECKS=0; 
 ALTER TABLE `vivazul_bceaa5`.`com_propostas`  
   ADD CONSTRAINT `vivazul_bceaa5_com_propostas_prz_entrega_foreign` FOREIGN KEY (`prz_entrega`) REFERENCES `vivazul_bceaa5`.`local_params`(`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
   ADD CONSTRAINT `vivazul_bceaa5_com_propostas_forma_pagto_foreign` FOREIGN KEY (`forma_pagto`) REFERENCES `vivazul_bceaa5`.`local_params`(`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
   ADD CONSTRAINT `vivazul_bceaa5_com_propostas_validade_prop_foreign` FOREIGN KEY (`validade_prop`) REFERENCES `vivazul_bceaa5`.`local_params`(`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
 SET FOREIGN_KEY_CHECKS=1; 
-
 
 /*Importar com_prop_compos*/
 ALTER TABLE vivazul_bceaa5.com_prop_compos ADD COLUMN old_id INT(10) UNSIGNED;
@@ -497,3 +501,11 @@ JOIN vivazul_api.users u ON c.nome REGEXP REPLACE(LOWER(u.NAME), ' ', '.+')
 WHERE u.STATUS = 10 AND u.agente_v = 1 AND u.name LIKE CONCAT(SUBSTRING_INDEX(c.nome, ' ', 1), '%')
 GROUP BY u.name
 ORDER BY u.name, c.id);
+
+/*Mensagens de boas vindas a todos os novos usuários*/
+INSERT INTO vivazul_api.sis_messages (STATUS,evento,created_at,updated_at,id_user,status_user,valid_from,valid_to,title,msg,title_future,msg_future,body_variant,severity)
+(SELECT 10,1,NOW(),NULL,id,10,'2024-01-01','2024-12-31','Boas vindas',
+CONCAT('<h2>Olá ',NAME,'! Seja Muito Bem-Vindo ao Vivazul!</h2>
+<p>Serei o novo parceiro de sua representação comercial. Estou aqui para tornar sua jornada de negócios simples e otimizada.</p>
+<p>Explore à vontade nossa plataforma e descubra como podemos impulsionar o sucesso da sua empresa. Se surgirem dúvidas, nossa equipe está sempre pronta para oferecer a ajuda necessária.</p>') NAME,
+NULL,NULL,'info',0 FROM `vivazul_api`.`users` WHERE `status` = 10);

@@ -84,20 +84,20 @@ const filtrarUnidadesDescricao = async () => {
 };
 
 // Itens do grid
-const limitDescription = 250;
+const limitDescription = 150;
 const limitNome = 25;
 // { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'documento', label: 'Documento', maxWidth: '3rem' },
-    { field: 'descricao', label: 'Descrição', maxWidth: '6rem', maxlength: limitDescription },
+    { field: 'documento', label: 'Documento' },
+    { field: 'descricao', label: 'Descrição', maxLength: limitDescription },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
         label: 'Data',
         type: 'date',
-        maxWidth: '4rem',
+        minWidth: '8rem',
         tagged: true
     }
 ]);
@@ -145,22 +145,18 @@ const loadLazyData = () => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
-                    if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' '); //dropdownStatusParams.value.find((item) => item.value == element.tipo_doc).label;
-                    const description = element.descricao || undefined;
+                    if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                     const nome = element.nome || undefined;
                     if (nome) {
                         element.nome = nome.trim().substr(0, limitNome);
                         if (nome.length > limitNome) element.nome += ' ...';
                     }
-                    if (description) {
-                        element.descricao = description.replaceAll('Este documento foi convertido para pedido. Segue a descrição original do documento:', '').trim().substr(0, limitDescription);
-                        if (description.length > limitDescription) element.descricao += ' ...';
-                    }
+                    element.descricao = element.descricao
+                        .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
+                        .replaceAll('Este documento foi liquidado quando foi versionado.', '')
+                        .replaceAll('Segue a descrição original do documento:', '')
+                        .trim();
                     if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
-                    // .toLocaleString('pt-BR', {
-                    //         style: 'currency',
-                    //         currency: 'BRL'
-                    //     });
                 });
                 loading.value = false;
             })
@@ -394,8 +390,9 @@ onMounted(() => {
                     :dataType="nome.type"
                     :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                 >
-                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
+                    <template #filter="{ filterModel, filterCallback }">
                         <Dropdown
+                            v-if="nome.type == 'list'"
                             :id="nome.field"
                             optionLabel="label"
                             optionValue="value"
@@ -404,21 +401,19 @@ onMounted(() => {
                             @change="filterCallback()"
                             :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
-                    </template>
-                    <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                         <Calendar
+                            v-else-if="nome.type == 'date'"
                             v-model="filterModel.value"
                             dateFormat="dd/mm/yy"
                             selectionMode="range"
                             :numberOfMonths="2"
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
-                            @input="filterCallback()"
+                            @date-select="filterCallback()"
                             :style="`min-width: ${nome.minWidth ? nome.minWidth : '2rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '2rem'}; overflow: hidden`"
                         />
-                    </template>
-                    <template v-else #filter="{ filterModel, filterCallback }">
                         <InputText
+                            v-else
                             type="text"
                             v-model="filterModel.value"
                             @keydown.enter="filterCallback()"
@@ -429,7 +424,7 @@ onMounted(() => {
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else v-html="data[nome.maxlength] ? String(data[nome.field]).trim().substring(0, data[nome.maxlength]) : String(data[nome.field]).trim()"></span>
+                        <span v-else v-html="nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>

@@ -36,6 +36,8 @@ const itemData = ref({});
 const listFolder = ref([]);
 // O registro tem pasta?
 const hasFolder = ref(false);
+// O servidor está acessível?
+const hostAccessible = ref(false);
 // Modelo de dados usado para comparação
 const itemDataComparision = ref({});
 // Modo do formulário
@@ -375,15 +377,27 @@ const getPipelineParam = async () => {
                 setTimeout(async () => {
                     const id = props.idPipeline || route.params.id;
                     const url = `${baseApiUrl}/pipeline/f-a/lfd`;
-                    await axios.post(url, { id_pipeline: id }).then((res) => {
-                        const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
-                        listFolder.value = res.data;
-                        // remover de listFolder os itensToNotList
-                        listFolder.value = listFolder.value.filter((item) => {
-                            return !itensToNotList.includes(item.name);
+                    await axios
+                        .post(url, { id_pipeline: id })
+                        .then((res) => {
+                            const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
+                            listFolder.value = res.data;
+                            // remover de listFolder os itensToNotList
+                            listFolder.value = listFolder.value.filter((item) => {
+                                return !itensToNotList.includes(item.name);
+                            });
+                            hasFolder.value = hostAccessible.value = true;
+                        })
+                        .catch((error) => {
+                            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+                            else if (typeof error.response == 'string') defaultWarn(error.response);
+                            else if (typeof error == 'string') defaultWarn(error);
+                            else {
+                                console.log(error);
+                                defaultWarn('Erro ao carregar dados!');
+                            }
+                            hostAccessible.value = false;
                         });
-                        hasFolder.value = listFolder.value.length > 0;
-                    });
                 }, Math.random() * 100);
         });
     }
@@ -579,6 +593,26 @@ const statusRecord = async (status) => {
             // Definir a mensagem baseado nos status e de acordo com itemDataStatusPreload
             defaultSuccess(`Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`);
             reload();
+        });
+};
+
+const mkFolder = async () => {
+    const url = `${baseApiUrl}/pipeline/f-a/mfd`;
+    await axios
+        .post(url, { id_pipeline: itemData.value.id })
+        .then((res) => {
+            // const msgDone = `Pasta criada com sucesso`;
+            defaultSuccess(res);
+            loadData();
+        })
+        .catch((error) => {
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao criar pasta!');
+            }
         });
 };
 /**
@@ -843,7 +877,7 @@ watch(route, (value) => {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 lg:col12" v-if="mode == 'new' || itemData.descricao">
+                        <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
                             <label for="descricao">Descrição</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <Editor v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
@@ -1015,14 +1049,15 @@ watch(route, (value) => {
                             />
                             <Button
                                 v-if="itemDataParam.gera_pasta == 1 && !hasFolder"
+                                :disabled="!hostAccessible"
                                 label="Criar Pasta"
                                 type="button"
                                 class="w-full mt-3 mb-3"
-                                icon="fa-solid fa-folder fa-shake"
+                                :icon="`fa-solid fa-folder ${hostAccessible ? 'fa-shake' : ''}`"
                                 severity="success"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_LIQUIDADO)"
+                                @click="mkFolder()"
                             />
                         </div>
                     </Fieldset>
@@ -1071,12 +1106,10 @@ watch(route, (value) => {
         background-color: var(--blue-500);
         color: var(--gray-50);
     }
-
     50% {
         background-color: var(--yellow-500);
         color: var(--gray-900);
     }
-
     100% {
         background-color: var(--surface-200);
         color: var(--gray-900);

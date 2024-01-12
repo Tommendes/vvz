@@ -175,7 +175,7 @@ const messagesButtoms = ref([
         severity: 'success'
     },
     {
-        label: 'Excluir',
+        label: 'Não mostrar novamente',
         icon: 'fa-regular fa-trash-can',
         severity: 'danger'
     }

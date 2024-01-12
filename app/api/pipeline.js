@@ -247,14 +247,13 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
 
         let queryes = undefined
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('str_to_date(status_created_at,"%d/%m/%Y")')
+        let sortField = app.db.raw('tbl1.created_at')
         let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
@@ -266,20 +265,22 @@ module.exports = app => {
                     if (element == 'field') {
                         if (['unidade'].includes(key.split(':')[1])) {
                             query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
-                            sortField = 'status_created_at'
+                            sortField = 'tbl1.created_at'
                             sortOrder = 'DESC'
-                        } else if (['documento'].includes(key.split(':')[1])) {
-                            query += `tbl1.documento = cast('${value}' as unsigned) AND `
                         } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
                             query += `pp.descricao = '${value}' AND `
-                            sortField = 'status_created_at'
+                            sortField = 'tbl1.created_at'
                             sortOrder = 'DESC'
                         } else if (['status_created_at'].includes(key.split(':')[1])) {
-                            sortField = 'status_created_at'
+                            sortField = 'tbl1.created_at'
                             value = queryes[key].split(':')
-                            let valueI = moment(value[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
-                            let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH').format('YYYY-MM-DD');
-                            if (typeof valueF != 'Date') valueF = valueI;
+                            let valueI = moment(value[1], 'ddd MMM DD YYYY HH');
+                            let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH');
+
+                            if (valueI.isValid()) valueI = valueI.format('YYYY-MM-DD')
+                            if (valueF.isValid()) valueF = valueF.format('YYYY-MM-DD')
+                            else valueF = valueI
+
                             switch (operator) {
                                 case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
                                     break;
@@ -290,12 +291,12 @@ module.exports = app => {
                                 default: operator = `between "${valueI}" and "${valueF}"`
                                     break;
                             }
-                            query += `date(ps.created_at) ${operator} AND `
+                            query += `tbl1.created_at ${operator} AND `
                         } else {
                             if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
-
+                            let queryField = key.split(':')[1]
                             switch (operator) {
-                                case 'startsWith': operator = `like "${value}"`
+                                case 'startsWith': operator = `like "${value}%"`
                                     break;
                                 case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
                                     break;
@@ -303,14 +304,15 @@ module.exports = app => {
                                     break;
                                 case 'endsWith': operator = `like "%${value}"`
                                     break;
-                                case 'notEquals': operator = `!= "${value}"`
+                                case 'notEquals': operator = queryField == 'documento' ? `!= cast('${value}' as unsigned)` : `!= "${value}"`
                                     break;
-                                default: operator = `= "${value}"`
+                                default: operator = queryField == 'documento' ? `= cast('${value}' as unsigned)` : `= "${value}"`
                                     break;
                             }
-                            let queryField = key.split(':')[1]
                             if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
+                            } else if (queryField == 'documento') {
+                                query += `cast(tbl1.documento as unsigned) ${operator} AND `
                             } else {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
@@ -329,7 +331,7 @@ module.exports = app => {
                     }
                     if (element == 'sort') {
                         sortField = key.split(':')[1].split('=')[0]
-                        if (sortField == 'status_created_at') sortField = 'str_to_date(status_created_at,"%d/%m/%Y")'
+                        if (sortField == 'status_created_at') sortField = 'tbl1.created_at'
                         sortOrder = queryes[key]
                     }
 
@@ -344,7 +346,7 @@ module.exports = app => {
             filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
         }
 
-        const totalRecords = await app.db({ tbl1: tabelaDomain })
+        let totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
@@ -354,7 +356,7 @@ module.exports = app => {
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, lpad(tbl1.documento,8,'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
-            (SELECT DATE_FORMAT(SUBSTRING_INDEX(MAX(ps.created_at),' ',1),'%d/%m/%Y') FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id)status_created_at, 
+            DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
@@ -364,8 +366,10 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
+        console.log(ret.toString());
         ret.then(body => {
-            return res.json({ data: body, totalRecords: totalRecords.count })
+            const length = body.length
+            return res.json({ data: body, totalRecords: totalRecords.count || length })
         }).catch(error => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         })
@@ -944,7 +948,8 @@ module.exports = app => {
             return res.send(`Pasta criada com sucesso no caminho: ${body.path}`);
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-            return res.status(500).send(error)
+            if (error.code == 'EHOSTUNREACH') return res.status(500).send(`Servidor de arquivos temporariamente indisponível. Tente novamente ou tente mais tarde`);
+            else return res.status(500).send(error)
         } finally {
             client.close();
         }
@@ -956,7 +961,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de pastas de documentos"`)
+            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Listagem de pastas de documentos"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -1007,7 +1012,8 @@ module.exports = app => {
             return res.send(list);
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-            return res.status(500).send(error)
+            if (error.code == 'EHOSTUNREACH') return res.status(500).send(`Servidor de arquivos temporariamente indisponível`);
+            else return res.status(500).send(error)
         } finally {
             client.close();
         }

@@ -23,7 +23,7 @@ const listaNomes = ref([
     { field: 'item_ativo', label: 'Ativo', minWidth: '5rem', tagged: true },
     { field: 'compoe', label: 'Compõe', minWidth: '5rem', tagged: true },
     { field: 'nome_comum', label: 'Produto', minWidth: '8rem' },
-    { field: 'descricao', label: 'Descrição', minWidth: '15rem', maxlength: limitDescription },
+    { field: 'descricao', label: 'Descrição', minWidth: '15rem', maxLength: limitDescription },
     { field: 'quantidade', label: 'Quantidade', minWidth: '15rem' }
     // { field: 'valor_unitario', label: 'Valor Unitário', minWidth: '15rem' },
 ]);
@@ -125,7 +125,7 @@ onBeforeMount(() => {
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                         <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="data[nome.maxlength] ? String(data[nome.field]).trim().substring(0, data[nome.maxlength]) : String(data[nome.field]).trim()"></span>
+                        <span v-else v-html="nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>
