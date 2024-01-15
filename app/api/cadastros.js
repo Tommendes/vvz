@@ -35,6 +35,9 @@ module.exports = app => {
             delete body.rg_isento
             existsOrError(body.nome, 'Nome não informado')
             existsOrError(body.aniversario, 'Data de Fundação/Nascimento não informado')
+            const dtNascto = moment(body.aniversario);
+            if (!dtNascto.isValid()) throw 'Data de Fundação/Nascimento inválida. Favor verificar'
+
             existsOrError(body.id_params_tipo, 'Tipo de registro não informado')
             existsOrError(body.id_params_atuacao, 'Área de atuação não informada')
             // existsOrError(body.qualificacao, 'Qualificação não informada')

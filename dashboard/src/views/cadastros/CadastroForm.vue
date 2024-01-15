@@ -95,11 +95,12 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
+        const obj = { ...itemData.value };
 
-        if (itemData.value.cpf_cnpj) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.unmasked(itemData.value.cpf_cnpj);
-        if (itemData.value.aniversario) itemData.value.aniversario = moment(itemData.value.aniversario, 'DD/MM/YYYY').format('YYYY-MM-DD');
-        if (itemData.value.telefone) itemData.value.telefone = masks.value.telefone.unmasked(itemData.value.telefone);
-        axios[method](url, itemData.value)
+        if (obj.cpf_cnpj) obj.cpf_cnpj = masks.value.cpf_cnpj.unmasked(obj.cpf_cnpj);
+        if (obj.aniversario) obj.aniversario = moment(obj.aniversario, 'DD/MM/YYYY').format('YYYY-MM-DD');
+        if (obj.telefone) obj.telefone = masks.value.telefone.unmasked(obj.telefone);
+        axios[method](url, obj)
             .then((res) => {
                 const body = res.data;
                 if (body && body.id) {
@@ -123,18 +124,11 @@ const saveData = async () => {
 // Converte 1 ou 0 para boolean
 const isTrue = (value) => value === 1;
 // Validar CPF
+// const validateCPF = () => true;
 const validateCPF = () => {
     if (cpf.isValid(itemData.value.cpf_cnpj) || cnpj.isValid(itemData.value.cpf_cnpj)) errorMessages.value.cpf_cnpj = null;
     else errorMessages.value.cpf_cnpj = 'CPF/CNPJ informado é inválido';
     return !errorMessages.value.cpf_cnpj;
-};
-// Validar data de nascimento
-const validateDtNascto = () => {
-    errorMessages.value.aniversario = null;
-    // Testa o formato da data
-    if (itemData.value.aniversario && itemData.value.aniversario.length > 0 && !masks.value.aniversario.completed(itemData.value.aniversario)) errorMessages.value.aniversario = 'Formato de data inválido';
-    if (!(moment(itemData.value.aniversario, 'DD/MM/YYYY').isValid() || moment(itemData.value.aniversario).isValid())) errorMessages.value.aniversario = 'Data inválida';
-    return !errorMessages.value.aniversario;
 };
 // Validar email
 const validateEmail = () => {
@@ -152,7 +146,7 @@ const validateTelefone = () => {
 };
 // Validar formulário
 const formIsValid = () => {
-    return validateDtNascto() && validateCPF() && validateEmail() && validateTelefone();
+    return validateCPF() && validateEmail() && validateTelefone();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -263,8 +257,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-2">
                         <label for="aniversario">{{ labels.aniversario }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" @input="validateDtNascto()" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.aniversario">{{ errorMessages.aniversario }}</small>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="id_params_p_nascto">País de Origem</label>
