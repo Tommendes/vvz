@@ -101,13 +101,15 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
-        if (itemData.value.data_visita) itemData.value.data_visita = moment(itemData.value.data_visita, 'DD/MM/YYYY').format('YYYY-MM-DD');
-        axios[method](url, itemData.value)
+        const obj = { ...itemData.value };
+        if (obj.data_visita) obj.data_visita = moment(obj.data_visita, 'DD/MM/YYYY').format('YYYY-MM-DD');
+        axios[method](url, obj)
             .then(async (res) => {
                 const body = res.data;
                 if (body && body.id) {
                     defaultSuccess('Registro salvo com sucesso');
                     itemData.value = body;
+                    itemData.value.data_visita = moment(itemData.value.data_visita, 'DD/MM/YYYY');
                     emit('changed');
                     if (route.name != 'cadastro' && mode.value == 'new') {
                         router.push({
@@ -221,6 +223,7 @@ const dropdownPeriodo = ref([
 // Validação do primeiro dígito do campo Contato
 const validateContato = () => {
     const valorContato = itemData.value.contato;
+    errorMessages.value.contato = null;
 
     // Verificar se o valor é um número ou letra
     if (valorContato) {
@@ -232,39 +235,21 @@ const validateContato = () => {
             // Validação para Telefone
             if (itemData.value.contato && itemData.value.contato.length > 0 && ![10, 11].includes(itemData.value.contato.replace(/([^\d])+/gim, '').length)) {
                 errorMessages.value.contato = 'Formato de telefone inválido';
-            } else errorMessages.value.contato = null;
-            return !errorMessages.value.contato;
+                return false;
+            }
         } else {
             // Validação para E-mail
             if (itemData.value.contato && itemData.value.contato.trim().length > 0 && !isValidEmail(itemData.value.contato)) {
                 errorMessages.value.contato = 'Formato de email inválido';
-            } else errorMessages.value.contato = null;
-            return !errorMessages.value.contato;
-        }
-    } else {
-        // Se o campo foi esvaziado, resetar as mensagens de erro
-        errorMessages.value.contato = null;
-        return !errorMessages.value.contato;
-    }
-};
-const validateDataVisita = () => {
-    errorMessages.value.data_visita = null;
-    // Testa o formato da data
-    if (itemData.value.data_visita && itemData.value.data_visita.length > 0 && !masks.value.data_visita.completed(itemData.value.data_visita)) {
-        errorMessages.value.data_visita = 'Formato de data inválido';
-    } else {
-        // Verifica se a data é válida
-        const momentDate = moment(itemData.value.data_visita, 'DD/MM/YYYY', true);
-        if (!momentDate.isValid()) {
-            errorMessages.value.data_visita = 'Data inválida';
+                return false;
+            }
         }
     }
-
-    return !errorMessages.value.data_visita;
+    return true;
 };
 // Validar formulário
 const formIsValid = () => {
-    return validateContato() && validateDataVisita();
+    return validateContato();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -338,8 +323,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-2">
                             <label for="data_visita">Data da Visita</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" @input="validateDataVisita()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.data_visita">{{ errorMessages.data_visita }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="periodo">Período da Visita</label>

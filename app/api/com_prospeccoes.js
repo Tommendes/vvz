@@ -30,8 +30,13 @@ module.exports = app => {
             existsOrError(body.id_cadastros, 'Cadastro não informado')
             existsOrError(body.id_agente, 'Agente não selecionado')
             existsOrError(body.id_cad_end, 'Endereço não selecionado')
+            existsOrError(body.data_visita, 'Data da visita não informada')
+
+            const momentDate = moment(body.data_visita);
+            if (!momentDate.isValid()) throw 'Data da visita inválida'
+
             if (!body.id) {
-                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, id_cad_end: body.id_cad_end, data_visita: body.data_visita, periodo: body.periodo , status: STATUS_ACTIVE}).first()
+                const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, id_cad_end: body.id_cad_end, data_visita: body.data_visita, periodo: body.periodo, status: STATUS_ACTIVE }).first()
                 if (unique) {
                     return res.status(400).send('Prospecção já cadastrada')
                 }
