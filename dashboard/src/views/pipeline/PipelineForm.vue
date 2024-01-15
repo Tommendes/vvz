@@ -82,7 +82,7 @@ const loadData = async () => {
         const id = props.idPipeline || route.params.id;
         const url = `${urlBase.value}/${id}`;
         if (mode.value != 'new')
-            axios.get(url).then(async (res) => {
+            await axios.get(url).then(async (res) => {
                 const body = res.data;
                 if (body && body.id) {
                     body.id = String(body.id);
@@ -94,7 +94,8 @@ const loadData = async () => {
                         name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
                     };
                     // Retorna os parâmetros do registro
-                    getPipelineParam();
+                    await getPipelineParam();
+                    await lstFolder();
                     await getNomeCliente();
                     // Lista o andamento do registro
                     await listStatusRegistro();
@@ -116,63 +117,60 @@ const loadData = async () => {
             };
             await getNomeCliente();
         }
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
     loading.value = false;
 };
 // Salvar dados do formulário
 const saveData = async () => {
-    if (formIsValid()) {
-        const method = itemData.value.id ? 'put' : 'post';
-        const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`;
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`;
 
-        convertFloatFields('en');
-        const preparedBody = {
-            ...itemData.value,
-            status_params_force: andamentoRegistroPipeline.STATUS_PENDENTE,
-            pipeline_params_force: itemDataParam.value
-        };
-        axios[method](url, preparedBody)
-            .then(async (res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    defaultSuccess('Registro salvo com sucesso');
-                    itemData.value = body;
-                    convertFloatFields();
-                    emit('changed');
-                    if (route.name != 'cadastro' && mode.value == 'new') {
-                        router.push({
-                            path: `/${userData.schema_description}/pipeline/${itemData.value.id}`
-                        });
-                        loadData();
-                    } else if (route.name != 'cadastro' && id != itemData.value.id) {
-                        router.push({
-                            path: `/${userData.schema_description}/pipeline/${itemData.value.id}`
-                        });
-                        const animation = animationDocNr.value;
-                        animationDocNr.value = '';
-                        loadData();
-                        animationDocNr.value = animation;
-                    } else reload();
-                    mode.value = 'view';
-                } else {
-                    defaultWarn('Erro ao salvar registro');
-                }
-            })
-            .catch((error) => {
-                if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else if (typeof error.response == 'string') defaultWarn(error.response);
-                else if (typeof error == 'string') defaultWarn(error);
-                else {
-                    console.log(error);
-                    defaultWarn('Erro ao carregar dados!');
-                }
-            });
-    }
-};
-// Validar formulário
-const formIsValid = () => {
-    return true;
+    itemData.value.documento = String(itemData.value.documento);
+    convertFloatFields('en');
+    const preparedBody = {
+        ...itemData.value,
+        status_params_force: andamentoRegistroPipeline.STATUS_PENDENTE,
+        pipeline_params_force: itemDataParam.value
+    };
+
+    axios[method](url, preparedBody)
+        .then(async (res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro salvo com sucesso');
+                itemData.value = body;
+                convertFloatFields();
+                emit('changed');
+                if (route.name != 'cadastro' && mode.value == 'new') {
+                    router.push({
+                        path: `/${userData.schema_description}/pipeline/${itemData.value.id}`
+                    });
+                    loadData();
+                } else if (route.name != 'cadastro' && id != itemData.value.id) {
+                    router.push({
+                        path: `/${userData.schema_description}/pipeline/${itemData.value.id}`
+                    });
+                    const animation = animationDocNr.value;
+                    animationDocNr.value = '';
+                    loadData();
+                    animationDocNr.value = animation;
+                } else reload();
+                mode.value = 'view';
+                await mkFolder();
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((error) => {
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
+        });
 };
 // Recarregar dados do formulário
 const reload = async () => {
@@ -369,32 +367,6 @@ const getPipelineParam = async () => {
         const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
         await axios.get(url).then((res) => {
             if (res.data && res.data.id) itemDataParam.value = res.data;
-            if (itemDataParam.value.gera_pasta == 1)
-                setTimeout(async () => {
-                    const id = props.idPipeline || route.params.id;
-                    const url = `${baseApiUrl}/pipeline/f-a/lfd`;
-                    await axios
-                        .post(url, { id_pipeline: id })
-                        .then((res) => {
-                            const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
-                            listFolder.value = res.data;
-                            // remover de listFolder os itensToNotList
-                            listFolder.value = listFolder.value.filter((item) => {
-                                return !itensToNotList.includes(item.name);
-                            });
-                            hasFolder.value = hostAccessible.value = true;
-                        })
-                        .catch((error) => {
-                            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-                            else if (typeof error.response == 'string') defaultWarn(error.response);
-                            else if (typeof error == 'string') defaultWarn(error);
-                            else {
-                                console.log(error);
-                                defaultWarn('Erro ao carregar dados!');
-                            }
-                            hostAccessible.value = false;
-                        });
-                }, Math.random() * 100);
         });
     }
 };
@@ -462,6 +434,7 @@ const itemNovo = [
             delete itemData.value.id_filho;
             delete itemData.value.id_pai;
             itemDataParam.value.obrig_valor = 0;
+            itemData.value.documento = String(itemData.value.documento);
             await saveData();
             defaultWarn('Verifique se o número do documento deve ser editado');
         }
@@ -515,7 +488,8 @@ const toProposal = async () => {
 const optionLongParams = async (query) => {
     const selects = query.select ? `&slct=${query.select}` : undefined;
     const url = `${baseApiUrl}/long-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-    return await axios.get(url);
+    const response = await axios.get(url);
+    return response;
 };
 
 /**
@@ -587,21 +561,56 @@ const statusRecord = async (status) => {
         });
 };
 
+const lstFolder = async () => {
+    if (itemDataParam.value.gera_pasta == 1)
+        setTimeout(async () => {
+            const id = props.idPipeline || route.params.id;
+            const url = `${baseApiUrl}/pipeline/f-a/lfd`;
+            await axios
+                .post(url, { id_pipeline: id })
+                .then((res) => {
+                    if (res.data && res.data.length) {
+                        const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
+                        listFolder.value = res.data;
+                        // remover de listFolder os itensToNotList
+                        if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
+                            listFolder.value = listFolder.value.filter((item) => {
+                                return !itensToNotList.includes(item.name);
+                            });
+                            hasFolder.value = true;
+                        } else listFolder.value = [];
+                    }
+                    if (typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
+                    hostAccessible.value = true;
+                })
+                .catch((error) => {
+                    if (typeof error == 'string') defaultWarn(error);
+                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                    else {
+                        console.log(error);
+                        defaultWarn('Erro ao carregar dados!');
+                    }
+                    hostAccessible.value = false;
+                });
+        }, Math.random() * 100);
+};
+
 const mkFolder = async () => {
     const url = `${baseApiUrl}/pipeline/f-a/mfd`;
     await axios
         .post(url, { id_pipeline: itemData.value.id })
-        .then((res) => {
+        .then(async (res) => {
             // const msgDone = `Pasta criada com sucesso`;
-            defaultSuccess(res);
-            loadData();
+            defaultSuccess(res.data);
+            await lstFolder();
         })
         .catch((error) => {
-            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else if (typeof error.response == 'string') defaultWarn(error.response);
-            else if (typeof error == 'string') defaultWarn(error);
+            console.log('Erro mkFolder', error);
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
             else {
-                console.log(error);
                 defaultWarn('Erro ao criar pasta!');
             }
         });
@@ -624,7 +633,7 @@ const showPrompt = (body) => {
             message: promptMessage
         },
         props: {
-            header: `Detalhes da nova proposta. Estes dados poderão ser ajustados posteriormente`,
+            header: `Por favor, informe alguns detalhes da nova proposta. Estes dados poderão ser ajustados posteriormente`,
             style: {
                 width: Math.floor(window.innerWidth * 0.5) + 'px'
             },
@@ -635,15 +644,14 @@ const showPrompt = (body) => {
             modal: true
         },
         onClose: (options) => {
-            console.log(options.data);
-            if (options.data && options.data.id_pipeline) onPromptConfirm();
+            if (options.data && options.data.id) onPromptConfirm(options.data.id);
             else onPromptCancel();
         }
     });
 };
 
-const onPromptConfirm = () => {
-    defaultSuccess('Registro salvo com sucesso');
+const onPromptConfirm = (idProposta) => {
+    window.location.href = `#/${userData.schema_description}/proposta/${idProposta}`;
 };
 
 const onPromptCancel = () => {
@@ -876,7 +884,7 @@ watch(route, (value) => {
                         </div>
                     </div>
                     <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
@@ -899,6 +907,7 @@ watch(route, (value) => {
                         <p>itemDataParam: {{ itemDataParam }}</p>
                         <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
                         <p>{{ unidadeLabel }}</p>
+                        <p>hasFolder {{ hasFolder }}</p>
                     </div>
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
@@ -912,7 +921,7 @@ watch(route, (value) => {
 
                         <div v-if="(mode == 'new' || itemDataLastStatus.status_params < 80) && !itemData.id_filho">
                             <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" />
                             <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">

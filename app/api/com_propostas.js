@@ -49,10 +49,12 @@ module.exports = app => {
             existsOrError(body.garantia, 'Garantia não informada')
             existsOrError(String(body.desconto_ativo), 'Desconto ativo não informado')
             existsOrError(body.observacoes_finais, 'Observações finais não informadas')
-            existsOrError(body.prz_entrega, 'Prazo de entrega não informado')
-            existsOrError(body.forma_pagto, 'Forma de pagamento não informada')
-            existsOrError(body.validade_prop, 'Validade da proposta não informada')
             existsOrError(body.assinatura, 'Assinatura não informada')
+            if (body.id) {
+                existsOrError(body.prz_entrega, 'Prazo de entrega não informado')
+                existsOrError(body.forma_pagto, 'Forma de pagamento não informada')
+                existsOrError(body.validade_prop, 'Validade da proposta não informada')
+            }
         } catch (error) {
             console.log(error);
             return res.status(400).send(error)
@@ -93,12 +95,13 @@ module.exports = app => {
                 })
         } else {
 
-            try {
-                const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_pv: body.id_pv, status: STATUS_ACTIVE }).first()
-                notExistsOrError(unique, 'Já há uma proposta para este Cliente com este Pipeline e este PV')
-            } catch (error) {
-                return res.status(400).send(error)
-            }
+            // try {
+            //     const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_pv: body.id_pv, status: STATUS_ACTIVE }).first()
+            //     notExistsOrError(unique, 'Já há uma proposta para este Cliente com este Pipeline e este PV')
+            // } catch (error) {
+            //     console.log(error);
+            //     return res.status(400).send(error)
+            // }
             // Criação de um novo registro
             const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
 

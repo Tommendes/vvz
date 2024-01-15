@@ -52,7 +52,7 @@ const loadData = async () => {
                 }
             });
             loading.value = false;
-        }, Math.random() * 1000 + 250);
+        }, Math.random() * 100);
     } else {
         itemData.value = {
             id_com_propostas: route.params.id,
@@ -124,7 +124,7 @@ const getComposicoes = async () => {
                 defaultWarn(err.response.data);
             });
         loading.value = false;
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 };
 // Validar formulário
 const formIsValid = () => {

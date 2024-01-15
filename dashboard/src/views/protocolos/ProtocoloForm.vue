@@ -70,7 +70,7 @@ const loadData = async () => {
                 }
             });
         } else loading.value = false;
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 };
 const loadDataProtoDocs = async () => {
     setTimeout(() => {
@@ -80,7 +80,7 @@ const loadDataProtoDocs = async () => {
             if (gridDatProtoDocs.value.descricao) itemDataProtDocs.value.items = gridDatProtoDocs.value.descricao.split(',');
             loading.value = false;
         });
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 };
 // Salvar dados do formulário
 const saveData = async () => {

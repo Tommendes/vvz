@@ -24,10 +24,10 @@ exports.up = function (knex) {
         table.boolean('desconto_ativo').defaultTo(0).notNull().comment('Desconto ativo (Não:0; Sim:1)')
         table.double('desconto_total', 11,2).defaultTo(0.00).comment('Desconto total em valor')
         table.specificType('observacoes_finais', 'text').notNull().comment('Corpo das observações finais da proposta')
-        table.string('prz_entrega', 50).notNull().comment('Prazo de entrega')
-        table.string('forma_pagto', 50).notNull().comment('Forma de pagamento')
-        table.string('validade_prop', 50).notNull().comment('Validade da proposta')
         table.specificType('assinatura', 'tinytext').notNull().comment('Assinatura da proposta')        
+        table.string('prz_entrega', 50).comment('Prazo de entrega')
+        table.string('forma_pagto', 50).comment('Forma de pagamento')
+        table.string('validade_prop', 50).comment('Validade da proposta')
     })
 };
 

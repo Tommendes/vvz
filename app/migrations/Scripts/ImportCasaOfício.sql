@@ -217,6 +217,7 @@ INSERT INTO vivazul_bceaa5.pipeline_params (
 	WHERE dominio = 'casaoficio'
 	ORDER BY descricao
   );
+UPDATE vivazul_bceaa5.pipeline_params SET gera_pasta = 1 WHERE gera_pasta = 2;
 /*Garante o tipo_secundário de acordo com id_old*/
 UPDATE vivazul_bceaa5.pipeline_params pp SET
 	pp.tipo_secundario = (SELECT gp.id FROM vivazul_bceaa5.pipeline_params gp WHERE gp.old_id = pp.tipo_secundario);

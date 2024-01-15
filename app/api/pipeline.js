@@ -174,9 +174,11 @@ module.exports = app => {
             app.db.transaction(async (trx) => {
                 // Se autom_nr = 1, gerar um novo número de documento
                 if (pipeline_params_force.autom_nr == 1) {
-                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(documento) + 1 AS documento'))
+                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS UNSIGNED)) + 1 AS documento'))
                         .where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
-                    body.documento = nextDocumentNr.documento || '1'
+                    if (nextDocumentNr.documento == null) body.documento = 1
+                    else body.documento = nextDocumentNr.documento + 1
+                    body.documento = body.documento.toString().padStart(8, '0')
                 }
 
                 // Variáveis da criação de um registro
@@ -378,7 +380,6 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         })
     }
-
 
     const getById = async (req, res) => {
         let user = req.user
@@ -1014,12 +1015,14 @@ module.exports = app => {
             });
 
             const list = await client.list('/' + body.path);
-
-            return res.send(list);
+            if (list.length == 0) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
+            else return res.send(list);
         } catch (error) {
+            console.log(error.code);
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-            if (error.code == 'EHOSTUNREACH') return res.status(500).send(`Servidor de arquivos temporariamente indisponível`);
-            else return res.status(500).send(error)
+            if (error.code == 'EHOSTUNREACH') return res.status(200).send(`Servidor de arquivos temporariamente indisponível`);
+            else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
+            else return res.status(200).send(error)
         } finally {
             client.close();
         }

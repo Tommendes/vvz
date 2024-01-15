@@ -181,7 +181,7 @@ const reload = () => {
 onMounted(() => {
     setTimeout(() => {
         loadData();
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {

@@ -335,7 +335,7 @@ onBeforeMount(() => {
 onMounted(() => {
     setTimeout(() => {
         loadData();
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 });
 </script>
 

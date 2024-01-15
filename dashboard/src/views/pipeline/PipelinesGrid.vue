@@ -168,7 +168,7 @@ const loadLazyData = () => {
                 }
                 router.push({ path: '/' });
             });
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 };
 // Carrega os dados do grid
 const onPage = (event) => {
@@ -192,7 +192,7 @@ const mode = ref('grid');
  * Monta a url com os filtros
  */
 const mountUrlFilters = () => {
-    let url = '?';
+    let url = '';
     Object.keys(filters.value).forEach((key) => {
         if (filters.value[key].value) {
             const macthMode = filters.value[key].matchMode || 'contains';
@@ -208,7 +208,7 @@ const mountUrlFilters = () => {
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
-    urlFilters.value = url;
+    urlFilters.value = `?${url}`;
 };
 // Exporta os dados do grid para CSV
 const exportCSV = () => {

@@ -371,7 +371,7 @@ const loadStats = () => {
         getTopProposalsBi();
         await getTopSellingBi();
         getSalesOverviewBi();
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 };
 
 const exportToPNG = () => {

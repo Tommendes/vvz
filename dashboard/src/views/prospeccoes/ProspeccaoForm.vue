@@ -83,7 +83,7 @@ const loadData = async () => {
                     router.push({ path: `/${userData.schema_description}/prospeccoes` });
                 }
             });
-        }, Math.random() * 1000 + 250);
+        }, Math.random() * 100);
     } else if (props.idCadastro) {
         itemData.value.id_cadastros = props.idCadastro;
         selectedCadastro.value = {

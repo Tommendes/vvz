@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { inject, onBeforeMount, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { isValidEmail, formatCurrency } from '@/global';
@@ -78,15 +78,17 @@ const dropdownDescontoAtivo = ref([
 const validateEmail = () => {
     if (itemData.value.email_contato && itemData.value.email_contato.trim().length > 0 && !isValidEmail(itemData.value.email_contato)) {
         errorMessages.value.email_contato = 'Formato de email inválido';
-    } else errorMessages.value.email_contato = null;
-    return !errorMessages.value.email_contato;
+        return false;
+    }
+    return true;
 };
 // Validar telefone
 const validateTelefone = () => {
     if (itemData.value.telefone_contato && itemData.value.telefone_contato.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone_contato).length)) {
         errorMessages.value.telefone_contato = 'Formato de telefone inválido';
-    } else errorMessages.value.telefone_contato = null;
-    return !errorMessages.value.telefone_contato;
+        return false;
+    }
+    return true;
 };
 // Validar formulário
 const formIsValid = () => {
@@ -130,7 +132,7 @@ const loadOptions = async () => {
                 dropdownValidade.value.push({ value: item.id, label: item.parametro });
             });
         });
-    }, Math.random() * 1000 + 250);
+    }, Math.random() * 100);
 };
 
 // http://localhost:55596/local-params/f-a/gbf?fld=grupo&vl=com_pr05&slct=id,parametro,label
