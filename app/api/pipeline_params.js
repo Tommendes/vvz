@@ -3,7 +3,9 @@ module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'pipeline_params'
     const tabelaAlias = 'Parâmetro de Pipeline'
+    const STATUS_INACTIVE = 0
     const STATUS_ACTIVE = 10
+    const STATUS_VIEW = 11
     const STATUS_DELETE = 99
 
     const save = async (req, res) => {
@@ -19,7 +21,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
@@ -29,7 +31,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName; delete body.url_logo;
+        delete body.hash; delete body.tblName; delete body.url_logo; delete body.url_rodape;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -110,12 +112,12 @@ module.exports = app => {
                 this.on('tbl1.id_uploads_logo', '=', 'u.id')
                     .andOn('u.status', '=', STATUS_ACTIVE)
             })
-            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
             .groupBy('tbl1.id')
-            .then(body => {
-                const count = body.length
-                return res.json({ data: body, count: count })
-            })
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count: count })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             })
@@ -144,7 +146,9 @@ module.exports = app => {
                 this.on('tbl1.id_uploads_rodape', '=', 'uf.id')
                     .andOn('uf.status', '=', STATUS_ACTIVE)
             })
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
+            .where({ 'tbl1.id': req.params.id })
+            .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
+            .first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
@@ -226,11 +230,14 @@ module.exports = app => {
         const doc_venda = req.query.doc_venda || undefined
         const gera_baixa = req.query.gera_baixa || undefined
         const descricao = req.query.descricao || undefined
-        const ret = app.db(tabelaDomain).where({ status: STATUS_ACTIVE })
+        const status = req.query.status || undefined
+        const ret = app.db(tabelaDomain)
 
         if (doc_venda) ret.where({ doc_venda: doc_venda })
         if (gera_baixa) ret.where({ gera_baixa: gera_baixa })
         if (descricao && descricao != '-1') ret.where(app.db.raw(`SUBSTRING_INDEX(descricao, '_', 1) = '${descricao}'`))
+        if (status) ret.where({ status: status })
+        else ret.where({ status: STATUS_ACTIVE })
 
         ret.orderBy('descricao', 'asc')
         ret.then(body => {

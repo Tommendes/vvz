@@ -17,18 +17,12 @@ const router = useRouter();
 
 // Campos de formulário
 const itemData = ref({});
-const registroTipo = ref('pf');
 // Modo do formulário
 const mode = ref('view');
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
-const loading = ref({
-    form: true,
-    accepted: null,
-    email: null,
-    telefone: null
-});
+const loading = ref(true);
 // Props do template
 const props = defineProps({
     mode: String
@@ -50,7 +44,7 @@ const loadData = async () => {
 
                     itemData.value = body;
 
-                    loading.value.form = false;
+                    loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
                     router.push({ path: `/${userData.schema_description}/pipeline-params` });
@@ -58,7 +52,7 @@ const loadData = async () => {
             });
         }
     }, Math.random() * 1000);
-    loading.value.form = false;
+    loading.value = false;
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -145,6 +139,11 @@ const onImageFooterRightClick = (event) => {
     menuFooter.value.show(event);
 };
 // Opções de DropDown do Form
+const dropdownNovosItens = ref([
+    { value: 10, label: 'Sim' },
+    { value: 0, label: 'Não' },
+    { value: 11, label: 'Apenas consulta' }
+]);
 const dropdownApresentacaoBi = ref([
     { value: 0, label: 'Sim' },
     { value: 1, label: 'Não' }
@@ -234,7 +233,7 @@ window.addEventListener('resize', () => {
 });
 </script>
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: `/${userData.schema_description}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb :items="[{ label: 'Todos os Parâmetros', to: `/${userData.schema_description}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -260,17 +259,22 @@ window.addEventListener('resize', () => {
                                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                                     <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.descricao" id="descricao" type="text" />
                                 </div>
-                                <div class="col-12 md:col-4">
+                                <div class="col-12 md:col-3">
+                                    <label for="status">Novos registros?</label>
+                                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                                    <Dropdown v-else id="status" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.status" :options="dropdownNovosItens" />
+                                </div>
+                                <div class="col-12 md:col-3">
                                     <label for="bi_index">Apresentação em BI</label>
                                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                                     <Dropdown v-else id="bi_index" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.bi_index" :options="dropdownApresentacaoBi" />
                                 </div>
-                                <div class="col-12 md:col-4">
+                                <div class="col-12 md:col-3">
                                     <label for="doc_venda">É documento de venda</label>
                                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                                     <Dropdown v-else id="doc_venda" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.doc_venda" :options="dropdownDocVenda" />
                                 </div>
-                                <div class="col-12 md:col-4">
+                                <div class="col-12 md:col-3">
                                     <label for="autom_nr">Numeracao automatica</label>
                                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                                     <Dropdown v-else id="autom_nr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.autom_nr" :options="dropdownAutomNum" />
@@ -288,7 +292,7 @@ window.addEventListener('resize', () => {
                             <Dropdown v-else id="tipo_secundario" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo_secundario" :options="dropdownTipoSec" />
                         </div>
                         <div class="col-12 md:col-2">
-                            <label for="obrig_valor">Obrigatorio declarar valor</label>
+                            <label for="obrig_valor">Valor é obrigatorio</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <Dropdown v-else id="obrig_valor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.obrig_valor" :options="dropdownObrigValor" />
                         </div>

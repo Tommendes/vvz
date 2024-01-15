@@ -174,7 +174,7 @@ module.exports = app => {
             app.db.transaction(async (trx) => {
                 // Se autom_nr = 1, gerar um novo número de documento
                 if (pipeline_params_force.autom_nr == 1) {
-                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS UNSIGNED)) + 1 AS documento'))
+                    let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(documento AS UNSIGNED)) AS documento'))
                         .where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
                     if (nextDocumentNr.documento == null) body.documento = 1
                     else body.documento = nextDocumentNr.documento + 1

@@ -182,7 +182,8 @@ const reload = async () => {
 // Listar unidades de negócio
 const listUnidadesDescricao = async () => {
     const query = { func: 'ubt', tipoDoc: undefined, unidade: undefined };
-    const url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
+    let url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
+    if (mode.value == 'new') url += '&status=10';
     await axios.get(url).then((res) => {
         dropdownUnidades.value = [];
         res.data.data.map((item) => {
@@ -1048,12 +1049,12 @@ watch(route, (value) => {
                                 @click="statusRecord(andamentoRegistroPipeline.STATUS_EXCLUIDO)"
                             />
                             <Button
-                                v-if="itemDataParam.gera_pasta == 1 && !hasFolder"
-                                :disabled="!hostAccessible"
+                                v-if="itemDataParam.gera_pasta == 1"
+                                :disabled="!hostAccessible || hasFolder"
                                 label="Criar Pasta"
                                 type="button"
                                 class="w-full mt-3 mb-3"
-                                :icon="`fa-solid fa-folder ${hostAccessible ? 'fa-shake' : ''}`"
+                                :icon="`fa-solid fa-folder ${hostAccessible && !hasFolder ? 'fa-shake' : ''}`"
                                 severity="success"
                                 text
                                 raised
@@ -1093,6 +1094,7 @@ watch(route, (value) => {
                         <ul class="list-decimal" v-if="listFolder.length">
                             <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
                         </ul>
+                        <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>
                         <p v-else>Não há conteúdo na pasta ou ela não existe</p>
                     </Fieldset>
                 </div>
