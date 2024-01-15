@@ -375,7 +375,7 @@ const itemNovo = [
     {
         label: 'Outro Cliente ou Tipo',
         icon: 'fa-solid fa-plus',
-        command: () => {
+        command: async () => {
             delete itemData.value.id;
             delete itemData.value.id_filho;
             delete itemData.value.id_pai;
@@ -394,12 +394,14 @@ const itemNovo = [
             itemDataLastStatus.value = {};
             editCadastro.value = true;
             mode.value = 'new';
+            // Unidades de negócio
+            await listUnidadesDescricao();
         }
     },
     {
         label: 'Mesmo Cliente e Outro Tipo',
         icon: 'fa-regular fa-copy',
-        command: () => {
+        command: async () => {
             delete itemData.value.id;
             delete itemData.value.id_filho;
             delete itemData.value.id_pai;
@@ -425,6 +427,8 @@ const itemNovo = [
             }
             itemDataLastStatus.value = {};
             mode.value = 'new';
+            // Unidades de negócio
+            await listUnidadesDescricao();
         }
     },
     {
