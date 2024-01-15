@@ -74,15 +74,19 @@ const applyMenuType = (value) => {
         localStorage.setItem('__layoutCfg', JSON.stringify({ menuType: value }));
     }
 };
-const center = ref({ lat: userGL.geolocation.latitude, lng: userGL.geolocation.longitude });
-const markers = ref([
-    {
-        position: {
-            lat: userGL.geolocation.latitude,
-            lng: userGL.geolocation.longitude
+let center = ref({ lat: 0, lng: 0 });
+let markers = ref([]);
+if (userGL && userGL.geolocation.latitude && userGL.geolocation.longitude) {
+    center = ref({ lat: userGL.geolocation.latitude, lng: userGL.geolocation.longitude });
+    markers = ref([
+        {
+            position: {
+                lat: userGL.geolocation.latitude,
+                lng: userGL.geolocation.longitude
+            }
         }
-    }
-]);
+    ]);
+}
 </script>
 
 <template>
@@ -117,7 +121,7 @@ const markers = ref([
         <h5>Seu IP atual</h5>
         <span>{{ user.ip }}</span>
 
-        <h5>Sua localização aproximada</h5>
+        <h5 v-if="markers.length">Sua localização aproximada</h5>
         <ComponentWithMap :markers="markers" :center="center" :mapFrameStyle="'width:100%;height:300px;'" />
         <!-- v-if="userGL.geolocation.latitude && userGL.geolocation.longitude"  -->
         <!-- <template v-if="!simple">

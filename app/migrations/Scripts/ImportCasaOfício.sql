@@ -89,7 +89,7 @@ INSERT INTO vivazul_bceaa5.local_params (
 INSERT INTO vivazul_api.params (
   id,evento,created_at,updated_at,STATUS,dominio,meta,VALUE,label
 )(SELECT  0,1,NOW(),NULL,10,'root','com_unidade',id,CONCAT(parametro,label) FROM vivazul_lynkos.params WHERE grupo = 'prod_tps' ORDER BY parametro);
-UPDATE `vivazul_api`.`params` SET `label` = 'Mão de Obra' WHERE `id` = '9';
+UPDATE `vivazul_api`.`params` SET `label` = 'Mão de Obra' WHERE `label` = 'Mão Obra';
 /*parâmetros comerciais das propostas*/
 INSERT INTO vivazul_bceaa5.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label

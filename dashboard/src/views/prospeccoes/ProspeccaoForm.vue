@@ -97,7 +97,8 @@ const loadData = async () => {
     loading.value = false;
 };
 const saveData = async () => {
-    if (formIsValid()) {
+    const formIsValid = validateContato();
+    if (formIsValid) {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
@@ -247,10 +248,6 @@ const validateContato = () => {
     }
     return true;
 };
-// Validar formulário
-const formIsValid = () => {
-    return validateContato();
-};
 // Recarregar dados do formulário
 const reload = () => {
     mode.value = 'view';
@@ -287,8 +284,6 @@ onBeforeMount(() => {
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
-// Observar alterações nos dados do formulário
-watchEffect(() => {});
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
     if (value) {
@@ -338,7 +333,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-3 contato">
                             <label for="contato">Contato</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @input="validateContato()" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @blur="validateContato()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.contato">{{ errorMessages.contato }}</small>
                         </div>
                         <div class="col-12 md:col-6">
@@ -390,7 +385,7 @@ watch(selectedCadastro, (value) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
