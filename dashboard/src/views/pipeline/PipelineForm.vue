@@ -117,7 +117,7 @@ const loadData = async () => {
             };
             await getNomeCliente();
         }
-    }, Math.random() * 100);
+    }, Math.random() * 250);
     loading.value = false;
 };
 // Salvar dados do formulário
@@ -593,7 +593,7 @@ const lstFolder = async () => {
                     }
                     hostAccessible.value = false;
                 });
-        }, Math.random() * 100);
+        }, Math.random() * 250);
 };
 
 const mkFolder = async () => {
@@ -669,7 +669,7 @@ onMounted(async () => {
         await listUnidadesDescricao();
         // Agentes de negócio
         await listAgentesNegocio();
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {

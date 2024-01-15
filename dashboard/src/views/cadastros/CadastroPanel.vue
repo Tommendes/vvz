@@ -35,7 +35,7 @@ const loadData = async () => {
                 router.push(urlBase.value);
             }
         });
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 };
 
 onBeforeMount(() => {

@@ -83,7 +83,7 @@ const loadData = async () => {
             });
         }
         loading.value = false;
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 };
 const loadDataProdTabelas = async () => {
     setTimeout(() => {
@@ -98,7 +98,7 @@ const loadDataProdTabelas = async () => {
             });
             loading.value = false;
         });
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -257,7 +257,7 @@ const loadOptions = () => {
                 dropdownUnidades.value.push({ value: item.id, label: item.label });
             });
         });
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 };
 /**
  * Autocomplete de cadastros

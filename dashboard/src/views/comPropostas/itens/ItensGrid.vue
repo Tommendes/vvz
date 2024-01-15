@@ -43,7 +43,7 @@ const goField = (data) => {
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'view';
-    }, 100);
+    }, Math.random() * 250);
 };
 
 const loadData = () => {
@@ -64,7 +64,7 @@ const loadData = () => {
             });
             loading.value = false;
         });
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 };
 
 const mode = ref('grid');
@@ -76,7 +76,7 @@ const newItem = () => {
     setTimeout(() => {
         itemData.value = {};
         mode.value = 'new';
-    }, 100);
+    }, Math.random() * 250);
 };
 onBeforeMount(() => {
     initFilters();

@@ -47,7 +47,7 @@ const loadData = async () => {
             }
         });
     }
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 };
 
 // const loadData = async () => {

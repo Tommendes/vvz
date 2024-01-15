@@ -65,7 +65,7 @@ const loadData = async () => {
             }
         });
         loading.value = false;
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 };
 
 const loadDataPipeline = async () => {

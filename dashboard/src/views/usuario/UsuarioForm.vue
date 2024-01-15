@@ -73,7 +73,7 @@ const loadData = async () => {
                 }
             });
         } else loading.value = false;
-    }, Math.random() * 100);
+    }, Math.random() * 250);
 };
 // Salvar dados do formulário
 const saveData = async () => {

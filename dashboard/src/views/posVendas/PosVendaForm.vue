@@ -91,7 +91,7 @@ const loadData = async () => {
                     }
                 });
             }
-        }, Math.random() * 100);
+        }, Math.random() * 250);
     } else if (props.idCadastro) {
         itemData.value.id_cadastros = props.idCadastro;
         selectedCadastro.value = {
