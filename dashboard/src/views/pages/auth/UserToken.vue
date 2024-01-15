@@ -73,7 +73,7 @@ const getTokenTime = async () => {
                             tokenTimeMessage.value = `Dentro de ${tokenTimeLeft.value + 1} segundos, informe o token enviado por SMS`;
                         }
                     } else tokenTimeLeftMessage.value = `Seu token venceu.<br>Clique abaixo para solicitar novo token`;
-                }, Math.random() * 250);
+                }, Math.random() * 1000);
             })
             .catch((error) => {
                 const data = error.response.data;

@@ -132,7 +132,7 @@ const loadOptions = async () => {
                 dropdownValidade.value.push({ value: item.id, label: item.parametro });
             });
         });
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 };
 
 // http://localhost:55596/local-params/f-a/gbf?fld=grupo&vl=com_pr05&slct=id,parametro,label

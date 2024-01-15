@@ -56,7 +56,7 @@ const loadData = async () => {
                 }
             });
         } else loading.value.form = false;
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 };
 
 // const loadData = async () => {

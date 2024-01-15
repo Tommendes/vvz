@@ -117,7 +117,7 @@ const loadData = async () => {
             };
             await getNomeCliente();
         }
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
     loading.value = false;
 };
 // Salvar dados do formulário
@@ -593,7 +593,7 @@ const lstFolder = async () => {
                     }
                     hostAccessible.value = false;
                 });
-        }, Math.random() * 250);
+        }, Math.random() * 1000);
 };
 
 const mkFolder = async () => {
@@ -669,7 +669,7 @@ onMounted(async () => {
         await listUnidadesDescricao();
         // Agentes de negócio
         await listAgentesNegocio();
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
@@ -1083,16 +1083,17 @@ watch(route, (value) => {
                             </template>
                         </Timeline>
                     </Fieldset>
-                    <Fieldset :toggleable="true" v-if="listFolder.length">
+                    <Fieldset :toggleable="true">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="pi pi-clock mr-2"></span>
                                 <span class="font-bold text-lg">Conteúdo da Pasta</span>
                             </div>
                         </template>
-                        <ul class="list-decimal">
+                        <ul class="list-decimal" v-if="listFolder.length">
                             <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
                         </ul>
+                        <p v-else>Não há conteúdo na pasta ou ela não existe</p>
                     </Fieldset>
                 </div>
             </div>

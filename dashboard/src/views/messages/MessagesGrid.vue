@@ -95,7 +95,7 @@ const loadData = () => {
             });
             loading.value = false;
         });
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 };
 const mode = ref('grid');
 onBeforeMount(() => {

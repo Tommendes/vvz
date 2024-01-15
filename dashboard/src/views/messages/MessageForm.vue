@@ -60,7 +60,7 @@ const loadData = async () => {
                     router.push({ path: `/${userData.schema_description}/messages` });
                 }
             });
-        }, Math.random() * 250);
+        }, Math.random() * 1000);
     } else loading.value = false;
 };
 // Salvar dados do formulário

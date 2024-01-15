@@ -87,7 +87,7 @@ const loadData = async () => {
                 }
             });
         } else loading.value.form = false;
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 };
 // Salvar dados do formulário
 const saveData = async () => {

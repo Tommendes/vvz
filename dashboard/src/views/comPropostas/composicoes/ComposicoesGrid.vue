@@ -39,7 +39,7 @@ const goField = (data) => {
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'view';
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 };
 
 const loadData = () => {
@@ -54,7 +54,7 @@ const loadData = () => {
             });
             loading.value = false;
         });
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 };
 const mode = ref('grid');
 const getSeverity = (value) => {
@@ -65,7 +65,7 @@ const newCompos = () => {
     setTimeout(() => {
         itemData.value = {};
         mode.value = 'new';
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 };
 onBeforeMount(() => {
     initFilters();

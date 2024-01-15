@@ -82,7 +82,7 @@ onBeforeMount(() => {
 onMounted(() => {
     setTimeout(() => {
         loadData();
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 });
 </script>
 

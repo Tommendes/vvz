@@ -89,7 +89,7 @@ const loadLazyData = () => {
                     defaultError('Erro ao carregar dados!');
                 }
             });
-    }, Math.random() * 250);
+    }, Math.random() * 1000);
 };
 const onPage = (event) => {
     lazyParams.value = event;
