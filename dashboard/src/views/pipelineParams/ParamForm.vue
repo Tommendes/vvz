@@ -140,9 +140,9 @@ const onImageFooterRightClick = (event) => {
 };
 // Opções de DropDown do Form
 const dropdownNovosItens = ref([
-    { value: 10, label: 'Sim' },
-    { value: 0, label: 'Inativo' },
-    { value: 11, label: 'Apenas consulta' }
+    { value: 10, label: 'Ativo' },
+    { value: 11, label: 'Apenas consulta' },
+    { value: 0, label: 'Inativo' }
 ]);
 const dropdownApresentacaoBi = ref([
     { value: 0, label: 'Sim' },
