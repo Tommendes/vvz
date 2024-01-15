@@ -25,7 +25,7 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-            if (!body.id_logo && !body.obrig_valor && !body.reg_agente)
+            if (body.status == STATUS_ACTIVE && (!body.id_logo && !body.obrig_valor && !body.reg_agente))
                 throw "Necessário informar ao menos um dos campos: id_logo, obrig_valor e reg_agente";
         } catch (error) {
             return res.status(400).send(error)
