@@ -141,7 +141,7 @@ const onImageFooterRightClick = (event) => {
 // Opções de DropDown do Form
 const dropdownNovosItens = ref([
     { value: 10, label: 'Sim' },
-    { value: 0, label: 'Não' },
+    { value: 0, label: 'Inativo' },
     { value: 11, label: 'Apenas consulta' }
 ]);
 const dropdownApresentacaoBi = ref([
