@@ -23,7 +23,7 @@ const listaNomes = ref([
     { field: 'item_ativo', label: 'Ativo', minWidth: '5rem', tagged: true },
     { field: 'compoe', label: 'Compõe', minWidth: '5rem', tagged: true },
     { field: 'nome_comum', label: 'Produto', minWidth: '8rem' },
-    { field: 'descricao', label: 'Descrição', minWidth: '15rem', maxLength: limitDescription },
+    { field: 'descricao', label: 'Descrição Adicional', minWidth: '15rem', maxLength: limitDescription },
     { field: 'quantidade', label: 'Quantidade', minWidth: '15rem' }
     // { field: 'valor_unitario', label: 'Valor Unitário', minWidth: '15rem' },
 ]);
@@ -56,6 +56,8 @@ const loadData = () => {
                 element.compoe = element.compoe_valor ? 'Sim' : 'Não';
                 element.item_ativo = element.item_ativo ? 'Sim' : 'Não';
                 if (element.compos_nr) element.item = `${element.compos_nr} / ${element.item}`;
+                if (element.descricao) element.descricao = element.descricao.trim();
+                else element.descricao = '';
                 // const description = element.descricao || undefined;
                 // if (description) {
                 //     element.descricao = description.trim().substr(0, limitDescription);

@@ -154,7 +154,7 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('p.documento')
+        let sortField = app.db.raw('cast(p.documento as unsigned)')
         let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
@@ -188,7 +188,7 @@ module.exports = app => {
 
                     if (queryField == 'descricao') queryField = 'pp.descricao'
                     // Se o campo for documento fazer cast para inteiro removendo zeros a esquerda
-                    if (queryField == 'documento') queryField = 'cast(documento as unsigned)'
+                    if (queryField == 'documento') queryField = 'cast(p.documento as unsigned)'
                     query += `${queryField} ${operator} AND `
 
                 } else if (key.split(':')[0] == 'params') {

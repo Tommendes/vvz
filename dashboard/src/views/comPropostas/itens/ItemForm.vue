@@ -57,7 +57,11 @@ const loadData = async () => {
         itemData.value = {
             id_com_propostas: route.params.id,
             item_ativo: true,
-            compoe_valor: true
+            compoe_valor: true,
+            quantidade: 1,
+            valor_unitario: '0,00',
+            desconto_total: '0,00',
+            desconto_ativo: 0,
         };
         mode.value = 'new';
         loading.value = false;
@@ -70,9 +74,12 @@ const saveData = async () => {
         const method = itemData.value.id ? 'put' : 'post';
         const id = itemData.value.id ? `/${itemData.value.id}` : '';
         const url = `${urlBase.value}${id}`;
+        const obj = { ...itemData.value };
+        obj.valor_unitario = obj.valor_unitario.replace(',', '.');
+        obj.desconto_total = obj.desconto_total.replace(',', '.');
         // Importante para o backend
         convertFloatFields('en');
-        axios[method](url, itemData.value)
+        axios[method](url, obj)
             .then((res) => {
                 const body = res.data;
                 if (body && body.id) {

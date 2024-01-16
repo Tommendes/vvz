@@ -35,7 +35,7 @@ module.exports = app => {
 
         try {
             existsOrError(body.id_com_produtos, 'Produto não selecionado')
-            existsOrError(body.descricao, 'Descrição não informada')
+            // existsOrError(body.descricao, 'Descrição não informada')
             valueOrError(body.quantidade, 'Quantidade não informada')
             valueOrError(body.valor_unitario, 'Valor unitário não informado')
             if (body.id_com_prop_compos) {
@@ -43,6 +43,7 @@ module.exports = app => {
                 existsOrError(compos, 'Composição não encontrada ou não pertence a esta proposta')
             }
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 
@@ -52,6 +53,7 @@ module.exports = app => {
             try {
                 if (body.status == 10) existsOrError(String(body.item), 'Item não informado')
             } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
                 return res.status(400).send(error)
             }
             const { createEventUpd } = app.api.sisEvents
@@ -98,15 +100,16 @@ module.exports = app => {
             }
         } else {
 
-            try {
-                const unique = await app.db(tabelaDomain)
-                    .where({ id_com_propostas: body.id_com_propostas, item: body.item, id_com_produtos: body.id_com_produtos })
-                    .whereIn('status', [STATUS_ACTIVE, STATUS_INACTIVE])
-                    .first()
-                notExistsOrError(unique, 'Este produto já foi adicionado a este item')
-            } catch (error) {
-                return res.status(400).send(error)
-            }
+            // try {
+            //     const unique = await app.db(tabelaDomain)
+            //         .where({ id_com_propostas: body.id_com_propostas, item: body.item, id_com_produtos: body.id_com_produtos })
+            //         .whereIn('status', [STATUS_ACTIVE, STATUS_INACTIVE])
+            //         .first()
+            //     notExistsOrError(unique, 'Este produto já foi adicionado a este item')
+            // } catch (error) {
+            //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            //     return res.status(400).send(error)
+            // }
             // Criação de um novo registro
             const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
 
@@ -241,6 +244,7 @@ module.exports = app => {
 
             res.status(204).send()
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
@@ -359,6 +363,7 @@ module.exports = app => {
         try {
             existsOrError(body.id_com_propostas, 'Proposta não informada')
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         // Localizar no BD todas as composições do item de body.id_com_propostas ordenadas por body.ordem

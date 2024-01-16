@@ -20,7 +20,7 @@ exports.up = function (knex) {
         table.integer('item').unsigned().notNull().comment('Item')
         table.boolean('item_ativo').defaultTo(1).notNull().comment('Item ativo (Não:0; Sim:1)')
         table.boolean('compoe_valor').defaultTo(1).notNull().comment('Compõe valor (Não:0; Sim:1)')
-        table.string('descricao').notNull().comment('Descrição')
+        table.string('descricao').comment('Descrição')
         table.double('quantidade', 11,2).notNull().defaultTo(0.00).comment('Quantidade')
         table.double('valor_unitario', 11,2).notNull().defaultTo(0.00).comment('Valor unitário')
         table.boolean('desconto_ativo').defaultTo(0).notNull().comment('Desconto ativo (Não:0; Sim:1)')
