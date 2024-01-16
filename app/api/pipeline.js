@@ -92,7 +92,7 @@ module.exports = app => {
                 if (status_params_force != status_params) {
                     // Inserir na tabela de status apenas se o status for diferente
                     await trx(tabelaPipelineStatusDomain).insert({
-                        evento: evento,
+                        evento: evento || 1,
                         status: STATUS_ACTIVE,
                         status_params: status_params_force,
                         created_at: new Date(),
@@ -145,7 +145,7 @@ module.exports = app => {
 
                     // Inserir na tabela de status um registro de criação
                     await trx(tabelaPipelineStatusDomain).insert({
-                        evento: evento,
+                        evento: evento || 1,
                         status: STATUS_ACTIVE,
                         created_at: new Date(),
                         id_pipeline: recordId,
@@ -153,7 +153,7 @@ module.exports = app => {
                     });
                     // Inserir na tabela de status um registro de pedido                    
                     await trx(tabelaPipelineStatusDomain).insert({
-                        evento: evento,
+                        evento: evento || 1,
                         status: STATUS_ACTIVE,
                         created_at: new Date(),
                         id_pipeline: recordId,
@@ -209,7 +209,7 @@ module.exports = app => {
 
                 // Inserir na tabela de status um registro de criação
                 await trx(tabelaPipelineStatusDomain).insert({
-                    evento: evento,
+                    evento: evento || 1,
                     status: STATUS_ACTIVE,
                     created_at: new Date(),
                     id_pipeline: recordId,
@@ -454,7 +454,7 @@ module.exports = app => {
                 const evento = await createEventUpd(eventPayload);
                 updateRecord = { ...updateRecord, evento: evento }
                 await trx(tabelaPipelineStatusDomain).insert({
-                    evento: evento,
+                    evento: evento || 1,
                     status: STATUS_ACTIVE,
                     status_params: registro.status,
                     created_at: new Date(),
@@ -463,7 +463,7 @@ module.exports = app => {
                 // Se o registro tiver um filho, e a mudança for para cancelado, reativado ou convertido(no caso do registro filho), também muda o status do filho
                 if (last.id_filho && [STATUS_CANCELADO, STATUS_REATIVADO, /*STATUS_CONVERTIDO*/].includes(Number(registro.status))) {
                     await trx(tabelaPipelineStatusDomain).insert({
-                        evento: evento,
+                        evento: evento || 1,
                         status: STATUS_ACTIVE,
                         status_params: registro.status,
                         created_at: new Date(),
@@ -632,7 +632,7 @@ module.exports = app => {
         const rows = req.query.rows || 5
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
@@ -641,7 +641,7 @@ module.exports = app => {
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaStatusDomain }, function () {
+                .join({ ps: tabelaPipelineStatusDomain }, function () {
                     this.on('ps.id_pipeline', '=', 'tbl1.id')
                 })
                 .join({ u: tabelaUsers }, function () {
@@ -687,14 +687,14 @@ module.exports = app => {
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaStatusDomain }, function () {
+                .join({ ps: tabelaPipelineStatusDomain }, function () {
                     this.on('ps.id_pipeline', '=', 'tbl1.id')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
@@ -751,7 +751,7 @@ module.exports = app => {
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
@@ -759,7 +759,7 @@ module.exports = app => {
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaStatusDomain }, function () {
+                .join({ ps: tabelaPipelineStatusDomain }, function () {
                     this.on('ps.id_pipeline', '=', 'tbl1.id')
                 })
                 .join({ u: tabelaUsers }, function () {
@@ -819,14 +819,14 @@ module.exports = app => {
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaStatusDomain }, function () {
+                .join({ ps: tabelaPipelineStatusDomain }, function () {
                     this.on('ps.id_pipeline', '=', 'tbl1.id')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PENDENTE })
@@ -881,14 +881,14 @@ module.exports = app => {
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
-        const tabelaStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biSalesOverview = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`DATE_FORMAT(ps.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaStatusDomain }, function () {
+                .join({ ps: tabelaPipelineStatusDomain }, function () {
                     this.on('ps.id_pipeline', '=', 'tbl1.id')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })

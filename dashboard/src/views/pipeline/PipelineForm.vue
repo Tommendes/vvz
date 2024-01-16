@@ -469,8 +469,8 @@ const itemsComiss = [
 const toPai = async () => {
     window.location.href = `#/${userData.schema_description}/pipeline/${itemData.value.id_pai}`;
 };
-const toFilho = async () => {
-    window.location.href = `#/${userData.schema_description}/pipeline/${itemData.value.id_filho}`;
+const toFilho = async (idFilho) => {
+    window.location.href = `#/${userData.schema_description}/pipeline/${idFilho || itemData.value.id_filho}`;
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
@@ -552,13 +552,13 @@ const statusRecord = async (status) => {
                 await axios
                     .put(url, preparedBody)
                     .then(async (body) => {
-                        defaultError(`Registro convertido com sucesso`);
-                        router.push({
-                            path: `/${userData.schema_description}/pipeline/${body.data.id}`
-                        });
-                        loading.value = true;
-                        loadData();
-                        await toFilho();
+                        defaultSuccess(`Registro convertido com sucesso`);
+                        // itemData.value = body.data;
+                        // console.log('body', body);
+                        // window.location.href = `#/${userData.schema_description}/pipeline/${body.data.id}`;
+                        // loading.value = true;
+                        // await loadData();
+                        await toFilho(body.data.id);
                     })
                     .catch((error) => {
                         console.log(error);
@@ -1002,7 +1002,7 @@ watch(route, (value) => {
                                 raised
                                 :model="itemsComiss"
                             />
-                            <Button
+                            <!-- <Button
                                 label="Criar OAT"
                                 v-if="itemDataParam.doc_venda >= 2 && (itemDataLastStatus.status_params == 20 || itemData.status == 10)"
                                 :disabled="itemDataLastStatus.status_params >= 89"
@@ -1013,7 +1013,7 @@ watch(route, (value) => {
                                 text
                                 raised
                                 @click="defaultSuccess('OAT')"
-                            />
+                            /> -->
                             <Button
                                 label="Liquidar Registro"
                                 v-if="itemDataLastStatus.status_params < 80 && itemDataParam.doc_venda == 0"
@@ -1052,6 +1052,7 @@ watch(route, (value) => {
                                 @click="statusRecord(andamentoRegistroPipeline.STATUS_REATIVADO)"
                             />
                             <Button
+                                v-if="userData.pipeline >= 4 && itemData.status == 10"
                                 label="Excluir Registro"
                                 v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
                                 type="button"
