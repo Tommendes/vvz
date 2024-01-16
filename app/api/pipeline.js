@@ -35,6 +35,13 @@ module.exports = app => {
 
         const pipeline_params_force = body.pipeline_params_force
 
+        if (body.valor_agente) body.valor_agente = body.valor_agente.replace(",", ".");
+        if (body.valor_representacao) body.valor_representacao = body.valor_representacao.replace(",", ".");
+        if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(",", ".");
+        if (body.perc_represent) body.perc_represent = body.perc_represent.replace(",", ".");
+        if (body.valor_liq) body.valor_liq = body.valor_liq.replace(",", ".");
+
+
         try {
             existsOrError(body.id_cadastros, 'Cadastro não informado')
             existsOrError(body.id_pipeline_params, 'Tipo de documento não informado')
