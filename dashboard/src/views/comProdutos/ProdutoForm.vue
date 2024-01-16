@@ -153,7 +153,7 @@ const menu = ref();
 const preview = ref(false);
 const itemRemoverImagem = ref({
     label: 'Remover a imagem',
-    icon: 'pi pi-fw pi-trash',
+    icon: 'fa-solid fa-trash',
     command: () => {
         // Declarar "delete_imagem" para que a API saiba que deve remover a imagem e não faça validações
         // Excluir esta propriedade do objeto na API antes de salvar
@@ -168,8 +168,8 @@ const removeImage = () => {
         header: 'Confirmar exclusão',
         message: 'Você tem certeza que deseja excluir esta imagem?',
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
             const url = `${urlBase.value}/${itemData.value.id}`;
@@ -198,7 +198,7 @@ const removeImage = () => {
 const items = ref([
     {
         label: 'Alterar a imagem do produto',
-        icon: 'pi pi-fw pi-cloud-upload',
+        icon: 'fa-solid fa-upload',
         command: () => {
             showUploadForm();
         }
@@ -321,8 +321,8 @@ const confirmEditCadastro = () => {
         header: 'Corfirma que deseja editar o cadastro?',
         message: 'Você tem certeza que deseja editar este registro?',
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
             selectedCadastro.value = undefined;
@@ -413,8 +413,8 @@ const deleteItem = (item) => {
         header: 'Confirmar exclusão',
         message: 'Você tem certeza que deseja excluir este registro?',
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
             axios.delete(`${urlBaseProdTabelas.value}/${itemData.value.id}/${item.id}`).then(() => {
@@ -526,8 +526,8 @@ watch(selectedCadastro, (value) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
                 <div class="col-12">
@@ -596,8 +596,8 @@ watch(selectedCadastro, (value) => {
                                                     <div class="col-12" v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
                                                         <div class="flex justify-content-center flex-wrap gap-3">
                                                             <Button type="button" v-if="modeTabelas == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="modeTabelas = 'edit'" />
-                                                            <Button type="button" v-if="modeTabelas != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formTabelasIsValid()" @click="saveDataProdTabelas" />
-                                                            <Button type="button" v-if="modeTabelas != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reloadDataProdTabelas" />
+                                                            <Button type="button" v-if="modeTabelas != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formTabelasIsValid()" @click="saveDataProdTabelas" />
+                                                            <Button type="button" v-if="modeTabelas != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reloadDataProdTabelas" />
                                                         </div>
                                                     </div>
                                                     <div class="col-12" v-else>

@@ -136,7 +136,7 @@ module.exports = app => {
                 }
                 const now = Math.floor(Date.now() / 1000)
                 const uParams = await app.db('users').where({ id: user.id }).first();
-                const expirationTime = now + (60 * (uParams.admin >= 1 ? (60 * 8) : 60)) // 60 minutos de validade ou oito horas caso seja adm
+                const expirationTime = now + (60 * (60 * 8))
                 const payload = {
                     id: user.id,
                     status: user.status,

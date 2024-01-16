@@ -130,7 +130,7 @@ const initFilters = () => {
                 <Toolbar class="mb-4">
                     <template v-slot:start>
                         <div class="my-2">
-                            <Button label="New" icon="pi pi-plus" class="p-button-success mr-2" @click="openNew" />
+                            <Button label="New" icon="fa-solid fa-plus" class="p-button-success mr-2" @click="openNew" />
                             <Button label="Delete" icon="pi pi-trash" class="p-button-danger" @click="confirmDeleteSelected" :disabled="!selectedProducts || !selectedProducts.length" />
                         </div>
                     </template>
@@ -158,7 +158,7 @@ const initFilters = () => {
                         <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
                             <h5 class="m-0">Manage Products</h5>
                             <span class="block mt-2 md:mt-0 p-input-icon-left">
-                                <i class="pi pi-search" />
+                                <i class="fa-solid fa-magnifying-glass" />
                                 <InputText v-model="filters['global'].value" placeholder="Search..." />
                             </span>
                         </div>
@@ -278,8 +278,8 @@ const initFilters = () => {
                         </div>
                     </div>
                     <template #footer>
-                        <Button label="Cancel" icon="pi pi-times" class="p-button-text" @click="hideDialog" />
-                        <Button label="Save" icon="pi pi-check" class="p-button-text" @click="saveProduct" />
+                        <Button label="Cancel" icon="fa-solid fa-xmark" class="p-button-text" @click="hideDialog" />
+                        <Button label="Save" icon="fa-solid fa-check" class="p-button-text" @click="saveProduct" />
                     </template>
                 </Dialog>
 
@@ -292,8 +292,8 @@ const initFilters = () => {
                         >
                     </div>
                     <template #footer>
-                        <Button label="No" icon="pi pi-times" class="p-button-text" @click="deleteProductDialog = false" />
-                        <Button label="Yes" icon="pi pi-check" class="p-button-text" @click="deleteProduct" />
+                        <Button label="No" icon="fa-solid fa-xmark" class="p-button-text" @click="deleteProductDialog = false" />
+                        <Button label="Yes" icon="fa-solid fa-check" class="p-button-text" @click="deleteProduct" />
                     </template>
                 </Dialog>
 
@@ -303,8 +303,8 @@ const initFilters = () => {
                         <span v-if="product">Are you sure you want to delete the selected products?</span>
                     </div>
                     <template #footer>
-                        <Button label="No" icon="pi pi-times" class="p-button-text" @click="deleteProductsDialog = false" />
-                        <Button label="Yes" icon="pi pi-check" class="p-button-text" @click="deleteSelectedProducts" />
+                        <Button label="No" icon="fa-solid fa-xmark" class="p-button-text" @click="deleteProductsDialog = false" />
+                        <Button label="Yes" icon="fa-solid fa-check" class="p-button-text" @click="deleteSelectedProducts" />
                     </template>
                 </Dialog>
             </div>

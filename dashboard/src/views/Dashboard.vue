@@ -517,8 +517,8 @@ onMounted(() => {
                         Vendas recentes<br /><span v-if="!biData.recentSales.loading" class="text-green-500 font-ligth text-xs"> Últimas {{ biData.recentSales.rows }} vendas</span>
                     </h5>
                     <div>
-                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('less')" v-tooltip.top="'Clique para reduzir'" v-if="biData.recentSales.rows > 1" />
-                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('plus')" v-tooltip.top="'Clique para adicionar'" v-if="biData.recentSales.rows < 10" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('less')" v-tooltip.top="'Clique para reduzir'" v-if="biData.recentSales.rows > 1" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('plus')" v-tooltip.top="'Clique para adicionar'" v-if="biData.recentSales.rows < 10" />
                     </div>
                 </div>
                 <DataTable :value="biData.recentSales.data" :rows="biData.recentSales.rows" :paginator="false" responsiveLayout="scroll">
@@ -542,7 +542,7 @@ onMounted(() => {
                     <Column style="width: 5%">
                         <template #header> Ir </template>
                         <template #body="slotProps">
-                            <Button icon="pi pi-search" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para seguir'" />
+                            <Button icon="fa-solid fa-magnifying-glass" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para seguir'" />
                         </template>
                     </Column>
                 </DataTable>
@@ -558,8 +558,8 @@ onMounted(() => {
                         >
                     </h5>
                     <div>
-                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('plus')" v-tooltip.top="'Clique para adicionar'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellers.data" :key="item.id">
@@ -595,8 +595,8 @@ onMounted(() => {
                         >
                     </h5>
                     <div>
-                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
@@ -632,8 +632,8 @@ onMounted(() => {
                         >
                     </h5>
                     <div>
-                        <Button icon="pi pi-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="pi pi-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('plus')" v-tooltip.top="'Clique para adicionar'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topProposals.data" :key="item.id">
@@ -684,7 +684,7 @@ onMounted(() => {
             <div class="flex align-items-center justify-content-between mb-4">
                 <h5>Notificações</h5>
                 <div>
-                    <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu1.toggle($event)"></Button>
+                    <Button icon="fa-solid fa-ellipsis-vertical" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu1.toggle($event)"></Button>
                     <Menu ref="menu1" :popup="true" :model="items"></Menu>
                 </div>
             </div>
@@ -693,7 +693,7 @@ onMounted(() => {
             <ul class="p-0 mx-0 mt-0 mb-4 list-none">
                 <li class="flex align-items-center py-2 border-bottom-1 surface-border">
                     <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-100 border-circle mr-3 flex-shrink-0">
-                        <i class="pi pi-dollar text-xl text-blue-500"></i>
+                        <i class="fa-solid fa-dollar-sign text-xl text-blue-500"></i>
                     </div>
                     <span class="text-900 line-height-3"
                         >Richard Jones
@@ -712,7 +712,7 @@ onMounted(() => {
             <ul class="p-0 m-0 list-none">
                 <li class="flex align-items-center py-2 border-bottom-1 surface-border">
                     <div class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-100 border-circle mr-3 flex-shrink-0">
-                        <i class="pi pi-dollar text-xl text-blue-500"></i>
+                        <i class="fa-solid fa-dollar-sign text-xl text-blue-500"></i>
                     </div>
                     <span class="text-900 line-height-3"
                         >Keyser Wick
@@ -774,9 +774,9 @@ onMounted(() => {
                 <div class="flex flex-column gap-2">
                     <label for="recent_sales_rows" style="text-align: end">Vendas Recentes</label>
                     <div class="p-inputgroup justify-content-end">
-                        <Button icon="pi pi-minus" outlined severity="warning" @click="applyBiRecentSales('less')" />
+                        <Button icon="fa-solid fa-minus" outlined severity="warning" @click="applyBiRecentSales('less')" />
                         <span disabled v-html="biData.recentSales.rows" class="p-inputtext p-component max-w-max" />
-                        <Button icon="pi pi-plus" outlined severity="success" @click="applyBiRecentSales('plus')" />
+                        <Button icon="fa-solid fa-plus" outlined severity="success" @click="applyBiRecentSales('plus')" />
                     </div>
                     <small id="username-help">Selecione acima a quantidade de vendas recentes a serem apresentadas nesta tela.</small>
                 </div>
@@ -785,9 +785,9 @@ onMounted(() => {
                 <div class="flex flex-column gap-2">
                     <label for="recent_sales_rows" style="text-align: end">Produtos mais vendidos</label>
                     <div class="p-inputgroup justify-content-end">
-                        <Button icon="pi pi-minus" outlined severity="warning" @click="applyBiTopSeilling('less')" />
+                        <Button icon="fa-solid fa-minus" outlined severity="warning" @click="applyBiTopSeilling('less')" />
                         <span disabled v-html="biData.recentSales.rows" class="p-inputtext p-component max-w-max" />
-                        <Button icon="pi pi-plus" outlined severity="success" @click="applyBiTopSeilling('plus')" />
+                        <Button icon="fa-solid fa-plus" outlined severity="success" @click="applyBiTopSeilling('plus')" />
                     </div>
                     <small id="username-help">Selecione acima a quantidade de produtos mais vendidos a serem apresentadas nesta tela.</small>
                 </div>

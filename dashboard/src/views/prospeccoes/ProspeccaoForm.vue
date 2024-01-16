@@ -200,8 +200,8 @@ const confirmEditAutoSuggest = (tipo) => {
         header: `Corfirmar edição`,
         message: `Corfirma que deseja editar o ${tipo}?`,
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
             if (tipo == 'cadastro') {
@@ -385,8 +385,8 @@ watch(selectedCadastro, (value) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
             </div>

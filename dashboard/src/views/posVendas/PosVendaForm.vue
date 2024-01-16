@@ -183,8 +183,8 @@ const confirmEditAutoSuggest = (tipo) => {
         header: `Corfirmar edição`,
         message: `Corfirma que deseja editar o ${tipo}?`,
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
             if (tipo == 'cadastro') {
@@ -250,7 +250,7 @@ const itemDataStatusPreload = ref([
         status: '0',
         action: 'Criação',
         label: 'Criado',
-        icon: 'pi pi-plus',
+        icon: 'fa-solid fa-plus',
         color: '#3b82f6'
     },
     {
@@ -271,21 +271,21 @@ const itemDataStatusPreload = ref([
         status: '80',
         action: 'Finalização',
         label: 'Finalizado',
-        icon: 'pi pi-check',
+        icon: 'fa-solid fa-check',
         color: '#607D8B'
     },
     {
         status: '89',
         action: 'Cancelamento',
         label: 'Cancelado',
-        icon: 'pi pi-times',
+        icon: 'fa-solid fa-xmark',
         color: '#8c221c'
     },
     {
         status: '99',
         action: 'Exclusão',
         label: 'Excluído',
-        icon: 'pi pi-ban',
+        icon: 'fa-solid fa-ban',
         color: '#8c221c'
     }
 ]);
@@ -320,8 +320,8 @@ const statusRecord = async (status) => {
     const optionsConfirmation = {
         group: 'templating',
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger'
     };
     if ([andamentoRegistroPv.STATUS_CANCELADO, andamentoRegistroPv.STATUS_EXCLUIDO, andamentoRegistroPv.STATUS_FINALIZADO].includes(status)) {
@@ -475,8 +475,8 @@ watch(selectedCadastro, (value) => {
                         </template>
                         <div v-if="mode != 'new' && itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO">
                             <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
-                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" :disabled="!formIsValid()" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr />
@@ -576,8 +576,8 @@ watch(selectedCadastro, (value) => {
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode == 'edit' ? reload() : toGrid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' ? reload() : toGrid()" />
                     </div>
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>

@@ -111,6 +111,38 @@ const loadTecnicos = async () => {
         });
     });
 };
+const clone = async () => {
+    const url = `${urlBase.value}`;
+    const obj = { ...itemData.value };
+    // delete obj.id;
+    delete obj.nr_oat;
+    delete obj.evento;
+    delete obj.created_at;
+    delete obj.updated_at;
+    obj.status = andamentoRegistroPvOat.STATUS_OS;
+    // Se body.valor_total então antes de salvar formate o valor com duas casas decimais em inglês
+    if (obj.valor_total) obj.valor_total = formatValor(obj.valor_total, 'en');
+    await axios
+        .post(url, obj)
+        .then(async (res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro clonado com sucesso');
+                closeDialog();
+            } else {
+                defaultWarn('Erro ao clonar registro');
+            }
+        })
+        .catch((error) => {
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
+        });
+};
 // Salvar dados do formulário
 const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
@@ -177,14 +209,14 @@ const itemDataStatusPreload = ref([
         status: andamentoRegistroPvOat.STATUS_OS,
         action: 'Registrar OAT',
         label: 'OAT Criada',
-        icon: 'pi pi-plus',
+        icon: 'fa-solid fa-plus',
         color: '#3b82f6'
     },
     {
         status: andamentoRegistroPvOat.STATUS_PROPOSTA,
         action: 'Registrar Proposta',
         label: 'Proposta Criada',
-        icon: 'pi pi-plus',
+        icon: 'fa-solid fa-plus',
         color: '#3b82f6'
     },
     {
@@ -212,7 +244,7 @@ const itemDataStatusPreload = ref([
         status: andamentoRegistroPvOat.STATUS_FINALIZADO,
         action: 'Finalizar',
         label: 'Finalizado',
-        icon: 'pi pi-check',
+        icon: 'fa-solid fa-check',
         color: '#607D8B'
     },
     {
@@ -226,14 +258,14 @@ const itemDataStatusPreload = ref([
         status: andamentoRegistroPvOat.STATUS_CANCELADO,
         action: 'Cancelar',
         label: 'Cancelado',
-        icon: 'pi pi-times',
+        icon: 'fa-solid fa-xmark',
         color: '#8c221c'
     },
     {
         status: andamentoRegistroPvOat.STATUS_EXCLUIDO,
         action: 'Excluir',
         label: 'Excluído',
-        icon: 'pi pi-ban',
+        icon: 'fa-solid fa-ban',
         color: '#8c221c'
     }
 ]);
@@ -268,8 +300,8 @@ const statusRecord = async (status) => {
     const optionsConfirmation = {
         group: 'templating',
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger'
     };
     if ([andamentoRegistroPvOat.STATUS_CANCELADO, andamentoRegistroPvOat.STATUS_EXCLUIDO, andamentoRegistroPvOat.STATUS_FINALIZADO].includes(status)) {
@@ -404,8 +436,8 @@ onMounted(() => {
             </div>
             <div class="col-12" v-if="mode == 'new'">
                 <div class="col-12 card flex justify-content-center flex-wrap gap-3">
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode = 'view'" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode = 'view'" />
                 </div>
             </div>
             <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
@@ -418,8 +450,8 @@ onMounted(() => {
                     </template>
                     <div v-if="dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO && itemDataLastStatus.status_pv_oat < andamentoRegistroPvOat.STATUS_FINALIZADO">
                         <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                        <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" :disabled="!formIsValid()" />
-                        <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
+                        <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" :disabled="!formIsValid()" />
+                        <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                     </div>
                     <div v-if="mode != 'edit'">
                         <hr />
@@ -443,6 +475,17 @@ onMounted(() => {
                             text
                             raised
                             @click="statusRecord(andamentoRegistroPvOat.STATUS_FINALIZADO)"
+                        />
+                        <Button
+                            label="Clonar Oat"
+                            type="button"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-clone fa-shake'`"
+                            severity="success"
+                            :disabled="dialogRef.data.lastStatus >= andamentoRegistroPv.STATUS_FINALIZADO"
+                            text
+                            raised
+                            @click="clone()"
                         />
                         <Button
                             label="Imprimir Oat"

@@ -1112,6 +1112,7 @@ module.exports = app => {
         const fieldName = req.query.fld
         const value = req.query.vl
         const select = req.query.slct
+        const status = req.query.status || undefined
 
         const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
@@ -1124,7 +1125,8 @@ module.exports = app => {
         }
 
         ret.where(app.db.raw(`${fieldName} = '${value}'`))
-            .where({ status: STATUS_ACTIVE })
+        if (status) ret.where({ status: status })
+        else ret.whereIn('status', [STATUS_SUSPENDED, STATUS_ACTIVE])
 
         if (first) {
             ret.first()

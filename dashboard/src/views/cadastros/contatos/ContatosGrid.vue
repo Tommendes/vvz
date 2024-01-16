@@ -82,8 +82,8 @@ const deleteRow = () => {
         header: 'Confirmar exclusão',
         message: 'Você tem certeza que deseja excluir este registro?',
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
             axios.delete(`${urlBase.value}/${itemData.value.id}`).then(async () => {
@@ -131,10 +131,10 @@ onBeforeMount(() => {
             <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="pi pi-filter-slash" label="Limpar filtro" outlined @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button
                         type="button"
-                        icon="pi pi-plus"
+                        icon="fa-solid fa-plus"
                         label="Novo Registro"
                         outlined
                         @click="
@@ -143,7 +143,7 @@ onBeforeMount(() => {
                         "
                     />
                     <span class="p-input-icon-left">
-                        <i class="pi pi-search" />
+                        <i class="fa-solid fa-magnifying-glass" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>

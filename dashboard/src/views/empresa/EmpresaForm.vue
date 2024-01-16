@@ -217,7 +217,7 @@ const preview = ref(false);
 const items = ref([
     {
         label: 'Alterar a logomarca',
-        icon: 'pi pi-fw pi-cloud-upload',
+        icon: 'fa-solid fa-upload',
         command: () => {
             showUploadForm();
         }
@@ -400,8 +400,8 @@ const onImageRightClick = (event) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised :disabled="!formIsValid()" />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="reload" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">

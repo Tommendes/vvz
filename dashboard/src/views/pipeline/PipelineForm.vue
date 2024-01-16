@@ -2,7 +2,7 @@
 import { onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
+import { defaultSuccess, defaultWarn } from '@/toast';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
 import { userKey, formatValor } from '@/global';
@@ -33,7 +33,7 @@ const animationDocNr = ref('animation-color animation-fill-forwards ');
 // Campos de formulário
 const itemData = ref({});
 // Listagem de arquivos na pasta do registro
-const listFolder = ref([]);
+const listFolder = ref(null);
 // O registro tem pasta?
 const hasFolder = ref(false);
 // O servidor está acessível?
@@ -111,18 +111,25 @@ const loadData = async () => {
             });
         else if (props.idCadastro) {
             itemData.value.id_cadastros = props.idCadastro;
+            itemData.value.valor_bruto = 0;
+            itemData.value.valor_liq = 0;
+            itemData.value.valor_representacao = 0;
+            itemData.value.valor_agente = 0;
+            itemData.value.perc_represent = 0;
             selectedCadastro.value = {
                 code: itemData.value.id_cadastros,
-                name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj,
-                valor_bruto: 0,
-                valor_liq: 0,
-                valor_representacao: 0,
-                valor_agente: 0,
-                perc_represent: 0
+                name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
             };
             await getNomeCliente();
         }
     }, Math.random() * 1000);
+    await listAgentesNegocio();
+
+    if (!itemData.value.valor_bruto) itemData.value.valor_bruto = 0;
+    if (!itemData.value.valor_liq) itemData.value.valor_liq = 0;
+    if (!itemData.value.valor_representacao) itemData.value.valor_representacao = 0;
+    if (!itemData.value.valor_agente) itemData.value.valor_agente = 0;
+    if (!itemData.value.perc_represent) itemData.value.perc_represent = 0;
     loading.value = false;
 };
 // Salvar dados do formulário
@@ -201,7 +208,8 @@ const listUnidadesDescricao = async () => {
 };
 // Listar unidades de negócio
 const listAgentesNegocio = async () => {
-    const url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name`;
+    let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name`;
+    if (mode.value == 'new') url += '&status=10';
     await axios.get(url).then((res) => {
         dropdownAgentes.value = [];
         res.data.data.map((item) => {
@@ -269,8 +277,8 @@ const confirmEditCadastro = () => {
         header: 'Corfirma que deseja editar o cadastro?',
         message: 'Você tem certeza que deseja editar este registro?',
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
             selectedCadastro.value = undefined;
@@ -296,7 +304,7 @@ const itemDataStatusPreload = ref([
         status: '0',
         action: 'Criação',
         label: 'Criado',
-        icon: 'pi pi-plus',
+        icon: 'fa-solid fa-plus',
         color: '#3b82f6'
     },
     {
@@ -324,21 +332,21 @@ const itemDataStatusPreload = ref([
         status: '80',
         action: 'Liquidação',
         label: 'Liquidado',
-        icon: 'pi pi-check',
+        icon: 'fa-solid fa-check',
         color: '#607D8B'
     },
     {
         status: '89',
         action: 'Cancelamento',
         label: 'Cancelado',
-        icon: 'pi pi-times',
+        icon: 'fa-solid fa-xmark',
         color: '#8c221c'
     },
     {
         status: '99',
         action: 'Exclusão',
         label: 'Excluído',
-        icon: 'pi pi-times',
+        icon: 'fa-solid fa-xmark',
         color: '#8c221c'
     }
 ]);
@@ -401,6 +409,7 @@ const itemNovo = [
             mode.value = 'new';
             // Unidades de negócio
             await listUnidadesDescricao();
+            await listAgentesNegocio();
         }
     },
     {
@@ -434,6 +443,7 @@ const itemNovo = [
             mode.value = 'new';
             // Unidades de negócio
             await listUnidadesDescricao();
+            await listAgentesNegocio();
         }
     },
     {
@@ -446,6 +456,7 @@ const itemNovo = [
             itemDataParam.value.obrig_valor = 0;
             itemData.value.documento = String(itemData.value.documento);
             await saveData();
+            await listAgentesNegocio();
             defaultWarn('Verifique se o número do documento deve ser editado');
         }
     }
@@ -453,14 +464,14 @@ const itemNovo = [
 const itemsComiss = [
     {
         label: 'Agente interno',
-        icon: 'pi pi-user',
+        icon: 'fa-regular fa-user',
         command: () => {
             defaultSuccess('Agente interno');
         }
     },
     {
         label: 'Terceiros',
-        icon: 'pi pi-users',
+        icon: 'fa-regular fa-users',
         command: () => {
             defaultSuccess('Terceiros');
         }
@@ -511,8 +522,8 @@ const statusRecord = async (status) => {
     const optionsConfirmation = {
         group: 'templating',
         icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'pi pi-check',
-        rejectIcon: 'pi pi-times',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger'
     };
     if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_EXCLUIDO, andamentoRegistroPipeline.STATUS_LIQUIDADO].includes(status)) {
@@ -594,9 +605,9 @@ const lstFolder = async () => {
                                 return !itensToNotList.includes(item.name);
                             });
                             hasFolder.value = true;
-                        } else listFolder.value = [];
+                        }
                     }
-                    if (typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
+                    if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
                     hostAccessible.value = true;
                 })
                 .catch((error) => {
@@ -614,6 +625,7 @@ const lstFolder = async () => {
 
 const mkFolder = async () => {
     const url = `${baseApiUrl}/pipeline/f-a/mfd`;
+    defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
     await axios
         .post(url, { id_pipeline: itemData.value.id })
         .then(async (res) => {
@@ -900,8 +912,8 @@ watch(route, (value) => {
                         </div>
                     </div>
                     <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="pi pi-save" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
@@ -937,8 +949,8 @@ watch(route, (value) => {
 
                         <div v-if="(mode == 'new' || itemDataLastStatus.status_params < 80) && !itemData.id_filho">
                             <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="pi pi-save" severity="success" />
-                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="pi pi-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr class="w-full mb-3" v-if="!itemData.id_filho" />
@@ -1107,7 +1119,7 @@ watch(route, (value) => {
                                 <span class="font-bold text-lg">Conteúdo da Pasta</span>
                             </div>
                         </template>
-                        <ul class="list-decimal" v-if="listFolder.length">
+                        <ul class="list-decimal" v-if="listFolder && listFolder.length">
                             <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
                         </ul>
                         <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>

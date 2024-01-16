@@ -24,7 +24,7 @@ const customEvents = ref([
     {
         status: 'Delivered',
         date: '16/10/2020 10:00',
-        icon: 'pi pi-check',
+        icon: 'fa-solid fa-check',
         color: '#607D8B'
     }
 ]);

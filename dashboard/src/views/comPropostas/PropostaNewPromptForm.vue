@@ -133,8 +133,8 @@ const saveData = async () => {
             </div>
             <div class="col-12">
                 <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="submit" label="Salvar" icon="pi pi-save" severity="success" text raised />
-                    <Button type="button" label="Cancelar" icon="pi pi-ban" severity="danger" text raised @click="close" />
+                    <Button type="submit" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="close" />
                 </div>
             </div>
             <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
