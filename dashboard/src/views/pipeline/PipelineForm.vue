@@ -368,6 +368,11 @@ const getPipelineParam = async () => {
         const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
         await axios.get(url).then((res) => {
             if (res.data && res.data.id) itemDataParam.value = res.data;
+            itemData.value.valor_bruto = 0;
+            itemData.value.valor_liq = 0;
+            itemData.value.valor_representacao = 0;
+            itemData.value.valor_agente = 0;
+            itemData.value.perc_represent = 0;
         });
     }
 };
