@@ -139,6 +139,7 @@ const loadLazyData = () => {
     expanded.value = false;
     setTimeout(() => {
         const url = `${urlBase.value}${urlFilters.value}`;
+        console.log(url);
         axios
             .get(url)
             .then((axiosRes) => {
@@ -151,22 +152,24 @@ const loadLazyData = () => {
                         element.nome = nome.trim().substr(0, limitNome);
                         if (nome.length > limitNome) element.nome += ' ...';
                     }
-                    element.descricao = element.descricao
-                        .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
-                        .replaceAll('Este documento foi liquidado quando foi versionado.', '')
-                        .replaceAll('Segue a descrição original do documento:', '')
-                        .trim();
+                    if (element.descricao)
+                        element.descricao = element.descricao
+                            .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
+                            .replaceAll('Este documento foi liquidado quando foi versionado.', '')
+                            .replaceAll('Segue a descrição original do documento:', '')
+                            .trim();
+                    else element.descricao = '';
                     if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
                 });
                 loading.value = false;
             })
             .catch((error) => {
+                console.log(error);
                 try {
                     defaultError(error.response.data);
                 } catch (error) {
                     defaultError('Erro ao carregar dados!');
                 }
-                router.push({ path: '/' });
             });
     }, Math.random() * 1000);
 };
