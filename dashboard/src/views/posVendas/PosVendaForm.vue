@@ -116,7 +116,7 @@ const saveData = async () => {
             .then(async (res) => {
                 const body = res.data;
                 defaultSuccess('Registro salvo com sucesso');
-                if (mode.value == 'new') window.location.href = `/${userData.schema_description}/pos-venda/${body.id}`;
+                if (mode.value == 'new') window.location.href = `#/${userData.schema_description}/pos-venda/${body.id}`;
                 else reload();
             })
             .catch((error) => {

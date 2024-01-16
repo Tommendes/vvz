@@ -462,14 +462,14 @@ const itemsComiss = [
     }
 ];
 const toPai = async () => {
-    window.location.href = `/${userData.schema_description}/pipeline/${itemData.value.id_pai}`;
+    window.location.href = `#/${userData.schema_description}/pipeline/${itemData.value.id_pai}`;
 };
 const toFilho = async () => {
-    window.location.href = `/${userData.schema_description}/pipeline/${itemData.value.id_filho}`;
+    window.location.href = `#/${userData.schema_description}/pipeline/${itemData.value.id_filho}`;
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
-    if (propostaInterna && propostaInterna.data && propostaInterna.data.data[0]) window.location.href = `/${userData.schema_description}/proposta/${propostaInterna.data.data[0].id}`;
+    if (propostaInterna && propostaInterna.data && propostaInterna.data.data[0]) window.location.href = `#/${userData.schema_description}/proposta/${propostaInterna.data.data[0].id}`;
     else {
         // Criar um objeto para representar o registro de uma nova proposta interna com os seguintes fields preenchidos: id_pipeline
         const newPropostaInterna = {
@@ -656,7 +656,7 @@ const showPrompt = (body) => {
 };
 
 const onPromptConfirm = (idProposta) => {
-    window.location.href = `/${userData.schema_description}/proposta/${idProposta}`;
+    window.location.href = `#/${userData.schema_description}/proposta/${idProposta}`;
 };
 
 const onPromptCancel = () => {

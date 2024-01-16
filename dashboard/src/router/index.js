@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 import AppLayout from '@/layout/AppLayout.vue';
 import { userKey } from '../global';
 
@@ -225,7 +225,7 @@ const routes = [
     }
 ];
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes: routes
 });
 

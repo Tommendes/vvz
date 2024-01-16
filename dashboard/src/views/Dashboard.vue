@@ -228,7 +228,7 @@ const getPedidosLastBi = async () => {
 };
 
 const irRecentSale = (id) => {
-    window.open(`/${userData.schema_description}/pipeline/${id}`, '_blank');
+    window.open(`#/${userData.schema_description}/pipeline/${id}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
