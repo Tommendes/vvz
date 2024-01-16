@@ -56,6 +56,7 @@ module.exports = app => {
                 if (body.valor_liq < 0.01) throw 'Valor líquido inválido'
             }
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const status_params_force = body.status_params_force; // Status forçado para edição
@@ -485,7 +486,7 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } catch (error) {
-            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
@@ -681,6 +682,7 @@ module.exports = app => {
             if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
             if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -744,6 +746,7 @@ module.exports = app => {
             if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
             if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -811,6 +814,7 @@ module.exports = app => {
             if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
             if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -872,6 +876,7 @@ module.exports = app => {
             if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
             if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -939,6 +944,7 @@ module.exports = app => {
             booleanOrError(body.ssl, 'SSL não informado')
             existsOrError(body.path, 'Caminho não informado')
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 
@@ -1002,6 +1008,7 @@ module.exports = app => {
             booleanOrError(body.ssl, 'SSL não informado')
             existsOrError(body.path, 'Caminho não informado')
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 

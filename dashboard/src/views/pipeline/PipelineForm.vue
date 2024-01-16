@@ -113,7 +113,12 @@ const loadData = async () => {
             itemData.value.id_cadastros = props.idCadastro;
             selectedCadastro.value = {
                 code: itemData.value.id_cadastros,
-                name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+                name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj,
+                valor_bruto: 0,
+                valor_liq: 0,
+                valor_representacao: 0,
+                valor_agente: 0,
+                perc_represent: 0
             };
             await getNomeCliente();
         }
@@ -368,11 +373,6 @@ const getPipelineParam = async () => {
         const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
         await axios.get(url).then((res) => {
             if (res.data && res.data.id) itemDataParam.value = res.data;
-            itemData.value.valor_bruto = 0;
-            itemData.value.valor_liq = 0;
-            itemData.value.valor_representacao = 0;
-            itemData.value.valor_agente = 0;
-            itemData.value.perc_represent = 0;
         });
     }
 };
@@ -549,15 +549,21 @@ const statusRecord = async (status) => {
                     status_params_force: andamentoRegistroPipeline.STATUS_CONVERTIDO,
                     pipeline_params_force: itemDataParam.value
                 };
-                await axios.put(url, preparedBody).then(async (body) => {
-                    defaultError(`Registro convertido com sucesso`);
-                    router.push({
-                        path: `/${userData.schema_description}/pipeline/${body.data.id}`
+                await axios
+                    .put(url, preparedBody)
+                    .then(async (body) => {
+                        defaultError(`Registro convertido com sucesso`);
+                        router.push({
+                            path: `/${userData.schema_description}/pipeline/${body.data.id}`
+                        });
+                        loading.value = true;
+                        loadData();
+                        await toFilho();
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        defaultWarn(error.response.data);
                     });
-                    loading.value = true;
-                    loadData();
-                    await toFilho();
-                });
             },
             reject: () => {
                 return false;
@@ -866,8 +872,8 @@ watch(route, (value) => {
                                     </div>
                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
-                                        <span v-if="calcTypeRepres == '%'" disabled v-html="itemData.perc_represent" id="valor_agente" class="p-inputtext p-component" />
-                                        <span v-else disabled v-html="itemData.valor_represent" id="valor_represent" class="p-inputtext p-component" />
+                                        <span v-if="calcTypeRepres == '%'" disabled v-html="itemData.perc_represent" id="perc_represent" class="p-inputtext p-component" />
+                                        <span v-else disabled v-html="itemData.valor_representacao" id="valor_representacao" class="p-inputtext p-component" />
                                     </div>
                                 </div>
                                 <div :class="`col-12 lg:col-${['view', 'expandedFormMode'].includes(mode) ? '3' : '6'}`">
