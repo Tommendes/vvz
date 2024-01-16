@@ -400,7 +400,7 @@ const exportToPDF = () => {
 };
 
 onMounted(() => {
-    loadStats();
+    loadStats(); 
 });
 </script>
 
