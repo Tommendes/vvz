@@ -40,6 +40,8 @@ module.exports = app => {
         const dbSchema = `${dbPrefix}_${uParams.schema_name}`
         const usuario = uParams.name
         const idEmpresa = 1
+        const empresa = await app.db({ e: `${dbSchema}.empresa` }).select('e.*').where({ 'e.id': idEmpresa }).first()
+        const logoUrl = await app.db({ u: `${dbPrefix}_api.uploads` }).select('u.url').where({ 'u.id': empresa.id_uploads_logo }).first()
         const idOat = req.body.idOat
         const tabelaPvOatDomain = `${dbPrefix}_${uParams.schema_name}.pv_oat`
         const tabelaPvDomain = `${dbPrefix}_${uParams.schema_name}.pv`
@@ -54,11 +56,12 @@ module.exports = app => {
 
         const optionParameters = {
             "usuario": usuario,
-            "idEmpresa": idEmpresa,
+            "idEmpresa": empresa.id,
             "idOat": idOat,
             "dbSchema": dbSchema,
-            "logoUrl": "https://vivazul.com.br/assets/Logo-CasaOficio.png",
+            "logoUrl": logoUrl.url,
         }
+        console.log(optionParameters);
 
         const exportType = body.exportType || 'pdf'
 
