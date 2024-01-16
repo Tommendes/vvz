@@ -4,10 +4,9 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 
-import { andamentoRegistroPv, andamentoRegistroPvOat } from '@/global';
-import { useRouter, useRoute } from 'vue-router';
+import { andamentoRegistroPv, andamentoRegistroPvOat, formatValor } from '@/global';
+import { useRouter } from 'vue-router';
 const router = useRouter();
-const route = useRoute();
 import moment from 'moment';
 
 import { useConfirm } from 'primevue/useconfirm';
@@ -60,7 +59,7 @@ const loadData = async () => {
                 if (body.id_tecnico) body.id_tecnico = String(body.id_tecnico);
                 if (body.aceite_do_cliente) dataAceite.value = moment(body.aceite_do_cliente).format('DD/MM/YYYY');
                 // Se body.valor_total então formate o valor com duas casas decimais em português
-                if (body.valor_total) body.valor_total = Number(body.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                if (body.valor_total) body.valor_total = formatValor(body.valor_total);
                 itemData.value = body;
                 // Lista o andamento do registro
                 await listStatusRegistro();
@@ -117,15 +116,16 @@ const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
+    const obj = { ...itemData.value };
     // Se body.valor_total então antes de salvar formate o valor com duas casas decimais em inglês
-    if (itemData.value.valor_total) itemData.value.valor_total = Number(itemData.value.valor_total.replace(',', '.')).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    axios[method](url, itemData.value)
+    if (obj.valor_total) obj.valor_total = formatValor(obj.valor_total, 'en');
+    axios[method](url, obj)
         .then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                if (itemData.value.valor_total) itemData.value.valor_total = Number(itemData.value.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                if (itemData.value.valor_total) itemData.value.valor_total = formatValor(itemData.value.valor_total);
                 mode.value = 'view';
                 emit('changed');
                 await listStatusRegistro();
@@ -282,11 +282,8 @@ const statusRecord = async (status) => {
             accept: async () => {
                 await axios.delete(url, itemData.value).then(() => {
                     const msgDone = `Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`;
-                    if (status == andamentoRegistroPvOat.STATUS_EXCLUIDO) {
+                    if ([andamentoRegistroPvOat.STATUS_CANCELADO, andamentoRegistroPvOat.STATUS_FINALIZADO, andamentoRegistroPvOat.STATUS_EXCLUIDO].includes(status)) {
                         closeDialog();
-                    } // Se for excluído, redireciona para o grid
-                    else if ([andamentoRegistroPvOat.STATUS_CANCELADO, andamentoRegistroPvOat.STATUS_FINALIZADO].includes(status)) {
-                        reload();
                     } // Se for cancelado ou liquidado, recarrega o registro
                     defaultSuccess(msgDone);
                 });

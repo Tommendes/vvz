@@ -116,7 +116,7 @@ const saveData = async () => {
             .then(async (res) => {
                 const body = res.data;
                 defaultSuccess('Registro salvo com sucesso');
-                if (mode.value == 'new') window.location.href = `#/${userData.schema_description}/pos-venda/${body.id}`;
+                if (mode.value == 'new') window.location.href = `/${userData.schema_description}/pos-venda/${body.id}`;
                 else reload();
             })
             .catch((error) => {
@@ -376,7 +376,7 @@ const showPvOatForm = () => {
             lastStatus: itemDataLastStatus.value.status_pv
         },
         props: {
-            header: `Registrar OAT`,
+            header: `Registrar OAT${userData.admin >= 2 ? ` (${itemData.value.id})` : ''}}`,
             style: {
                 width: Math.floor(window.innerWidth * 0.9) + 'px'
             },

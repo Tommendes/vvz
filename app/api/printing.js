@@ -57,6 +57,7 @@ module.exports = app => {
             "idEmpresa": idEmpresa,
             "idOat": idOat,
             "dbSchema": dbSchema,
+            "logoUrl": "https://vivazul.com.br/assets/Logo-CasaOficio.png",
         }
 
         const exportType = body.exportType || 'pdf'

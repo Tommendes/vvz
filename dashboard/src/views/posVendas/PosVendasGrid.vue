@@ -12,9 +12,8 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 const router = useRouter();
-const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -96,6 +95,7 @@ const loadLazyData = () => {
                 gridData.value.forEach((element) => {
                     // Exibe dados formatados
                     if (element.documento) element.pipeline = `${element.tipo_doc.replaceAll('_', ' ')} (${element.documento})`;
+                    else element.pipeline = '';
                     element.tipo = String(element.tipo);
                     switch (element.tipo) {
                         case '1':
