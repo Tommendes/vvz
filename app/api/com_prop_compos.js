@@ -38,6 +38,7 @@ module.exports = app => {
         try {
             existsOrError(String(body.localizacao), 'Descrição curta não informada')
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 
@@ -45,6 +46,7 @@ module.exports = app => {
             try {
                 if (body.status == 10) existsOrError(String(body.compos_nr), 'Número da composição não informado')
             } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
                 return res.status(400).send(error)
             }
             const { createEventUpd } = app.api.sisEvents
@@ -91,12 +93,12 @@ module.exports = app => {
         } else {
             try {
                 const unique = await app.db(tabelaDomain)
-                    .where({ id_com_propostas: body.id_com_propostas, localizacao: body.localizacao, tombamento: body.tombamento })
+                    .where({ id_com_propostas: body.id_com_propostas, localizacao: body.localizacao })
                     .whereIn('status', [STATUS_ACTIVE, STATUS_INACTIVE])
                     .first()
-                notExistsOrError(unique, 'Esta combinação de composição, localização e tombamento já existe')
+                notExistsOrError(unique, 'Esta combinação de composição e descrição já existe')
             } catch (error) {
-                console.log(error);
+                app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
                 return res.status(400).send(error)
             }
             // Criação de um novo registro
@@ -227,6 +229,7 @@ module.exports = app => {
 
             res.status(204).send()
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
@@ -352,6 +355,7 @@ module.exports = app => {
         try {
             existsOrError(body.id_com_propostas, 'Proposta não informada')
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         // Localizar no BD todas as composições do item de body.id_com_propostas ordenadas por body.ordem
