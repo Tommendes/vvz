@@ -271,7 +271,6 @@ onBeforeMount(() => {
                                 <InputText disabled v-model="nomeProduto" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditProduto()" :disabled="mode == 'view'" />
                             </div>
-                            <p>{{ selectedProduto }}</p>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="quantidade">Quantidade</label>
