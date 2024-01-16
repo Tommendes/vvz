@@ -376,7 +376,7 @@ const showPvOatForm = () => {
             lastStatus: itemDataLastStatus.value.status_pv
         },
         props: {
-            header: `Registrar OAT${userData.admin >= 2 ? ` (${itemData.value.id})` : ''}}`,
+            header: `Registrar OAT${userData.admin >= 2 ? ` (${itemData.value.id})` : ''}`,
             style: {
                 width: Math.floor(window.innerWidth * 0.9) + 'px'
             },
