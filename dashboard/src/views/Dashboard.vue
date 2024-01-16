@@ -362,16 +362,16 @@ const loadStats = () => {
     getBiPeriod();
     getBiPeriodVG();
     setTimeout(async () => {
-        getCadastrosBi();
-        getPropectosBi();
-        getPropostasBi();
-        getPedidosBi();
-        getPedidosLastBi();
-        getTopSellersBi();
-        getTopProposalsBi();
+        await getCadastrosBi();
+        await getPropectosBi();
+        await getPropostasBi();
+        await getPedidosBi();
+        await getPedidosLastBi();
+        await getTopSellersBi();
+        await getTopProposalsBi();
         await getTopSellingBi();
-        getSalesOverviewBi();
-    }, Math.random() * 1000);
+        await getSalesOverviewBi();
+    }, Math.random() * 1000 + 250);
 };
 
 const exportToPNG = () => {
