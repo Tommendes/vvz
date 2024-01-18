@@ -94,61 +94,76 @@ const loadData = async () => {
 };
 // Salvar dados do formulário
 const saveData = async () => {
-    if (formIsValid()) {
-        const method = itemData.value.id ? 'put' : 'post';
-        const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`;
-        if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-        if (itemData.value.tel1) itemData.value.tel1 = masks.value.telefone.unmasked(itemData.value.tel1);
-        if (itemData.value.tel2) itemData.value.tel2 = masks.value.telefone.unmasked(itemData.value.tel2);
-        if (itemData.value.cep) itemData.value.cep = masks.value.cep.unmasked(itemData.value.cep);
-        axios[method](url, itemData.value)
-            .then((res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    defaultSuccess('Registro salvo com sucesso');
-                    reload();
-                } else {
-                    defaultWarn('Erro ao salvar registro');
-                }
-            })
-            .catch((err) => {
-                defaultWarn(err.response.data);
-            });
+    if (!formIsValid()) {
+        defaultWarn('Verifique os campos obrigatórios');
+        return;
     }
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`;
+    if (itemData.value.cpf_cnpj_empresa) itemData.value.cpf_cnpj_empresa = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
+    if (itemData.value.tel1) itemData.value.tel1 = masks.value.telefone.unmasked(itemData.value.tel1);
+    if (itemData.value.tel2) itemData.value.tel2 = masks.value.telefone.unmasked(itemData.value.tel2);
+    if (itemData.value.cep) itemData.value.cep = masks.value.cep.unmasked(itemData.value.cep);
+    axios[method](url, itemData.value)
+        .then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro salvo com sucesso');
+                reload();
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((err) => {
+            defaultWarn(err.response.data);
+        });
 };
 // Validar a existência do nome do cliente
 const validateRazaoSocial = () => {
-    if (itemData.value.razaosocial && typeof itemData.value.razaosocial.trim() == 'string' && itemData.value.razaosocial.trim().length > 0) errorMessages.value.razaosocial = null;
-    else errorMessages.value.razaosocial = 'Nome ou razão social inválidos';
-    return !errorMessages.value.razaosocial;
+    errorMessages.value.razaosocial = null;
+    if (itemData.value.razaosocial && typeof itemData.value.razaosocial.trim() == 'string' && itemData.value.razaosocial.trim().length > 0) return true;
+    else {
+        errorMessages.value.razaosocial = 'Nome ou razão social inválidos';
+        return false;
+    }
 };
 // Validar CPF
 const validateCPFCNPJ = () => {
+    errorMessages.value.cpf_cnpj_empresa = null;
     const toValidate = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-    if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) errorMessages.value.cpf_cnpj_empresa = null;
-    else errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
-    return !errorMessages.value.cpf_cnpj_empresa;
+    if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) return true;
+    else {
+        errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
+        return false;
+    }
 };
 // Validar Cep
 const validateCep = () => {
-    if (itemData.value.cep && itemData.value.cep.replace(/([^\d])+/gim, '').length == 8) errorMessages.value.cep = null;
-    else errorMessages.value.cep = 'Formato de cep inválido';
-    return !errorMessages.value.cep;
+    errorMessages.value.cep = null;
+    if (itemData.value.cep && itemData.value.cep.replace(/([^\d])+/gim, '').length == 8) return true;
+    else {
+        errorMessages.value.cep = 'Formato de cep inválido';
+        return false;
+    }
 };
 // Validar email
 const validateEmail = (field) => {
+    errorMessages.value[field] = null;
     if (itemData.value[field] && itemData.value[field].trim().length > 0 && !isValidEmail(itemData.value[field])) {
         errorMessages.value[field] = 'Formato de email inválido';
-    } else errorMessages.value[field] = null;
-    return !errorMessages.value[field];
+        return false;
+    }
+    return true;
 };
 // Validar telefone
 const validateTelefone = (field) => {
+    errorMessages.value[field] = null;
     if (itemData.value[field] && itemData.value[field].trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value[field]).length)) {
         errorMessages.value[field] = 'Formato de telefone inválido';
-    } else errorMessages.value[field] = null;
-    return !errorMessages.value[field];
+        return false;
+    }
+    return true;
 };
 const validator = () => {
     let isValid = true;
@@ -261,7 +276,7 @@ const onImageRightClick = (event) => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.schema_description}/empresa` }, { label: itemData.razaosocial + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
-        <form @submit.prevent="saveData" enctype="multipart/form-data">
+        <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-3">
                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
@@ -400,7 +415,7 @@ const onImageRightClick = (event) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
