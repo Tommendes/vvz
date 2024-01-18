@@ -715,7 +715,7 @@ module.exports = app => {
     const mailyPasswordReset = async (req, res) => {
         try {
             const user = await app.db(tabela)
-            .where({ email: req.email }).first()
+                .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
             const urlTo = `${baseFrontendUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
             const bodyEmail = {
@@ -768,8 +768,8 @@ module.exports = app => {
                 <p>Atenciosamente,</p>
                 <p><b>Time ${appName}</b></p>`,
             })
-            .then(() => app.api.logger.logInfo({ log: { line: `Email mailyUnlocked enviado com sucesso para ${user.email}`, sConsole: true } }))
-            .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+                .then(() => app.api.logger.logInfo({ log: { line: `Email mailyUnlocked enviado com sucesso para ${user.email}`, sConsole: true } }))
+                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
@@ -1113,6 +1113,7 @@ module.exports = app => {
         const value = req.query.vl
         const select = req.query.slct
         const status = req.query.status || undefined
+        const order = req.query.order || undefined
 
         const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
@@ -1128,6 +1129,8 @@ module.exports = app => {
         if (status) ret.where({ status: status })
         else ret.whereIn('status', [STATUS_SUSPENDED, STATUS_ACTIVE])
 
+        if (order) ret.orderBy(order)
+
         if (first) {
             ret.first()
         }
@@ -1139,7 +1142,7 @@ module.exports = app => {
             return res.status(500).send(error)
         })
     }
-    
+
 
     // Lista de registros por campo
     const getListByField = async (req, res) => {

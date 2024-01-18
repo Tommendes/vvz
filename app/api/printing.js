@@ -4,6 +4,7 @@ const JSIntegration = require('../config/jSIntegration')
 const { cnpj } = require('cpf-cnpj-validator')
 const path = require('path')
 const fs = require('fs')
+const axios = require('axios')
 
 module.exports = app => {
     const { isMatchOrError, noAccessMsg, existsOrError } = app.api.validation
@@ -58,16 +59,15 @@ module.exports = app => {
             "usuario": usuario,
             "idEmpresa": empresa.id,
             "idOat": idOat,
-            "dbSchema": dbSchema,
-            "logoUrl": logoUrl.url,
+            "dbSchema": dbSchema
         }
-        console.log(optionParameters);
 
         const exportType = body.exportType || 'pdf'
+        const fileRootName = 'reports/Vivazul/pv/oat/Oat'
 
         const jsIntegration = new JSIntegration(
-            jasperServerUrl, // URL of the Jasper Server
-            'reports/Vivazul/pv/oat/Oat', // Path to the Report Unit
+            jasperServerUrl, // URL of the Jasper Server'
+            fileRootName, // Path to the Report Unit
             exportType, // Export type
             jasperServerU, // User
             jasperServerK, // Password
@@ -79,13 +79,40 @@ module.exports = app => {
                 res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
                 res.setHeader("Content-Length", data.length);
                 if (body.encoding == 'base64') res.send(Buffer.from(data).toString('base64'))
-                else res.send(data)
+                else
+                    res.send(data)
             })
-            .catch((error) => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } });
                 res.send(error)
             });
     }
+
+    /*    
+
+        // const username = 'vvz';
+        // const password = 'v1V@zull';
+        // const url = `http://85.31.231.103:8081/jasperserver/rest_v2/reports/${fileRootName}.${exportType}?usuario=Tom Mendes&idEmpresa=1&idOat=8201&dbSchema=vivazul_bceaa5`
+        // const credentials = btoa(`${username}:${password}`);
+        // const rep = await axios.get(url, { headers: { Authorization: `Basic ${credentials}` } })
+        //     .then((data) => {
+        //         const data64 = Buffer.from(data.data)
+        //         const data64Length = data64.length
+        //         // console.log(data64, data64Length);
+        //         res.setHeader("Content-Type", `application/${exportType}`);
+        //         res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
+        //         res.setHeader("Content-Length", data64Length);
+        //         // if (body.encoding == 'base64') res.send(Buffer.from(data).toString('base64'))
+        //         // else 
+        //         console.log(res);
+        //         res.send(data64)
+        //     })
+        //     .catch((error) => {
+        //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });
+        //         res.send(error)
+        //     });
+
+     */
 
     return { getByFunction }
 }

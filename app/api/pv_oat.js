@@ -169,6 +169,7 @@ module.exports = app => {
 
         ret.where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pv': id_pv })
             .groupBy('tbl1.id')
+            .orderBy('tbl1.id', 'desc')
             .then(body => {
                 const count = body.length
                 return res.json({ data: body, count: count })

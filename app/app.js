@@ -87,5 +87,16 @@ app.listen(port, async () => {
             }
         })
     })
+    const tempDir = path.join(__dirname, 'temp')
+    if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true }, (err) => {
+            if (err) {
+                app.api.logger.logInfo({ log: { line: `Directory temp create error! Error: ${err}`, sConsole: false } })
+                return console.error(err);
+            }
+        });
+        app.api.logger.logInfo({ log: { line: `Directory temp created successfully!`, sConsole: true } })
+    }
+
     app.api.logger.logInfo({ log: { line: `Backend executando na porta ${port}`, sConsole: true } })
 })
