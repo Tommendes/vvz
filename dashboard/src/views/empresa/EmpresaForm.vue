@@ -261,7 +261,7 @@ const onImageRightClick = (event) => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Empresas', to: `/${userData.schema_description}/empresa` }, { label: itemData.razaosocial + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
     <div class="card">
-        <form @submit.prevent="saveData">
+        <form @submit.prevent="saveData" enctype="multipart/form-data">
             <div class="grid">
                 <div class="col-3">
                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>

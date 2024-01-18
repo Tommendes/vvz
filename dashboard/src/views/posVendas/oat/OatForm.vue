@@ -310,13 +310,17 @@ const statusRecord = async (status) => {
         confirm.require({
             ...optionsConfirmation,
             header: 'Confirmar',
-            message: `${startMessage}Confirma a ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].action.toLowerCase()}?`,
+            message: `${startMessage}Confirma que deseja ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].action.toLowerCase()}?`,
             accept: async () => {
-                await axios.delete(url, itemData.value).then(() => {
+                await axios.delete(url, itemData.value).then(async () => {
                     const msgDone = `Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`;
-                    if ([andamentoRegistroPvOat.STATUS_CANCELADO, andamentoRegistroPvOat.STATUS_FINALIZADO, andamentoRegistroPvOat.STATUS_EXCLUIDO].includes(status)) {
+                    if ([andamentoRegistroPvOat.STATUS_FINALIZADO, andamentoRegistroPvOat.STATUS_EXCLUIDO].includes(status)) {
+                        // Fecha o formulário
                         closeDialog();
-                    } // Se for cancelado ou liquidado, recarrega o registro
+                    } else if ([andamentoRegistroPvOat.STATUS_CANCELADO].includes(status)) {
+                        // Recarrega o registro
+                        reload();
+                    }
                     defaultSuccess(msgDone);
                 });
             },
@@ -337,13 +341,10 @@ const statusRecord = async (status) => {
 const imprimirOat = async () => {
     defaultSuccess('Por favor aguarde...');
     const url = `${baseApiUrl}/printing/oat/`;
-    await axios.post(url, { idOat: itemData.value.id, encoding: 'base64' }).then((res) => {
+    await axios.post(url, { idOat: itemData.value.id, encoding: 'base64', exportType: 'pdf' }).then((res) => {
         const body = res.data;
         let pdfWindow = window.open('');
-        pdfWindow.document.write(
-            `<iframe width='100%' height='100%' src='data:application/pdf;base64, 
-            ${encodeURI(body)} '></iframe>`
-        );
+        pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
     });
 };
 // Fchar formulário
@@ -493,7 +494,7 @@ onMounted(() => {
                             class="w-full mb-3"
                             :icon="`fa-solid fa-print fa-shake'`"
                             style="color: #1d067a"
-                            :disabled="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_FINALIZADO"
+                            :disabled="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_EXCLUIDO"
                             text
                             raised
                             @click="imprimirOat()"

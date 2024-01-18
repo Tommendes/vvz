@@ -15,6 +15,7 @@
         "chart.js": "3.3.2",
         "cpf-cnpj-validator": "^1.0.3",
         "date-fns": "^2.30.0",
+        "file-saver": "^2.0.5",
         "html2canvas": "^1.4.1",
         "html2pdf.js": "^0.10.1",
         "ipify2": "^1.1.3",
