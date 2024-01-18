@@ -114,6 +114,7 @@ module.exports = app => {
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(documento) + 1 AS documento'))
                         .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
                     body.documento = nextDocumentNr.documento || '1'
+                    body.documento = body.documento.toString().padStart(8, '0')
                     // Informa o id do registro pai
                     const idPai = body.id
                     // Limpa os dados do corpo da solicitação
@@ -644,7 +645,7 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
             const biRows = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`tbl1.id,upl.url url_logo,replace(pp.descricao,'_',' ') representacao,tbl1.documento,ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
+                .select(app.db.raw(`tbl1.id,upl.url url_logo,replace(pp.descricao,'_',' ') representacao,lpad(tbl1.documento,8,'0'),ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
