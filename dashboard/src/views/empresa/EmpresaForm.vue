@@ -125,9 +125,19 @@ const validateRazaoSocial = () => {
 };
 // Validar CPF
 const validateCPFCNPJ = () => {
-    const toValidate = masks.value.cpf_cnpj_empresa.unmasked(itemData.value.cpf_cnpj_empresa);
-    if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) errorMessages.value.cpf_cnpj_empresa = null;
-    else errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
+    const inputValue = itemData.value.cpf_cnpj_empresa || '';
+    
+    if (inputValue.trim().length > 0) {
+        const toValidate = masks.value.cpf_cnpj_empresa.unmasked(inputValue);
+        if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) {
+            errorMessages.value.cpf_cnpj_empresa = null;
+        } else {
+            errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ informado é inválido';
+        }
+    } else {
+        errorMessages.value.cpf_cnpj_empresa = 'CPF/CNPJ não pode estar vazio';
+    }
+
     return !errorMessages.value.cpf_cnpj_empresa;
 };
 // Validar Cep
