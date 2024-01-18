@@ -238,7 +238,7 @@ onBeforeMount(() => {
         </router-link>
 
         <button class="p-link layout-menu-button layout-topbar-button" @click="onMenuToggle()">
-            <i class="pi pi-bars"></i>
+            <i class="fa-solid fa-bars fa-lg"></i>
         </button>
 
         <button class="p-link layout-topbar-menu-button layout-topbar-button" @click="onTopBarMenuButton()">
@@ -262,7 +262,7 @@ onBeforeMount(() => {
             </Button>
             <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
             <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
-                <i class="pi pi-user"></i>
+                <i class="fa-regular fa-user"></i>
                 <span>Perfil</span>
             </Button>
             <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />

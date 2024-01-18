@@ -33,7 +33,9 @@ const userData = JSON.parse(json);
 import { cpf, cnpj } from 'cpf-cnpj-validator';
 
 // Campos de formulário
-const itemData = ref({});
+const itemData = ref({
+    id_params_p_nascto: 4
+});
 const labels = ref({
     pfpj: 'pf',
     nome: 'Nome',

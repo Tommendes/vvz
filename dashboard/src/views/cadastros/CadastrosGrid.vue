@@ -145,6 +145,9 @@ const loadLazyData = () => {
                     // Exibe dado com máscara
                     if (element.cpf_cnpj && element.cpf_cnpj.length == 11) element.cpf_cnpj = masks.value.cpf.masked(element.cpf_cnpj);
                     else if (element.cpf_cnpj && element.cpf_cnpj.length == 14) element.cpf_cnpj = masks.value.cnpj.masked(element.cpf_cnpj);
+                    // Tratamento para resultados nulos
+                    if(element.aniversario == null) element.aniversario = '';
+                    if(element.telefone == null) element.telefone = '';
                     // Converte data en para pt
                     if (element.aniversario) element.aniversario = moment(element.aniversario).format('DD/MM/YYYY');
                     if (element.email) element.email = renderizarHTML(element.email);

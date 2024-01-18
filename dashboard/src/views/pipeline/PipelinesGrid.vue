@@ -133,6 +133,13 @@ const clearFilter = () => {
     };
     loadLazyData();
 };
+//Scrool quando criar um Novo Registro
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+};
 // Carrega os dados do grid
 const loadLazyData = () => {
     loading.value = true;
@@ -376,7 +383,7 @@ onMounted(() => {
                     />
                     <Button icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />
                     <Button type="button" icon="fa-solid fa-angles-up" @click="collapseAll()" v-if="expanded" />
                     <Button type="button" icon="fa-solid fa-angles-down" @click="expandAll()" v-else />
                 </div>
