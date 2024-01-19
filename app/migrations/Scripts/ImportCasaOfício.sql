@@ -1,5 +1,5 @@
 /*Recriar tabelas*/
-DELETE FROM vivazul_api.knex_migrations WHERE id > 11;
+DELETE FROM vivazul_api.knex_migrations WHERE id > 12;
 ALTER TABLE vivazul_api.knex_migrations AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=0; 
 DROP TABLE IF EXISTS vivazul_bceaa5.cad_contatos; 
@@ -35,8 +35,21 @@ TRUNCATE TABLE vivazul_bceaa5.long_params;
 TRUNCATE TABLE vivazul_api.uploads;
 SET FOREIGN_KEY_CHECKS=1; 
 
-/* Rodar a API para criação das tabelas */
+/* 
 
+
+Rodar a API para criação das tabelas 
+
+
+*/
+
+/*Adiciona o ftp_control 1 de CasaOficio*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_api.ftp_control;
+ALTER TABLE vivazul_api.ftp_control AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_api.ftp_control (evento, created_at, updated_at, STATUS, schema_id, descricao, HOST, USER, pass) VALUES ('1', NOW(), NULL, '10', 1, 'Host base', 'ftp.tommendes.com.br', 'vivazul-ftp@encurte.me', 'S3+@lguém+s0ub3r...'); 
+  
 /*Importar usuários*/
 -- ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
@@ -201,6 +214,13 @@ DELETE FROM vivazul_bceaa5.pipeline_ftp;
 ALTER TABLE vivazul_bceaa5.pipeline_ftp AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_bceaa5.pipeline_ftp (evento, created_at, updated_at, STATUS, descricao, HOST, USER, pass) VALUES ('1', NOW(), NULL, '10', 'gnt', 'gnt.casaoficio.com.br', 'lynkos', 'a5a54dcd93'); 
+
+/*Adiciona o ftp_control 1 de CasaOficio*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_api.ftp_control;
+ALTER TABLE vivazul_api.ftp_control AUTO_INCREMENT=0;
+SET FOREIGN_KEY_CHECKS=1; 
+INSERT INTO vivazul_api.ftp_control (evento, created_at, updated_at, STATUS, schema_id, descricao, HOST, USER, pass) VALUES ('1', NOW(), NULL, '10', 1, 'Host base', 'ftp.tommendes.com.br', 'vivazul-ftp@encurte.me', 'S3+@lguém+s0ub3r...'); 
   
 /*Importa os documentos(ged_params x pipeline_params)*/
 ALTER TABLE vivazul_bceaa5.pipeline_params ADD COLUMN old_id INT(10) UNSIGNED;
