@@ -17,7 +17,16 @@ const masks = ref({
     }),
     telefone: new Mask({
         mask: ['(##) ####-####', '(##) #####-####']
-    })
+    }),
+    cep: new Mask({
+        mask: '##.###-###'
+    }),
+    rg: new Mask({
+        mask: '##.###.###-#',
+    }),
+    ie: new Mask({
+        mask: '##.###.###-###',
+    }),
 });
 
 import { useRoute, useRouter } from 'vue-router';
@@ -132,14 +141,65 @@ const saveData = async () => {
 };
 // Converte 1 ou 0 para boolean
 const isTrue = (value) => value === 1;
+// Preencher campos de endereço com base no CEP
+const buscarCEP = async () => {
+  const cep = itemData.value.cep.replace(/[^0-9]/g, '');
+
+  if (cep !== '') {
+    try {
+      // Limpar os campos enquanto aguarda a resposta
+      itemData.value.logradouro = '...';
+      itemData.value.bairro = '...';
+      itemData.value.cidade = '...';
+      itemData.value.uf = '...';
+      itemData.value.ibge = '...';
+
+      const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+
+      if (!response.data.erro) {
+        // Atualizar os campos com os valores da consulta.
+        itemData.value.logradouro = response.data.logradouro;
+        itemData.value.bairro = response.data.bairro;
+        itemData.value.cidade = response.data.localidade;
+        itemData.value.uf = response.data.uf;
+        itemData.value.ibge = response.data.ibge;
+      } else {
+        // CEP pesquisado não foi encontrado.
+        limparFormularioCEP();
+        defaultWarn('CEP não encontrado.');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar informações do CEP', error);
+      limparFormularioCEP();
+      defaultWarn('Erro ao buscar informações do CEP');
+    }
+  } else {
+    // CEP sem valor, limpar formulário.
+    limparFormularioCEP();
+  }
+};
+const limparFormularioCEP = () => {
+  itemData.value.logradouro = '';
+  itemData.value.bairro = '';
+  itemData.value.cidade = '';
+  itemData.value.uf = '';
+};
 // Validar CPF
 const validateCPF = () => {
-    errorMessages.value.cpf_cnpj = null;
-    if (cpf.isValid(itemData.value.cpf_cnpj) || cnpj.isValid(itemData.value.cpf_cnpj)) return true;
-    else {
-        errorMessages.value.cpf_cnpj = 'CPF/CNPJ informado é inválido';
-        return false;
+    const inputValue = itemData.value.cpf_cnpj || '';
+    
+    if (inputValue.trim().length > 0) {
+        const toValidate = masks.value.cpf_cnpj.unmasked(inputValue);
+        if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) {
+            errorMessages.value.cpf_cnpj = null;
+        } else {
+            errorMessages.value.cpf_cnpj = 'CPF/CNPJ informado é inválido';
+        }
+    } else {
+        errorMessages.value.cpf_cnpj = 'CPF/CNPJ não pode estar vazio';
     }
+
+    return !errorMessages.value.cpf_cnpj;
 };
 // Validar email
 const validateEmail = () => {
@@ -159,17 +219,27 @@ const validateTelefone = () => {
     }
     return true;
 };
-
 // Validar data cep
 const validateCep = () => {
     errorMessages.value.cep = null;
+    const inputValue = itemData.value.cep || '';
+
     // Testa o formato do cep
-    if (itemData.value.cep && itemData.value.cep.length > 0 && !masks.value.cep.completed(itemData.value.cep)) {
-        errorMessages.value.cep = 'Formato de cep inválido';
+    if (inputValue.trim().length > 0) {
+        const unmaskedCep = masks.value.cep.unmasked(inputValue);
+        // Verifica se o CEP desmascarado possui o comprimento esperado
+        if (unmaskedCep.length !== 8) {
+            errorMessages.value.cep = 'Formato de cep inválido';
+            return false;
+        }
+    } else {
+        errorMessages.value.cep = 'CEP não pode estar vazio';
         return false;
     }
+
     return true;
 };
+
 // Validar formulário
 const formIsValid = () => {
     return validateCPF() && validateEmail() && validateTelefone();
@@ -386,7 +456,7 @@ watchEffect(() => {
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" />
+                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" @blur="buscarCEP" />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
