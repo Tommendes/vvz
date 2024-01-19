@@ -645,7 +645,7 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
             const biRows = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`tbl1.id,CONCAT(u.url_destination, '/', u.url_path, '/', u.filename, '.', u.extension) AS url_logo,replace(pp.descricao,'_',' ') representacao,lpad(tbl1.documento,8,'0'),ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
+                .select(app.db.raw(`tbl1.id,CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.filename, '.', upl.extension) AS url_logo,replace(pp.descricao,'_',' ') representacao,lpad(tbl1.documento,8,'0'),ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
