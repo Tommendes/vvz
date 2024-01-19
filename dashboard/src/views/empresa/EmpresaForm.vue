@@ -59,10 +59,6 @@ const loading = ref({
     email: null,
     telefone: null
 });
-// Props do template
-const props = defineProps({
-    mode: String
-});
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
