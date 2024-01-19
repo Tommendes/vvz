@@ -66,7 +66,7 @@ onBeforeMount(() => {
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
                             <i class="pi pi-map mr-2"></i>
-                            <span>Endereços</span>
+                            <span>Endereços Adicionais</span>
                         </template>
                         <EnderecosGrid v-if="itemData.id" :itemDataRoot="itemData" />
                     </TabPanel>

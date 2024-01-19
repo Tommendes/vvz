@@ -25,30 +25,43 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
+
             existsOrError(body.cpf_cnpj, 'CNPJ ou CPF não informado')
             if (body.cpf_cnpj && body.cpf_cnpj.length == 11) cpfOrError(body.cpf_cnpj)
             else if (body.cpf_cnpj && body.cpf_cnpj.length == 14) cnpjOrError(body.cpf_cnpj)
             else throw 'Documento (CNPJ ou CPF) inválido. Favor verificar'
-            if (body.tipo_cadastro == 0 && !body.rg_isento) {
-                existsOrError(body.rg_ie, 'Rg não informado')
-            }
-            delete body.rg_isento
-            existsOrError(body.nome, 'Nome não informado')
-            existsOrError(body.aniversario, 'Data de Fundação/Nascimento não informado')
-            const dtNascto = moment(body.aniversario);
-            if (!dtNascto.isValid()) throw 'Data de Fundação/Nascimento inválida. Favor verificar'
-
-            existsOrError(body.id_params_tipo, 'Tipo de registro não informado')
-            existsOrError(body.id_params_atuacao, 'Área de atuação não informada')
-            // existsOrError(body.qualificacao, 'Qualificação não informada')
-
             if (body.cpf_cnpj) {
                 const dataFromDB = await app.db(tabelaDomain)
                     .where({ cpf_cnpj: body.cpf_cnpj })
                     .andWhere(app.db.raw(body.id ? (`id != '${body.id}'`) : '1=1'))
                     .first()
-                notExistsOrError(dataFromDB, 'Combinação de CNPJ/ CPF já cadastrado')
+                notExistsOrError(dataFromDB, `Combinação de CNPJ/ CPF já cadastrado`)
             }
+
+            existsOrError(body.nome, 'Nome não informado')
+            
+            existsOrError(body.id_params_tipo, 'Tipo de registro não informado')
+            
+            if (!body.prospecto) {
+                // Campos exigidos caso não seja prospecto                
+                existsOrError(body.aniversario, 'Data de Fundação/Nascimento não informado')
+                const dtNascto = moment(body.aniversario);
+                if (!dtNascto.isValid()) throw 'Data de Fundação/Nascimento inválida. Favor verificar'
+                existsOrError(body.id_params_p_nascto,  'País de origem não informado')
+                existsOrError(body.id_params_atuacao, 'Área de atuação não informada')
+                existsOrError(body.telefone, 'Telefone não informado')
+                existsOrError(body.email, 'E-mail não informado')
+                
+                existsOrError(body.id_params_tipo, 'Tipo do endereço não informado')
+                existsOrError(body.cep, 'CEP não informado')
+                if (body.cep.length != 8) throw "CEP inválido"
+                existsOrError(body.nr, 'Número não informado')
+                existsOrError(body.logradouro, 'Logradouro não informado')
+                existsOrError(body.bairro, 'Bairro não informado')
+                existsOrError(body.cidade, 'Cidade não informada')
+                existsOrError(body.uf, 'Estado não informado')
+            }
+
         } catch (error) {
             console.log(error);
             return res.status(400).send(error)

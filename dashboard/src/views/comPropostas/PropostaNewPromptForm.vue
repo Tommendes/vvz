@@ -28,29 +28,29 @@ const masks = ref({
 });
 // Validar contato
 const validateContato = () => {
+    errorMessages.value.pessoa_contato = null;
     if (!itemData.value.pessoa_contato) {
         errorMessages.value.pessoa_contato = 'Informe um nome de contato';
         return false;
     }
-    delete errorMessages.value.pessoa_contato;
     return true;
 };
 // Validar telefone
 const validateTelefone = () => {
+    errorMessages.value.telefone_contato = null;
     if (itemData.value.telefone_contato && itemData.value.telefone_contato.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone_contato).length)) {
         errorMessages.value.telefone_contato = 'Formato de telefone inválido';
         return false;
     }
-    delete errorMessages.value.telefone_contato;
     return true;
 };
 // Validar email
 const validateEmail = () => {
+    errorMessages.value.email_contato = null;
     if (itemData.value.email_contato && itemData.value.email_contato.trim().length > 0 && !isValidEmail(itemData.value.email_contato)) {
         errorMessages.value.email_contato = 'Formato de email inválido';
         return false;
     }
-    delete errorMessages.value.email_contato;
     return true;
 };
 
@@ -61,13 +61,16 @@ const userData = JSON.parse(json);
 
 const saveData = async () => {
     const isFormValid = validateContato() && itemData.value.pessoa_contato.trim().length && validateTelefone() && validateEmail();
-    if (!isFormValid) defaultWarn('Por favor, invorme um nome de contato, um telefone e um email válidos');
+    if (!isFormValid) {
+        defaultWarn('Por favor, invorme um nome de contato, um telefone e um email válidos');
+        return;
+    }
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
-    if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
-    if (!isFormValid) return;
-    await axios[method](url, itemData.value)
+    const obj = { ...itemData.value };
+    if (obj.telefone_contato) obj.telefone_contato = masks.value.telefone.unmasked(obj.telefone_contato);
+    await axios[method](url, obj)
         .then(async (res) => {
             const body = res.data;
             if (body && body.id) {

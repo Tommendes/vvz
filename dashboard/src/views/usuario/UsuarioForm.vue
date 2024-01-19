@@ -77,47 +77,56 @@ const loadData = async () => {
 };
 // Salvar dados do formulário
 const saveData = async () => {
-    if (formIsValid()) {
-        const method = itemData.value.id ? 'put' : 'post';
-        const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`;
-        if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.unmasked(itemData.value.cpf);
-        axios[method](url, itemData.value)
-            .then((res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    defaultSuccess('Registro salvo com sucesso');
-                    itemData.value = body;
-                    if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
-                    mode.value = 'view';
-                } else {
-                    defaultWarn('Erro ao salvar registro');
-                }
-            })
-            .catch((err) => {
-                defaultWarn(err.response.data);
-            });
+    if (!formIsValid()) {
+        defaultWarn('Verifique os campos obrigatórios');
+        return;
     }
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`;
+    if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.unmasked(itemData.value.cpf);
+    axios[method](url, itemData.value)
+        .then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro salvo com sucesso');
+                itemData.value = body;
+                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
+                mode.value = 'view';
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((err) => {
+            defaultWarn(err.response.data);
+        });
 };
 // Validar CPF
 const validateCPF = () => {
-    if (cpf.isValid(itemData.value.cpf) || cnpj.isValid(itemData.value.cpf)) errorMessages.value.cpf = null;
-    else errorMessages.value.cpf = 'CPF/CNPJ informado é inválido';
-    return !errorMessages.value.cpf;
+    errorMessages.value.cpf = null;
+    if (cpf.isValid(itemData.value.cpf) || cnpj.isValid(itemData.value.cpf)) return true;
+    else {
+        errorMessages.value.cpf = 'CPF/CNPJ informado é inválido';
+        return false;
+    }
 };
 // Validar telefone
 const validateTelefone = () => {
+    errorMessages.value.telefone = null;
     if (itemData.value.telefone && itemData.value.telefone.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone).length)) {
         errorMessages.value.telefone = 'Formato de telefone inválido';
-    } else errorMessages.value.telefone = null;
-    return !errorMessages.value.telefone;
+        return false;
+    }
+    return true;
 };
 // Validar email
 const validateEmail = () => {
+    errorMessages.value.email = null;
     if (itemData.value.email && itemData.value.email.trim().length > 0 && !isValidEmail(itemData.value.email)) {
         errorMessages.value.email = 'Formato de email inválido';
-    } else errorMessages.value.email = null;
-    return !errorMessages.value.email;
+        return false;
+    }
+    return true;
 };
 // Validar formulário
 const formIsValid = () => {
@@ -185,7 +194,7 @@ watchEffect(() => {});
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>

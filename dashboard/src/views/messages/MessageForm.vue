@@ -65,28 +65,30 @@ const loadData = async () => {
 };
 // Salvar dados do formulário
 const saveData = async () => {
-    if (formIsValid()) {
-        const method = itemData.value.id ? 'put' : 'post';
-        const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`; 
-        if (itemData.value.valid_from) itemData.value.valid_from = moment(itemData.value.valid_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
-        if (itemData.value.valid_to) itemData.value.valid_to = moment(itemData.value.valid_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
-        await axios[method](url, itemData.value)
-            .then((res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    defaultSuccess('Registro salvo com sucesso');
-                    itemData.value = body;
-                    if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/message/${itemData.value.id}` });
-                    mode.value = 'view';
-                } else {
-                    defaultWarn('Erro ao salvar registro');
-                }
-            })
-            .catch((err) => {
-                defaultWarn(err.response.data);
-            });
+    if (!formIsValid()) {
+        defaultWarn('Verifique os campos obrigatórios');
+        return;
     }
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`; 
+    if (itemData.value.valid_from) itemData.value.valid_from = moment(itemData.value.valid_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    if (itemData.value.valid_to) itemData.value.valid_to = moment(itemData.value.valid_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    await axios[method](url, itemData.value)
+        .then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro salvo com sucesso');
+                itemData.value = body;
+                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/message/${itemData.value.id}` });
+                mode.value = 'view';
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((err) => {
+            defaultWarn(err.response.data);
+        });
 };
 // DropDowns
 const dropdownStatusUser = ref([
@@ -115,19 +117,22 @@ const validateDateFrom = () => {
         // Testa o formato da data
         if (!masks.value.date.completed(itemData.value.valid_from)) {
             errorMessages.value.valid_from = 'Formato de data inválido';
+            return false;
         } else {
             // Verifica se a data é válida
             const momentDate = moment(itemData.value.valid_from, 'DD/MM/YYYY', true);
             if (!momentDate.isValid()) {
                 errorMessages.value.valid_from = 'Data inválida';
+                return false;
             }
         }
     } else {
         // Se o campo estiver vazio, a data será inválida
         errorMessages.value.valid_from = 'Campo obrigatório';
+        return false;
     }
-
-    return !errorMessages.value.valid_from;
+    
+    return true;
 };
 const validateDateTo = () => {
     errorMessages.value.valid_to = null;
@@ -136,15 +141,17 @@ const validateDateTo = () => {
         // Testa o formato da data
         if (!masks.value.date.completed(itemData.value.valid_to)) {
             errorMessages.value.valid_to = 'Formato de data inválido';
+            return false;
         } else {
             // Verifica se a data é válida
             const momentDate = moment(itemData.value.valid_to, 'DD/MM/YYYY', true);
             if (!momentDate.isValid()) {
                 errorMessages.value.valid_to = 'Data inválida';
+                return false;
             }
         }
     }
-    return !errorMessages.value.valid_to;
+    return true;
 };
 // Validar formulário
 const formIsValid = () => {

@@ -43,31 +43,33 @@ const loadData = async () => {
     loading.value = false;
 };
 const saveData = async () => {
-    if (formIsValid()) {
-        const method = itemData.value.id ? 'put' : 'post';
-        const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`;
-        if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
-        axios[method](url, itemData.value)
-            .then(async (res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    defaultSuccess('Registro salvo com sucesso');
-                    emit('changed');
-                } else {
-                    defaultWarn('Erro ao salvar registro');
-                }
-            })
-            .catch((error) => {
-                if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else if (typeof error.response == 'string') defaultWarn(error.response);
-                else if (typeof error == 'string') defaultWarn(error);
-                else {
-                    console.log(error);
-                    defaultWarn('Erro ao carregar dados!');
-                }
-            });
+    if (!formIsValid()) {
+        defaultWarn('Verifique os campos obrigatórios');
+        return;
     }
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`;
+    if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
+    axios[method](url, itemData.value)
+        .then(async (res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro salvo com sucesso');
+                emit('changed');
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((error) => {
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
+        });
 };
 // DropDown Desconto Ativo
 const dropdownDescontoAtivo = ref([
@@ -76,6 +78,7 @@ const dropdownDescontoAtivo = ref([
 ]);
 // Validar email
 const validateEmail = () => {
+    errorMessages.value.email_contato = null;
     if (itemData.value.email_contato && itemData.value.email_contato.trim().length > 0 && !isValidEmail(itemData.value.email_contato)) {
         errorMessages.value.email_contato = 'Formato de email inválido';
         return false;
@@ -84,6 +87,7 @@ const validateEmail = () => {
 };
 // Validar telefone
 const validateTelefone = () => {
+    errorMessages.value.telefone_contato = null;
     if (itemData.value.telefone_contato && itemData.value.telefone_contato.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone_contato).length)) {
         errorMessages.value.telefone_contato = 'Formato de telefone inválido';
         return false;
@@ -114,7 +118,7 @@ const dropdownFormaPagto = ref([]);
 const dropdownValidade = ref([]);
 const loadOptions = async () => {
     setTimeout(async () => {
-    // Prazo de entrega da proposta
+        // Prazo de entrega da proposta
         await optionLocalParams({ field: 'grupo', value: 'com_pr05', select: 'id,parametro' }).then((res) => {
             res.data.data.map((item) => {
                 dropdownPrazo.value.push({ value: item.id, label: item.parametro });
@@ -143,8 +147,7 @@ onBeforeMount(async () => {
     loadData();
 });
 // Observar alterações nos dados do formulário
-watchEffect(() => {
-});
+watchEffect(() => {});
 </script>
 
 <template>
@@ -235,7 +238,7 @@ watchEffect(() => {
             <div class="col-12">
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                 </div>
             </div>

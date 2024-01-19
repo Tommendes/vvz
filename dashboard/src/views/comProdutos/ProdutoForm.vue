@@ -102,35 +102,37 @@ const loadDataProdTabelas = async () => {
 };
 // Salvar dados do formulário
 const saveData = async () => {
-    if (formIsValid()) {
-        const method = itemData.value.id ? 'put' : 'post';
-        const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`;
-        // Se o tipo for serviço, limpa os campos ncm e cean
-        if (itemData.value.produto == 0) {
-            itemData.value.ncm = null;
-            itemData.value.cean = null;
-        }
-        axios[method](url, itemData.value)
-            .then(async (res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    reload();
-                    emit('changed');
-                } else {
-                    defaultWarn('Erro ao salvar registro');
-                }
-            })
-            .catch((error) => {
-                if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else if (typeof error.response == 'string') defaultWarn(error.response);
-                else if (typeof error == 'string') defaultWarn(error);
-                else {
-                    console.log(error);
-                    defaultWarn('Erro ao carregar dados!');
-                }
-            });
+    if (!formIsValid()) {
+        defaultWarn('Verifique os campos obrigatórios');
+        return;
     }
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`;
+    // Se o tipo for serviço, limpa os campos ncm e cean
+    if (itemData.value.produto == 0) {
+        itemData.value.ncm = null;
+        itemData.value.cean = null;
+    }
+    axios[method](url, itemData.value)
+        .then(async (res) => {
+            const body = res.data;
+            if (body && body.id) {
+                reload();
+                emit('changed');
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((error) => {
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
+        });
 };
 // Validar formulário
 const formIsValid = () => {
@@ -526,7 +528,7 @@ watch(selectedCadastro, (value) => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>

@@ -25,9 +25,9 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
+            existsOrError(body.id_params_tipo, 'Tipo do contato não informado')
             existsOrError(body.pessoa, 'Pessoa não informado')
             existsOrError(body.meio, 'Meio não informada')
-            existsOrError(body.id_params_tipo, 'Tipo do contato não informado')
         } catch (error) {
             return res.status(400).send(error)
         }

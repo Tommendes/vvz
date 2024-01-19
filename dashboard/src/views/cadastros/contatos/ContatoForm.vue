@@ -29,17 +29,21 @@ const masks = ref({
 });
 // Validar e-mail
 const validateEmail = () => {
+    errorMessages.value.meio = null;
     if (itemData.value.meio && !isValidEmail(itemData.value.meio)) {
         errorMessages.value.meio = 'Formato de e-mail inválido';
-    } else errorMessages.value.meio = null;
-    return !errorMessages.value.meio;
+        return false;
+    }
+    return true;
 };
 // Validar telefone
 const validateTelefone = () => {
+    errorMessages.value.meio = null;
     if (itemData.value.meio && itemData.value.meio.length > 0 && ![10, 11].includes(itemData.value.meio.replace(/([^\d])+/gim, '').length)) {
         errorMessages.value.meio = `Formato de ${getDropdownLabel(itemData.value.id_params_tipo)} inválido`;
-    } else errorMessages.value.meio = null;
-    return !errorMessages.value.meio;
+        return false;
+    }
+    return true;
 };
 // Validar formulário
 const formIsValid = () => {
@@ -48,8 +52,8 @@ const formIsValid = () => {
     let label = getDropdownLabel(itemData.value.id_params_tipo);
     if (label) label = label.toString().toLowerCase();
     if (label == 'e-mail') return validateEmail();
-    else if (label == 'telefone' || label == 'celular') return validateTelefone();
-    else return true;
+    if (label == 'telefone' || label == 'celular') return validateTelefone();
+    return true;
 };
 const getDropdownLabel = (value) => {
     if (!value) return undefined;
@@ -68,41 +72,32 @@ const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
 const loadData = async () => {
     setTimeout(async () => {
         if (itemData && itemData.id) {
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        await axios.get(url).then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                itemData.value = body;
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.schema_description}/cadastros` });
-            }
-        });
-    }
+            const url = `${urlBase.value}/${itemData.value.id}`;
+            await axios.get(url).then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    itemData.value = body;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                }
+            });
+        }
     }, Math.random() * 1000);
 };
-// const loadData = async () => {
-//     if (itemData && itemData.id) {
-//         const url = `${urlBase.value}/${itemData.value.id}`;
-//         await axios.get(url).then((res) => {
-//             const body = res.data;
-//             if (body && body.id) {
-//                 body.id = String(body.id);
-//                 itemData.value = body;
-//             } else {
-//                 defaultWarn('Registro não localizado');
-//                 router.push({ path: `/${userData.schema_description}/cadastros` });
-//             }
-//         });
-//     }
-// };
 // Salvar dados do formulário
 const saveData = async () => {
+    // Se o formulário não for válido, não salva
+    if (!formIsValid()) {
+        defaultWarn('Verifique os campos obrigatórios');
+        return;
+    }
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
-    axios[method](url, itemData.value)
+    const obj = { ...itemData.value };
+    axios[method](url, obj)
         .then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -179,7 +174,7 @@ onBeforeMount(() => {
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode = 'view'" />
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">

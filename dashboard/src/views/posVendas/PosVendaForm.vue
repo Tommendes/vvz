@@ -104,26 +104,28 @@ const loadData = async () => {
 };
 // Salvar dados do formulário
 const saveData = async () => {
-    if (formIsValid()) {
-        const method = itemData.value.id ? 'put' : 'post';
-        const id = itemData.value.id ? `/${itemData.value.id}` : '';
-        const url = `${urlBase.value}${id}`;
-        const preparedBody = {
-            ...itemData.value,
-            status_pv_force: andamentoRegistroPv.STATUS_PENDENTE
-        };
-        axios[method](url, preparedBody)
-            .then(async (res) => {
-                const body = res.data;
-                defaultSuccess('Registro salvo com sucesso');
-                if (mode.value == 'new') window.location.href = `#/${userData.schema_description}/pos-venda/${body.id}`;
-                else reload();
-            })
-            .catch((error) => {
-                console.log(error);
-                defaultWarn('Erro ao carregar dados!');
-            });
+    if (!formIsValid()) {
+        defaultWarn('Verifique os campos obrigatórios');
+        return;
     }
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`;
+    const preparedBody = {
+        ...itemData.value,
+        status_pv_force: andamentoRegistroPv.STATUS_PENDENTE
+    };
+    axios[method](url, preparedBody)
+        .then(async (res) => {
+            const body = res.data;
+            defaultSuccess('Registro salvo com sucesso');
+            if (mode.value == 'new') window.location.href = `#/${userData.schema_description}/pos-venda/${body.id}`;
+            else reload();
+        })
+        .catch((error) => {
+            console.log(error);
+            defaultWarn('Erro ao carregar dados!');
+        });
 };
 /**
  * Autocomplete de cadastros e pipeline
@@ -475,7 +477,7 @@ watch(selectedCadastro, (value) => {
                         </template>
                         <div v-if="mode != 'new' && itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO">
                             <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" :disabled="!formIsValid()" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
                             <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">
@@ -576,7 +578,7 @@ watch(selectedCadastro, (value) => {
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' ? reload() : toGrid()" />
                     </div>
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
