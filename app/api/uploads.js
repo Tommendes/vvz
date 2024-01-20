@@ -440,9 +440,9 @@ module.exports = app => {
                                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
                                     return res.status(500).send('Erro ao enviar arquivo:' + error)
                                 }
-                                setTimeout(() => {
-                                    if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);                                    
-                                }, 3000);
+                                // setTimeout(() => {
+                                //     if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);                                    
+                                // }, 3000);
                             });
                         });
                         // Fechar a conexão após as operações     
