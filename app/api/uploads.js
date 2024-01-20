@@ -409,6 +409,7 @@ module.exports = app => {
                     // Deletar os arquivos enviados
                     files.forEach(file => {
                         const filePath = path.join(__dirname, tempFiles, schemaParam.schema_description, file.originalname);
+                        console.log('filePath', filePath);
                         fs.unlinkSync(filePath);
                     });
                     return res.status(401).send(error)
