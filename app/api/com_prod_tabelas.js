@@ -1,7 +1,6 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, valueOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const { removeFileFromServer } = app.api.uploads
     const tabela = 'com_prod_tabelas'
     const tabelaProdutos = 'com_produtos'
     const tabelaAlias = 'Tabelas dos Produtos'

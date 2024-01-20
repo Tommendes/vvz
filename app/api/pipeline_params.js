@@ -105,13 +105,8 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
-            })
+            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
             .groupBy('tbl1.id')
         ret.then(body => {
@@ -137,19 +132,22 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, uf.url url_rodape, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
+            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo, CONCAT(uplf.url_destination, '/', uplf.url_path, '/', uplf.uid, '_', uplf.filename) AS url_rodape, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            // upl = uploads logo
+            .leftJoin({ upl: tabelaUploadsDomain }, function () {
+                this.on('tbl1.id_uploads_logo', '=', 'upl.id')
+                    .andOn('upl.status', '=', STATUS_ACTIVE)
             })
-            .leftJoin({ uf: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_rodape', '=', 'uf.id')
-                    .andOn('uf.status', '=', STATUS_ACTIVE)
+            // uplf = uploads footer
+            .leftJoin({ uplf: tabelaUploadsDomain }, function () {
+                this.on('tbl1.id_uploads_rodape', '=', 'uplf.id')
+                    .andOn('uplf.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.id': req.params.id })
             .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
             .first()
-            .then(body => {
+            // console.log(ret.toString());
+            ret.then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
             })

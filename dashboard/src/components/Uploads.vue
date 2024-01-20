@@ -205,6 +205,7 @@ onMounted(() => {
         </div>
         <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
             <p>itemData: {{ itemData }}</p>
+            <p>filesData: {{ filesData }}</p>
         </div>
     </div>
 </template>

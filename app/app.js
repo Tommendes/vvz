@@ -6,14 +6,15 @@ const db = require('./config/db')
 const fs = require('fs')
 const path = require('path')
 const logsDir = 'logs'
-const moment = require('moment')
-const assets = path.join(__dirname, "../../public_html/assets/")
+const tempDir = path.join(__dirname, '../', 'temp-files')
 const port = process.env.PORT || 55596
 
-app.use(express.static(assets))
+app.use(express.static(tempDir))
+app.use(express.static(logsDir))
 app.use(cors())
 app.db = db
-app.assets = assets
+app.tempDir = tempDir
+app.logsDir = logsDir
 
 Object.defineProperty(global, '__stack', {
     get: function () {
@@ -57,42 +58,20 @@ consign()
 
 app.listen(port, async () => {
     if (!fs.existsSync(logsDir)) {
-        fs.mkdirSync(path.join(__dirname, logsDir), (err) => {
-            if (err) {
-                app.api.logger.logInfo({ log: { line: `Directory logs create error! Error: ${err}`, sConsole: false } })
-                return console.error(err);
+        fs.mkdirSync(path.join(__dirname, logsDir), (error) => {
+            if (error) {
+                app.api.logger.logError({ log: { line: `Directory logs create error! Error: ${error}`, sConsole: true } })
+                return console.error(error);
             }
         });
         app.api.logger.logInfo({ log: { line: `Directory logs created successfully!`, sConsole: true } })
     }
-    const clientes = await app.db('params')
-        .select('value')
-        .where({ meta: 'clientName', dominio: 'root' })
-        .andWhereNot({ value: 'root' }).then()
-    clientes.forEach(async elementClient => {
-        const dominios = await app.db('params')
-            .select('value')
-            .where({ meta: 'domainName', dominio: elementClient.value }).then()
-        dominios.forEach(elementDomain => {
-            const photosDir = `./assets/images/${elementClient.value}/${elementDomain.value}`
-            // const photosDir = `../frontend/src/assets/images/${elementClient.value}/${elementDomain.value}`
-            if (!fs.existsSync(photosDir)) {
-                fs.mkdirSync(path.join(__dirname, photosDir), { recursive: true }, (err) => {
-                    if (err) {
-                        app.api.logger.logInfo({ log: { line: `Directory photos create error! Error: ${err}`, sConsole: false } })
-                        return console.error(err);
-                    }
-                });
-                app.api.logger.logInfo({ log: { line: `Directory photos created successfully!`, sConsole: true } })
-            }
-        })
-    })
-    const tempDir = path.join(__dirname, 'temp')
+
     if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true }, (err) => {
-            if (err) {
-                app.api.logger.logInfo({ log: { line: `Directory temp create error! Error: ${err}`, sConsole: false } })
-                return console.error(err);
+        fs.mkdirSync(tempDir, { recursive: true }, (error) => {
+            if (error) {
+                app.api.logger.logError({ log: { line: `Directory temp create error! Error: ${error}`, sConsole: true } })
+                return console.error(error);
             }
         });
         app.api.logger.logInfo({ log: { line: `Directory temp created successfully!`, sConsole: true } })

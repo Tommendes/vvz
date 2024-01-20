@@ -42,14 +42,16 @@ const getItem = (data) => {
     router.push({ path: `/${userData.schema_description}/pipeline-param/${data.id}` })
 };
 const loadData = () => {
-    loading.value = true;
-    axios.get(`${urlBase.value}`).then((axiosRes) => {
-        gridData.value = axiosRes.data.data;
-        gridData.value.forEach((element) => {
-            element.descricao = element.descricao.replaceAll('_', ' ');
+    setTimeout(() => {
+        loading.value = true;
+        axios.get(`${urlBase.value}`).then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            gridData.value.forEach((element) => {
+                element.descricao = element.descricao.replaceAll('_', ' ');
+            });
+            loading.value = false;
         });
-        loading.value = false;
-    });
+    }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
 onBeforeMount(() => {

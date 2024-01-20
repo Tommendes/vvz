@@ -1,12 +1,14 @@
-const { log } = require("console")
-const { dbPrefix, uploadsRoot, baseFrontendUrl } = require("../.env")
+const { dbPrefix, tempFiles, baseFilesUrl } = require("../.env")
 const sharp = require('sharp');
+const ftp = require("ftp");
+const path = require("path");
 module.exports = app => {
     const { existsOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'uploads'
     const tabelaAlias = 'Uploads'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+    const clienteFTP = new ftp();
 
     const save = async (req, res) => {
         let user = req.user
@@ -243,7 +245,8 @@ module.exports = app => {
             }
             // Excluir o arquivo do servidor com o endereço contido em rowsUpdated.path
             try {
-                if (await removeFileFromServer(rowsUpdated) != true) throw 'Erro ao excluir arquivo do servidor'
+                const fileRemoved = await removeFileFromServer(req, res)
+                if (fileRemoved != true) throw 'Erro ao excluir arquivo do servidor. Erro: ' + fileRemoved
             } catch (error) {
                 return res.status(500).send(error)
             }
@@ -263,23 +266,47 @@ module.exports = app => {
         }
     }
 
-    const removeFileFromServer = async (rowUpdated) => {
-        // Excluir o arquivo do servidor com o endereço contido em rowsUpdated.path
-        const fs = require('fs');
-        const path = require('path');
-        const { promisify } = require('util');
-        const unlink = promisify(fs.unlink);
+    const removeFileFromServer = async (req, res) => {
         try {
-            // Identificar a existência do arquivo referenciado em rowUpdated.path antes de excluir
-            // Receber o caminho do arquivo a ser excluído ou um objeto contendo uma proprieadade path
-            const pathTo = rowUpdated.path || rowUpdated
-            if (fs.existsSync(pathTo)) {
-                await unlink(pathTo);
-            }
-            return true
+            let user = req.user
+            const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+            const tabelaFtp = `${dbPrefix}_api.ftp_control`
+            const ftpParam = await app.db({ ftp: tabelaFtp })
+                .select('host', 'port', 'user', 'pass', 'ssl')
+                .where({ schema_id: uParams.schema_id }).first()
+            clienteFTP.connect({
+                host: ftpParam.host,
+                port: ftpParam.port,
+                user: ftpParam.user,
+                password: ftpParam.pass,
+            });
+            const tabelaDomain = `${dbPrefix}_api.${tabela}`
+            clienteFTP.on("ready", async () => {
+                const filesToDelete = await app.db(tabelaDomain).where({ status: STATUS_DELETE })
+                filesToDelete.forEach(async (file) => {
+                    // Excluir o arquivo no servidor FTP
+                    const fileToDelete = path.join(file.url_path, file.uid + '_' + file.filename)
+                    clienteFTP.delete(fileToDelete, async (error) => {
+                        if (error) {
+                            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Erro ao excluir arquivo no servidor FTP: ${error}`, sConsole: true } });
+                        } else {
+                            app.api.logger.logInfo({ log: { line: `Arquivo ${fileToDelete} excluído com sucesso!`, sConsole: true } })
+                        }
+                        // Excluir o registro da tabela de uploads no banco de dados após excluir o arquivo no servidor FTP alterando o status para 999
+                        await app.db(tabelaDomain)
+                            .update({ status: 999, updated_at: new Date() })
+                            .where({ id: file.id })
+                    });
+
+                    // Fechar a conexão após as operações
+                    clienteFTP.end();
+                });
+            });
+
+            return true;
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });
-            return false
+            return res.send(error);
         }
     }
 
@@ -327,76 +354,129 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        // Configurando o multer para lidar com o upload de arquivos
-        const destinationPath = path.join(__dirname, uploadsRoot, uParams.schema_description);
-        const storage = multer.diskStorage({
-            destination: function (req, file, cb) {
-                if (!fs.existsSync(destinationPath)) {
-                    fs.mkdirSync(destinationPath, { recursive: true });
-                }
-                cb(null, destinationPath);
-            },
-            filename: function (req, file, cb) {
-                let nomeArquivo = file.originalname;
-                let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
-                let nomeSemExtensao = ultimaPosicaoPonto !== -1 ? nomeArquivo.substring(0, ultimaPosicaoPonto) : nomeArquivo;
 
-                cb(null, nomeSemExtensao + '-' + Date.now() + path.extname(file.originalname));
-            },
-        });
 
-        const upload = multer({ storage: storage }).array('arquivos');
-        upload(req, res, async (error) => {
-            const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-            // Verifica se tem alçada para upload
-            let files = req.files;
-            req.user = uParams;
-            try {
-                isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Upload de arquivos"`)
-            } catch (error) {
-                // Se Não tiver permissão, faça rollback da transação
-                app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                // Deletar os arquivos enviados
-                files.forEach(file => {
-                    const filePath = path.join(destinationPath, file.filename);
-                    fs.unlinkSync(filePath);
-                });
-                return res.status(401).send(error)
-            }
-            if (error) {
-                console.log(error);
-                return res.status(500).send({ message: 'Erro ao enviar arquivos', error });
-            }
-            files.forEach(async (file) => {
-                // Caminho do arquivo original
-                const inputPath = path.join(destinationPath, file.filename);
-                // Caminho do arquivo redimensionado
-                file.filename = `reduced_${file.filename}`;
-                const outputPath = path.join(destinationPath, file.filename);
-                file.path = outputPath;
-                // Atualiza a URL para apontar para a versão redimensionada
-                // remover # de baseFrontendUrl
-                const baseUrlSemHash = baseFrontendUrl.split('#')[0];
-                file.url = `${baseUrlSemHash}assets/files/${uParams.schema_description}/${file.filename}`;
-                // Adicione a propriedade file.label contendo o file.originalname sem a extensão
-                let nomeArquivo = file.originalname;
-                let ultimaPosicaoPonto = nomeArquivo.lastIndexOf(".");
-                let nomeSemExtensao = ultimaPosicaoPonto !== -1 ? nomeArquivo.substring(0, ultimaPosicaoPonto) : nomeArquivo;
-                file.label = nomeSemExtensao;
-                // Da propriedade/valor filename: '?????????-1700489374395.jpg', extraia o valor 1700489374395 e atribua à propriedade file.uid.
-                // Esse valor estará sempre após o último traço (-) do nome do arquivo.
-                let nomeArquivoUid = file.filename.split('-');
-                file.uid = nomeArquivoUid[nomeArquivoUid.length - 1].split('.')[0];
+        const tabelaFtp = `${dbPrefix}_api.ftp_control`
+        const ftpParam = await app.db({ ftp: tabelaFtp })
+            .select('host', 'port', 'user', 'pass', 'ssl')
+            .where({ schema_id: uParams.schema_id }).first()
+        req.ftpParam = ftpParam
+        const tabelaSchema = `${dbPrefix}_api.schemas_control`
+        const schemaParam = await app.db({ sc: tabelaSchema }).where({ id: uParams.schema_id }).first()
+        req.schemaParam = schemaParam
 
-                // Redimensiona a imagem para 250x250
-                await resizeImage(inputPath, outputPath); //, 250, 250
-                // Exclui o arquivo original
-                await removeFileFromServer(inputPath)
+        // ftpParam contém os dados de conexão com o servidor FTP. 
+        // Primeiro verifique se a conexão com o servidor FTP está funcionando
+        // Depois verifique se a pasta do cliente existe no servidor FTP. O nome da pasta é o schema_description
+        // O arquivo recebido deverá ser enviado para o servidor FTP utilizando o multer     
+
+        try {
+            // Verificar se a conexão com o servidor FTP está funcionando
+            clienteFTP.connect({
+                host: ftpParam.host,
+                port: ftpParam.port,
+                user: ftpParam.user,
+                password: ftpParam.pass,
             });
-            req.body = files
-            files = await registerFileInDb(req)
-            return res.status(200).send({ message: 'Arquivos enviados com sucesso', files: files });
-        });
+            req.clienteFTP = clienteFTP
+
+            // Configurando o multer para lidar com o upload de arquivos
+            const destinationPath = path.join(__dirname, tempFiles, schemaParam.schema_description);
+            const storage = multer.diskStorage({
+                destination: function (req, file, cb) {
+                    if (!fs.existsSync(destinationPath)) {
+                        fs.mkdirSync(destinationPath, { recursive: true });
+                    }
+                    cb(null, destinationPath);
+                },
+                filename: function (req, file, cb) {
+                    cb(null, file.originalname);
+                }
+            });
+
+            const upload = multer({ storage: storage }).array('arquivos');
+            upload(req, res, async (error) => {
+                const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+                // Verifica se tem alçada para upload
+                let files = req.files;
+                req.user = uParams;
+                const schemaParam = req.schemaParam
+                try {
+                    isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Upload de arquivos"`)
+                } catch (error) {
+                    // Se Não tiver permissão, faça rollback da transação
+                    app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                    // Deletar os arquivos enviados
+                    files.forEach(file => {
+                        const filePath = path.join(__dirname, tempFiles, schemaParam.schema_description, file.originalname);
+                        fs.unlinkSync(filePath);
+                    });
+                    return res.status(401).send(error)
+                }
+                if (error) {
+                    console.log(error);
+                    return res.status(500).send({ message: 'Erro ao enviar arquivos', error });
+                }
+                files.forEach(async (file) => {
+                    file.uid = Math.floor(Date.now());
+                    file.url_destination = `${baseFilesUrl}`;
+                    file.url_path = schemaParam.schema_description;
+                    file.extension = file.originalname.split('.').pop();
+                    const inputPath = path.join(file.destination, file.originalname);
+
+                    clienteFTP.on("ready", () => {
+                        // Agora que o cliente está pronto, podemos realizar operações FTP
+                        // Garante a pasta do cliente no servidor FTP. O nome da pasta é o schema_description
+                        criarDiretorioRecursivo(schemaParam.schema_description, async () => {
+                            const ftpPath = path.join(schemaParam.schema_description, file.uid + '_' + file.filename);
+                            // Enviar o arquivo após a criação do diretório
+                            clienteFTP.put(inputPath, ftpPath, (erro) => {
+                                if (erro) {
+                                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
+                                    return res.status(500).send('Erro ao enviar arquivo:' + error)
+                                }
+                                setTimeout(() => {
+                                    if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);                                    
+                                }, 3000);
+                            });
+                        });
+                        // Fechar a conexão após as operações     
+                        clienteFTP.end();
+                    })
+                });
+                req.body = files
+                files = await registerFileInDb(req)
+                setTimeout(() => {
+                    return res.status(200).send({ message: 'Arquivo(s) enviado(s) com sucesso', files: files });
+                }, 2000);
+            });
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            if (error.code == 'EHOSTUNREACH') return res.status(500).send(`Servidor de arquivos temporariamente indisponível. Tente novamente ou tente mais tarde`);
+            else return res.status(500).send(error)
+        }
+    }
+
+    function criarDiretorioRecursivo(caminho, callback) {
+        const partes = caminho.split("/");
+        criarProximoDiretorio(0);
+        function criarProximoDiretorio(indice) {
+            if (indice >= partes.length) {
+                // Todos os diretórios criados
+                callback();
+                return;
+            }
+            const diretorioAtual = partes.slice(0, indice + 1).join("/");
+            clienteFTP.mkdir(diretorioAtual, true, (erro) => {
+                if (erro && erro.code !== 550) {
+                    // Código 550 significa que o diretório já existe, outros códigos indicam erros
+                    console.error("Erro ao criar diretório:", diretorioAtual, erro);
+                    callback(erro);
+                    return;
+                }
+                criarProximoDiretorio(indice + 1);
+            });
+        }
     }
 
     const registerFileInDb = async (req) => {
@@ -414,6 +494,9 @@ module.exports = app => {
             }
         })
         await body.forEach(async (element) => {
+            delete element.destination;
+            delete element.path;
+            delete element.fieldname;
             element.evento = nextEventID.count + 1
             element.status = STATUS_ACTIVE
             element.created_at = new Date()
@@ -467,7 +550,6 @@ module.exports = app => {
             const uploadBodyRemove = await app.db(tabelaDomain).where({ id: last[itemData.field] }).first()
             const uploadBodyRemoveBefore = { ...uploadBodyRemove }
             if (uploadBodyRemove && uploadBodyRemove.id) {
-                if (await removeFileFromServer(uploadBodyRemove) != true) throw 'Erro ao excluir arquivo do servidor'
                 uploadBodyRemove.status = STATUS_DELETE
 
                 evento = await createEventUpd({

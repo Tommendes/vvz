@@ -119,10 +119,10 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
+            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .leftJoin({ upl: tabelaUploadsDomain }, function () {
+                this.on('tbl1.id_uploads_logo', '=', 'upl.id')
+                    .andOn('upl.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
@@ -149,10 +149,10 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
+            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .leftJoin({ upl: tabelaUploadsDomain }, function () {
+                this.on('tbl1.id_uploads_logo', '=', 'upl.id')
+                    .andOn('upl.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {

@@ -54,9 +54,8 @@ module.exports = app => {
                 const uploadBodyRemove = await app.db(tabelaUploadsDomain).where({ id: body.id_uploads_imagem }).first()
                 const uploadBodyRemoveBefore = { ...uploadBodyRemove }
                 if (uploadBodyRemove && uploadBodyRemove.id) {
-                    if (await removeFileFromServer(uploadBodyRemove) != true) throw 'Erro ao excluir arquivo do servidor'
                     uploadBodyRemove.status = STATUS_DELETE
-
+                    
                     let evento = await createEventUpd({
                         "notTo": ['created_at', 'updated_at', 'evento'],
                         "last": uploadBodyRemoveBefore,
@@ -71,19 +70,13 @@ module.exports = app => {
                     uploadBodyRemove.updated_at = new Date()
                     uploadBodyRemove.evento = evento
                     await app.db(tabelaUploadsDomain)
-                        .update(uploadBodyRemove)
-                        .where({ id: body.id_uploads_imagem })
-                }
-
-                try {
-                    if (await removeFileFromServer(uploadBodyRemove) != true) throw 'Erro ao excluir arquivo do servidor'
-                    // Remove a referência de upload da tabela
-                    body.id_uploads_imagem = null
-                } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
+                    .update(uploadBodyRemove)
+                    .where({ id: body.id_uploads_imagem })
+                    removeFileFromServer(req)
                 }
             }
+            // Importante só fazer esta alteração depois de excluir a imagem
+            body.id_uploads_imagem = null
 
             evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento',],
@@ -257,10 +250,10 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_imagem', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
+            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .leftJoin({ upl: tabelaUploadsDomain }, function () {
+                this.on('tbl1.id_uploads_imagem', '=', 'upl.id')
+                    .andOn('upl.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {

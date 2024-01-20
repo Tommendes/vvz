@@ -179,6 +179,7 @@ const removeImage = () => {
                 .put(url, itemData.value)
                 .then(() => {
                     reload();
+                    itemData.value.delete_imagem = false;
                     defaultSuccess('Imagem removida com sucesso');
                 })
                 .catch((error) => {

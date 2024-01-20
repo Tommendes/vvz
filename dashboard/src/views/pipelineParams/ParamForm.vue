@@ -1,11 +1,15 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
+
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
+import Uploads from '@/components/Uploads.vue';
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
@@ -51,7 +55,7 @@ const loadData = async () => {
                 }
             });
         }
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
     loading.value = false;
 };
 // Salvar dados do formulário
@@ -79,9 +83,6 @@ const saveData = async () => {
             defaultWarn(err.response.data);
         });
 };
-import { useDialog } from 'primevue/usedialog';
-const dialog = useDialog();
-import Uploads from '@/components/Uploads.vue';
 
 const showUploadForm = () => {
     dialog.open(Uploads, {
@@ -104,7 +105,10 @@ const showUploadForm = () => {
             modal: true
         },
         onClose: () => {
-            reload();
+            setTimeout(() => {
+                defaultSuccess('Por favor aguarde! Recarregando dados...');
+                window.location.reload();
+            }, Math.random() * 1000 + 250);
         }
     });
 };
@@ -129,7 +133,10 @@ const showUploadFooterForm = () => {
             modal: true
         },
         onClose: () => {
-            reload();
+            setTimeout(() => {
+                defaultSuccess('Por favor aguarde! Recarregando dados...');
+                window.location.reload();
+            }, Math.random() * 1000 + 250);
         }
     });
 };
@@ -186,10 +193,10 @@ const formIsValid = () => {
     return true;
 };
 // Recarregar dados do formulário
-const reload = () => {
+const reload = async () => {
     mode.value = 'view';
     errorMessages.value = {};
-    loadData();
+    await loadData();
     emit('cancel');
 };
 // Carregar dados do formulário
@@ -232,6 +239,10 @@ const windowHeight = ref(window.innerHeight);
 window.addEventListener('resize', () => {
     windowWidth.value = window.innerWidth;
     windowHeight.value = window.innerHeight;
+});
+watch(itemData.value, () => {
+    if (!itemData.value.url_logo) itemData.value.url_logo = '/assets/images/DefaultLogomarca.png';
+    if (!itemData.value.url_rodape) itemData.value.url_rodape = '/assets/images/DefaultRodape.png';
 });
 </script>
 <template>
