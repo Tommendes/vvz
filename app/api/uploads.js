@@ -286,6 +286,7 @@ module.exports = app => {
                 filesToDelete.forEach(async (file) => {
                     // Excluir o arquivo no servidor FTP
                     const fileToDelete = path.join(file.url_path, file.uid + '_' + file.filename)
+                    console.log('fileToDelete', fileToDelete);
                     clienteFTP.delete(fileToDelete, async (error) => {
                         if (error) {
                             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Erro ao excluir arquivo no servidor FTP: ${error}`, sConsole: true } });
@@ -382,6 +383,7 @@ module.exports = app => {
 
             // Configurando o multer para lidar com o upload de arquivos
             const destinationPath = path.join(__dirname, tempFiles, schemaParam.schema_description);
+            console.log('destinationPath', destinationPath);
             const storage = multer.diskStorage({
                 destination: function (req, file, cb) {
                     if (!fs.existsSync(destinationPath)) {
