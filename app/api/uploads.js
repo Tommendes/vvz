@@ -423,12 +423,14 @@ module.exports = app => {
                     file.url_path = schemaParam.schema_description;
                     file.extension = file.originalname.split('.').pop();
                     const inputPath = path.join(file.destination, file.originalname);
+                    console.log('inputPath', inputPath);
 
                     clienteFTP.on("ready", () => {
                         // Agora que o cliente está pronto, podemos realizar operações FTP
                         // Garante a pasta do cliente no servidor FTP. O nome da pasta é o schema_description
                         criarDiretorioRecursivo(schemaParam.schema_description, async () => {
                             const ftpPath = path.join(schemaParam.schema_description, file.uid + '_' + file.filename);
+                            console.log('ftpPath', ftpPath);
                             // Enviar o arquivo após a criação do diretório
                             clienteFTP.put(inputPath, ftpPath, (erro) => {
                                 if (erro) {
