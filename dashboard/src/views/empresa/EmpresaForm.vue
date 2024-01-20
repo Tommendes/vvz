@@ -310,7 +310,10 @@ const showUploadForm = () => {
             modal: true
         },
         onClose: () => {
-            reload();
+            setTimeout(() => {
+                defaultSuccess('Por favor aguarde! Atualizando imagem...');
+                window.location.reload();
+            }, 3000);
         }
     });
 };

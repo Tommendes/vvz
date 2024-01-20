@@ -178,9 +178,11 @@ const removeImage = () => {
             axios
                 .put(url, itemData.value)
                 .then(() => {
-                    reload();
                     itemData.value.delete_imagem = false;
                     defaultSuccess('Imagem removida com sucesso');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2500);
                 })
                 .catch((error) => {
                     if (typeof error.response.data == 'string') defaultWarn(error.response.data);
@@ -233,7 +235,10 @@ const showUploadForm = () => {
             modal: true
         },
         onClose: () => {
-            reload();
+            setTimeout(() => {
+                defaultSuccess('Por favor aguarde! Atualizando imagem...');
+                window.location.reload();
+            }, 3000);
         }
     });
 };

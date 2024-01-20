@@ -106,9 +106,9 @@ const showUploadForm = () => {
         },
         onClose: () => {
             setTimeout(() => {
-                defaultSuccess('Por favor aguarde! Recarregando dados...');
+                defaultSuccess('Por favor aguarde! Atualizando imagem...');
                 window.location.reload();
-            }, Math.random() * 1000 + 250);
+            }, 3000);
         }
     });
 };
