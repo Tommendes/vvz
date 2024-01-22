@@ -451,8 +451,8 @@ watchEffect(() => {
 
                     <hr />
                     <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo">Tipo de Endereço<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipoEndereco" placeholder="Selecione..."> </Dropdown>
+                        <label for="id_params_tipo_end">Tipo de Endereço<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <Dropdown id="id_params_tipo_end" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo_end" :options="dropdownTipoEndereco" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
