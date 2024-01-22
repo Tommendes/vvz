@@ -326,8 +326,8 @@ module.exports = app => {
                             }
                             if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
-                            } else if (queryField == 'documento') {
-                                query += `cast(tbl1.documento as unsigned) ${operator} AND `
+                            } else if (queryField == 'documento_p') {
+                                query += `(cast(tbl1.documento as unsigned) ${operator}) AND `
                             } else {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
@@ -370,7 +370,9 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, lpad(tbl1.documento,8,'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
+            (SELECT LPAD(tblO.documento,8,'0') FROM ${tabelaDomain} AS tblO WHERE id = tbl1.id_pai)AS proposta,
+            lpad(tbl1.documento,8,'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
             DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')

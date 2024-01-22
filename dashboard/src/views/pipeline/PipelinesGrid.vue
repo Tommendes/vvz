@@ -90,15 +90,15 @@ const limitNome = 25;
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'documento', label: 'Documento' },
+    { field: 'documento_p', label: 'Proposta/Documento', class: 'text-center' },
     { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '4rem', maxWidth: '4rem' },
-    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '10rem', maxWidth: '10rem' },
+    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '10rem' },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
         label: 'Data',
         type: 'date',
-        minWidth: '8rem',
+        minWidth: '7rem',
         tagged: true
     }
 ]);
@@ -159,6 +159,8 @@ const loadLazyData = () => {
                         element.nome = nome.trim().substr(0, limitNome);
                         if (nome.length > limitNome) element.nome += ' ...';
                     }
+                    if (element.proposta) element.documento_p = `${element.proposta}/${element.documento}`;
+                    else element.documento_p = element.documento;
                     if (element.descricao)
                         element.descricao = element.descricao
                             .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
