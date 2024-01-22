@@ -326,8 +326,10 @@ module.exports = app => {
                             }
                             if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
-                            } else if (queryField == 'documento_p') {
-                                query += `(cast(tbl1.documento as unsigned) ${operator}) AND `
+                            } else if (queryField == 'documento') {
+                                query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
+                            } else if (queryField == 'proposta') {
+                                query += `cast(tbl2.documento as unsigned) ${operator} AND `
                             } else {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
@@ -364,6 +366,7 @@ module.exports = app => {
         let totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
@@ -371,11 +374,11 @@ module.exports = app => {
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
-            (SELECT LPAD(tblO.documento,8,'0') FROM ${tabelaDomain} AS tblO WHERE id = tbl1.id_pai)AS proposta,
-            lpad(tbl1.documento,8,'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+            lpad(tbl2.documento,8,'0') proposta, lpad(tbl1.documento,8,'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
             DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
@@ -383,7 +386,7 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
-        console.log(ret.toString());
+        // console.log(ret.toString());
         ret.then(body => {
             const length = body.length
             return res.json({ data: body, totalRecords: totalRecords.count || length })

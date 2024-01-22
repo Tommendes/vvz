@@ -90,7 +90,8 @@ const limitNome = 25;
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'documento_p', label: 'Proposta/Documento', class: 'text-center' },
+    { field: 'proposta', label: 'Proposta', class: 'text-center' },
+    { field: 'documento', label: 'Documento', class: 'text-center' },
     { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '4rem', maxWidth: '4rem' },
     { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '10rem' },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
@@ -159,8 +160,7 @@ const loadLazyData = () => {
                         element.nome = nome.trim().substr(0, limitNome);
                         if (nome.length > limitNome) element.nome += ' ...';
                     }
-                    if (element.proposta) element.documento_p = `${element.proposta}/${element.documento}`;
-                    else element.documento_p = element.documento;
+                    if (!element.proposta) element.proposta = '';
                     if (element.descricao)
                         element.descricao = element.descricao
                             .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
@@ -437,7 +437,7 @@ onMounted(() => {
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else v-html="nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                        <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>
