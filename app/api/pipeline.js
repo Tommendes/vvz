@@ -14,6 +14,7 @@ module.exports = app => {
     const tabelaCadastros = 'cadastros'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+    const digitsOfAFolder = 6
 
     const save = async (req, res) => {
         let user = req.user
@@ -114,7 +115,7 @@ module.exports = app => {
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(documento) + 1 AS documento'))
                         .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
                     body.documento = nextDocumentNr.documento || '1'
-                    body.documento = body.documento.toString().padStart(8, '0')
+                    body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                     // Informa o id do registro pai
                     const idPai = body.id
                     // Limpa os dados do corpo da solicitação
@@ -187,7 +188,7 @@ module.exports = app => {
                         .where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
                     if (nextDocumentNr.documento == null) body.documento = 1
                     else body.documento = nextDocumentNr.documento + 1
-                    body.documento = body.documento.toString().padStart(8, '0')
+                    body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                 }
 
                 // Variáveis da criação de um registro
@@ -365,6 +366,7 @@ module.exports = app => {
 
         let totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
+            //Localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             //Localizar registros pai
             .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
@@ -377,9 +379,10 @@ module.exports = app => {
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
-            lpad(tbl2.documento,8,'0') proposta, lpad(tbl1.documento,8,'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+            lpad(tbl2.documento,${digitsOfAFolder},'0') proposta, lpad(tbl1.documento,${digitsOfAFolder},'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
             DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            // localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             //Localizar registros pai
             .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
@@ -420,7 +423,7 @@ module.exports = app => {
             .first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
-                body.documento = body.documento.toString().padStart(8, '0')
+                body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                 return res.json(body)
             })
             .catch(error => {
@@ -656,7 +659,7 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
             const biRows = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`tbl1.id,CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo,replace(pp.descricao,'_',' ') representacao,lpad(tbl1.documento,8,'0'),ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
+                .select(app.db.raw(`tbl1.id,CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo,replace(pp.descricao,'_',' ') representacao,lpad(tbl1.documento,${digitsOfAFolder},'0'),ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
@@ -947,7 +950,7 @@ module.exports = app => {
         const ftpParam = await app.db({ ftp: tabelaFtpDomain })
             .select('host', 'port', 'user', 'pass', 'ssl')
             .where({ id: pipelineParam.id_ftp }).first()
-        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento)
+        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
         body.ftp = ftpParam
         body.ftp.path = pathDoc
 

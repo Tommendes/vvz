@@ -90,10 +90,11 @@ const limitNome = 25;
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'proposta', label: 'Proposta', class: 'text-center' },
-    { field: 'documento', label: 'Documento', class: 'text-center' },
+    { field: 'proposta', label: 'Proposta', class: 'text-center', minWidth: '4rem', maxWidth: '4rem' },
+    { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '4rem', maxWidth: '4rem' },
     { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '4rem', maxWidth: '4rem' },
-    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '10rem' },
+    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem' },
+    { field: 'agente', label: 'Agente', minWidth: '5rem', maxWidth: '5rem' },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
