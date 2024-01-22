@@ -329,7 +329,7 @@ module.exports = app => {
                             } else if (queryField == 'documento') {
                                 query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
                             } else if (queryField == 'proposta') {
-                                query += `cast(tbl2.documento as unsigned) ${operator} AND `
+                                query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
                             } else {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
@@ -366,7 +366,10 @@ module.exports = app => {
         let totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            //Localizar registros pai
             .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
+            //Localizar registros filho
+            .leftJoin({ tbl3: tabelaDomain }, 'tbl1.id_filho', '=', 'tbl3.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
@@ -378,7 +381,10 @@ module.exports = app => {
             DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            //Localizar registros pai
             .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
+            //Localizar registros filho
+            .leftJoin({ tbl3: tabelaDomain }, 'tbl1.id_filho', '=', 'tbl3.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
