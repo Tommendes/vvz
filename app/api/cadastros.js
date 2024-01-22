@@ -66,7 +66,7 @@ module.exports = app => {
             console.log(error);
             return res.status(400).send(error)
         }
-        delete body.hash; delete body.tblName
+        delete body.hash; delete body.tblName; delete body.ibge;
         // body.nascimento = moment(body.nascimento).format("DD/MM/YYYY")
         const { changeUpperCase, removeAccentsObj } = app.api.facilities
         body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
