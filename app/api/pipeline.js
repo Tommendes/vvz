@@ -268,7 +268,7 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('tbl1.created_at')
+        let sortField = app.db.raw('date(tbl1.created_at)')
         let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
@@ -280,14 +280,14 @@ module.exports = app => {
                     if (element == 'field') {
                         if (['unidade'].includes(key.split(':')[1])) {
                             query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
-                            sortField = 'tbl1.created_at'
+                            sortField = 'date(tbl1.created_at)'
                             sortOrder = 'DESC'
                         } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
                             query += `pp.descricao = '${value}' AND `
-                            sortField = 'tbl1.created_at'
+                            sortField = 'date(tbl1.created_at)'
                             sortOrder = 'DESC'
                         } else if (['status_created_at'].includes(key.split(':')[1])) {
-                            sortField = 'tbl1.created_at'
+                            sortField = 'date(tbl1.created_at)'
                             value = queryes[key].split(':')
                             let valueI = moment(value[1], 'ddd MMM DD YYYY HH');
                             let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH');
@@ -306,7 +306,7 @@ module.exports = app => {
                                 default: operator = `between "${valueI}" and "${valueF}"`
                                     break;
                             }
-                            query += `tbl1.created_at ${operator} AND `
+                            query += `date(tbl1.created_at) ${operator} AND `
                         } else {
                             if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
                             let queryField = key.split(':')[1]
@@ -346,7 +346,7 @@ module.exports = app => {
                     }
                     if (element == 'sort') {
                         sortField = key.split(':')[1].split('=')[0]
-                        if (sortField == 'status_created_at') sortField = 'tbl1.created_at'
+                        if (sortField == 'status_created_at') sortField = 'date(tbl1.created_at)'
                         sortOrder = queryes[key]
                     }
 
@@ -381,7 +381,7 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
-        // console.log(ret.toString());
+        console.log(ret.toString());
         ret.then(body => {
             const length = body.length
             return res.json({ data: body, totalRecords: totalRecords.count || length })
