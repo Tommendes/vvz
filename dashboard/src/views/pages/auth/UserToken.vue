@@ -87,7 +87,7 @@ const getTokenTime = async () => {
 };
 
 const getNewToken = async () => {
-    const urlTo = `${baseApiUrl}/user-sms-unlock`;
+    const urlTo = `${baseApiUrl}/user-mail-unlock`;
     await axios
         .patch(urlTo, { id: idUser.value })
         .then(async (body) => {
