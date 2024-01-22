@@ -52,7 +52,7 @@ module.exports = app => {
                 existsOrError(body.telefone, 'Telefone não informado')
                 existsOrError(body.email, 'E-mail não informado')
                 
-                existsOrError(body.id_params_tipo, 'Tipo do endereço não informado')
+                existsOrError(body.id_params_tipo_end, 'Tipo do endereço não informado')
                 existsOrError(body.cep, 'CEP não informado')
                 if (body.cep.length != 8) throw "CEP inválido"
                 existsOrError(body.nr, 'Número não informado')
