@@ -18,7 +18,7 @@ module.exports = app => {
         try {
             isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Inclusão de Empresa"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -27,7 +27,7 @@ module.exports = app => {
         try {
             existsOrError(body.schema_description, 'Descrição do esquema não informada')
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 
@@ -69,7 +69,7 @@ module.exports = app => {
                 if (!setNewDb) throw setNewDb
                 return res.send(`Schema and user created with name ${schemaNameAndUser}`);
             }).catch((error) => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)
             })
     }
@@ -78,7 +78,7 @@ module.exports = app => {
         try {
             return await app.db(tabelaSchemas).insert(req.body)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return error
         }
     }

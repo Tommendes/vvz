@@ -42,7 +42,7 @@ module.exports = app => {
             body.cpf = body.cpf.replace(/([^\d])+/gim, "")
             cpfOrError(body.cpf, 'CPF inválido')
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send({ msg: error })
         }
 
@@ -89,7 +89,7 @@ module.exports = app => {
                 const userEmail = await app.db(tabela).where({ email: body.email }).first()
                 if (userEmail && !isStatusActive) notExistsOrError(userEmail.email, 'E-mail já registrado')
             } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(400).send({ msg: error })
             }
         }
@@ -106,7 +106,7 @@ module.exports = app => {
                 try {
                     existsOrError(body.email, 'E-mail obrigatório não informado')
                 } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(400).send({ msg: error })
                 }
             } else {
@@ -119,7 +119,7 @@ module.exports = app => {
                         const userCelPhone = await app.db(tabela).select('telefone').where({ telefone: body.celular }).first()
                         if (userCelPhone) notExistsOrError(userCelPhone.telefone, 'Celular já registrado')
                     } catch (error) {
-                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                         return res.status(400).send({ msg: error })
                     }
 
@@ -130,7 +130,7 @@ module.exports = app => {
                     existsOrError(body.confirmPassword, 'Confirmação de Senha inválida')
                     equalsOrError(body.password, body.confirmPassword, 'Senhas não conferem')
                 } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(400).send({ msg: error })
                 }
 
@@ -151,7 +151,7 @@ module.exports = app => {
                 try {
                     if (typeof isValidPassword(body.password) === 'string') throw isValidPassword(body.password)
                 } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(400).send({
                         isInvalidPassword: true,
                         msg: error
@@ -215,7 +215,7 @@ module.exports = app => {
                                 })
                             })
                             .catch(error => {
-                                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                                 return res.status(500).send({ msg: error })
                             })
 
@@ -230,7 +230,7 @@ module.exports = app => {
                         })
                     })
                     .catch(error => {
-                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                         return res.status(500).send({ msg: error })
                     })
             }
@@ -320,7 +320,7 @@ module.exports = app => {
         try {
             existsOrError(user.cpf, 'CPF não informado')
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(200).send(error)
         }
         const thisUser = await app.db(tabela)
@@ -330,7 +330,7 @@ module.exports = app => {
         try {
             existsOrError(thisUser, await showRandomMessage())
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(200).send(error)
         }
 
@@ -395,7 +395,7 @@ module.exports = app => {
             existsOrError(user.confirmPassword, 'Confirmação de Senha não informada')
             if (user.password != user.confirmPassword) throw 'Senhas não conferem'
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         if (!(req.query.tkn || (req.body && req.body.token)))
@@ -435,7 +435,7 @@ module.exports = app => {
         try {
             if (typeof isValidPassword(passTest) === 'string') throw isValidPassword(passTest)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(200).send({
                 isValidPassword: false,
                 msg: error
@@ -484,7 +484,7 @@ module.exports = app => {
                 })
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send({ msg: error })
             })
     }
@@ -550,7 +550,7 @@ module.exports = app => {
                 return res.status(200).send({ msg: 'Usuário autorizado a usar o sistema! Obrigado por sua confirmação' })
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send({ msg: error })
             })
     }
@@ -628,7 +628,7 @@ module.exports = app => {
             if (req.method === 'PATCH') res.send({ msg: `SMS enviado com sucesso para o celular ${userFromDB.telefone}` })
             else return token
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send({ msg: error })
         }
     }
@@ -702,7 +702,7 @@ module.exports = app => {
                 else return userFromDB.password_reset_token
             })
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send({ msg: error })
         }
     }
@@ -737,7 +737,7 @@ module.exports = app => {
             }
             await transporter.sendMail(bodyEmail).then(() => app.api.logger.logInfo({ log: { line: `Email password-reset enviado com sucesso para ${user.email}`, sConsole: true } }))
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
@@ -769,9 +769,9 @@ module.exports = app => {
                 <p><b>Time ${appName}</b></p>`,
             })
                 .then(() => app.api.logger.logInfo({ log: { line: `Email mailyUnlocked enviado com sucesso para ${user.email}`, sConsole: true } }))
-                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } }))
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
@@ -816,7 +816,7 @@ module.exports = app => {
                     notExistsOrError(userFromDB, 'E-mail ou CPF já registrado')
                 }
             } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(400).send(error)
             }
 
@@ -899,7 +899,7 @@ module.exports = app => {
                 return res.json(user)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send({ msg: error })
             })
         existsOrError(rowsUpdated, 'Usuário não foi encontrado')
@@ -913,7 +913,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!(uParams && (uParams.admin + uParams.gestor) >= 1)) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -968,7 +968,7 @@ module.exports = app => {
             return res.json({ data: users, count, limit })
         })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send({ msg: error })
             })
     }
@@ -993,7 +993,7 @@ module.exports = app => {
                 return res.json(users)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send({ msg: error })
             })
     }
@@ -1003,7 +1003,7 @@ module.exports = app => {
         try {
             cpfOrError()
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         app.db(tabela)
             .select('dominio', 'cliente', 'email', 'telefone', 'name', 'cpf')
@@ -1013,7 +1013,7 @@ module.exports = app => {
                 return res.json(users)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send({ msg: error })
             })
     }
@@ -1030,7 +1030,7 @@ module.exports = app => {
             return res.json(user)
         })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send({ msg: error })
             })
     }
@@ -1042,7 +1042,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.admin >= 2, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
         try {
@@ -1070,7 +1070,7 @@ module.exports = app => {
 
             res.status(204).send()
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
@@ -1106,7 +1106,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
 
         const fieldName = req.query.fld
@@ -1138,7 +1138,7 @@ module.exports = app => {
             const count = body.length
             return res.json({ data: body, count })
         }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
     }
@@ -1152,7 +1152,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
 
         const fieldName = req.query.fld
@@ -1183,7 +1183,7 @@ module.exports = app => {
             const count = body.length
             return res.json({ data: body, count })
         }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
     }

@@ -91,7 +91,8 @@ const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
     { field: 'documento', label: 'Documento' },
-    { field: 'descricao', label: 'Descrição', maxLength: limitDescription },
+    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '3rem', maxWidth: '3rem' },
+    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '10rem', maxWidth: '10rem' },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
@@ -296,7 +297,7 @@ onMounted(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline' }]" />
-    <div class="card">
+    <div class="card" :style="route.name == 'pipeline' ? 'width: 100rem;' : ''">
         <PipelineForm
             :mode="mode"
             :idCadastro="props.idCadastro"
@@ -391,6 +392,7 @@ onMounted(() => {
             <Column expander style="width: 5rem" />
             <template v-for="nome in listaNomes" :key="nome">
                 <Column
+                    :class="nome.class"
                     :field="nome.field"
                     :header="nome.label"
                     :filterField="nome.field"
