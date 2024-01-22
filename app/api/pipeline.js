@@ -59,8 +59,8 @@ module.exports = app => {
             if (pipeline_params_force.obrig_valor == 1) {
                 existsOrError(body.valor_bruto, 'Valor bruto não informado')
                 if (body.valor_bruto < 0.01) throw 'Valor bruto inválido'
-                existsOrError(body.valor_liq, 'Valor líquido não informado')
-                if (body.valor_liq < 0.01) throw 'Valor líquido inválido'
+                // existsOrError(body.valor_liq, 'Valor líquido não informado')
+                // if (body.valor_liq < 0.01) throw 'Valor líquido inválido'
             }
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
