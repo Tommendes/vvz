@@ -997,6 +997,11 @@ module.exports = app => {
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
 
+        try {
+            if (!body.id_pipeline) throw 'Pipeline não informado. Por favor recarregue a página...'
+        } catch (error) {
+            return res.status(200).send(error)
+        }
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
         const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
         const ftpParam = await app.db({ ftp: tabelaFtpDomain })
