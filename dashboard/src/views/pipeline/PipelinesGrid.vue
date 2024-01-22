@@ -91,7 +91,7 @@ const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
     { field: 'documento', label: 'Documento' },
-    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '3rem', maxWidth: '3rem' },
+    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '4rem', maxWidth: '4rem' },
     { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '10rem', maxWidth: '10rem' },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
