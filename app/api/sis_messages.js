@@ -22,10 +22,10 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
-
+        
         if (!body.body_variant) body.body_variant = 'info'
         if (!body.severity) body.severity = 0
-        if (!body.valid_from) body.valid_from = new Date()
+        if (!body.valid_from) body.valid_from = moment(new Date()).format('YYYY-MM-DD')
 
         try {
             existsOrError(body.title, 'Título não informado')
