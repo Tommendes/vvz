@@ -35,19 +35,35 @@ const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
 const loadData = async () => {
     setTimeout(async () => {
         if (itemData && itemData.id) {
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        await axios.get(url).then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                itemData.value = body;
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.schema_description}/cadastros` });
-            }
-        });
-    }
+            const url = `${urlBase.value}/${itemData.value.id}`;
+            await axios.get(url).then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    itemData.value = body;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                }
+            });
+        }
     }, Math.random() * 1000);
+};
+const getViaCep = async () => {
+    if (!masks.value.cep.completed(itemData.value.cep)) return;
+    const cep = masks.value.cep.unmasked(itemData.value.cep);
+    const url = `https://viacep.com.br/ws/${cep}/json/`;
+    await axios.get(url).then((res) => {
+        const body = res.data;
+        if (body && body.cep) {
+            itemData.value.logradouro = body.logradouro;
+            itemData.value.bairro = body.bairro;
+            itemData.value.cidade = body.localidade;
+            itemData.value.uf = body.uf;
+        } else {
+            defaultWarn('CEP não localizado. TEnte novamente ou preencha manualmente.');
+        }
+    });
 };
 
 // const loadData = async () => {
@@ -146,7 +162,7 @@ onBeforeMount(() => {
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" />
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" @blur="getViaCep()" />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
