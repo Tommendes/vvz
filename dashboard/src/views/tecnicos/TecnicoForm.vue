@@ -153,7 +153,7 @@ watchEffect(() => {});
                         <div class="col-12 md:col-4">
                             <label for="email_contato">E-mail para contato</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="tecnico" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato }}</small>
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.observacao || ['edit', 'new'].includes(mode)">
