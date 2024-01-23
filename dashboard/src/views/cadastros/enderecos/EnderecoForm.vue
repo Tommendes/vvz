@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeMount, ref, inject } from 'vue';
 import { baseApiUrl } from '@/env';
+import { getViaCep } from '@/getCep';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRouter } from 'vue-router';
@@ -48,22 +49,6 @@ const loadData = async () => {
             });
         }
     }, Math.random() * 1000);
-};
-const getViaCep = async () => {
-    if (!masks.value.cep.completed(itemData.value.cep)) return;
-    const cep = masks.value.cep.unmasked(itemData.value.cep);
-    const url = `https://viacep.com.br/ws/${cep}/json/`;
-    await axios.get(url).then((res) => {
-        const body = res.data;
-        if (body && body.cep) {
-            itemData.value.logradouro = body.logradouro;
-            itemData.value.bairro = body.bairro;
-            itemData.value.cidade = body.localidade;
-            itemData.value.uf = body.uf;
-        } else {
-            defaultWarn('CEP não localizado. TEnte novamente ou preencha manualmente.');
-        }
-    });
 };
 
 // const loadData = async () => {
