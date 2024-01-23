@@ -335,6 +335,7 @@ module.exports = app => {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
                                 else if (queryField == 'tipo_doc') queryField = 'pp.descricao'
+                                else if (queryField == 'id_cadastros') queryField = 'tbl1.id_cadastros'
                                 query += `${queryField} ${operator} AND `
                             }
                         }
