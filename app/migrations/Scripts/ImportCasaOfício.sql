@@ -191,6 +191,20 @@ INSERT INTO vivazul_bceaa5.cad_enderecos (
 	JOIN vivazul_bceaa5.local_params lc ON lc.label = ce.tipo
 	WHERE ce.dominio = 'casaoficio' AND ce.status = 10
 );
+-- Atualizar os cadastros para receber a primeira ocorrência de cad_enderecos
+UPDATE cadastros c
+JOIN (SELECT ce.id_cadastros,ce.id_params_tipo,ce.cep,ce.logradouro,ce.nr,ce.complnr,ce.bairro,ce.cidade,ce.uf,ce.geo_ltd,ce.geo_lng FROM cad_enderecos ce GROUP BY id_cadastros) AS ce ON ce.id_cadastros = c.id
+SET 
+c.id_params_tipo_end = ce.id_params_tipo,
+c.cep = ce.cep,
+c.logradouro = ce.logradouro,
+c.nr = ce.nr,
+c.complnr = ce.complnr,
+c.bairro = ce.bairro,
+c.cidade = ce.cidade,
+c.uf = ce.uf,
+c.geo_ltd = ce.geo_ltd,
+c.geo_lng = ce.geo_lng; 
 
 /*Importar empresa*/
 SET FOREIGN_KEY_CHECKS=0; 

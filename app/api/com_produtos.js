@@ -3,6 +3,7 @@ module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const { removeFileFromServer } = app.api.uploads
     const tabela = 'com_produtos'
+    const tabelaTabelas = 'com_prod_tabelas'
     const tabelaCadastros = 'cadastros'
     const tabelaAlias = 'Produtos'
     const STATUS_ACTIVE = 10
@@ -55,7 +56,7 @@ module.exports = app => {
                 const uploadBodyRemoveBefore = { ...uploadBodyRemove }
                 if (uploadBodyRemove && uploadBodyRemove.id) {
                     uploadBodyRemove.status = STATUS_DELETE
-                    
+
                     let evento = await createEventUpd({
                         "notTo": ['created_at', 'updated_at', 'evento'],
                         "last": uploadBodyRemoveBefore,
@@ -70,8 +71,8 @@ module.exports = app => {
                     uploadBodyRemove.updated_at = new Date()
                     uploadBodyRemove.evento = evento
                     await app.db(tabelaUploadsDomain)
-                    .update(uploadBodyRemove)
-                    .where({ id: body.id_uploads_imagem })
+                        .update(uploadBodyRemove)
+                        .where({ id: body.id_uploads_imagem })
                     removeFileFromServer(req)
                 }
             }
@@ -381,7 +382,8 @@ module.exports = app => {
 
         const first = req.query.first && req.query.first == true
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const ret = app.db(tabelaDomain)
+        const tabelaTabelasDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaTabelas}`
+        const ret = app.db({ tbl1: tabelaDomain })
 
         if (select) {
             // separar os campos e retirar os espaços
@@ -389,12 +391,17 @@ module.exports = app => {
             ret.select(selectArr)
         }
 
-        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
-            .where({ status: STATUS_ACTIVE })
+        ret.select(app.db.raw(`(SELECT tbl2.valor_venda FROM vivazul_bceaa5.com_prod_tabelas AS tbl2 WHERE tbl2.status = ${STATUS_ACTIVE} and tbl2.ini_validade <= date(now()) and tbl2.id_com_produtos = tbl1.id ORDER BY DATE(ini_validade) DESC LIMIT 1) AS valor_venda`))
 
+        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+            .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl2.status': STATUS_ACTIVE })
+            .leftJoin({ tbl2: tabelaTabelasDomain }, 'tbl2.id_com_produtos', '=', 'tbl1.id')
+            .groupBy('tbl1.id')
         if (first) {
             ret.first()
         }
+
+        // console.log(ret.toString());
         ret.then(body => {
             const count = body.length
             return res.json({ data: body, count })

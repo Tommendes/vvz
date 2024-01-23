@@ -80,6 +80,7 @@ const saveData = async () => {
     const obj = { ...itemData.value };
     obj.valor_unitario = obj.valor_unitario.replace(',', '.');
     obj.desconto_total = obj.desconto_total.replace(',', '.');
+    obj.quantidade = obj.quantidade.replace(',', '.');
     // Importante para o backend
     convertFloatFields('en');
     axios[method](url, obj)
@@ -152,15 +153,17 @@ const editProduto = ref(false);
 const produto = ref([]);
 const filteredProdutos = ref([]);
 const selectedProduto = ref();
-const nomeProduto = ref();
+const nomeProduto = ref('');
+const valorVendaProduto = ref(0);
 const getNomeProduto = async () => {
     if (itemData.value.id_com_produtos) {
         try {
-            const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=id&vl=${itemData.value.id_com_produtos}&slct=id,nome_comum,descricao`;
+            const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.id&vl=${itemData.value.id_com_produtos}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
             const response = await axios.get(url);
             if (response.data.data.length > 0) {
                 // remover tags html de descricao
                 nomeProduto.value = response.data.data[0].nome_comum;
+                valorVendaProduto.value = formatValor(response.data.data[0].valor_venda, 'pt');
             }
         } catch (error) {
             console.error('Erro ao buscar produto:', error);
@@ -187,9 +190,9 @@ const searchProdutos = (event) => {
     }, 250);
 };
 const getProdutoBySearchedId = async (idProduto) => {
-    const qry = idProduto ? `fld=id&vl=${idProduto}` : 'fld=1&vl=1';
+    const qry = idProduto ? `fld=tbl1.id&vl=${idProduto}` : 'fld=1&vl=1';
     try {
-        const url = `${baseApiUrl}/com-produtos/f-a/glf?${qry}&slct=id,nome_comum,descricao`;
+        const url = `${baseApiUrl}/com-produtos/f-a/glf?${qry}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
         const response = await axios.get(url);
         produto.value = response.data.data.map((element) => {
             return {
@@ -200,7 +203,8 @@ const getProdutoBySearchedId = async (idProduto) => {
                     element.descricao
                         .replace(/(<([^>]+)>)/gi, '')
                         .replace('&nbsp;', ' ')
-                        .trim()
+                        .trim(),
+                valor_venda: formatValor(element.valor_venda, 'pt')
             };
         });
     } catch (error) {
@@ -217,12 +221,15 @@ const confirmEditProduto = () => {
 const convertFloatFields = (result = 'pt') => {
     itemData.value.valor_unitario = formatValor(itemData.value.valor_unitario, result);
     itemData.value.desconto_total = formatValor(itemData.value.desconto_total, result);
+    itemData.value.quantidade = formatValor(itemData.value.quantidade, result);
 };
 
 // Observar alterações na propriedade selectedProduto
 watch(selectedProduto, (value) => {
     if (value) {
         itemData.value.id_com_produtos = value.code;
+        itemData.value.descricao = value.name;
+        if (!(itemData.value.valor_unitario && itemData.value.valor_unitario > 0)) itemData.value.valor_unitario = value.valor_venda;
     }
 });
 // Carregar dados do formulário
@@ -280,6 +287,7 @@ onBeforeMount(() => {
                                 <InputText disabled v-model="nomeProduto" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditProduto()" :disabled="mode == 'view'" />
                             </div>
+                            <p>{{ selectedProduto }}</p>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="quantidade">Quantidade</label>
@@ -287,12 +295,12 @@ onBeforeMount(() => {
                             <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade" id="quantidade" type="text" /> -->
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon" @click="['new', 'edit'].includes(mode) ? itemData.quantidade++ : true">+</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade" id="quantidade" type="number" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade" id="quantidade" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                 <span class="p-inputgroup-addon" @click="['new', 'edit'].includes(mode) && itemData.quantidade > 0 ? itemData.quantidade-- : true">-</span>
                             </div>
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_unitario">Valor Unitário</label>
+                            <label for="valor_unitario">Valor Unitário (Valor de venda do registro: R$ {{ valorVendaProduto }})</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>

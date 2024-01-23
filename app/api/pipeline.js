@@ -336,6 +336,7 @@ module.exports = app => {
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
                                 else if (queryField == 'tipo_doc') queryField = 'pp.descricao'
                                 else if (queryField == 'id_cadastros') queryField = 'tbl1.id_cadastros'
+                                else if (queryField == 'valor_bruto') queryField = 'tbl1.valor_bruto'
                                 query += `${queryField} ${operator} AND `
                             }
                         }
