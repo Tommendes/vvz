@@ -160,7 +160,7 @@ const moveToNextInput = (index) => {
                         <div class="flex align-items-center justify-content-between mb-2">
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
                             <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/forgot')"> Recuperar a senha? </Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/forgot')"> Recuperar a senha </Button>
                         </div>
 
                         <Button

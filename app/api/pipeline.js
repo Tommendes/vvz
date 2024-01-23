@@ -856,7 +856,7 @@ module.exports = app => {
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PENDENTE })
                 .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .groupBy('pp.id')
-                .orderBy('valor_bruto', 'desc')
+                .orderBy('tbl1.valor_bruto', 'desc')
                 .limit(rows)
             let totalProposed = 0;
             let totalProposedQuantity = 0;
