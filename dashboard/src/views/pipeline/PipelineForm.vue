@@ -937,6 +937,7 @@ watch(route, (value) => {
                         <p>{{ unidadeLabel }}</p>
                         <p>hasFolder {{ hasFolder }}</p>
                         <p>editCadastro {{ editCadastro }}</p>
+                        <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
                     </div>
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
@@ -1120,7 +1121,7 @@ watch(route, (value) => {
                                 <span class="font-bold text-lg">Conteúdo da Pasta</span>
                             </div>
                         </template>
-                        <ul class="list-decimal" v-if="listFolder && listFolder.length">
+                        <ul class="list-decimal" v-if="listFolder && typeof listFolder == 'object' && listFolder.length">
                             <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
                         </ul>
                         <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>
