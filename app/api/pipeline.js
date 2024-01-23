@@ -14,6 +14,7 @@ module.exports = app => {
     const tabelaCadastros = 'cadastros'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+    const digitsOfAFolder = 6
 
     const save = async (req, res) => {
         let user = req.user
@@ -26,7 +27,7 @@ module.exports = app => {
             if (body.id) isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
             else isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -50,20 +51,20 @@ module.exports = app => {
                 existsOrError(body.documento, 'Número de documento não informado')
                 if (!(parseInt(body.documento) > 0)) throw 'Número de documento não informado'
             }
-            if (body.id_com_agentes && pipeline_params_force.doc_venda >= 2) {
-                existsOrError(body.valor_representacao, 'Valor base da comissão da representação não informado')
-                if (body.valor_representacao < 0.01) throw 'Valor base da comissão da representação inválido'
-                existsOrError(body.valor_agente, 'Valor base da comissão do agente não informado')
-                if (body.valor_agente < 0.01) throw 'Valor base da comissão do agente inválido'
-            }
+            // if (body.id_com_agentes && pipeline_params_force.doc_venda >= 2) {
+            //     existsOrError(body.valor_representacao, 'Valor base da comissão da representação não informado')
+            //     if (body.valor_representacao < 0.01) throw 'Valor base da comissão da representação inválido'
+            //     existsOrError(body.valor_agente, 'Valor base da comissão do agente não informado')
+            //     if (body.valor_agente < 0.01) throw 'Valor base da comissão do agente inválido'
+            // }
             if (pipeline_params_force.obrig_valor == 1) {
                 existsOrError(body.valor_bruto, 'Valor bruto não informado')
                 if (body.valor_bruto < 0.01) throw 'Valor bruto inválido'
-                existsOrError(body.valor_liq, 'Valor líquido não informado')
-                if (body.valor_liq < 0.01) throw 'Valor líquido inválido'
+                // existsOrError(body.valor_liq, 'Valor líquido não informado')
+                // if (body.valor_liq < 0.01) throw 'Valor líquido inválido'
             }
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const status_params_force = body.status_params_force; // Status forçado para edição
@@ -114,7 +115,7 @@ module.exports = app => {
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(documento) + 1 AS documento'))
                         .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
                     body.documento = nextDocumentNr.documento || '1'
-                    body.documento = body.documento.toString().padStart(8, '0')
+                    body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                     // Informa o id do registro pai
                     const idPai = body.id
                     // Limpa os dados do corpo da solicitação
@@ -174,7 +175,7 @@ module.exports = app => {
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
                 app.api.logger.logError({
-                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                    log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true },
                 });
                 return res.status(500).send(error);
             });
@@ -187,7 +188,7 @@ module.exports = app => {
                         .where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
                     if (nextDocumentNr.documento == null) body.documento = 1
                     else body.documento = nextDocumentNr.documento + 1
-                    body.documento = body.documento.toString().padStart(8, '0')
+                    body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                 }
 
                 // Variáveis da criação de um registro
@@ -241,7 +242,7 @@ module.exports = app => {
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
                 app.api.logger.logError({
-                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                    log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true },
                 });
                 return res.status(500).send(error);
             });
@@ -255,7 +256,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -268,7 +269,7 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('tbl1.created_at')
+        let sortField = app.db.raw('date(tbl1.created_at)')
         let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
@@ -280,14 +281,14 @@ module.exports = app => {
                     if (element == 'field') {
                         if (['unidade'].includes(key.split(':')[1])) {
                             query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
-                            sortField = 'tbl1.created_at'
+                            sortField = 'date(tbl1.created_at)'
                             sortOrder = 'DESC'
                         } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
                             query += `pp.descricao = '${value}' AND `
-                            sortField = 'tbl1.created_at'
+                            sortField = 'date(tbl1.created_at)'
                             sortOrder = 'DESC'
                         } else if (['status_created_at'].includes(key.split(':')[1])) {
-                            sortField = 'tbl1.created_at'
+                            sortField = 'date(tbl1.created_at)'
                             value = queryes[key].split(':')
                             let valueI = moment(value[1], 'ddd MMM DD YYYY HH');
                             let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH');
@@ -306,7 +307,7 @@ module.exports = app => {
                                 default: operator = `between "${valueI}" and "${valueF}"`
                                     break;
                             }
-                            query += `tbl1.created_at ${operator} AND `
+                            query += `date(tbl1.created_at) ${operator} AND `
                         } else {
                             if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
                             let queryField = key.split(':')[1]
@@ -327,7 +328,9 @@ module.exports = app => {
                             if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
                             } else if (queryField == 'documento') {
-                                query += `cast(tbl1.documento as unsigned) ${operator} AND `
+                                query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
+                            } else if (queryField == 'proposta') {
+                                query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
                             } else {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
@@ -346,7 +349,7 @@ module.exports = app => {
                     }
                     if (element == 'sort') {
                         sortField = key.split(':')[1].split('=')[0]
-                        if (sortField == 'status_created_at') sortField = 'tbl1.created_at'
+                        if (sortField == 'status_created_at') sortField = 'date(tbl1.created_at)'
                         sortOrder = queryes[key]
                     }
 
@@ -363,17 +366,28 @@ module.exports = app => {
 
         let totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
+            //Localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            //Localizar registros pai
+            .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
+            //Localizar registros filho
+            .leftJoin({ tbl3: tabelaDomain }, 'tbl1.id_filho', '=', 'tbl3.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, lpad(tbl1.documento,8,'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
+            lpad(tbl2.documento,${digitsOfAFolder},'0') proposta, lpad(tbl1.documento,${digitsOfAFolder},'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
             DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at, 
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            // localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
+            //Localizar registros pai
+            .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
+            //Localizar registros filho
+            .leftJoin({ tbl3: tabelaDomain }, 'tbl1.id_filho', '=', 'tbl3.id')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
@@ -381,12 +395,12 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
-        console.log(ret.toString());
+        // console.log(ret.toString());
         ret.then(body => {
             const length = body.length
             return res.json({ data: body, totalRecords: totalRecords.count || length })
         }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         })
     }
 
@@ -397,7 +411,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -409,11 +423,11 @@ module.exports = app => {
             .first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
-                body.documento = body.documento.toString().padStart(8, '0')
+                body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                 return res.json(body)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)
             })
     }
@@ -425,7 +439,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pipeline >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -489,12 +503,12 @@ module.exports = app => {
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
                 app.api.logger.logError({
-                    log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true },
+                    log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true },
                 });
                 return res.status(500).send(error);
             });
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
@@ -543,7 +557,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             res.status(401).send(error)
         }
         const fieldName = req.query.fld
@@ -580,7 +594,7 @@ module.exports = app => {
             const count = body.length
             return res.json({ data: body, count })
         }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
     }
@@ -593,7 +607,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
@@ -622,7 +636,7 @@ module.exports = app => {
                 .andWhere({ 'pp.doc_venda': `${biPeriodDv}` }).first()
             return res.send({ total: total.count, novos: novos.count, noPeriodo: noPeriodo.count })
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
     }
@@ -635,7 +649,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const rows = req.query.rows || 5
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -645,7 +659,7 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
             const biRows = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`tbl1.id,CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.filename, '.', upl.extension) AS url_logo,replace(pp.descricao,'_',' ') representacao,lpad(tbl1.documento,8,'0'),ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
+                .select(app.db.raw(`tbl1.id,CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo,replace(pp.descricao,'_',' ') representacao,lpad(tbl1.documento,${digitsOfAFolder},'0'),ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
@@ -664,7 +678,7 @@ module.exports = app => {
                 .limit(rows)
             return res.send(biRows)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
     }
@@ -677,7 +691,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
@@ -690,7 +704,7 @@ module.exports = app => {
             if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
             if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -728,7 +742,7 @@ module.exports = app => {
 
             return res.send({ data: biTopSelling, totalSell, totalSellQuantity })
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
     }
@@ -741,7 +755,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
@@ -754,7 +768,7 @@ module.exports = app => {
             if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
             if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -796,7 +810,7 @@ module.exports = app => {
 
             return res.send({ data: biTopSelling, totalSell, totalSellQuantity })
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
     }
@@ -809,7 +823,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
@@ -822,7 +836,7 @@ module.exports = app => {
             if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
             if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -860,7 +874,7 @@ module.exports = app => {
 
             return res.send({ data: biTopSelling, totalProposed, totalProposedQuantity })
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
     }
@@ -873,7 +887,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
@@ -884,7 +898,7 @@ module.exports = app => {
             if (!moment(biPeriodDi, 'YYYY-MM-DD', true).isValid()) throw 'Período inicial inválido'
             if (!moment(biPeriodDf, 'YYYY-MM-DD', true).isValid()) throw 'Período final inválido'
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -907,7 +921,7 @@ module.exports = app => {
             const formatData = await formatDataForChart(biSalesOverview)
             return res.send(formatData)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
     }
@@ -920,7 +934,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de pastas de documentos"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -936,7 +950,7 @@ module.exports = app => {
         const ftpParam = await app.db({ ftp: tabelaFtpDomain })
             .select('host', 'port', 'user', 'pass', 'ssl')
             .where({ id: pipelineParam.id_ftp }).first()
-        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento)
+        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
         body.ftp = ftpParam
         body.ftp.path = pathDoc
 
@@ -952,7 +966,7 @@ module.exports = app => {
             booleanOrError(body.ssl, 'SSL não informado')
             existsOrError(body.path, 'Caminho não informado')
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 
@@ -968,7 +982,7 @@ module.exports = app => {
             await client.ensureDir(body.path);
             return res.send(`Pasta criada com sucesso no caminho: ${body.path}`);
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             if (error.code == 'EHOSTUNREACH') return res.status(500).send(`Servidor de arquivos temporariamente indisponível. Tente novamente ou tente mais tarde`);
             else return res.status(500).send(error)
         } finally {
@@ -984,7 +998,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Listagem de pastas de documentos"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -995,6 +1009,11 @@ module.exports = app => {
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
 
+        try {
+            if (!body.id_pipeline) throw 'Pipeline não informado. Por favor recarregue a página...'
+        } catch (error) {
+            return res.status(200).send(error)
+        }
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
         const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
         const ftpParam = await app.db({ ftp: tabelaFtpDomain })
@@ -1016,7 +1035,7 @@ module.exports = app => {
             booleanOrError(body.ssl, 'SSL não informado')
             existsOrError(body.path, 'Caminho não informado')
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 
@@ -1034,7 +1053,7 @@ module.exports = app => {
             else return res.send(list);
         } catch (error) {
             console.log(error.code);
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             if (error.code == 'EHOSTUNREACH') return res.status(200).send(`Servidor de arquivos temporariamente indisponível`);
             else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.status(200).send(error)

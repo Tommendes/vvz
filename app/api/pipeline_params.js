@@ -18,7 +18,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -57,7 +57,7 @@ module.exports = app => {
                 else res.status(200).send('Parâmetro não encontrado')
             })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         } else {
@@ -87,7 +87,7 @@ module.exports = app => {
                     return res.json(body)
                 })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         }
@@ -100,18 +100,13 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
-            })
+            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
             .groupBy('tbl1.id')
         ret.then(body => {
@@ -119,7 +114,7 @@ module.exports = app => {
             return res.json({ data: body, count: count })
         })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })
     }
 
@@ -130,31 +125,34 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.gestor >= 1 || uParams.pipeline >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, uf.url url_rodape, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_logo', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
+            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo, CONCAT(uplf.url_destination, '/', uplf.url_path, '/', uplf.uid, '_', uplf.filename) AS url_rodape, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            // upl = uploads logo
+            .leftJoin({ upl: tabelaUploadsDomain }, function () {
+                this.on('tbl1.id_uploads_logo', '=', 'upl.id')
+                    .andOn('upl.status', '=', STATUS_ACTIVE)
             })
-            .leftJoin({ uf: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_rodape', '=', 'uf.id')
-                    .andOn('uf.status', '=', STATUS_ACTIVE)
+            // uplf = uploads footer
+            .leftJoin({ uplf: tabelaUploadsDomain }, function () {
+                this.on('tbl1.id_uploads_rodape', '=', 'uplf.id')
+                    .andOn('uplf.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.id': req.params.id })
             .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
             .first()
-            .then(body => {
+            // console.log(ret.toString());
+            ret.then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)
             })
     }
@@ -166,7 +164,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -224,7 +222,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de unidades de negócios"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const doc_venda = req.query.doc_venda || undefined
@@ -244,7 +242,7 @@ module.exports = app => {
             const quant = body.length
             return res.json({ data: body, quant })
         }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
     }
@@ -256,7 +254,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de unidades de negócios"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db(tabelaDomain)
@@ -268,7 +266,7 @@ module.exports = app => {
             const quant = body.length
             return res.json({ data: body, quant })
         }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
     }

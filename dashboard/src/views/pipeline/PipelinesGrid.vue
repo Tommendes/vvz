@@ -90,14 +90,17 @@ const limitNome = 25;
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'documento', label: 'Documento' },
-    { field: 'descricao', label: 'Descrição', maxLength: limitDescription },
+    { field: 'proposta', label: 'Proposta', class: 'text-center', minWidth: '4rem', maxWidth: '4rem' },
+    { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '4rem', maxWidth: '4rem' },
+    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '4rem', maxWidth: '4rem' },
+    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem' },
+    { field: 'agente', label: 'Agente', minWidth: '5rem', maxWidth: '5rem' },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
         label: 'Data',
         type: 'date',
-        minWidth: '8rem',
+        minWidth: '7rem',
         tagged: true
     }
 ]);
@@ -158,6 +161,7 @@ const loadLazyData = () => {
                         element.nome = nome.trim().substr(0, limitNome);
                         if (nome.length > limitNome) element.nome += ' ...';
                     }
+                    if (!element.proposta) element.proposta = '';
                     if (element.descricao)
                         element.descricao = element.descricao
                             .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
@@ -296,7 +300,7 @@ onMounted(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline' }]" />
-    <div class="card">
+    <div class="card" :style="route.name == 'pipeline' ? 'width: 100rem;' : ''">
         <PipelineForm
             :mode="mode"
             :idCadastro="props.idCadastro"
@@ -391,6 +395,7 @@ onMounted(() => {
             <Column expander style="width: 5rem" />
             <template v-for="nome in listaNomes" :key="nome">
                 <Column
+                    :class="nome.class"
                     :field="nome.field"
                     :header="nome.label"
                     :filterField="nome.field"
@@ -433,7 +438,7 @@ onMounted(() => {
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else v-html="nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                        <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>

@@ -33,6 +33,7 @@ DROP TABLE IF EXISTS vivazul_bceaa5.com_produtos;
 TRUNCATE TABLE vivazul_bceaa5.local_params;
 TRUNCATE TABLE vivazul_bceaa5.long_params;
 TRUNCATE TABLE vivazul_api.uploads;
+TRUNCATE TABLE vivazul_api.ftp_control;
 SET FOREIGN_KEY_CHECKS=1; 
 
 /* 
@@ -48,11 +49,11 @@ SET FOREIGN_KEY_CHECKS=0;
 DELETE FROM vivazul_api.ftp_control;
 ALTER TABLE vivazul_api.ftp_control AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
-INSERT INTO vivazul_api.ftp_control (evento, created_at, updated_at, STATUS, schema_id, descricao, HOST, USER, pass) VALUES ('1', NOW(), NULL, '10', 1, 'Host base', 'ftp.tommendes.com.br', 'vivazul-ftp@encurte.me', 'S3+@lguém+s0ub3r...'); 
+INSERT INTO vivazul_api.ftp_control (evento, created_at, updated_at, STATUS, schema_id, descricao, HOST, USER, pass) VALUES ('1', NOW(), NULL, '10', 1, 'Host base', 'ftp.encurte.me', 'vivazul-ftp@encurte.me', 'S3+@lguém+s0ub3r...'); 
   
 /*Importar usuários*/
 -- ALTER TABLE vivazul_api.users ADD COLUMN old_id INT(10) UNSIGNED;
-SET FOREIGN_KEY_CHECKS=0; 
+/*SET FOREIGN_KEY_CHECKS=0; 
 DELETE FROM vivazul_api.users WHERE admin != 2;
 ALTER TABLE vivazul_api.users AUTO_INCREMENT=0;
 ALTER TABLE vivazul_api.users DROP COLUMN IF EXISTS PASSWORD;
@@ -152,7 +153,7 @@ INSERT INTO vivazul_bceaa5.cadastros (
 	LIMIT 0, 9999999 
   ) ;
  /*Remover espaços extras em nomes de cadastros*/
-UPDATE cadastros SET nome = TRIM(nome);
+UPDATE vivazul_bceaa5.cadastros SET nome = TRIM(nome);
 /*Importa os contatos dos cadastros*/  
 ALTER TABLE vivazul_bceaa5.cad_contatos ADD COLUMN old_id INT(10) UNSIGNED;
 SET FOREIGN_KEY_CHECKS=0; 
@@ -457,9 +458,9 @@ INSERT INTO vivazul_bceaa5.com_propostas (
 	LEFT JOIN vivazul_bceaa5.pv ON pv.old_id = prop.id_pv
 	WHERE prop.dominio = 'casaoficio' AND prop.status = 10
 );
-UPDATE vivazul_bceaa5.com_propostas cp SET forma_pagto = (SELECT id FROM local_params WHERE LOWER(parametro) = LOWER(cp.forma_pagto) GROUP BY LOWER(cp.forma_pagto));
-UPDATE vivazul_bceaa5.com_propostas cp SET validade_prop = (SELECT id FROM local_params WHERE LOWER(parametro) = LOWER(cp.validade_prop) GROUP BY LOWER(cp.validade_prop));
-UPDATE vivazul_bceaa5.com_propostas cp SET prz_entrega = (SELECT id FROM local_params WHERE LOWER(parametro) = LOWER(cp.prz_entrega) GROUP BY LOWER(cp.prz_entrega));
+UPDATE vivazul_bceaa5.com_propostas cp SET forma_pagto = (SELECT id FROM vivazul_bceaa5.local_params WHERE LOWER(parametro) = LOWER(cp.forma_pagto) GROUP BY LOWER(cp.forma_pagto));
+UPDATE vivazul_bceaa5.com_propostas cp SET validade_prop = (SELECT id FROM vivazul_bceaa5.local_params WHERE LOWER(parametro) = LOWER(cp.validade_prop) GROUP BY LOWER(cp.validade_prop));
+UPDATE vivazul_bceaa5.com_propostas cp SET prz_entrega = (SELECT id FROM vivazul_bceaa5.local_params WHERE LOWER(parametro) = LOWER(cp.prz_entrega) GROUP BY LOWER(cp.prz_entrega));
 ALTER TABLE `vivazul_bceaa5`.`com_propostas`   
   CHANGE `prz_entrega` `prz_entrega` INT(10) UNSIGNED NOT NULL   COMMENT 'Prazo de entrega',
   CHANGE `forma_pagto` `forma_pagto` INT(10) UNSIGNED NOT NULL   COMMENT 'Forma de pagamento',

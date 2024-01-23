@@ -20,7 +20,7 @@ module.exports = app => {
             if (body.id) isMatchOrError(uParams && (uParams.at >= 3 || uParams.comercial >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
             else isMatchOrError(uParams && (uParams.at >= 2 || uParams.comercial >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -54,9 +54,8 @@ module.exports = app => {
                 const uploadBodyRemove = await app.db(tabelaUploadsDomain).where({ id: body.id_uploads_imagem }).first()
                 const uploadBodyRemoveBefore = { ...uploadBodyRemove }
                 if (uploadBodyRemove && uploadBodyRemove.id) {
-                    if (await removeFileFromServer(uploadBodyRemove) != true) throw 'Erro ao excluir arquivo do servidor'
                     uploadBodyRemove.status = STATUS_DELETE
-
+                    
                     let evento = await createEventUpd({
                         "notTo": ['created_at', 'updated_at', 'evento'],
                         "last": uploadBodyRemoveBefore,
@@ -71,19 +70,13 @@ module.exports = app => {
                     uploadBodyRemove.updated_at = new Date()
                     uploadBodyRemove.evento = evento
                     await app.db(tabelaUploadsDomain)
-                        .update(uploadBodyRemove)
-                        .where({ id: body.id_uploads_imagem })
-                }
-
-                try {
-                    if (await removeFileFromServer(uploadBodyRemove) != true) throw 'Erro ao excluir arquivo do servidor'
-                    // Remove a referência de upload da tabela
-                    body.id_uploads_imagem = null
-                } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
+                    .update(uploadBodyRemove)
+                    .where({ id: body.id_uploads_imagem })
+                    removeFileFromServer(req)
                 }
             }
+            // Importante só fazer esta alteração depois de excluir a imagem
+            body.id_uploads_imagem = null
 
             evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento',],
@@ -116,7 +109,7 @@ module.exports = app => {
                     else res.status(200).send(`${tabelaAlias} não encontrado`)
                 })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         } else {
@@ -153,7 +146,7 @@ module.exports = app => {
                     return res.json(body)
                 })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         }
@@ -166,7 +159,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.at >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -239,7 +232,7 @@ module.exports = app => {
                 return res.json({ data: body, totalRecords: totalRecords.count })
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })
     }
 
@@ -250,17 +243,17 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.at >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.url url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .leftJoin({ u: tabelaUploadsDomain }, function () {
-                this.on('tbl1.id_uploads_imagem', '=', 'u.id')
-                    .andOn('u.status', '=', STATUS_ACTIVE)
+            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .leftJoin({ upl: tabelaUploadsDomain }, function () {
+                this.on('tbl1.id_uploads_imagem', '=', 'upl.id')
+                    .andOn('upl.status', '=', STATUS_ACTIVE)
             })
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
@@ -268,7 +261,7 @@ module.exports = app => {
                 return res.json(body)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)
             })
     }
@@ -280,7 +273,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.at >= 4 || uParams.comercial >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -338,7 +331,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -366,7 +359,7 @@ module.exports = app => {
             const count = body.length
             return res.json({ data: body, count })
         }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
     }
@@ -378,7 +371,7 @@ module.exports = app => {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
@@ -406,7 +399,7 @@ module.exports = app => {
             const count = body.length
             return res.json({ data: body, count })
         }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
     }

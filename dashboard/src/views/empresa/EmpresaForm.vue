@@ -131,7 +131,7 @@ const validateRazaoSocial = () => {
 // Validar CPF
 const validateCPFCNPJ = () => {
     const inputValue = itemData.value.cpf_cnpj_empresa || '';
-    
+
     if (inputValue.trim().length > 0) {
         const toValidate = masks.value.cpf_cnpj_empresa.unmasked(inputValue);
         if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) {
@@ -147,47 +147,47 @@ const validateCPFCNPJ = () => {
 };
 // Preencher campos de endereço com base no CEP
 const buscarCEP = async () => {
-  const cep = itemData.value.cep.replace(/[^0-9]/g, '');
+    const cep = itemData.value.cep.replace(/[^0-9]/g, '');
 
-  if (cep !== '') {
-    try {
-      // Limpar os campos enquanto aguarda a resposta
-      itemData.value.logradouro = '...';
-      itemData.value.bairro = '...';
-      itemData.value.cidade = '...';
-      itemData.value.uf = '...';
-      itemData.value.ibge = '...';
+    if (cep !== '') {
+        try {
+            // Limpar os campos enquanto aguarda a resposta
+            itemData.value.logradouro = '...';
+            itemData.value.bairro = '...';
+            itemData.value.cidade = '...';
+            itemData.value.uf = '...';
+            itemData.value.ibge = '...';
 
-      const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+            const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
 
-      if (!response.data.erro) {
-        // Atualizar os campos com os valores da consulta.
-        itemData.value.logradouro = response.data.logradouro;
-        itemData.value.bairro = response.data.bairro;
-        itemData.value.cidade = response.data.localidade;
-        itemData.value.uf = response.data.uf;
-        itemData.value.ibge = response.data.ibge;
-      } else {
-        // CEP pesquisado não foi encontrado.
+            if (!response.data.erro) {
+                // Atualizar os campos com os valores da consulta.
+                itemData.value.logradouro = response.data.logradouro;
+                itemData.value.bairro = response.data.bairro;
+                itemData.value.cidade = response.data.localidade;
+                itemData.value.uf = response.data.uf;
+                itemData.value.ibge = response.data.ibge;
+            } else {
+                // CEP pesquisado não foi encontrado.
+                limparFormularioCEP();
+                defaultWarn('CEP não encontrado.');
+            }
+        } catch (error) {
+            console.error('Erro ao buscar informações do CEP', error);
+            limparFormularioCEP();
+            defaultWarn('Erro ao buscar informações do CEP');
+        }
+    } else {
+        // CEP sem valor, limpar formulário.
         limparFormularioCEP();
-        defaultWarn('CEP não encontrado.');
-      }
-    } catch (error) {
-      console.error('Erro ao buscar informações do CEP', error);
-      limparFormularioCEP();
-      defaultWarn('Erro ao buscar informações do CEP');
     }
-  } else {
-    // CEP sem valor, limpar formulário.
-    limparFormularioCEP();
-  }
 };
 const limparFormularioCEP = () => {
-  itemData.value.logradouro = '';
-  itemData.value.bairro = '';
-  itemData.value.cidade = '';
-  itemData.value.uf = '';
-  itemData.value.ibge = '';
+    itemData.value.logradouro = '';
+    itemData.value.bairro = '';
+    itemData.value.cidade = '';
+    itemData.value.uf = '';
+    itemData.value.ibge = '';
 };
 // Validar Cep
 const validateCep = () => {
@@ -314,7 +314,10 @@ const showUploadForm = () => {
             modal: true
         },
         onClose: () => {
-            reload();
+            setTimeout(() => {
+                defaultSuccess('Por favor aguarde! Atualizando imagem...');
+                window.location.reload();
+            }, 3000);
         }
     });
 };
@@ -356,15 +359,7 @@ const onImageRightClick = (event) => {
                         <div class="col-12 md:col-2">
                             <label for="cep">CEP</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText
-                            v-else
-                            autocomplete="no"
-                            :disabled="mode == 'view'"
-                            v-model="itemData.cep"
-                            id="cep"
-                            type="text"
-                            @blur="buscarCEP"
-                            />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cep" id="cep" type="text" @blur="buscarCEP" />
                             <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                         </div>
                         <div class="col-12 md:col-2">

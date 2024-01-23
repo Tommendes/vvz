@@ -225,7 +225,7 @@ module.exports = app => {
                             msg: [
                                 `Olá ${body.name.split(' ')[0]}!`,
                                 `Estamos confirmando sua inscrição ✔`,
-                                `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token que enviamos em seu email ou SMS`
+                                `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token que enviamos em seu email`
                             ]
                         })
                     })
@@ -340,9 +340,10 @@ module.exports = app => {
         if (thisUser.password_reset_token && thisUser.password_reset_token.split('_').length > 0) validate = thisUser.password_reset_token.split('_')[1]
         if (validate > (now - 60)) {
             // Se o token estiver dentro da validade menos um minuto então não gera outro
+            mailyPasswordReset(thisUser)
             return res.status(200).send({
                 id: thisUser.id,
-                msg: `Verifique seu email${thisUser.email ? (' (' + thisUser.email + ')') : ''} ou SMS no celular (${thisUser.telefone}) para concluir a operação!`,
+                msg: `Verifique seu email${thisUser.email ? (' (' + thisUser.email + ')') : ''} para concluir a operação!`,
                 token: thisUser.password_reset_token
             })
         } else {
@@ -371,11 +372,11 @@ module.exports = app => {
                 .where({ cpf: thisUser.cpf })
                 .then(_ => {
                     req.body = thisUser
-                    smsToken(req)
+                    // smsToken(req)
                     mailyPasswordReset(thisUser)
                     return res.status(200).send({
                         id: thisUser.id,
-                        msg: `Verifique seu email${thisUser.email ? (' (' + thisUser.email + ')') : ''} ou SMS no celular (${thisUser.telefone}) para concluir a operação!`,
+                        msg: `Verifique seu email${thisUser.email ? (' (' + thisUser.email + ')') : ''} para concluir a operação!`,
                         token: password_reset_token
                     })
                 })

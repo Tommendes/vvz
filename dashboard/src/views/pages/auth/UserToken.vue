@@ -67,10 +67,10 @@ const getTokenTime = async () => {
                         tokenTimeLeft.value--;
                         tokenTimeMinutesLeft.value = Math.floor(tokenTimeLeft.value / 60) + 1;
                         if (tokenTimeMinutesLeft.value > 1) {
-                            tokenTimeMessage.value = `Dentro de ${tokenTimeMinutesLeft.value} minutos, informe o token enviado por SMS`;
+                            tokenTimeMessage.value = `Dentro de ${tokenTimeMinutesLeft.value} minutos, informe o token enviado por e-mail`;
                             tokenTimeLeftMessage.value = `Aguarde ${tokenTimeMinutesLeft.value} minutos para solicitar novo token`;
                         } else {
-                            tokenTimeMessage.value = `Dentro de ${tokenTimeLeft.value + 1} segundos, informe o token enviado por SMS`;
+                            tokenTimeMessage.value = `Dentro de ${tokenTimeLeft.value + 1} segundos, informe o token enviado por e-mail`;
                         }
                     } else tokenTimeLeftMessage.value = `Seu token venceu.<br>Clique abaixo para solicitar novo token`;
                 }, Math.random() * 1000);
@@ -87,7 +87,7 @@ const getTokenTime = async () => {
 };
 
 const getNewToken = async () => {
-    const urlTo = `${baseApiUrl}/user-sms-unlock`;
+    const urlTo = `${baseApiUrl}/user-mail-unlock`;
     await axios
         .patch(urlTo, { id: idUser.value })
         .then(async (body) => {
@@ -172,7 +172,7 @@ const moveToNextInput = (index) => {
                             type="submit"
                             class="w-full p-3 text-xl mt-3 mb-3 gap-5"
                         ></Button>
-                        <Button v-else rounded label="Solicite outro token por SMS" icon="pi pi-sign-in" @click="getNewToken" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
+                        <Button v-else rounded label="Solicite outro token por e-mail" icon="pi pi-sign-in" @click="getNewToken" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
                     </form>
                 </div>
             </div>

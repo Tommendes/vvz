@@ -13,13 +13,6 @@ module.exports = app => {
         .post(app.api.db_schemas_control.creatClientSchema)
 
     /**
-     * Exibição ou captura de ativos do sistema
-     */
-    app.route('/asset')
-        .all(app.config.passport.authenticate())
-        .post(app.api.assets.getAsset)
-
-    /**
      * Rota de validação genérica de documentos
      */
     app.route('/validator/:func/:tk')

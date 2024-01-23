@@ -30,7 +30,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de OAT"`)
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const body = { ...req.body }
         try {
@@ -42,7 +42,6 @@ module.exports = app => {
         const usuario = uParams.name
         const idEmpresa = 1
         const empresa = await app.db({ e: `${dbSchema}.empresa` }).select('e.*').where({ 'e.id': idEmpresa }).first()
-        const logoUrl = await app.db({ u: `${dbPrefix}_api.uploads` }).select('u.url').where({ 'u.id': empresa.id_uploads_logo }).first()
         const idOat = req.body.idOat
         const tabelaPvOatDomain = `${dbPrefix}_${uParams.schema_name}.pv_oat`
         const tabelaPvDomain = `${dbPrefix}_${uParams.schema_name}.pv`
@@ -83,7 +82,7 @@ module.exports = app => {
                     res.send(data)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } });
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
                 res.send(error)
             });
     }
@@ -108,7 +107,7 @@ module.exports = app => {
         //         res.send(data64)
         //     })
         //     .catch((error) => {
-        //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });
+        //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
         //         res.send(error)
         //     });
 

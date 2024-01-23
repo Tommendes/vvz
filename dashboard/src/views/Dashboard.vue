@@ -400,7 +400,7 @@ const exportToPDF = () => {
 };
 
 onMounted(() => {
-    loadStats(); 
+    loadStats();
 });
 </script>
 
@@ -587,10 +587,7 @@ onMounted(() => {
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h5>
-                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows : 'Único' }} produto{{ `${biData.topSellings.rows > 1 ? 's mais' : ''}` }} vendido{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }} <br /><span
-                            v-if="!biData.topSellings.loading"
-                            class="text-green-500 font-ligth text-xs"
-                        >
+                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows + ' empresas ' : 'Empresa' }} com mais vendas<br /><span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-xs">
                             No período {{ biPeriod.dataPt }}</span
                         >
                     </h5>
@@ -615,7 +612,10 @@ onMounted(() => {
                 </ul>
                 <div class="flex justify-content-end align-items-center mb-5">
                     <span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-base">
-                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de {{ biData.topSellings.totalSellQuantity }} venda{{ `${biData.topSellings.totalSellQuantity > 1 ? 's' : ''}` }}</span
+                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de {{ biData.topSellings.rows }} venda{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }} desta{{
+                            `${biData.topSellings.rows > 1 ? 's' : ''}`
+                        }}
+                        empresa{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }}</span
                     >
                 </div>
             </div>
@@ -624,10 +624,7 @@ onMounted(() => {
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h5>
-                        {{ biData.topProposals.rows > 1 ? biData.topProposals.rows : 'Único' }} produto{{ `${biData.topProposals.rows > 1 ? 's mais' : ''}` }} proposto{{ `${biData.topProposals.rows > 1 ? 's' : ''}` }} <br /><span
-                            v-if="!biData.topProposals.loading"
-                            class="text-green-500 font-ligth text-xs"
-                        >
+                        {{ biData.topProposals.rows > 1 ? biData.topProposals.rows + ' empresas ' : 'Empresa' }} com mais propostas<br /><span v-if="!biData.topProposals.loading" class="text-green-500 font-ligth text-xs">
                             No período {{ biPeriod.dataPt }}</span
                         >
                     </h5>
@@ -652,7 +649,10 @@ onMounted(() => {
                 </ul>
                 <div class="flex justify-content-end align-items-center mb-5">
                     <span v-if="!biData.topProposals.loading" class="text-green-500 font-ligth text-base">
-                        Total no período: {{ formatCurrency(biData.topProposals.totalProposed) }}, proveniente de {{ biData.topProposals.totalProposedQuantity }} proposta{{ `${biData.topProposals.totalProposedQuantity > 1 ? 's' : ''}` }}</span
+                        Total no período: {{ formatCurrency(biData.topProposals.totalProposed) }}, proveniente de {{ biData.topProposals.totalProposedQuantity }} proposta{{ `${biData.topProposals.rows > 1 ? 's' : ''}` }} desta{{
+                            `${biData.topProposals.rows > 1 ? 's' : ''}`
+                        }}
+                        empresa{{ `${biData.topProposals.rows > 1 ? 's' : ''}` }}</span
                     >
                 </div>
             </div>

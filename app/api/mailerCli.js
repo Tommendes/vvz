@@ -55,7 +55,7 @@ module.exports = app => {
             else
                 mailWork.then(res.status(200).send('E-mail enviado.'))
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } });
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             res.status(400).send(error)
         }
     }

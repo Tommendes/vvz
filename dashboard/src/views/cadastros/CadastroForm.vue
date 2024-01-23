@@ -347,9 +347,9 @@ watchEffect(() => {
                         <InputText v-else autocomplete="no" :disabled="!validateCPF() || mode == 'view'" v-model="itemData.nome" id="nome" type="text" />
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="rg_ie">{{ labels.rg_ie }}<small id="text-error" v-if="!itemData.prospecto && labels.pfpj == 'pf'" class="p-error"> *</small></label>
+                        <label for="rg_ie">{{ labels.rg_ie }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :required="!itemData.prospecto && labels.pfpj == 'pf'" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie" type="text" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie" type="text" />
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pf'">
                         <label for="id_params_sexo">Sexo<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
@@ -451,8 +451,8 @@ watchEffect(() => {
 
                     <hr />
                     <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo">Tipo de Endereço<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipoEndereco" placeholder="Selecione..."> </Dropdown>
+                        <label for="id_params_tipo_end">Tipo de Endereço<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <Dropdown id="id_params_tipo_end" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo_end" :options="dropdownTipoEndereco" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
@@ -486,7 +486,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-12">
                         <label for="observacao_endereco">Observação do Endereço</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text" />
+                        <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no" v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text" />
                         <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled"></p>
                     </div>
                 </div>
