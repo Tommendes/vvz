@@ -299,9 +299,9 @@ const loadOptions = async () => {
     });
 };
 // Carregar dados do formulário
-onMounted(() => {
-    loadData();
-    loadOptions();
+onMounted(async () => {
+    await loadData();
+    await loadOptions();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
