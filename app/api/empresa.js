@@ -43,7 +43,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName; delete body.url_logo;
+        delete body.hash; delete body.tblName; delete body.url_path;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
