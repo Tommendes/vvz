@@ -113,6 +113,11 @@ const validateCep = () => {
     }
     return true;
 };
+const getCep = async () => {
+    const cep = masks.value.cep.unmasked(itemData.value.cep);
+    const viaCep = await getViaCep(cep);
+    console.log(viaCep);
+};
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
     const selects = query.select ? `&slct=${query.select}` : undefined;
@@ -147,7 +152,7 @@ onBeforeMount(() => {
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" @blur="getViaCep()" />
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" @blur="getCep()" />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
