@@ -102,7 +102,7 @@ const loadData = async () => {
                 }
             });
         } else loading.value.form = false;
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -422,12 +422,13 @@ const loadOptions = async () => {
             dropdownTipoEndereco.value.push({ value: item.id, label: item.label });
         });
     });
+    loading.value.form = false;
 };
 // Carregar dados do formulário
 onMounted(async () => {
     loading.value.form = true;
-    await loadOptions();
     await loadData();
+    await loadOptions();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
