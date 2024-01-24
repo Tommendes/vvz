@@ -53,7 +53,9 @@ const isTrue = (value) => value === 1;
 
 // Carragamento de dados do form
 const loadData = async () => {
+    console.log(itemData.value.id)
     setTimeout(async () => {
+        console.log(itemData.value.id)
         if (route.params.id || itemData.value.id) {
             if (route.params.id) itemData.value.id = route.params.id;
             const url = `${urlBase.value}/${itemData.value.id}`;
@@ -66,14 +68,24 @@ const loadData = async () => {
                     itemData.value = body;
                     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
 
-                    loading.value.form = false;
+                    // Certificação de que loading.value é um objeto antes de acessar a propriedade form
+                    if (typeof loading.value === 'object') {
+                        loading.value.form = false;
+                    }
                 } else {
                     defaultWarn('Registro não localizado');
+                    console.log(itemData.value.id)
                     router.push({ path: `/${userData.schema_description}/usuarios` });
                 }
             });
-        } else loading.value = false;
+        } else {
+            // Certificação de que loading.value é um objeto antes de acessar a propriedade form
+            if (typeof loading.value === 'object') {
+                loading.value = false;
+            }
+        }
     }, Math.random() * 1000);
+    console.log(itemData.value.id)
 };
 // Salvar dados do formulário
 const saveData = async () => {
