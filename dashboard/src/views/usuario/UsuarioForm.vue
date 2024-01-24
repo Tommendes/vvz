@@ -53,9 +53,7 @@ const isTrue = (value) => value === 1;
 
 // Carragamento de dados do form
 const loadData = async () => {
-    console.log(itemData.value.id)
     setTimeout(async () => {
-        console.log(itemData.value.id)
         if (route.params.id || itemData.value.id) {
             if (route.params.id) itemData.value.id = route.params.id;
             const url = `${urlBase.value}/${itemData.value.id}`;
@@ -74,7 +72,6 @@ const loadData = async () => {
                     }
                 } else {
                     defaultWarn('Registro não localizado');
-                    console.log(itemData.value.id)
                     router.push({ path: `/${userData.schema_description}/usuarios` });
                 }
             });
@@ -85,7 +82,6 @@ const loadData = async () => {
             }
         }
     }, Math.random() * 1000);
-    console.log(itemData.value.id)
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -98,21 +94,62 @@ const saveData = async () => {
     const url = `${urlBase.value}${id}`;
     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.unmasked(itemData.value.cpf);
     axios[method](url, itemData.value)
-        .then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                defaultSuccess('Registro salvo com sucesso');
-                itemData.value = body;
-                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
-                mode.value = 'view';
-            } else {
-                defaultWarn('Erro ao salvar registro');
-            }
-        })
-        .catch((err) => {
-            defaultWarn(err.response.data);
-        });
+    .then((res) => {
+        const body = res.data;
+        if (body && body.id) {
+            defaultSuccess('Registro salvo com sucesso');
+            itemData.value = body;
+            if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
+            mode.value = 'view';
+        } else {
+            defaultWarn('Erro ao salvar registro');
+        }
+    })
+    .catch((err) => {
+        defaultWarn(err.response.data);
+    });
 };
+//DropDowns
+const dropdownGestaoDeCadastros = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownGestaoDePipeline = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownGestaoDePv = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownGestaoComercial = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownGestaoFiscal = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownGestaoFinanceiro = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownComissoes = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownAgenteVendedor = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownAgente_arq = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
+const dropdownAgenteAt = ref([
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
+]);
 // Validar CPF
 const validateCPF = () => {
     errorMessages.value.cpf = null;
@@ -172,28 +209,94 @@ watchEffect(() => {});
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-12">
+                            <label id="secaodadosbasicos">Dados básicos</label>
+                        </div>
+                        <div class="col-12 md:col-3">
                             <label for="name">Nome</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.name" id="name" type="text" />
                         </div>
-                        <div class="col-12 md:col-6">
-                            <label for="cpf">CPF/CNPJ</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
-                        </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="tecnico" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12 md:col-2">
+                            <label for="cpf">CPF/CNPJ</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
+                        </div>                        
+                        <div class="col-12 md:col-2">
                             <label for="telefone">Telefone</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="schema_description">Schema</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.schema_description" id="schema_description" type="text" />
+                        </div>                        
+                        <div class="col-12 md:col-12">
+                            <label id="secaopermissao">Permissões</label>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="cadastros">Gestão de cadastros</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownGestaoDeCadastros" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="pipeline">Gestão de pipeline</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownGestaoDePipeline" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="pv">Gestão de pós-venda</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownGestaoDePv" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="comercial">Gestão comercial</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownGestaoComercial" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="fiscal">Gestão fiscal</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownGestaoFiscal" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="financeiro">Gestão financeira</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownGestaoFinanceiro" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="comissoes">Gestão de comissões</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownComissoes" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="agente_v">Agente vendedor</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownAgenteVendedor" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="agente_arq">Agente arquiteto</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownAgente_arq" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="agente_at">Agente de atendimento</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownAgenteAt" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <label for="time_to_pas_expires">Tempo para expirar a senha</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.time_to_pas_expires" id="time_to_pas_expires" type="text" />
                         </div>
                     </div>
                     <div class="col-12" v-if="userData.admin >= 2">
@@ -214,3 +317,12 @@ watchEffect(() => {});
         </form>
     </div>
 </template>
+<style scoped>
+.grid{
+    margin-left: 0rem;
+}
+#secaodadosbasicos,#secaopermissao{
+    margin-left: -1rem;
+    color: gray;
+}
+</style>
