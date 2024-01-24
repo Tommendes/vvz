@@ -114,7 +114,7 @@ module.exports = app => {
                     request: req,
                     evento: {
                         evento: 'Novo registro',
-                        tabela_bd: tabelaDomain,
+                        tabela_bd: tabela,
                     },
                     trx: trx
                 };

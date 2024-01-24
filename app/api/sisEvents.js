@@ -267,67 +267,12 @@ module.exports = app => {
             })
     }
 
-    // const limit = 20 // usado para paginação
-    // const get = async (req, res) => {
-    //     let user = req.user
-    //     const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-    //     try {
-    //         // Alçada do usuário
-    //         isMatchOrError(uParams && uParams.gestor >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
-    //     } catch (error) {
-    //         app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-    //         return res.status(401).send(error)
-    //     }
-
-    //     const page = req.query.page || 1
-    //     const key = req.query.key ? req.query.key : ''
-    //     let tabelas_bd = req.query.tabelas_bd ? req.query.tabelas_bd : ''
-    //     let arrayOfTabelas = tabelas_bd.split(",")
-    //     let classevento = req.query.classevento ? req.query.classevento : ''
-    //     let arrayOfClasses = classevento.split(",")
-
-    //     const sql = app.db({ se: tabelaSisEvents }).select(app.db.raw('count(*) as count'))
-    //         .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
-    //         .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-    //         .where({ 'sc.schema_description': user.schema_description })
-    //         .where(function () {
-    //             this.where('se.evento', 'like', `%${key}%`)
-    //                 .orWhere('us.name', 'like', `%${key}%`)
-    //         })
-    //     if (tabelas_bd)
-    //         sql.whereIn("tabela_bd", arrayOfTabelas)
-    //     if (classevento)
-    //         sql.whereIn("classevento", arrayOfClasses)
-    //     const result = await app.db.raw(sql.toString())
-    //     const count = result[0][0] ? parseInt(result[0][0].count) : 0
-
-    //     const ret = app.db({ se: tabelaSisEvents })
-    //         .select({ id: 'se.id' }, { evento: 'se.evento' }, { created_at: 'se.created_at' }, { classevento: 'se.classevento' }, { tabela_bd: 'se.tabela_bd' }, { id_registro: 'se.id_registro' }, { user: 'us.name' },)
-    //         .join({ us: 'users' }, 'se.id_user', '=', 'us.id')
-    //         .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-    //         .where({ 'sc.schema_description': user.schema_description })
-    //         .where(function () {
-    //             this.where('se.evento', 'like', `%${key}%`)
-    //                 .orWhere('us.name', 'like', `%${key}%`)
-    //         })
-    //     if (tabelas_bd)
-    //         ret.whereIn("tabela_bd", arrayOfTabelas)
-    //     if (classevento)
-    //         ret.whereIn("classevento", arrayOfClasses)
-    //     ret.orderBy("se.created_at", "desc")
-    //     ret.then(sis_events => res.json({ data: sis_events, count, limit }))
-    //         .catch(error => {
-    //             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-    //             return res.status(500).send(error)
-    //         })
-    // }
-
     const getByField = async (req, res) => {
         const field = req.params.field
         const ret = app.db({ se: tabelaSisEvents })
             .select(app.db.raw(`${field} as field`))
             .where(app.db.raw(`length(${field}) > 0`))
-            .groupBy(app.db.raw(`${field}`), "desc")
+            .groupBy(app.db.raw(`${field}`))
             .orderBy(app.db.raw(`${field}`), "desc")
             .then(fields => res.json({ data: fields }))
             .catch(error => {
@@ -359,5 +304,34 @@ module.exports = app => {
             })
     }
 
-    return { createEventUpd, createEventIns, createEventRemove, createEvent, get, getById, getByField }
+    const getEventosDoRegistro = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const limit = req.query.limit || 10
+        const orderBy = req.query.orderBy || 'created_at'
+
+        app.db({ tbl1: tabelaSisEvents })
+            .select({ id: 'tbl1.id' }, { evento: 'tbl1.evento' }, { created_at: 'tbl1.created_at' }, { classevento: 'tbl1.classevento' }, { tabela_bd: 'tbl1.tabela_bd' }, { id_registro: 'tbl1.id_registro' }, { user: 'us.name' },)
+            .join({ us: 'users' }, 'tbl1.id_user', '=', 'us.id')
+            .where({ 'tbl1.id_registro': req.params.id, 'tbl1.tabela_bd': req.params.tabela_bd })
+            .orderBy(orderBy, 'desc')
+            .limit(limit)
+            .then(sis_events => {
+                return res.json(sis_events)
+            })
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                return res.status(500).send(error)
+            })
+    }
+
+    return { createEventUpd, createEventIns, createEventRemove, createEvent, get, getById, getByField, getEventosDoRegistro }
 }

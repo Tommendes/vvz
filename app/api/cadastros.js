@@ -32,11 +32,11 @@ module.exports = app => {
             else if (body.cpf_cnpj && body.cpf_cnpj.length == 14) cnpjOrError(body.cpf_cnpj)
             else throw 'Documento (CNPJ ou CPF) inválido. Favor verificar'
             if (body.cpf_cnpj) {
-                const dataFromDB = await app.db(tabelaDomain)
+                const unique = await app.db(tabelaDomain)
                     .where({ cpf_cnpj: body.cpf_cnpj })
                     .andWhere(app.db.raw(body.id ? (`id != '${body.id}'`) : '1=1'))
                     .first()
-                notExistsOrError(dataFromDB, `Combinação de CNPJ/ CPF já cadastrado`)
+                notExistsOrError(unique, `Combinação de CNPJ/ CPF já cadastrado`)
             }
 
             existsOrError(body.nome, 'Nome não informado')

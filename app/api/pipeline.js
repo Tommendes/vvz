@@ -67,8 +67,8 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
-        const status_params_force = body.status_params_force; // Status forçado para edição
         const status_params = body.status_params; // Último status do registro
+        const status_params_force = body.status_params_force || body.status_params; // Status forçado para edição
         delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force; delete body.hash; delete body.tblName;
         if (body.id) {
             // Variáveis da edição de um registro            
@@ -88,7 +88,7 @@ module.exports = app => {
                     next: updateRecord,
                     request: req,
                     evento: {
-                        "evento": `Alteração de cadastro de ${tabela}`,
+                        "evento": `Alteração de registro de ${tabela}`,
                         "tabela_bd": tabela,
                     },
                     trx: trx
@@ -111,6 +111,7 @@ module.exports = app => {
                 // Se a mudança for para convertido, deve criar um novo registro com base no pipeline_params_force.tipo_secundario com o status pedido
                 if (status_params_force == STATUS_CONVERTIDO) {
 
+                    const oldBody = { ...body }
                     // Gerar um número de documento baseado no pipeline_params_force.tipo_secundario
                     let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(documento) + 1 AS documento'))
                         .where({ id_pipeline_params: pipeline_params_force.tipo_secundario, status: STATUS_ACTIVE }).first()
@@ -139,18 +140,31 @@ module.exports = app => {
                     const newRecordWithID = { ...newRecordWithEvent, id: recordId }
 
                     // Registrar o evento na tabela de eventos
-                    const eventPayload = {
+                    let eventPayload = {
                         notTo: ['created_at', 'evento'],
-                        next: newRecord,
+                        next: newRecordWithID,
                         request: req,
                         evento: {
                             evento: 'Novo registro',
-                            tabela_bd: tabelaDomain,
+                            tabela_bd: tabela,
                         },
                         trx: trx
                     };
                     const { createEventIns } = app.api.sisEvents
-                    const evento = await createEventIns(eventPayload);
+                    let evento = await createEventIns(eventPayload);
+
+                    // Evento de conversão do registro em pedido
+                    const { createEvent } = app.api.sisEvents
+                    createEvent({
+                        "request": req,
+                        "evento": {
+                            id_user: user.id,
+                            evento: `Conversão para pedido`,
+                            classevento: `conversion`,
+                            id_registro: idPai,
+                            tabela_bd: tabela
+                        }
+                    })
 
                     // Inserir na tabela de status um registro de criação
                     await trx(tabelaPipelineStatusDomain).insert({
@@ -192,7 +206,7 @@ module.exports = app => {
                 }
 
                 // Variáveis da criação de um registro
-                const newRecord = {
+                let newRecord = {
                     status: STATUS_ACTIVE,
                     created_at: new Date(),
                     ...body, // Incluindo outros dados do corpo da solicitação
@@ -201,7 +215,7 @@ module.exports = app => {
                 // Iniciar a transação e inserir na tabela principal
                 const nextEventID = await app.db(`${dbPrefix}_api.sis_events`, trx).select(app.db.raw('count(*) as count')).first()
                 const [recordId] = await trx(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
-
+                newRecord = { ...newRecord, id: recordId }
                 // Registrar o evento na tabela de eventos
                 const eventPayload = {
                     notTo: ['created_at', 'evento'],
@@ -209,7 +223,7 @@ module.exports = app => {
                     request: req,
                     evento: {
                         evento: 'Novo registro',
-                        tabela_bd: tabelaDomain,
+                        tabela_bd: tabela,
                     },
                     trx: trx
                 };
@@ -263,6 +277,7 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
 
         let queryes = undefined
@@ -279,19 +294,12 @@ module.exports = app => {
                 let value = queryes[key].split(':')[1]
                 key.split(':').forEach(element => {
                     if (element == 'field') {
-                        if (['unidade'].includes(key.split(':')[1])) {
-                            query += `SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' AND `
-                            sortField = 'date(tbl1.created_at)'
-                            sortOrder = 'DESC'
-                        } else if (['descricaoUnidade'].includes(key.split(':')[1])) {
-                            query += `pp.descricao = '${value}' AND `
-                            sortField = 'date(tbl1.created_at)'
-                            sortOrder = 'DESC'
+                        if (['unidade'].includes(key.split(':')[1]) || ['descricaoUnidade'].includes(key.split(':')[1])) {
+                            query += `(SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' or lower(pp.descricao) = lower('${value}')) AND `
                         } else if (['status_created_at'].includes(key.split(':')[1])) {
-                            sortField = 'date(tbl1.created_at)'
-                            value = queryes[key].split(':')
-                            let valueI = moment(value[1], 'ddd MMM DD YYYY HH');
-                            let valueF = moment(value[3].split(',')[1], 'ddd MMM DD YYYY HH');
+                            value = queryes[key].split(':')[1].split(',')
+                            let valueI = moment(value[0]);
+                            let valueF = moment(value[1]);
 
                             if (valueI.isValid()) valueI = valueI.format('YYYY-MM-DD')
                             if (valueF.isValid()) valueF = valueF.format('YYYY-MM-DD')
@@ -311,6 +319,7 @@ module.exports = app => {
                         } else {
                             if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
                             let queryField = key.split(':')[1]
+                            if (queryField == 'last_status_params') operator = 'equals'
                             switch (operator) {
                                 case 'startsWith': operator = `like "${value}%"`
                                     break;
@@ -329,6 +338,8 @@ module.exports = app => {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
                             } else if (queryField == 'documento') {
                                 query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
+                            } else if (queryField == 'last_status_params') {                                
+                                query += `(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) ${operator} AND `
                             } else if (queryField == 'proposta') {
                                 query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
                             } else {
@@ -354,7 +365,6 @@ module.exports = app => {
                         if (sortField == 'status_created_at') sortField = 'date(tbl1.created_at)'
                         sortOrder = queryes[key]
                     }
-
                 });
             }
             query = query.slice(0, -5).trim()
@@ -367,7 +377,9 @@ module.exports = app => {
         }
 
         let totalRecords = await app.db({ tbl1: tabelaDomain })
-            .countDistinct('tbl1.id as count').first()
+            .countDistinct('tbl1.id as count')
+            .sum('tbl1.valor_bruto as sum')
+            .first()
             //Localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             //Localizar registros pai
@@ -382,7 +394,8 @@ module.exports = app => {
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
             lpad(tbl2.documento,${digitsOfAFolder},'0') proposta, lpad(tbl1.documento,${digitsOfAFolder},'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
-            DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at, 
+            DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
+            (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) last_status_params,
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             // localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
@@ -397,10 +410,9 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
-            
         ret.then(body => {
             const length = body.length
-            return res.json({ data: body, totalRecords: totalRecords.count || length })
+            return res.json({ data: body, totalRecords: totalRecords.count || length, sumRecords: totalRecords.sum || 0 })
         }).catch(error => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         })
@@ -616,11 +628,15 @@ module.exports = app => {
         const biPeriodDv = req.query.periodDv || 2
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_status`
         try {
             const total = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
-                }).where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` }).first()
+                })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_PEDIDO}`)
+                .first()
             let noPeriodo = { count: 0 }
             if (biPeriodDi && biPeriodDf)
                 noPeriodo = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
@@ -675,6 +691,7 @@ module.exports = app => {
                     this.on('upl.id', '=', 'pp.id_uploads_logo')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('ps.id_pipeline')
                 .orderBy('ps.created_at', 'desc')
                 .limit(rows)
@@ -714,17 +731,15 @@ module.exports = app => {
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
+                .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao, pp.descricao unidade_descricao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaPipelineStatusDomain }, function () {
-                    this.on('ps.id_pipeline', '=', 'tbl1.id')
-                })
-                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
-                .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('pp.id')
-                .orderBy('valor_bruto', 'desc')
+                .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
             let totalSell = 0;
             let totalSellQuantity = 0;
@@ -735,12 +750,13 @@ module.exports = app => {
             });
             // Agora calcule o total para cada item e adicione o percentual em cada item
             biTopSelling.forEach(element => {
-                element.percentual = Math.round((element.valor_bruto / totalSell) * 100)
+                // Percentuak com apenas duas casas decimais
+                element.percentual = ((element.valor_bruto / totalSell) * 100).toFixed(2)
                 element.percentualQuantity = Math.round((element.quantidade / totalSellQuantity) * 100)
             });
             totalSell = Math.round(totalSell * 100) / 100
             // Ordene biTopSelling por percentual
-            biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
+            // biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
 
             return res.send({ data: biTopSelling, totalSell, totalSellQuantity })
         } catch (error) {
@@ -789,8 +805,9 @@ module.exports = app => {
                 .join({ u: tabelaUsers }, function () {
                     this.on('u.id', '=', 'tbl1.id_com_agentes')
                 })
-                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
-                .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('tbl1.id_com_agentes')
                 .orderBy('valor_bruto', 'desc')
                 .limit(rows)
@@ -803,7 +820,7 @@ module.exports = app => {
             });
             // Agora calcule o total para cada item e adicione o percentual em cada item
             biTopSelling.forEach(element => {
-                element.percentual = Math.round((element.valor_bruto / totalSell) * 100)
+                element.percentual = ((element.valor_bruto / totalSell) * 100).toFixed(2)
                 element.percentualQuantity = Math.round((element.quantidade / totalSellQuantity) * 100)
             });
             totalSell = Math.round(totalSell * 100) / 100
@@ -850,13 +867,11 @@ module.exports = app => {
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaPipelineStatusDomain }, function () {
-                    this.on('ps.id_pipeline', '=', 'tbl1.id')
-                })
-                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PENDENTE })
-                .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                // .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_ACTIVE}`)
                 .groupBy('pp.id')
-                .orderBy('tbl1.valor_bruto', 'desc')
+                .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
             let totalProposed = 0;
             let totalProposedQuantity = 0;
@@ -867,7 +882,7 @@ module.exports = app => {
             });
             // Agora calcule o total para cada item e adicione o percentual em cada item
             biTopSelling.forEach(element => {
-                element.percentual = Math.round((element.valor_bruto / totalProposed) * 100)
+                element.percentual = ((element.valor_bruto / totalProposed) * 100).toFixed(2)
                 element.percentualQuantity = Math.round((element.quantidade / totalProposedQuantity) * 100)
             });
             totalProposed = Math.round(totalProposed * 100) / 100
@@ -917,6 +932,7 @@ module.exports = app => {
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
                 .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
                 .orderBy(app.db.raw('representacao, mes'))
