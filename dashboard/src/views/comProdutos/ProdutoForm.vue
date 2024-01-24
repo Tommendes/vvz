@@ -380,20 +380,20 @@ const formTabelasIsValid = () => {
     return validateDataTabela();
 };
 
-const convertFloatFields = (result = 'pt') => {
-    itemDataProdTabelas.value.valor_compra = formatValor(itemDataProdTabelas.value.valor_compra, result);
-    itemDataProdTabelas.value.valor_venda = formatValor(itemDataProdTabelas.value.valor_venda, result);
-};
 const saveDataProdTabelas = async () => {
     if (!formTabelasIsValid()) return;
     const method = itemDataProdTabelas.value.id ? 'put' : 'post';
     const id = itemDataProdTabelas.value.id ? `/${itemDataProdTabelas.value.id}` : '';
     const url = `${urlBaseProdTabelas.value}/${itemData.value.id}${id}`;
-    const oldIniValid = itemDataProdTabelas.value.ini_validade;
-    itemDataProdTabelas.value.ini_validade = moment(itemDataProdTabelas.value.ini_validade, 'DD/MM/YYYY').format('YYYY-MM-DD');
-    convertFloatFields('en');
-    // Remover os colchetes do array itemDataProdTabelas.value.descricao
-    await axios[method](url, itemDataProdTabelas.value)
+    // const oldIniValid = itemDataProdTabelas.value.ini_validade;
+    const obj = {
+        ...itemDataProdTabelas.value
+    };
+    obj.ini_validade = moment(obj.ini_validade, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    obj.valor_compra = formatValor(itemDataProdTabelas.value.valor_compra, 'en');
+    obj.valor_venda = formatValor(itemDataProdTabelas.value.valor_venda, 'en');
+    // Remover os colchetes do array obj.descricao
+    await axios[method](url, obj)
         .then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -406,7 +406,6 @@ const saveDataProdTabelas = async () => {
         .catch((err) => {
             console.log(err);
             defaultWarn(err.response.data);
-            itemDataProdTabelas.value.ini_validade = oldIniValid;
         });
 };
 // Editar item da lista de documentos

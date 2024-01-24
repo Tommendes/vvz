@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeMount, ref, inject } from 'vue';
 import { baseApiUrl } from '@/env';
+import { getViaCep } from '@/getCep';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRouter } from 'vue-router';
@@ -35,18 +36,18 @@ const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
 const loadData = async () => {
     setTimeout(async () => {
         if (itemData && itemData.id) {
-        const url = `${urlBase.value}/${itemData.value.id}`;
-        await axios.get(url).then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                itemData.value = body;
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.schema_description}/cadastros` });
-            }
-        });
-    }
+            const url = `${urlBase.value}/${itemData.value.id}`;
+            await axios.get(url).then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    itemData.value = body;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                }
+            });
+        }
     }, Math.random() * 1000);
 };
 
@@ -112,6 +113,11 @@ const validateCep = () => {
     }
     return true;
 };
+const getCep = async () => {
+    const cep = masks.value.cep.unmasked(itemData.value.cep);
+    const viaCep = await getViaCep(cep);
+    console.log(viaCep);
+};
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
     const selects = query.select ? `&slct=${query.select}` : undefined;
@@ -146,7 +152,7 @@ onBeforeMount(() => {
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" />
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" @blur="getCep()" />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">

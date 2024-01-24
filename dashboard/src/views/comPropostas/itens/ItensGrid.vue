@@ -2,6 +2,7 @@
 import { ref, onBeforeMount, inject } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
+import { formatValor } from '@/global';
 import axios from '@/axios-interceptor';
 import ItemForm from './ItemForm.vue';
 
@@ -58,6 +59,7 @@ const loadData = () => {
                 if (element.compos_nr) element.item = `${element.compos_nr} / ${element.item}`;
                 if (element.descricao) element.descricao = element.descricao.trim();
                 else element.descricao = '';
+                element.quantidade = formatValor(element.quantidade, 'pt');
                 // const description = element.descricao || undefined;
                 // if (description) {
                 //     element.descricao = description.trim().substr(0, limitDescription);

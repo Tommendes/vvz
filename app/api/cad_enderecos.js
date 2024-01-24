@@ -1,4 +1,5 @@
 const { dbPrefix } = require("../.env")
+const axios = require('axios');
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'cad_enderecos'
@@ -152,7 +153,6 @@ module.exports = app => {
             })
     }
 
-
     const getById = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -229,6 +229,9 @@ module.exports = app => {
                 break;
             case 'glf':
                 getListByField(req, res)
+                break;
+            case 'gvc':
+                getViaCep(req, res)
                 break;
             default:
                 res.status(404).send('Função inexitente')
@@ -313,6 +316,36 @@ module.exports = app => {
             return res.status(500).send(error)
         })
     }
+
+    const getViaCep = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Pesquisa de CEP"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+        }
+
+        const cep = req.body.cep;
+        const url = `https://viacep.com.br/ws/${cep}/json/`;
+        try {
+            const response = await axios.get(url).then((res) => {
+                const body = res.data;
+                if (body && body.cep) {
+                    return body
+                } else {
+                    return 'CEP não localizado. Tente novamente ou preencha manualmente.';
+                }
+            });
+            return res.json(response);
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            if (error.code == 'ERR_BAD_REQUEST') return res.status(400).send('CEP não localizado. Tente novamente ou preencha manualmente.')
+            console.log(error);
+            return res.status(400).send(error)
+        }
+    };
 
     return { save, get, getById, remove, getByFunction }
 }

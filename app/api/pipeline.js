@@ -335,6 +335,8 @@ module.exports = app => {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
                                 else if (queryField == 'tipo_doc') queryField = 'pp.descricao'
+                                else if (queryField == 'id_cadastros') queryField = 'tbl1.id_cadastros'
+                                else if (queryField == 'valor_bruto') queryField = 'tbl1.valor_bruto'
                                 query += `${queryField} ${operator} AND `
                             }
                         }
@@ -854,7 +856,7 @@ module.exports = app => {
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PENDENTE })
                 .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .groupBy('pp.id')
-                .orderBy('valor_bruto', 'desc')
+                .orderBy('tbl1.valor_bruto', 'desc')
                 .limit(rows)
             let totalProposed = 0;
             let totalProposedQuantity = 0;
@@ -1052,7 +1054,6 @@ module.exports = app => {
             if (list.length == 0) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.send(list);
         } catch (error) {
-            console.log(error.code);
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             if (error.code == 'EHOSTUNREACH') return res.status(200).send(`Servidor de arquivos temporariamente indisponível`);
             else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);

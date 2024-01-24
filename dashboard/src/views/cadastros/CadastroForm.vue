@@ -3,7 +3,7 @@ import { onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { isValidEmail } from '@/global';
+import { isValidEmail, capitalizeFirst } from '@/global';
 import moment from 'moment';
 import { guide } from '@/guides/cadastroFormGuide.js';
 
@@ -22,11 +22,11 @@ const masks = ref({
         mask: '##.###-###'
     }),
     rg: new Mask({
-        mask: '##.###.###-#',
+        mask: '##.###.###-#'
     }),
     ie: new Mask({
-        mask: '##.###.###-###',
-    }),
+        mask: '##.###.###-###'
+    })
 });
 
 import { useRoute, useRouter } from 'vue-router';
@@ -45,6 +45,7 @@ import { cpf, cnpj } from 'cpf-cnpj-validator';
 const itemData = ref({
     id_params_p_nascto: 4
 });
+const dadosPublicos = ref({});
 const labels = ref({
     pfpj: 'pf',
     nome: 'Nome',
@@ -53,6 +54,7 @@ const labels = ref({
 });
 // Modo do formulário
 const mode = ref('view');
+const searched = ref(false);
 // Mensages de erro
 const errorMessages = ref({});
 // Dropdowns
@@ -142,52 +144,159 @@ const saveData = async () => {
 // Converte 1 ou 0 para boolean
 const isTrue = (value) => value === 1;
 // Preencher campos de endereço com base no CEP
+
 const buscarCEP = async () => {
-  const cep = itemData.value.cep.replace(/[^0-9]/g, '');
+    if (!validateCep()) return;
+    const cep = itemData.value.cep.replace(/[^0-9]/g, '');
 
-  if (cep !== '') {
-    try {
-      // Limpar os campos enquanto aguarda a resposta
-      itemData.value.logradouro = '...';
-      itemData.value.bairro = '...';
-      itemData.value.cidade = '...';
-      itemData.value.uf = '...';
-      itemData.value.ibge = '...';
+    if (cep !== '') {
+        try {
+            // Limpar os campos enquanto aguarda a resposta
+            itemData.value.logradouro = '...';
+            itemData.value.bairro = '...';
+            itemData.value.cidade = '...';
+            itemData.value.uf = '...';
+            itemData.value.ibge = '...';
 
-      const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+            // Consultar API externa
+            const url = `${baseApiUrl}/cad-enderecos/f-a/gvc`;
+            const response = await axios.post(url, { cep: cep });
 
-      if (!response.data.erro) {
-        // Atualizar os campos com os valores da consulta.
-        itemData.value.logradouro = response.data.logradouro;
-        itemData.value.bairro = response.data.bairro;
-        itemData.value.cidade = response.data.localidade;
-        itemData.value.uf = response.data.uf;
-        itemData.value.ibge = response.data.ibge;
-      } else {
-        // CEP pesquisado não foi encontrado.
+            if (response.data.cep) {
+                // Atualizar os campos com os valores da consulta.
+                itemData.value.logradouro = response.data.logradouro;
+                itemData.value.bairro = response.data.bairro;
+                itemData.value.cidade = response.data.localidade;
+                itemData.value.uf = response.data.uf;
+                itemData.value.ibge = response.data.ibge;
+            } else {
+                // CEP pesquisado não foi encontrado.
+                limparFormularioCEP();
+                defaultWarn(response.data);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar informações do CEP', error);
+            limparFormularioCEP();
+            defaultWarn('Erro ao buscar informações do CEP');
+        }
+    } else {
+        // CEP sem valor, limpar formulário.
         limparFormularioCEP();
-        defaultWarn('CEP não encontrado.');
-      }
-    } catch (error) {
-      console.error('Erro ao buscar informações do CEP', error);
-      limparFormularioCEP();
-      defaultWarn('Erro ao buscar informações do CEP');
     }
-  } else {
-    // CEP sem valor, limpar formulário.
-    limparFormularioCEP();
-  }
 };
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
+const buscarCNPJ = async () => {
+    if (!validateCPF()) return;
+    const cnpj = itemData.value.cpf_cnpj.replace(/[^0-9]/g, '');
+    if (cnpj.length != 14) return;
+
+    confirm.require({
+        group: 'templating',
+        header: 'Dados públicos',
+        message: 'Gostaria de baixar os dados públicos do CNPJ?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            try {
+                // Consultar API externa
+                const url = `${baseApiUrl}/cad-dados-publicos/f-a/gCnpj`;
+                const response = await axios.post(url, { cnpj: cnpj });
+                if (response.data.cnpj) {
+                    delete response.data.qsa;
+                    delete response.data.extra;
+                    delete response.data.billing;
+                    dadosPublicos.value = response.data;
+                    try {
+                        await axios.post(`${baseApiUrl}/cad-dados-publicos/${itemData.value.id}`, { dados: formatarDadosParaHTML(response.data) });
+                        emit('dadosPublicos', dadosPublicos.value);
+                        searched.value = true;
+                        atualizarDados();
+                    } catch (error) {
+                        console.error('Erro ao salvar dados públicos', error);
+                        defaultWarn('Erro ao salvar dados públicos');
+                    }
+                } else {
+                    // CNPJ pesquisado não foi encontrado.
+                    defaultWarn(response.data);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar informações do CNPJ', error);
+                defaultWarn('Erro ao buscar informações do CNPJ');
+            }
+        },
+        reject: () => {
+            return;
+        }
+    });
+};
+
+const animationDocNr = ref('');
+const atualizarDados = async () => {
+    confirm.require({
+        group: 'templating',
+        header: 'Dados públicos',
+        message: 'Deseja atualizar os valores de acordo com os dados coletados?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            animationDocNr.value = 'animation-color animation-fill-forwards';
+            if (dadosPublicos.value.nome) itemData.value.nome = dadosPublicos.value.nome;
+            if (dadosPublicos.value.abertura) itemData.value.aniversario = dadosPublicos.value.abertura;
+            if (dadosPublicos.value.logradouro) itemData.value.logradouro = dadosPublicos.value.logradouro;
+            if (dadosPublicos.value.nr) itemData.value.nr = dadosPublicos.value.nr;
+            if (dadosPublicos.value.bairro) itemData.value.bairro = dadosPublicos.value.bairro;
+            if (dadosPublicos.value.complemento) itemData.value.complnr = dadosPublicos.value.complemento;
+            if (dadosPublicos.value.email) itemData.value.email = dadosPublicos.value.email;
+            if (dadosPublicos.value.uf) itemData.value.uf = dadosPublicos.value.uf;
+            defaultSuccess('Dados atualizados com sucesso');
+            setTimeout(() => {
+                animationDocNr.value = '';
+            }, 5000);
+        },
+        reject: () => {
+            return;
+        }
+    });
+};
+function formatarDadosParaHTML(dados) {
+    let htmlString = '<p>';
+
+    for (const key in dados) {
+        if (Object.prototype.hasOwnProperty.call(dados, key)) {
+            const value = dados[key];
+
+            if (Array.isArray(value)) {
+                htmlString += `<strong>${capitalizeFirst(key.replaceAll('_', ' '))}:</strong>`;
+                htmlString += '<ul>';
+                value.forEach((item) => {
+                    htmlString += `<li>${item.text}</li>`;
+                });
+                htmlString += '</ul>';
+            } else {
+                htmlString += `<strong>${capitalizeFirst(key.replaceAll('_', ' '))}:</strong> ${value}<br />`;
+            }
+        }
+    }
+
+    htmlString += '</p>';
+    return htmlString;
+}
+
 const limparFormularioCEP = () => {
-  itemData.value.logradouro = '';
-  itemData.value.bairro = '';
-  itemData.value.cidade = '';
-  itemData.value.uf = '';
+    itemData.value.logradouro = '';
+    itemData.value.bairro = '';
+    itemData.value.cidade = '';
+    itemData.value.uf = '';
 };
 // Validar CPF
 const validateCPF = () => {
     const inputValue = itemData.value.cpf_cnpj || '';
-    
+
     if (inputValue.trim().length > 0) {
         const toValidate = masks.value.cpf_cnpj.unmasked(inputValue);
         if (cpf.isValid(toValidate) || cnpj.isValid(toValidate)) {
@@ -299,9 +408,9 @@ const loadOptions = async () => {
     });
 };
 // Carregar dados do formulário
-onMounted(() => {
-    loadData();
-    loadOptions();
+onMounted(async () => {
+    await loadData();
+    await loadOptions();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -338,13 +447,17 @@ watchEffect(() => {
                     <div class="field col-12 md:col-2">
                         <label for="cpf_cnpj">CPF/CNPJ<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
+                        <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
+                            <Button :disabled="mode == 'view'" :icon="`fa-solid fa-arrows-rotate${!(mode == 'view' || searched) ? ' fa-spin' : ''}`" v-tooltip.top="'Clique para buscar os dados públicos'" class="bg-blue-500" @click="buscarCNPJ()" />
+                        </div>
+
                         <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj">{{ errorMessages.cpf_cnpj }}</small>
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="nome">{{ labels.nome }}<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="!validateCPF() || mode == 'view'" v-model="itemData.nome" id="nome" type="text" />
+                        <InputText v-else autocomplete="no" :disabled="!validateCPF() || mode == 'view'" v-model="itemData.nome" id="nome" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="rg_ie">{{ labels.rg_ie }}</label>
@@ -369,7 +482,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-2">
                         <label for="aniversario">{{ labels.aniversario }}<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" />
+                        <InputText v-else autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="id_params_p_nascto">País de Origem<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
@@ -461,11 +574,11 @@ watchEffect(() => {
                     </div>
                     <div class="field col-12 md:col-7">
                         <label for="logradouro">Logradouro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" />
+                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-1">
                         <label for="nr">Número<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" />
+                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="complnr">Complemento</label>
@@ -473,15 +586,15 @@ watchEffect(() => {
                     </div>
                     <div class="field col-12 md:col-4">
                         <label for="cidade">Cidade<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" />
+                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-4">
                         <label for="bairro">Bairro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" />
+                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-1">
                         <label for="uf">UF<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.uf" maxlength="2" id="uf" type="text" />
+                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.uf" maxlength="2" id="uf" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-12">
                         <label for="observacao_endereco">Observação do Endereço</label>
@@ -500,6 +613,7 @@ watchEffect(() => {
                 <div class="card bg-green-200 mt-3">
                     <p>Mode: {{ mode }}</p>
                     <p>itemData: {{ itemData }}</p>
+                    <p>dadosPublicos: {{ dadosPublicos }}</p>
                 </div>
             </div>
         </form>
@@ -519,3 +633,24 @@ watchEffect(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+@keyframes animation-color {
+    0% {
+        background-color: var(--blue-500);
+        color: var(--gray-50);
+    }
+    50% {
+        background-color: var(--yellow-500);
+        color: var(--gray-900);
+    }
+    100% {
+        background-color: var(--surface-200);
+        color: var(--gray-900);
+    }
+}
+
+.animation-color {
+    animation: animation-color 5s linear;
+}
+</style>

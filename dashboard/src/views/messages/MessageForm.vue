@@ -50,11 +50,11 @@ const loadData = async () => {
             await axios.get(url).then((res) => {
                 const body = res.data;
                 if (body && body.id) {
-                    body.id = String(body.id);                
+                    body.id = String(body.id);
                     itemData.value = body;
                     if (itemData.value.valid_from) itemData.value.valid_from = masks.value.date.masked(moment(itemData.value.valid_from).format('DD/MM/YYYY'));
                     if (itemData.value.valid_to) itemData.value.valid_to = masks.value.date.masked(moment(itemData.value.valid_to).format('DD/MM/YYYY'));
-                    loading.value = false;                
+                    loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
                     router.push({ path: `/${userData.schema_description}/messages` });
@@ -71,15 +71,15 @@ const saveData = async () => {
     }
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
-    const url = `${urlBase.value}${id}`; 
-    if (itemData.value.valid_from) itemData.value.valid_from = moment(itemData.value.valid_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
-    if (itemData.value.valid_to) itemData.value.valid_to = moment(itemData.value.valid_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
-    await axios[method](url, itemData.value)
+    const url = `${urlBase.value}${id}`;
+    const obj = { ...itemData.value };
+    // if (itemData.value.valid_from) obj.valid_from = moment(itemData.value.valid_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    // if (itemData.value.valid_to) obj.valid_to = moment(itemData.value.valid_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    await axios[method](url, obj)
         .then((res) => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
-                itemData.value = body;
                 if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/message/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
@@ -98,9 +98,9 @@ const dropdownStatusUser = ref([
 ]);
 // O dropdown abaixo está com valores literais para não causar possíveis problemas de integração
 const dropdownCorDaMensagem = ref([
-    { value: 'success', label: 'Success'},
-    { value: 'info', label: 'Info'},
-    { value: 'warning', label: 'Warning'},
+    { value: 'success', label: 'Success' },
+    { value: 'info', label: 'Info' },
+    { value: 'warning', label: 'Warning' },
     { value: 'danger', label: 'Danger' }
 ]);
 const dropdownSeveridade = ref([
@@ -131,7 +131,7 @@ const validateDateFrom = () => {
         errorMessages.value.valid_from = 'Campo obrigatório';
         return false;
     }
-    
+
     return true;
 };
 const validateDateTo = () => {
@@ -200,10 +200,10 @@ watchEffect(() => {
     isItemDataChanged();
     // Adiciona um watcher para o campo 'body_variant'
     if (itemData.value.body_variant) {
-    switch (itemData.value.body_variant) {
-        case 'success':
-            title_color = '#22C55E';
-            break;
+        switch (itemData.value.body_variant) {
+            case 'success':
+                title_color = '#22C55E';
+                break;
             case 'info':
                 title_color = '#0EA5E9';
                 break;
@@ -241,34 +241,18 @@ watchEffect(() => {
                             <label for="valid_from">Válido de</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_from" id="valid_from" type="text" @input="validateDateFrom()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.valid_from">{{errorMessages.valid_from }}</small>
+                            <small id="text-error" class="p-error" v-if="errorMessages.valid_from">{{ errorMessages.valid_from }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="valid_to">Válido até</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText
-                                v-else
-                                autocomplete="no"
-                                :disabled="mode == 'view'"
-                                v-maska data-maska="##/##/####"
-                                v-model="itemData.valid_to"
-                                id="valid_to"
-                                type="text"
-                                @input="validateDateTo()"
-                            />
-                            <small id="text-error" class="p-error" v-if="errorMessages.valid_to">{{errorMessages.valid_to }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_to" id="valid_to" type="text" @input="validateDateTo()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.valid_to">{{ errorMessages.valid_to }}</small>
                         </div>
                         <div class="col-12 md:col-5">
                             <label for="title">Título da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText
-                                v-else
-                                autocomplete="no"
-                                :disabled="mode == 'view'"
-                                v-model="itemData.title"
-                                :style="{ color: title_color }"
-                                id="title" type="text"
-                            />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title" :style="{ color: title_color }" id="title" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="body_variant">Cor da Mensagem</label>

@@ -5,7 +5,7 @@ module.exports = app => {
     const tabela = 'com_prop_itens'
     const tabelaComposicoes = 'com_prop_compos'
     const tabelaAlias = 'Item'
-    const STATUS_INACTIVE = 0
+    const STATUS_ITEM_INACTIVE = 0
     const STATUS_ITEM_ACTIVE = 1
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
@@ -47,11 +47,11 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        if (body.status == 0) delete body.item
+        if (body.item_ativo == 0) delete body.item
         delete body.hash; delete body.tblName
         if (body.id) {
             try {
-                if (body.status == 10) existsOrError(String(body.item), 'Item não informado')
+                if (body.item_ativo == 1) existsOrError(String(body.item), 'Item não informado')
             } catch (error) {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(400).send(error)
@@ -103,7 +103,7 @@ module.exports = app => {
             // try {
             //     const unique = await app.db(tabelaDomain)
             //         .where({ id_com_propostas: body.id_com_propostas, item: body.item, id_com_produtos: body.id_com_produtos })
-            //         .whereIn('status', [STATUS_ACTIVE, STATUS_INACTIVE])
+            //         .whereIn('status', [STATUS_ACTIVE, STATUS_ITEM_INACTIVE])
             //         .first()
             //     notExistsOrError(unique, 'Este produto já foi adicionado a este item')
             // } catch (error) {
@@ -116,10 +116,11 @@ module.exports = app => {
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
+            body.item_ativo = STATUS_ITEM_ACTIVE
             body.created_at = new Date()
             const ordem = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas }).select(app.db.raw('count(*) as count')).first()
             body.ordem = ordem.count + 1 || 1
-            const item = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, status: STATUS_ACTIVE }).select(app.db.raw('count(*) as count')).first()
+            const item = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, item_ativo: STATUS_ITEM_ACTIVE }).select(app.db.raw('count(*) as count')).first()
             body.item = item.count + 1 || 1
             delete body.old_id;
             app.db(tabelaDomain)
@@ -167,7 +168,7 @@ module.exports = app => {
             .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
             .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
             .where({ 'tbl1.id_com_propostas': id_com_propostas })
-            .whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_INACTIVE])
+            .whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_ITEM_INACTIVE])
             .orderBy(app.db.raw('cast(tbl3.compos_nr as int)'), 'asc')
             .orderBy(app.db.raw('cast(tbl1.item as int)'), 'desc')
             .then(body => {
@@ -194,7 +195,7 @@ module.exports = app => {
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id })
-            .whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_INACTIVE]).first()
+            .whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_ITEM_INACTIVE]).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
@@ -372,7 +373,7 @@ module.exports = app => {
         const tabelaComposicoesDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaComposicoes}`
         // Primeiro seta todos os itens inativos da proposta como item = 0 (zero)
         if (body.id_com_propostas)
-            await app.db(tabelaDomain).update({ item: 0 }).where({ id_com_propostas: body.id_com_propostas, item_ativo: STATUS_INACTIVE })
+            await app.db(tabelaDomain).update({ item: 0 }).where({ id_com_propostas: body.id_com_propostas, item_ativo: STATUS_ITEM_INACTIVE })
 
         // Localiza todas os itens ativos sem composição da proposta ordenadas por ordem e data de criação
         const itens = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, item_ativo: STATUS_ITEM_ACTIVE })
