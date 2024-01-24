@@ -146,7 +146,7 @@ module.exports = app => {
             .where({ 'tbl1.id': req.params.id })
             .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
             .first()
-            // console.log(ret.toString());
+            
             ret.then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)

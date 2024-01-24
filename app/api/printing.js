@@ -87,31 +87,5 @@ module.exports = app => {
             });
     }
 
-    /*    
-
-        // const username = 'vvz';
-        // const password = 'v1V@zull';
-        // const url = `http://85.31.231.103:8081/jasperserver/rest_v2/reports/${fileRootName}.${exportType}?usuario=Tom Mendes&idEmpresa=1&idOat=8201&dbSchema=vivazul_bceaa5`
-        // const credentials = btoa(`${username}:${password}`);
-        // const rep = await axios.get(url, { headers: { Authorization: `Basic ${credentials}` } })
-        //     .then((data) => {
-        //         const data64 = Buffer.from(data.data)
-        //         const data64Length = data64.length
-        //         // console.log(data64, data64Length);
-        //         res.setHeader("Content-Type", `application/${exportType}`);
-        //         res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
-        //         res.setHeader("Content-Length", data64Length);
-        //         // if (body.encoding == 'base64') res.send(Buffer.from(data).toString('base64'))
-        //         // else 
-        //         console.log(res);
-        //         res.send(data64)
-        //     })
-        //     .catch((error) => {
-        //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-        //         res.send(error)
-        //     });
-
-     */
-
     return { getByFunction }
 }
