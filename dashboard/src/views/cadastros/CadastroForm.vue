@@ -253,6 +253,7 @@ const atualizarDados = async () => {
             if (dadosPublicos.value.complemento) itemData.value.complnr = dadosPublicos.value.complemento;
             if (dadosPublicos.value.email) itemData.value.email = dadosPublicos.value.email;
             if (dadosPublicos.value.uf) itemData.value.uf = dadosPublicos.value.uf;
+            if (dadosPublicos.value.cep) itemData.value.cep = dadosPublicos.value.cep;
             defaultSuccess('Dados atualizados com sucesso');
             setTimeout(() => {
                 animationDocNr.value = '';
