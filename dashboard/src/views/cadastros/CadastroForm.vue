@@ -429,8 +429,9 @@ const loadOptions = async () => {
 };
 // Carregar dados do formulário
 onMounted(async () => {
-    await loadData();
+    loading.value.form = true;
     await loadOptions();
+    await loadData();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
