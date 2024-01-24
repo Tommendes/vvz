@@ -258,13 +258,13 @@ const atualizarDados = async () => {
             animationDocNr.value = 'animation-color animation-fill-forwards';
             if (dadosPublicos.value.nome) itemData.value.nome = dadosPublicos.value.nome;
             if (dadosPublicos.value.abertura) itemData.value.aniversario = dadosPublicos.value.abertura;
-            if (dadosPublicos.value.logradouro) itemData.value.logradouro = dadosPublicos.value.logradouro;
-            if (dadosPublicos.value.nr) itemData.value.nr = dadosPublicos.value.nr;
-            if (dadosPublicos.value.bairro) itemData.value.bairro = dadosPublicos.value.bairro;
-            if (dadosPublicos.value.complemento) itemData.value.complnr = dadosPublicos.value.complemento;
-            if (dadosPublicos.value.email) itemData.value.email = dadosPublicos.value.email;
-            if (dadosPublicos.value.uf) itemData.value.uf = dadosPublicos.value.uf;
             if (dadosPublicos.value.cep) itemData.value.cep = dadosPublicos.value.cep;
+            if (dadosPublicos.value.uf) itemData.value.uf = dadosPublicos.value.uf;
+            if (dadosPublicos.value.municipio) itemData.value.cidade = dadosPublicos.value.municipio;
+            if (dadosPublicos.value.logradouro) itemData.value.logradouro = dadosPublicos.value.logradouro;
+            if (dadosPublicos.value.numero) itemData.value.nr = dadosPublicos.value.numero;
+            if (dadosPublicos.value.bairro) itemData.value.bairro = dadosPublicos.value.bairro;
+            if (dadosPublicos.value.email) itemData.value.email = dadosPublicos.value.email;
             defaultSuccess('Dados atualizados com sucesso');
             setTimeout(() => {
                 animationDocNr.value = '';
