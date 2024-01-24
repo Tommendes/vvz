@@ -564,11 +564,6 @@ const statusRecord = async (status) => {
                     .put(url, preparedBody)
                     .then(async (body) => {
                         defaultSuccess(`Registro convertido com sucesso`);
-                        // itemData.value = body.data;
-                        // console.log('body', body);
-                        // window.location.href = `#/${userData.schema_description}/pipeline/${body.data.id}`;
-                        // loading.value = true;
-                        // await loadData();
                         await toFilho(body.data.id);
                     })
                     .catch((error) => {
@@ -634,7 +629,6 @@ const mkFolder = async () => {
             await lstFolder();
         })
         .catch((error) => {
-            console.log('Erro mkFolder', error);
             if (typeof error == 'string') defaultWarn(error);
             else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
             else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);

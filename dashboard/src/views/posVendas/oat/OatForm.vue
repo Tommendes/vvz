@@ -276,7 +276,6 @@ const itemDataStatusPreload = ref([
 // Listar status do registro
 const listStatusRegistro = async () => {
     const url = `${baseApiUrl}/pv-oat-status/${itemData.value.id}`;
-    console.log(url);
     await axios.get(url).then((res) => {
         if (res.data && res.data.data.length > 0) {
             itemDataLastStatus.value = res.data.data[res.data.data.length - 1];

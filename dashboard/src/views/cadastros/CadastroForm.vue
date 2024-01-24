@@ -449,9 +449,15 @@ watchEffect(() => {
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                             <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
-                            <Button :disabled="mode == 'view'" :icon="`fa-solid fa-arrows-rotate${!(mode == 'view' || searched) ? ' fa-spin' : ''}`" v-tooltip.top="'Clique para buscar os dados públicos'" class="bg-blue-500" @click="buscarCNPJ()" />
+                            <Button
+                                v-if="labels.pfpj == 'pj'"
+                                :disabled="mode == 'view'"
+                                :icon="`fa-solid fa-arrows-rotate${!(mode == 'view' || searched) ? ' fa-spin' : ''}`"
+                                v-tooltip.top="'Clique para buscar os dados públicos'"
+                                class="bg-blue-500"
+                                @click="buscarCNPJ()"
+                            />
                         </div>
-
                         <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj">{{ errorMessages.cpf_cnpj }}</small>
                     </div>
                     <div class="field col-12 md:col-6">

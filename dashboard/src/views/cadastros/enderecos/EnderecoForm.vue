@@ -113,10 +113,51 @@ const validateCep = () => {
     }
     return true;
 };
-const getCep = async () => {
-    const cep = masks.value.cep.unmasked(itemData.value.cep);
-    const viaCep = await getViaCep(cep);
-    console.log(viaCep);
+const buscarCEP = async () => {
+    if (!validateCep()) return;
+    const cep = itemData.value.cep.replace(/[^0-9]/g, '');
+
+    if (cep !== '') {
+        try {
+            // Limpar os campos enquanto aguarda a resposta
+            itemData.value.logradouro = '...';
+            itemData.value.bairro = '...';
+            itemData.value.cidade = '...';
+            itemData.value.uf = '...';
+            itemData.value.ibge = '...';
+
+            // Consultar API externa
+            const url = `${baseApiUrl}/cad-enderecos/f-a/gvc`;
+            const response = await axios.post(url, { cep: cep });
+
+            if (response.data.cep) {
+                // Atualizar os campos com os valores da consulta.
+                itemData.value.logradouro = response.data.logradouro;
+                itemData.value.bairro = response.data.bairro;
+                itemData.value.cidade = response.data.localidade;
+                itemData.value.uf = response.data.uf;
+                itemData.value.ibge = response.data.ibge;
+            } else {
+                // CEP pesquisado não foi encontrado.
+                limparFormularioCEP();
+                defaultWarn(response.data);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar informações do CEP', error);
+            limparFormularioCEP();
+            defaultWarn('Erro ao buscar informações do CEP');
+        }
+    } else {
+        // CEP sem valor, limpar formulário.
+        limparFormularioCEP();
+    }
+};
+
+const limparFormularioCEP = () => {
+    itemData.value.logradouro = '';
+    itemData.value.bairro = '';
+    itemData.value.cidade = '';
+    itemData.value.uf = '';
 };
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
@@ -152,7 +193,7 @@ onBeforeMount(() => {
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" @blur="getCep()" />
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" @blur="buscarCEP" />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">

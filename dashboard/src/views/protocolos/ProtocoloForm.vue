@@ -131,9 +131,9 @@ const saveDataProtDocs = async () => {
                 defaultWarn('Erro ao salvar documentos');
             }
         })
-        .catch((err) => {
-            console.log(err);
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            console.log(error);
+            defaultWarn(error.response.data);
         });
     if (itemDataProtDocs.value.descricao) itemDataProtDocs.value.descricao = itemDataProtDocs.value.descricao.split(',');
 };
