@@ -576,7 +576,19 @@ watchEffect(() => {
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cep">CEP<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()" @blur="buscarCEP" />
+                        <InputText
+                            autocomplete="no"
+                            :required="!itemData.prospecto"
+                            :disabled="mode == 'view'"
+                            v-maska
+                            data-maska="##.###-###"
+                            v-model="itemData.cep"
+                            id="cep"
+                            type="text"
+                            @input="validateCep()"
+                            @blur="buscarCEP"
+                            :class="`${animationDocNr}`"
+                        />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
