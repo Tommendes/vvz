@@ -21,6 +21,7 @@ const urlBase = ref(`${baseApiUrl}/pipeline`);
 const props = defineProps(['idCadastro']);
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
+const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Seus dados iniciais
@@ -36,6 +37,7 @@ const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
 const dropdownUnidadesFilter = ref([]); // Itens do dropdown de Unidades de Negócio do grid
 const tipoDoc = ref(null); // Tipo de documento selecionado
 const unidade = ref(null); // Unidade de negócio selecionada
+const periodo = ref(null); // Período selecionado
 const unidadeNegocio = ref(null); // Unidade de negócio selecionada
 
 // Obter parâmetros do BD
@@ -86,13 +88,22 @@ const filtrarUnidadesDescricao = async () => {
 // Itens do grid
 const limitDescription = 150;
 const limitNome = 25;
+
+// Lista de tipos
+const dropdownStatus = ref([
+    { label: 'Pendente', value: '0' },
+    { label: 'Proposta', value: '10' },
+    { label: 'Pedido', value: '20' },
+    { label: 'Liquidado', value: '80' },
+    { label: 'Cancelado', value: '89' }
+]);
 // { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'proposta', label: 'Proposta', class: 'text-center', minWidth: '4rem', maxWidth: '4rem' },
-    { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '4rem', maxWidth: '4rem' },
-    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '4rem', maxWidth: '4rem' },
+    { field: 'proposta', label: 'Proposta', class: 'text-center', minWidth: '5rem', maxWidth: '5rem' },
+    { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '5rem', maxWidth: '5rem' },
+    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '5rem', maxWidth: '5rem' },
     { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem' },
     { field: 'agente', label: 'Agente', minWidth: '5rem', maxWidth: '5rem' },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
@@ -102,6 +113,13 @@ const listaNomes = ref([
         type: 'date',
         minWidth: '7rem',
         tagged: true
+    },
+    {
+        field: 'last_status_params',
+        label: 'Situação',
+        minWidth: '5rem',
+        maxWidth: '5rem',
+        list: dropdownStatus.value
     }
 ]);
 // Inicializa os filtros do grid
@@ -124,8 +142,8 @@ const urlFilters = ref('');
 // Limpa os filtros do grid
 const clearFilter = () => {
     loading.value = true;
-    tipoDoc.value = unidade.value = unidadeNegocio.value = null;
     rowsPerPage.value = 10;
+    tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = null;
     initFilters();
     lazyParams.value = {
         first: dt.value.first,
@@ -135,6 +153,10 @@ const clearFilter = () => {
         filters: filters.value
     };
     loadLazyData();
+    // router.push({ path: `/${userData.schema_description}/pipeline` });
+};
+const reload = () => {
+    router.replace({ query: {} });
 };
 //Scrool quando criar um Novo Registro
 const scrollToTop = () => {
@@ -154,6 +176,7 @@ const loadLazyData = () => {
             .then((axiosRes) => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
+                sumRecords.value = axiosRes.data.sumRecords;
                 gridData.value.forEach((element) => {
                     if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                     const nome = element.nome || undefined;
@@ -162,6 +185,10 @@ const loadLazyData = () => {
                         if (nome.length > limitNome) element.nome += ' ...';
                     }
                     if (!element.proposta) element.proposta = '';
+                    // alterar o valor de element.last_status_params de acordo com o dropdownStatus
+                    dropdownStatus.value.forEach((item) => {
+                        if (item.value == element.last_status_params) element.last_status_params = item.label;
+                    });
                     if (element.descricao)
                         element.descricao = element.descricao
                             .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
@@ -209,7 +236,14 @@ const mountUrlFilters = () => {
     Object.keys(filters.value).forEach((key) => {
         if (filters.value[key].value) {
             const macthMode = filters.value[key].matchMode || 'contains';
-            url += `field:${key}=${macthMode}:${filters.value[key].value}&`;
+            let value = filters.value[key].value;
+            if (key && key == 'status_created_at') {
+                const dI = value[0] || undefined;
+                const dF = value[1] || undefined;
+                value = `${moment(dI).format('YYYY-MM-DD')},${moment(dF).format('YYYY-MM-DD')}`;
+                periodo.value = undefined;
+            }
+            url += `field:${key}=${macthMode}:${value}&`;
         }
     });
     if (lazyParams.value.originalEvent && (lazyParams.value.originalEvent.page || lazyParams.value.originalEvent.rows))
@@ -219,6 +253,7 @@ const mountUrlFilters = () => {
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
     if (tipoDoc.value) url += `field:doc_venda=equals:${tipoDoc.value}&`;
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
+    if (periodo.value) url += `field:status_created_at=contains:${periodo.value}&`;
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = `?${url}`;
@@ -289,18 +324,27 @@ onBeforeMount(() => {
 onMounted(() => {
     // Limpa os filtros do grid
     clearFilter();
-    if (route.query.tpd) {
+    let load = false;
+    if (route.query.tpd && route.query.tpd.length) {
         tipoDoc.value = route.query.tpd;
-
-        loadLazyData();
+        load = true;
         filtrarUnidades();
     }
+    if (route.query.per && route.query.per.length) {
+        periodo.value = route.query.per;
+        load = true;
+    }
+    if (route.query.tdoc && route.query.tdoc.length) {
+        unidadeNegocio.value = route.query.tdoc;
+        load = true;
+    }
+    if (load) loadLazyData();
 });
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline' }]" />
-    <div class="card" :style="route.name == 'pipeline' ? 'width: 100rem;' : ''">
+    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]" />
+    <div class="card" :style="route.name == 'pipeline' ? 'width: 120rem;' : ''">
         <PipelineForm
             :mode="mode"
             :idCadastro="props.idCadastro"
@@ -340,8 +384,9 @@ onMounted(() => {
             <!-- @rowCollapse="onRowCollapse" -->
             <!-- scrollHeight="600px" -->
             <template #header>
-                <div class="flex justify-content-end gap-3 mb-3">
+                <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                     <Tag :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
+                    <Tag class="tagRes" :value="`Total geral: ${formatCurrency(sumRecords)}`"> </Tag>
                 </div>
                 <div class="flex justify-content-end gap-3">
                     <Dropdown
@@ -386,8 +431,9 @@ onMounted(() => {
                         @change="loadLazyData()"
                     />
                     <Button icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-refresh" label="Todo o pipeline" outlined @click="reload()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
                     <Button type="button" icon="fa-solid fa-angles-up" @click="collapseAll()" v-if="expanded" />
                     <Button type="button" icon="fa-solid fa-angles-down" @click="expandAll()" v-else />
                 </div>
@@ -404,30 +450,34 @@ onMounted(() => {
                     :dataType="nome.type"
                     :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                 >
-                    <template #filter="{ filterModel, filterCallback }">
+                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
-                            v-if="nome.type == 'list'"
                             :id="nome.field"
                             optionLabel="label"
                             optionValue="value"
                             v-model="filterModel.value"
                             :options="nome.list"
                             @change="filterCallback()"
+                            :class="nome.class"
                             :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            placeholder="Pesquise..."
                         />
+                    </template>
+                    <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                         <Calendar
-                            v-else-if="nome.type == 'date'"
                             v-model="filterModel.value"
                             dateFormat="dd/mm/yy"
                             selectionMode="range"
+                            showButtonBar
                             :numberOfMonths="2"
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
-                            @date-select="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '2rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '2rem'}; overflow: hidden`"
+                            @input="filterCallback()"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
+                    </template>
+                    <template v-else #filter="{ filterModel, filterCallback }">
                         <InputText
-                            v-else
                             type="text"
                             v-model="filterModel.value"
                             @keydown.enter="filterCallback()"
@@ -464,3 +514,13 @@ onMounted(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.tagRes {
+    background-color: #077a59;
+    color: rgb(255, 255, 255);
+    font-size: 1.5rem;
+    margin-left: 3rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+</style>

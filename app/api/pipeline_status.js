@@ -115,12 +115,16 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaUsers = `${dbPrefix}_api.users`
+        const tabelaEvents = `${dbPrefix}_api.sis_events`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`u.name, tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .leftJoin({ se: tabelaEvents }, 'se.id', 'tbl1.evento')
+            .leftJoin({ u: tabelaUsers }, 'u.id', 'se.id_user')
             .where({ id_pipeline: id_pipeline })
-        ret.where({ status: STATUS_ACTIVE })
+        ret.where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
-        if (last) ret.orderBy('created_at', 'desc').orderBy('status_params', 'desc').first()
+        if (last) ret.orderBy('tbl1.created_at', 'desc').orderBy('tbl1.status_params', 'desc').first()
         else ret.orderBy('created_at').orderBy('status_params')
         ret.then(body => {
             const quantidade = body.length

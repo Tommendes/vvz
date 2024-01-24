@@ -128,7 +128,7 @@ DELETE FROM vivazul_bceaa5.cadastros;
 ALTER TABLE vivazul_bceaa5.cadastros AUTO_INCREMENT=0;
 SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_bceaa5.cadastros (
-  id,evento,created_at,updated_at,STATUS,prospect,
+  id,evento,created_at,updated_at,STATUS,prospecto,
   id_params_tipo,
   id_params_atuacao,
   cpf_cnpj,rg_ie,nome,
@@ -138,7 +138,7 @@ INSERT INTO vivazul_bceaa5.cadastros (
 ) ( 
 	SELECT 
 	  0,1,FROM_UNIXTIME(created_at)created_at,updated_at,STATUS,
-	  IF((SELECT COUNT(id) FROM vivazul_lynkos.ged WHERE id_cadastro = vivazul_lynkos.cadastros.id) > 0, 0, 1)prospect,
+	  IF((SELECT COUNT(id) FROM vivazul_lynkos.ged WHERE id_cadastro = vivazul_lynkos.cadastros.id) > 0, 0, 1)prospecto,
 	  COALESCE((SELECT id FROM vivazul_bceaa5.local_params WHERE parametro = tipo AND grupo = 'tipo_cadastro'),4)id_params_tipo,
 	  COALESCE((SELECT id FROM vivazul_bceaa5.local_params WHERE parametro = cadas_atuacao_id AND grupo = 'id_atuacao'),1)id_params_atuacao,
 	  IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)cpf_cnpj,rg_ie,cadas_nome,

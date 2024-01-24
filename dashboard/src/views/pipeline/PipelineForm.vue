@@ -32,6 +32,8 @@ import moment from 'moment';
 const animationDocNr = ref('animation-color animation-fill-forwards ');
 // Campos de formulário
 const itemData = ref({});
+// Eventos do registro
+const itemDataEventos = ref({});
 // Listagem de arquivos na pasta do registro
 const listFolder = ref(null);
 // O registro tem pasta?
@@ -101,6 +103,8 @@ const loadData = async () => {
                     await listStatusRegistro();
                     // Unidades de negócio
                     await listUnidadesDescricao();
+                    // Eventos do registro
+                    await getEventos();
                     breadItems.value = [{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }];
                     if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
@@ -140,11 +144,11 @@ const saveData = async () => {
 
     itemData.value.documento = String(itemData.value.documento);
     convertFloatFields('en');
-    const preparedBody = {
+    let preparedBody = {
         ...itemData.value,
-        status_params_force: andamentoRegistroPipeline.STATUS_PENDENTE,
         pipeline_params_force: itemDataParam.value
     };
+    if (method == 'post') preparedBody = { ...preparedBody, status_params_force: andamentoRegistroPipeline.STATUS_PENDENTE}
 
     axios[method](url, preparedBody)
         .then(async (res) => {
@@ -365,7 +369,9 @@ const listStatusRegistro = async () => {
                 itemDataStatus.value.push({
                     // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
                     date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                    user: element.name,
                     status: status[0].label,
+                    statusCode: element.status_params,
                     icon: status[0].icon,
                     color: status[0].color
                 });
@@ -680,6 +686,36 @@ const onPromptCancel = () => {
     defaultWarn('Você não pode prosseguir sem informar os dados solicitados');
 };
 
+const getEventos = async () => {
+    setTimeout(async () => {
+        const id = props.idPipeline || route.params.id;
+        const url = `${baseApiUrl}/sis-events/${id}/pipeline/get-events`;
+        await axios.get(url).then((res) => {
+            if (res.data && res.data.length > 0) {
+                itemDataEventos.value = res.data;
+                itemDataEventos.value.forEach((element) => {
+                    if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
+                    else if (element.classevento.toLowerCase() == 'update')
+                        element.evento =
+                            `Edição do registro` +
+                            (userData.gestor >= 1
+                                ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                                : '');
+                    else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão do registro';
+                    else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
+                    element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
+                });
+            } else {
+                itemDataEventos.value = [
+                    {
+                        evento: 'Ainda não há registro de log eventos para este registro'
+                    }
+                ];
+            }
+        });
+    }, Math.random() * 1000);
+};
+
 // Carregar dados do formulário
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -909,6 +945,18 @@ watch(route, (value) => {
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
+                    <Fieldset class="bg-orange-200 mb-3" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-circle-info mr-2"></span>
+                                <span class="font-bold text-lg">Eventos do registro</span>
+                            </div>
+                        </template>
+                        <div class="m-0" v-for="item in itemDataEventos" :key="item.id">
+                            <h4 v-if="item.data">Em {{ item.data }}: {{ item.user }}</h4>
+                            <p v-html="item.evento" class="mb-3" />
+                        </div>
+                    </Fieldset>
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -924,6 +972,7 @@ watch(route, (value) => {
                         <p>{{ route.name }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
+                        <p>itemDataEventos: {{ itemDataEventos }}</p>
                         <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
                         <p v-if="props.idPipeline">idPipeline: {{ props.idPipeline }}</p>
                         <p>itemDataParam: {{ itemDataParam }}</p>
@@ -1103,9 +1152,7 @@ watch(route, (value) => {
                             <template #opposite="slotProps">
                                 <small class="p-text-secondary">{{ slotProps.item.date }}</small>
                             </template>
-                            <template #content="slotProps">
-                                {{ slotProps.item.status }}
-                            </template>
+                            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ userData.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
                         </Timeline>
                     </Fieldset>
                     <Fieldset :toggleable="true">

@@ -44,7 +44,8 @@ const listaNomes = ref([
     { field: 'created_at', label: 'Data de criação' },
     { field: 'evento', label: 'Tipo do evento', minWidth: '10rem' },
     { field: 'classevento', label: 'Classe' },
-    { field: 'tabela_bd', label: 'Tabela' }
+    { field: 'tabela_bd', label: 'Tabela' },
+    { field: 'id_registro', label: 'Registro' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
