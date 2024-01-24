@@ -43,7 +43,7 @@ const loadData = async () => {
 
 const flashDadosPublicos = () => {
     classFlashDadosPublicos.value = 'animation-color animation-fill-none flex align-items-center justify-content-center font-bold border-round px-5';
-}
+};
 const classFlashDadosPublicos = ref('');
 // Carragamento de dados públicos
 const loadDataDadosPublicos = async () => {
@@ -82,7 +82,12 @@ onBeforeMount(() => {
                             <i class="fa-regular fa-address-card mr-2"></i>
                             <span>Dados básicos</span>
                         </template>
-                        <CadastroForm @dadosPublicos="loadDataDadosPublicos(); flashDadosPublicos()" />
+                        <CadastroForm
+                            @dadosPublicos="
+                                loadDataDadosPublicos();
+                                flashDadosPublicos();
+                            "
+                        />
                     </TabPanel>
                     <TabPanel v-if="itemDataDadosPublicos.id">
                         <template #header>

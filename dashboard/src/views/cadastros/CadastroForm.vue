@@ -121,11 +121,22 @@ const saveData = async () => {
     if (obj.telefone) obj.telefone = masks.value.telefone.unmasked(obj.telefone);
     if (obj.cep) obj.cep = obj.cep.replace(/([^\d])+/gim, '');
     await axios[method](url, obj)
-        .then((res) => {
+        .then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
+
+                try {
+                    await axios.post(`${baseApiUrl}/cad-dados-publicos/${itemData.value.id}`, { dados: formatarDadosParaHTML(dadosPublicos.value) });
+                    emit('dadosPublicos', dadosPublicos.value);
+                    // searched.value = true;
+                    // atualizarDados();
+                } catch (error) {
+                    console.error('Erro ao salvar dados públicos', error);
+                    defaultWarn('Erro ao salvar dados públicos');
+                }
+
                 if (itemData.value.aniversario) itemData.value.aniversario = moment(itemData.value.aniversario).format('DD/MM/YYYY');
                 emit('changed');
                 // if (mode.value != 'new') reload();
@@ -210,7 +221,7 @@ const buscarCNPJ = async () => {
                     delete response.data.billing;
                     dadosPublicos.value = response.data;
                     try {
-                        await axios.post(`${baseApiUrl}/cad-dados-publicos/${itemData.value.id}`, { dados: formatarDadosParaHTML(response.data) });
+                        // await axios.post(`${baseApiUrl}/cad-dados-publicos/${itemData.value.id}`, { dados: formatarDadosParaHTML(response.data) });
                         emit('dadosPublicos', dadosPublicos.value);
                         searched.value = true;
                         atualizarDados();
