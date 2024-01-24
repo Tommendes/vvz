@@ -318,7 +318,7 @@ module.exports = app => {
     const requestPasswordReset = async (req, res) => {
         let user = { ...req.body }
         try {
-            existsOrError(user.cpf, 'CPF não informado')
+            existsOrError(user.cpf, 'CPF/e-mail não informado')
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(200).send(error)
@@ -330,7 +330,7 @@ module.exports = app => {
         try {
             existsOrError(thisUser, await showRandomMessage())
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}. E-mail: ${user.cpf}`, sConsole: true } })
             return res.status(200).send(error)
         }
 
