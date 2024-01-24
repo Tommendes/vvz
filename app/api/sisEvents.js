@@ -223,6 +223,7 @@ module.exports = app => {
                             break;
                     }
                     let queryField = key.split(':')[1]
+                    if (queryField == 'evento') queryField = 'tbl1.evento'
                     query += `${queryField} ${operator} AND `
                 } else if (key.split(':')[0] == 'params') {
                     switch (key.split(':')[1]) {
