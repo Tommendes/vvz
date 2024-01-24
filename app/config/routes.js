@@ -93,48 +93,23 @@ module.exports = app => {
     app.route('/cadastros/f-a/:func')
         .all(app.config.passport.authenticate())
         .get(app.api.cadastros.getByFunction)
+        .post(app.api.cadastros.getByFunction)
 
     /**
-     * Rota de local_params
+     * Rotas de cadastros
      */
-    app.route('/local-params/f-a/:func').all(app.config.passport.authenticate()).get(app.api.local_params.getByFunction)
-    app.route('/local-params')
+    app.route('/cad-dados-publicos/:id_cadastros')
         .all(app.config.passport.authenticate())
-        .post(app.api.local_params.save)
-        .get(app.api.local_params.get)
-    app.route('/local-params/:id')
+        .post(app.api.cad_dados_publicos.save)
+        .get(app.api.cad_dados_publicos.get)
+    app.route('/cad-dados-publicos/:id_cadastros/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.local_params.save)
-        .get(app.api.local_params.getById)
-        .delete(app.api.local_params.remove)
-
-    /**
-     * Rota de long_params
-     */
-    app.route('/long-params/f-a/:func').all(app.config.passport.authenticate()).get(app.api.long_params.getByFunction)
-    app.route('/long-params')
+        .put(app.api.cad_dados_publicos.save)
+        .delete(app.api.cad_dados_publicos.remove)
+    app.route('/cad-dados-publicos/f-a/:func')
         .all(app.config.passport.authenticate())
-        .post(app.api.long_params.save)
-        .get(app.api.long_params.get)
-    app.route('/long-params/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.long_params.save)
-        .get(app.api.long_params.getById)
-        .delete(app.api.long_params.remove)
-
-    /**
-     * Rota de sis_messages
-     */
-    app.route('/sis-messages/f-a/:func').all(app.config.passport.authenticate()).get(app.api.sis_messages.getByFunction)
-    app.route('/sis-messages')
-        .all(app.config.passport.authenticate())
-        .post(app.api.sis_messages.save)
-        .get(app.api.sis_messages.get)
-    app.route('/sis-messages/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.sis_messages.save)
-        .get(app.api.sis_messages.getById)
-        .delete(app.api.sis_messages.remove)
+        .get(app.api.cad_dados_publicos.getByFunction)
+        .post(app.api.cad_dados_publicos.getByFunction)
 
     /**
      * Rota de cad_endereços
@@ -142,6 +117,7 @@ module.exports = app => {
     app.route('/cad-enderecos/f-a/:func')
         .all(app.config.passport.authenticate())
         .get(app.api.cad_enderecos.getByFunction)
+        .post(app.api.cad_enderecos.getByFunction)
     app.route('/cad-enderecos/:id_cadastros')
         .all(app.config.passport.authenticate())
         .post(app.api.cad_enderecos.save)
@@ -177,6 +153,54 @@ module.exports = app => {
         .put(app.api.cad_documentos.save)
         .get(app.api.cad_documentos.getById)
         .delete(app.api.cad_documentos.remove)
+
+    /**
+     * Rota de local_params
+     */
+    app.route('/local-params/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.local_params.getByFunction)
+    app.route('/local-params')
+        .all(app.config.passport.authenticate())
+        .post(app.api.local_params.save)
+        .get(app.api.local_params.get)
+    app.route('/local-params/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.local_params.save)
+        .get(app.api.local_params.getById)
+        .delete(app.api.local_params.remove)
+
+    /**
+     * Rota de long_params
+     */
+    app.route('/long-params/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.long_params.getByFunction)
+    app.route('/long-params')
+        .all(app.config.passport.authenticate())
+        .post(app.api.long_params.save)
+        .get(app.api.long_params.get)
+    app.route('/long-params/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.long_params.save)
+        .get(app.api.long_params.getById)
+        .delete(app.api.long_params.remove)
+
+    /**
+     * Rota de sis_messages
+     */
+    app.route('/sis-messages/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.sis_messages.getByFunction)
+    app.route('/sis-messages')
+        .all(app.config.passport.authenticate())
+        .post(app.api.sis_messages.save)
+        .get(app.api.sis_messages.get)
+    app.route('/sis-messages/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.sis_messages.save)
+        .get(app.api.sis_messages.getById)
+        .delete(app.api.sis_messages.remove)
 
     /**
      * Rota de pipeline_params

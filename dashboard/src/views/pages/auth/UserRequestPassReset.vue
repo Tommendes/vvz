@@ -64,7 +64,7 @@ const passRequest = async () => {
                             <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
                         </div>
-                        <Button rounded label="Acessar" icon="pi pi-sign-in" :loading="click" :disabled="!cpf" type="submit" class="w-full p-3 text-xl"></Button>
+                        <Button rounded label="Recuperar" icon="pi pi-sign-in" :loading="click" :disabled="!cpf" type="submit" class="w-full p-3 text-xl"></Button>
                     </form>
                 </div>
             </div>

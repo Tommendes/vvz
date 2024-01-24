@@ -1,5 +1,6 @@
 const { dbPrefix } = require("../.env")
 const moment = require('moment')
+const axios = require('axios')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'cadastros'
@@ -421,7 +422,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
-    }
+    }  
 
     return { save, get, getById, remove, getByFunction }
 }
