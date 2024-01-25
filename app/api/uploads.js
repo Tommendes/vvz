@@ -394,7 +394,7 @@ module.exports = app => {
                     cb(null, destinationPath);
                 },
                 filename: function (req, file, cb) {
-                    cb(null, file.originalname);
+                    cb(null, file.originalname.replace(/ /g, '_'));
                 }
             });
 
