@@ -20,6 +20,14 @@ const masks = ref({
     })
 });
 
+import { defineProps } from 'vue';
+const props = defineProps({
+    padroes: {
+        type: Boolean,
+        default: false
+    }
+});
+
 // Campos de formulário
 const itemData = inject('itemData');
 // const itemDataPipeline = inject('itemDataPipeline');
@@ -139,7 +147,26 @@ const loadOptions = async () => {
     }, Math.random() * 1000);
 };
 
-// http://localhost:55596/local-params/f-a/gbf?fld=grupo&vl=com_pr05&slct=id,parametro,label
+const imprimirProposta = async () => {
+    defaultSuccess('Por favor aguarde...');
+    const url = `${baseApiUrl}/printing/proposal/`;
+    await axios
+        .post(url, { idProposta: itemData.value.id, encoding: 'base64', exportType: 'pdf' })
+        .then((res) => {
+            const body = res.data;
+            let pdfWindow = window.open('');
+            pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
+        })
+        .catch((error) => {
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
+        });
+};
 
 // Carregar dados do formulário
 onBeforeMount(async () => {
@@ -154,7 +181,7 @@ watchEffect(() => {});
     <form @submit.prevent="saveData">
         <div class="grid">
             <div class="col-12">
-                <div class="p-fluid grid">
+                <div class="p-fluid grid" v-if="!props.padroes">
                     <div class="col-12 md:col-3">
                         <label for="pessoa_contato">Contato</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
@@ -203,35 +230,37 @@ watchEffect(() => {});
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescontoAtivo" />
                     </div>
-                    <div class="col-12 md:col-12">
+                </div>
+                <div class="p-fluid grid" v-if="props.padroes">
+                    <div class="col-12 md:col-6">
                         <label for="saudacao_inicial">Saudação Inicial</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.saudacao_inicial" id="saudacao_inicial" editorStyle="height: 160px" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.saudacao_inicial" class="p-inputtext p-component p-filled disabled"></p>
+                    </div>
+                    <div class="col-12 md:col-6">
+                        <label for="garantia">Garantia</label>
+                        <Skeleton v-if="loading" height="2rem"></Skeleton>
+                        <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.garantia" id="garantia" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <p v-else v-html="itemData.garantia" class="p-inputtext p-component p-filled disabled"></p>
+                    </div>
+                    <div class="col-12 md:col-6">
+                        <label for="conclusao">Conclusão</label>
+                        <Skeleton v-if="loading" height="2rem"></Skeleton>
+                        <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.conclusao" id="conclusao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <p v-else v-html="itemData.conclusao" class="p-inputtext p-component p-filled disabled"></p>
+                    </div>
+                    <div class="col-12 md:col-6">
+                        <label for="assinatura">Assinatura</label>
+                        <Skeleton v-if="loading" height="2rem"></Skeleton>
+                        <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.assinatura" id="assinatura" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <p v-else v-html="itemData.assinatura" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="observacoes_finais">Observacoes Finais</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes_finais" id="observacoes_finais" editorStyle="height: 160px" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.observacoes_finais" class="p-inputtext p-component p-filled disabled"></p>
-                    </div>
-                    <div class="col-12 md:col-12">
-                        <label for="garantia">Garantia</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.garantia" id="garantia" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.garantia" class="p-inputtext p-component p-filled disabled"></p>
-                    </div>
-                    <div class="col-12 md:col-12">
-                        <label for="conclusao">Conclusão</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.conclusao" id="conclusao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.conclusao" class="p-inputtext p-component p-filled disabled"></p>
-                    </div>
-                    <div class="col-12 md:col-12">
-                        <label for="assinatura">Assinatura</label>
-                        <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.assinatura" id="assinatura" editorStyle="height: 160px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.assinatura" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                 </div>
             </div>
@@ -240,10 +269,12 @@ watchEffect(() => {});
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                    <Button type="button" v-if="props.padroes" label="Imprimir" icon="fa-solid fa-print" severity="success" text raised @click="imprimirProposta()" />
                 </div>
             </div>
             <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                 <h5>FormData</h5>
+                <p>props.padroes: {{ props.padroes }}</p>
                 <p>mode: {{ mode }}</p>
                 <p>itemData: {{ itemData }}</p>
             </div>

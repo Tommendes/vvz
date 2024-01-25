@@ -344,11 +344,22 @@ const statusRecord = async (status) => {
 const imprimirOat = async () => {
     defaultSuccess('Por favor aguarde...');
     const url = `${baseApiUrl}/printing/oat/`;
-    await axios.post(url, { idOat: itemData.value.id, encoding: 'base64', exportType: 'pdf' }).then((res) => {
-        const body = res.data;
-        let pdfWindow = window.open('');
-        pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
-    });
+    await axios
+        .post(url, { idOat: itemData.value.id, encoding: 'base64', exportType: 'pdf' })
+        .then((res) => {
+            const body = res.data;
+            let pdfWindow = window.open('');
+            pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
+        })
+        .catch((error) => {
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
+        });
 };
 // Fchar formulário
 const closeDialog = () => {
