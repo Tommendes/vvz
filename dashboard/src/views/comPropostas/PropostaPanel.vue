@@ -128,7 +128,7 @@ onBeforeMount(async () => {
                             <i class="fa-regular fa-address-card mr-2"></i>
                             <span>Dados básicos</span>
                         </template>
-                        <PropostaForm @changed="loadData()" />
+                        <PropostaForm :padroes="false" @changed="loadData()" />
                     </TabPanel>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
@@ -148,9 +148,9 @@ onBeforeMount(async () => {
                         <template #header>
                             <i class="fa-solid fa-cog mr-2"></i>
                             <i class="fa-solid fa-print mr-2"></i>
-                            <span>Padrões e Impressão</span>
+                            <span>Termos e Impressão</span>
                         </template>
-                        <p>Aqui será o painel de padrões e configuraçõs da proposta</p>
+                        <PropostaForm :padroes="true" @changed="loadData()" />
                     </TabPanel>
                 </TabView>
             </div>
