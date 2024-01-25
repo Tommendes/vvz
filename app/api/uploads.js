@@ -51,6 +51,8 @@ module.exports = app => {
         }
         delete body.hash; delete body.tblName;
 
+        body.filename = body.filename.replace(/ /g, '_');
+
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
