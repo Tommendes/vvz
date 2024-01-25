@@ -81,7 +81,7 @@ const loadData = async () => {
                         await listPipeline();
                         editCadastro.value = false;
                         breadItems.value = [{ label: 'Pós-vendas', to: `/${userData.schema_description}/pos-vendas` }];
-                        breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
+                        breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                         if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
                         // Lista o andamento do registro
                         await listStatusRegistro();
@@ -505,6 +505,7 @@ watch(selectedCadastro, (value) => {
                                 @click="showPvOatForm"
                             />
                             <Button
+                                v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO"
                                 label="Finalizar Atendimento"
                                 type="button"
                                 class="w-full mb-3"
@@ -514,6 +515,17 @@ watch(selectedCadastro, (value) => {
                                 text
                                 raised
                                 @click="statusRecord(andamentoRegistroPv.STATUS_FINALIZADO)"
+                            />
+                            <Button
+                                v-if="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_FINALIZADO"
+                                label="Reabrir Atendimento"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-check fa-shake'`"
+                                severity="success"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_EM_ANDAMENTO)"
                             />
                             <Button
                                 label="Cancelar Atendimento"

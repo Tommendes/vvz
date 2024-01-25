@@ -72,7 +72,13 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="itemData.id" :items="[{ label: 'Todos os cadastros', to: `/${userData.schema_description}/cadastros` }, { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb
+        v-if="itemData.id"
+        :items="[
+            { label: 'Todos os cadastros', to: `/${userData.schema_description}/cadastros` },
+            { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="grid" :style="route.name == 'cadastro' ? 'min-width: 100rem;' : ''">
         <div class="col-12">
             <div class="card">

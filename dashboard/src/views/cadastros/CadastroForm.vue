@@ -481,7 +481,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-6">
                         <label for="nome">{{ labels.nome }}<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="!validateCPF() || mode == 'view'" v-model="itemData.nome" id="nome" type="text" :class="`${animationDocNr}`" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="rg_ie">{{ labels.rg_ie }}</label>

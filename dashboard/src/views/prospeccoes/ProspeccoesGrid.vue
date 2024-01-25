@@ -166,7 +166,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções' }]" />
+    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções', to: route.fullPath }]" />
     <div class="card">
         <ProspeccaoForm
             :mode="mode"

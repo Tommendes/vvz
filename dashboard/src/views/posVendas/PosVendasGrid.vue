@@ -171,7 +171,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas' }]" />
+    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas', to: `/${userData.schema_description}/pos-venda` }]" />
     <div class="card">
         <PosVendaForm
             :mode="mode"

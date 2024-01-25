@@ -91,7 +91,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Usuários' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Usuários', to: route.fullPath }]" />
     <div class="card">
         <UsuarioForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

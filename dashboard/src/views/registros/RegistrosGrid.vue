@@ -4,7 +4,6 @@ import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
-import { useRouter } from 'vue-router';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import RegistroForm from './RegistroForm.vue';
@@ -15,7 +14,10 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
+
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
@@ -98,7 +100,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Registros' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Registros', to: route.fullPath }]" />
     <div class="card">
         <RegistroForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

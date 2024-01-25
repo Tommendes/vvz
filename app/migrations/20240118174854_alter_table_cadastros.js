@@ -4,14 +4,14 @@
  */
 exports.up = function(knex) {
     return knex.schema.alterTable('vivazul_bceaa5.cadastros', table => {
-        table.integer('id_params_tipo_end').notNull().unsigned().comment('Tipo de endereço')
-        table.string('cep',8).notNull().comment('Cep')
-        table.string('logradouro').notNull().comment('Logradouro')
-        table.string('nr').notNull().comment('Número')
+        table.integer('id_params_tipo_end').unsigned().references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION').comment('Tipo de endereço')
+        table.string('cep',8).comment('Cep')
+        table.string('logradouro').comment('Logradouro')
+        table.string('nr').comment('Número')
         table.string('complnr').comment('Complemento')
         table.string('bairro').comment('Bairro')
-        table.string('cidade').notNull().comment('Cidade')
-        table.string('uf',2).notNull().comment('Estado')
+        table.string('cidade').comment('Cidade')
+        table.string('uf',2).comment('Estado')
         table.string('geo_ltd').comment('Geo. latd')
         table.string('geo_lng').comment('Geo. lng')
         table.string('observacao_endereco').comment('Observações do endereço')

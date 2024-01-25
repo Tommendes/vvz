@@ -92,7 +92,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: route.fullPath }]" />
     <div class="card">
         <ProtocoloForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

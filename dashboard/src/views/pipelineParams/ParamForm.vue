@@ -246,7 +246,12 @@ watch(itemData.value, () => {
 });
 </script>
 <template>
-    <Breadcrumb :items="[{ label: 'Todos os Parâmetros', to: `/${userData.schema_description}/pipeline-params` }, { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb
+        :items="[
+            { label: 'Todos os Parâmetros', to: `/${userData.schema_description}/pipeline-params` },
+            { label: itemData.descricao + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">

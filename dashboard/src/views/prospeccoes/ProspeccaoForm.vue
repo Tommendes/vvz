@@ -68,7 +68,7 @@ const loadData = async () => {
                     itemData.value = body;
                     body.id_cad_end = String(body.id_cad_end);
                     if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
-                    breadItems.value.push({ label: itemData.value.nome + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
+                    breadItems.value.push({ label: itemData.value.nome + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
                     await listAgentes();
                     await loadEnderecos();

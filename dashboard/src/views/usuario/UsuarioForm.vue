@@ -98,20 +98,20 @@ const saveData = async () => {
     const url = `${urlBase.value}${id}`;
     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.unmasked(itemData.value.cpf);
     axios[method](url, itemData.value)
-    .then((res) => {
-        const body = res.data;
-        if (body && body.id) {
-            defaultSuccess('Registro salvo com sucesso');
-            itemData.value = body;
-            if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
-            mode.value = 'view';
-        } else {
-            defaultWarn('Erro ao salvar registro');
-        }
-    })
-    .catch((err) => {
-        defaultWarn(err.response.data);
-    });
+        .then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro salvo com sucesso');
+                itemData.value = body;
+                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
+                mode.value = 'view';
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((err) => {
+            defaultWarn(err.response.data);
+        });
 };
 //DropDowns
 const dropdownSN = ref([
@@ -197,7 +197,13 @@ watchEffect(() => {});
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Usuários', to: `/${userData.schema_description}/usuarios` }, { label: itemData.name + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Usuários', to: `/${userData.schema_description}/usuarios` },
+            { label: itemData.name + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -315,10 +321,11 @@ watchEffect(() => {});
     </div>
 </template>
 <style scoped>
-.grid{
+.grid {
     margin-left: 0rem;
 }
-#secaodadosbasicos,#secaopermissao{
+#secaodadosbasicos,
+#secaopermissao {
     margin-left: -1rem;
     color: gray;
 }

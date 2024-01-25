@@ -3,19 +3,18 @@ import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess } from '@/toast';
-import { useRouter } from 'vue-router';
-import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import ParamForm from './ParamForm.vue';
-const confirm = useConfirm();
 
 // Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
+
 const filters = ref(null);
 const gridData = ref(null);
 const itemData = ref(null);
@@ -61,7 +60,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: route.fullPath }]" />
     <div class="card">
         <ParamForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
