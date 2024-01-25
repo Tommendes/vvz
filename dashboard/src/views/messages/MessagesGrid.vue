@@ -4,7 +4,6 @@ import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
-import { useRouter } from 'vue-router';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import { renderizarHTML } from '@/global';
 import MenssageForm from './MessageForm.vue';
@@ -16,7 +15,10 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
+
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
@@ -105,7 +107,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Mensagens' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Mensagens', to: route.fullPath }]" />
     <div class="card">
         <MenssageForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

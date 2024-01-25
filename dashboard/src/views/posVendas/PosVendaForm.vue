@@ -81,7 +81,7 @@ const loadData = async () => {
                         await listPipeline();
                         editCadastro.value = false;
                         breadItems.value = [{ label: 'Pós-vendas', to: `/${userData.schema_description}/pos-vendas` }];
-                        breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 2 ? `: (${itemData.value.id})` : '') });
+                        breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                         if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
                         // Lista o andamento do registro
                         await listStatusRegistro();

@@ -10,8 +10,9 @@ import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -211,7 +212,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: route.fullPath }]" />
     <div class="card">
         <CadastroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

@@ -137,7 +137,13 @@ const items = ref([
 ]);
 </script>
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Registros', to: `/${userData.schema_description}/registros` }, { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Registros', to: `/${userData.schema_description}/registros` },
+            { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">

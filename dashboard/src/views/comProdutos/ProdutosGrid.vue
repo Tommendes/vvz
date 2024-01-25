@@ -148,7 +148,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Produtos' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Produtos', to: route.fullPath }]" />
     <div class="card">
         <ProdutoForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

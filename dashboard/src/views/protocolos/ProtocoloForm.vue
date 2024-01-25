@@ -330,7 +330,13 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: `/${userData.schema_description}/protocolos` }, { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Todos os Protocolos', to: `/${userData.schema_description}/protocolos` },
+            { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card" style="max-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">

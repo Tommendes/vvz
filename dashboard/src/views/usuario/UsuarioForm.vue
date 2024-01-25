@@ -94,20 +94,20 @@ const saveData = async () => {
     const url = `${urlBase.value}${id}`;
     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.unmasked(itemData.value.cpf);
     axios[method](url, itemData.value)
-    .then((res) => {
-        const body = res.data;
-        if (body && body.id) {
-            defaultSuccess('Registro salvo com sucesso');
-            itemData.value = body;
-            if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
-            mode.value = 'view';
-        } else {
-            defaultWarn('Erro ao salvar registro');
-        }
-    })
-    .catch((err) => {
-        defaultWarn(err.response.data);
-    });
+        .then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro salvo com sucesso');
+                itemData.value = body;
+                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/usuario/${itemData.value.id}` });
+                mode.value = 'view';
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((err) => {
+            defaultWarn(err.response.data);
+        });
 };
 //DropDowns
 const dropdownGestaoDeCadastros = ref([
@@ -203,7 +203,13 @@ watchEffect(() => {});
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Usuários', to: `/${userData.schema_description}/usuarios` }, { label: itemData.name + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Usuários', to: `/${userData.schema_description}/usuarios` },
+            { label: itemData.name + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -228,7 +234,7 @@ watchEffect(() => {});
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
-                        </div>                        
+                        </div>
                         <div class="col-12 md:col-2">
                             <label for="telefone">Telefone</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
@@ -239,59 +245,59 @@ watchEffect(() => {});
                             <label for="schema_description">Schema</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.schema_description" id="schema_description" type="text" />
-                        </div>                        
+                        </div>
                         <div class="col-12 md:col-12">
                             <label id="secaopermissao">Permissões</label>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="cadastros">Gestão de cadastros</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownGestaoDeCadastros" placeholder="Selecione..."/>
+                            <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownGestaoDeCadastros" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pipeline">Gestão de pipeline</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownGestaoDePipeline" placeholder="Selecione..."/>
+                            <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownGestaoDePipeline" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pv">Gestão de pós-venda</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownGestaoDePv" placeholder="Selecione..."/>
+                            <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownGestaoDePv" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="comercial">Gestão comercial</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownGestaoComercial" placeholder="Selecione..."/>
+                            <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownGestaoComercial" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="fiscal">Gestão fiscal</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownGestaoFiscal" placeholder="Selecione..."/>
+                            <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownGestaoFiscal" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="financeiro">Gestão financeira</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownGestaoFinanceiro" placeholder="Selecione..."/>
+                            <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownGestaoFinanceiro" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="comissoes">Gestão de comissões</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownComissoes" placeholder="Selecione..."/>
+                            <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownComissoes" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_v">Agente vendedor</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownAgenteVendedor" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownAgenteVendedor" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_arq">Agente arquiteto</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownAgente_arq" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownAgente_arq" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_at">Agente de atendimento</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownAgenteAt" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownAgenteAt" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-4">
                             <label for="time_to_pas_expires">Tempo para expirar a senha</label>
@@ -318,10 +324,11 @@ watchEffect(() => {});
     </div>
 </template>
 <style scoped>
-.grid{
+.grid {
     margin-left: 0rem;
 }
-#secaodadosbasicos,#secaopermissao{
+#secaodadosbasicos,
+#secaopermissao {
     margin-left: -1rem;
     color: gray;
 }

@@ -4,7 +4,6 @@ import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
-import { useRouter } from 'vue-router';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import RetencaoForm from './RetencaoForm.vue';
@@ -15,7 +14,10 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
+
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
@@ -45,8 +47,8 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'valor', label:' Valor da retenção', minWidth: '25rem' },
-    { field: 'valor_da_retencao', label:' Descrição da retenção', minWidth: '25rem' }
+    { field: 'valor', label: ' Valor da retenção', minWidth: '25rem' },
+    { field: 'valor_da_retencao', label: ' Descrição da retenção', minWidth: '25rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -85,8 +87,7 @@ const loadData = () => {
     loading.value = true;
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        gridData.value.forEach((element) => {
-        });
+        gridData.value.forEach((element) => {});
         loading.value = false;
     });
 };
@@ -97,7 +98,7 @@ onBeforeMount(() => {
 });
 </script>
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Retenções' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Retenções', to: route.fullPath }]" />
     <div class="card">
         <RetencaoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

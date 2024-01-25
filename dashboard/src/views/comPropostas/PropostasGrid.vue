@@ -12,8 +12,9 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 
 const urlBase = ref(`${baseApiUrl}/com-propostas`);
 
@@ -140,7 +141,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Propostas' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Propostas', to: route.fullPath }]" />
     <div class="card">
         <PropostaForm @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

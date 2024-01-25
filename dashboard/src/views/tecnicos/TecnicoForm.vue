@@ -133,7 +133,13 @@ watchEffect(() => {});
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: `/${userData.schema_description}/tecnicos-pv` }, { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Técnicos Pós Vendas', to: `/${userData.schema_description}/tecnicos-pv` },
+            { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">

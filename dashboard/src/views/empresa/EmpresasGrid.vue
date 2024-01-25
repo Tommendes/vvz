@@ -3,7 +3,6 @@ import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { useRouter } from 'vue-router';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import EmpresaForm from './EmpresaForm.vue';
 
@@ -12,7 +11,9 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 const filters = ref(null);
 const gridData = ref(null);
 const loading = ref(true);
@@ -64,7 +65,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros de empresas' }]" />
+    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros de empresas', to: route.fullPath }]" />
     <div class="card">
         <EmpresaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable

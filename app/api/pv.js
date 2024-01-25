@@ -265,7 +265,7 @@ module.exports = app => {
             .whereNot({ 'tbl1.status': STATUS_DELETE })
             .whereRaw(query ? query : '1=1')
             .orderBy(app.db.raw(sortField), sortOrder)
-            .orderBy('tbl1.created_at', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
+            .orderBy('tbl1.created_at', 'desc') // além da ordenação selecionada ordenar por data
             .limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })

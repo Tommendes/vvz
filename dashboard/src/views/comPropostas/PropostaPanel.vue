@@ -55,7 +55,7 @@ const loadData = async () => {
                 if (itemData.value.id_pipeline) await loadDataPipeline();
                 if (itemDataPipeline.value.id_pipeline_params) await loadPipelineParamsData();
                 breadItems.value = [{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }];
-                if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 1 ? `: (${itemData.value.id})` : '') });
+                if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 1 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                 if (itemDataPipeline.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemDataPipeline.value.id_cadastros}` });
                 mode.value = 'view';
                 loading.value = false;
