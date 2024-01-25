@@ -809,7 +809,7 @@ module.exports = app => {
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('tbl1.id_com_agentes')
-                .orderBy('valor_bruto', 'desc')
+                .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
             let totalSell = 0;
             let totalSellQuantity = 0;
