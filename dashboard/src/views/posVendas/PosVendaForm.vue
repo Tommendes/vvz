@@ -505,6 +505,7 @@ watch(selectedCadastro, (value) => {
                                 @click="showPvOatForm"
                             />
                             <Button
+                                v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO"
                                 label="Finalizar Atendimento"
                                 type="button"
                                 class="w-full mb-3"
@@ -514,6 +515,17 @@ watch(selectedCadastro, (value) => {
                                 text
                                 raised
                                 @click="statusRecord(andamentoRegistroPv.STATUS_FINALIZADO)"
+                            />
+                            <Button
+                                v-if="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_FINALIZADO"
+                                label="Reabrir Atendimento"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-check fa-shake'`"
+                                severity="success"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_EM_ANDAMENTO)"
                             />
                             <Button
                                 label="Cancelar Atendimento"

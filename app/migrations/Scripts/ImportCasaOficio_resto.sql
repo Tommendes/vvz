@@ -12,6 +12,14 @@ LEFT JOIN (SELECT id
 	) vvz ON orig.id = vvz.id
 WHERE vvz.id IS NULL;
 
+SELECT orig.id FROM 
+	(SELECT id FROM vivazul_lynkos_or.cadastros 
+	WHERE STATUS = 10 AND dominio = 'casaoficio' AND cadas_nome IS NOT NULL AND LENGTH(TRIM(cadas_nome)) > 0
+	ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
+	) orig
+LEFT JOIN (SELECT old_id id FROM vivazul_bceaa5.cadastros) vvz ON orig.id = vvz.id
+WHERE vvz.id IS NULL;
+
 /*Desativar foreign checks*/
 USE `vivazul_bceaa5`;
 SET FOREIGN_KEY_CHECKS=0; 
@@ -37,19 +45,13 @@ INSERT INTO vivazul_bceaa5.cadastros (
 	  REGEXP_REPLACE(COALESCE(telefone1,telefone2), '[^0-9]', '')telefone,email,
 	  cim,doc_esp,id 
 	FROM vivazul_lynkos_or.cadastros co
-	WHERE co.id IN (
-		SELECT orig.id FROM 
-			(SELECT id FROM vivazul_lynkos_or.cadastros 
-			WHERE STATUS = 10 AND dominio = 'casaoficio' AND cadas_nome IS NOT NULL AND LENGTH(TRIM(cadas_nome)) > 0
-			-- GROUP BY IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
-			ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
-			) orig
-		LEFT JOIN (SELECT id FROM vivazul_lynkos.cadastros 
-			WHERE STATUS = 10 AND dominio = 'casaoficio' AND cadas_nome IS NOT NULL AND LENGTH(TRIM(cadas_nome)) > 0
-			GROUP BY IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
-			ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
-			) vvz ON orig.id = vvz.id
-		WHERE vvz.id IS NULL
+	WHERE co.id IN (SELECT orig.id FROM 
+				(SELECT id FROM vivazul_lynkos_or.cadastros 
+				WHERE STATUS = 10 AND dominio = 'casaoficio' AND cadas_nome IS NOT NULL AND LENGTH(TRIM(cadas_nome)) > 0
+				ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
+				) orig
+			LEFT JOIN (SELECT old_id id FROM vivazul_bceaa5.cadastros) vvz ON orig.id = vvz.id
+			WHERE vvz.id IS NULL
 	) 
   ) ;
  /*Remover espaços extras em nomes de cadastros*/
@@ -62,21 +64,21 @@ INSERT INTO vivazul_bceaa5.cad_contatos (
 	SELECT 
 	  0,1,FROM_UNIXTIME(o.created_at),FROM_UNIXTIME(o.updated_at),o.status,c.id,
 	  lc.id,o.pessoa,o.departamento,o.contato,NULL,o.id
-	FROM vivazul_lynkos.cadastros_ofc o
+	FROM vivazul_lynkos_or.cadastros_ofc o
 	JOIN vivazul_bceaa5.cadastros c ON c.old_id = o.id_cadas
-	JOIN vivazul_bceaa5.local_params lc ON lc.label = o.tipo
-	WHERE o.status = 10 AND c.old_id IN (SELECT orig.id FROM 
+	LEFT JOIN vivazul_bceaa5.local_params lc ON lc.label = o.tipo
+	WHERE o.status = 10 AND o.id_cadas IN (SELECT orig.id FROM 
 			(SELECT id FROM vivazul_lynkos_or.cadastros 
 			WHERE STATUS = 10 AND dominio = 'casaoficio' AND cadas_nome IS NOT NULL AND LENGTH(TRIM(cadas_nome)) > 0
-			-- GROUP BY IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
 			ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
 			) orig
-		LEFT JOIN (SELECT id FROM vivazul_lynkos.cadastros 
+		LEFT JOIN (SELECT id 
+			FROM vivazul_lynkos.cadastros 
 			WHERE STATUS = 10 AND dominio = 'casaoficio' AND cadas_nome IS NOT NULL AND LENGTH(TRIM(cadas_nome)) > 0
-			-- GROUP BY IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
+			GROUP BY IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
 			ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
 			) vvz ON orig.id = vvz.id
-		WHERE vvz.id IS NULL)
+		WHERE vvz.id IS NULL) 
 ) ;
 
 /*Importa os endereços dos cadastros*/  
