@@ -33,7 +33,7 @@ module.exports = app => {
             else throw 'Documento (CNPJ ou CPF) inválido. Favor verificar'
             if (body.cpf_cnpj) {
                 const unique = await app.db(tabelaDomain)
-                    .where({ cpf_cnpj: body.cpf_cnpj })
+                    .where({ cpf_cnpj: body.cpf_cnpj, status: STATUS_ACTIVE})
                     .andWhere(app.db.raw(body.id ? (`id != '${body.id}'`) : '1=1'))
                     .first()
                 notExistsOrError(unique, `Combinação de CNPJ/ CPF já cadastrado`)
