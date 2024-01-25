@@ -1,6 +1,6 @@
 <script setup>
 import moment from 'moment';
-import { onMounted, reactive, ref } from 'vue';
+import { onBeforeMount, onMounted, reactive, ref } from 'vue';
 import { formatCurrency } from '@/global';
 import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
@@ -346,6 +346,7 @@ const lineData = reactive({
     datasets: []
 });
 const lineOptions = ref(null);
+const biPeriodOptions = ref(null);
 const chartExportItems = ref([
     {
         label: 'Imagem',
@@ -403,6 +404,30 @@ const exportToPDF = () => {
     };
     html2pdf().set(opt).from(divToExport).save();
 };
+
+const setBiPeriodOptions = () => {
+    // Opções predefinidas para o componente de seleção de período no format 2023-01-01T03:00:00.000Z
+    // 1 - Este mes
+    // 2 - Ultimo mês
+    // 3 - Ultimos 3 meses
+    // 4 - Ultimos 6 meses
+    // 5 - Este ano
+    // 6 - Ultimo ano
+    // 7 - Ano anterior
+    biPeriodOptions.value = [
+        { value: [moment().startOf('month').toDate(), moment().toDate()], label: 'Este mês' },
+        { value: [moment().subtract(1, 'month').toDate(), moment().toDate()], label: 'Último mês' },
+        { value: [moment().subtract(3, 'month').toDate(), moment().toDate()], label: 'Últimos 3 meses' },
+        { value: [moment().subtract(6, 'month').toDate(), moment().toDate()], label: 'Últimos 6 meses' },
+        { value: [moment().subtract(1, 'year').toDate(), moment().toDate()], label: 'Último ano' },
+        { value: [moment().startOf('year').toDate(), moment().toDate()], label: 'Este ano' },
+        { value: [moment().subtract(1, 'year').startOf('year').toDate(), moment().subtract(1, 'year').endOf('year').toDate()], label: 'Ano anterior' }
+    ];
+};
+
+onBeforeMount(() => {
+    setBiPeriodOptions();
+});
 
 onMounted(() => {
     loadStats();
@@ -607,7 +632,7 @@ onMounted(() => {
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0" v-html="item.representacao" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" />
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0 cursor-pointer" v-html="item.representacao" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" />
                             <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
                         </div>
                         <div class="mt-2 md:mt-0 flex align-items-center">
@@ -689,7 +714,7 @@ onMounted(() => {
             </div>
         </div>
 
-        <div class="col-12 xl:col-6 xl:col-3">
+        <div class="col-12 md:col-offset-6 md:col-6 xl:col-offset-8 xl:col-4">
             <div class="card">
                 <div class="flex align-items-center justify-content-between mb-4">
                     <h5>Padrões do Dashboard</h5>
@@ -697,19 +722,23 @@ onMounted(() => {
                 <div class="flex justify-content-end mb-5">
                     <div class="flex flex-column gap-2">
                         <label for="biPeriod" style="text-align: end">Período de Exibição Geral</label>
-                        <Calendar
-                            aria-describedby="username-help"
-                            showIcon
-                            dateFormat="dd/mm/yy"
-                            v-model="biPeriod"
-                            selectionMode="range"
-                            :numberOfMonths="2"
-                            :manualInput="true"
-                            showButtonBar
-                            class="custom-calendar"
-                            @update:modelValue="applyBiParams()"
-                        />
-                        <small id="username-help">Selecione acima o período desejado para apresentar os resultados nesta tela.</small>
+                        <InputGroup>
+                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full md:w-16rem mr-2" @update:modelValue="applyBiParams()" />
+                            <Calendar
+                                aria-describedby="username-help"
+                                showIcon
+                                dateFormat="dd/mm/yy"
+                                v-model="biPeriod"
+                                selectionMode="range"
+                                :numberOfMonths="2"
+                                :manualInput="true"
+                                showButtonBar
+                                class="custom-calendar w-full md:w-16rem"
+                                @update:modelValue="applyBiParams()"
+                            />
+                        </InputGroup>
+                        <!-- <p>{{ biPeriod }}</p> -->
+                        <small id="username-help">Selecione acima o período desejado para apresentar os resultados</small>
                     </div>
                 </div>
                 <div class="flex justify-content-end mb-5" v-if="lineData.labels.length == 0">
@@ -730,28 +759,6 @@ onMounted(() => {
                         <small id="username-help">Selecione acima o período desejado para apresentar os resultados no gráfico.</small>
                     </div>
                 </div>
-                <!-- <div class="flex justify-content-end mb-5">
-                <div class="flex flex-column gap-2">
-                    <label for="recent_sales_rows" style="text-align: end">Vendas Recentes</label>
-                    <div class="p-inputgroup justify-content-end">
-                        <Button icon="fa-solid fa-minus" outlined severity="warning" @click="applyBiRecentSales('less')" />
-                        <span disabled v-html="biData.recentSales.rows" class="p-inputtext p-component max-w-max" />
-                        <Button icon="fa-solid fa-plus" outlined severity="success" @click="applyBiRecentSales('plus')" />
-                    </div>
-                    <small id="username-help">Selecione acima a quantidade de vendas recentes a serem apresentadas nesta tela.</small>
-                </div>
-            </div>
-            <div class="flex justify-content-end mb-5">
-                <div class="flex flex-column gap-2">
-                    <label for="recent_sales_rows" style="text-align: end">Produtos mais vendidos</label>
-                    <div class="p-inputgroup justify-content-end">
-                        <Button icon="fa-solid fa-minus" outlined severity="warning" @click="applyBiTopSeilling('less')" />
-                        <span disabled v-html="biData.recentSales.rows" class="p-inputtext p-component max-w-max" />
-                        <Button icon="fa-solid fa-plus" outlined severity="success" @click="applyBiTopSeilling('plus')" />
-                    </div>
-                    <small id="username-help">Selecione acima a quantidade de produtos mais vendidos a serem apresentadas nesta tela.</small>
-                </div>
-            </div> -->
             </div>
         </div>
     </div>

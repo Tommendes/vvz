@@ -338,7 +338,7 @@ module.exports = app => {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
                             } else if (queryField == 'documento') {
                                 query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
-                            } else if (queryField == 'last_status_params') {                                
+                            } else if (queryField == 'last_status_params') {
                                 query += `(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) ${operator} AND `
                             } else if (queryField == 'proposta') {
                                 query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
@@ -393,10 +393,10 @@ module.exports = app => {
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
-            lpad(tbl2.documento,${digitsOfAFolder},'0') proposta, lpad(tbl1.documento,${digitsOfAFolder},'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
-            DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
-            (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) last_status_params,
-            SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+                lpad(tbl2.documento,${digitsOfAFolder},'0') proposta, lpad(tbl1.documento,${digitsOfAFolder},'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+                DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
+                (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) last_status_params,
+                SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             // localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             //Localizar registros pai
@@ -659,7 +659,7 @@ module.exports = app => {
         }
     }
 
-    // Recupera dados para index da plataforma BI
+    // Recupera dados para "Vendas recentes" da plataforma BI
     const getRecentSales = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -677,12 +677,10 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
             const biRows = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`tbl1.id,CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo,replace(pp.descricao,'_',' ') representacao,lpad(tbl1.documento,${digitsOfAFolder},'0'),ps.created_at data_status,tbl1.valor_bruto,u.name agente`))
+                .select(app.db.raw(`tbl1.id,CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo,replace(pp.descricao,'_',' ') representacao,
+                    lpad(tbl1.documento,${digitsOfAFolder},'0'),tbl1.created_at data_status,tbl1.valor_bruto,u.name agente`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
-                })
-                .join({ ps: tabelaPipelineStatusDomain }, function () {
-                    this.on('ps.id_pipeline', '=', 'tbl1.id')
                 })
                 .join({ u: tabelaUsers }, function () {
                     this.on('u.id', '=', 'tbl1.id_com_agentes')
@@ -690,10 +688,13 @@ module.exports = app => {
                 .leftJoin({ upl: tabelaUploadsDomain }, function () {
                     this.on('upl.id', '=', 'pp.id_uploads_logo')
                 })
-                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
+                .join({ ps: tabelaPipelineStatusDomain }, function () {
+                    this.on('ps.id_pipeline', '=', 'tbl1.id')
+                })
+                .where({ 'tbl1.status': STATUS_ACTIVE })
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('ps.id_pipeline')
-                .orderBy('ps.created_at', 'desc')
+                .orderBy(app.db.raw('date(tbl1.created_at)'), 'desc')
                 .limit(rows)
             return res.send(biRows)
         } catch (error) {
@@ -702,7 +703,7 @@ module.exports = app => {
         }
     }
 
-    // Recupera dados para index da plataforma BI
+    // Recupera dados para "Empresas com mais vendas" da plataforma BI
     const getTopSelling = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -765,7 +766,7 @@ module.exports = app => {
         }
     }
 
-    // Recupera dados para index da plataforma BI
+    // Recupera dados para "Resultados por agente" da plataforma BI
     const getTopSellers = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -799,9 +800,6 @@ module.exports = app => {
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaPipelineStatusDomain }, function () {
-                    this.on('ps.id_pipeline', '=', 'tbl1.id')
-                })
                 .join({ u: tabelaUsers }, function () {
                     this.on('u.id', '=', 'tbl1.id_com_agentes')
                 })
@@ -825,7 +823,7 @@ module.exports = app => {
             });
             totalSell = Math.round(totalSell * 100) / 100
             // Ordene biTopSelling por percentual
-            biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
+            // biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
 
             return res.send({ data: biTopSelling, totalSell, totalSellQuantity })
         } catch (error) {
@@ -834,7 +832,7 @@ module.exports = app => {
         }
     }
 
-    // Recupera dados para index da plataforma BI
+    // Recupera dados para "Empresas com mais propostas" da plataforma BI
     const getTopProposals = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -887,7 +885,7 @@ module.exports = app => {
             });
             totalProposed = Math.round(totalProposed * 100) / 100
             // Ordene biTopSelling por percentual
-            biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
+            // biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
 
             return res.send({ data: biTopSelling, totalProposed, totalProposedQuantity })
         } catch (error) {
@@ -896,7 +894,7 @@ module.exports = app => {
         }
     }
 
-    // Recupera dados para index da plataforma BI
+    // Recupera dados para "Gráfico" da plataforma BI
     const getSalesOverview = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -923,16 +921,16 @@ module.exports = app => {
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biSalesOverview = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`DATE_FORMAT(ps.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
+                .select(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .join({ ps: tabelaPipelineStatusDomain }, function () {
-                    this.on('ps.id_pipeline', '=', 'tbl1.id')
-                })
-                .where({ 'tbl1.status': STATUS_ACTIVE, 'ps.status_params': STATUS_PEDIDO })
-                .whereRaw(`date(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC LIMIT 1) = ${STATUS_PEDIDO}`)
+                // .join({ ps: tabelaPipelineStatusDomain }, function () {
+                //     this.on('ps.id_pipeline', '=', 'tbl1.id')
+                // })
+                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
                 .orderBy(app.db.raw('representacao, mes'))
