@@ -26,6 +26,10 @@ const route = useRoute();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
+import { useToast } from 'primevue/usetoast'; //IA
+const toast = useToast(); //IA
+
+
 // Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -110,46 +114,36 @@ const saveData = async () => {
     });
 };
 //DropDowns
-const dropdownGestaoDeCadastros = ref([
+const dropdownSN = ref([
     { value: 0, label: 'Não' },
     { value: 1, label: 'Sim' }
 ]);
-const dropdownGestaoDePipeline = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
+const dropdownAlcadas = ref([
+    { value: 0, label: 'Negado' },
+    { value: 1, label: 'Pesquisa' },
+    { value: 2, label: 'Inclusão' },
+    { value: 3, label: 'Edição' },
+    { value: 4, label: 'Administrar' }
 ]);
-const dropdownGestaoDePv = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
-const dropdownGestaoComercial = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
-const dropdownGestaoFiscal = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
-const dropdownGestaoFinanceiro = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
-const dropdownComissoes = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
-const dropdownAgenteVendedor = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
-const dropdownAgente_arq = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
-const dropdownAgenteAt = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
+// Troca de senha
+const changePassword = async () => {
+  const urlRequestRequestPassReset = `${baseApiUrl}/request-password-reset/`;
+
+  try {
+    const response = await axios.post(urlRequestRequestPassReset, { cpf: userData.cpf });
+    if (response.data.id) {
+      redirectToPasswordReset(response.data.id);
+      defaultSuccess(response.data.msg);
+    } else {
+      defaultWarn('Ops! Parece que houve um erro ao executar sua solicitação. Por favor, tente novamente.');
+    }
+  } catch (error) {
+    defaultError(error);
+  }
+};
+const redirectToPasswordReset = (passwordResetId) => {
+  router.push({ path: `/${userData.schema_description}/password-reset`, query: { q: passwordResetId } });
+};
 // Validar CPF
 const validateCPF = () => {
     errorMessages.value.cpf = null;
@@ -218,85 +212,88 @@ watchEffect(() => {});
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.name" id="name" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="email">E-mail</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="tecnico" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
-                        </div>
-                        <div class="col-12 md:col-2">
                             <label for="cpf">CPF/CNPJ</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="email">E-mail</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <p class="p-inputtext p-component p-filled"> {{ itemData.email }} </p>
                         </div>                        
-                        <div class="col-12 md:col-2">
+                        <div class="col-12 md:col-3">
                             <label for="telefone">Telefone</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
                         </div>
-                        <div class="col-12 md:col-2">
-                            <label for="schema_description">Schema</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.schema_description" id="schema_description" type="text" />
-                        </div>                        
                         <div class="col-12 md:col-12">
                             <label id="secaopermissao">Permissões</label>
                         </div>
                         <div class="col-12 md:col-2">
+                            <label for="gestor">Gestor</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="gestor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gestor" :options="dropdownSN" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="multiCliente">MultiCliente</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.multiCliente" :options="dropdownSN" placeholder="Selecione..."/>
+                        </div>
+                        <div class="col-12 md:col-2">
                             <label for="cadastros">Gestão de cadastros</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownGestaoDeCadastros" placeholder="Selecione..."/>
+                            <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownAlcadas" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pipeline">Gestão de pipeline</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownGestaoDePipeline" placeholder="Selecione..."/>
+                            <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownAlcadas" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pv">Gestão de pós-venda</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownGestaoDePv" placeholder="Selecione..."/>
+                            <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownAlcadas" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="comercial">Gestão comercial</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownGestaoComercial" placeholder="Selecione..."/>
+                            <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownAlcadas" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="fiscal">Gestão fiscal</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownGestaoFiscal" placeholder="Selecione..."/>
+                            <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownAlcadas" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="financeiro">Gestão financeira</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownGestaoFinanceiro" placeholder="Selecione..."/>
+                            <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownAlcadas" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="comissoes">Gestão de comissões</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownComissoes" placeholder="Selecione..."/>
+                            <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_v">Agente vendedor</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownAgenteVendedor" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownSN" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_arq">Agente arquiteto</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownAgente_arq" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownSN" placeholder="Selecione..."/>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_at">Agente de atendimento</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownAgenteAt" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..."/>
                         </div>
-                        <div class="col-12 md:col-4">
-                            <label for="time_to_pas_expires">Tempo para expirar a senha</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.time_to_pas_expires" id="time_to_pas_expires" type="text" />
+                        <!-- Botão trocar senha -->
+                        <div id="divTS" class="col-12 md:col-2 m-0">
+                            <Button id="btnTS" class="bg-transparent shadow-none text-left" @click="changePassword" label="Trocar Senha" icon="pi pi-external-link" raised />
                         </div>
                     </div>
                     <div class="col-12" v-if="userData.admin >= 2">
@@ -304,7 +301,7 @@ watchEffect(() => {});
                             <p>Mode: {{ mode }}</p>
                             <p>itemData: {{ itemData }}</p>
                         </div>
-                    </div>
+                    </div>                    
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
@@ -324,5 +321,9 @@ watchEffect(() => {});
 #secaodadosbasicos,#secaopermissao{
     margin-left: -1rem;
     color: gray;
+}
+#btnTS{
+    border-color: #ced4da;
+    color: #495057;
 }
 </style>
