@@ -43,7 +43,6 @@ module.exports = app => {
         const status_pv_force = body.status_pv_force; // Status forçado para edição
         const status_pv = body.status_pv; // Último status do registro
         delete body.status_pv; delete body.pipeline_params_force; delete body.status_pv_force; delete body.hash; delete body.tblName;
-        if (body.pv_nr) body.pv_nr = body.pv_nr.toString().padStart(6, '0')
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -92,9 +91,9 @@ module.exports = app => {
             // Criação de um novo registro
             app.db.transaction(async (trx) => {
                 let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr AS INT)) + 1 AS pv_nr')) 
-                    .where({ status: STATUS_ACTIVE }).first()
-                body.pv_nr = nextDocumentNr.pv_nr || '1'
-                body.pv_nr = body.pv_nr.toString().padStart(6, '0')
+                    .where('status', '!=', STATUS_DELETE ).first()
+                nextDocumentNr.pv_nr = nextDocumentNr.pv_nr || '1'
+                body.pv_nr = nextDocumentNr.pv_nr
 
                 // Variáveis da criação de um registro
                 const newRecord = {
@@ -266,7 +265,7 @@ module.exports = app => {
             .whereNot({ 'tbl1.status': STATUS_DELETE })
             .whereRaw(query ? query : '1=1')
             .orderBy(app.db.raw(sortField), sortOrder)
-            .orderBy(app.db.raw('cast(tbl1.pv_nr as int)'), 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
+            .orderBy('tbl1.created_at', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })

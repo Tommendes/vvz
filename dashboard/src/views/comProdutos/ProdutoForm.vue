@@ -461,7 +461,13 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os produtos', to: `/${userData.schema_description}/produtos` }, { label: itemData.nome_comum + (userData.admin >= 1 ? `: (${itemData.id})` : '') }]" />
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Todos os produtos', to: `/${userData.schema_description}/produtos` },
+            { label: itemData.nome_comum + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -603,7 +609,17 @@ watch(selectedCadastro, (value) => {
                                                     <div class="col-12" v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
                                                         <div class="flex justify-content-center flex-wrap gap-3">
                                                             <Button type="button" v-if="modeTabelas == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="modeTabelas = 'edit'" />
-                                                            <Button type="button" v-if="modeTabelas != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formTabelasIsValid()" @click="saveDataProdTabelas" />
+                                                            <Button
+                                                                type="button"
+                                                                v-if="modeTabelas != 'view'"
+                                                                label="Salvar"
+                                                                icon="fa-solid fa-floppy-disk"
+                                                                severity="success"
+                                                                text
+                                                                raised
+                                                                :disabled="!formTabelasIsValid()"
+                                                                @click="saveDataProdTabelas"
+                                                            />
                                                             <Button type="button" v-if="modeTabelas != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reloadDataProdTabelas" />
                                                         </div>
                                                     </div>
