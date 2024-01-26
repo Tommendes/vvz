@@ -1099,7 +1099,7 @@ watch(route, (value) => {
                             <Button
                                 label="Reativar Registro"
                                 v-tooltip.top="itemData.id_filho ? `Se reativar, reativará o documento relacionado e suas comissões, caso haja!` : ''"
-                                v-else-if="userData.pipeline >= 4 && itemDataLastStatus.status_params == 89"
+                                v-else-if="userData.pipeline >= 4 && itemDataLastStatus.status_params >= 89"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice ${itemDataLastStatus.status_params == 0 ? 'fa-shake' : ''}`"
