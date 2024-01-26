@@ -127,15 +127,16 @@ const saveData = async () => {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
 
-                try {
-                    await axios.post(`${baseApiUrl}/cad-dados-publicos/${itemData.value.id}`, { dados: formatarDadosParaHTML(dadosPublicos.value) });
-                    emit('dadosPublicos', dadosPublicos.value);
-                    // searched.value = true;
-                    // atualizarDados();
-                } catch (error) {
-                    console.error('Erro ao salvar dados públicos', error);
-                    defaultWarn('Erro ao salvar dados públicos');
-                }
+                if (dadosPublicos.value)
+                    try {
+                        await axios.post(`${baseApiUrl}/cad-dados-publicos/${itemData.value.id}`, { dados: formatarDadosParaHTML(dadosPublicos.value) });
+                        emit('dadosPublicos', dadosPublicos.value);
+                        // searched.value = true;
+                        // atualizarDados();
+                    } catch (error) {
+                        console.error('Erro ao salvar dados públicos', error);
+                        defaultWarn('Erro ao salvar dados públicos');
+                    }
 
                 if (itemData.value.aniversario) itemData.value.aniversario = moment(itemData.value.aniversario).format('DD/MM/YYYY');
                 emit('changed');
