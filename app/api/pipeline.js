@@ -153,9 +153,18 @@ module.exports = app => {
                     const { createEventIns } = app.api.sisEvents
                     let evento = await createEventIns(eventPayload);
 
+                    // Inserir na tabela de status um registro de criação
+                    await trx(tabelaPipelineStatusDomain).insert({
+                        evento: evento || 1,
+                        status: STATUS_ACTIVE,
+                        created_at: new Date(),
+                        id_pipeline: recordId,
+                        status_params: STATUS_PENDENTE,
+                    });
+
                     // Evento de conversão do registro em pedido
                     const { createEvent } = app.api.sisEvents
-                    createEvent({
+                    evento = await createEvent({
                         "request": req,
                         "evento": {
                             id_user: user.id,
@@ -165,15 +174,6 @@ module.exports = app => {
                             tabela_bd: tabela
                         }
                     })
-
-                    // Inserir na tabela de status um registro de criação
-                    await trx(tabelaPipelineStatusDomain).insert({
-                        evento: evento || 1,
-                        status: STATUS_ACTIVE,
-                        created_at: new Date(),
-                        id_pipeline: recordId,
-                        status_params: STATUS_PENDENTE,
-                    });
                     // Inserir na tabela de status um registro de pedido                    
                     await trx(tabelaPipelineStatusDomain).insert({
                         evento: evento || 1,
