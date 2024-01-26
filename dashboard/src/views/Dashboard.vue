@@ -540,43 +540,42 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-        <!-- Vendas Recentes -->
+        <!-- Empresas com mais vendas -->
         <div class="col-12 xl:col-6 xl:col-3">
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h5>
-                        Vendas recentes<br /><span v-if="!biData.recentSales.loading" class="text-green-500 font-ligth text-xs"> Últimas {{ biData.recentSales.rows }} vendas</span>
+                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows + ' empresas ' : 'Empresa' }} com mais vendas<br /><span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-xs">
+                            No período {{ biPeriod.dataPt }}</span
+                        >
                     </h5>
                     <div>
-                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('less')" v-tooltip.top="'Clique para reduzir'" v-if="biData.recentSales.rows > 1" />
-                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('plus')" v-tooltip.top="'Clique para adicionar'" v-if="biData.recentSales.rows < 10" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
                     </div>
                 </div>
-                <DataTable :value="biData.recentSales.data" :rows="biData.recentSales.rows" :paginator="false" responsiveLayout="scroll">
-                    <Column style="width: 10%">
-                        <template #header> Representação </template>
-                        <template #body="slotProps">
-                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/DefaultLogomarca.png'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
-                        </template>
-                    </Column>
-                    <Column style="width: 45%">
-                        <template #header> Documento </template>
-                        <template #body="slotProps"> {{ slotProps.data.representacao }} {{ slotProps.data.documento }} </template>
-                    </Column>
-                    <Column style="width: 15%">
-                        <template #header> Bruto </template>
-                        <template #body="slotProps">
-                            {{ formatCurrency(slotProps.data.valor_bruto) }}
-                        </template>
-                    </Column>
-                    <Column field="agente" header="Agente" style="width: 25%"></Column>
-                    <Column style="width: 5%">
-                        <template #header> Ir </template>
-                        <template #body="slotProps">
-                            <Button icon="fa-solid fa-magnifying-glass" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para seguir'" />
-                        </template>
-                    </Column>
-                </DataTable>
+                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0 cursor-pointer" v-html="item.representacao" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" />
+                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
+                            </div>
+                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="flex justify-content-end align-items-center mb-5">
+                    <span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-base">
+                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de {{ biData.topSellings.totalSellQuantity }} venda{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }} desta{{
+                            `${biData.topSellings.rows > 1 ? 's' : ''}`
+                        }}
+                        empresa{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }}</span
+                    >
+                </div>
             </div>
         </div>
         <!-- Resultados por agentes -->
@@ -615,42 +614,43 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-        <!-- Empresas com mais vendas -->
+        <!-- Vendas Recentes -->
         <div class="col-12 xl:col-6 xl:col-3">
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h5>
-                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows + ' empresas ' : 'Empresa' }} com mais vendas<br /><span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-xs">
-                            No período {{ biPeriod.dataPt }}</span
-                        >
+                        Vendas recentes<br /><span v-if="!biData.recentSales.loading" class="text-green-500 font-ligth text-xs"> Últimas {{ biData.recentSales.rows }} vendas</span>
                     </h5>
                     <div>
-                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('less')" v-tooltip.top="'Clique para reduzir'" v-if="biData.recentSales.rows > 1" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('plus')" v-tooltip.top="'Clique para adicionar'" v-if="biData.recentSales.rows < 10" />
                     </div>
                 </div>
-                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0 cursor-pointer" v-html="item.representacao" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" />
-                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
-                            </div>
-                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
-                        </div>
-                    </li>
-                </ul>
-                <div class="flex justify-content-end align-items-center mb-5">
-                    <span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-base">
-                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de {{ biData.topSellings.totalSellQuantity }} venda{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }} desta{{
-                            `${biData.topSellings.rows > 1 ? 's' : ''}`
-                        }}
-                        empresa{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }}</span
-                    >
-                </div>
+                <DataTable :value="biData.recentSales.data" :rows="biData.recentSales.rows" :paginator="false" responsiveLayout="scroll">
+                    <Column style="width: 10%">
+                        <template #header> Representação </template>
+                        <template #body="slotProps">
+                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/DefaultLogomarca.png'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
+                        </template>
+                    </Column>
+                    <Column style="width: 45%">
+                        <template #header> Documento </template>
+                        <template #body="slotProps"> {{ slotProps.data.representacao }} {{ slotProps.data.documento }} </template>
+                    </Column>
+                    <Column style="width: 15%">
+                        <template #header> Bruto </template>
+                        <template #body="slotProps">
+                            {{ formatCurrency(slotProps.data.valor_bruto) }}
+                        </template>
+                    </Column>
+                    <Column field="agente" header="Agente" style="width: 25%"></Column>
+                    <Column style="width: 5%">
+                        <template #header> Ir </template>
+                        <template #body="slotProps">
+                            <Button icon="fa-solid fa-magnifying-glass" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para seguir'" />
+                        </template>
+                    </Column>
+                </DataTable>
             </div>
         </div>
         <!-- Empresas com mais propostas -->
