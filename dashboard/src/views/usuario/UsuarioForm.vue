@@ -223,7 +223,13 @@ watchEffect(() => {});
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
                         </div>
-                        <div class="col-12 md:col-3">
+                        <div v-if="!itemData.email && mode == 'new'" class="col-12 md:col-3">
+                            <label for="email">E-mail</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
+                        </div>
+                        <div v-else class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <p class="p-inputtext p-component p-filled"> {{ itemData.email }} </p>
@@ -298,8 +304,8 @@ watchEffect(() => {});
                             <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..."/>
                         </div>
                         <!-- Botão trocar senha -->
-                        <div id="divTS" class="col-12 md:col-2 m-0">
-                            <Button id="btnTS" class="bg-transparent shadow-none text-left" @click="changePassword" label="Trocar Senha" icon="pi pi-external-link" raised />
+                        <div id="divTS" class="col-12 md:col-2 m-0 font-normal">
+                            <Button id="btnTS" class="shadow-none text-left font-normal	custom-font-weight" @click="changePassword" label="Trocar Senha" icon="pi pi-external-link" raised :disabled="mode === 'view'" />
                         </div>
                     </div>
                     <div class="col-12" v-if="userData.admin >= 2">
@@ -332,5 +338,13 @@ watchEffect(() => {});
 #btnTS{
     border-color: #ced4da;
     color: #495057;
+    background-color: rgba(240, 248, 255, 0);
+}
+#btnTS .p-button-label{
+    font-weight: 400 !important;
+}
+#btnTS:hover{
+    border-color: #6366F1;
+    background-color: #e9eef1;
 }
 </style>
