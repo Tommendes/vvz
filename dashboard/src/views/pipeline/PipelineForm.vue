@@ -701,7 +701,7 @@ const getEventos = async () => {
                             (userData.gestor >= 1
                                 ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
                                 : '');
-                    else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão do registro';
+                    else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
                     else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
                     element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
                 });
@@ -1099,7 +1099,7 @@ watch(route, (value) => {
                             <Button
                                 label="Reativar Registro"
                                 v-tooltip.top="itemData.id_filho ? `Se reativar, reativará o documento relacionado e suas comissões, caso haja!` : ''"
-                                v-else-if="userData.gestor >= 1 && itemDataLastStatus.status_params == 89"
+                                v-else-if="userData.pipeline >= 4 && itemDataLastStatus.status_params == 89"
                                 type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice ${itemDataLastStatus.status_params == 0 ? 'fa-shake' : ''}`"
