@@ -128,6 +128,9 @@ module.exports = app => {
         else ret.orderBy('created_at').orderBy('status_params')
         ret.then(body => {
             const quantidade = body.length
+            body.forEach(element => {
+                if (element.evento == 1) element.name = 'Vivazul'                
+            });
             return res.json({ data: body, count: quantidade })
         })
             .catch(error => {

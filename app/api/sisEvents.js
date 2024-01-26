@@ -192,6 +192,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_api.sis_events`
+        const tabelaUserDomain = `${dbPrefix}_api.users`
 
         let queryes = undefined
         let query = undefined
@@ -224,6 +225,7 @@ module.exports = app => {
                     }
                     let queryField = key.split(':')[1]
                     if (queryField == 'evento') queryField = 'tbl1.evento'
+                    else if (queryField == 'user') queryField = 'us.user'
                     query += `${queryField} ${operator} AND `
                 } else if (key.split(':')[0] == 'params') {
                     switch (key.split(':')[1]) {
@@ -252,7 +254,7 @@ module.exports = app => {
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select({ id: 'tbl1.id' }, { evento: 'tbl1.evento' }, { created_at: 'tbl1.created_at' }, { classevento: 'tbl1.classevento' }, { tabela_bd: 'tbl1.tabela_bd' }, { id_registro: 'tbl1.id_registro' }, { user: 'us.name' },)
-            .join({ us: 'users' }, 'tbl1.id_user', '=', 'us.id')
+            .join({ us: tabelaUserDomain }, 'tbl1.id_user', '=', 'us.id')
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
             .where({ 'sc.schema_description': user.schema_description })
             .whereRaw(query ? query : '1=1')
