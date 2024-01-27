@@ -708,7 +708,7 @@ const getEventos = async () => {
             } else {
                 itemDataEventos.value = [
                     {
-                        evento: 'Ainda não há registro de log eventos para este registro'
+                        evento: 'Não há registro de log eventos para este registro'
                     }
                 ];
             }

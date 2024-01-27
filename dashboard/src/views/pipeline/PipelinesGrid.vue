@@ -95,8 +95,8 @@ const dropdownStatus = ref([
     { label: 'Proposta', value: '10' },
     { label: 'Pedido', value: '20' },
     { label: 'Liquidado', value: '80' },
-    { label: 'Cancelado', value: '89' },
-    { label: 'Cancelado', value: '99' }
+    { label: 'Cancelado', value: '89' }
+    // { label: 'Excluído', value: '99' }
 ]);
 // { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
@@ -198,6 +198,7 @@ const loadLazyData = () => {
                             .trim();
                     else element.descricao = '';
                     if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
+                    else element.valor_bruto = '';
                 });
                 loading.value = false;
             })
