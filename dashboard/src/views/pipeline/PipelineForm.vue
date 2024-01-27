@@ -930,7 +930,7 @@ watch(route, (value) => {
                                     <label for="valor_agente">Valor base dos agentes</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <SelectButton v-model="calcTypeAgente" :options="['R$', '%']" aria-labelledby="basic" />
+                                        <span class="p-inputgroup-addon">R$</span>
                                         <InputText autocomplete="no" v-model="itemData.valor_agente" id="valor_agente" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                         <Button v-tooltip.top="'Clique para repetir o valor líquido aqui'" class="bg-blue-500" label="VL" @click="itemData.valor_agente = itemData.valor_liq" />
                                         <Button v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500" label="VB" @click="itemData.valor_agente = itemData.valor_bruto" />
