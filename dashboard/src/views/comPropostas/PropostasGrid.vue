@@ -145,7 +145,7 @@ watchEffect(() => {
     <div class="card">
         <PropostaForm @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
-            style="font-size: 0.9rem"
+            style="font-size: 1rem"
             :value="gridData"
             lazy
             paginator
@@ -216,7 +216,7 @@ watchEffect(() => {
                 <template #body="{ data }">
                     <Button
                         type="button"
-                        icon="pi pi-bars"
+                        icon="fa-solid fa-bars"
                         rounded
                         @click="router.push({ path: `/${userData.schema_description}/proposta/${data.id}` })"
                         aria-haspopup="true"

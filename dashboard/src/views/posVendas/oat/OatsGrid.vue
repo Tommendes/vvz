@@ -99,7 +99,7 @@ onMounted(() => {
         </div>
         <DataTable
             v-else
-            style="font-size: 0.9rem"
+            style="font-size: 1rem"
             ref="dt"
             :value="gridData"
             :paginator="true"

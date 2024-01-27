@@ -22,9 +22,7 @@ const mode = ref('view');
 // Loadings
 const loading = ref(false);
 // Props do template
-const props = defineProps({
-    idItem: String
-});
+const props = defineProps(['idItem']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
@@ -61,7 +59,7 @@ const loadData = async () => {
             quantidade: 1,
             valor_unitario: '0,00',
             desconto_total: '0,00',
-            desconto_ativo: 0,
+            desconto_ativo: 0
         };
         mode.value = 'new';
         loading.value = false;
@@ -330,9 +328,9 @@ onBeforeMount(() => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="button" label="Fechar" icon="fa-solid fa-xmark" severity="secondary" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Fechar" icon="fa-solid fa-xmark" severity="secondary" text raised @click="reload()" />
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode = 'view'" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload()" />
                     </div>
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">

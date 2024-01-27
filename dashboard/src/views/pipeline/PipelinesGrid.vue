@@ -359,7 +359,7 @@ onMounted(() => {
         />
         <DataTable
             class="hidden lg:block"
-            style="font-size: 0.9rem"
+            style="font-size: 1rem"
             :value="gridData"
             lazy
             paginator

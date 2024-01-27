@@ -178,7 +178,7 @@ const showEvent = (evento) => {
     <Breadcrumb :items="[{ label: 'Todos os Eventos', to: `/${userData.schema_description}/eventos` }]" />
     <div class="card">
         <DataTable
-            style="font-size: 0.9rem"
+            style="font-size: 1rem"
             :value="gridData"
             lazy
             paginator
@@ -245,7 +245,7 @@ const showEvent = (evento) => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="showEvent(data)" aria-haspopup="true" v-tooltip.left="'Clique para ver completo'" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="fa-solid fa-bars" rounded @click="showEvent(data)" aria-haspopup="true" v-tooltip.left="'Clique para ver completo'" aria-controls="overlay_menu" class="p-button-outlined" />
                 </template>
             </Column>
         </DataTable>
