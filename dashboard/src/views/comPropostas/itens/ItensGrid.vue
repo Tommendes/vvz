@@ -49,6 +49,14 @@ const goField = (data) => {
     }, Math.random() * 1000);
 };
 
+const duplicateField = (data) => {
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = data;
+        mode.value = 'clone';
+    }, Math.random() * 1000);
+};
+
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
@@ -92,7 +100,7 @@ onBeforeMount(() => {
 
 <template>
     <div>
-        <ItemForm :idItem="itemData.id" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit'].includes(mode)" />
+        <ItemForm :idItem="itemData.id" :modeParent="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit', 'clone'].includes(mode)" />
         <DataTable
             style="font-size: 1rem"
             :value="gridData"
