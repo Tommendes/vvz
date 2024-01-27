@@ -825,7 +825,7 @@ watch(route, (value) => {
                                         </span>
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-${['view', 'expandedFormMode'].includes(mode) ? '3' : '6'}`">
+                                <div :class="`col-12 lg:col-6`">
                                     <label for="valor_bruto">Bruto</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
@@ -846,7 +846,7 @@ watch(route, (value) => {
                                         <span disabled v-html="itemData.valor_bruto" id="valor_bruto" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-${['view', 'expandedFormMode'].includes(mode) ? '3' : '6'}`">
+                                <div :class="`col-12 lg:col-6`">
                                     <label for="valor_liq">Líquido</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
@@ -868,28 +868,16 @@ watch(route, (value) => {
                                         <span disabled v-html="itemData.valor_liq" id="valor_liq" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-${['view', 'expandedFormMode'].includes(mode) ? '3' : '6'}`">
-                                    <label for="valor_representacao">Representação</label>
+                                <div :class="`col-12 lg:col-4`">
+                                    <label for="valor_representacao">Valor base da representação</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <SelectButton :disabled="mode == 'view'" v-model="calcTypeRepres" :options="['R$', '%']" aria-labelledby="basic" />
+                                        <span class="p-inputgroup-addon">R$</span>
                                         <InputText
-                                            v-if="calcTypeRepres == 'R$'"
                                             autocomplete="no"
                                             :disabled="['view', 'expandedFormMode'].includes(mode)"
                                             v-model="itemData.valor_representacao"
                                             id="valor_representacao"
-                                            type="text"
-                                            v-maska
-                                            data-maska="0,99"
-                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                        />
-                                        <InputText
-                                            v-else-if="calcTypeRepres == '%'"
-                                            autocomplete="no"
-                                            :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                            v-model="itemData.perc_represent"
-                                            id="perc_represent"
                                             type="text"
                                             v-maska
                                             data-maska="0,99"
@@ -914,12 +902,32 @@ watch(route, (value) => {
                                     </div>
                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
-                                        <span v-if="calcTypeRepres == '%'" disabled v-html="itemData.perc_represent" id="perc_represent" class="p-inputtext p-component" />
-                                        <span v-else disabled v-html="itemData.valor_representacao" id="valor_representacao" class="p-inputtext p-component" />
+                                        <span disabled v-html="itemData.valor_representacao" id="valor_representacao" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-${['view', 'expandedFormMode'].includes(mode) ? '3' : '6'}`">
-                                    <label for="valor_agente">Agente</label>
+                                <div :class="`col-12 lg:col-4`">
+                                    <label for="perc_represent">Comissão da representação</label>
+                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                                        <span class="p-inputgroup-addon">%</span>
+                                        <InputText
+                                            autocomplete="no"
+                                            :disabled="['view', 'expandedFormMode'].includes(mode)"
+                                            v-model="itemData.perc_represent"
+                                            id="perc_represent"
+                                            type="text"
+                                            v-maska
+                                            data-maska="0,99"
+                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
+                                        />
+                                    </div>
+                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                        <span class="p-inputgroup-addon">%</span>
+                                        <span disabled v-html="itemData.perc_represent" id="perc_represent" class="p-inputtext p-component" />
+                                    </div>
+                                </div>
+                                <div :class="`col-12 lg:col-4`">
+                                    <label for="valor_agente">Valor base dos agentes</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <SelectButton v-model="calcTypeAgente" :options="['R$', '%']" aria-labelledby="basic" />
