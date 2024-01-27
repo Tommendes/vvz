@@ -233,7 +233,7 @@ const irRecentSale = (id) => {
 
 const irPipelineFilter = (tpd, perDi, perDf, tDoc) => {
     const perParam = perDi && perDf ? `${perDi},${perDf}` : '';
-    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}&tdoc=${tDoc}`, '_blank');
+    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}${tDoc ? '&tdoc=' + tDoc : ''}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
@@ -493,7 +493,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/pipeline?tpd=1`" v-tooltip.top="'Clique para seguir'">Propostas</router-link>
+                            <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df)" v-tooltip.top="'Clique para seguir'">Propostas</router-link>
                         </span>
                         <Skeleton v-if="biData.propostas.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.propostas.total }}</div>
@@ -519,7 +519,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/pipeline?tpd=2`" v-tooltip.top="'Clique para seguir'">Pedidos</router-link>
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df)" v-tooltip.top="'Clique para seguir'">Pedidos</router-link>
                         </span>
                         <Skeleton v-if="biData.pedidos.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.pedidos.total }}</div>
@@ -557,7 +557,10 @@ onMounted(() => {
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0 cursor-pointer" v-html="item.representacao" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" />
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" v-tooltip.top="'Clique para seguir'">
+                                <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.representacao }}</span>
+                            </router-link>
+                            <!-- <span class="text-900 font-medium mr-2 mb-1 md:mb-0 cursor-pointer" v-html="item.representacao" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" /> -->
                             <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
                         </div>
                         <div class="mt-2 md:mt-0 flex align-items-center">
