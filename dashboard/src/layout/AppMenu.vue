@@ -24,7 +24,8 @@ const model = ref([
             { label: 'Pipeline', icon: 'pi pi-fw pi-paperclip', to: `/${userData.schema_description}/pipeline` },
             { label: 'Propostas', icon: 'pi pi-fw pi-bars', to: `/${userData.schema_description}/propostas` },
             { label: 'Protocolos', icon: 'pi pi-fw pi-folder', to: `/${userData.schema_description}/protocolos` },
-            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${userData.schema_description}/produtos` }
+            { label: 'Produtos', icon: 'pi pi-fw pi-shopping-cart', to: `/${userData.schema_description}/produtos` },
+            { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.schema_description}/pipeline-params` }
         ]
     },
     {
@@ -47,7 +48,6 @@ const model = ref([
         items: [
             { label: 'Empresa', icon: 'pi pi-fw pi-building', to: `/${userData.schema_description}/empresa` },
             { label: 'Usuários', icon: 'pi pi-fw pi-users', to: `/${userData.schema_description}/usuarios` },
-            { label: 'Parâmetros do Pipeline', icon: 'pi pi-fw pi-cog', to: `/${userData.schema_description}/pipeline-params` },
             { label: 'Eventos do sistema', icon: 'pi pi-fw pi-clock', to: `/${userData.schema_description}/eventos` }
         ]
     // },
