@@ -330,7 +330,6 @@ module.exports = app => {
                         } else {
                             if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
                             let queryField = key.split(':')[1]
-                            if (queryField == 'last_status_params') operator = 'equals'
                             switch (operator) {
                                 case 'startsWith': operator = `like "${value}%"`
                                     break;
@@ -340,7 +339,10 @@ module.exports = app => {
                                     break;
                                 case 'endsWith': operator = `like "%${value}"`
                                     break;
-                                case 'notEquals': operator = queryField == 'documento' ? `!= cast('${value}' as unsigned)` : `!= "${value}"`
+                                case 'notEquals': {
+                                    if (['last_status_params','documento'].includes(queryField)) operator = `!= cast('${value}' as unsigned)`;
+                                    else operator =`!= "${value}"`
+                                }
                                     break;
                                 default: operator = queryField == 'documento' ? `= cast('${value}' as unsigned)` : `= "${value}"`
                                     break;
@@ -705,7 +707,7 @@ module.exports = app => {
                 .join({ ps: tabelaPipelineStatusDomain }, function () {
                     this.on('ps.id_pipeline', '=', 'tbl1.id')
                 })
-                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 1 })
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PEDIDO}`)
                 .groupBy('ps.id_pipeline')
                 .orderBy(app.db.raw('date(tbl1.created_at)'), 'desc')
@@ -750,7 +752,7 @@ module.exports = app => {
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PEDIDO}`)
                 .groupBy('pp.id')
@@ -817,7 +819,7 @@ module.exports = app => {
                 .join({ u: tabelaUsers }, function () {
                     this.on('u.id', '=', 'tbl1.id_com_agentes')
                 })
-                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PEDIDO}`)
                 .groupBy('tbl1.id_com_agentes')
@@ -879,7 +881,7 @@ module.exports = app => {
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
-                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 1 })
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 // .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_ACTIVE}`)
                 .groupBy('pp.id')
@@ -942,7 +944,7 @@ module.exports = app => {
                 // .join({ ps: tabelaPipelineStatusDomain }, function () {
                 //     this.on('ps.id_pipeline', '=', 'tbl1.id')
                 // })
-                .where({ 'tbl1.status': STATUS_ACTIVE })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
                 .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
