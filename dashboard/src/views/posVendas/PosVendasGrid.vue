@@ -12,8 +12,9 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -48,12 +49,33 @@ const dropdownTipos = ref([
     { label: 'Venda', value: '2' }
 ]);
 
+/*
+Lista de situações
+
+STATUS_PENDENTE = 0;
+STATUS_REATIVADO = 1;
+STATUS_EM_ANDAMENTO = 60;
+STATUS_FINALIZADO = 80;
+STATUS_CANCELADO = 89;
+STATUS_EXCLUIDO = 99; 
+*/
+const dropdownSituacoes = ref([
+    // { label: 'Aberto', value: '0' },
+    // { label: 'Reaberto', value: '1' },
+    { label: 'Em andamento', value: '60' },
+    { label: 'Finalizado', value: '80' },
+    { label: 'Cancelado', value: '89' },
+    { label: 'Excluído', value: '99' }
+]);
+
 // Itens do grid
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente', minWidth: '18rem' },
-    { field: 'pipeline', label: 'Pipeline', minWidth: '6rem' },
-    { field: 'tipo', label: 'Tipo', maxWidth: '1rem', list: dropdownTipos.value },
-    { field: 'pv_nr', label: 'Número', maxWidth: '1rem' }
+    { field: 'pipeline', label: 'Pipeline', minWidth: '8rem' },
+    { field: 'tipo', label: 'Tipo', minWidth: '8rem', maxWidth: '8rem', list: dropdownTipos.value },
+    { field: 'pv_nr', label: 'Número', minWidth: '8rem', maxWidth: '8rem' },
+    { field: 'last_status_pv', label: 'Situação', minWidth: '8rem', maxWidth: '8rem', list: dropdownSituacoes.value },
+    { field: 'observacao', label: 'Observações', minWidth: '20rem', maxWidth: '20rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -97,6 +119,12 @@ const loadLazyData = () => {
                     if (element.documento) element.pipeline = `${element.tipo_doc.replaceAll('_', ' ')} (${element.documento})`;
                     else element.pipeline = '';
                     element.tipo = String(element.tipo);
+                    // alterar o valor de element.last_status_pv de acordo com o dropdownSituacoes
+                    dropdownSituacoes.value.forEach((item) => {
+                        if (item.value == element.last_status_pv) element.last_status_pv = item.label;
+                    });
+                    if (element.observacao) element.observacao = removeHtmlTags(element.observacao);
+                    else element.observacao = '';
                     switch (element.tipo) {
                         case '1':
                             element.tipo = 'Montagem';
@@ -172,7 +200,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas', to: `/${userData.schema_description}/pos-venda` }]" />
-    <div class="card">
+    <div class="card" :style="route.name == 'pos-vendas' ? 'width: 120rem;' : ''">
         <PosVendaForm
             :mode="mode"
             :idCadastro="props.idCadastro"
@@ -235,6 +263,7 @@ watchEffect(() => {
                             :class="nome.class"
                             :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                             placeholder="Pesquise..."
+                            showClear
                         />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
@@ -263,7 +292,7 @@ watchEffect(() => {
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                         <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                        <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>

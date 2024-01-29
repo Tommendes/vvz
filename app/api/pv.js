@@ -160,6 +160,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPvStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaPipeline}`
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
@@ -197,7 +198,8 @@ module.exports = app => {
                             query += `date(tbl1.created_at) ${operator} AND `
                         } else {
                             if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
-
+                            let queryField = key.split(':')[1]
+                            if (queryField == 'last_status_pv') operator = 'equals'
                             switch (operator) {
                                 case 'startsWith': operator = `like "${value}"`
                                     break;
@@ -212,9 +214,10 @@ module.exports = app => {
                                 default: operator = `= "${value}"`
                                     break;
                             }
-                            let queryField = key.split(':')[1]
                             if (queryField == 'pipeline') {
                                 query += `(pp.descricao ${operator} or p.documento ${operator}) AND `
+                            } else if (queryField == 'last_status_pv') {
+                                query += `(SELECT ps.status_pv FROM ${tabelaPvStatusDomain} ps WHERE ps.id_pv = tbl1.id ORDER BY ps.created_at DESC, ps.status_pv DESC LIMIT 1)  ${operator} AND `
                             } else if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
                             } else {
@@ -257,7 +260,8 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, p.documento, c.nome, c.cpf_cnpj, tbl1.pv_nr, tbl1.tipo,
+            .select(app.db.raw(`tbl1.id, tbl1.observacao, tbl1.status, pp.descricao AS tipo_doc, p.documento, c.nome, c.cpf_cnpj, tbl1.pv_nr, tbl1.tipo,
+            (SELECT ps.status_pv FROM ${tabelaPvStatusDomain} ps WHERE ps.id_pv = tbl1.id ORDER BY ps.created_at DESC, ps.status_pv DESC LIMIT 1)  last_status_pv,
             SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
             .leftJoin({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
             .leftJoin({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'p.id_pipeline_params')

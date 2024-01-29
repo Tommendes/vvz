@@ -9,6 +9,7 @@ module.exports = app => {
     const STATUS_PENDENTE = 0;
     const STATUS_REATIVADO = 1;
     const STATUS_CONVERTIDO = 10;
+    const STATUS_PROPOSTA = 10;
     const STATUS_PEDIDO = 20;
     const STATUS_LIQUIDADO = 80;
     const STATUS_CANCELADO = 89;
@@ -266,6 +267,7 @@ module.exports = app => {
         STATUS_PENDENTE,
         STATUS_REATIVADO,
         STATUS_CONVERTIDO,
+        STATUS_PROPOSTA,
         STATUS_PEDIDO,
         STATUS_LIQUIDADO,
         STATUS_CANCELADO
