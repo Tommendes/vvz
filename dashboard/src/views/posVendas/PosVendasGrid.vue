@@ -64,8 +64,8 @@ const dropdownSituacoes = ref([
     // { label: 'Reaberto', value: '1' },
     { label: 'Em andamento', value: '60' },
     { label: 'Finalizado', value: '80' },
-    { label: 'Cancelado', value: '89' },
-    { label: 'Excluído', value: '99' }
+    { label: 'Cancelado', value: '89' }
+    // { label: 'Excluído', value: '99' }
 ]);
 
 // Itens do grid
