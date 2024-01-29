@@ -58,7 +58,8 @@ const listaNomes = ref([
     { field: 'pessoa', label: 'Pessoa contatada', minWidth: '11rem' },
     // { field: 'contato', label: 'Forma de Contato', minWidth: '12rem' },
     // { field: 'periodo', label: 'Período da visita', minWidth: '8rem', list: dropdownPeriodo.value },
-    { field: 'data_visita', label: 'Data da visita', minWidth: '8rem', type: 'date' }
+    { field: 'data_visita', label: 'Data da visita', minWidth: '8rem', type: 'date' },
+    { field: 'agente', label: 'Agente', minWidth: '5rem', maxWidth: '5rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -104,6 +105,13 @@ const loadLazyData = () => {
                     if (element.contato) element.contato = renderizarHTML(element.contato);
                     element.periodo = String(element.periodo);
                     if (element.periodo) element.periodo = dropdownPeriodo.value.find((x) => x.value == element.periodo).label;
+                    if (element.name) {
+                        let agenteName = element.name.split(' ');
+                        while (agenteName.length > 2) {
+                            agenteName.pop();
+                        }
+                        element.agente = agenteName.join(' ');
+                    }
                 });
                 loading.value = false;
             })

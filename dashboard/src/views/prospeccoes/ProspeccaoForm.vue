@@ -70,7 +70,6 @@ const loadData = async () => {
                     if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
                     breadItems.value.push({ label: itemData.value.nome + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
-                    await listAgentes();
                     await loadEnderecos();
                     await getNomeCliente();
                     editCadastro.value = false;
@@ -90,10 +89,10 @@ const loadData = async () => {
             code: itemData.value.id_cadastros,
             name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
         };
-        await listAgentes();
         await loadEnderecos();
         await getNomeCliente();
     }
+    await listAgentes();
     loading.value = false;
 };
 const saveData = async () => {
@@ -258,28 +257,32 @@ const reload = () => {
 // Obter parâmetros do BD
 //  Parâmetros Agente
 const listAgentes = async () => {
-    const url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name`;
-    await axios.get(url).then((res) => {
-        dropdownAgentes.value = [];
-        res.data.data.map((item) => {
-            dropdownAgentes.value.push({ value: item.id, label: item.name });
+    setTimeout(async () => {
+        const url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name`;
+        await axios.get(url).then((res) => {
+            dropdownAgentes.value = [];
+            res.data.data.map((item) => {
+                dropdownAgentes.value.push({ value: item.id, label: item.name });
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 const loadEnderecos = async () => {
-    const url = `${baseApiUrl}/cad-enderecos/${itemData.value.id_cadastros}`;
-    dropdownEnderecos.value = [];
-    await axios.get(url).then((res) => {
-        res.data.data.map((item) => {
-            const label = `${item.logradouro}${item.nr ? ', ' + item.nr : ''}${item.complnr ? ' ' + item.complnr : ''}${item.bairro ? ' - ' + item.bairro : ''}${userData.admin >= 2 ? ` (${item.id})` : ''}`;
-            dropdownEnderecos.value.push({ value: String(item.id), label: label });
-        });
-    });
+    if (itemData.value.id_cadastros)
+        setTimeout(async () => {
+            const url = `${baseApiUrl}/cad-enderecos/${itemData.value.id_cadastros}`;
+            dropdownEnderecos.value = [];
+            await axios.get(url).then((res) => {
+                res.data.data.map((item) => {
+                    const label = `${item.logradouro}${item.nr ? ', ' + item.nr : ''}${item.complnr ? ' ' + item.complnr : ''}${item.bairro ? ' - ' + item.bairro : ''}${userData.admin >= 2 ? ` (${item.id})` : ''}`;
+                    dropdownEnderecos.value.push({ value: String(item.id), label: label });
+                });
+            });
+        }, Math.random() * 1000 + 250);
 };
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
-    // loadOptions();
 });
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;

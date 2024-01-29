@@ -209,13 +209,15 @@ module.exports = app => {
             filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
         }
 
-        const totalRecords = await app.db({ tbl1: tabelaDomain })
+        let totalRecords = app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
             .join({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_agente')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
+        if (uParams.agente_v == 1 && !(uParams.gestor + uParams.admin + uParams.prospeccoes >= 1)) totalRecords.where({ 'tbl1.id_agente': uParams.id })
+        totalRecords = await totalRecords
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.periodo, tbl1.pessoa, tbl1.contato, tbl1.data_visita,
@@ -227,6 +229,7 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
             .orderBy(app.db.raw(sortField), sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
+        if (uParams.agente_v == 1 && !(uParams.gestor + uParams.admin + uParams.prospeccoes >= 1)) ret.where({ 'tbl1.id_agente': uParams.id })
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
         }).catch(error => {
