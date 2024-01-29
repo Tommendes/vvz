@@ -220,6 +220,8 @@ module.exports = app => {
                                 query += `(SELECT ps.status_pv FROM ${tabelaPvStatusDomain} ps WHERE ps.id_pv = tbl1.id ORDER BY ps.created_at DESC, ps.status_pv DESC LIMIT 1)  ${operator} AND `
                             } else if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
+                            } else if (queryField == 'observacao') {
+                                query += `tbl1.observacao ${operator} AND `
                             } else {
                                 query += `${queryField} ${operator} AND `
                             }
