@@ -2,7 +2,7 @@
 import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn } from '@/toast';
+import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
 import { isValidEmail } from '@/global';
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
@@ -28,7 +28,6 @@ const router = useRouter();
 
 import { useToast } from 'primevue/usetoast'; //IA
 const toast = useToast(); //IA
-
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -69,8 +68,8 @@ const loadData = async () => {
 
                     itemData.value = body;
                     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
-                    console.log(itemData.value.cpf)
-                    console.log(itemData.value.email)
+                    console.log(itemData.value.cpf);
+                    console.log(itemData.value.email);
 
                     // Certificação de que loading.value é um objeto antes de acessar a propriedade form
                     if (typeof loading.value === 'object') {
@@ -234,8 +233,8 @@ watchEffect(() => {});
                         <div v-else class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p class="p-inputtext p-component p-filled" > {{ itemData.email }} </p>
-                        </div>                        
+                            <p class="p-inputtext p-component p-filled">{{ itemData.email }}</p>
+                        </div>
                         <div class="col-12 md:col-3">
                             <label for="telefone">Telefone</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
@@ -248,71 +247,66 @@ watchEffect(() => {});
                         <div class="col-12 md:col-2">
                             <label for="gestor">Gestor</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="gestor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gestor" :options="dropdownSN" placeholder="Selecione..."/>
+                            <Dropdown v-else id="gestor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gestor" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="multiCliente">MultiCliente</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.multiCliente" :options="dropdownSN" placeholder="Selecione..."/>
+                            <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.multiCliente" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="cadastros">Gestão de cadastros</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownAlcadas" placeholder="Selecione..."/>
+                            <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownAlcadas" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pipeline">Gestão de pipeline</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownAlcadas" placeholder="Selecione..."/>
+                            <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownAlcadas" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pv">Gestão de pós-venda</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownAlcadas" placeholder="Selecione..."/>
+                            <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownAlcadas" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="comercial">Gestão comercial</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownAlcadas" placeholder="Selecione..."/>
+                            <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownAlcadas" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="fiscal">Gestão fiscal</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownAlcadas" placeholder="Selecione..."/>
+                            <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownAlcadas" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="financeiro">Gestão financeira</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownAlcadas" placeholder="Selecione..."/>
+                            <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownAlcadas" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="comissoes">Gestão de comissões</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas" placeholder="Selecione..."/>
+                            <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_v">Agente vendedor</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownSN" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_arq">Agente arquiteto</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownSN" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="agente_at">Agente de atendimento</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..."/>
+                            <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <!-- Botão trocar senha -->
-<<<<<<< HEAD
                         <div id="divTS" class="col-12 md:col-2 m-0 font-normal">
-                            <Button id="btnTS" class="shadow-none text-left font-normal	custom-font-weight" @click="changePassword" label="Trocar Senha" icon="fa-solid fa-external-link" raised :disabled="mode === 'view'" />
-=======
-                        <div v-if="itemData.id" id="divTS" class="col-12 md:col-2 m-0 font-normal">
-                            <Button id="btnTS" class="shadow-none text-left font-normal	custom-font-weight" @click="changePassword" label="Trocar Senha" icon="pi pi-external-link" raised :disabled="mode === 'view'" />
->>>>>>> 129f989039f7b56bc924193d99f7081169ca7f14
+                            <Button id="btnTS" class="shadow-none text-left font-normal custom-font-weight" @click="changePassword" label="Trocar Senha" icon="fa-solid fa-external-link" raised :disabled="mode === 'view'" />
                         </div>
                     </div>
                     <div class="col-12" v-if="userData.admin >= 2">
@@ -320,7 +314,7 @@ watchEffect(() => {});
                             <p>Mode: {{ mode }}</p>
                             <p>itemData: {{ itemData }}</p>
                         </div>
-                    </div>                    
+                    </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
@@ -342,16 +336,16 @@ watchEffect(() => {});
     margin-left: -1rem;
     color: gray;
 }
-#btnTS{
+#btnTS {
     border-color: #ced4da;
     color: #495057;
     background-color: rgba(240, 248, 255, 0);
 }
-#btnTS .p-button-label{
+#btnTS .p-button-label {
     font-weight: 400 !important;
 }
-#btnTS:hover{
-    border-color: #6366F1;
+#btnTS:hover {
+    border-color: #6366f1;
     background-color: #e9eef1;
 }
 </style>
