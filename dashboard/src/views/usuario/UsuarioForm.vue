@@ -69,6 +69,8 @@ const loadData = async () => {
 
                     itemData.value = body;
                     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
+                    console.log(itemData.value.cpf)
+                    console.log(itemData.value.email)
 
                     // Certificação de que loading.value é um objeto antes de acessar a propriedade form
                     if (typeof loading.value === 'object') {
@@ -130,7 +132,7 @@ const changePassword = async () => {
     const urlRequestRequestPassReset = `${baseApiUrl}/request-password-reset/`;
 
     try {
-        const response = await axios.post(urlRequestRequestPassReset, { cpf: userData.cpf });
+        const response = await axios.post(urlRequestRequestPassReset, { cpf: itemData.value.cpf });
         if (response.data.id) {
             redirectToPasswordReset(response.data.id);
             defaultSuccess(response.data.msg);
@@ -232,7 +234,7 @@ watchEffect(() => {});
                         <div v-else class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p class="p-inputtext p-component p-filled"> {{ itemData.email }} </p>
+                            <p class="p-inputtext p-component p-filled" > {{ itemData.email }} </p>
                         </div>                        
                         <div class="col-12 md:col-3">
                             <label for="telefone">Telefone</label>
