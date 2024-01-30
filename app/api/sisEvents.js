@@ -207,7 +207,6 @@ module.exports = app => {
             for (const key in queryes) {
                 let operator = queryes[key].split(':')[0]
                 let value = queryes[key].split(':')[1]
-                console.log(key, operator);
                 if (key.split(':')[0] == 'field') {
                     if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
 
@@ -272,7 +271,6 @@ module.exports = app => {
             .groupBy('tbl1.id')
             .orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-        console.log(ret.toString());
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
         })

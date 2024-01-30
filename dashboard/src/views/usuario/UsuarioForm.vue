@@ -69,6 +69,8 @@ const loadData = async () => {
 
                     itemData.value = body;
                     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
+                    console.log(itemData.value.cpf)
+                    console.log(itemData.value.email)
 
                     // Certificação de que loading.value é um objeto antes de acessar a propriedade form
                     if (typeof loading.value === 'object') {
@@ -127,22 +129,22 @@ const dropdownAlcadas = ref([
 ]);
 // Troca de senha
 const changePassword = async () => {
-  const urlRequestRequestPassReset = `${baseApiUrl}/request-password-reset/`;
+    const urlRequestRequestPassReset = `${baseApiUrl}/request-password-reset/`;
 
-  try {
-    const response = await axios.post(urlRequestRequestPassReset, { cpf: userData.cpf });
-    if (response.data.id) {
-      redirectToPasswordReset(response.data.id);
-      defaultSuccess(response.data.msg);
-    } else {
-      defaultWarn('Ops! Parece que houve um erro ao executar sua solicitação. Por favor, tente novamente.');
+    try {
+        const response = await axios.post(urlRequestRequestPassReset, { cpf: itemData.value.cpf });
+        if (response.data.id) {
+            redirectToPasswordReset(response.data.id);
+            defaultSuccess(response.data.msg);
+        } else {
+            defaultWarn('Ops! Parece que houve um erro ao executar sua solicitação. Por favor, tente novamente.');
+        }
+    } catch (error) {
+        defaultError(error);
     }
-  } catch (error) {
-    defaultError(error);
-  }
 };
 const redirectToPasswordReset = (passwordResetId) => {
-  router.push({ path: `/${userData.schema_description}/password-reset`, query: { q: passwordResetId } });
+    router.push({ path: `/${userData.schema_description}/password-reset`, query: { q: passwordResetId } });
 };
 // Validar CPF
 const validateCPF = () => {
@@ -223,7 +225,7 @@ watchEffect(() => {});
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
                         </div>
-                        <div v-if="!itemData.email && mode == 'new'" class="col-12 md:col-3">
+                        <div v-if="!itemData.id && mode == 'new'" class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
@@ -232,12 +234,12 @@ watchEffect(() => {});
                         <div v-else class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p class="p-inputtext p-component p-filled"> {{ itemData.email }} </p>
+                            <p class="p-inputtext p-component p-filled" > {{ itemData.email }} </p>
                         </div>                        
                         <div class="col-12 md:col-3">
                             <label for="telefone">Telefone</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" @input="validateTelefone()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
                         </div>
                         <div class="col-12 md:col-12">
@@ -304,8 +306,13 @@ watchEffect(() => {});
                             <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..."/>
                         </div>
                         <!-- Botão trocar senha -->
+<<<<<<< HEAD
                         <div id="divTS" class="col-12 md:col-2 m-0 font-normal">
                             <Button id="btnTS" class="shadow-none text-left font-normal	custom-font-weight" @click="changePassword" label="Trocar Senha" icon="fa-solid fa-external-link" raised :disabled="mode === 'view'" />
+=======
+                        <div v-if="itemData.id" id="divTS" class="col-12 md:col-2 m-0 font-normal">
+                            <Button id="btnTS" class="shadow-none text-left font-normal	custom-font-weight" @click="changePassword" label="Trocar Senha" icon="pi pi-external-link" raised :disabled="mode === 'view'" />
+>>>>>>> 129f989039f7b56bc924193d99f7081169ca7f14
                         </div>
                     </div>
                     <div class="col-12" v-if="userData.admin >= 2">

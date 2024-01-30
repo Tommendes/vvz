@@ -342,7 +342,6 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             if (error.code == 'ERR_BAD_REQUEST') return res.status(400).send('CEP não localizado. Tente novamente ou preencha manualmente.')
-            console.log(error);
             return res.status(400).send(error)
         }
     };
