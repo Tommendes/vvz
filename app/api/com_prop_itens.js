@@ -120,7 +120,12 @@ module.exports = app => {
             body.created_at = new Date()
             const ordem = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas }).select(app.db.raw('count(*) as count')).first()
             body.ordem = ordem.count + 1 || 1
-            const item = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas, item_ativo: STATUS_ITEM_ACTIVE }).select(app.db.raw('count(*) as count')).first()
+            let item = app.db(tabelaDomain)
+                .where({ id_com_propostas: body.id_com_propostas, item_ativo: STATUS_ITEM_ACTIVE })
+                .select(app.db.raw('count(*) as count')).first()
+            if (body.id_com_prop_compos) item.where({ id_com_prop_compos: body.id_com_prop_compos })
+            else item.where(app.db.raw('id_com_prop_compos is null'))
+            item = await item
             body.item = item.count + 1 || 1
             delete body.old_id;
             app.db(tabelaDomain)

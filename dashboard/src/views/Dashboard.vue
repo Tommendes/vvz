@@ -233,7 +233,7 @@ const irRecentSale = (id) => {
 
 const irPipelineFilter = (tpd, perDi, perDf, tDoc) => {
     const perParam = perDi && perDf ? `${perDi},${perDf}` : '';
-    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}&tdoc=${tDoc}`, '_blank');
+    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}${tDoc ? '&tdoc=' + tDoc : ''}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
@@ -493,7 +493,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/pipeline?tpd=1`" v-tooltip.top="'Clique para seguir'">Propostas</router-link>
+                            <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df)" v-tooltip.top="'Clique para seguir'">Propostas</router-link>
                         </span>
                         <Skeleton v-if="biData.propostas.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.propostas.total }}</div>
@@ -519,7 +519,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/pipeline?tpd=2`" v-tooltip.top="'Clique para seguir'">Pedidos</router-link>
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df)" v-tooltip.top="'Clique para seguir'">Pedidos</router-link>
                         </span>
                         <Skeleton v-if="biData.pedidos.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.pedidos.total }}</div>
@@ -537,6 +537,83 @@ onMounted(() => {
                     <Skeleton v-if="biData.pedidos.loading" width="20rem" height="1rem"></Skeleton>
                     <span v-else class="text-green-500 font-ligth text-xs">{{ biData.pedidos.noPeriodo }} novos </span>
                     <span v-if="!biData.pedidos.loading" class="text-500 font-ligth text-xs">no período {{ biPeriod.dataPt }}</span>
+                </div>
+            </div>
+        </div>
+        <!-- Empresas com mais vendas -->
+        <div class="col-12 xl:col-6 xl:col-3">
+            <div class="card">
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <h5>
+                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows + ' empresas ' : 'Empresa' }} com mais vendas<br /><span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-xs">
+                            No período {{ biPeriod.dataPt }}</span
+                        >
+                    </h5>
+                    <div>
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
+                    </div>
+                </div>
+                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" v-tooltip.top="'Clique para seguir'">
+                                <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.representacao }}</span>
+                            </router-link>
+                            <!-- <span class="text-900 font-medium mr-2 mb-1 md:mb-0 cursor-pointer" v-html="item.representacao" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" /> -->
+                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
+                            </div>
+                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="flex justify-content-end align-items-center mb-5">
+                    <span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-base">
+                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de {{ biData.topSellings.totalSellQuantity }} venda{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }} desta{{
+                            `${biData.topSellings.rows > 1 ? 's' : ''}`
+                        }}
+                        empresa{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }}</span
+                    >
+                </div>
+            </div>
+        </div>
+        <!-- Resultados por agentes -->
+        <div class="col-12 xl:col-6 xl:col-3">
+            <div class="card">
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <h5>
+                        Resultados por agente
+                        <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-xs"> No período {{ biPeriod.dataPt }}</span> <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-xs">
+                            {{ biData.topSellers.rows }} primeiro{{ `${biData.topSellers.rows > 1 ? 's' : ''}` }} no ranking</span
+                        >
+                    </h5>
+                    <div>
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('plus')" v-tooltip.top="'Clique para adicionar'" />
+                    </div>
+                </div>
+                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellers.data" :key="item.id">
+                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">{{ item.agente }}</span>
+                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
+                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
+                            </div>
+                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="flex justify-content-end align-items-center mb-5">
+                    <span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-base">
+                        Fechamento total no período: {{ formatCurrency(biData.topSellers.totalSell) }}, proveniente de {{ biData.topSellers.totalSellQuantity }} venda{{ `${biData.topSellers.totalSellQuantity > 1 ? 's' : ''}` }}</span
+                    >
                 </div>
             </div>
         </div>
@@ -577,80 +654,6 @@ onMounted(() => {
                         </template>
                     </Column>
                 </DataTable>
-            </div>
-        </div>
-        <!-- Resultados por agentes -->
-        <div class="col-12 xl:col-6 xl:col-3">
-            <div class="card">
-                <div class="flex justify-content-between align-items-center mb-5">
-                    <h5>
-                        Resultados por agente
-                        <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-xs"> No período {{ biPeriod.dataPt }}</span> <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-xs">
-                            {{ biData.topSellers.rows }} primeiro{{ `${biData.topSellers.rows > 1 ? 's' : ''}` }} no ranking</span
-                        >
-                    </h5>
-                    <div>
-                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('plus')" v-tooltip.top="'Clique para adicionar'" />
-                    </div>
-                </div>
-                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellers.data" :key="item.id">
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">{{ item.agente }}</span>
-                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
-                            </div>
-                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
-                        </div>
-                    </li>
-                </ul>
-                <div class="flex justify-content-end align-items-center mb-5">
-                    <span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-base">
-                        Fechamento total no período: {{ formatCurrency(biData.topSellers.totalSell) }}, proveniente de {{ biData.topSellers.totalSellQuantity }} venda{{ `${biData.topSellers.totalSellQuantity > 1 ? 's' : ''}` }}</span
-                    >
-                </div>
-            </div>
-        </div>
-        <!-- Empresas com mais vendas -->
-        <div class="col-12 xl:col-6 xl:col-3">
-            <div class="card">
-                <div class="flex justify-content-between align-items-center mb-5">
-                    <h5>
-                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows + ' empresas ' : 'Empresa' }} com mais vendas<br /><span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-xs">
-                            No período {{ biPeriod.dataPt }}</span
-                        >
-                    </h5>
-                    <div>
-                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
-                    </div>
-                </div>
-                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
-                    <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0 cursor-pointer" v-html="item.representacao" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" />
-                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 flex align-items-center">
-                            <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
-                                <div :class="`bg-${item.color} h-full`" :style="`width: ${item.percentual}%`"></div>
-                            </div>
-                            <span :class="`text-${item.color} ml-3 font-medium`">%{{ item.percentual }}</span>
-                        </div>
-                    </li>
-                </ul>
-                <div class="flex justify-content-end align-items-center mb-5">
-                    <span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-base">
-                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de {{ biData.topSellings.totalSellQuantity }} venda{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }} desta{{
-                            `${biData.topSellings.rows > 1 ? 's' : ''}`
-                        }}
-                        empresa{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }}</span
-                    >
-                </div>
             </div>
         </div>
         <!-- Empresas com mais propostas -->

@@ -64,7 +64,7 @@ onBeforeMount(() => {
     <div class="card">
         <ParamForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
-            style="font-size: 0.9rem"
+            style="font-size: 1rem"
             :value="gridData"
             :paginator="true"
             :rows="10"
@@ -105,7 +105,7 @@ onBeforeMount(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="getItem(data)" class="p-button-outlined" />
+                    <Button type="button" icon="fa-solid fa-bars" rounded @click="getItem(data)" class="p-button-outlined" />
                 </template>
             </Column>
         </DataTable>

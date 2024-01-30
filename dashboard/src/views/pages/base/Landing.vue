@@ -28,7 +28,7 @@ const logoUrl = computed(() => {
                 </a>
                 <a class="cursor-pointer block lg:hidden text-700 p-ripple" v-ripple
                     v-styleclass="{ selector: '@next', enterClass: 'hidden', leaveToClass: 'hidden', hideOnOutsideClick: true }">
-                    <i class="pi pi-bars text-4xl"></i>
+                    <i class="fa-solid fa-bars text-4xl"></i>
                 </a>
                 <div class="align-items-center surface-0 flex-grow-1 justify-content-between hidden lg:flex absolute lg:static w-full left-0 px-6 lg:px-0 z-2"
                     style="top: 120px">

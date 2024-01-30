@@ -95,18 +95,18 @@ const dropdownStatus = ref([
     { label: 'Proposta', value: '10' },
     { label: 'Pedido', value: '20' },
     { label: 'Liquidado', value: '80' },
-    { label: 'Cancelado', value: '89' },
-    { label: 'Cancelado', value: '99' }
+    { label: 'Cancelado', value: '89' }
+    // { label: 'Excluído', value: '99' }
 ]);
 // { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
     { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'proposta', label: 'Proposta', class: 'text-center', minWidth: '5rem', maxWidth: '5rem' },
-    { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '5rem', maxWidth: '5rem' },
-    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '5rem', maxWidth: '5rem' },
-    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem' },
-    { field: 'agente', label: 'Agente', minWidth: '5rem', maxWidth: '5rem' },
+    { field: 'proposta', label: 'Proposta', class: 'text-center', minWidth: '7rem', maxWidth: '7rem' },
+    { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '7rem', maxWidth: '7rem' },
+    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '7rem', maxWidth: '7rem' },
+    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem', maxWidth: '8rem' },
+    { field: 'agente', label: 'Agente', minWidth: '7rem', maxWidth: '7rem' },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
@@ -118,8 +118,8 @@ const listaNomes = ref([
     {
         field: 'last_status_params',
         label: 'Situação',
-        minWidth: '5rem',
-        maxWidth: '5rem',
+        minWidth: '7rem',
+        maxWidth: '7rem',
         list: dropdownStatus.value
     }
 ]);
@@ -158,6 +158,7 @@ const clearFilter = () => {
 };
 const reload = () => {
     router.replace({ query: {} });
+    clearFilter();
 };
 //Scrool quando criar um Novo Registro
 const scrollToTop = () => {
@@ -198,6 +199,7 @@ const loadLazyData = () => {
                             .trim();
                     else element.descricao = '';
                     if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
+                    else element.valor_bruto = '';
                 });
                 loading.value = false;
             })
@@ -359,7 +361,7 @@ onMounted(() => {
         />
         <DataTable
             class="hidden lg:block"
-            style="font-size: 0.9rem"
+            style="font-size: 1rem"
             :value="gridData"
             lazy
             paginator
@@ -386,7 +388,7 @@ onMounted(() => {
             <!-- scrollHeight="600px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                    <Tag :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
+                    <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
                     <Tag class="tagRes" :value="`Total geral: ${formatCurrency(sumRecords)}`"> </Tag>
                 </div>
                 <div class="flex justify-content-end gap-3">
@@ -459,6 +461,7 @@ onMounted(() => {
                             v-model="filterModel.value"
                             :options="nome.list"
                             @change="filterCallback()"
+                            showClear
                             :class="nome.class"
                             :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                             placeholder="Pesquise..."
@@ -516,6 +519,9 @@ onMounted(() => {
     </div>
 </template>
 <style scoped>
+.tagQualify {
+    font-size: 1.2rem;
+}
 .tagRes {
     background-color: #077a59;
     color: rgb(255, 255, 255);

@@ -4,6 +4,9 @@ import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import ComposicaoForm from './ComposicaoForm.vue';
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -51,6 +54,10 @@ const loadData = () => {
             gridData.value.forEach((element) => {
                 element.compoe = element.compoe_valor ? 'Sim' : 'Não';
                 element.comp_ativa = element.comp_ativa ? 'Sim' : 'Não';
+                if (element.localizacao) element.localizacao = element.localizacao.trim();
+                else element.localizacao = '';
+                if (element.tombamento) element.tombamento = element.tombamento.trim();
+                else element.tombamento = '';
             });
             loading.value = false;
         });
@@ -77,7 +84,7 @@ onBeforeMount(() => {
     <div>
         <ComposicaoForm :idComposicao="itemData.id" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit'].includes(mode)" />
         <DataTable
-            style="font-size: 0.9rem"
+            style="font-size: 1rem"
             :value="gridData"
             :paginator="true"
             :rows="10"
@@ -120,9 +127,12 @@ onBeforeMount(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>
+        <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+            <p>mode: {{ mode }}</p>
+        </div>
     </div>
 </template>

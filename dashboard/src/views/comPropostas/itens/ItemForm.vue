@@ -22,9 +22,7 @@ const mode = ref('view');
 // Loadings
 const loading = ref(false);
 // Props do template
-const props = defineProps({
-    idItem: String
-});
+const props = defineProps(['idItem', 'modeParent']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
@@ -45,6 +43,17 @@ const loadData = async () => {
                     itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     await getNomeProduto();
+                    if (props.modeParent == 'clone') {
+                        mode.value = 'new';
+                        delete itemData.value.id;
+                        delete itemData.value.item;
+                        delete itemData.value.updated_at;
+                        delete itemData.value.old_id;
+                        delete itemData.value.hash;
+                        delete itemData.value.tblName;
+                        itemData.value.item_ativo = true;
+                        itemData.value.compoe_valor = true;
+                    }
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
@@ -61,7 +70,7 @@ const loadData = async () => {
             quantidade: 1,
             valor_unitario: '0,00',
             desconto_total: '0,00',
-            desconto_ativo: 0,
+            desconto_ativo: 0
         };
         mode.value = 'new';
         loading.value = false;
@@ -158,13 +167,15 @@ const valorVendaProduto = ref(0);
 const getNomeProduto = async () => {
     if (itemData.value.id_com_produtos) {
         try {
-            const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.id&vl=${itemData.value.id_com_produtos}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
-            const response = await axios.get(url);
-            if (response.data.data.length > 0) {
-                // remover tags html de descricao
-                nomeProduto.value = response.data.data[0].nome_comum;
-                valorVendaProduto.value = formatValor(response.data.data[0].valor_venda, 'pt');
-            }
+            setTimeout(async () => {
+                const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.id&vl=${itemData.value.id_com_produtos}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
+                const response = await axios.get(url);
+                if (response.data.data.length > 0) {
+                    // remover tags html de descricao
+                    nomeProduto.value = response.data.data[0].nome_comum;
+                    valorVendaProduto.value = formatValor(response.data.data[0].valor_venda, 'pt');
+                }
+            }, Math.random() * 1000);
         } catch (error) {
             console.error('Erro ao buscar produto:', error);
         }
@@ -282,7 +293,7 @@ onBeforeMount(() => {
                         <div class="col-12 md:col-10">
                             <label for="id_com_produtos">Produto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editProduto || mode == 'new'" v-model="selectedProduto" optionLabel="name" :suggestions="filteredProdutos" @complete="searchProdutos" forceSelection />
+                            <AutoComplete v-else-if="editProduto || (mode == 'new' && props.modeParent != 'clone')" v-model="selectedProduto" optionLabel="name" :suggestions="filteredProdutos" @complete="searchProdutos" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeProduto" />
                                 <Button icon="pi pi-pencil" severity="primary" @click="confirmEditProduto()" :disabled="mode == 'view'" />
@@ -330,13 +341,14 @@ onBeforeMount(() => {
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="button" label="Fechar" icon="fa-solid fa-xmark" severity="secondary" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Fechar" icon="fa-solid fa-xmark" severity="secondary" text raised @click="reload()" />
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode = 'view'" />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload()" />
                     </div>
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                     <p>mode: {{ mode }}</p>
+                    <p>modeParent: {{ props.modeParent }}</p>
                     <p>itemData: {{ itemData }}</p>
                 </div>
             </div>

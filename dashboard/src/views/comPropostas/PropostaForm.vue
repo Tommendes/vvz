@@ -147,9 +147,11 @@ const loadOptions = async () => {
     }, Math.random() * 1000);
 };
 
-const imprimirProposta = async () => {
+const imprimirProposta = async (resumo = false) => {
     defaultSuccess('Por favor aguarde...');
-    const url = `${baseApiUrl}/printing/proposal/`;
+    let url = `${baseApiUrl}/printing/`;
+    if (resumo) url += 'resumo/';
+    else url += 'proposta/';
     await axios
         .post(url, { idProposta: itemData.value.id, encoding: 'base64', exportType: 'pdf' })
         .then((res) => {
@@ -269,7 +271,8 @@ watchEffect(() => {});
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
-                    <Button type="button" v-if="props.padroes" label="Imprimir" icon="fa-solid fa-print" severity="success" text raised @click="imprimirProposta()" />
+                    <Button type="button" v-if="props.padroes" label="Imprimir Proposta" icon="fa-solid fa-print" severity="success" text raised @click="imprimirProposta()" />
+                    <Button type="button" v-if="props.padroes" label="Imprimir Resumo" icon="fa-solid fa-print" severity="success" text raised @click="imprimirProposta(true)" />
                 </div>
             </div>
             <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">

@@ -5,7 +5,9 @@ import { baseApiUrl } from '@/env';
 import { formatValor } from '@/global';
 import axios from '@/axios-interceptor';
 import ItemForm from './ItemForm.vue';
-
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
@@ -44,6 +46,14 @@ const goField = (data) => {
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'view';
+    }, Math.random() * 1000);
+};
+
+const duplicateField = (data) => {
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = data;
+        mode.value = 'clone';
     }, Math.random() * 1000);
 };
 
@@ -90,9 +100,9 @@ onBeforeMount(() => {
 
 <template>
     <div>
-        <ItemForm :idItem="itemData.id" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit'].includes(mode)" />
+        <ItemForm :idItem="itemData.id" :modeParent="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit', 'clone'].includes(mode)" />
         <DataTable
-            style="font-size: 0.9rem"
+            style="font-size: 1rem"
             :value="gridData"
             :paginator="true"
             :rows="10"
@@ -129,15 +139,19 @@ onBeforeMount(() => {
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                         <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                        <span v-else v-html="nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + (String(data[nome.field]).trim() > nome.maxLength ? '...' : '') : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>
-            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+            <Column headerStyle="width: 10rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="pi pi-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" icon="fa-regular fa-copy" rounded @click="duplicateField(data)" class="ml-2 p-button-outlined" v-tooltip.left="'Clique para duplicar o item'" />
                 </template>
             </Column>
         </DataTable>
+        <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+            <p>mode: {{ mode }}</p>
+        </div>
     </div>
 </template>
