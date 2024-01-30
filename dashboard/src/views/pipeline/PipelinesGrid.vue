@@ -92,7 +92,7 @@ const limitNome = 25;
 // Lista de tipos
 const dropdownStatus = ref([
     { label: 'Pendente', value: '0' },
-    { label: 'Proposta', value: '10' },
+    { label: 'Convertido', value: '10' },
     { label: 'Pedido', value: '20' },
     { label: 'Liquidado', value: '80' },
     { label: 'Cancelado', value: '89' }
@@ -172,7 +172,18 @@ const loadLazyData = () => {
     loading.value = true;
     expanded.value = false;
     setTimeout(() => {
-        const url = `${urlBase.value}${urlFilters.value}`;
+        let urlQueryes = '';
+        let objetcQueryes = Object.keys(queryUrl.value);
+        if (objetcQueryes.length > 0) {
+            urlQueryes = Object.keys(queryUrl.value)
+                .map((key) => `${key}=${queryUrl.value[key]}`)
+                .join('&');
+            // Pesquise filters.value, identifique a atribua o valor de acordo com o que foi passado na URL (queryUrl.value)
+            Object.keys(filters.value).forEach((key) => {
+                if (queryUrl.value[key]) filters.value[key].value = queryUrl.value[key];
+            });
+        }
+        const url = `${urlBase.value}${urlFilters.value}${urlQueryes}`;
         axios
             .get(url)
             .then((axiosRes) => {
@@ -324,7 +335,9 @@ onBeforeMount(() => {
     initFilters();
     loadOptions();
 });
+const queryUrl = ref('');
 onMounted(() => {
+    queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
     let load = false;

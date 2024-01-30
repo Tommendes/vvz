@@ -305,7 +305,7 @@ watchEffect(() => {});
                         </div>
                         <!-- Botão trocar senha -->
                         <div id="divTS" class="col-12 md:col-2 m-0 font-normal">
-                            <Button id="btnTS" class="shadow-none text-left font-normal	custom-font-weight" @click="changePassword" label="Trocar Senha" icon="pi pi-external-link" raised :disabled="mode === 'view'" />
+                            <Button id="btnTS" class="shadow-none text-left font-normal	custom-font-weight" @click="changePassword" label="Trocar Senha" icon="fa-solid fa-external-link" raised :disabled="mode === 'view'" />
                         </div>
                     </div>
                     <div class="col-12" v-if="userData.admin >= 2">

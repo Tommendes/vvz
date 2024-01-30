@@ -42,7 +42,7 @@ module.exports = app => {
                 }
             }
         } catch (error) {
-            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
 

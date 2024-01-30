@@ -18,6 +18,8 @@ const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 // Campos de formulário
 const itemData = ref({});
+// Dados do Cadastro
+const itemDataCadastro = ref({});
 const dataAceite = ref(null);
 // Modo do formulário
 const mode = ref('view');
@@ -61,6 +63,7 @@ const loadData = async () => {
                 // Se body.valor_total então formate o valor com duas casas decimais em português
                 if (body.valor_total) body.valor_total = formatValor(body.valor_total);
                 itemData.value = body;
+                itemData.value.id_cadastros = dialogRef.value.data.idCadastro;
                 // Lista o andamento do registro
                 await listStatusRegistro();
             } else {
@@ -71,6 +74,7 @@ const loadData = async () => {
     } else {
         itemData.value = {
             id_pv: dialogRef.value.data.idPv,
+            id_cadastros: dialogRef.value.data.idCadastro,
             id_cadastro_endereco: null,
             id_tecnico: null,
             nr_oat: null,
@@ -85,6 +89,7 @@ const loadData = async () => {
             descricao: null
         };
     }
+    await loadEnderecoBasico();
     loading.value = false;
     if (!dialogRef.value.data.idPvOat) mode.value = 'new';
 };
@@ -110,6 +115,20 @@ const loadTecnicos = async () => {
             dropdownTecnicos.value.push({ value: String(item.id), label: item.tecnico });
         });
     });
+};
+const loadEnderecoBasico = async () => {
+    const url = `${baseApiUrl}/cadastros/${dialogRef.value.data.idCadastro}`;
+    setTimeout(async () => {
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                itemDataCadastro.value = body;
+                const endereco = itemDataCadastro.value.logradouro + (itemDataCadastro.value.nr ? ', ' + itemDataCadastro.value.nr : '') + ' - (Cadastro Principal)';
+                dropdownEnderecos.value.push({ value: String(0), label: endereco });
+            }
+        });
+    }, Math.random() * 1000 + 250);
 };
 const clone = async () => {
     const url = `${urlBase.value}`;
@@ -161,6 +180,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
+                itemData.value.id_cadastros = dialogRef.value.data.idCadastro;
                 if (itemData.value.valor_total) itemData.value.valor_total = formatValor(itemData.value.valor_total);
                 mode.value = 'view';
                 emit('changed');
@@ -377,8 +397,8 @@ onBeforeMount(() => {
     loadTecnicos();
 });
 onMounted(() => {
-    setTimeout(() => {
-        loadData();
+    setTimeout(async () => {
+        await loadData();
     }, Math.random() * 1000);
 });
 </script>
@@ -452,21 +472,21 @@ onMounted(() => {
             <div class="col-12" v-if="mode == 'new'">
                 <div class="col-12 card flex justify-content-center flex-wrap gap-3">
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode = 'view'" />
+                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'new' ? closeDialog() : (mode = 'view')" />
                 </div>
             </div>
             <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
                 <Fieldset :toggleable="true" class="mb-3">
                     <template #legend>
                         <div class="flex align-items-center text-primary">
-                            <span class="pi pi-bolt mr-2"></span>
+                            <span class="fa-solid fa-bolt mr-2"></span>
                             <span class="font-bold text-lg">Ações do Registro</span>
                         </div>
                     </template>
                     <div v-if="dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO && itemDataLastStatus.status_pv_oat < andamentoRegistroPvOat.STATUS_FINALIZADO">
                         <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
                         <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
-                        <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
+                        <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : closeDialog()" />
                     </div>
                     <div v-if="mode != 'edit'">
                         <hr />
@@ -478,7 +498,7 @@ onMounted(() => {
                             style="color: #a97328"
                             text
                             raised
-                            @click="openInNewTab(`/${userData.schema_description}/cadastro/${dialogRef.data.idCadastro}`)"
+                            @click="openInNewTab(`#/${userData.schema_description}/cadastro/${dialogRef.data.idCadastro}`)"
                         />
                         <Button
                             label="Finalizar Oat"
@@ -554,7 +574,7 @@ onMounted(() => {
                 <Fieldset :toggleable="true">
                     <template #legend>
                         <div class="flex align-items-center text-primary">
-                            <span class="pi pi-clock mr-2"></span>
+                            <span class="fa-solid fa-clock mr-2"></span>
                             <span class="font-bold text-lg">Andamento do Registro</span>
                         </div>
                     </template>
@@ -580,6 +600,7 @@ onMounted(() => {
         <div class="card bg-green-200 mt-3">
             <p>Mode: {{ mode }}</p>
             <p>itemData: {{ itemData }}</p>
+            <p>itemDataCadastro: {{ itemDataCadastro }}</p>
             <p>PV last status (dialogRef.data): {{ dialogRef.data }}</p>
             <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
         </div>
@@ -589,6 +610,7 @@ onMounted(() => {
 .p-input-filled .p-inputtext {
     background-color: #ffffff00;
 }
+
 .p-input-filled .p-dropdown {
     background-color: #ffffff00;
 }

@@ -61,6 +61,8 @@ const errorMessages = ref({});
 const dropdownSexo = ref([]);
 const dropdownPaisNascim = ref([]);
 const dropdownTipo = ref([]);
+import { ufsSiglas } from '@/global';
+const dropdownUfs = ref(ufsSiglas);
 const dropdownTipoEndereco = ref([]);
 const dropdownAtuacao = ref([]);
 // Loadings
@@ -580,11 +582,11 @@ watchEffect(() => {
                         <Skeleton v-if="loading.form" borderRadius="16px" height="2rem"></Skeleton>
                         <InputSwitch v-else id="prospecto" :disabled="mode == 'view'" v-model="itemData.prospecto" />
                     </div>
-                    <div class="field col-12 md:col-12">
+                    <div class="field col-12 md:col-12" v-if="(itemData.observacao && itemData.observacao.length) || mode != 'view'">
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 80px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
+                        <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled p-disabled"></p>
                     </div>
 
                     <hr />
@@ -622,22 +624,22 @@ watchEffect(() => {
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr" type="text" />
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="cidade">Cidade<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" :class="`${animationDocNr}`" />
-                    </div>
-                    <div class="field col-12 md:col-4">
                         <label for="bairro">Bairro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" :class="`${animationDocNr}`" />
                     </div>
+                    <div class="field col-12 md:col-4">
+                        <label for="cidade">Cidade<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" :class="`${animationDocNr}`" />
+                    </div>
                     <div class="field col-12 md:col-1">
                         <label for="uf">UF<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.uf" maxlength="2" id="uf" type="text" :class="`${animationDocNr}`" />
+                        <Dropdown id="uf" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.uf" :options="dropdownUfs" placeholder="Selecione..." :class="`${animationDocNr}`"></Dropdown>
                     </div>
-                    <div class="field col-12 md:col-12">
+                    <div class="field col-12 md:col-12" v-if="(itemData.observacao_endereco && itemData.observacao_endereco.length) || mode != 'view'">
                         <label for="observacao_endereco">Observação do Endereço</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no" v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text" />
-                        <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled"></p>
+                        <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled p-disabled"></p>
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">

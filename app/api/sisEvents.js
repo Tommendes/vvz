@@ -202,10 +202,12 @@ module.exports = app => {
         let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
+            console.log(queryes);
             query = ''
             for (const key in queryes) {
                 let operator = queryes[key].split(':')[0]
                 let value = queryes[key].split(':')[1]
+                console.log(key, operator);
                 if (key.split(':')[0] == 'field') {
                     if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
 
@@ -225,7 +227,7 @@ module.exports = app => {
                     }
                     let queryField = key.split(':')[1]
                     if (queryField == 'evento') queryField = 'tbl1.evento'
-                    else if (queryField == 'user') queryField = 'us.user'
+                    else if (queryField == 'user') queryField = 'us.name'
                     query += `${queryField} ${operator} AND `
                 } else if (key.split(':')[0] == 'params') {
                     switch (key.split(':')[1]) {
@@ -237,6 +239,11 @@ module.exports = app => {
                 } else if (key.split(':')[0] == 'sort') {
                     sortField = key.split(':')[1].split('=')[0]
                     sortOrder = queryes[key]
+                } else if (typeof key === 'string' && key !== null) {
+                    const objectQueryes = Object.keys(queryes)
+                    objectQueryes.forEach(element => {
+                        query += `${element} = '${queryes[element]}' AND `
+                    });
                 }
             }
             query = query.slice(0, -5).trim()
@@ -249,8 +256,12 @@ module.exports = app => {
         }
 
         const totalRecords = await app.db({ tbl1: tabelaDomain })
-            .countDistinct('tbl1.id as count').first()
+            .countDistinct('tbl1.id as count')
+            .join({ us: tabelaUserDomain }, 'tbl1.id_user', '=', 'us.id')
+            .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
+            .where({ 'sc.schema_description': user.schema_description })
             .whereRaw(query ? query : '1=1')
+            .first()
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select({ id: 'tbl1.id' }, { evento: 'tbl1.evento' }, { created_at: 'tbl1.created_at' }, { classevento: 'tbl1.classevento' }, { tabela_bd: 'tbl1.tabela_bd' }, { id_registro: 'tbl1.id_registro' }, { user: 'us.name' },)
@@ -261,9 +272,10 @@ module.exports = app => {
             .groupBy('tbl1.id')
             .orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-            .then(body => {
-                return res.json({ data: body, totalRecords: totalRecords.count })
-            })
+        console.log(ret.toString());
+        ret.then(body => {
+            return res.json({ data: body, totalRecords: totalRecords.count })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })

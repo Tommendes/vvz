@@ -85,3 +85,10 @@ const close = () => {
     background-image: url('/assets/images/wallpaper.png');
 }
 </style>
+
+<style>
+.p-disabled,
+.p-component:disabled {
+    opacity: 0.8;
+}
+</style>

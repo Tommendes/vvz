@@ -16,20 +16,25 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+import { useRoute } from 'vue-router';
+const route = useRoute();
+
 import { Mask } from 'maska';
 const masks = ref({
     date: new Mask({
         mask: '##/##/####'
     })
 });
-const visible = ref(false);
 const urlBase = ref(`${baseApiUrl}/sis-events`);
 
 onBeforeMount(() => {
     // Inicializa os filtros do grid
     initFilters();
 });
+
+const queryUrl = ref('');
 onMounted(() => {
+    queryUrl.value = route.query;
     clearFilter();
 });
 
@@ -79,7 +84,18 @@ const clearFilter = () => {
 const loadLazyData = () => {
     loading.value = true;
     setTimeout(() => {
-        const url = `${urlBase.value}${urlFilters.value}`;
+        let urlQueryes = '';
+        let objetcQueryes = Object.keys(queryUrl.value);
+        if (objetcQueryes.length > 0) {
+            urlQueryes = Object.keys(queryUrl.value)
+                .map((key) => `${key}=${queryUrl.value[key]}`)
+                .join('&');
+            // Pesquise filters.value, identifique a atribua o valor de acordo com o que foi passado na URL (queryUrl.value)
+            Object.keys(filters.value).forEach((key) => {
+                if (queryUrl.value[key]) filters.value[key].value = queryUrl.value[key];
+            });
+        }
+        const url = `${urlBase.value}${urlFilters.value}${urlQueryes}`;
         const maxStringLength = 100;
         axios
             .get(url)
@@ -115,7 +131,6 @@ const onFilter = () => {
     mountUrlFilters();
     loadLazyData();
 };
-const mode = ref('grid');
 const mountUrlFilters = () => {
     let url = '?';
     Object.keys(filters.value).forEach((key) => {

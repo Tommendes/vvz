@@ -56,7 +56,7 @@ module.exports = app => {
                 existsOrError(body.validade_prop, 'Validade da proposta não informada')
             }
         } catch (error) {
-            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         delete body.hash; delete body.tblName

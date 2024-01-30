@@ -383,7 +383,7 @@ const showPvOatForm = () => {
                 width: Math.floor(window.innerWidth * 0.9) + 'px'
             },
             breakpoints: {
-                '1199px': '75vw',
+                '1199px': '95vw',
                 '575px': '90vw'
             },
             modal: true
@@ -394,12 +394,15 @@ const showPvOatForm = () => {
     });
 };
 
+const toOpenOat = ref(null);
+
 // Carregar dados do formulário
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     if (props.idCadastro) itemData.value.id_cadastros = props.idCadastro;
     // Carrega os dados do formulário
     await loadData();
+    if (route.query.id_oat) toOpenOat.value = route.query.id_oat;
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
@@ -433,7 +436,7 @@ watch(selectedCadastro, (value) => {
                             />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button v-if="route.name != 'cadastro'" icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                                <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-3">
@@ -465,13 +468,13 @@ watch(selectedCadastro, (value) => {
                             <p v-else v-html="itemData.observacao || ''" class="p-inputtext p-component p-filled p-disabled" />
                         </div>
                     </div>
-                    <OatsGrid ref="oatsGrid" v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="{ ...itemData, last_status: itemDataLastStatus.status_pv }" />
+                    <OatsGrid ref="oatsGrid" :toOpenOat="toOpenOat" v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="{ ...itemData, last_status: itemDataLastStatus.status_pv }" />
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
                     <Fieldset :toggleable="true" class="mb-3">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
-                                <span class="pi pi-bolt mr-2"></span>
+                                <span class="fa-solid fa-bolt mr-2"></span>
                                 <span class="font-bold text-lg">Ações do Registro</span>
                             </div>
                         </template>
@@ -492,6 +495,16 @@ watch(selectedCadastro, (value) => {
                                 text
                                 raised
                                 @click="router.push(`/${userData.schema_description}/cadastro/${itemData.id_cadastros}`)"
+                            />
+                            <Button
+                                v-if="route.name == 'pos-venda'"
+                                label="Ir ao Pipeline"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-paperclip fa-shake`"
+                                text
+                                raised
+                                @click="router.push(`/${userData.schema_description}/pipeline/${itemData.id_pipeline}`)"
                             />
                             <Button
                                 label="Criar OAT"
@@ -568,7 +581,7 @@ watch(selectedCadastro, (value) => {
                     <Fieldset :toggleable="true">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
-                                <span class="pi pi-clock mr-2"></span>
+                                <span class="fa-solid fa-clock mr-2"></span>
                                 <span class="font-bold text-lg">Andamento do Registro</span>
                             </div>
                         </template>

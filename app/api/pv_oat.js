@@ -1,6 +1,6 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
-    const { existsOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
+    const { existsOrError, booleanOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pv_oat'
     const tabelaAlias = 'OAT'
     const tabelaStatus = 'pv_oat_status'
@@ -15,6 +15,7 @@ module.exports = app => {
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
+        if (req.params.id_pv) body.id_pv = req.params.id_pv
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && (uParams.pv >= 3 || uParams.at >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
@@ -23,21 +24,48 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.schema_name}.cad_enderecos`
         const tabelaPvOatStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
 
-        const pipeline_params_force = body.pipeline_params_force
+        const idCadastro = body.id_cadastros
+        delete body.id_cadastros;
+
+        // Usado para identificar se houve um acionamento do botão Criar OAT de montagem em PipelineForm.vue
+        const autoPvFromPipeline = body.auto_pv_from_pipeline
+        delete body.auto_pv_from_pipeline;
 
         try {
-            existsOrError(body.id_pv, 'Pós-venda não encontrado')
-            existsOrError(body.id_cadastro_endereco, 'Endereço não informado')
-            existsOrError(body.int_ext, 'Se interno ou externo não informado')
-            existsOrError(body.garantia, 'Se garantia não informado')
-            if (body.garantia == 1 && !(!!body.nf_garantia.trim())) throw "Favor informar a nota fiscal"
-            existsOrError(body.pessoa_contato, 'Contato no cliente não encontrado')
-            existsOrError(body.telefone_contato, 'Telefone do contato não encontrado')
+            existsOrError(idCadastro, 'Cadastro não informado')
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(400).send(error)
+        }
+        const cadastro = await app.db({ c: tabelaCadastrosDomain }).where({ id: idCadastro }).first()
+        const cadastroEndereco = await app.db({ ce: tabelaCadEnderecosDomain }).where({ id_cadastros: idCadastro }).first()
+
+        try {
+            existsOrError((cadastro.cep && cadastro.cep.trim().length && cadastro.logradouro && cadastro.nr && cadastro.bairro && cadastro.cidade && cadastro.uf)
+                || cadastroEndereco, 'Dados do endereço básico do cadastro ausentes ou incompletos e não há endereço adicional cadastrado. Não é possível prosseguir com a inclusão da OAT')
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(400).send(error)
+        }
+        try {
+            existsOrError(idCadastro, 'Cadastro não informado')
+            if (!autoPvFromPipeline) existsOrError(body.id_cadastro_endereco, 'Endereço não informado')
+            existsOrError(body.id_pv, 'Pós-venda não encontrado')
+            booleanOrError(body.int_ext, 'Se interno ou externo não informado')
+            booleanOrError(body.garantia, 'Se garantia não informado')
+            if (body.garantia == 1 && !(!!body.nf_garantia.trim())) throw "Favor informar a nota fiscal"
+            if (!autoPvFromPipeline) {
+                existsOrError(body.pessoa_contato, 'Contato no cliente não encontrado')
+                existsOrError(body.telefone_contato, 'Telefone do contato não encontrado')
+            }
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error)
         }
 
@@ -54,6 +82,10 @@ module.exports = app => {
 
             app.db.transaction(async (trx) => {
                 // Iniciar a transação e editar na tabela principal
+
+                // Caso seja um autoPvFromPipeline ou um registro sem endereço, desabilitar a verificação de chave estrangeira pois o endereço pode ser o básico do cadastro
+                if (autoPvFromPipeline || body.id_cadastro_endereco == 0) await trx.raw('SET FOREIGN_KEY_CHECKS=0')
+
                 const nextEventID = await app.db(`${dbPrefix}_api.sis_events`, trx).select(app.db.raw('count(*) as count')).first()
                 updateRecord = { ...updateRecord, evento: nextEventID.count + 1 }
                 // Registrar o evento na tabela de eventos
@@ -81,17 +113,23 @@ module.exports = app => {
                         id_pv_oat: body.id,
                     });
                 }
+
+                // Reativar a verificação de chave estrangeira
+                if (autoPvFromPipeline || body.id_cadastro_endereco == 0) await trx.raw('SET FOREIGN_KEY_CHECKS=1')
                 return res.json(updateRecord);
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
-                app.api.logger.logError({
-                    log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true },
-                });
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
                 return res.status(500).send(error);
             });
         } else {
             // Criação de um novo registro
             app.db.transaction(async (trx) => {
+                // Iniciar a transação e inserir na tabela principal
+
+                // Caso seja um autoPvFromPipeline ou um registro sem endereço, desabilitar a verificação de chave estrangeira pois o endereço pode ser o básico do cadastro
+                if (autoPvFromPipeline || body.id_cadastro_endereco == 0) await trx.raw('SET FOREIGN_KEY_CHECKS=0')
+
                 let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(nr_oat AS INT)) + 1 AS nr_oat'))
                     .where({ id_pv: body.id_pv, status: STATUS_ACTIVE }).first()
                 body.nr_oat = nextDocumentNr.nr_oat || '1'
@@ -138,13 +176,18 @@ module.exports = app => {
                     id_pv_oat: recordId,
                     status_pv_oat: STATUS_EM_ANDAMENTO,
                 });
-                const newRecordWithID = { ...newRecord, id: recordId }
+                let newRecordWithID = { ...newRecord, id: recordId }
+
+                if (autoPvFromPipeline) {
+                    newRecordWithID = { ...newRecordWithID, email: cadastro.email, telefone: cadastro.telefone }
+                }
+
+                // Reativar a verificação de chave estrangeira
+                if (autoPvFromPipeline || body.id_cadastro_endereco == 0) await trx.raw('SET FOREIGN_KEY_CHECKS=1')
                 return res.json(newRecordWithID);
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
-                app.api.logger.logError({
-                    log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true },
-                });
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
                 return res.status(500).send(error);
             });
         }
@@ -160,7 +203,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const id_pv = req.params.id_pv
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
@@ -267,7 +310,7 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } catch (error) {
-            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }

@@ -10,6 +10,10 @@ module.exports = app => {
     const tabelaCadastros = 'cadastros'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+    const TIPO_PV_SUPORTE = 0;
+    const TIPO_PV_MONTAGEM = 1;
+    const TIPO_PV_VENDAS = 2;
+
 
     const save = async (req, res) => {
         let user = req.user
@@ -25,17 +29,19 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPvStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
 
-        const pipeline_params_force = body.pipeline_params_force
+        // Usado para identificar se houve um acionamento do botão Criar OAT de montagem em PipelineForm.vue
+        const autoPvFromPipeline = body.auto_pv_from_pipeline
+        delete body.auto_pv_from_pipeline;
 
         try {
             existsOrError(body.id_cadastros, 'Cadastro não encontrado ')
             if (body.id_cadastros < 0 && body.id_cadastros.length > 10) throw "Id_cadastros inválido"
             existsOrError(body.tipo, 'Tipo não encontrado')
-            if (body.tipo = !1 || 0) throw 'Tipo inválido'
+            if (body.tipo > 2) throw 'Tipo inválido'
         } catch (error) {
             return res.status(400).send(error)
         }
@@ -90,8 +96,8 @@ module.exports = app => {
         } else {
             // Criação de um novo registro
             app.db.transaction(async (trx) => {
-                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr AS INT)) + 1 AS pv_nr')) 
-                    .where('status', '!=', STATUS_DELETE ).first()
+                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr AS INT)) + 1 AS pv_nr'))
+                    .where('status', '!=', STATUS_DELETE).first()
                 nextDocumentNr.pv_nr = nextDocumentNr.pv_nr || '1'
                 body.pv_nr = nextDocumentNr.pv_nr
 
@@ -368,10 +374,10 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } catch (error) {
-            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
 
-    return { save, get, getById, remove }
+    return { save, get, getById, remove, TIPO_PV_SUPORTE, TIPO_PV_MONTAGEM, TIPO_PV_VENDAS }
 }

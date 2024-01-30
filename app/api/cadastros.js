@@ -55,7 +55,7 @@ module.exports = app => {
                 
                 existsOrError(body.id_params_tipo_end, 'Tipo do endereço não informado')
                 existsOrError(body.cep, 'CEP não informado')
-                if (body.cep.length != 8) throw "CEP inválido"
+                if (body.cep.trim().length != 8) throw "CEP é inválido"
                 existsOrError(body.nr, 'Número não informado')
                 existsOrError(body.logradouro, 'Logradouro não informado')
                 existsOrError(body.bairro, 'Bairro não informado')
@@ -64,7 +64,7 @@ module.exports = app => {
             }
 
         } catch (error) {
-            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
         delete body.hash; delete body.tblName; delete body.ibge;

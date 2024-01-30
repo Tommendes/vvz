@@ -82,7 +82,7 @@ onBeforeMount(() => {
     <div class="grid" :style="route.name == 'cadastro' ? 'min-width: 100rem;' : ''">
         <div class="col-12">
             <div class="card">
-                <TabView>
+                <TabView lazy>
                     <TabPanel>
                         <template #header>
                             <i class="fa-regular fa-address-card mr-2"></i>
@@ -106,35 +106,35 @@ onBeforeMount(() => {
                     </TabPanel>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
-                            <i class="pi pi-at mr-2"></i>
+                            <i class="fa-solid fa-at mr-2"></i>
                             <span>Contatos Adicionais</span>
                         </template>
                         <ContatosGrid v-if="itemData.id" :itemDataRoot="itemData" />
                     </TabPanel>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
-                            <i class="pi pi-map mr-2"></i>
+                            <i class="fa-solid fa-map-pin mr-2"></i>
                             <span>Endereços Adicionais</span>
                         </template>
                         <EnderecosGrid v-if="itemData.id" :itemDataRoot="itemData" />
                     </TabPanel>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
-                            <i class="pi pi-paperclip mr-2"></i>
+                            <i class="fa-solid fa-paperclip mr-2"></i>
                             <span>Pipeline</span>
                         </template>
                         <PipelinesGrid v-if="itemData.id" :idCadastro="itemData.id" />
                     </TabPanel>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
-                            <i class="pi pi-cart-plus mr-2"></i>
+                            <i class="fa-solid fa-cart-plus mr-2"></i>
                             <span>Pós-vendas</span>
                         </template>
                         <PosVendasGrid v-if="itemData.id" :idCadastro="itemData.id" />
                     </TabPanel>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
-                            <i class="pi pi-map-marker mr-2"></i>
+                            <i class="fa-solid fa-map-location-dot mr-2"></i>
                             <span>Prospecções e visitas ao cliente</span>
                         </template>
                         <ProspeccoesGrid v-if="itemData.id" :idCadastro="itemData.id" />

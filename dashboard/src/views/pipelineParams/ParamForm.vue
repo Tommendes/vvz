@@ -99,7 +99,7 @@ const showUploadForm = () => {
                 width: '50rem'
             },
             breakpoints: {
-                '1199px': '75vw',
+                '1199px': '95vw',
                 '575px': '90vw'
             },
             modal: true
@@ -127,7 +127,7 @@ const showUploadFooterForm = () => {
                 width: '50rem'
             },
             breakpoints: {
-                '1199px': '75vw',
+                '1199px': '95vw',
                 '575px': '90vw'
             },
             modal: true

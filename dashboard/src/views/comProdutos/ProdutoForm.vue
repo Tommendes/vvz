@@ -229,7 +229,7 @@ const showUploadForm = () => {
                 width: '50rem'
             },
             breakpoints: {
-                '1199px': '75vw',
+                '1199px': '95vw',
                 '575px': '90vw'
             },
             modal: true
@@ -491,7 +491,7 @@ watch(selectedCadastro, (value) => {
                                     <AutoComplete v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
                                     <div class="p-inputgroup flex-1" v-else>
                                         <InputText disabled v-model="nomeCliente" />
-                                        <Button v-if="route.name != 'cadastro'" icon="pi pi-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
+                                        <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                                     </div>
                                 </div>
                                 <div class="col-12 md:col-3">

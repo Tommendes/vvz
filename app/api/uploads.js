@@ -45,7 +45,7 @@ module.exports = app => {
                 existsOrError(body.url, 'URL de acesso ao arquivo não informado');
                 existsOrError(body.label, 'Label não informado');
             } catch (error) {
-                console.log(error);
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
                 return res.status(400).send(error)
             }
         }
@@ -288,7 +288,6 @@ module.exports = app => {
                 filesToDelete.forEach(async (file) => {
                     // Excluir o arquivo no servidor FTP
                     const fileToDelete = path.join(file.url_path, file.uid + '_' + file.filename)
-                    console.log('fileToDelete', fileToDelete);
                     clienteFTP.delete(fileToDelete, async (error) => {
                         if (error) {
                             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Erro ao excluir arquivo no servidor FTP: ${error}`, sConsole: true } });
@@ -385,7 +384,6 @@ module.exports = app => {
 
             // Configurando o multer para lidar com o upload de arquivos
             const destinationPath = path.join(__dirname, tempFiles, schemaParam.schema_description);
-            console.log('destinationPath', destinationPath);
             const storage = multer.diskStorage({
                 destination: function (req, file, cb) {
                     if (!fs.existsSync(destinationPath)) {
@@ -413,13 +411,12 @@ module.exports = app => {
                     // Deletar os arquivos enviados
                     files.forEach(file => {
                         const filePath = path.join(__dirname, tempFiles, schemaParam.schema_description, file.originalname);
-                        console.log('filePath', filePath);
                         fs.unlinkSync(filePath);
                     });
                     return res.status(401).send(error)
                 }
                 if (error) {
-                    console.log(error);
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
                     return res.status(500).send({ message: 'Erro ao enviar arquivos', error });
                 }
                 files.forEach(async (file) => {
@@ -428,17 +425,15 @@ module.exports = app => {
                     file.url_path = schemaParam.schema_description;
                     file.extension = file.originalname.split('.').pop();
                     const inputPath = path.join(file.destination, file.originalname);
-                    console.log('inputPath', inputPath);
 
                     clienteFTP.on("ready", () => {
                         // Agora que o cliente está pronto, podemos realizar operações FTP
                         // Garante a pasta do cliente no servidor FTP. O nome da pasta é o schema_description
                         criarDiretorioRecursivo(schemaParam.schema_description, async () => {
                             const ftpPath = path.join(schemaParam.schema_description, file.uid + '_' + file.filename);
-                            console.log('ftpPath', ftpPath);
                             // Enviar o arquivo após a criação do diretório
-                            clienteFTP.put(inputPath, ftpPath, (erro) => {
-                                if (erro) {
+                            clienteFTP.put(inputPath, ftpPath, (error) => {
+                                if (error) {
                                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
                                     return res.status(500).send('Erro ao enviar arquivo:' + error)
                                 }
@@ -577,7 +572,7 @@ module.exports = app => {
                     .where({ id: last[itemData.field] })
             }
         } catch (error) {
-            console.log(error);
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
 

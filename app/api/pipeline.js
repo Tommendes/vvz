@@ -5,6 +5,7 @@ const path = require('path')
 
 module.exports = app => {
     const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
+    const { TIPO_PV_SUPORTE, TIPO_PV_MONTAGEM, TIPO_PV_VENDAS } = require('./pv.js')(app)
     const { existsOrError, booleanOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pipeline'
     const tabelaAlias = 'Pipeline'
@@ -70,6 +71,7 @@ module.exports = app => {
         const status_params = body.status_params; // Último status do registro
         const status_params_force = body.status_params_force || body.status_params; // Status forçado para edição
         delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force; delete body.hash; delete body.tblName;
+        delete body.id_pv; delete body.id_oat;
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -120,7 +122,7 @@ module.exports = app => {
                     // Informa o id do registro pai
                     const idPai = body.id
                     // Limpa os dados do corpo da solicitação
-                    delete body.id; delete body.id_filho;; delete body.versao; delete body.updated_at;
+                    delete body.id; delete body.id_filho; delete body.versao; delete body.updated_at;
 
                     // Variáveis da criação de um registro
                     const newRecord = {
@@ -340,8 +342,8 @@ module.exports = app => {
                                 case 'endsWith': operator = `like "%${value}"`
                                     break;
                                 case 'notEquals': {
-                                    if (['last_status_params','documento'].includes(queryField)) operator = `!= cast('${value}' as unsigned)`;
-                                    else operator =`!= "${value}"`
+                                    if (['last_status_params', 'documento'].includes(queryField)) operator = `!= cast('${value}' as unsigned)`;
+                                    else operator = `!= "${value}"`
                                 }
                                     break;
                                 default: operator = queryField == 'documento' ? `= cast('${value}' as unsigned)` : `= "${value}"`
@@ -444,14 +446,23 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPvDomain = `${dbPrefix}_${uParams.schema_name}.pv`
+        const tabelaOatDomain = `${dbPrefix}_${uParams.schema_name}.pv_oat`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .where({ 'tbl1.id': req.params.id })
             .whereNot({ 'tbl1.status': STATUS_DELETE })
             .first()
-            .then(body => {
+            .then(async (body) => {
                 if (!body) return res.status(404).send('Registro não encontrado')
                 body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
+                let pv = await app.db(tabelaPvDomain).select({ 'id_pv': 'id' }).where({ id_pipeline: body.id, tipo: TIPO_PV_MONTAGEM, status: STATUS_ACTIVE }).first()
+                if (pv) {
+                    pv = pv.id_pv;
+                    body = { ...body, id_pv: pv }
+                    let oat = await app.db(tabelaOatDomain).select({ 'id_oat': 'id' }).where({ id_pv: pv, status: STATUS_ACTIVE }).first()
+                    if (oat) body = { ...body, id_oat: oat.id_oat }
+                }
                 return res.json(body)
             })
             .catch(error => {
@@ -877,7 +888,7 @@ module.exports = app => {
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
+                .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao, pp.descricao unidade_descricao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })

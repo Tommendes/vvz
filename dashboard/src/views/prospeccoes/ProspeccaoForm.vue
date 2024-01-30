@@ -352,7 +352,7 @@ watch(selectedCadastro, (value) => {
                             />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-6">

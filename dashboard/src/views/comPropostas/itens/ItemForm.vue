@@ -296,7 +296,7 @@ onBeforeMount(() => {
                             <AutoComplete v-else-if="editProduto || (mode == 'new' && props.modeParent != 'clone')" v-model="selectedProduto" optionLabel="name" :suggestions="filteredProdutos" @complete="searchProdutos" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeProduto" />
-                                <Button icon="pi pi-pencil" severity="primary" @click="confirmEditProduto()" :disabled="mode == 'view'" />
+                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditProduto()" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-2">
