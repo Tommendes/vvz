@@ -5,8 +5,7 @@
     "main": "app.js",
     "scripts": {
         "start": "nodemon",
-        "production": "pm2 start app.js --name vivazul-api",
-        "start-with-log": "pm2 start app.js -f --name vivazul-api --log logs/pm2.log"
+        "production": "pm2 start app.js --name vivazul-api"
     },
     "keywords": [],
     "author": "",
@@ -40,12 +39,5 @@
     },
     "devDependencies": {
         "knex-mariadb": "^2.0.0"
-    },
-    "pm2": {
-      "watch": true,
-      "ignore_watch": ["node_modules", "logs"],
-      "log_date_format": "YYYY-MM-DD HH:mm:ss",
-      "error_file": "logs/pm2-error.log",
-      "out_file": "logs/pm2-out.log"
     }
 }
