@@ -3,7 +3,7 @@ const fs = require('fs')
 module.exports = app => {
     const logInfo = async (req, res) => {
         const log = { ...req.log }
-        stream = fs.createWriteStream("./logs/info.txt", { flags: 'a' });
+        const stream = fs.createWriteStream("./logs/info.txt", { flags: 'a' });
         const line = `[${new Date().toISOString()}] ${req.user ? req.user.name : ''}: ${log.line}`
         stream.write(line + "\n");
         stream.end();
@@ -12,7 +12,7 @@ module.exports = app => {
     
     const logError = async (req, res) => {
         const log = { ...req.log }
-        stream = fs.createWriteStream("./logs/errors.txt", { flags: 'a' });
+        const stream = fs.createWriteStream("./logs/errors.txt", { flags: 'a' });
         const line = `[${new Date().toISOString()}] ${req.user ? req.user.name : ''}: ${log.line}`
         stream.write(line + "\n");
         stream.end();

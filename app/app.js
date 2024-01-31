@@ -42,6 +42,44 @@ Object.defineProperty(global, '__function', {
     }
 });
 
+// Adicionando manipulador de exceção não capturada
+const logError = fs.createWriteStream("./logs/uncaughtException.txt", { flags: 'a' });
+const logInfo = fs.createWriteStream("./logs/info.txt", { flags: 'a' });
+
+process.on('uncaughtException', async (err) => {
+    // Adicione lógica aqui para lidar com a exceção, como registrar em logs
+    logError.write(`[${new Date().toISOString()}] Exceção não detectada/tratada: ${err.message}\n`);
+    
+    // Reinicia a aplicação usando PM2
+    try {
+        await restartApp();
+        logInfo.write(`[${new Date().toISOString()}] Aplicação reiniciada após exceção não detectada/tratada\n`);
+    } catch (error) {
+        logError.write(`[${new Date().toISOString()}] Falha ao reiniciar a aplicação: ${error}\n`);
+
+        process.exit(1); // Encerra a aplicação após a exceção não tratada
+    }
+    try {
+        logError.end();        
+    } catch (error) {
+        logError.write(`[${new Date().toISOString()}] Falha ao finalizar a gravação do log de erro: ${error}\n`);
+    }
+});
+
+async function restartApp() {
+    return new Promise((resolve, reject) => {
+        // Use o módulo child_process para executar o comando pm2 restart
+        const { exec } = require('child_process');
+        exec('pm2 restart vivazul-api', (error, stdout, stderr) => {
+            if (error) {
+                reject(new Error(`Erro ao reiniciar a aplicação: ${stderr || error.message}`));
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
 consign()
     .include('./config/passport.js')
     .then('./config/middlewares.js')
