@@ -72,7 +72,7 @@ async function restartApp() {
         const { exec } = require('child_process');
         exec('pm2 restart vivazul-api', (error, stdout, stderr) => {
             if (error) {
-                reject(new Error(`Erro ao reiniciar a aplicação: ${stderr || error.message}`));
+                reject(new Error(`[${new Date().toISOString()}] Erro ao reiniciar a aplicação: ${stderr || error.message}`));
             } else {
                 resolve();
             }
