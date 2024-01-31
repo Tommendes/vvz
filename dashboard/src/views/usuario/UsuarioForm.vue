@@ -68,8 +68,6 @@ const loadData = async () => {
 
                     itemData.value = body;
                     if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
-                    console.log(itemData.value.cpf);
-                    console.log(itemData.value.email);
 
                     // Certificação de que loading.value é um objeto antes de acessar a propriedade form
                     if (typeof loading.value === 'object') {
@@ -305,7 +303,7 @@ watchEffect(() => {});
                             <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <!-- Botão trocar senha -->
-                        <div id="divTS" class="col-12 md:col-2 m-0 font-normal">
+                        <div v-if="itemData.id" id="divTS" class="col-12 md:col-2 m-0 font-normal">
                             <Button id="btnTS" class="shadow-none text-left font-normal custom-font-weight" @click="changePassword" label="Trocar Senha" icon="fa-solid fa-external-link" raised :disabled="mode === 'view'" />
                         </div>
                     </div>
@@ -337,15 +335,13 @@ watchEffect(() => {});
     color: gray;
 }
 #btnTS {
-    border-color: #ced4da;
     color: #495057;
     background-color: rgba(240, 248, 255, 0);
-}
-#btnTS .p-button-label {
-    font-weight: 400 !important;
+    height: 3.4rem;
+    border: 1px solid grey;
 }
 #btnTS:hover {
-    border-color: #6366f1;
+    border-color: black;
     background-color: #e9eef1;
 }
 </style>
