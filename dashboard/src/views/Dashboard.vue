@@ -192,10 +192,11 @@ const getPropectosBi = async () => {
 };
 
 const getPropostasBi = async () => {
-    const url = `${baseApiUrl}/pipeline/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&periodDv=1`;
+    const url = `${baseApiUrl}/pipeline/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&periodDv=1&stt=0`;
     biData.value.propostas.loading = true;
     await axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
+        console.log('getPropostasBi', data);
         biData.value.propostas.total = data.total;
         biData.value.propostas.noPeriodo = data.noPeriodo;
         biData.value.propostas.novos = data.novos;
@@ -231,9 +232,9 @@ const irRecentSale = (id) => {
     window.open(`#/${userData.schema_description}/pipeline/${id}`, '_blank');
 };
 
-const irPipelineFilter = (tpd, perDi, perDf, tDoc) => {
+const irPipelineFilter = (tpd, perDi, perDf, tDoc, ag, stt) => {
     const perParam = perDi && perDf ? `${perDi},${perDf}` : '';
-    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}${tDoc ? '&tdoc=' + tDoc : ''}`, '_blank');
+    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}${tDoc ? '&tdoc=' + tDoc : ''}${ag ? '&ag=' + ag : ''}${stt ? '&stt=' + stt : ''}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
@@ -436,12 +437,13 @@ onMounted(() => {
 
 <template>
     <div class="grid">
+        <!-- Stat Cadastros -->
         <div class="col-12 lg:col-6 xl:col-3">
             <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/cadastros`" v-tooltip.top="'Clique para seguir'">Cadastros</router-link>
+                            <router-link :to="`/${userData.schema_description}/cadastros`" v-tooltip.top="'Clique para ir'">Cadastros</router-link>
                         </span>
                         <Skeleton v-if="biData.cadastros.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.cadastros.total }}</div>
@@ -462,12 +464,13 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+        <!-- Stat Visitas(Prospecções) -->
         <div class="col-12 lg:col-6 xl:col-3">
             <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/prospeccoes`" v-tooltip.top="'Clique para seguir'">Visitas</router-link>
+                            <router-link :to="`/${userData.schema_description}/prospeccoes`" v-tooltip.top="'Clique para ir'">Visitas</router-link>
                         </span>
                         <Skeleton v-if="biData.prospectos.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.prospectos.total }}</div>
@@ -488,12 +491,13 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+        <!-- Stat Propostas -->
         <div class="col-12 lg:col-6 xl:col-3">
             <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df)" v-tooltip.top="'Clique para seguir'">Propostas</router-link>
+                            <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 0)" v-tooltip.top="'Clique para ir'">Propostas</router-link>
                         </span>
                         <Skeleton v-if="biData.propostas.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.propostas.total }}</div>
@@ -514,12 +518,13 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+        <!-- Statt Pedidos -->
         <div class="col-12 lg:col-6 xl:col-3">
             <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df)" v-tooltip.top="'Clique para seguir'">Pedidos</router-link>
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df)" v-tooltip.top="'Clique para ir'">Pedidos</router-link>
                         </span>
                         <Skeleton v-if="biData.pedidos.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.pedidos.total }}</div>
@@ -557,7 +562,7 @@ onMounted(() => {
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" v-tooltip.top="'Clique para seguir'">
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" v-tooltip.top="'Clique para ir'">
                                 <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.representacao }}</span>
                             </router-link>
                             <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
@@ -598,7 +603,9 @@ onMounted(() => {
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellers.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">{{ item.agente }}</span>
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, item.agente)" v-tooltip.top="'Clique para ir'">
+                                <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.agente }}</span>
+                            </router-link>
                             <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
                         </div>
                         <div class="mt-2 md:mt-0 flex align-items-center">
@@ -649,7 +656,7 @@ onMounted(() => {
                     <Column style="width: 5%">
                         <template #header> Ir </template>
                         <template #body="slotProps">
-                            <Button icon="fa-solid fa-magnifying-glass" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para seguir'" />
+                            <Button icon="fa-solid fa-magnifying-glass" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para ir'" />
                         </template>
                     </Column>
                 </DataTable>
@@ -672,7 +679,7 @@ onMounted(() => {
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topProposals.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" v-tooltip.top="'Clique para seguir'">
+                            <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao)" v-tooltip.top="'Clique para ir'">
                                 <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.representacao }}</span>
                             </router-link>
                             <div class="mt-1 text-600">{{ item.quantidade }} propostas ({{ formatCurrency(item.valor_bruto) }})</div>
@@ -726,7 +733,7 @@ onMounted(() => {
                 <div class="flex justify-content-end mb-5">
                     <div class="flex flex-column gap-2">
                         <label for="biPeriod" style="text-align: end">Período de Exibição Geral</label>
-                        <InputGroup>
+                        <div class="p-inputgroup">
                             <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full md:w-16rem mr-2" @update:modelValue="applyBiParams()" />
                             <Calendar
                                 aria-describedby="username-help"
@@ -740,7 +747,7 @@ onMounted(() => {
                                 class="custom-calendar w-full md:w-16rem"
                                 @update:modelValue="applyBiParams()"
                             />
-                        </InputGroup>
+                        </div>
                         <!-- <p>{{ biPeriod }}</p> -->
                         <small id="username-help">Selecione acima o período desejado para apresentar os resultados</small>
                     </div>

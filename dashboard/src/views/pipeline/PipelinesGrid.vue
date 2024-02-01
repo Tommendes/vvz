@@ -24,7 +24,8 @@ const totalRecords = ref(0); // O total de registros (deve ser atualizado com o 
 const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
-const gridData = ref([]); // Seus dados iniciais
+const gridData = ref([]); // Dados do grid
+const gridDataRaw = ref([]); // Dados sem formatação
 const idPipeline = ref(null); // Id do registro selecionado
 const expandedRows = ref([]); // Registro expandido
 // Itens do dropdown de Tipos
@@ -39,6 +40,8 @@ const tipoDoc = ref(null); // Tipo de documento selecionado
 const unidade = ref(null); // Unidade de negócio selecionada
 const periodo = ref(null); // Período selecionado
 const unidadeNegocio = ref(null); // Unidade de negócio selecionada
+const agenteNegocio = ref(null); // Agente de negócio selecionada
+const statusNegocio = ref(null); // Situação de negócio selecionada
 
 // Obter parâmetros do BD
 const optionParams = async (query) => {
@@ -144,7 +147,7 @@ const urlFilters = ref('');
 const clearFilter = () => {
     loading.value = true;
     rowsPerPage.value = 10;
-    tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = null;
+    tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = agenteNegocio.value = statusNegocio.value = null;
     initFilters();
     lazyParams.value = {
         first: dt.value.first,
@@ -191,6 +194,7 @@ const loadLazyData = () => {
                 totalRecords.value = axiosRes.data.totalRecords;
                 sumRecords.value = axiosRes.data.sumRecords;
                 gridData.value.forEach((element) => {
+                    gridDataRaw.value.push({ ...element });
                     if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                     const nome = element.nome || undefined;
                     if (nome) {
@@ -269,6 +273,8 @@ const mountUrlFilters = () => {
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
     if (periodo.value) url += `field:status_created_at=contains:${periodo.value}&`;
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
+    if (agenteNegocio.value) url += `field:agente=equals:${agenteNegocio.value}&`;
+    if (statusNegocio.value) url += `field:last_status_params=equals:${statusNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = `?${url}`;
 };
@@ -281,7 +287,66 @@ const exportCSV = () => {
         });
     });
     toExport.exportCSV();
+    console.log('Exportar', toExport.value);
 };
+
+import xlsx from 'json-as-xlsx';
+let data = [
+    {
+        sheet: 'Pipeline',
+        columns: [
+            { label: 'Cliente', value: (row) => row.cliente },
+            { label: 'Tipo', value: (row) => row.tipo },
+            { label: 'Proposta', value: (row) => row.proposta },
+            { label: 'Documento', value: (row) => row.documento },
+            { label: 'R$ Bruto', value: (row) => row.valor_bruto, format: 'R$#,##0.00' },
+            { label: 'Descrição', value: (row) => row.descricao },
+            { label: 'Agente', value: (row) => row.agente },
+            { label: 'Data', value: (row) => row.status_created_at },
+            { label: 'Situação', value: (row) => row.last_status_params }
+        ],
+        content: []
+    }
+];
+
+const exportXls = () => {
+    gridDataRaw.value.forEach((element) => {
+        let last_status_params = '';
+        let descricao = '';
+        let valor_bruto = '';
+        dropdownStatus.value.forEach((item) => {
+            if (item.value == element.last_status_params) last_status_params = item.label;
+        });
+        if (element.descricao)
+            descricao = element.descricao
+                .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
+                .replaceAll('Este documento foi liquidado quando foi versionado.', '')
+                .replaceAll('Segue a descrição original do documento:', '')
+                .trim();
+        // if (element.valor_bruto && element.valor_bruto >= 0) valor_bruto = formatCurrency(element.valor_bruto);
+
+        data[0].content.push({
+            cliente: element.nome,
+            tipo: element.tipo_doc.replaceAll('_', ' '),
+            proposta: element.proposta,
+            documento: element.documento,
+            valor_bruto: element.valor_bruto,
+            descricao: removeHtmlTags(descricao),
+            agente: element.agente,
+            status_created_at: element.status_created_at,
+            last_status_params: last_status_params
+        });
+    });
+    let settings = {
+        fileName: data[0].sheet // Name of the resulting spreadsheet
+        // extraLength: 3, // A bigger number means that columns will be wider
+        // writeMode: 'writeFile', // The available parameters are 'WriteFile' and 'write'. This setting is optional. Useful in such cases https://docs.sheetjs.com/docs/solutions/output#example-remote-file
+        // writeOptions: {}, // Style options from https://docs.sheetjs.com/docs/api/write-options
+        // RTL: true // Display the columns from right-to-left (the default value is false)
+    };
+    xlsx(data, settings);
+};
+
 // Determina a qualificação baseado no tempo de existência do registro (status_created_at)
 // Se o registro tiver 120 dias ou mais, retorne 'danger'
 // Se o registro tiver 120 dias ou menos, retorne 'help'
@@ -354,6 +419,14 @@ onMounted(() => {
         unidadeNegocio.value = route.query.tdoc;
         load = true;
     }
+    if (route.query.ag && route.query.ag.length) {
+        agenteNegocio.value = route.query.ag;
+        load = true;
+    }
+    if (route.query.stt && route.query.stt.length) {
+        statusNegocio.value = route.query.stt;
+        load = true;
+    }
     if (load) loadLazyData();
 });
 </script>
@@ -402,7 +475,7 @@ onMounted(() => {
             <template #header>
                 <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                     <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
-                    <Tag class="tagRes" :value="`Total geral: ${formatCurrency(sumRecords)}`"> </Tag>
+                    <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
                 </div>
                 <div class="flex justify-content-end gap-3">
                     <Dropdown
@@ -446,7 +519,14 @@ onMounted(() => {
                         :options="dropdownUnidadesFilter"
                         @change="loadLazyData()"
                     />
-                    <Button icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
+                    <Button
+                        icon="fa-solid fa-cloud-arrow-down"
+                        label="Exportar"
+                        @click="
+                            exportCSV($event);
+                            exportXls();
+                        "
+                    />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined @click="clearFilter()" />
                     <Button type="button" icon="fa-solid fa-refresh" label="Todo o pipeline" outlined @click="reload()" />
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
