@@ -476,10 +476,10 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/prospeccoes`" v-tooltip.top="'Clique para ir'">Visitas a Clientes</router-link>
+                            <router-link :to="`/${userData.schema_description}/prospeccoes`" v-tooltip.top="'Clique para ir'">Visitas a Clientes
+                                <span v-if="biData.prospectos.total" class="text-900 font-medium text-xl"> ({{ biData.prospectos.total }})</span>
+                            </router-link>
                         </span>
-                        <Skeleton v-if="biData.prospectos.loading" width="20rem" height="2rem"></Skeleton>
-                        <div v-else class="text-900 font-medium text-xl">{{ biData.prospectos.total }}</div>
                     </div>
                     <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
                         <i class="fa fa-comments-o text-gray-500 text-xl"></i>
@@ -492,7 +492,7 @@ onMounted(() => {
                 </div>
                 <div>
                     <Skeleton v-if="biData.prospectos.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.prospectos.noPeriodo }} visitas </span>
+                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.prospectos.noPeriodo }} novas visitas </span>
                     <span v-if="!biData.prospectos.loading" class="text-500 font-ligth text-base">no período {{ biPeriod.dataPt }}</span>
                 </div>
             </div>
