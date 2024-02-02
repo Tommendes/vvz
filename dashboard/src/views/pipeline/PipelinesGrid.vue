@@ -202,7 +202,6 @@ const loadLazyData = () => {
             });
         }
         const url = `${urlBase.value}${urlFilters.value}`; //${urlQueryes}
-        console.log('URL', url);
         axios
             .get(url)
             .then(async (axiosRes) => {
@@ -293,18 +292,6 @@ const mountUrlFilters = () => {
     if (statusNegocio.value) url += `field:last_status_params=equals:${statusNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = `?${url}`;
-    console.log('urlFilters', urlFilters.value);
-};
-// Exporta os dados do grid para CSV
-const exportCSV = () => {
-    const toExport = dt.value;
-    toExport.value.forEach((element) => {
-        Object.keys(element).forEach((key) => {
-            element[key] = removeHtmlTags(element[key]);
-        });
-    });
-    toExport.exportCSV();
-    console.log('Exportar', toExport.value);
 };
 
 import xlsx from 'json-as-xlsx';
@@ -422,7 +409,6 @@ onMounted(async () => {
     // Limpa os filtros do grid
     clearFilter();
     let load = false;
-    console.log('route.query', route.query);
     if (route.query.tpd && route.query.tpd.length) {
         tipoDoc.value = route.query.tpd;
         filters.value.doc_venda = { value: route.query.tpd, matchMode: 'equals' };
@@ -490,7 +476,7 @@ onMounted(async () => {
             @page="onPage($event)"
             @sort="onSort($event)"
             @filter="onFilter($event)"
-            filterDisplay="row"
+            filterDisplay="menu"
             tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
