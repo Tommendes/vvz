@@ -10,6 +10,7 @@ const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 import { useRoute } from 'vue-router';
 const route = useRoute();
+import { defaultSuccess } from '@/toast';
 
 const filters = ref(null);
 const gridData = ref(null);
@@ -55,6 +56,31 @@ const duplicateField = (data) => {
         itemData.value = data;
         mode.value = 'clone';
     }, Math.random() * 1000);
+};
+
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
+const removeItem = (item) => {
+    confirm.require({
+        group: 'templating',
+        header: 'Confirmar exclusão',
+        message: 'Você tem certeza que deseja excluir este item?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            const url = `${urlBase.value}/${itemDataProposta.value.id}/${item.id}`;
+            console.log(url);
+            axios.delete(url).then(() => {
+                defaultSuccess('Item excluído com sucesso!');
+                loadData();
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
 };
 
 const loadData = () => {
@@ -143,10 +169,13 @@ onBeforeMount(() => {
                     </template>
                 </Column>
             </template>
-            <Column headerStyle="width: 10rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+            <Column headerStyle="text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
-                    <Button type="button" icon="fa-regular fa-copy" rounded @click="duplicateField(data)" class="ml-2 p-button-outlined" v-tooltip.left="'Clique para duplicar o item'" />
+                    <div class="flex justify-content-center gap-1">
+                        <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                        <Button type="button" icon="fa-regular fa-copy" rounded @click="duplicateField(data)" class="p-button-outlined" v-tooltip.left="'Clique para duplicar o item'" />
+                        <Button type="button" icon="fa-solid fa-trash" rounded @click="removeItem(data)" class="p-button-outlined" severity="danger" v-tooltip.left="'Clique para excluir o item'" />
+                    </div>
                 </template>
             </Column>
         </DataTable>
