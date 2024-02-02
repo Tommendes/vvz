@@ -476,7 +476,8 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/prospeccoes`" v-tooltip.top="'Clique para ir'">Visitas a Clientes
+                            <router-link :to="`/${userData.schema_description}/prospeccoes`" v-tooltip.top="'Clique para ir'"
+                                >Visitas a Clientes
                                 <span v-if="biData.prospectos.total" class="text-900 font-medium text-xl"> ({{ biData.prospectos.total }})</span>
                             </router-link>
                         </span>
@@ -516,12 +517,13 @@ onMounted(() => {
                     <Skeleton v-if="biData.propostas.loading" width="20rem" height="2rem"></Skeleton>
                     <span v-else class="text-green-500 font-medium">{{ biData.propostas.novos }} propostas </span>
                     <span v-if="!biData.propostas.loading" class="text-500">
-                        <router-link to="#" @click="irPipelineFilter(1, dateStartOfMonth, dateEndOfMonth, null, null, 0)" v-tooltip.top="'Clique para ir'">neste mês</router-link>
+                        <router-link to="#" @click="irPipelineFilter(1, dateStartOfMonth, dateEndOfMonth, null, null, 0)" v-tooltip.top="'Clique para ir'">novas este mês</router-link>
                     </span>
                 </div>
                 <div>
                     <Skeleton v-if="biData.propostas.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.propostas.noPeriodo }} propostas ainda não convertidas 
+                    <span v-else class="text-green-500 font-ligth text-base"
+                        >{{ biData.propostas.noPeriodo }} propostas ainda não convertidas
                         <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 0)" v-tooltip.top="'Clique para ir'">do período {{ biPeriod.dataPt }}</router-link>
                     </span>
                 </div>
@@ -551,7 +553,7 @@ onMounted(() => {
                 </div>
                 <div>
                     <Skeleton v-if="biData.pedidos.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.pedidos.noPeriodo }} novos registros </span>
+                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.pedidos.noPeriodo }} novos pedidos </span>
                     <span v-if="!biData.pedidos.loading" class="text-500 font-ligth text-base">
                         <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 20)" v-tooltip.top="'Clique para ir'">no período {{ biPeriod.dataPt }}</router-link>
                     </span>
