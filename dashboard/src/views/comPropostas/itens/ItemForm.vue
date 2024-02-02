@@ -138,9 +138,9 @@ const getComposicoes = async () => {
                 if (itensAtivos.length > 0) dropdownComposicoes.value.push({ label: 'Ativas ', comp_ativa: 1, items: itensAtivos });
                 if (itensInativos.length > 0) dropdownComposicoes.value.push({ label: 'Inativas ', comp_ativa: 0, items: itensInativos });
             })
-            .catch((err) => {
-                console.log(err);
-                defaultWarn(err.response.data);
+            .catch((error) => {
+                console.log(error);
+                defaultWarn(error.response.data);
             });
         loading.value = false;
     }, Math.random() * 1000);

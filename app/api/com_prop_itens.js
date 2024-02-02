@@ -169,7 +169,7 @@ module.exports = app => {
         const tabelaComposicoesDomain = `${dbPrefix}_${uParams.schema_name}.com_prop_compos`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl2.nome_comum, tbl2.descricao descricao_produto, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl3.localizacao, tbl3.tombamento, tbl2.nome_comum, tbl2.descricao descricao_produto, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
             .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
             .where({ 'tbl1.id_com_propostas': id_com_propostas })

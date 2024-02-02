@@ -45,6 +45,40 @@ const goField = (data) => {
     }, Math.random() * 1000);
 };
 
+const duplicateField = (data) => {
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = data;
+        mode.value = 'clone';
+    }, Math.random() * 1000);
+};
+
+import { useConfirm } from 'primevue/useconfirm';
+import { defaultSuccess } from '@/toast';
+const confirm = useConfirm();
+const removeComposicao = (item) => {
+    confirm.require({
+        id: 'removeComposicao',
+        group: 'templating',
+        header: 'Confirmar exclusão',
+        message: `Deseja excluir a composição ${item.localizacao} (${item.compos_nr}) e seus itens?`,
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            const url = `${urlBase.value}/${itemDataProposta.value.id}/${item.id}`;
+            axios.delete(url).then(() => {
+                defaultSuccess('Composição e itens excluídos com sucesso');
+                loadData();
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
@@ -82,7 +116,7 @@ onBeforeMount(() => {
 
 <template>
     <div>
-        <ComposicaoForm :idComposicao="itemData.id" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit'].includes(mode)" />
+        <ComposicaoForm :idComposicao="itemData.id" :modeParent="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit', 'clone'].includes(mode)" />
         <DataTable
             style="font-size: 1rem"
             :value="gridData"
@@ -125,9 +159,13 @@ onBeforeMount(() => {
                     </template>
                 </Column>
             </template>
-            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+            <Column headerStyle="text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <div class="flex justify-content-center gap-1">
+                        <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                        <Button type="button" icon="fa-regular fa-copy" rounded @click="duplicateField(data)" class="p-button-outlined" v-tooltip.left="'Clique para duplicar a composição'" />
+                        <Button type="button" icon="fa-solid fa-trash" rounded @click="removeComposicao(data)" class="p-button-outlined" severity="danger" v-tooltip.left="'Clique para excluir a composição'" />
+                    </div>
                 </template>
             </Column>
         </DataTable>

@@ -71,7 +71,6 @@ const removeItem = (item) => {
         acceptClass: 'p-button-danger',
         accept: () => {
             const url = `${urlBase.value}/${itemDataProposta.value.id}/${item.id}`;
-            console.log(url);
             axios.delete(url).then(() => {
                 defaultSuccess('Item excluído com sucesso!');
                 loadData();
@@ -87,12 +86,13 @@ const loadData = () => {
     setTimeout(() => {
         loading.value = true;
         const url = `${urlBase.value}/${route.params.id}`;
+        console.log(url);
         axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
             gridData.value.forEach((element) => {
                 element.compoe = element.compoe_valor ? 'Sim' : 'Não';
                 element.item_ativo = element.item_ativo ? 'Sim' : 'Não';
-                if (element.compos_nr) element.item = `${element.compos_nr} / ${element.item}`;
+                if (element.compos_nr) element.item = `${element.localizacao || element.compos_nr} / ${element.item}`;
                 if (element.descricao) element.descricao = element.descricao.trim();
                 else element.descricao = '';
                 element.quantidade = formatValor(element.quantidade, 'pt');

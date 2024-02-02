@@ -198,36 +198,31 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const registro = { status: STATUS_DELETE }
-        try {
-            // registrar o evento na tabela de eventos
-            const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento'],
-                "last": last,
-                "next": registro,
+        const tabelaItensDomain = `${dbPrefix}_${uParams.schema_name}.com_prop_itens`
+        // Iniciar uma transação para exclusão definitiva
+        app.db.transaction(async (trx) => {
+
+            // Evento de exclusão definitiva da composição e seus itens
+            const { createEvent } = app.api.sisEvents
+            evento = await createEvent({
                 "request": req,
                 "evento": {
-                    "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
-                    "tabela_bd": tabela,
+                    id_user: user.id,
+                    evento: `Exclusão dos itens da composição ${req.params.id}`,
+                    classevento: `Remove`,
+                    id_registro: req.params.id,
+                    tabela_bd: tabela
                 }
             })
-            const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
-                .where({ id: req.params.id })
-            existsOrError(rowsUpdated, 'Registro não foi encontrado')
+            await app.db(tabelaItensDomain).where({ id_com_prop_compos: req.params.id }).del()
+            await app.db(tabelaDomain).where({ id: req.params.id }).del()
 
-            res.status(204).send()
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            res.status(400).send(error)
-        }
+            return res.status(204).send()
+        })
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                return res.status(400).send(error)
+            })
     }
 
     const getByFunction = async (req, res) => {
@@ -317,7 +312,7 @@ module.exports = app => {
 
         ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
         if (comp_ativa) ret.where({ comp_ativa: comp_ativa })
-        
+
         if (order) {
             // separar os campos e retirar os espaços
             const orderArr = order.split(',').map(s => s.trim())
