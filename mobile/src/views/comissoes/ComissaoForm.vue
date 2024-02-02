@@ -1,0 +1,194 @@
+<script setup>
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { baseApiUrl } from '@/env';
+import axios from '@/axios-interceptor';
+import { defaultSuccess, defaultWarn } from '@/toast';
+
+// Cookies de usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
+import Breadcrumb from '@/components/Breadcrumb.vue';
+
+import { useRoute, useRouter } from 'vue-router';
+const route = useRoute();
+const router = useRouter();
+
+// Campos de formulário
+const itemData = ref({});
+// Modo do formulário
+const mode = ref('view');
+// Mensages de erro
+const errorMessages = ref({});
+// Loadings
+const loading = ref({
+    form: true,
+    accepted: null,
+    email: null,
+    telefone: null
+});
+// Props do template
+const props = defineProps({
+    mode: String
+});
+// Emit do template
+const emit = defineEmits(['changed', 'cancel']);
+// Url base do form action
+const urlBase = ref(`${baseApiUrl}/fin-cc`);
+// Carragamento de dados do form
+
+const loadData = async () => {
+    setTimeout(async () => {
+        if (route.params.id || itemData.value.id) {
+            if (route.params.id) itemData.value.id = route.params.id;
+            const url = `${urlBase.value}/${itemData.value.id}`;
+
+            await axios.get(url).then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    itemData.value = body;
+                    loading.value.form = false;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${userData.schema_description}/comissoes` });
+                }
+            });
+        } else loading.value.form = false;
+    }, Math.random() * 1000);
+};
+
+// const loadData = async () => {
+//     if (route.params.id || itemData.value.id) {
+//         if (route.params.id) itemData.value.id = route.params.id;
+//         const url = `${urlBase.value}/${itemData.value.id}`;
+
+//         await axios.get(url).then((res) => {
+//             const body = res.data;
+//             if (body && body.id) {
+//                 body.id = String(body.id);
+//                 itemData.value = body;
+//                 loading.value.form = false;
+//             } else {
+//                 defaultWarn('Registro não localizado');
+//                 router.push({ path: `/${userData.schema_description}/comissoes` });
+//             }
+//         });
+//     } else loading.value.form = false;
+// };
+// Salvar dados do formulário
+const saveData = async () => {
+    if (!formIsValid()) {
+        defaultWarn('Verifique os campos obrigatórios');
+        return;
+    }
+    const method = itemData.value.id ? 'put' : 'post';
+    const id = itemData.value.id ? `/${itemData.value.id}` : '';
+    const url = `${urlBase.value}${id}`;
+    axios[method](url, itemData.value)
+        .then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                defaultSuccess('Registro salvo com sucesso');
+                itemData.value = body;
+                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/lancamento/${itemData.value.id}` });
+                mode.value = 'view';
+            } else {
+                defaultWarn('Erro ao salvar registro');
+            }
+        })
+        .catch((err) => {
+            defaultWarn(err.response.data);
+        });
+};
+// DropDown Tipo
+const dropdownTipo = ref([
+    { value: 0, label: 'Despesa' },
+    { value: 1, label: 'Receita' }
+]);
+// Validar formulário
+const formIsValid = () => {
+    return true;
+};
+// Recarregar dados do formulário
+const reload = () => {
+    mode.value = 'view';
+    errorMessages.value = {};
+    loadData();
+    emit('cancel');
+};
+// Carregar dados do formulário
+onBeforeMount(() => {
+    loadData();
+});
+onMounted(() => {
+    if (props.mode && props.mode != mode.value) mode.value = props.mode;
+    else {
+        if (itemData.value.id) mode.value = 'view';
+        else mode.value = 'new';
+    }
+});
+// Observar alterações nos dados do formulário
+watchEffect(() => {});
+const menu = ref();
+const preview = ref(false);
+const items = ref([
+    {
+        label: 'View',
+        icon: 'fa-solid fa-magnifying-glass',
+        command: () => {
+            alert('Enviar nova imagem');
+        }
+    },
+    {
+        label: 'Delete',
+        icon: 'fa-solid fa-trash',
+        command: () => {
+            alert('Excluir imagem');
+        }
+    }
+]);
+</script>
+<template>
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Registros', to: `/${userData.schema_description}/registros` },
+            { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
+    <div class="card">
+        <form @submit.prevent="saveData">
+            <div class="grid">
+                <div class="col-12">
+                    <div class="p-fluid grid">
+                        <div class="col-12 md:col-6">
+                            <label for="codigo">Código da despesa ou receita</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.codigo" id="codigo" type="text" />
+                        </div>
+                        <div class="col-12 md:col-6">
+                            <label for="tipo">Despesa ou receita</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Dropdown v-else id="tipo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTipo" />
+                        </div>
+                        <div class="col-12 md:col-12">
+                            <label for="descricao">Descrição do centro de custo</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card flex justify-content-center flex-wrap gap-3">
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</template>
