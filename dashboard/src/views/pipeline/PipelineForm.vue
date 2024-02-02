@@ -84,9 +84,10 @@ const loadData = async () => {
         const id = props.idPipeline || route.params.id;
         const url = `${urlBase.value}/${id}`;
         if (mode.value != 'new')
-            await axios.get(url).then(async (res) => {
-                const body = res.data;
-                if (body && body.id) {
+            await axios
+                .get(url)
+                .then(async (res) => {
+                    const body = res.data;
                     body.id = String(body.id);
 
                     itemData.value = body;
@@ -108,11 +109,17 @@ const loadData = async () => {
                     breadItems.value = [{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }];
                     if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
-                } else {
-                    defaultWarn('Registro não localizado');
+                })
+                .catch((error) => {
+                    if (typeof error == 'string') defaultWarn(error);
+                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                    else {
+                        console.log(error);
+                        defaultWarn('Erro ao carregar dados!');
+                    }
                     toGrid();
-                }
-            });
+                });
         else if (props.idCadastro) {
             itemData.value.id_cadastros = props.idCadastro;
             itemData.value.valor_bruto = 0;
@@ -459,6 +466,8 @@ const itemNovo = [
             delete itemData.value.id;
             delete itemData.value.id_filho;
             delete itemData.value.id_pai;
+            delete itemData.value.created_at;
+            delete itemData.value.updated_at;
             itemDataParam.value.obrig_valor = 0;
             itemData.value.documento = String(itemData.value.documento);
             await saveData();

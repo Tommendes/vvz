@@ -7,9 +7,9 @@ module.exports = app => {
     const STATUS_DELETE = 99
     // Andamento do registro    
     const STATUS_PENDENTE = 0;
+    const STATUS_PROPOSTA = 0;
     const STATUS_REATIVADO = 1;
     const STATUS_CONVERTIDO = 10;
-    const STATUS_PROPOSTA = 10;
     const STATUS_PEDIDO = 20;
     const STATUS_LIQUIDADO = 80;
     const STATUS_CANCELADO = 89;

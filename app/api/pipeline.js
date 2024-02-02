@@ -303,14 +303,14 @@ module.exports = app => {
             queryes = req.query
             query = ''
             for (const key in queryes) {
-                let operator = queryes[key].split(':')[0]
-                let value = queryes[key].split(':')[1]
+                let operator = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[0] : queryes[key].split(':')[0]
+                let value = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[1] : queryes[key].split(':')[1]
                 key.split(':').forEach(element => {
                     if (element == 'field') {
                         if (['unidade'].includes(key.split(':')[1]) || ['descricaoUnidade'].includes(key.split(':')[1])) {
                             query += `(SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' or lower(pp.descricao) = lower('${value}')) AND `
                         } else if (['status_created_at'].includes(key.split(':')[1])) {
-                            value = queryes[key].split(':')[1].split(',')
+                            value = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[1].split(',') : queryes[key].split(':')[1].split(',')
                             let valueI = moment(value[0]);
                             let valueF = moment(value[1]);
 
@@ -351,12 +351,19 @@ module.exports = app => {
                             }
                             if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
-                            } else if (queryField == 'documento') {
-                                query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
+                            } else if (['documento', 'proposta'].includes(queryField)) {
+                                query += `(cast(tbl1.documento as unsigned) like "%${Number(value)}%" or cast(tbl2.documento as unsigned) like "%${Number(value)}%") AND `
                             } else if (queryField == 'last_status_params') {
-                                query += `(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  ${operator} AND `
-                            } else if (queryField == 'proposta') {
-                                query += `(cast(tbl1.documento as unsigned) ${operator} or cast(tbl2.documento as unsigned) ${operator}) AND `
+                                operator = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[0] : queryes[key].split(':')[0]
+                                switch (operator) {
+                                    case 'notEquals':
+                                    case 'notContains':
+                                        operator = `!= "${value}"`;
+                                        break;
+                                    default: operator = `= "${value}"`
+                                        break;
+                                }
+                                query += `(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) ${operator} AND `
                             } else {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
@@ -425,6 +432,7 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
+            // console.log(ret.toString());
         ret.then(body => {
             const length = body.length
             return res.json({ data: body, totalRecords: totalRecords.count || length, sumRecords: totalRecords.sum || 0 })
@@ -647,42 +655,79 @@ module.exports = app => {
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
+        const biStt = req.query.stt
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
         const biPeriodDv = req.query.periodDv || 2
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_status`
+
+        const firstFayOfThisMonth = moment().startOf('month').format('YYYY-MM-DD')
+        const lastDayOfThisMonth = moment().endOf('month').format('YYYY-MM-DD')
+        let total = { count: 0, sum: 0 }
         try {
-            const total = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+            // todos
+            total = app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
-                .first()
-            let noPeriodo = { count: 0 }
-            if (biPeriodDi && biPeriodDf)
-                noPeriodo = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
-                    .join({ pp: tabelaParamsDomain }, function () {
-                        this.on('pp.id', '=', 'tbl1.id_pipeline_params')
-                    })
-                    .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                    .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
-                    .andWhere({ 'pp.doc_venda': `${biPeriodDv}` }).first()
-            const novos = await app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
-                .join({ pp: tabelaParamsDomain }, function () {
-                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
-                })
-                .whereRaw(`EXTRACT(YEAR FROM date(tbl1.created_at)) = EXTRACT(YEAR FROM NOW())`)
-                .whereRaw(`EXTRACT(MONTH FROM date(tbl1.created_at)) = EXTRACT(MONTH FROM NOW())`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
-                .andWhere({ 'pp.doc_venda': `${biPeriodDv}` }).first()
-            return res.send({ total: total.count, novos: novos.count, noPeriodo: noPeriodo.count })
+            if (biStt) total.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
+                ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biStt}`)
+            else total.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
+                ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
+            total.first()
+            total = await total
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
+
+        let noPeriodo = { count: 0 }
+        try {
+            // no período
+            if (biPeriodDi && biPeriodDf) {
+                noPeriodo = app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+                    .join({ pp: tabelaParamsDomain }, function () {
+                        this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                    })
+                    .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
+                    .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                if (biStt) noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
+                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biStt}`)
+                else noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
+                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
+                noPeriodo.first()
+                noPeriodo = await noPeriodo
+            } 
+            noPeriodo = { count: noPeriodo.count || 0 }
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+
+        let novos = { count: 0 }
+        try {
+            // neste mês
+            novos = app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
+                .join({ pp: tabelaParamsDomain }, function () {
+                    this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                })
+                .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
+                .whereRaw(`date(tbl1.created_at) between "${firstFayOfThisMonth}" and "${lastDayOfThisMonth}"`)
+            if (biStt) novos.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
+                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biStt}`)
+            else novos.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
+                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
+            novos.first()
+            novos = await novos
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+
+        return res.send({ total: total.count || 0, sum: total.sum || 0, novos: novos.count || 0, noPeriodo: noPeriodo.count || 0 })
     }
 
     // Recupera dados para "Vendas recentes" da plataforma BI
@@ -893,7 +938,7 @@ module.exports = app => {
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 1 })
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                // .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_ACTIVE}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PROPOSTA}`)
                 .groupBy('pp.id')
                 .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)

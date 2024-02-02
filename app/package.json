@@ -1,11 +1,11 @@
 {
-    "name": "backend",
+    "name": "vivazul-api",
     "version": "1.0.0",
     "description": "",
     "main": "app.js",
     "scripts": {
         "start": "nodemon",
-        "production": "pm2 start app.js --name vivazul-backend"
+        "production": "pm2 start app.js --name vivazul-api"
     },
     "keywords": [],
     "author": "",

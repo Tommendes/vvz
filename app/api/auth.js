@@ -14,7 +14,7 @@ module.exports = app => {
      * @param {*} req 
      * @param {*} res 
      * @returns 
-     */
+     */ 
     const signin = async (req, res) => {
         const email = req.body.email || req.body.cpf || undefined
         let password = req.body.password || undefined

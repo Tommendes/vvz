@@ -403,9 +403,9 @@ const saveDataProdTabelas = async () => {
                 defaultWarn('Erro ao registrar tabela');
             }
         })
-        .catch((err) => {
-            console.log(err);
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            console.log(error);
+            defaultWarn(error.response.data);
         });
 };
 // Editar item da lista de documentos

@@ -169,7 +169,7 @@ module.exports = app => {
         const tabelaComposicoesDomain = `${dbPrefix}_${uParams.schema_name}.com_prop_compos`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl2.nome_comum, tbl2.descricao descricao_produto, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl3.localizacao, tbl3.tombamento, tbl2.nome_comum, tbl2.descricao descricao_produto, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
             .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
             .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
             .where({ 'tbl1.id_com_propostas': id_com_propostas })
@@ -223,36 +223,16 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const registro = { status: STATUS_DELETE }
-        try {
-            // registrar o evento na tabela de eventos
-            const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento'],
-                "last": last,
-                "next": registro,
-                "request": req,
-                "evento": {
-                    "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
-                    "tabela_bd": tabela,
-                }
+        app.db(tabelaDomain)
+            .where({ id: req.params.id })
+            .del()
+            .then(ret => {
+                return res.status(204).send()
             })
-            const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
-                .where({ id: req.params.id })
-            existsOrError(rowsUpdated, 'Registro não foi encontrado')
-
-            res.status(204).send()
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            res.status(400).send(error)
-        }
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                return res.status(400).send(error)
+            })
     }
 
     const getByFunction = async (req, res) => {

@@ -21,7 +21,7 @@ const mode = ref('view');
 // Loadings
 const loading = ref(false);
 // Props do template
-const props = defineProps(['mode', 'idComposicao']);
+const props = defineProps(['mode', 'idComposicao', 'modeParent']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
@@ -40,6 +40,19 @@ const loadData = async () => {
                     itemData.value.comp_ativa = isTrue(itemData.value.comp_ativa);
                     itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
+                    if (props.modeParent == 'clone') {
+                        mode.value = 'new';
+                        delete itemData.value.id;
+                        delete itemData.value.compos_nr;
+                        delete itemData.value.ordem;
+                        delete itemData.value.created_at;
+                        delete itemData.value.updated_at;
+                        delete itemData.value.old_id;
+                        delete itemData.value.hash;
+                        delete itemData.value.tblName;
+                        itemData.value.comp_ativa = true;
+                        itemData.value.compoe_valor = true;
+                    }
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
@@ -114,7 +127,8 @@ onMounted(() => {
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-8">
                             <div class="flex justify-content-start gap-5">
-                                <div class="switch-label" v-if="String(itemData.compos_nr)">Número da composição: {{ itemData.compos_nr }}</div>
+                                <div class="switch-label" v-if="itemData.compos_nr">Número da composição: {{ itemData.compos_nr }}</div>
+                                <div class="switch-label" v-else>Nova composição</div>
                                 <div class="switch-label">
                                     Composição ativa
                                     <InputSwitch id="comp_ativa" :disabled="mode == 'view'" v-model="itemData.comp_ativa" />
@@ -147,6 +161,7 @@ onMounted(() => {
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                     <p>mode: {{ mode }}</p>
+                    <p>modeParent: {{ props.modeParent }}</p>
                     <p>itemData: {{ itemData }}</p>
                 </div>
             </div>

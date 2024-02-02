@@ -980,7 +980,7 @@ module.exports = app => {
         if (req.user.id != req.params.id && !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         app.db({ us: tabela })
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-            .select("us.id","us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description",
+            .select("us.id", "us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description",
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
@@ -1094,6 +1094,9 @@ module.exports = app => {
             case 'glf':
                 getListByField(req, res)
                 break;
+            case 'gag':
+                getAgentesVendas(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
@@ -1187,6 +1190,32 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
+    }
+
+    // Lista de agentes de negócios
+    const getAgentesVendas = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+
+        const tabelaDomain = `${dbPrefix}_api.${tabela}`
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
+        const ret = app.db({ u: tabelaDomain }).select('u.id', 'u.name')
+            .join({ p: tabelaPipelineDomain }, 'p.id_com_agentes', 'u.id')
+            .where({ 'u.agente_v': 1 })
+            .groupBy('u.id', 'u.name')
+            .orderBy('u.name')
+            .then(body => {
+                return res.json(body)
+            }).catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                return res.status(500).send(error)
+            })
     }
 
     const getSisMessages = async (req, res) => {

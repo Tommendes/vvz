@@ -24,7 +24,8 @@ const totalRecords = ref(0); // O total de registros (deve ser atualizado com o 
 const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
-const gridData = ref([]); // Seus dados iniciais
+const gridData = ref([]); // Dados do grid
+const gridDataRaw = ref([]); // Dados sem formatação
 const idPipeline = ref(null); // Id do registro selecionado
 const expandedRows = ref([]); // Registro expandido
 // Itens do dropdown de Tipos
@@ -35,15 +36,32 @@ const dropdownTiposDoc = ref([
 ]);
 const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
 const dropdownUnidadesFilter = ref([]); // Itens do dropdown de Unidades de Negócio do grid
+const dropdownAgentes = ref([]); // Itens do dropdown de Agentes de Negócio do grid
 const tipoDoc = ref(null); // Tipo de documento selecionado
 const unidade = ref(null); // Unidade de negócio selecionada
 const periodo = ref(null); // Período selecionado
 const unidadeNegocio = ref(null); // Unidade de negócio selecionada
+const agenteNegocio = ref(null); // Agente de negócio selecionada
+const statusNegocio = ref(null); // Situação de negócio selecionada
 
 // Obter parâmetros do BD
 const optionParams = async (query) => {
     const url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
     return await axios.get(url);
+};
+// Obter Agentes de negócio
+const getAgentes = async () => {
+    setTimeout(async () => {
+        const url = `${baseApiUrl}/users/f-a/gag`;
+        await axios.get(url).then((res) => {
+            res.data.map((item) => {
+                dropdownAgentes.value.push({
+                    value: item.name,
+                    label: item.name
+                });
+            });
+        });
+    }, Math.random() * 1000 + 250);
 };
 // Carregar opções do formulário de pesquisa
 const loadOptions = async () => {
@@ -106,7 +124,7 @@ const listaNomes = ref([
     { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '7rem', maxWidth: '7rem' },
     { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '7rem', maxWidth: '7rem' },
     { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem', maxWidth: '8rem' },
-    { field: 'agente', label: 'Agente', minWidth: '7rem', maxWidth: '7rem' },
+    { field: 'agente', label: 'Agente', minWidth: '7rem', maxWidth: '7rem', list: dropdownAgentes.value },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
@@ -144,7 +162,7 @@ const urlFilters = ref('');
 const clearFilter = () => {
     loading.value = true;
     rowsPerPage.value = 10;
-    tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = null;
+    tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = agenteNegocio.value = statusNegocio.value = null;
     initFilters();
     lazyParams.value = {
         first: dt.value.first,
@@ -183,14 +201,15 @@ const loadLazyData = () => {
                 if (queryUrl.value[key]) filters.value[key].value = queryUrl.value[key];
             });
         }
-        const url = `${urlBase.value}${urlFilters.value}${urlQueryes}`;
+        const url = `${urlBase.value}${urlFilters.value}`; //${urlQueryes}
         axios
             .get(url)
-            .then((axiosRes) => {
+            .then(async (axiosRes) => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 sumRecords.value = axiosRes.data.sumRecords;
                 gridData.value.forEach((element) => {
+                    gridDataRaw.value.push({ ...element });
                     if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                     const nome = element.nome || undefined;
                     if (nome) {
@@ -269,19 +288,67 @@ const mountUrlFilters = () => {
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
     if (periodo.value) url += `field:status_created_at=contains:${periodo.value}&`;
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
+    if (agenteNegocio.value) url += `field:agente=equals:${agenteNegocio.value}&`;
+    if (statusNegocio.value) url += `field:last_status_params=equals:${statusNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = `?${url}`;
 };
-// Exporta os dados do grid para CSV
-const exportCSV = () => {
-    const toExport = dt.value;
-    toExport.value.forEach((element) => {
-        Object.keys(element).forEach((key) => {
-            element[key] = removeHtmlTags(element[key]);
+
+import xlsx from 'json-as-xlsx';
+let dataToExcelExport = [
+    {
+        sheet: 'Pipeline',
+        columns: [
+            { label: 'Cliente', value: (row) => row.cliente },
+            { label: 'Tipo', value: (row) => row.tipo },
+            { label: 'Proposta', value: (row) => row.proposta },
+            { label: 'Documento', value: (row) => row.documento },
+            { label: 'R$ Bruto', value: (row) => row.valor_bruto, format: 'R$#,##0.00' },
+            { label: 'Descrição', value: (row) => row.descricao },
+            { label: 'Agente', value: (row) => row.agente },
+            { label: 'Data', value: (row) => row.status_created_at },
+            { label: 'Situação', value: (row) => row.last_status_params }
+        ],
+        content: []
+    }
+];
+
+const exportXls = () => {
+    gridDataRaw.value.forEach((element) => {
+        let last_status_params = '';
+        let descricao = '';
+        dropdownStatus.value.forEach((item) => {
+            if (item.value == element.last_status_params) last_status_params = item.label;
+        });
+        if (element.descricao)
+            descricao = element.descricao
+                .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
+                .replaceAll('Este documento foi liquidado quando foi versionado.', '')
+                .replaceAll('Segue a descrição original do documento:', '')
+                .trim();
+
+        dataToExcelExport[0].content.push({
+            cliente: element.nome,
+            tipo: element.tipo_doc.replaceAll('_', ' '),
+            proposta: element.proposta,
+            documento: element.documento,
+            valor_bruto: element.valor_bruto,
+            descricao: removeHtmlTags(descricao),
+            agente: element.agente,
+            status_created_at: element.status_created_at,
+            last_status_params: last_status_params
         });
     });
-    toExport.exportCSV();
+    let settings = {
+        fileName: dataToExcelExport[0].sheet // Name of the resulting spreadsheet
+        // extraLength: 3, // A bigger number means that columns will be wider
+        // writeMode: 'writeFile', // The available parameters are 'WriteFile' and 'write'. This setting is optional. Useful in such cases https://docs.sheetjs.com/docs/solutions/output#example-remote-file
+        // writeOptions: {}, // Style options from https://docs.sheetjs.com/docs/api/write-options
+        // RTL: true // Display the columns from right-to-left (the default value is false)
+    };
+    xlsx(dataToExcelExport, settings);
 };
+
 // Determina a qualificação baseado no tempo de existência do registro (status_created_at)
 // Se o registro tiver 120 dias ou mais, retorne 'danger'
 // Se o registro tiver 120 dias ou menos, retorne 'help'
@@ -334,26 +401,45 @@ onBeforeMount(() => {
     // Inicializa os filtros do grid
     initFilters();
     loadOptions();
+    getAgentes();
 });
 const queryUrl = ref('');
-onMounted(() => {
+onMounted(async () => {
     queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
     let load = false;
     if (route.query.tpd && route.query.tpd.length) {
         tipoDoc.value = route.query.tpd;
+        filters.value.doc_venda = { value: route.query.tpd, matchMode: 'equals' };
         load = true;
         filtrarUnidades();
     }
     if (route.query.per && route.query.per.length) {
-        periodo.value = route.query.per;
+        const periodo = [];
+        periodo.push(moment(route.query.per.split(',')[0]).format('YYYY-MM-DDTHH:mm:ss'));
+        if (route.query.per.split(',')[1]) periodo.push(moment(route.query.per.split(',')[1]).format('YYYY-MM-DDTHH:mm:ss'));
+        else periodo.push(moment(route.query.per.split(',')[0]).format('YYYY-MM-DDTHH:mm:ss'));
+        periodo.value = periodo;
+        filters.value.status_created_at = { value: periodo.value, matchMode: 'dateIs' };
         load = true;
     }
     if (route.query.tdoc && route.query.tdoc.length) {
         unidadeNegocio.value = route.query.tdoc;
+        filters.value.tipo_doc = { value: route.query.tdoc, matchMode: 'equals' };
         load = true;
     }
+    if (route.query.ag && route.query.ag.length) {
+        agenteNegocio.value = route.query.ag;
+        filters.value.agente = { value: route.query.ag, matchMode: 'equals' };
+        load = true;
+    }
+    if (route.query.stt && route.query.stt.length) {
+        statusNegocio.value = route.query.stt;
+        filters.value.last_status_params = { value: route.query.stt, matchMode: 'equals' };
+        load = true;
+    }
+    router.replace({ query: {} });
     if (load) loadLazyData();
 });
 </script>
@@ -372,6 +458,7 @@ onMounted(() => {
             "
             v-if="mode == 'new' || idPipeline"
         />
+        <!-- <p>{{ filters }}</p> -->
         <DataTable
             class="hidden lg:block"
             style="font-size: 1rem"
@@ -389,7 +476,7 @@ onMounted(() => {
             @page="onPage($event)"
             @sort="onSort($event)"
             @filter="onFilter($event)"
-            filterDisplay="row"
+            filterDisplay="menu"
             tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
@@ -402,7 +489,7 @@ onMounted(() => {
             <template #header>
                 <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                     <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
-                    <Tag class="tagRes" :value="`Total geral: ${formatCurrency(sumRecords)}`"> </Tag>
+                    <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
                 </div>
                 <div class="flex justify-content-end gap-3">
                     <Dropdown
@@ -446,7 +533,14 @@ onMounted(() => {
                         :options="dropdownUnidadesFilter"
                         @change="loadLazyData()"
                     />
-                    <Button icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
+                    <Button
+                        icon="fa-solid fa-cloud-arrow-down"
+                        label="Exportar"
+                        @click="
+                            // exportCSV($event);
+                            exportXls();
+                        "
+                    />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined @click="clearFilter()" />
                     <Button type="button" icon="fa-solid fa-refresh" label="Todo o pipeline" outlined @click="reload()" />
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
@@ -489,7 +583,7 @@ onMounted(() => {
                             :numberOfMonths="2"
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
-                            @input="filterCallback()"
+                            @update:modelValue="filterCallback()"
                             :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
                     </template>
@@ -535,6 +629,7 @@ onMounted(() => {
 .tagQualify {
     font-size: 1.2rem;
 }
+
 .tagRes {
     background-color: #077a59;
     color: rgb(255, 255, 255);
