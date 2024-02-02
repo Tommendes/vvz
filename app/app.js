@@ -46,25 +46,33 @@ Object.defineProperty(global, '__function', {
 const logError = fs.createWriteStream("./logs/uncaughtException.txt", { flags: 'a' });
 const logInfo = fs.createWriteStream("./logs/info.txt", { flags: 'a' });
 
-process.on('uncaughtException', async (err) => {
-    // Adicione lógica aqui para lidar com a exceção, como registrar em logs
-    logError.write(`[${new Date().toISOString()}] Exceção não detectada/tratada: ${err.message}\n`);
-    
-    // Reinicia a aplicação usando PM2
-    try {
-        await restartApp();
-        logInfo.write(`[${new Date().toISOString()}] Aplicação reiniciada após exceção não detectada/tratada\n`);
-    } catch (error) {
-        logError.write(`[${new Date().toISOString()}] Falha ao reiniciar a aplicação: ${error}\n`);
+// process.on('uncaughtException', async (err) => {
+//     // Adicione lógica aqui para lidar com a exceção, como registrar em logs
+//     const log = `[${new Date().toISOString()}] Exceção não detectada/tratada: ${err.message}\n`;
+//     console.log(log);
+//     logError.write(log);
 
-        process.exit(1); // Encerra a aplicação após a exceção não tratada
-    }
-    try {
-        logError.end();        
-    } catch (error) {
-        logError.write(`[${new Date().toISOString()}] Falha ao finalizar a gravação do log de erro: ${error}\n`);
-    }
-});
+//     // Reinicia a aplicação usando PM2
+//     try {
+//         await restartApp();
+//         const log = `[${new Date().toISOString()}] Aplicação reiniciada após exceção não detectada/tratada\n`;
+//         console.log(log);
+//         logInfo.write(log);
+//     } catch (error) {
+//         const log = `[${new Date().toISOString()}] Falha ao reiniciar a aplicação após exceção não detectada/tratada: ${error}\n`;
+//         console.log(log);
+//         logError.write(log);
+
+//         process.exit(1); // Encerra a aplicação após a exceção não tratada
+//     }
+//     try {
+//         logError.end();
+//     } catch (error) {
+//         const log = `[${new Date().toISOString()}] Falha ao finalizar a gravação do log de erro: ${error}\n`;
+//         console.log(log);
+//         logError.write(log);
+//     }
+// });
 
 async function restartApp() {
     return new Promise((resolve, reject) => {

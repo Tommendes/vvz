@@ -196,7 +196,6 @@ const getPropostasBi = async () => {
     biData.value.propostas.loading = true;
     await axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
-        console.log('getPropostasBi', data);
         biData.value.propostas.total = data.total;
         biData.value.propostas.noPeriodo = data.noPeriodo;
         biData.value.propostas.novos = data.novos;
@@ -205,7 +204,7 @@ const getPropostasBi = async () => {
 };
 
 const getPedidosBi = async () => {
-    const url = `${baseApiUrl}/pipeline/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&periodDv=2`;
+    const url = `${baseApiUrl}/pipeline/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&periodDv=2&stt=20`;
     biData.value.pedidos.loading = true;
     await axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
@@ -234,12 +233,13 @@ const irRecentSale = (id) => {
 
 const irPipelineFilter = (tpd, perDi, perDf, tDoc, ag, stt) => {
     const perParam = perDi && perDf ? `${perDi},${perDf}` : '';
-    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}${tDoc ? '&tdoc=' + tDoc : ''}${ag ? '&ag=' + ag : ''}${stt ? '&stt=' + stt : ''}`, '_blank');
+    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}${tDoc ? '&tdoc=' + tDoc : ''}${ag ? '&ag=' + ag : ''}${String(stt) ? '&stt=' + stt : ''}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
     if (moreOrLess === 'plus' && biData.value.recentSales.rows < 10) biData.value.recentSales.rows++;
     else if (moreOrLess === 'less' && biData.value.recentSales.rows > 1) biData.value.recentSales.rows--;
+    if (moreOrLess === 'all') biData.value.recentSales.rows = 10;
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     localStorage.setItem('__biParams', JSON.stringify({ ...biParams, recentSales: { rows: biData.value.recentSales.rows } }));
     getPedidosLastBi();
@@ -250,7 +250,7 @@ const applyBiTopSeilling = async (moreOrLess) => {
     else if (moreOrLess === 'less' && biData.value.topSellings.rows > 1) biData.value.topSellings.rows--;
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellings: { rows: biData.value.topSellings.rows } }));
-    await getTopSellingBi();
+    await getTopSellingBi(moreOrLess);
     getSalesOverviewBi();
 };
 
@@ -259,7 +259,7 @@ const applyBiTopSellers = (moreOrLess) => {
     else if (moreOrLess === 'less' && biData.value.topSellers.rows > 1) biData.value.topSellers.rows--;
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellers: { rows: biData.value.topSellers.rows } }));
-    getTopSellersBi();
+    getTopSellersBi(moreOrLess);
 };
 
 const applyBiTopProposals = (moreOrLess) => {
@@ -267,13 +267,13 @@ const applyBiTopProposals = (moreOrLess) => {
     else if (moreOrLess === 'less' && biData.value.topProposals.rows > 1) biData.value.topProposals.rows--;
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topProposals: { rows: biData.value.topProposals.rows } }));
-    getTopProposalsBi();
+    getTopProposalsBi(moreOrLess);
 };
 
-const getTopSellingBi = async () => {
+const getTopSellingBi = async (moreOrLess) => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     biData.value.topSellings.rows = biParams.topSellings.rows || biData.value.topSellings.rows;
-    const url = `${baseApiUrl}/pipeline/f-a/gts?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${biData.value.topSellings.rows}`;
+    const url = `${baseApiUrl}/pipeline/f-a/gts?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${moreOrLess == 'all' ? 99999 : biData.value.topSellings.rows}`;
     biData.value.topSellings.loading = true;
     await axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
@@ -288,14 +288,15 @@ const getTopSellingBi = async () => {
         });
         biData.value.topSellings.totalSell = data.totalSell;
         biData.value.topSellings.totalSellQuantity = data.totalSellQuantity;
+        if (moreOrLess == 'all') biData.value.topSellings.rows = data.data.length;
     });
     biData.value.topSellings.loading = false;
 };
 
-const getTopSellersBi = async () => {
+const getTopSellersBi = async (moreOrLess) => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     biData.value.topSellers.rows = biParams.topSellers.rows || biData.value.topSellers.rows;
-    const url = `${baseApiUrl}/pipeline/f-a/gtss?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${biData.value.topSellers.rows}`;
+    const url = `${baseApiUrl}/pipeline/f-a/gtss?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${moreOrLess == 'all' ? 99999 : biData.value.topSellers.rows}`;
     biData.value.topSellers.loading = true;
     await axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
@@ -306,14 +307,15 @@ const getTopSellersBi = async () => {
         biData.value.topSellers.data = data.data;
         biData.value.topSellers.totalSell = data.totalSell;
         biData.value.topSellers.totalSellQuantity = data.totalSellQuantity;
+        if (moreOrLess == 'all') biData.value.topSellers.rows = data.data.length;
     });
     biData.value.topSellers.loading = false;
 };
 
-const getTopProposalsBi = async () => {
+const getTopProposalsBi = async (moreOrLess) => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     biData.value.topProposals.rows = biParams.topProposals.rows || biData.value.topProposals.rows;
-    const url = `${baseApiUrl}/pipeline/f-a/gtp?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${biData.value.topProposals.rows}`;
+    const url = `${baseApiUrl}/pipeline/f-a/gtp?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${moreOrLess == 'all' ? 99999 : biData.value.topProposals.rows}`;
     biData.value.topProposals.loading = true;
     await axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
@@ -324,6 +326,7 @@ const getTopProposalsBi = async () => {
         biData.value.topProposals.data = data.data;
         biData.value.topProposals.totalProposed = data.totalProposed;
         biData.value.topProposals.totalProposedQuantity = data.totalProposedQuantity;
+        if (moreOrLess == 'all') biData.value.topProposals.rows = data.data.length;
     });
     biData.value.topProposals.loading = false;
 };
@@ -518,13 +521,13 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-        <!-- Statt Pedidos -->
+        <!-- Stat Pedidos -->
         <div class="col-12 lg:col-6 xl:col-3">
             <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df)" v-tooltip.top="'Clique para ir'">Pedidos</router-link>
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 20)" v-tooltip.top="'Clique para ir'">Pedidos</router-link>
                         </span>
                         <Skeleton v-if="biData.pedidos.loading" width="20rem" height="2rem"></Skeleton>
                         <div v-else class="text-900 font-medium text-xl">{{ biData.pedidos.total }}</div>
@@ -557,6 +560,7 @@ onMounted(() => {
                     <div>
                         <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
                         <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
@@ -598,12 +602,13 @@ onMounted(() => {
                     <div>
                         <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('less')" v-tooltip.top="'Clique para reduzir'" />
                         <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellers.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, item.agente)" v-tooltip.top="'Clique para ir'">
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, item.agente, 20)" v-tooltip.top="'Clique para ir'">
                                 <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.agente }}</span>
                             </router-link>
                             <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
@@ -633,6 +638,7 @@ onMounted(() => {
                     <div>
                         <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('less')" v-tooltip.top="'Clique para reduzir'" v-if="biData.recentSales.rows > 1" />
                         <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('plus')" v-tooltip.top="'Clique para adicionar'" v-if="biData.recentSales.rows < 10" />
+                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
                 <DataTable :value="biData.recentSales.data" :rows="biData.recentSales.rows" :paginator="false" responsiveLayout="scroll">
@@ -674,6 +680,7 @@ onMounted(() => {
                     <div>
                         <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('less')" v-tooltip.top="'Clique para reduzir'" />
                         <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topProposals.data" :key="item.id">

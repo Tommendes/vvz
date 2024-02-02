@@ -36,6 +36,7 @@ const dropdownTiposDoc = ref([
 ]);
 const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
 const dropdownUnidadesFilter = ref([]); // Itens do dropdown de Unidades de Negócio do grid
+const dropdownAgentes = ref([]); // Itens do dropdown de Agentes de Negócio do grid
 const tipoDoc = ref(null); // Tipo de documento selecionado
 const unidade = ref(null); // Unidade de negócio selecionada
 const periodo = ref(null); // Período selecionado
@@ -47,6 +48,20 @@ const statusNegocio = ref(null); // Situação de negócio selecionada
 const optionParams = async (query) => {
     const url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
     return await axios.get(url);
+};
+// Obter Agentes de negócio
+const getAgentes = async () => {
+    setTimeout(async () => {
+        const url = `${baseApiUrl}/users/f-a/gag`;
+        await axios.get(url).then((res) => {
+            res.data.map((item) => {
+                dropdownAgentes.value.push({
+                    value: item.name,
+                    label: item.name
+                });
+            });
+        });
+    }, Math.random() * 1000 + 250);
 };
 // Carregar opções do formulário de pesquisa
 const loadOptions = async () => {
@@ -109,7 +124,7 @@ const listaNomes = ref([
     { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '7rem', maxWidth: '7rem' },
     { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '7rem', maxWidth: '7rem' },
     { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem', maxWidth: '8rem' },
-    { field: 'agente', label: 'Agente', minWidth: '7rem', maxWidth: '7rem' },
+    { field: 'agente', label: 'Agente', minWidth: '7rem', maxWidth: '7rem', list: dropdownAgentes.value },
     // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
     {
         field: 'status_created_at',
@@ -186,10 +201,11 @@ const loadLazyData = () => {
                 if (queryUrl.value[key]) filters.value[key].value = queryUrl.value[key];
             });
         }
-        const url = `${urlBase.value}${urlFilters.value}${urlQueryes}`;
+        const url = `${urlBase.value}${urlFilters.value}`; //${urlQueryes}
+        console.log('URL', url);
         axios
             .get(url)
-            .then((axiosRes) => {
+            .then(async (axiosRes) => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 sumRecords.value = axiosRes.data.sumRecords;
@@ -277,6 +293,7 @@ const mountUrlFilters = () => {
     if (statusNegocio.value) url += `field:last_status_params=equals:${statusNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = `?${url}`;
+    console.log('urlFilters', urlFilters.value);
 };
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
@@ -291,7 +308,7 @@ const exportCSV = () => {
 };
 
 import xlsx from 'json-as-xlsx';
-let data = [
+let dataToExcelExport = [
     {
         sheet: 'Pipeline',
         columns: [
@@ -313,7 +330,6 @@ const exportXls = () => {
     gridDataRaw.value.forEach((element) => {
         let last_status_params = '';
         let descricao = '';
-        let valor_bruto = '';
         dropdownStatus.value.forEach((item) => {
             if (item.value == element.last_status_params) last_status_params = item.label;
         });
@@ -323,9 +339,8 @@ const exportXls = () => {
                 .replaceAll('Este documento foi liquidado quando foi versionado.', '')
                 .replaceAll('Segue a descrição original do documento:', '')
                 .trim();
-        // if (element.valor_bruto && element.valor_bruto >= 0) valor_bruto = formatCurrency(element.valor_bruto);
 
-        data[0].content.push({
+        dataToExcelExport[0].content.push({
             cliente: element.nome,
             tipo: element.tipo_doc.replaceAll('_', ' '),
             proposta: element.proposta,
@@ -338,13 +353,13 @@ const exportXls = () => {
         });
     });
     let settings = {
-        fileName: data[0].sheet // Name of the resulting spreadsheet
+        fileName: dataToExcelExport[0].sheet // Name of the resulting spreadsheet
         // extraLength: 3, // A bigger number means that columns will be wider
         // writeMode: 'writeFile', // The available parameters are 'WriteFile' and 'write'. This setting is optional. Useful in such cases https://docs.sheetjs.com/docs/solutions/output#example-remote-file
         // writeOptions: {}, // Style options from https://docs.sheetjs.com/docs/api/write-options
         // RTL: true // Display the columns from right-to-left (the default value is false)
     };
-    xlsx(data, settings);
+    xlsx(dataToExcelExport, settings);
 };
 
 // Determina a qualificação baseado no tempo de existência do registro (status_created_at)
@@ -399,34 +414,46 @@ onBeforeMount(() => {
     // Inicializa os filtros do grid
     initFilters();
     loadOptions();
+    getAgentes();
 });
 const queryUrl = ref('');
-onMounted(() => {
+onMounted(async () => {
     queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
     let load = false;
+    console.log('route.query', route.query);
     if (route.query.tpd && route.query.tpd.length) {
         tipoDoc.value = route.query.tpd;
+        filters.value.doc_venda = { value: route.query.tpd, matchMode: 'equals' };
         load = true;
         filtrarUnidades();
     }
     if (route.query.per && route.query.per.length) {
-        periodo.value = route.query.per;
+        const periodo = [];
+        periodo.push(moment(route.query.per.split(',')[0]).format('YYYY-MM-DDTHH:mm:ss'));
+        if (route.query.per.split(',')[1]) periodo.push(moment(route.query.per.split(',')[1]).format('YYYY-MM-DDTHH:mm:ss'));
+        else periodo.push(moment(route.query.per.split(',')[0]).format('YYYY-MM-DDTHH:mm:ss'));
+        periodo.value = periodo;
+        filters.value.status_created_at = { value: periodo.value, matchMode: 'dateIs' };
         load = true;
     }
     if (route.query.tdoc && route.query.tdoc.length) {
         unidadeNegocio.value = route.query.tdoc;
+        filters.value.tipo_doc = { value: route.query.tdoc, matchMode: 'equals' };
         load = true;
     }
     if (route.query.ag && route.query.ag.length) {
         agenteNegocio.value = route.query.ag;
+        filters.value.agente = { value: route.query.ag, matchMode: 'equals' };
         load = true;
     }
     if (route.query.stt && route.query.stt.length) {
         statusNegocio.value = route.query.stt;
+        filters.value.last_status_params = { value: route.query.stt, matchMode: 'equals' };
         load = true;
     }
+    router.replace({ query: {} });
     if (load) loadLazyData();
 });
 </script>
@@ -445,6 +472,7 @@ onMounted(() => {
             "
             v-if="mode == 'new' || idPipeline"
         />
+        <!-- <p>{{ filters }}</p> -->
         <DataTable
             class="hidden lg:block"
             style="font-size: 1rem"
@@ -523,7 +551,7 @@ onMounted(() => {
                         icon="fa-solid fa-cloud-arrow-down"
                         label="Exportar"
                         @click="
-                            exportCSV($event);
+                            // exportCSV($event);
                             exportXls();
                         "
                     />
@@ -569,7 +597,7 @@ onMounted(() => {
                             :numberOfMonths="2"
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
-                            @input="filterCallback()"
+                            @update:modelValue="filterCallback()"
                             :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
                     </template>
@@ -615,6 +643,7 @@ onMounted(() => {
 .tagQualify {
     font-size: 1.2rem;
 }
+
 .tagRes {
     background-color: #077a59;
     color: rgb(255, 255, 255);
