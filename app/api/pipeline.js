@@ -305,7 +305,6 @@ module.exports = app => {
             for (const key in queryes) {
                 let operator = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[0] : queryes[key].split(':')[0]
                 let value = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[1] : queryes[key].split(':')[1]
-                console.log(operator, value);
                 key.split(':').forEach(element => {
                     if (element == 'field') {
                         if (['unidade'].includes(key.split(':')[1]) || ['descricaoUnidade'].includes(key.split(':')[1])) {
@@ -939,7 +938,7 @@ module.exports = app => {
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 1 })
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                // .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_ACTIVE}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PROPOSTA}`)
                 .groupBy('pp.id')
                 .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
