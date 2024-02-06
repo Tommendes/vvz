@@ -444,6 +444,7 @@ onMounted(() => {
 <template>
     <div class="grid">
         <!-- Stat Cadastros -->
+        <p id="browser"></p>
         <div class="col-12 lg:col-6 xl:col-3">
             <div class="card mb-0" style="background-color: rgb(87 115 177 / 8%)">
                 <div class="flex justify-content-between mb-3">
