@@ -3,7 +3,6 @@ import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
-import moment from 'moment';
 import CadastroForm from './CadastroForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
@@ -16,9 +15,6 @@ const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
-    aniversario: new Mask({
-        mask: '##/##/####'
-    }),
     cpf: new Mask({
         mask: '###.###.###-##'
     }),
@@ -43,35 +39,12 @@ onMounted(() => {
 
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
-const rowsPerPage = ref(10); // Quantidade de registros por página
+const rowsPerPage = ref(20); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
-// Lista de meses
-const dropdownMes = ref([
-    { label: 'Janeiro', value: '01' },
-    { label: 'Fevereiro', value: '02' },
-    { label: 'Março', value: '03' },
-    { label: 'Abril', value: '04' },
-    { label: 'Maio', value: '05' },
-    { label: 'Junho', value: '06' },
-    { label: 'Julho', value: '07' },
-    { label: 'Agosto', value: '08' },
-    { label: 'Setembro', value: '09' },
-    { label: 'Outubro', value: '10' },
-    { label: 'Novembro', value: '11' },
-    { label: 'Dezembro', value: '12' }
-]);
 
 // Itens do grid
-const listaNomes = ref([
-    { field: 'tipo_cadas', label: 'Tipo Cadastro', showDefault: false },
-    { field: 'cpf_cnpj', label: 'CPF/CNPJ', showDefault: true },
-    { field: 'nome', label: 'Nome', minWidth: '10rem', showDefault: true },
-    { field: 'atuacao', label: 'Área de atuação', showDefault: false },
-    // { field: 'email', label: 'Email', showDefault: true },
-    { field: 'telefone', label: 'Telefone', showDefault: true, mask: 'telefone' },
-    { field: 'aniversario', label: 'Aniv/Fundação', showDefault: true, list: dropdownMes.value }
-]);
+const listaNomes = ref([{ field: 'cadastro', label: 'Cadastro' }]);
 // Inicializa os filtros do grid
 const initFilters = () => {
     filters.value = {};
@@ -119,7 +92,6 @@ const filtrarAtuacao = async () => {
 const clearFilter = () => {
     loading.value = true;
     areaAtuacao.value = tipoCadastro.value = null;
-    rowsPerPage.value = 10;
     initFilters();
     lazyParams.value = {
         first: dt.value.first,
@@ -137,21 +109,18 @@ const loadLazyData = () => {
 
     setTimeout(() => {
         const url = `${urlBase.value}${urlFilters.value}`;
+        console.log(url);
         axios
             .get(url)
             .then((axiosRes) => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
-                    // Exibe dado com máscara
                     if (element.cpf_cnpj && element.cpf_cnpj.length == 11) element.cpf_cnpj = masks.value.cpf.masked(element.cpf_cnpj);
                     else if (element.cpf_cnpj && element.cpf_cnpj.length == 14) element.cpf_cnpj = masks.value.cnpj.masked(element.cpf_cnpj);
-                    // Tratamento para resultados nulos
-                    if(element.aniversario == null) element.aniversario = '';
-                    if(element.telefone == null) element.telefone = '';
-                    // Converte data en para pt
-                    if (element.aniversario) element.aniversario = moment(element.aniversario).format('DD/MM/YYYY');
                     if (element.email) element.email = renderizarHTML(element.email);
+                    if (element.telefone == null) element.telefone = '';
+                    element.cadastro = `${element.nome} <br> ${element.cpf_cnpj} <br> ${element.email} <br> ${element.telefone}`;
                 });
                 loading.value = false;
             })
@@ -216,7 +185,6 @@ watchEffect(() => {
     <div id="w-95" class="card">
         <CadastroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
-            style="font-size: 1rem"
             :value="gridData"
             lazy
             paginator
@@ -226,13 +194,11 @@ watchEffect(() => {
             dataKey="id"
             :totalRecords="totalRecords"
             :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
             :loading="loading"
             @page="onPage($event)"
             @sort="onSort($event)"
             @filter="onFilter($event)"
             filterDisplay="row"
-            tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
@@ -249,7 +215,7 @@ watchEffect(() => {
                         filter
                         placeholder="Filtrar por Tipo de Cadastro..."
                         :showClear="tipoCadastro"
-                        style="min-width: 200px"
+                        style="min-width: 50vw"
                         id="tipoCadastro"
                         optionLabel="label"
                         optionValue="value"
@@ -261,49 +227,23 @@ watchEffect(() => {
                         filter
                         placeholder="Filtrar por Área de Atuação..."
                         :showClear="areaAtuacao"
-                        style="min-width: 200px"
+                        style="min-width: 50vw"
                         id="areaAtuacao"
                         optionLabel="label"
                         optionValue="value"
                         v-model="areaAtuacao"
                         :options="dropdownAtuacao"
                         @change="loadLazyData()"
-                    />                    
+                    />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column v-if="nome.showDefault" :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
-                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown
-                            :id="nome.field"
-                            optionLabel="label"
-                            optionValue="value"
-                            v-model="filterModel.value"
-                            :options="nome.list"
-                            @change="filterCallback()"
-                            :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
-                        />
-                    </template>
-                    <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar
-                            v-model="filterModel.value"
-                            dateFormat="dd/mm/yy"
-                            selectionMode="range"
-                            :numberOfMonths="2"
-                            placeholder="dd/mm/aaaa"
-                            mask="99/99/9999"
-                            @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
-                        />
-                    </template>
-                    <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" style="max-width: 80vw">
+                    <template #filter="{ filterModel, filterCallback }">
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                        <span v-html="data.cadastro"></span>
                     </template>
                 </Column>
             </template>
@@ -315,16 +255,3 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
-<style scoped>
-#w-95{
-    width: 95vw;
-}
-</style>
-<style>
-.container{
-    overflow-x: hidden;
-}
-.p-paginator{
-    flex-wrap: nowrap;
-}
-</style>

@@ -132,6 +132,10 @@ app.use(VueGoogleMaps, {
     autobindAllEvents: true
 });
 
+import { VueScreenSizeMixin } from 'vue-screen-size';
+
+app.mixin(VueScreenSizeMixin);
+
 app.directive('tooltip', Tooltip);
 app.directive('badge', BadgeDirective);
 app.directive('ripple', Ripple);

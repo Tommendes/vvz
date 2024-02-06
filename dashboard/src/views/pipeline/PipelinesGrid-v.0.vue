@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
@@ -7,16 +7,6 @@ import PipelineForm from './PipelineForm.vue';
 import { removeHtmlTags, formatCurrency } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import moment from 'moment';
-
-// const isMobile = window.innerWidth < 768;
-const screenWidth = ref(window.innerWidth);
-const isMobile = ref(window.matchMedia('(max-width: 767px)').matches);
-const updateScreenWidth = () => {
-    isMobile.value = window.matchMedia('(max-width: 767px)').matches;
-    screenWidth.value = window.innerWidth;
-    console.log('isMobile', isMobile.value);
-    console.log('screenWidth', screenWidth.value);
-};
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -37,6 +27,7 @@ const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
 const gridDataRaw = ref([]); // Dados sem formatação
 const idPipeline = ref(null); // Id do registro selecionado
+const expandedRows = ref([]); // Registro expandido
 // Itens do dropdown de Tipos
 const dropdownTiposDoc = ref([
     { label: 'Outros', value: '0' },
@@ -127,15 +118,28 @@ const dropdownStatus = ref([
 ]);
 // { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
-    { field: 'nome', label: 'Cliente', class: '' },
-    // { field: 'tipo_doc', label: 'Tipo', class: isMobile.value ? 'hidden' : '' },
-    // { field: 'proposta', label: 'Proposta', class: isMobile.value || screenWidth.value < 840 ? 'hidden' : 'md:text-center' },
-    { field: 'documento', label: 'Documento', class: isMobile.value || screenWidth.value < 840 ? 'hidden' : '' },
-    { field: 'valor_bruto', label: 'R$ Bruto', class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
-    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
-    { field: 'agente', label: 'Agente', list: dropdownAgentes.value, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
-    { field: 'status_created_at', label: 'Data', type: 'date', tagged: true, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
-    { field: 'last_status_params', label: 'Situação', list: dropdownStatus.value, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' }
+    { field: 'nome', label: 'Cliente' },
+    { field: 'tipo_doc', label: 'Tipo' },
+    { field: 'proposta', label: 'Proposta', class: 'text-center', minWidth: '7rem', maxWidth: '7rem' },
+    { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '7rem', maxWidth: '7rem' },
+    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '7rem', maxWidth: '7rem' },
+    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem', maxWidth: '8rem' },
+    { field: 'agente', label: 'Agente', minWidth: '7rem', maxWidth: '7rem', list: dropdownAgentes.value },
+    // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
+    {
+        field: 'status_created_at',
+        label: 'Data',
+        type: 'date',
+        minWidth: '7rem',
+        tagged: true
+    },
+    {
+        field: 'last_status_params',
+        label: 'Situação',
+        minWidth: '7rem',
+        maxWidth: '7rem',
+        list: dropdownStatus.value
+    }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -184,6 +188,7 @@ const scrollToTop = () => {
 // Carrega os dados do grid
 const loadLazyData = () => {
     loading.value = true;
+    expanded.value = false;
     setTimeout(() => {
         let urlQueryes = '';
         let objetcQueryes = Object.keys(queryUrl.value);
@@ -205,9 +210,7 @@ const loadLazyData = () => {
                 sumRecords.value = axiosRes.data.sumRecords;
                 gridData.value.forEach((element) => {
                     gridDataRaw.value.push({ ...element });
-                    // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
-                    if (element.documento) element.documento = `${element.tipo_doc.replaceAll('_', ' ')} (Doc: ${element.documento})`;
-                    if (element.proposta) element.documento += ` (Prop: ${element.proposta})`;
+                    if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                     const nome = element.nome || undefined;
                     if (nome) {
                         element.nome = nome.trim().substr(0, limitNome);
@@ -373,6 +376,21 @@ const goField = (data) => {
     idPipeline.value = data.id;
     router.push({ path: `/${userData.schema_description}/pipeline/${data.id}` });
 };
+// const onRowExpand = (event) => {
+//     // defaultInfo('Product Expanded: ' + event.data.documento);
+// };
+// const onRowCollapse = (event) => {
+//     // defaultSuccess('Product Collapsed: ' + event.data.documento);
+// };
+const expanded = ref(false);
+const expandAll = () => {
+    expanded.value = true;
+    expandedRows.value = gridData.value.filter((p) => p.id);
+};
+const collapseAll = () => {
+    expanded.value = false;
+    expandedRows.value = null;
+};
 // Carrega os dados do filtro do grid
 watchEffect(() => {
     mountUrlFilters();
@@ -385,16 +403,8 @@ onBeforeMount(() => {
     loadOptions();
     getAgentes();
 });
-onBeforeUnmount(() => {
-    // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
-    window.removeEventListener('resize', updateScreenWidth);
-});
-
 const queryUrl = ref('');
 onMounted(async () => {
-    window.addEventListener('resize', updateScreenWidth);
-    updateScreenWidth(); // Atualize a propriedade inicialmente
-
     queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
@@ -432,7 +442,6 @@ onMounted(async () => {
     router.replace({ query: {} });
     if (load) loadLazyData();
 });
-const customFilterOptions = ref({ filterclear: false });
 </script>
 
 <template>
@@ -457,18 +466,18 @@ const customFilterOptions = ref({ filterclear: false });
         <div class="col-12">
             <div class="card">
                 <DataTable
-                    ref="dt"
+                    class="hidden lg:block"
                     :value="gridData"
                     lazy
                     paginator
-                    :rows="rowsPerPage"
-                    dataKey="id"
-                    :rowHover="true"
+                    :first="0"
                     v-model:filters="filters"
-                    filterDisplay="row"
+                    ref="dt"
+                    dataKey="id"
                     :loading="loading"
-                    :filters="filters"
-                    responsiveLayout="scroll"
+                    filterDisplay="menu"
+                    :rows="rowsPerPage"
+                    tableStyle="min-width: 75rem"
                     :totalRecords="totalRecords"
                     :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
                     @page="onPage($event)"
@@ -477,93 +486,141 @@ const customFilterOptions = ref({ filterclear: false });
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
                     :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
                     scrollable
-                    :filter-options="customFilterOptions"
+                    v-model:expandedRows="expandedRows"
                 >
+                    <!-- @rowExpand="onRowExpand" -->
+                    <!-- @rowCollapse="onRowCollapse" -->
+                    <!-- scrollHeight="600px" -->
                     <template #header>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                             <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
                             <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
                         </div>
-                        <div class="grid">
-                            <div class="col-6 md:col-3">
-                                <Dropdown
-                                    placeholder="Todos...?"
-                                    :showClear="!!tipoDoc"
-                                    class="flex-none flex"
-                                    id="doc_venda"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    v-model="tipoDoc"
-                                    :options="dropdownTiposDoc"
-                                    @change="
-                                        loadLazyData();
-                                        filtrarUnidades();
-                                    "
-                                />
-                            </div>
-                            <div class="col-6 md:col-3">
-                                <Dropdown
-                                    filter
-                                    placeholder="Filtrar por Representada..."
-                                    :showClear="!!unidade"
-                                    class="flex-none flex"
-                                    id="unidades"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    v-model="unidade"
-                                    :options="dropdownUnidades"
-                                    @change="
-                                        loadLazyData();
-                                        filtrarUnidadesDescricao();
-                                    "
-                                />
-                            </div>
-                            <div class="col-12 md:col-6">
-                                <Dropdown
-                                    filter
-                                    placeholder="Filtrar por Tipo..."
-                                    :showClear="!!unidadeNegocio"
-                                    class="flex-grow-1 flex"
-                                    id="unidade_tipos"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    v-model="unidadeNegocio"
-                                    :options="dropdownUnidadesFilter"
-                                    @change="loadLazyData()"
-                                />
-                            </div>
-                        </div>
-                        <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" @click="exportXls()" />
+                        <div class="flex justify-content-end gap-3">
+                            <Dropdown
+                                placeholder="Todos...?"
+                                :showClear="!!tipoDoc"
+                                style="min-width: 150px"
+                                id="doc_venda"
+                                optionLabel="label"
+                                optionValue="value"
+                                v-model="tipoDoc"
+                                :options="dropdownTiposDoc"
+                                @change="
+                                    loadLazyData();
+                                    filtrarUnidades();
+                                "
+                            />
+                            <Dropdown
+                                filter
+                                placeholder="Filtrar por Representada..."
+                                :showClear="!!unidade"
+                                style="min-width: 150px"
+                                id="unidades"
+                                optionLabel="label"
+                                optionValue="value"
+                                v-model="unidade"
+                                :options="dropdownUnidades"
+                                @change="
+                                    loadLazyData();
+                                    filtrarUnidadesDescricao();
+                                "
+                            />
+                            <Dropdown
+                                filter
+                                placeholder="Filtrar por Tipo..."
+                                :showClear="!!unidadeNegocio"
+                                style="min-width: 200px"
+                                id="unidade_tipos"
+                                optionLabel="label"
+                                optionValue="value"
+                                v-model="unidadeNegocio"
+                                :options="dropdownUnidadesFilter"
+                                @change="loadLazyData()"
+                            />
+                            <Button
+                                icon="fa-solid fa-cloud-arrow-down"
+                                label="Exportar"
+                                @click="
+                                    // exportCSV($event);
+                                    exportXls()
+                                "
+                            />
                             <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined @click="clearFilter()" />
                             <Button type="button" icon="fa-solid fa-refresh" label="Todo o pipeline" outlined @click="reload()" />
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
+                            <Button type="button" icon="fa-solid fa-angles-up" @click="collapseAll()" v-if="expanded" />
+                            <Button type="button" icon="fa-solid fa-angles-down" @click="expandAll()" v-else />
                         </div>
                     </template>
-                    <template #empty> <h2>Sem dados a apresentar para o filtro/período selecionado</h2> </template>
-                    <template #loading> <h2>Carregando dados. Por favor aguarde...</h2> </template>
+                    <Column expander style="width: 5rem" />
                     <template v-for="nome in listaNomes" :key="nome">
-                        <Column :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" style="min-width: 12rem" sortable :class="nome.class">
+                        <Column
+                            :class="nome.class"
+                            :field="nome.field"
+                            :header="nome.label"
+                            :filterField="nome.field"
+                            :filterMatchMode="'contains'"
+                            sortable
+                            :dataType="nome.type"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                        >
+                            <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
+                                <Dropdown
+                                    :id="nome.field"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    v-model="filterModel.value"
+                                    :options="nome.list"
+                                    @change="filterCallback()"
+                                    showClear
+                                    :class="nome.class"
+                                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                                    placeholder="Pesquise..."
+                                />
+                            </template>
+                            <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
+                                <Calendar
+                                    v-model="filterModel.value"
+                                    dateFormat="dd/mm/yy"
+                                    selectionMode="range"
+                                    showButtonBar
+                                    :numberOfMonths="2"
+                                    placeholder="dd/mm/aaaa"
+                                    mask="99/99/9999"
+                                    @update:modelValue="filterCallback()"
+                                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                                />
+                            </template>
+                            <template v-else #filter="{ filterModel, filterCallback }">
+                                <InputText
+                                    type="text"
+                                    v-model="filterModel.value"
+                                    @keydown.enter="filterCallback()"
+                                    class="p-column-filter"
+                                    placeholder="Pesquise..."
+                                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                                />
+                            </template>
                             <template #body="{ data }">
                                 <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                                 <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                             </template>
-                            <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" showClear placeholder="Pesquise..." />
-                            </template>
-                            <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @update:modelValue="filterCallback()" />
-                            </template>
-                            <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                            </template>
-                            <template #filterclear="{ filterCallback }">
-                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()" class="p-button-secondary"></Button>
-                            </template>
-                            <template #filterapply="{ filterCallback }">
-                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()" class="p-button-success"></Button>
-                            </template>
                         </Column>
+                    </template>
+                    <template #expansion="slotProps">
+                        <div class="ml-5 p-3">
+                            <PipelineForm
+                                :mode="'expandedFormMode'"
+                                :idCadastro="props.idCadastro"
+                                :idPipeline="slotProps.data.id"
+                                @changed="loadLazyData()"
+                                @cancel="
+                                    mode = 'grid';
+                                    idPipeline = undefined;
+                                "
+                            />
+                        </div>
                     </template>
                     <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" style="0.6rem">
                         <template #body="{ data }">
