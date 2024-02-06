@@ -213,7 +213,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: route.fullPath }]" />
-    <div class="card">
+    <div id="w-95" class="card">
         <CadastroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 1rem"
@@ -239,7 +239,12 @@ watchEffect(() => {
         >
             <!-- scrollHeight="420px" -->
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex justify-content-end flex-column gap-3">
+                    <div class="flex justify-content-between">
+                        <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="novoRegistro()" />
+                        <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
+                    </div>
                     <Dropdown
                         filter
                         placeholder="Filtrar por Tipo de Cadastro..."
@@ -263,10 +268,7 @@ watchEffect(() => {
                         v-model="areaAtuacao"
                         :options="dropdownAtuacao"
                         @change="loadLazyData()"
-                    />
-                    <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="novoRegistro()" />
+                    />                    
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
@@ -313,3 +315,16 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+#w-95{
+    width: 95vw;
+}
+</style>
+<style>
+.container{
+    overflow-x: hidden;
+}
+.p-paginator{
+    flex-wrap: nowrap;
+}
+</style>

@@ -585,10 +585,9 @@ watchEffect(() => {
                     <div class="field col-12 md:col-12" v-if="(itemData.observacao && itemData.observacao.length) || mode != 'view'">
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 80px" aria-describedby="editor-error" />
+                        <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 100px" aria-describedby="editor-error" placeholder="Digite..." />
                         <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled p-disabled"></p>
                     </div>
-
                     <hr />
                     <div class="field col-12 md:col-2">
                         <label for="id_params_tipo_end">Tipo de Endereço<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>

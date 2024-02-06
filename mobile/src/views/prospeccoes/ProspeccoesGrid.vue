@@ -175,7 +175,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções', to: route.fullPath }]" />
-    <div class="card">
+    <div id="w-95" class="card">
         <ProspeccaoForm
             :mode="mode"
             :idCadastro="props.idCadastro"
@@ -210,10 +210,10 @@ watchEffect(() => {
             scrollable
         >
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex justify-content-between gap-1">
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                     <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
@@ -262,3 +262,16 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+#w-95{
+    width: 95vw;
+}
+</style>
+<style>
+.container{
+    overflow-x: hidden;
+}
+.p-paginator{
+    flex-wrap: nowrap;
+}
+</style>

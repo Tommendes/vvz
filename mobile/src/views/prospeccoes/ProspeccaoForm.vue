@@ -298,7 +298,7 @@ watch(selectedCadastro, (value) => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="breadItems" />
-    <div class="card">
+    <div class="card p-0 border-none">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
@@ -373,7 +373,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
                             <label for="observacoes">Observações</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 100px" aria-describedby="editor-error" placeholder="Digite..." />
                             <p v-else v-html="itemData.observacoes" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>

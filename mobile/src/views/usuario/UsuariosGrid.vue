@@ -110,9 +110,9 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex justify-content-end flex-column gap-3">
-                    <span>
-                        <Button class="mr-2 w-49" type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
-                        <Button class="w-49" type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
+                    <span class="flex justify-content-between">
+                        <Button class="mr-1 w-full" type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                        <Button class="ml-1 w-full" type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     </span>
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
@@ -160,9 +160,6 @@ onBeforeMount(() => {
 }
 #screen{
     width: 95vw;
-}
-.w-49{
-    width: 49%;
 }
 </style>
 <style>
