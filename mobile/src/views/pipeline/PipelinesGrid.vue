@@ -21,7 +21,6 @@ const urlBase = ref(`${baseApiUrl}/pipeline`);
 const props = defineProps(['idCadastro']);
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
-const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Seus dados iniciais
@@ -34,11 +33,9 @@ const dropdownTiposDoc = ref([
     { label: 'Pedidos', value: '2' }
 ]);
 const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
-const dropdownUnidadesFilter = ref([]); // Itens do dropdown de Unidades de Negócio do grid
 const tipoDoc = ref(null); // Tipo de documento selecionado
 const unidade = ref(null); // Unidade de negócio selecionada
 const periodo = ref(null); // Período selecionado
-const unidadeNegocio = ref(null); // Unidade de negócio selecionada
 
 // Obter parâmetros do BD
 const optionParams = async (query) => {
@@ -73,16 +70,7 @@ const filtrarUnidadesDescricao = async () => {
         func: 'ubt',
         tipoDoc: tipoDoc.value,
         unidade: unidade.value
-    }).then((res) => {
-        dropdownUnidadesFilter.value = [];
-        res.data.data.map((item) => {
-            const label = item.descricao.toString().replaceAll(/_/g, ' ');
-            dropdownUnidadesFilter.value.push({
-                value: item.descricao,
-                label: label
-            });
-        });
-    });
+    })
 };
 
 // Itens do grid
@@ -100,28 +88,8 @@ const dropdownStatus = ref([
 ]);
 // { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
-    { field: 'nome', label: 'Cliente' },
-    { field: 'tipo_doc', label: 'Tipo' },
-    { field: 'proposta', label: 'Proposta', class: 'text-center', minWidth: '7rem', maxWidth: '7rem' },
-    { field: 'documento', label: 'Documento', class: 'text-center', minWidth: '7rem', maxWidth: '7rem' },
-    { field: 'valor_bruto', label: 'R$ Bruto', class: 'text-right', minWidth: '7rem', maxWidth: '7rem' },
-    { field: 'descricao', label: 'Descrição', maxLength: limitDescription, minWidth: '8rem', maxWidth: '8rem' },
-    { field: 'agente', label: 'Agente', minWidth: '7rem', maxWidth: '7rem' },
-    // { field: 'valor_bruto', label: 'R$ bruto', maxWidth: '5rem' },
-    {
-        field: 'status_created_at',
-        label: 'Data',
-        type: 'date',
-        minWidth: '7rem',
-        tagged: true
-    },
-    {
-        field: 'last_status_params',
-        label: 'Situação',
-        minWidth: '7rem',
-        maxWidth: '7rem',
-        list: dropdownStatus.value
-    }
+    { field: 'nome', label: 'Cliente', minWidth: '9rem' },
+    { field: 'documento', label: 'Documento', maxWidth: '3rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -144,7 +112,6 @@ const urlFilters = ref('');
 const clearFilter = () => {
     loading.value = true;
     rowsPerPage.value = 10;
-    tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = null;
     initFilters();
     lazyParams.value = {
         first: dt.value.first,
@@ -189,7 +156,6 @@ const loadLazyData = () => {
             .then((axiosRes) => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
-                sumRecords.value = axiosRes.data.sumRecords;
                 gridData.value.forEach((element) => {
                     if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                     const nome = element.nome || undefined;
@@ -268,7 +234,6 @@ const mountUrlFilters = () => {
     if (tipoDoc.value) url += `field:doc_venda=equals:${tipoDoc.value}&`;
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
     if (periodo.value) url += `field:status_created_at=contains:${periodo.value}&`;
-    if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = `?${url}`;
 };
@@ -281,29 +246,6 @@ const exportCSV = () => {
         });
     });
     toExport.exportCSV();
-};
-// Determina a qualificação baseado no tempo de existência do registro (status_created_at)
-// Se o registro tiver 120 dias ou mais, retorne 'danger'
-// Se o registro tiver 120 dias ou menos, retorne 'help'
-// Se o registro tiver 80 dias ou menos, retorne 'warning'
-// Se o registro tiver 40 dias ou menos, retorne 'info'
-// Se o registro tiver 7 dias ou menos, retorne 'success'
-const daysToQualify = ref([
-    { days: 7, qualify: 'success', label: '7 dias ou menos' },
-    { days: 39, qualify: 'info', label: 'Inferior a 40 dias' },
-    { days: 79, qualify: 'warning', label: 'Inferior a 80 dias' },
-    { days: 119, qualify: 'help', label: 'Inferior a 120 dias' },
-    { days: 120, qualify: 'danger', label: '120 dias ou mais' }
-]);
-const getSeverity = (status_created_at) => {
-    const ageInDays = moment().diff(moment(status_created_at, 'DD/MM/YYYY'), 'days');
-    for (let i = 0; i < daysToQualify.value.length; i++) {
-        const element = daysToQualify.value[i];
-        if (ageInDays <= element.days) {
-            return element.qualify;
-        }
-    }
-    return 'danger';
 };
 const goField = (data) => {
     idPipeline.value = data.id;
@@ -350,10 +292,6 @@ onMounted(() => {
         periodo.value = route.query.per;
         load = true;
     }
-    if (route.query.tdoc && route.query.tdoc.length) {
-        unidadeNegocio.value = route.query.tdoc;
-        load = true;
-    }
     if (load) loadLazyData();
 });
 </script>
@@ -389,7 +327,6 @@ onMounted(() => {
             @sort="onSort($event)"
             @filter="onFilter($event)"
             filterDisplay="row"
-            tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
@@ -400,8 +337,6 @@ onMounted(() => {
             <!-- scrollHeight="600px" -->
             <template #header>
                 <div class="flex flex-column justify-content-end gap-3 mb-3 p-tag-esp">
-                    <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
-                    <Tag class="tagRes" :value="`Total geral: ${formatCurrency(sumRecords)}`"> </Tag>
                 </div>
                 <div class="flex flex-column justify-content-end gap-3">
                     <Dropdown
@@ -430,20 +365,7 @@ onMounted(() => {
                         :options="dropdownUnidades"
                         @change="
                             loadLazyData();
-                            filtrarUnidadesDescricao();
                         "
-                    />
-                    <Dropdown
-                        filter
-                        placeholder="Filtrar por Tipo..."
-                        :showClear="!!unidadeNegocio"
-                        style="min-width: 200px"
-                        id="unidade_tipos"
-                        optionLabel="label"
-                        optionValue="value"
-                        v-model="unidadeNegocio"
-                        :options="dropdownUnidadesFilter"
-                        @change="loadLazyData()"
                     />
                     <Button icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined @click="clearFilter()" />
