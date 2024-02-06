@@ -33,26 +33,26 @@ module.exports = app => {
             else throw 'Documento (CNPJ ou CPF) inválido. Favor verificar'
             if (body.cpf_cnpj) {
                 const unique = await app.db(tabelaDomain)
-                    .where({ cpf_cnpj: body.cpf_cnpj, status: STATUS_ACTIVE})
+                    .where({ cpf_cnpj: body.cpf_cnpj, status: STATUS_ACTIVE })
                     .andWhere(app.db.raw(body.id ? (`id != '${body.id}'`) : '1=1'))
                     .first()
                 notExistsOrError(unique, `Combinação de CNPJ/ CPF já cadastrado`)
             }
 
             existsOrError(body.nome, 'Nome não informado')
-            
+
             existsOrError(body.id_params_tipo, 'Tipo de registro não informado')
-            
+
             if (!body.prospecto) {
                 // Campos exigidos caso não seja prospecto                
                 existsOrError(body.aniversario, 'Data de Fundação/Nascimento não informado')
                 const dtNascto = moment(body.aniversario);
                 if (!dtNascto.isValid()) throw 'Data de Fundação/Nascimento inválida. Favor verificar'
-                existsOrError(body.id_params_p_nascto,  'País de origem não informado')
+                existsOrError(body.id_params_p_nascto, 'País de origem não informado')
                 existsOrError(body.id_params_atuacao, 'Área de atuação não informada')
                 existsOrError(body.telefone, 'Telefone não informado')
                 existsOrError(body.email, 'E-mail não informado')
-                
+
                 existsOrError(body.id_params_tipo_end, 'Tipo do endereço não informado')
                 existsOrError(body.cep, 'CEP não informado')
                 if (body.cep.trim().length != 8) throw "CEP é inválido"
@@ -162,6 +162,29 @@ module.exports = app => {
                 if (key.split(':')[0] == 'field') {
                     if (['aniversario'].includes(key.split(':')[1])) {
                         query += `EXTRACT(MONTH FROM ${key.split(':')[1]}) = '${value}' AND `
+                    } else if (['cadastro'].includes(key.split(':')[1])) {
+                        const fields = ['nome', 'cpf_cnpj', 'telefone', 'email']
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'endsWith': operator = `like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+                        query += '('
+                        fields.forEach(element => {
+                            query += `tbl1.${element} ${operator} or `
+                        });
+                        query = query.slice(0, -3).trim()
+                        query += ') AND '
+                        // console.log('query', query);
                     } else {
                         if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
 
@@ -221,9 +244,11 @@ module.exports = app => {
             .groupBy('tbl1.id')
             .orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-            .then(body => {
-                return res.json({ data: body, totalRecords: totalRecords.count })
-            })
+        // console.log(ret.toString());
+        // return res.json(ret.toString())
+        ret.then(body => {
+            return res.json({ data: body, totalRecords: totalRecords.count })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })
@@ -422,7 +447,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         }
-    }  
+    }
 
     return { save, get, getById, remove, getByFunction }
 }
