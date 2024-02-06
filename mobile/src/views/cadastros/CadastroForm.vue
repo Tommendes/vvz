@@ -556,7 +556,7 @@ watchEffect(() => {
                             v-model="itemData.telefone"
                             id="telefone"
                             type="text"
-                            @input="validateTelefone()"
+                            @input="validateTelefone()"                                                    
                         />
                         <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
                     </div>
@@ -690,5 +690,8 @@ watchEffect(() => {
 
 .animation-color {
     animation: animation-color 5s linear;
+}
+.p-inputtext {
+    height: 3rem;
 }
 </style>
