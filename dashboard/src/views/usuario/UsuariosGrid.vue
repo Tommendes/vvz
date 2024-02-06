@@ -63,27 +63,6 @@ const loadData = () => {
     }, Math.random() * 1000);
 };
 const mode = ref('grid');
-const searchInPage = () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const contentElement = document.getElementByTagName('tbody');
-
-    if (searchTerm) {
-        const contentText = contentElement.innerText.toLowerCase();
-
-        if (contentText.includes(searchTerm)) {
-            // Criamos uma expressão regular global (g) para encontrar todas as correspondências
-            const regex = new RegExp(searchTerm, 'g');
-
-            // Usamos o método replace para envolver as correspondências com uma tag de destaque
-            contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
-
-            // Definimos o foco de volta no campo de input
-            document.getElementById('searchInput').focus();
-        } else {
-            alert('Nenhuma correspondência encontrada.');
-        }
-    }
-};
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -114,7 +93,7 @@ onBeforeMount(() => {
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
+                        <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>

@@ -826,17 +826,7 @@ module.exports = app => {
             delete user.admin
             delete user.gestor
             delete user.multiCliente
-            delete user.consignatario
-            delete user.tipoUsuario
-            delete user.averbaOnline
-            delete user.cad_servidores
-            delete user.financeiro
-            delete user.con_contratos
-            delete user.cad_orgao
         }
-
-        if (user.email && user.email.trim.length == 0)
-            delete user.email
 
         if (user.email && !isValidEmail(user.email))
             return res.status(400).send('E-mail inválido')
@@ -844,9 +834,8 @@ module.exports = app => {
         if (user.password && user.confirmPassword)
             user.password = encryptPassword(user.password)
 
-        delete user.idCadas
-        delete user.clientName
         delete user.confirmPassword
+        delete user.schema_description
         delete user.j_user
         delete user.j_paswd
         // Apenas admins podem selecionar outros admins, gestores ou multiCliente
@@ -875,22 +864,6 @@ module.exports = app => {
 
         app.api.logger.logInfo({ log: { line: `Alteração de perfil de usuário! Usuário: ${user.name}`, sConsole: true } })
 
-        const tabelaFinParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFinParametros}`
-        const mesAtual = f_folha.getMonth().toString().padStart(2, "0")
-        let isMonth = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano, mes: user.f_mes }).first()
-        if (!isMonth)
-            isMonth = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano, mes: mesAtual }).first()
-        if (!isMonth)
-            isMonth = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano }).orderBy('mes', 'complementar').first()
-
-        let isComplementary = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano, mes: isMonth.mes, complementar: user.f_complementar }).first()
-        if (!isComplementary)
-            isComplementary = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano, mes: isMonth.mes, complementar: '000' }).first()
-        if (!isComplementary)
-            isComplementary = await app.db(tabelaFinParamsDomain).where({ ano: user.f_ano, mes: isMonth.mes }).orderBy('complementar').first()
-
-        user.f_mes = isMonth.mes
-        user.f_complementar = isComplementary.complementar
         user.evento = evento
         user.updated_at = new Date()
         const rowsUpdated = await app.db(tabela)
@@ -980,10 +953,9 @@ module.exports = app => {
         if (req.user.id != req.params.id && !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         app.db({ us: tabela })
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-            .select("us.id", "us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description",
-                "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
-                "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
-                "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
+            .select("us.name", "us.cpf", "us.email", "us.telefone", "us.id", "us.admin", "us.gestor", "us.multiCliente", "us.cadastros",
+                "us.pipeline", "us.pipeline_params", "us.pv", "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.prospeccoes",
+                "us.at", "us.protocolo", "us.uploads", "us.agente_v", "us.agente_arq", "us.agente_at", "us.time_to_pas_expires", "sc.schema_description")
             .where(app.db.raw(`us.id = ${req.params.id}`))
             .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
             .first()

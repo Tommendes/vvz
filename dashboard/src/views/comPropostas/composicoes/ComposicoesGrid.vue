@@ -39,6 +39,7 @@ const clearFilter = () => {
 };
 const goField = (data) => {
     mode.value = 'grid';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'view';
@@ -47,6 +48,7 @@ const goField = (data) => {
 
 const duplicateField = (data) => {
     mode.value = 'grid';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'clone';
@@ -103,6 +105,7 @@ const getSeverity = (value) => {
 };
 const newCompos = () => {
     mode.value = 'grid';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {
         itemData.value = {};
         mode.value = 'new';
