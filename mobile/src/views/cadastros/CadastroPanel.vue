@@ -79,11 +79,11 @@ onBeforeMount(() => {
             { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
-    <div class="grid" :style="route.name == 'cadastro' ? 'min-width: 100rem;' : ''">
+    <div class="grid w-95">
         <div class="col-12">
             <div class="card">
-                <TabView lazy>
-                    <TabPanel>
+                <Accordion :activeIndex="0" lazy>
+                    <AccordionTab>
                         <template #header>
                             <i class="fa-regular fa-address-card mr-2"></i>
                             <span>Dados básicos</span>
@@ -94,8 +94,8 @@ onBeforeMount(() => {
                                 flashDadosPublicos();
                             "
                         />
-                    </TabPanel>
-                    <TabPanel v-if="itemDataDadosPublicos.id">
+                    </AccordionTab>
+                    <AccordionTab v-if="itemDataDadosPublicos.id">
                         <template #header>
                             <div :class="classFlashDadosPublicos">
                                 <i class="fa-regular fa-address-card mr-2"></i>
@@ -103,43 +103,43 @@ onBeforeMount(() => {
                             </div>
                         </template>
                         <CadasDadosPublicos :itemData="itemDataDadosPublicos" />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
+                    </AccordionTab>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-at mr-2"></i>
                             <span>Contatos Adicionais</span>
                         </template>
                         <ContatosGrid v-if="itemData.id" :itemDataRoot="itemData" />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
+                    </AccordionTab>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-map-pin mr-2"></i>
                             <span>Endereços Adicionais</span>
                         </template>
                         <EnderecosGrid v-if="itemData.id" :itemDataRoot="itemData" />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
+                    </AccordionTab>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-paperclip mr-2"></i>
                             <span>Pipeline</span>
                         </template>
                         <PipelinesGrid v-if="itemData.id" :idCadastro="itemData.id" />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
+                    </AccordionTab>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-cart-plus mr-2"></i>
                             <span>Pós-vendas</span>
                         </template>
                         <PosVendasGrid v-if="itemData.id" :idCadastro="itemData.id" />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
+                    </AccordionTab>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-map-location-dot mr-2"></i>
                             <span>Prospecções e visitas ao cliente</span>
                         </template>
                         <ProspeccoesGrid v-if="itemData.id" :idCadastro="itemData.id" />
-                    </TabPanel>
-                </TabView>
+                    </AccordionTab>
+                </Accordion>
             </div>
         </div>
     </div>
@@ -163,5 +163,8 @@ onBeforeMount(() => {
 
 .animation-color {
     animation: animation-color 5s linear;
+}
+.w-95{
+    width: 95vw !important;
 }
 </style>

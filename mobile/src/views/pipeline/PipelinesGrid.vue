@@ -360,7 +360,7 @@ onMounted(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]" />
-    <div class="card" :style="route.name == 'pipeline' ? 'width: 120rem;' : ''">
+    <div class="card w-95" :style="route.name == 'pipeline' ? 'width: 120rem;' : ''">
         <PipelineForm
             :mode="mode"
             :idCadastro="props.idCadastro"
@@ -373,7 +373,6 @@ onMounted(() => {
             v-if="mode == 'new' || idPipeline"
         />
         <DataTable
-            class="hidden lg:block"
             style="font-size: 1rem"
             :value="gridData"
             lazy
@@ -400,11 +399,11 @@ onMounted(() => {
             <!-- @rowCollapse="onRowCollapse" -->
             <!-- scrollHeight="600px" -->
             <template #header>
-                <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                <div class="flex flex-column justify-content-end gap-3 mb-3 p-tag-esp">
                     <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
                     <Tag class="tagRes" :value="`Total geral: ${formatCurrency(sumRecords)}`"> </Tag>
                 </div>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column justify-content-end gap-3">
                     <Dropdown
                         placeholder="Todos...?"
                         :showClear="!!tipoDoc"
@@ -542,5 +541,11 @@ onMounted(() => {
     margin-left: 3rem;
     padding-left: 1rem;
     padding-right: 1rem;
+}
+</style>
+<style>
+.w-95{
+    width: 95vw !important;
+    max-width: 100%;
 }
 </style>
