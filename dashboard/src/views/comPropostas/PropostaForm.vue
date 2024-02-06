@@ -58,8 +58,10 @@ const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
-    if (itemData.value.telefone_contato) itemData.value.telefone_contato = masks.value.telefone.unmasked(itemData.value.telefone_contato);
-    axios[method](url, itemData.value)
+    const obj = { ...itemData.value };
+    if (obj.telefone_contato) obj.telefone_contato = masks.value.telefone.unmasked(obj.telefone_contato);
+    if (obj.desconto_total) obj.desconto_total = obj.desconto_total.replace(',', '.');
+    axios[method](url, obj)
         .then(async (res) => {
             const body = res.data;
             if (body && body.id) {

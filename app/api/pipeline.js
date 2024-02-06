@@ -352,9 +352,12 @@ module.exports = app => {
                             if (queryField == 'nome') {
                                 query += `(c.nome ${operator} or c.cpf_cnpj ${operator}) AND `
                             } else if (['documento', 'proposta'].includes(queryField)) {
-                                // remover todos os caracteres nã onuméricos e converter para número
+                                // remover todos os caracteres não numéricos e converter para número
                                 const valor = value.replaceAll(/([^\d])+/gim, "")
-                                query += `(pp.descricao regexp("${value.toString().replace(' ', '.+')}") or cast(tbl1.documento as unsigned) like "%${Number(valor)}%" or cast(tbl2.documento as unsigned) like "%${Number(valor)}%") AND `
+                                // Receber caracteres não numéricos	
+                                const texto = value.replaceAll(/([\d])+/gim, "")
+                                if (texto.length > 0) query += `pp.descricao regexp("${texto}") AND `
+                                if (valor.length > 0) query += `(cast(tbl1.documento as unsigned) like "%${Number(valor)}%" or cast(tbl2.documento as unsigned) like "%${Number(valor)}%" or cast(tbl3.documento as unsigned) like "%${Number(valor)}%") AND `
                             } else if (queryField == 'last_status_params') {
                                 operator = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[0] : queryes[key].split(':')[0]
                                 switch (operator) {
@@ -434,6 +437,7 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
+        // console.log(ret.toString());
         ret.then(body => {
             const length = body.length
             return res.json({ data: body, totalRecords: totalRecords.count || length, sumRecords: totalRecords.sum || 0 })

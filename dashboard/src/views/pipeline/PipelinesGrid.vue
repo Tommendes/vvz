@@ -8,14 +8,11 @@ import { removeHtmlTags, formatCurrency } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import moment from 'moment';
 
-// const isMobile = window.innerWidth < 768;
 const screenWidth = ref(window.innerWidth);
 const isMobile = ref(window.matchMedia('(max-width: 767px)').matches);
 const updateScreenWidth = () => {
     isMobile.value = window.matchMedia('(max-width: 767px)').matches;
     screenWidth.value = window.innerWidth;
-    console.log('isMobile', isMobile.value);
-    console.log('screenWidth', screenWidth.value);
 };
 
 // Cookies do usuário
@@ -206,8 +203,8 @@ const loadLazyData = () => {
                 gridData.value.forEach((element) => {
                     gridDataRaw.value.push({ ...element });
                     // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
-                    if (element.documento) element.documento = `${element.tipo_doc.replaceAll('_', ' ')} (Doc: ${element.documento})`;
-                    if (element.proposta) element.documento += ` (Prop: ${element.proposta})`;
+                    if (element.documento) element.documento = `${element.tipo_doc.replaceAll('_', ' ')}<br>(Documento: ${element.documento})`;
+                    if (element.proposta) element.documento += `<br>(Proposta: ${element.proposta})`;
                     const nome = element.nome || undefined;
                     if (nome) {
                         element.nome = nome.trim().substr(0, limitNome);
@@ -227,6 +224,8 @@ const loadLazyData = () => {
                     else element.descricao = '';
                     if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
                     else element.valor_bruto = '';
+                    if (element.agente) element.agente = element.agente.trim();
+                    else element.agente = '';
                 });
                 loading.value = false;
             })
@@ -248,6 +247,7 @@ const onPage = (event) => {
 // Ordena os dados do grid
 const onSort = (event) => {
     lazyParams.value = event;
+    console.log(lazyParams.value);
     loadLazyData();
 };
 // Filtra os dados do grid
@@ -543,7 +543,7 @@ const customFilterOptions = ref({ filterclear: false });
                     <template #empty> <h2>Sem dados a apresentar para o filtro/período selecionado</h2> </template>
                     <template #loading> <h2>Carregando dados. Por favor aguarde...</h2> </template>
                     <template v-for="nome in listaNomes" :key="nome">
-                        <Column :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" style="min-width: 12rem" sortable :class="nome.class">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
                                 <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                                 <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
