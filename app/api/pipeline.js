@@ -355,7 +355,7 @@ module.exports = app => {
                                 // remover todos os caracteres não numéricos e converter para número
                                 const valor = value.replaceAll(/([^\d])+/gim, "")
                                 // Receber caracteres não numéricos	
-                                const texto = value.toString().replace(' ', '.+').replaceAll(/([\d])+/gim, "")
+                                const texto = value.toString().replaceAll(valor, '').trim().replace(' ', '.+').replaceAll(/([\d])+/gim, "")
                                 if (texto.length > 0) query += `pp.descricao regexp("${texto.toString().replace(' ', '.+')}") AND `
                                 if (valor.length > 0) query += `(cast(tbl1.documento as unsigned) like "%${Number(valor)}%" or cast(tbl2.documento as unsigned) like "%${Number(valor)}%" or cast(tbl3.documento as unsigned) like "%${Number(valor)}%") AND `
                             } else if (queryField == 'last_status_params') {
