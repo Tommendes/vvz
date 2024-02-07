@@ -202,7 +202,6 @@ module.exports = app => {
         let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
-            console.log(queryes);
             query = ''
             for (const key in queryes) {
                 let operator = queryes[key].split(':')[0]

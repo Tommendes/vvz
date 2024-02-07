@@ -470,14 +470,14 @@ const itemNovo = [
 const itemsComiss = [
     {
         label: 'Agente interno',
-        icon: 'fa-regular fa-user',
+        icon: 'fa-solid fa-user',
         command: () => {
             defaultSuccess('Agente interno');
         }
     },
     {
         label: 'Terceiros',
-        icon: 'fa-regular fa-users',
+        icon: 'fa-solid fa-users',
         command: () => {
             defaultSuccess('Terceiros');
         }
