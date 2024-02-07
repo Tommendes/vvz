@@ -486,9 +486,11 @@ module.exports = app => {
     const remove = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const registro = { status: req.query.st || STATUS_DELETE }
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.pipeline >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            if (registro.status == STATUS_DELETE) isMatchOrError(uParams && uParams.pipeline >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            else if ([STATUS_CANCELADO, STATUS_REATIVADO].includes(registro.status) == STATUS_DELETE) isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Cancelamento ou reativação de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -496,7 +498,6 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
-        const registro = { status: req.query.st || STATUS_DELETE }
         try {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -705,7 +706,7 @@ module.exports = app => {
                         ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
                 noPeriodo.first()
                 noPeriodo = await noPeriodo
-            } 
+            }
             noPeriodo = { count: noPeriodo.count || 0 }
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
