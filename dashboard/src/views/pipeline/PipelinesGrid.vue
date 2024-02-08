@@ -194,7 +194,6 @@ const loadLazyData = () => {
         //     });
         // }
         const url = `${urlBase.value}${urlFilters.value}`; //${urlQueryes}
-        console.log(url);
         axios
             .get(url)
             .then(async (axiosRes) => {
@@ -252,7 +251,6 @@ const onPage = (event) => {
 // Ordena os dados do grid
 const onSort = (event) => {
     lazyParams.value = event;
-    console.log(lazyParams.value);
     loadLazyData();
 };
 // Filtra os dados do grid

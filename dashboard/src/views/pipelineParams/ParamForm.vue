@@ -191,7 +191,6 @@ const getUnidadesDescricao = async () => {
             dropdownTipoSec.value = [];
             res.data.data.map((item) => {
                 const label = item.descricao.toString().replaceAll(/_/g, ' ');
-                console.log(item);
                 dropdownTipoSec.value.push({
                     value: item.descricao,
                     label: label
