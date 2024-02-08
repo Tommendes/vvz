@@ -84,11 +84,9 @@ const dropdownStatus = ref([
     { label: 'Pedido', value: '20' },
     { label: 'Liquidado', value: '80' },
     { label: 'Cancelado', value: '89' }
-    // { label: 'Excluído', value: '99' }
 ]);
-// { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
-    { field: 'nome', label: 'Cliente', minWidth: '9rem' },
+    { field: 'nome', label: 'Cliente' },
     { field: 'documento', label: 'Documento', maxWidth: '3rem' }
 ]);
 // Inicializa os filtros do grid
@@ -342,7 +340,6 @@ onMounted(() => {
                     <Dropdown
                         placeholder="Todos...?"
                         :showClear="!!tipoDoc"
-                        style="min-width: 150px"
                         id="doc_venda"
                         optionLabel="label"
                         optionValue="value"
@@ -357,7 +354,6 @@ onMounted(() => {
                         filter
                         placeholder="Filtrar por Representada..."
                         :showClear="!!unidade"
-                        style="min-width: 150px"
                         id="unidades"
                         optionLabel="label"
                         optionValue="value"
@@ -385,7 +381,7 @@ onMounted(() => {
                     :filterMatchMode="'contains'"
                     sortable
                     :dataType="nome.type"
-                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                    :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                 >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
@@ -411,7 +407,7 @@ onMounted(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
@@ -421,7 +417,7 @@ onMounted(() => {
                             @keydown.enter="filterCallback()"
                             class="p-column-filter"
                             placeholder="Pesquise..."
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
                     </template>
                     <template #body="{ data }">
@@ -431,7 +427,7 @@ onMounted(() => {
                 </Column>
             </template>
             <template #expansion="slotProps">
-                <div class="ml-5 p-3">
+                <div class="pt-3 pb-3">
                     <PipelineForm
                         :mode="'expandedFormMode'"
                         :idCadastro="props.idCadastro"
@@ -453,21 +449,8 @@ onMounted(() => {
     </div>
 </template>
 <style scoped>
-.tagQualify {
-    font-size: 1.2rem;
-}
-.tagRes {
-    background-color: #077a59;
-    color: rgb(255, 255, 255);
-    font-size: 1.5rem;
-    margin-left: 3rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-</style>
-<style>
 .w-95{
     width: 95vw !important;
-    max-width: 100%;
+    max-width: 100% !important;
 }
 </style>

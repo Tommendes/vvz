@@ -140,7 +140,7 @@ onBeforeMount(() => {
             :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']"
         >
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column-reverse gap-3">
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button
                         type="button"
@@ -154,7 +154,7 @@ onBeforeMount(() => {
                     />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
+                        <InputText class="w-full" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
