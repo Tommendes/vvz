@@ -274,7 +274,7 @@ watchEffect(() => {});
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     <Button type="button" v-if="props.padroes" label="Imprimir Proposta" icon="fa-solid fa-print" severity="success" text raised @click="imprimirProposta()" />
-                    <Button type="button" v-if="props.padroes" label="Imprimir Resumo" icon="fa-solid fa-print" severity="success" text raised @click="imprimirProposta(true)" />
+                    <Button type="button" v-if="props.padroes" label="Imprimir Resumo" icon="fa-solid fa-cash-register" severity="success" text raised @click="imprimirProposta(true)" />
                 </div>
             </div>
             <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">

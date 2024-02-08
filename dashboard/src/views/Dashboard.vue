@@ -745,7 +745,7 @@ onMounted(() => {
             </div>
         </div>
 
-        <div class="col-12 md:col-offset-6 md:col-6 xl:col-offset-8 xl:col-4">
+        <div class="col-12 md:col-offset-6 md:col-6 lg:col-offset-7 lg:col-5">
             <div class="card">
                 <div class="flex align-items-center justify-content-between mb-4">
                     <h4>Padrões do Dashboard</h4>

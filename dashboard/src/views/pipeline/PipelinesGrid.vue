@@ -182,18 +182,19 @@ const scrollToTop = () => {
 const loadLazyData = () => {
     loading.value = true;
     setTimeout(() => {
-        let urlQueryes = '';
-        let objetcQueryes = Object.keys(queryUrl.value);
-        if (objetcQueryes.length > 0) {
-            urlQueryes = Object.keys(queryUrl.value)
-                .map((key) => `${key}=${queryUrl.value[key]}`)
-                .join('&');
-            // Pesquise filters.value, identifique a atribua o valor de acordo com o que foi passado na URL (queryUrl.value)
-            Object.keys(filters.value).forEach((key) => {
-                if (queryUrl.value[key]) filters.value[key].value = queryUrl.value[key];
-            });
-        }
+        // let urlQueryes = '';
+        // let objetcQueryes = Object.keys(queryUrl.value);
+        // if (objetcQueryes.length > 0) {
+        //     urlQueryes = Object.keys(queryUrl.value)
+        //         .map((key) => `${key}=${queryUrl.value[key]}`)
+        //         .join('&');
+        //     // Pesquise filters.value, identifique a atribua o valor de acordo com o que foi passado na URL (queryUrl.value)
+        //     Object.keys(filters.value).forEach((key) => {
+        //         if (queryUrl.value[key]) filters.value[key].value = queryUrl.value[key];
+        //     });
+        // }
         const url = `${urlBase.value}${urlFilters.value}`; //${urlQueryes}
+        console.log(url);
         axios
             .get(url)
             .then(async (axiosRes) => {
@@ -203,14 +204,18 @@ const loadLazyData = () => {
                 gridData.value.forEach((element) => {
                     gridDataRaw.value.push({ ...element });
                     // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
-                    if (element.documento) element.documento = `${element.tipo_doc.replaceAll('_', ' ')}<br>(Documento: ${element.documento})`;
-                    if (element.proposta) element.documento += `<br>(Proposta: ${element.proposta})`;
+                    const documento = element.documento;
+                    if (element.documento) element.documento = `${element.tipo_doc.replaceAll('_', ' ')} ${documento}`;
+                    if (element.doc_pai && element.doc_pai != documento) element.documento += `<br>(Proposta: ${element.doc_pai})`;
+                    if (element.doc_filho && element.doc_filho != documento) element.documento += `<br>(Pedido: ${element.doc_filho})`;
+                    if (element.doc_pai && element.doc_filho && ![element.doc_pai, element.doc_filho].includes(documento)) element.documento += `<br>(Registro: ${documento})`;
                     const nome = element.nome || undefined;
                     if (nome) {
                         element.nome = nome.trim().substr(0, limitNome);
                         if (nome.length > limitNome) element.nome += ' ...';
                     }
-                    if (!element.proposta) element.proposta = '';
+                    if (!element.doc_pai) element.doc_pai = '';
+                    if (!element.doc_filho) element.doc_filho = '';
                     // alterar o valor de element.last_status_params de acordo com o dropdownStatus
                     dropdownStatus.value.forEach((item) => {
                         if (item.value == element.last_status_params) element.last_status_params = item.label;
@@ -298,7 +303,8 @@ let dataToExcelExport = [
         columns: [
             { label: 'Cliente', value: (row) => row.cliente },
             { label: 'Tipo', value: (row) => row.tipo },
-            { label: 'Proposta', value: (row) => row.proposta },
+            { label: 'Proposta', value: (row) => row.doc_pai || '' },
+            { label: 'Pedido', value: (row) => row.doc_filho || ''},
             { label: 'Documento', value: (row) => row.documento },
             { label: 'R$ Bruto', value: (row) => row.valor_bruto, format: 'R$#,##0.00' },
             { label: 'Descrição', value: (row) => row.descricao },
@@ -327,7 +333,8 @@ const exportXls = () => {
         dataToExcelExport[0].content.push({
             cliente: element.nome,
             tipo: element.tipo_doc.replaceAll('_', ' '),
-            proposta: element.proposta,
+            proposta: element.doc_pai || '',
+            pedido: element.doc_filho || '',
             documento: element.documento,
             valor_bruto: element.valor_bruto,
             descricao: removeHtmlTags(descricao),
@@ -390,12 +397,12 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', updateScreenWidth);
 });
 
-const queryUrl = ref('');
+// const queryUrl = ref('');
 onMounted(async () => {
     window.addEventListener('resize', updateScreenWidth);
     updateScreenWidth(); // Atualize a propriedade inicialmente
 
-    queryUrl.value = route.query;
+    // queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
     let load = false;

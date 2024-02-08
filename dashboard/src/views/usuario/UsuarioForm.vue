@@ -5,6 +5,8 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn, defaultError } from '@/toast';
 import { isValidEmail } from '@/global';
 
+import { guide } from '@/guides/userFormGuide.js';
+
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
 import { Mask } from 'maska';
@@ -25,9 +27,6 @@ const route = useRoute();
 
 import { useRouter } from 'vue-router';
 const router = useRouter();
-
-import { useToast } from 'primevue/usetoast'; //IA
-const toast = useToast(); //IA
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -51,39 +50,25 @@ const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/users`);
 
-// Converte 1 ou 0 para boolean
-const isTrue = (value) => value === 1;
-
 // Carragamento de dados do form
 const loadData = async () => {
+    loading.value = true;
     setTimeout(async () => {
-        if (route.params.id || itemData.value.id) {
-            if (route.params.id) itemData.value.id = route.params.id;
-            const url = `${urlBase.value}/${itemData.value.id}`;
-            await axios.get(url).then((res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    body.id = String(body.id);
-                    body.prospect = isTrue(body.prospect);
+        const url = `${urlBase.value}/${route.params.id}`;
+        console.log(url);
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
 
-                    itemData.value = body;
-                    if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
-
-                    // Certificação de que loading.value é um objeto antes de acessar a propriedade form
-                    if (typeof loading.value === 'object') {
-                        loading.value.form = false;
-                    }
-                } else {
-                    defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/usuarios` });
-                }
-            });
-        } else {
-            // Certificação de que loading.value é um objeto antes de acessar a propriedade form
-            if (typeof loading.value === 'object') {
-                loading.value = false;
+                itemData.value = body;
+                if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
+            } else {
+                defaultWarn('Registro não localizado');
+                router.push({ path: `/${userData.schema_description}/usuarios` });
             }
-        }
+            loading.value = false;
+        });
     }, Math.random() * 1000);
 };
 // Salvar dados do formulário
@@ -95,8 +80,9 @@ const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
-    if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.unmasked(itemData.value.cpf);
-    axios[method](url, itemData.value)
+    const obj = { ...itemData.value };
+    if (obj.cpf) obj.cpf = masks.value.cpf_cnpj.unmasked(obj.cpf);
+    axios[method](url, obj)
         .then((res) => {
             const body = res.data;
             if (body && body.id) {
@@ -122,7 +108,7 @@ const dropdownAlcadas = ref([
     { value: 1, label: 'Pesquisa' },
     { value: 2, label: 'Inclusão' },
     { value: 3, label: 'Edição' },
-    { value: 4, label: 'Administrar' }
+    { value: 4, label: 'Administração/Exclusão' }
 ]);
 // Troca de senha
 const changePassword = async () => {
@@ -218,20 +204,31 @@ watchEffect(() => {});
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="cpf">CPF/CNPJ</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText
+                                v-else-if="userData.admin || userData.gestor"
+                                autocomplete="no"
+                                :disabled="mode == 'view'"
+                                v-model="itemData.cpf"
+                                id="cpf"
+                                type="text"
+                                @input="validateCPF()"
+                                v-maska
+                                data-maska="['##.###.###/####-##','###.###.###-##']"
+                            />
+                            <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.email }}</p>
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
                         </div>
                         <div v-if="!itemData.id && mode == 'new'" class="col-12 md:col-3">
                             <label for="email">E-mail</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                         </div>
                         <div v-else class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p class="p-inputtext p-component p-filled">{{ itemData.email }}</p>
+                            <p class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.email }}</p>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="telefone">Telefone</label>
@@ -239,78 +236,99 @@ watchEffect(() => {});
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" @input="validateTelefone()" />
                             <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
                         </div>
-                        <div class="col-12 md:col-12">
-                            <label id="secaopermissao">Permissões</label>
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="gestor">Gestor</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="gestor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gestor" :options="dropdownSN" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="multiCliente">MultiCliente</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.multiCliente" :options="dropdownSN" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="cadastros">Gestão de cadastros</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownAlcadas" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="pipeline">Gestão de pipeline</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownAlcadas" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="pv">Gestão de pós-venda</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownAlcadas" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="comercial">Gestão comercial</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownAlcadas" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="fiscal">Gestão fiscal</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownAlcadas" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="financeiro">Gestão financeira</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownAlcadas" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="comissoes">Gestão de comissões</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="agente_v">Agente vendedor</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownSN" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="agente_arq">Agente arquiteto</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownSN" placeholder="Selecione..." />
-                        </div>
-                        <div class="col-12 md:col-2">
-                            <label for="agente_at">Agente de atendimento</label>
-                            <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..." />
+                        <div class="grid" v-if="userData.admin + userData.gestor >= 1">
+                            <div class="col-12 md:col-12">
+                                <label id="secaopermissao">Permissões de gestão / Alçadas</label>
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="gestor">Gestor</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="gestor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gestor" :options="dropdownSN" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="multiCliente">MultiCliente</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.multiCliente" :options="dropdownSN" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="cadastros">Cadastros</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="pipeline">Pipeline</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="pipeline_params">Parâmetros do pipeline</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="pipeline_params" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline_params" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="pv">Pós-venda</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="at">Assistência técnica</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.at" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="comercial">Comercial</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="prospeccoes">Prospecções</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="prospeccoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.prospeccoes" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="fiscal">Fiscal</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="financeiro">Financeira</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="protocolo">Protocolo</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="protocolo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.protocolo" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="comissoes">Comissões</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="agente_v">Usuário vendedor</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownSN" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="agente_arq">Usuário arquiteto</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownSN" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <label for="agente_at">Usuário de AT</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-4">
+                                <label for="schema_description">Domínio de dados do usuário</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.schema_description }}</p>
+                            </div>
                         </div>
                         <!-- Botão trocar senha -->
                         <div v-if="itemData.id" id="divTS" class="col-12 md:col-2 m-0 font-normal">
                             <Button id="btnTS" class="shadow-none text-left font-normal custom-font-weight" @click="changePassword" label="Trocar Senha" icon="fa-solid fa-external-link" raised :disabled="mode === 'view'" />
-                        </div>
-                    </div>
-                    <div class="col-12" v-if="userData.admin >= 2">
-                        <div class="card bg-green-200 mt-3">
-                            <p>Mode: {{ mode }}</p>
-                            <p>itemData: {{ itemData }}</p>
                         </div>
                     </div>
                 </div>
@@ -321,8 +339,27 @@ watchEffect(() => {});
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
+                <div class="col-12">
+                    <Fieldset class="bg-green-200" toggleable :collapsed="true">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-circle-info mr-2"></span>
+                                <span class="font-bold text-lg">Instruções</span>
+                            </div>
+                        </template>
+                        <p class="m-0">
+                            <span v-html="guide" />
+                        </p>
+                    </Fieldset>
+                </div>
             </div>
         </form>
+        <div class="col-12" v-if="userData.admin >= 2">
+            <div class="card bg-green-200 mt-3">
+                <p>Mode: {{ mode }}</p>
+                <p>itemData: {{ itemData }}</p>
+            </div>
+        </div>
     </div>
 </template>
 <style scoped>

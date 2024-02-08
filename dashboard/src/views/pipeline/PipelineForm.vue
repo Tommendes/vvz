@@ -394,99 +394,126 @@ const getPipelineParam = async () => {
         const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
         await axios.get(url).then((res) => {
             if (res.data && res.data.id) itemDataParam.value = res.data;
+            // if (itemDataParam.value.autom_nr != 1) itemNovo.pop();
         });
     }
 };
 const itemNovo = [
-    {
-        label: 'Outro Cliente ou Tipo',
-        icon: 'fa-solid fa-plus',
-        command: async () => {
-            delete itemData.value.id;
-            delete itemData.value.id_filho;
-            delete itemData.value.id_pai;
-            delete itemData.value.documento;
-            itemData.value = {
-                id_pipeline_params: itemData.value.id_pipeline_params,
-                id_com_agentes: itemData.value.id_com_agentes,
-                valor_bruto: itemData.value.valor_bruto,
-                valor_liq: itemData.value.valor_liq,
-                valor_representacao: itemData.value.valor_representacao,
-                valor_agente: itemData.value.valor_agente,
-                perc_represent: itemData.value.perc_represent,
-                descricao: itemData.value.descricao
-            };
-            selectedCadastro.value = undefined;
-            itemDataLastStatus.value = {};
-            editCadastro.value = true;
-            mode.value = 'new';
-            // Unidades de negócio
-            await listUnidadesDescricao();
-            await listAgentesNegocio();
-        }
-    },
-    {
-        label: 'Mesmo Cliente e Outro Tipo',
-        icon: 'fa-regular fa-copy',
-        command: async () => {
-            delete itemData.value.id;
-            delete itemData.value.id_filho;
-            delete itemData.value.id_pai;
-            delete itemData.value.documento;
-            delete itemData.value.updated_at;
-            itemData.value = {
-                id_cadastros: itemData.value.id_cadastros,
-                id_pipeline_params: itemData.value.id_pipeline_params,
-                id_com_agentes: itemData.value.id_com_agentes,
-                valor_bruto: itemData.value.valor_bruto,
-                valor_liq: itemData.value.valor_liq,
-                valor_representacao: itemData.value.valor_representacao,
-                valor_agente: itemData.value.valor_agente,
-                perc_represent: itemData.value.perc_represent,
-                descricao: itemData.value.descricao
-            };
-            if (itemDataParam.value.doc_venda == 0) {
-                delete itemData.value.valor_bruto;
-                delete itemData.value.valor_liq;
-                delete itemData.value.valor_representacao;
-                delete itemData.value.valor_agente;
-                delete itemData.value.perc_represent;
-            }
-            itemDataLastStatus.value = {};
-            mode.value = 'new';
-            // Unidades de negócio
-            await listUnidadesDescricao();
-            await listAgentesNegocio();
-        }
-    },
+    // {
+    //     label: 'Outro Cliente ou Tipo',
+    //     icon: 'fa-solid fa-plus',
+    //     command: async () => {
+    //         delete itemData.value.id;
+    //         delete itemData.value.id_filho;
+    //         delete itemData.value.id_pai;
+    //         delete itemData.value.documento;
+    //         itemData.value = {
+    //             id_pipeline_params: itemData.value.id_pipeline_params,
+    //             id_com_agentes: itemData.value.id_com_agentes,
+    //             valor_bruto: itemData.value.valor_bruto,
+    //             valor_liq: itemData.value.valor_liq,
+    //             valor_representacao: itemData.value.valor_representacao,
+    //             valor_agente: itemData.value.valor_agente,
+    //             perc_represent: itemData.value.perc_represent,
+    //             descricao: itemData.value.descricao
+    //         };
+    //         selectedCadastro.value = undefined;
+    //         itemDataLastStatus.value = {};
+    //         editCadastro.value = true;
+    //         mode.value = 'new';
+    //         // Unidades de negócio
+    //         await listUnidadesDescricao();
+    //         await listAgentesNegocio();
+    //     }
+    // },
+    // {
+    //     label: 'Mesmo Cliente e Outro Tipo',
+    //     icon: 'fa-regular fa-copy',
+    //     command: async () => {
+    //         delete itemData.value.id;
+    //         delete itemData.value.id_filho;
+    //         delete itemData.value.id_pai;
+    //         delete itemData.value.documento;
+    //         delete itemData.value.updated_at;
+    //         itemData.value = {
+    //             id_cadastros: itemData.value.id_cadastros,
+    //             id_pipeline_params: itemData.value.id_pipeline_params,
+    //             id_com_agentes: itemData.value.id_com_agentes,
+    //             valor_bruto: itemData.value.valor_bruto,
+    //             valor_liq: itemData.value.valor_liq,
+    //             valor_representacao: itemData.value.valor_representacao,
+    //             valor_agente: itemData.value.valor_agente,
+    //             perc_represent: itemData.value.perc_represent,
+    //             descricao: itemData.value.descricao
+    //         };
+    //         if (itemDataParam.value.doc_venda == 0) {
+    //             delete itemData.value.valor_bruto;
+    //             delete itemData.value.valor_liq;
+    //             delete itemData.value.valor_representacao;
+    //             delete itemData.value.valor_agente;
+    //             delete itemData.value.perc_represent;
+    //         }
+    //         itemDataLastStatus.value = {};
+    //         mode.value = 'new';
+    //         // Unidades de negócio
+    //         await listUnidadesDescricao();
+    //         await listAgentesNegocio();
+    //     }
+    // },
     {
         label: 'Mesmo Cliente e Tipo (Clonar)',
         icon: 'fa-solid fa-copy',
         command: async () => {
             delete itemData.value.id;
+            delete itemData.value.evento;
+            delete itemData.value.documento;
             delete itemData.value.id_filho;
             delete itemData.value.id_pai;
             delete itemData.value.created_at;
             delete itemData.value.updated_at;
             itemDataParam.value.obrig_valor = 0;
-            itemData.value.documento = String(itemData.value.documento);
-            await saveData();
+            itemDataLastStatus.value = {};
+            mode.value = 'clone';
+            // Unidades de negócio
+            await listUnidadesDescricao();
             await listAgentesNegocio();
-            defaultWarn('Verifique se o número do documento deve ser editado');
+            // itemData.value.documento = String(itemData.value.documento);
+            // await saveData();
+            // await listAgentesNegocio();
+            // defaultWarn('Verifique se o número do documento deve ser editado');
         }
     }
 ];
+const registroIdentico = async () => {
+    delete itemData.value.id;
+    delete itemData.value.evento;
+    delete itemData.value.documento;
+    delete itemData.value.id_filho;
+    delete itemData.value.id_pai;
+    delete itemData.value.created_at;
+    delete itemData.value.updated_at;
+    itemDataParam.value.obrig_valor = 0;
+    itemDataLastStatus.value = {};
+    mode.value = 'clone';
+    // Unidades de negócio
+    await listUnidadesDescricao();
+    await listAgentesNegocio();
+    // itemData.value.documento = String(itemData.value.documento);
+    // await saveData();
+    // await listAgentesNegocio();
+    // defaultWarn('Verifique se o número do documento deve ser editado');
+};
 const itemsComiss = [
     {
         label: 'Agente interno',
-        icon: 'fa-regular fa-user',
+        icon: 'fa-solid fa-user',
         command: () => {
             defaultSuccess('Agente interno');
         }
     },
     {
         label: 'Terceiros',
-        icon: 'fa-regular fa-users',
+        icon: 'fa-solid fa-users',
         command: () => {
             defaultSuccess('Terceiros');
         }
@@ -835,10 +862,16 @@ watch(route, (value) => {
                             />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button v-if="route.name != 'cadastro' && itemDataLastStatus.status_params < 80 && userData.pipeline >= 4" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
+                                <Button
+                                    v-if="(route.name != 'cadastro' && itemDataLastStatus.status_params < 80 && userData.pipeline >= 4) || mode == 'clone'"
+                                    icon="fa-solid fa-pencil"
+                                    severity="primary"
+                                    @click="confirmEditCadastro()"
+                                    :disabled="mode == 'view'"
+                                />
                             </div>
                         </div>
-                        <div :class="`col-12 lg:col-${mode == 'new' && !(itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
+                        <div :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
                             <label for="id_pipeline_params">Tipo</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <p v-else-if="['view', 'expandedFormMode'].includes(mode) && unidadeLabel" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`" v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
@@ -854,11 +887,11 @@ watch(route, (value) => {
                                 optionValue="value"
                                 v-model="itemData.id_pipeline_params"
                                 :options="dropdownUnidades"
-                                :disabled="mode != 'new'"
+                                :disabled="!['new', 'clone'].includes(mode)"
                                 @change="getPipelineParam()"
                             />
                         </div>
-                        <div :class="`col-12 lg:col-${mode == 'new' && !(itemData.documento || (mode == 'new' && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
+                        <div :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
                             <label for="id_com_agentes">Agente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown
@@ -1022,7 +1055,7 @@ watch(route, (value) => {
                             <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
-                    <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
+                    <div class="card flex justify-content-center flex-wrap gap-3" v-if="['new', 'clone'].includes(mode)">
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
@@ -1073,7 +1106,7 @@ watch(route, (value) => {
                             </div>
                         </template>
 
-                        <div v-if="(mode == 'new' || itemDataLastStatus.status_params < 80) && !itemData.id_filho">
+                        <div v-if="(['new', 'clone'].includes(mode) || itemDataLastStatus.status_params < 80) && !itemData.id_filho">
                             <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
                             <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
                             <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
@@ -1091,7 +1124,8 @@ watch(route, (value) => {
                                 raised
                                 @click="router.push(`/${userData.schema_description}/cadastro/${itemData.id_cadastros}`)"
                             />
-                            <SplitButton label="Novo Registro Idêntico" v-if="!itemData.id_pai" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" />
+                            <Button label="Novo Registro Idêntico" v-if="!itemData.id_pai" type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised @click="registroIdentico" />
+                            <!-- <SplitButton label="Novo Registro Idêntico" v-if="!itemData.id_pai" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" /> -->
                             <Button
                                 :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
                                 v-if="itemData.id_filho || itemData.id_pai"

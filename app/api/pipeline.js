@@ -355,8 +355,8 @@ module.exports = app => {
                                 // remover todos os caracteres não numéricos e converter para número
                                 const valor = value.replaceAll(/([^\d])+/gim, "")
                                 // Receber caracteres não numéricos	
-                                const texto = value.replaceAll(/([\d])+/gim, "")
-                                if (texto.length > 0) query += `pp.descricao regexp("${texto}") AND `
+                                const texto = value.toString().replaceAll(valor, '').trim().replace(' ', '.+').replaceAll(/([\d])+/gim, "")
+                                if (texto.length > 0) query += `pp.descricao regexp("${texto.toString().replace(' ', '.+')}") AND `
                                 if (valor.length > 0) query += `(cast(tbl1.documento as unsigned) like "%${Number(valor)}%" or cast(tbl2.documento as unsigned) like "%${Number(valor)}%" or cast(tbl3.documento as unsigned) like "%${Number(valor)}%") AND `
                             } else if (queryField == 'last_status_params') {
                                 operator = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[0] : queryes[key].split(':')[0]
@@ -420,7 +420,8 @@ module.exports = app => {
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
-                lpad(tbl2.documento,${digitsOfAFolder},'0') proposta, lpad(tbl1.documento,${digitsOfAFolder},'0') documento, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+                lpad(tbl1.documento,${digitsOfAFolder},'0') documento, lpad(tbl2.documento,${digitsOfAFolder},'0') doc_pai, 
+                lpad(tbl3.documento,${digitsOfAFolder},'0') doc_filho, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
                 DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
                 (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  last_status_params,
                 SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
@@ -460,35 +461,42 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPvDomain = `${dbPrefix}_${uParams.schema_name}.pv`
         const tabelaOatDomain = `${dbPrefix}_${uParams.schema_name}.pv_oat`
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .where({ 'tbl1.id': req.params.id })
-            .whereNot({ 'tbl1.status': STATUS_DELETE })
-            .first()
-            .then(async (body) => {
-                if (!body) return res.status(404).send('Registro não encontrado')
-                body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
-                let pv = await app.db(tabelaPvDomain).select({ 'id_pv': 'id' }).where({ id_pipeline: body.id, tipo: TIPO_PV_MONTAGEM, status: STATUS_ACTIVE }).first()
-                if (pv) {
-                    pv = pv.id_pv;
-                    body = { ...body, id_pv: pv }
-                    let oat = await app.db(tabelaOatDomain).select({ 'id_oat': 'id' }).where({ id_pv: pv, status: STATUS_ACTIVE }).first()
-                    if (oat) body = { ...body, id_oat: oat.id_oat }
-                }
-                return res.json(body)
-            })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
-            })
+        if (Number(req.params.id) > 0) {
+            const ret = app.db({ tbl1: tabelaDomain })
+                .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+                .where({ 'tbl1.id': req.params.id })
+                .whereNot({ 'tbl1.status': STATUS_DELETE })
+                .first()
+                // console.log(ret.toString());
+                ret.then(async (body) => {
+                    if (!body) return res.status(404).send('Registro não encontrado')
+                    body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
+                    let pv = await app.db(tabelaPvDomain).select({ 'id_pv': 'id' }).where({ id_pipeline: body.id, tipo: TIPO_PV_MONTAGEM, status: STATUS_ACTIVE }).first()
+                    if (pv) {
+                        pv = pv.id_pv;
+                        body = { ...body, id_pv: pv }
+                        let oat = await app.db(tabelaOatDomain).select({ 'id_oat': 'id' }).where({ id_pv: pv, status: STATUS_ACTIVE }).first()
+                        if (oat) body = { ...body, id_oat: oat.id_oat }
+                    }
+                    return res.json(body)
+                })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
+        } else {
+            return res.status(201)
+        }
     }
 
     const remove = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const registro = { status: req.query.st || STATUS_DELETE }
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.pipeline >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            if (registro.status == STATUS_DELETE) isMatchOrError(uParams && uParams.pipeline >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            else if ([STATUS_CANCELADO, STATUS_REATIVADO].includes(registro.status) == STATUS_DELETE) isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Cancelamento ou reativação de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -496,7 +504,6 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
-        const registro = { status: req.query.st || STATUS_DELETE }
         try {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -705,7 +712,7 @@ module.exports = app => {
                         ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
                 noPeriodo.first()
                 noPeriodo = await noPeriodo
-            } 
+            }
             noPeriodo = { count: noPeriodo.count || 0 }
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
