@@ -5,6 +5,8 @@ import axios from '@/axios-interceptor';
 import { isValidEmail, formatCurrency } from '@/global';
 import { defaultSuccess, defaultWarn } from '@/toast';
 
+import { guide1, guide2 } from '@/guides/propostasFormGuide.js';
+
 // Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -47,6 +49,7 @@ const loadData = async () => {
     loading.value = true;
     if (itemData && itemData.id) {
         if (itemData.telefone_contato) itemData.telefone_contato = masks.value.telefone.masked(itemData.telefone_contato);
+        if (itemData.desconto_total) itemData.desconto_total = formatCurrency(itemData.desconto_total);
     }
     loading.value = false;
 };
@@ -222,6 +225,7 @@ watchEffect(() => {});
                         <label for="desconto_total">Desconto Total</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <div v-else-if="!['view'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                            <span class="p-inputgroup-addon">R$</span>
                             <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                         </div>
                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
@@ -276,6 +280,20 @@ watchEffect(() => {});
                     <Button type="button" v-if="props.padroes" label="Imprimir Proposta" icon="fa-solid fa-print" severity="success" text raised @click="imprimirProposta()" />
                     <Button type="button" v-if="props.padroes" label="Imprimir Resumo" icon="fa-solid fa-cash-register" severity="success" text raised @click="imprimirProposta(true)" />
                 </div>
+            </div>
+            <div class="col-12">
+                <Fieldset class="bg-green-200" toggleable :collapsed="true">
+                    <template #legend>
+                        <div class="flex align-items-center text-primary">
+                            <span class="fa-solid fa-circle-info mr-2"></span>
+                            <span class="font-bold text-lg">Instruções</span>
+                        </div>
+                    </template>
+                    <p class="m-0">
+                        <span v-if="!props.padroes" v-html="guide1" />
+                        <span v-if="props.padroes" v-html="guide2" />
+                    </p>
+                </Fieldset>
             </div>
             <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                 <h5>FormData</h5>

@@ -55,7 +55,6 @@ const loadData = async () => {
     loading.value = true;
     setTimeout(async () => {
         const url = `${urlBase.value}/${route.params.id}`;
-        console.log(url);
         await axios.get(url).then((res) => {
             const body = res.data;
             if (body && body.id) {

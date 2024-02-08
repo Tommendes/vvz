@@ -58,6 +58,7 @@ const close = () => {
                 </div>
             </template>
         </ConfirmDialog>
+        <ScrollTop />
     </div>
 </template>
 

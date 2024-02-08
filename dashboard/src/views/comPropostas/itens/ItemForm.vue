@@ -1,8 +1,11 @@
 <script setup>
-import { onBeforeMount, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
+
+import { guide } from '@/guides/propostasItemFormGuide.js';
+
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -14,6 +17,8 @@ import { formatValor } from '@/global';
 
 import moment from 'moment';
 
+const form = ref();
+
 // Campos de formulário
 const itemData = ref({});
 const dataRegistro = ref('');
@@ -22,7 +27,7 @@ const mode = ref('view');
 // Loadings
 const loading = ref(false);
 // Props do template
-const props = defineProps(['idItem', 'modeParent']);
+const props = defineProps(['idItem', 'modeParent', 'idComposicao']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
@@ -41,6 +46,7 @@ const loadData = async () => {
                     convertFloatFields();
                     itemData.value.item_ativo = isTrue(itemData.value.item_ativo);
                     itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
+                    itemData.value.desconto_ativo = Number(itemData.value.desconto_ativo) || 0;
                     dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                     await getNomeProduto();
                     if (props.modeParent == 'clone') {
@@ -53,6 +59,8 @@ const loadData = async () => {
                         delete itemData.value.tblName;
                         itemData.value.item_ativo = true;
                         itemData.value.compoe_valor = true;
+                        itemData.value.desconto_total = '0,00';
+                        itemData.value.desconto_ativo = 0;
                     }
                     loading.value = false;
                 } else {
@@ -65,6 +73,7 @@ const loadData = async () => {
     } else {
         itemData.value = {
             id_com_propostas: route.params.id,
+            id_com_prop_compos: props.idComposicao,
             item_ativo: true,
             compoe_valor: true,
             quantidade: 1,
@@ -93,15 +102,15 @@ const saveData = async () => {
     // Importante para o backend
     convertFloatFields('en');
     axios[method](url, obj)
-        .then((res) => {
+        .then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
-                itemData.value = body;
+                itemData.value.id = body.id;
+                await getNomeProduto();
                 convertFloatFields();
-                itemData.value.item_ativo = isTrue(itemData.value.item_ativo);
-                itemData.value.compoe_valor = isTrue(itemData.value.compoe_valor);
                 mode.value = 'view';
+                editProduto.value = false;
                 emit('changed');
             } else {
                 defaultWarn('Erro ao salvar registro');
@@ -248,10 +257,14 @@ onBeforeMount(() => {
     loadData();
     getComposicoes();
 });
+
+onMounted(() => {
+    form.value.scrollIntoView({ behavior: 'smooth' });
+});
 </script>
 
 <template>
-    <div class="card">
+    <div class="card" ref="form">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
@@ -259,11 +272,17 @@ onBeforeMount(() => {
                         <div class="col-12 md:col-8">
                             <div class="flex justify-content-start gap-5">
                                 <div class="switch-label" v-if="itemData.item">Número do item: {{ itemData.item }}</div>
-                                <div class="switch-label">Item ativo <InputSwitch id="item_ativo" :disabled="mode == 'view'" v-model="itemData.item_ativo" /></div>
-                                <div class="switch-label">Compõe valor <InputSwitch id="compoe_valor" :disabled="mode == 'view'" v-model="itemData.compoe_valor" /></div>
+                                <div class="switch-label">
+                                    Item ativo
+                                    <InputSwitch id="item_ativo" :disabled="mode == 'view'" v-model="itemData.item_ativo" />
+                                </div>
+                                <div class="switch-label">
+                                    Compõe valor
+                                    <InputSwitch id="compoe_valor" :disabled="mode == 'view'" v-model="itemData.compoe_valor" />
+                                </div>
                             </div>
                         </div>
-                        <div class="col-12">
+                        <div class="col-12" v-if="!props.idComposicao">
                             <label for="id_com_prop_compos">Composição</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown
@@ -293,7 +312,15 @@ onBeforeMount(() => {
                         <div class="col-12 md:col-10">
                             <label for="id_com_produtos">Produto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editProduto || (mode == 'new' && props.modeParent != 'clone')" v-model="selectedProduto" optionLabel="name" :suggestions="filteredProdutos" @complete="searchProdutos" forceSelection />
+                            <AutoComplete
+                                v-else-if="editProduto || (mode == 'new' && props.modeParent != 'clone')"
+                                v-model="selectedProduto"
+                                optionLabel="name"
+                                :suggestions="filteredProdutos"
+                                @complete="searchProdutos"
+                                forceSelection
+                                panelClass="p-autocomplete-panel-red"
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeProduto" />
                                 <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditProduto()" :disabled="mode == 'view'" />
@@ -346,6 +373,19 @@ onBeforeMount(() => {
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload()" />
                     </div>
                 </div>
+                <div class="col-12">
+                    <Fieldset class="bg-green-200" toggleable :collapsed="true">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-circle-info mr-2"></span>
+                                <span class="font-bold text-lg">Instruções</span>
+                            </div>
+                        </template>
+                        <p class="m-0">
+                            <span v-html="guide" />
+                        </p>
+                    </Fieldset>
+                </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                     <p>mode: {{ mode }}</p>
                     <p>modeParent: {{ props.modeParent }}</p>
@@ -356,6 +396,9 @@ onBeforeMount(() => {
     </div>
 </template>
 <style scoped>
+.p-autocomplete-panel-red {
+    max-width: 70vh;
+}
 .switch-label {
     font-size: 1.75rem;
     font-family: inherit;
