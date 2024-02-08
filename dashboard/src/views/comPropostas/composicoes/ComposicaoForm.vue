@@ -3,6 +3,9 @@ import { onBeforeMount, onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
+
+import { guide } from '@/guides/propostasComposFormGuide.js';
+
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -114,13 +117,15 @@ const reload = () => {
 onBeforeMount(() => {
     loadData();
 });
+const form = ref();
 onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
+    form.value.scrollIntoView({ behavior: 'smooth' });
 });
 </script>
 
 <template>
-    <div class="card">
+    <div class="card" ref="form">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
@@ -158,6 +163,19 @@ onMounted(() => {
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload()" />
                     </div>
+                </div>
+                <div class="col-12">
+                    <Fieldset class="bg-green-200" toggleable :collapsed="true">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-circle-info mr-2"></span>
+                                <span class="font-bold text-lg">Instruções</span>
+                            </div>
+                        </template>
+                        <p class="m-0">
+                            <span v-html="guide" />
+                        </p>
+                    </Fieldset>
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                     <p>mode: {{ mode }}</p>

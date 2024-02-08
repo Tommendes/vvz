@@ -8,6 +8,7 @@ import PropostaForm from './PropostaForm.vue';
 import ComposicoesGrid from './composicoes/ComposicoesGrid.vue';
 import ItensGrid from './itens/ItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
+
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -16,6 +17,7 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 
 import { Mask } from 'maska';
+import { formatCurrency } from '../../global';
 const masks = ref({
     cpf_cnpj: new Mask({
         mask: ['###.###.###-##', '##.###.###/####-##']
@@ -52,6 +54,7 @@ const loadData = async () => {
             if (body && body.id) {
                 body.id = String(body.id);
                 itemData.value = body;
+                if (itemData.value.desconto_total) itemData.value.desconto_total = formatCurrency(itemData.value.desconto_total);
                 if (itemData.value.id_pipeline) await loadDataPipeline();
                 if (itemDataPipeline.value.id_pipeline_params) await loadPipelineParamsData();
                 breadItems.value = [{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }];

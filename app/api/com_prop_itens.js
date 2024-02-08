@@ -164,6 +164,7 @@ module.exports = app => {
         }
 
         const id_com_propostas = req.params.id_com_propostas
+        const idComposicao = req.query.idComposicao || null
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaProdutosDomain = `${dbPrefix}_${uParams.schema_name}.com_produtos`
         const tabelaComposicoesDomain = `${dbPrefix}_${uParams.schema_name}.com_prop_compos`
@@ -173,13 +174,14 @@ module.exports = app => {
             .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
             .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
             .where({ 'tbl1.id_com_propostas': id_com_propostas })
-            .whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_ITEM_INACTIVE])
+        if (idComposicao) ret.where({ 'tbl1.id_com_prop_compos': idComposicao })
+        ret.whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_ITEM_INACTIVE])
             .orderBy(app.db.raw('cast(tbl3.compos_nr as int)'), 'asc')
             .orderBy(app.db.raw('cast(tbl1.item as int)'), 'desc')
-            .then(body => {
-                const count = body.length
-                return res.json({ data: body, count: count })
-            })
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count: count })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })

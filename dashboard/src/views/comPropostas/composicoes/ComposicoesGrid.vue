@@ -4,6 +4,7 @@ import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import ComposicaoForm from './ComposicaoForm.vue';
+import ItensGrid from '../itens/ItensGrid.vue';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -20,11 +21,11 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-prop-compos`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'comp_ativa', label: 'Ativo', minWidth: '5rem', tagged: true },
-    { field: 'compoe', label: 'Compõe', minWidth: '5rem', tagged: true },
-    { field: 'compos_nr', label: 'Número', minWidth: '5rem' },
-    { field: 'localizacao', label: 'Descrição um', minWidth: '15rem' },
-    { field: 'tombamento', label: 'Descrição dois', minWidth: '15rem' }
+    { field: 'comp_ativa', label: 'Ativo', tagged: true },
+    { field: 'compoe', label: 'Compõe', tagged: true },
+    { field: 'compos_nr', label: 'Número' },
+    { field: 'localizacao', label: 'Descrição curta' },
+    { field: 'tombamento', label: 'Descrição longa' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -81,7 +82,19 @@ const removeComposicao = (item) => {
     });
 };
 
+const expandedRows = ref([]); // Registro expandido
+const expanded = ref(false);
+const expandAll = () => {
+    expanded.value = true;
+    expandedRows.value = gridData.value.filter((p) => p.id);
+};
+const collapseAll = () => {
+    defaultSuccess('collapseAll');
+    expanded.value = false;
+    expandedRows.value = null;
+};
 const loadData = () => {
+    expanded.value = false;
     setTimeout(() => {
         loading.value = true;
         const url = `${urlBase.value}/${route.params.id}`;
@@ -118,62 +131,82 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div>
-        <ComposicaoForm :idComposicao="itemData.id" :modeParent="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit', 'clone'].includes(mode)" />
-        <DataTable
-            style="font-size: 1rem"
-            :value="gridData"
-            :paginator="true"
-            :rows="10"
-            dataKey="id"
-            :rowHover="true"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :loading="loading"
-            :filters="filters"
-            responsiveLayout="scroll"
-            :globalFilterFields="['compos_nr', 'localizacao', 'tombamento']"
-        >
-            <template #header>
-                <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newCompos" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <span class="p-input-icon-left">
-                        <i class="fa-solid fa-magnifying-glass" />
-                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
-                    </span>
-                </div>
-            </template>
-            <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
-                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
-                    </template>
-                    <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
-                    </template>
-                    <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
-                    </template>
-                    <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
-                    </template>
-                </Column>
-            </template>
-            <Column headerStyle="text-align: center" bodyStyle="text-align: center; overflow: visible">
-                <template #body="{ data }">
-                    <div class="flex justify-content-center gap-1">
-                        <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
-                        <Button type="button" icon="fa-regular fa-copy" rounded @click="duplicateField(data)" class="p-button-outlined" v-tooltip.left="'Clique para duplicar a composição'" />
-                        <Button type="button" icon="fa-solid fa-trash" rounded @click="removeComposicao(data)" class="p-button-outlined" severity="danger" v-tooltip.left="'Clique para excluir a composição'" />
+    <div class="grid">
+        <div class="col-12">
+            <ComposicaoForm :idComposicao="itemData.id" :modeParent="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit', 'clone'].includes(mode)" />
+        </div>
+        <div class="col-12">
+            <DataTable
+                :value="gridData"
+                :paginator="true"
+                :rows="10"
+                dataKey="id"
+                :rowHover="true"
+                v-model:filters="filters"
+                filterDisplay="menu"
+                :loading="loading"
+                :filters="filters"
+                responsiveLayout="scroll"
+                :globalFilterFields="['compos_nr', 'localizacao', 'tombamento']"
+                v-model:expandedRows="expandedRows"
+            >
+                <template #header>
+                    <div class="flex justify-content-end gap-3">
+                        <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newCompos" />
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
+                        <span class="p-input-icon-left">
+                            <i class="fa-solid fa-magnifying-glass" />
+                            <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
+                        </span>
+                        <Button type="button" icon="fa-solid fa-angles-up" @click="collapseAll()" v-if="expanded" />
+                        <Button type="button" icon="fa-solid fa-angles-down" @click="expandAll()" v-else />
                     </div>
                 </template>
-            </Column>
-        </DataTable>
-        <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
-            <p>mode: {{ mode }}</p>
+                <Column expander style="width: 5rem" />
+                <template v-for="nome in listaNomes" :key="nome">
+                    <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                        <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
+                            <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
+                        </template>
+                        <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
+                            <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
+                        </template>
+                        <template v-else #filter="{ filterModel, filterCallback }">
+                            <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
+                        </template>
+                        <template #body="{ data }">
+                            <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                            <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
+                            <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                        </template>
+                    </Column>
+                </template>
+                <template #expansion="slotProps">
+                    <div class="ml-5 p-3">
+                        <ItensGrid
+                            :mode="'expandedFormMode'"
+                            :idComposicao="slotProps.data.id"
+                            @changed="loadData()"
+                            @cancel="
+                                mode = 'grid';
+                                idComposicao = undefined;
+                            "
+                        />
+                    </div>
+                </template>
+                <Column headerStyle="text-align: center" bodyStyle="text-align: center; overflow: visible">
+                    <template #body="{ data }">
+                        <div class="flex justify-content-center gap-1">
+                            <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                            <Button type="button" icon="fa-regular fa-copy" rounded @click="duplicateField(data)" class="p-button-outlined" v-tooltip.left="'Clique para duplicar a composição'" />
+                            <Button type="button" icon="fa-solid fa-trash" rounded @click="removeComposicao(data)" class="p-button-outlined" severity="danger" v-tooltip.left="'Clique para excluir a composição'" />
+                        </div>
+                    </template>
+                </Column>
+            </DataTable>
+            <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                <p>mode: {{ mode }}</p>
+            </div>
         </div>
     </div>
 </template>
