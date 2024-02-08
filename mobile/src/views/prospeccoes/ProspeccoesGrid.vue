@@ -197,20 +197,19 @@ watchEffect(() => {
             ref="dt"
             dataKey="id"
             :totalRecords="totalRecords"
-            :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
+            :rows="5"
             :loading="loading"
             @page="onPage($event)"
             @sort="onSort($event)"
             @filter="onFilter($event)"
             filterDisplay="row"
             tableStyle="min-width: 75rem"
-            paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            paginatorTemplate="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
         >
             <template #header>
-                <div class="flex justify-content-between gap-1">
+                <div class="flex flex-column-reverse gap-1">
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                     <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />

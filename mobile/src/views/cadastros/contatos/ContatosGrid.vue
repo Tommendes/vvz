@@ -115,15 +115,13 @@ onBeforeMount(() => {
             ref="dt"
             :value="gridData"
             :paginator="true"
-            :rowsPerPageOptions="[5, 10, 20, 50]"
-            tableStyle="min-width: 50rem"
             :rows="5"
             dataKey="id"
             :rowHover="true"
             v-model:filters="filters"
             filterDisplay="menu"
             :filters="filters"
-            paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            paginatorTemplate="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
             scrollable
             :globalFilterFields="['tipo', 'pessoa', 'departamento', 'meio']"
@@ -148,21 +146,21 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
+            <!-- <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.tipo }}
                     </div>
                 </template>
-            </Column>
-            <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
+            </Column> -->
+            <!-- <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.pessoa }}
                     </div>
                 </template>
-            </Column>
-            <Column field="meio" header="Meio" sortable style="min-width: 30rem">
+            </Column> -->
+            <Column field="meio" header="Contato" sortable>
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         <span v-html="data.meioRenderizado" />
