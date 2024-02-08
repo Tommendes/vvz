@@ -123,7 +123,8 @@ onBeforeMount(() => {
                             <i class="fa-solid fa-paperclip mr-2"></i>
                             <span>Pipeline</span>
                         </template>
-                        <PipelinesGrid v-if="itemData.id" :idCadastro="itemData.id" />
+                        <PipelinesGrid v-if="itemData.id" :idCadastro="itemData.id" class="custom-pipelines-grid" />
+
                     </AccordionTab>
                     <AccordionTab :disabled="!itemData.id">
                         <template #header>
