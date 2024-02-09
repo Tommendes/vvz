@@ -57,8 +57,8 @@ module.exports = app => {
             existsOrError(idCadastro, 'Cadastro não informado')
             if (!autoPvFromPipeline) existsOrError(body.id_cadastro_endereco, 'Endereço não informado')
             existsOrError(body.id_pv, 'Pós-venda não encontrado')
-            booleanOrError(body.int_ext, 'Se interno ou externo não informado')
-            booleanOrError(body.garantia, 'Se garantia não informado')
+            existsOrError(String(body.int_ext), 'Se interno ou externo não informado')
+            existsOrError(String(body.garantia), 'Se garantia não informado')
             if (body.garantia == 1 && !(!!body.nf_garantia.trim())) throw "Favor informar a nota fiscal"
             if (!autoPvFromPipeline) {
                 existsOrError(body.pessoa_contato, 'Contato no cliente não encontrado')

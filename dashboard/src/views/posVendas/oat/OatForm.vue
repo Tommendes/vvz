@@ -75,18 +75,18 @@ const loadData = async () => {
         itemData.value = {
             id_pv: dialogRef.value.data.idPv,
             id_cadastros: dialogRef.value.data.idCadastro,
-            id_cadastro_endereco: null,
-            id_tecnico: null,
-            nr_oat: null,
-            int_ext: null,
-            garantia: null,
-            nf_garantia: null,
-            pessoa_contato: null,
-            telefone_contato: null,
-            email_contato: null,
-            valor_total: null,
-            aceite_do_cliente: null,
-            descricao: null
+            id_cadastro_endereco: undefined,
+            id_tecnico: undefined,
+            nr_oat: undefined,
+            int_ext: undefined,
+            garantia: undefined,
+            nf_garantia: undefined,
+            pessoa_contato: undefined,
+            telefone_contato: undefined,
+            email_contato: undefined,
+            valor_total: undefined,
+            aceite_do_cliente: undefined,
+            descricao: undefined
         };
     }
     await loadEnderecoBasico();
@@ -174,6 +174,8 @@ const saveData = async () => {
     const obj = { ...itemData.value };
     // Se body.valor_total então antes de salvar formate o valor com duas casas decimais em inglês
     if (obj.valor_total) obj.valor_total = formatValor(obj.valor_total, 'en');
+    obj.int_ext = obj.int_ext ? 1 : 0;
+    obj.garantia = obj.garantia ? 1 : 0;
     axios[method](url, obj)
         .then(async (res) => {
             const body = res.data;

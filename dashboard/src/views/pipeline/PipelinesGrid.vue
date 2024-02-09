@@ -122,7 +122,6 @@ const dropdownStatus = ref([
     { label: 'Cancelado', value: '89' }
     // { label: 'Excluído', value: '99' }
 ]);
-// { field: 'agente', label: 'Agente', minWidth: '6rem' },
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente', class: '' },
     // { field: 'tipo_doc', label: 'Tipo', class: isMobile.value ? 'hidden' : '' },
