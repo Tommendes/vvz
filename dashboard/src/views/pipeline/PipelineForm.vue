@@ -1078,8 +1078,11 @@ watch(route, (value) => {
                                 <span class="font-bold text-lg">Instruções</span>
                             </div>
                         </template>
+                        <p class="mb-3" v-if="itemData.old_id">
+                            <spam>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</spam>
+                            <span style="font-size: 20px">&#128521;</span>
+                        </p>
                         <p class="m-0">
-                            <p v-if="itemData.old_id">Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs ;-)</p>
                             <span v-html="guide" />
                         </p>
                     </Fieldset>
