@@ -302,9 +302,9 @@ let dataToExcelExport = [
             { label: 'Cliente', value: (row) => row.cliente },
             { label: 'Tipo', value: (row) => row.tipo },
             { label: 'Proposta', value: (row) => row.doc_pai || '' },
-            { label: 'Pedido', value: (row) => row.doc_filho || ''},
+            { label: 'Pedido', value: (row) => row.doc_filho || '' },
             { label: 'Documento', value: (row) => row.documento },
-            { label: 'R$ Bruto', value: (row) => row.valor_bruto, format: 'R$#,##0.00' },
+            { label: 'R$ Bruto', value: (row) => row.valor_bruto, format: 'R$ #,##0.00' },
             { label: 'Descrição', value: (row) => row.descricao },
             { label: 'Agente', value: (row) => row.agente },
             { label: 'Data', value: (row) => row.status_created_at },
@@ -329,13 +329,16 @@ const exportXls = () => {
                 .replaceAll('Segue a descrição original do documento:', '')
                 .trim();
 
+        let valorBruto = element.valor_bruto;
+        if (typeof valorBruto === 'string') valorBruto = parseFloat(valorBruto.replace(/\D/g, '')) / 100;
+        valorBruto = valorBruto || 0;
         dataToExcelExport[0].content.push({
             cliente: element.nome,
             tipo: element.tipo_doc.replaceAll('_', ' '),
             proposta: element.doc_pai || '',
             pedido: element.doc_filho || '',
             documento: element.documento,
-            valor_bruto: element.valor_bruto,
+            valor_bruto: valorBruto, // .replaceAll('R$', '').replaceAll('.', '').replaceAll(',', '.'), // formatCurrency(element.valor_bruto),
             descricao: removeHtmlTags(descricao),
             agente: element.agente,
             status_created_at: element.status_created_at,
