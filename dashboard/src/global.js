@@ -93,9 +93,11 @@ export function validarDataPTBR(data) {
     }
 }
 
-export function formatCurrency(value) {
+export function formatCurrency(value, locale = { place: 'pt-BR', currency: 'BRL' }) {
     value = value || 0;
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    // remova todos os caracteres não numéricos e converta para double
+    if (typeof value === 'string') value = parseFloat(value.replace(/\D/g, '')) / 100;
+    return value.toLocaleString(locale.place, { style: 'currency', currency: locale.currency });
 }
 // Verifique o horario e informe: Bom dia, boa tarde ou boa noite
 export const saudation = () => {

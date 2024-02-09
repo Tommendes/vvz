@@ -14,7 +14,6 @@ const userData = JSON.parse(json);
 
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
-const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -70,12 +69,12 @@ const dropdownSituacoes = ref([
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'nome', label: 'Cliente', minWidth: '18rem' },
-    { field: 'pipeline', label: 'Pipeline', minWidth: '8rem' },
-    { field: 'tipo', label: 'Tipo', minWidth: '8rem', maxWidth: '8rem', list: dropdownTipos.value },
-    { field: 'pv_nr', label: 'Número', minWidth: '8rem', maxWidth: '8rem' },
-    { field: 'last_status_pv', label: 'Situação', minWidth: '8rem', maxWidth: '8rem', list: dropdownSituacoes.value },
-    { field: 'observacao', label: 'Observações', minWidth: '20rem', maxWidth: '20rem' }
+    { field: 'nome', label: 'Cliente' },
+    { field: 'pipeline', label: 'Pipeline' },
+    { field: 'tipo', label: 'Tipo', list: dropdownTipos.value },
+    { field: 'pv_nr', label: 'Número' },
+    { field: 'last_status_pv', label: 'Situação', list: dropdownSituacoes.value },
+    { field: 'observacao', label: 'Observações' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -199,108 +198,90 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas', to: `/${userData.schema_description}/pos-venda` }]" />
-    <div class="card" :style="route.name == 'pos-vendas' ? 'width: 120rem;' : ''">
-        <PosVendaForm
-            :mode="mode"
-            :idCadastro="props.idCadastro"
-            :idRegs="idRegs"
-            @changed="loadLazyData()"
-            @cancel="
-                mode = 'grid';
-                idRegs = undefined;
-            "
-            v-if="mode == 'new' || idRegs"
-        />
-        <DataTable
-            style="font-size: 1rem"
-            :value="gridData"
-            lazy
-            paginator
-            :first="0"
-            v-model:filters="filters"
-            ref="dt"
-            dataKey="id"
-            :totalRecords="totalRecords"
-            :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
-            :loading="loading"
-            @page="onPage($event)"
-            @sort="onSort($event)"
-            @filter="onFilter($event)"
-            filterDisplay="row"
-            tableStyle="min-width: 75rem"
-            paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            :currentPageReportTemplate="`{first} a {last} de ${totalRecords} Pós-Vendas`"
-            scrollable
-        >
-            <!-- scrollHeight="420px" -->
-            <template #header>
-                <div class="flex justify-content-end gap-3">
-                    <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
-                </div>
-            </template>
-            <template v-for="nome in listaNomes" :key="nome">
-                <Column
-                    :field="nome.field"
-                    :header="nome.label"
-                    :filterField="nome.field"
-                    :filterMatchMode="'contains'"
-                    sortable
-                    :dataType="nome.type"
-                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+    <div class="grid">
+        <div class="col-12">
+            <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas', to: `/${userData.schema_description}/pos-venda` }]" />
+        </div>
+        <div class="col-12">
+            <PosVendaForm
+                :mode="mode"
+                :idCadastro="props.idCadastro"
+                :idRegs="idRegs"
+                @changed="loadLazyData()"
+                @cancel="
+                    mode = 'grid';
+                    idRegs = undefined;
+                "
+                v-if="mode == 'new' || idRegs"
+            />
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <DataTable
+                    :value="gridData"
+                    lazy
+                    paginator
+                    :first="0"
+                    v-model:filters="filters"
+                    ref="dt"
+                    dataKey="id"
+                    :totalRecords="totalRecords"
+                    :rows="rowsPerPage"
+                    :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
+                    :loading="loading"
+                    @page="onPage($event)"
+                    @sort="onSort($event)"
+                    @filter="onFilter($event)"
+                    filterDisplay="row"
+                    paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} Pós-Vendas`"
+                    scrollable
                 >
-                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown
-                            :id="nome.field"
-                            optionLabel="label"
-                            optionValue="value"
-                            v-model="filterModel.value"
-                            :options="nome.list"
-                            @change="filterCallback()"
-                            :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
-                            placeholder="Pesquise..."
-                            showClear
-                        />
+                    <!-- scrollHeight="420px" -->
+                    <template #header>
+                        <div class="flex justify-content-end gap-3">
+                            <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
+                            <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                        </div>
                     </template>
-                    <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar
-                            v-model="filterModel.value"
-                            dateFormat="dd/mm/yy"
-                            selectionMode="range"
-                            showButtonBar
-                            :numberOfMonths="2"
-                            placeholder="dd/mm/aaaa"
-                            mask="99/99/9999"
-                            @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
-                        />
+                    <template v-for="nome in listaNomes" :key="nome">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
+                            <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
+                                <Dropdown
+                                    :id="nome.field"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    v-model="filterModel.value"
+                                    :options="nome.list"
+                                    @change="filterCallback()"
+                                    :class="nome.class"
+                                    :style="`overflow: hidden`"
+                                    placeholder="Pesquise..."
+                                    showClear
+                                />
+                            </template>
+                            <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
+                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" :style="`overflow: hidden`" />
+                            </template>
+                            <template v-else #filter="{ filterModel, filterCallback }">
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`overflow: hidden`" />
+                            </template>
+                            <template #body="{ data }">
+                                <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                                <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
+                                <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                            </template>
+                        </Column>
                     </template>
-                    <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText
-                            type="text"
-                            v-model="filterModel.value"
-                            @keydown.enter="filterCallback()"
-                            class="p-column-filter"
-                            placeholder="Pesquise..."
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
-                        />
-                    </template>
-                    <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
-                    </template>
-                </Column>
-            </template>
-            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
-                <template #body="{ data }">
-                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
-                </template>
-            </Column>
-        </DataTable>
+                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+                        <template #body="{ data }">
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                        </template>
+                    </Column>
+                </DataTable>
+            </div>
+        </div>
     </div>
 </template>

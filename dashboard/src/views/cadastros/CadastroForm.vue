@@ -647,28 +647,32 @@ watchEffect(() => {
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                 </div>
-            </div>
-            <div class="col-12" v-if="userData.admin >= 2">
-                <div class="card bg-green-200 mt-3">
-                    <p>Mode: {{ mode }}</p>
-                    <p>itemData: {{ itemData }}</p>
-                    <p>dadosPublicos: {{ dadosPublicos }}</p>
+
+                <div class="col-12">
+                    <Fieldset class="bg-green-200" toggleable :collapsed="true">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-circle-info mr-2"></span>
+                                <span class="font-bold text-lg">Instruções</span>
+                            </div>
+                        </template>
+                        <p class="mb-3" v-if="itemData.old_id">
+                            <spam>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/cadastros/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</spam>
+                            <span style="font-size: 20px">&#128521;</span>
+                        </p>
+                        <p class="m-0">
+                            <span v-html="guide" />
+                        </p>
+                    </Fieldset>
                 </div>
             </div>
         </form>
-
-        <div class="col-12">
-            <Fieldset class="bg-green-200" toggleable :collapsed="true">
-                <template #legend>
-                    <div class="flex align-items-center text-primary">
-                        <span class="fa-solid fa-circle-info mr-2"></span>
-                        <span class="font-bold text-lg">Instruções</span>
-                    </div>
-                </template>
-                <p class="m-0">
-                    <span v-html="guide" />
-                </p>
-            </Fieldset>
+        <div class="col-12" v-if="userData.admin >= 2">
+            <div class="card bg-green-200 mt-3">
+                <p>Mode: {{ mode }}</p>
+                <p>itemData: {{ itemData }}</p>
+                <p>dadosPublicos: {{ dadosPublicos }}</p>
+            </div>
         </div>
     </div>
 </template>
