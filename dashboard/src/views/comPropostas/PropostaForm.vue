@@ -22,7 +22,6 @@ const masks = ref({
     })
 });
 
-import { defineProps } from 'vue';
 const props = defineProps({
     padroes: {
         type: Boolean,

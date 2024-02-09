@@ -315,7 +315,8 @@ let dataToExcelExport = [
 ];
 
 const exportXls = () => {
-    gridDataRaw.value.forEach((element) => {
+    const toExport = dt.value;
+    toExport.value.forEach((element) => {
         let last_status_params = '';
         let descricao = '';
         dropdownStatus.value.forEach((item) => {
