@@ -54,12 +54,12 @@ const dropdownPeriodo = ref([
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'nome', label: 'Cliente', minWidth: '15rem' },
-    { field: 'pessoa', label: 'Pessoa contatada', minWidth: '11rem' },
+    { field: 'nome', label: 'Cliente' },
+    // { field: 'pessoa', label: 'Pessoa contatada' },
     // { field: 'contato', label: 'Forma de Contato', minWidth: '12rem' },
     // { field: 'periodo', label: 'Período da visita', minWidth: '8rem', list: dropdownPeriodo.value },
-    { field: 'data_visita', label: 'Data da visita', minWidth: '8rem', type: 'date' },
-    { field: 'agente', label: 'Agente', minWidth: '5rem', maxWidth: '5rem' }
+    { field: 'data_visita', label: 'Data da visita', type: 'date' },
+    // { field: 'agente', label: 'Agente' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -203,7 +203,6 @@ watchEffect(() => {
             @sort="onSort($event)"
             @filter="onFilter($event)"
             filterDisplay="row"
-            tableStyle="min-width: 75rem"
             paginatorTemplate="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
@@ -216,7 +215,7 @@ watchEffect(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
                             :id="nome.field"
@@ -226,8 +225,8 @@ watchEffect(() => {
                             :options="nome.list"
                             @change="filterCallback()"
                             :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
                             placeholder="Pesquise..."
+                            :style="`min-width: 5rem`"
                         />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
@@ -236,15 +235,13 @@ watchEffect(() => {
                             dateFormat="dd/mm/yy"
                             selectionMode="range"
                             showButtonBar
-                            :numberOfMonths="2"
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
@@ -273,5 +270,11 @@ watchEffect(() => {
 }
 .p-paginator{
     flex-wrap: nowrap;
+}
+svg{
+    display: none;
+}
+.p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
+    display: none;
 }
 </style>
