@@ -1079,6 +1079,7 @@ watch(route, (value) => {
                             </div>
                         </template>
                         <p class="m-0">
+                            <p v-if="itemData.old_id">Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs ;-)</p>
                             <span v-html="guide" />
                         </p>
                     </Fieldset>
