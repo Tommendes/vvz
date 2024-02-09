@@ -316,6 +316,7 @@ let dataToExcelExport = [
 
 const exportXls = () => {
     const toExport = dt.value;
+    dataToExcelExport[0].content = [];
     toExport.value.forEach((element) => {
         let last_status_params = '';
         let descricao = '';
