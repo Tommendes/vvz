@@ -96,10 +96,13 @@ const removeItem = (item) => {
     });
 };
 
+const semComposicao = ref(true);
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
-        const idComposicao = props.idComposicao ? `?idComposicao=${props.idComposicao}` : null;
+        let idComposicao = null;
+        if (props.idComposicao) `?idComposicao=${props.idComposicao}`;
+        else if (semComposicao.value == true) idComposicao = `?idComposicao=noComposition`;
         const url = `${urlBase.value}/${route.params.id}${idComposicao}`;
         axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
@@ -161,6 +164,19 @@ onBeforeMount(() => {
                             <i class="fa-solid fa-magnifying-glass" />
                             <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                         </span>
+                        <Button
+                            v-if="gridData"
+                            :icon="`fa-solid fa-${semComposicao ? 'times' : 'filter'}`"
+                            :outlined="semComposicao"
+                            type="button"
+                            :label="semComposicao ? `Itens sem composição` : `Todos os itens`"
+                            :badge="gridData.length"
+                            v-tooltip.top="semComposicao ? `Clique para mostrar todos os itens` : `Clique para mostrar somente os itens sem composição`"
+                            @click="
+                                semComposicao = !semComposicao;
+                                loadData();
+                            "
+                        />
                     </div>
                 </template>
                 <template v-for="nome in listaNomes" :key="nome">

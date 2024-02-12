@@ -184,7 +184,6 @@ module.exports = app => {
                         });
                         query = query.slice(0, -3).trim()
                         query += ') AND '
-                        // console.log('query', query);
                     } else {
                         if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
 
@@ -244,8 +243,6 @@ module.exports = app => {
             .groupBy('tbl1.id')
             .orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-        // console.log(ret.toString());
-        // return res.json(ret.toString())
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
         })

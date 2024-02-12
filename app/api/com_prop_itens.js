@@ -74,8 +74,8 @@ module.exports = app => {
 
             body.evento = evento
             body.updated_at = new Date()
-            const ordem = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas }).select(app.db.raw('count(*) as count')).first()
-            body.ordem = body.ordem || ordem.count + 1 || 1
+            // const ordem = await app.db(tabelaDomain).where({ id_com_propostas: body.id_com_propostas }).select(app.db.raw('count(*) as count')).first()
+            // body.ordem = body.ordem || ordem.count + 1 || 1
 
             try {
                 const ret = await app.db(tabelaDomain)
@@ -84,13 +84,13 @@ module.exports = app => {
 
                 if (ret > 0) {
                     // Reordena as composições ativas
-                    if (body.item_ativo == 0 || body.item_ativo != last.item_ativo || last.id_com_prop_compos != body.id_com_prop_compos || last.item != body.item) {
+                    // if (body.item_ativo == 0 || body.item_ativo != last.item_ativo || last.id_com_prop_compos != body.id_com_prop_compos || last.item != body.item) {
                         const method = req.method
                         req.method = 'BOOLEAN'
                         await setReorderItemNr(req, res)
                         req.method = method
                         body = await app.db(tabelaDomain).where({ id: body.id }).first()
-                    }
+                    // }
                     return res.status(200).send(body)
                 }
                 else return res.status(200).send(`${tabelaAlias} não encontrado`)
@@ -164,17 +164,25 @@ module.exports = app => {
         }
 
         const id_com_propostas = req.params.id_com_propostas
-        const idComposicao = req.query.idComposicao || null
+        let idComposicao = req.query.idComposicao || undefined
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaProdutosDomain = `${dbPrefix}_${uParams.schema_name}.com_produtos`
         const tabelaComposicoesDomain = `${dbPrefix}_${uParams.schema_name}.com_prop_compos`
 
+        
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl3.localizacao, tbl3.tombamento, tbl2.nome_comum, tbl2.descricao descricao_produto, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
-            .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
-            .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
-            .where({ 'tbl1.id_com_propostas': id_com_propostas })
-        if (idComposicao) ret.where({ 'tbl1.id_com_prop_compos': idComposicao })
+        .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl3.localizacao, tbl3.tombamento, tbl2.nome_comum, tbl2.descricao descricao_produto, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+        .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
+        .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
+        .where({ 'tbl1.id_com_propostas': id_com_propostas })
+
+        // Se idComposicao for 'noComposition' retorna somente os itens sem composição
+        if (idComposicao && idComposicao == 'noComposition') ret.whereRaw('tbl1.id_com_prop_compos is null')
+        // Se não for 'noComposition' então verifica se é um número
+        else idComposicao = Number(idComposicao)    
+        // Se idComposicao for um número, retorna somente os itens da composição
+        if (idComposicao && typeof idComposicao == 'number') ret.where({ 'tbl1.id_com_prop_compos': idComposicao })
+
         ret.whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_ITEM_INACTIVE])
             .orderBy(app.db.raw('cast(tbl3.compos_nr as int)'), 'asc')
             .orderBy(app.db.raw('cast(tbl1.item as int)'), 'desc')

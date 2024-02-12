@@ -109,7 +109,6 @@ const loadLazyData = () => {
 
     setTimeout(() => {
         const url = `${urlBase.value}${urlFilters.value}`;
-        console.log(url);
         axios
             .get(url)
             .then((axiosRes) => {
