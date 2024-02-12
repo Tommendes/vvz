@@ -454,3 +454,8 @@ onMounted(() => {
     max-width: 100% !important;
 }
 </style>
+<style>
+.p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
+    display: none;
+}
+</style>

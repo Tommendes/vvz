@@ -70,12 +70,11 @@ const dropdownSituacoes = ref([
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'nome', label: 'Cliente', minWidth: '18rem' },
-    { field: 'pipeline', label: 'Pipeline', minWidth: '8rem' },
-    { field: 'tipo', label: 'Tipo', minWidth: '8rem', maxWidth: '8rem', list: dropdownTipos.value },
-    { field: 'pv_nr', label: 'Número', minWidth: '8rem', maxWidth: '8rem' },
-    { field: 'last_status_pv', label: 'Situação', minWidth: '8rem', maxWidth: '8rem', list: dropdownSituacoes.value },
-    { field: 'observacao', label: 'Observações', minWidth: '20rem', maxWidth: '20rem' }
+    { field: 'nome', label: 'Cliente', minWidth: '2rem' },
+    { field: 'pv_nr', label: 'Número' },
+    // { field: 'pipeline', label: 'Pipeline' },
+    { field: 'tipo', label: 'Tipo', list: dropdownTipos.value },
+    // { field: 'last_status_pv', label: 'Situação', list: dropdownSituacoes.value }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -123,8 +122,6 @@ const loadLazyData = () => {
                     dropdownSituacoes.value.forEach((item) => {
                         if (item.value == element.last_status_pv) element.last_status_pv = item.label;
                     });
-                    if (element.observacao) element.observacao = removeHtmlTags(element.observacao);
-                    else element.observacao = '';
                     switch (element.tipo) {
                         case '1':
                             element.tipo = 'Montagem';
@@ -200,7 +197,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas', to: `/${userData.schema_description}/pos-venda` }]" />
-    <div class="card" :style="route.name == 'pos-vendas' ? 'width: 120rem;' : ''">
+    <div class="card w-95">
         <PosVendaForm
             :mode="mode"
             :idCadastro="props.idCadastro"
@@ -228,7 +225,6 @@ watchEffect(() => {
             @sort="onSort($event)"
             @filter="onFilter($event)"
             filterDisplay="row"
-            tableStyle="min-width: 75rem"
             paginatorTemplate="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} Pós-Vendas`"
             scrollable
@@ -249,7 +245,7 @@ watchEffect(() => {
                     :filterMatchMode="'contains'"
                     sortable
                     :dataType="nome.type"
-                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                    :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                 >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
@@ -260,7 +256,7 @@ watchEffect(() => {
                             :options="nome.list"
                             @change="filterCallback()"
                             :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                             placeholder="Pesquise..."
                             showClear
                         />
@@ -275,7 +271,7 @@ watchEffect(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
@@ -285,7 +281,7 @@ watchEffect(() => {
                             @keydown.enter="filterCallback()"
                             class="p-column-filter"
                             placeholder="Pesquise..."
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                         />
                     </template>
                     <template #body="{ data }">
@@ -303,3 +299,9 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.w-95{
+ width: 95vw;
+ max-width: 100%;
+}
+</style>
