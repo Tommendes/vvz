@@ -100,8 +100,8 @@ const semComposicao = ref(true);
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
-        let idComposicao = null;
-        if (props.idComposicao) `?idComposicao=${props.idComposicao}`;
+        let idComposicao = '';
+        if (props.idComposicao) idComposicao = `?idComposicao=${props.idComposicao}`;
         else if (semComposicao.value == true) idComposicao = `?idComposicao=noComposition`;
         const url = `${urlBase.value}/${route.params.id}${idComposicao}`;
         axios.get(url).then((axiosRes) => {
@@ -165,7 +165,7 @@ onBeforeMount(() => {
                             <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                         </span>
                         <Button
-                            v-if="gridData"
+                            v-if="gridData && !props.idComposicao"
                             :icon="`fa-solid fa-${semComposicao ? 'times' : 'filter'}`"
                             :outlined="semComposicao"
                             type="button"

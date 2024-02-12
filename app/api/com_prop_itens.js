@@ -175,7 +175,7 @@ module.exports = app => {
         .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
         .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
         .where({ 'tbl1.id_com_propostas': id_com_propostas })
-
+        
         // Se idComposicao for 'noComposition' retorna somente os itens sem composição
         if (idComposicao && idComposicao == 'noComposition') ret.whereRaw('tbl1.id_com_prop_compos is null')
         // Se não for 'noComposition' então verifica se é um número
