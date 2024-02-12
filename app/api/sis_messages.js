@@ -116,10 +116,14 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_api.${tabela}`
+        const tabelaUsersDomain = `${dbPrefix}_api.users`
+        const tabelaSchemasDomain = `${dbPrefix}_api.schemas_control`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-            .where({ status: STATUS_ACTIVE })
+            .select(app.db.raw(`tbl1.*, tbl2.name, tbl3.schema_description`))
+            .join({ tbl2: tabelaUsersDomain }, 'tbl2.id', 'tbl1.id_user')
+            .join({ tbl3: tabelaSchemasDomain }, 'tbl3.id', 'tbl2.schema_id')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
             .then(body => {
                 const count = body.length

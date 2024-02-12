@@ -257,11 +257,11 @@ onBeforeMount(() => {
                 aria-haspopup="true"
                 @click="toggleMenuMessages"
             />
-            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages" class="p-link layout-topbar-button">
+            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages" class="p-link layout-topbar-button p-button-transparent">
                 <i class="fa-regular fa-bell"></i>
             </Button>
             <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
-            <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
+            <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button p-button-transparent">
                 <i class="fa-regular fa-user"></i>
                 <span>Perfil</span>
             </Button>
@@ -279,5 +279,8 @@ onBeforeMount(() => {
 <style scoped>
 .fa-regular .fa-bell .fa-shake {
     font-size: 1.5rem;
+}
+.p-button-transparent {
+    background-color: transparent;
 }
 </style>

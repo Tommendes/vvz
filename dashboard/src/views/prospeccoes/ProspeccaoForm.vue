@@ -59,7 +59,7 @@ const loadData = async () => {
     loading.value = true;
     const id = props.idRegs || route.params.id;
     const url = `${urlBase.value}/${id}`;
-    if (mode.value != 'new' && id) {
+    if (mode.value != 'new' && route.name != 'cadastro' && id) {
         setTimeout(async () => {
             await axios.get(url).then(async (res) => {
                 const body = res.data;
@@ -68,6 +68,7 @@ const loadData = async () => {
                     itemData.value = body;
                     body.id_cad_end = String(body.id_cad_end);
                     if (itemData.value.data_visita) itemData.value.data_visita = masks.value.data_visita.masked(moment(itemData.value.data_visita).format('DD/MM/YYYY'));
+                    breadItems.value = [{ label: 'Todas as Prospecções', to: `/${userData.schema_description}/prospeccoes` }];
                     breadItems.value.push({ label: itemData.value.nome + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
                     await loadEnderecos();
@@ -77,9 +78,6 @@ const loadData = async () => {
                         code: itemData.value.id_cadastros,
                         name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
                     };
-                } else {
-                    defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/prospeccoes` });
                 }
             });
         }, Math.random() * 1000);
@@ -352,7 +350,7 @@ watch(selectedCadastro, (value) => {
                             />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                                <Button v-if="!route.name == 'cadastro'" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-6">
@@ -383,6 +381,7 @@ watch(selectedCadastro, (value) => {
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
                         <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
+                        <p v-if="props.idRegs">idRegs: {{ props.idRegs }}</p>
                     </div>
                 </div>
                 <div class="col-12">

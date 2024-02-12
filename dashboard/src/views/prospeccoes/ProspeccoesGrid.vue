@@ -102,6 +102,7 @@ const loadLazyData = () => {
                     // Exibe dado com máscara
                     // Converte data en para pt
                     if (element.data_visita) element.data_visita = moment(element.data_visita).format('DD/MM/YYYY');
+                    if (!element.pessoa) element.pessoa = '';
                     if (element.contato) element.contato = renderizarHTML(element.contato);
                     element.periodo = String(element.periodo);
                     if (element.periodo) element.periodo = dropdownPeriodo.value.find((x) => x.value == element.periodo).label;
@@ -177,15 +178,14 @@ watchEffect(() => {
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções', to: route.fullPath }]" />
     <div class="card">
         <ProspeccaoForm
-            :mode="mode"
+            :mode="'new'"
             :idCadastro="props.idCadastro"
-            :idRegs="idRegs"
             @changed="loadLazyData()"
             @cancel="
                 mode = 'grid';
                 idRegs = undefined;
             "
-            v-if="mode == 'new' || idRegs"
+            v-if="mode == 'new'"
         />
         <DataTable
             style="font-size: 1rem"

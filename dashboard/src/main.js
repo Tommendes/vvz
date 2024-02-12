@@ -102,6 +102,10 @@ import TriStateCheckbox from 'primevue/tristatecheckbox';
 import VirtualScroller from 'primevue/virtualscroller';
 import Editor from 'primevue/editor';
 
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+
+
 import CodeHighlight from '@/components/CodeHighlight.vue';
 import BlockViewer from '@/components/BlockViewer.vue';
 import Geolocation from '@/components/Geolocation.vue';
@@ -122,6 +126,10 @@ app.use(PrimeVue, {
     ripple: true,
     inputStyle: 'filled'
 });
+
+//in main.js
+import 'primevue/resources/themes/md-light-deeppurple/theme.css';
+
 app.use(ToastService);
 app.use(DialogService);
 app.use(ConfirmationService);
@@ -233,5 +241,7 @@ app.component('TreeTable', TreeTable);
 app.component('TriStateCheckbox', TriStateCheckbox);
 app.component('VirtualScroller', VirtualScroller);
 app.component('Editor', Editor);
+app.component('IconField', IconField);
+app.component('InputIcon', InputIcon);
 
 app.mount('#app');

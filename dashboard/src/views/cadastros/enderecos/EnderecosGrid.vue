@@ -13,12 +13,12 @@ const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
-const mode = ref('grid');
 // Props do template
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 });
+const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
+const mode = ref('grid');
 // Máscaras
 import { Mask } from 'maska';
 const masks = ref({

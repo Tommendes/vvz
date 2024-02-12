@@ -14,12 +14,12 @@ const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(false);
-const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
-const mode = ref('grid');
-// Props do template
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 });
+const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
+const mode = ref('grid');
+// Props do template
 // Ref do gridData
 const dt = ref(null);
 // Inicializa os filtros

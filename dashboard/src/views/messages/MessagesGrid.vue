@@ -48,9 +48,9 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'id_user', label: 'Usuário destinado', minWidth: '20rem' },
-    { field: 'title', label: 'Título', minWidth: '20rem' },
-    { field: 'msg', label: 'Mensagem', minWidth: '20rem' }    
+    { field: 'user', label: 'Usuário' },
+    { field: 'title', label: 'Título' },
+    { field: 'msg', label: 'Mensagem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -92,8 +92,7 @@ const loadData = () => {
         axios.get(`${urlBase.value}`).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
             gridData.value.forEach((element) => {
-                if (element.telefone_contato) element.telefone_contato = renderizarHTML(element.telefone_contato, { to: element.tecnico, from: userData.name });
-                if (element.email_contato) element.email_contato = renderizarHTML(element.email_contato);
+                element.user = element.name + ' - ' + element.schema_description;
             });
             loading.value = false;
         });
@@ -111,7 +110,6 @@ onBeforeMount(() => {
     <div class="card">
         <MenssageForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
-            style="font-size: 1rem"
             :value="gridData"
             :paginator="true"
             :rows="10"
@@ -135,50 +133,15 @@ onBeforeMount(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column
-                    :field="nome.field"
-                    :header="nome.label"
-                    :filterField="nome.field"
-                    :filterMatchMode="'contains'"
-                    sortable
-                    :dataType="nome.type"
-                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
-                >
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`overflow: hidden`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown
-                            :id="nome.field"
-                            optionLabel="label"
-                            optionValue="value"
-                            v-model="filterModel.value"
-                            :options="nome.list"
-                            @change="filterCallback()"
-                            :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
-                            placeholder="Pesquise..."
-                        />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :class="nome.class" :style="`overflow: hidden`" placeholder="Pesquise..." />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar
-                            v-model="filterModel.value"
-                            dateFormat="dd/mm/yy"
-                            selectionMode="range"
-                            showButtonBar
-                            :numberOfMonths="2"
-                            placeholder="dd/mm/aaaa"
-                            mask="99/99/9999"
-                            @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
-                        />
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" :style="`overflow: hidden`" />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText
-                            type="text"
-                            v-model="filterModel.value"
-                            @keydown.enter="filterCallback()"
-                            class="p-column-filter"
-                            placeholder="Pesquise..."
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
-                        />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`overflow: hidden`" />
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
