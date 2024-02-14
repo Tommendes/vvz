@@ -381,7 +381,7 @@ onMounted(() => {
                     :filterMatchMode="'contains'"
                     sortable
                     :dataType="nome.type"
-                    :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                    :style="`overflow: hidden`"
                 >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
@@ -393,7 +393,7 @@ onMounted(() => {
                             @change="filterCallback()"
                             showClear
                             :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`overflow: hidden`"
                             placeholder="Pesquise..."
                         />
                     </template>
@@ -407,7 +407,7 @@ onMounted(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`overflow: hidden`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
@@ -417,7 +417,7 @@ onMounted(() => {
                             @keydown.enter="filterCallback()"
                             class="p-column-filter"
                             placeholder="Pesquise..."
-                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`overflow: hidden`"
                         />
                     </template>
                     <template #body="{ data }">
@@ -455,7 +455,10 @@ onMounted(() => {
 }
 </style>
 <style>
-.p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
+.p-column-filter-clear-button {
     display: none;
+}
+.container{
+    overflow-x: hidden;
 }
 </style>

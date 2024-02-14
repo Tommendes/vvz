@@ -27,10 +27,10 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/users`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'name', label: 'Nome', minWidth: '15rem' },
-    { field: 'cpf', label: 'CPF', minWidth: '15rem' },
-    { field: 'email', label: 'Email', minWidth: '25rem' },
-    { field: 'telefone', label: 'Telefone', minWidth: '15rem' }
+    { field: 'name', label: 'Nome' },
+    { field: 'cpf', label: 'CPF' },
+    // { field: 'email', label: 'Email', minWidth: '25rem' },
+    // { field: 'telefone', label: 'Telefone', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -63,27 +63,27 @@ const loadData = () => {
     }, Math.random() * 1000);
 };
 const mode = ref('grid');
-const searchInPage = () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const contentElement = document.getElementByTagName('tbody');
+// const searchInPage = () => {
+//     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
-    if (searchTerm) {
-        const contentText = contentElement.innerText.toLowerCase();
+//     const contentElement = document.getElementByTagName('tbody');
+//     if (searchTerm) {
+//         const contentText = contentElement.innerText.toLowerCase();
 
-        if (contentText.includes(searchTerm)) {
-            // Criamos uma expressão regular global (g) para encontrar todas as correspondências
-            const regex = new RegExp(searchTerm, 'g');
+//         if (contentText.includes(searchTerm)) {
+//             // Criamos uma expressão regular global (g) para encontrar todas as correspondências
+//             const regex = new RegExp(searchTerm, 'g');
 
-            // Usamos o método replace para envolver as correspondências com uma tag de destaque
-            contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
+//             // Usamos o método replace para envolver as correspondências com uma tag de destaque
+//             contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
 
-            // Definimos o foco de volta no campo de input
-            document.getElementById('searchInput').focus();
-        } else {
-            alert('Nenhuma correspondência encontrada.');
-        }
-    }
-};
+//             // Definimos o foco de volta no campo de input
+//             document.getElementById('searchInput').focus();
+//         } else {
+//             alert('Nenhuma correspondência encontrada.');
+//         }
+//     }
+// };
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -116,7 +116,7 @@ onBeforeMount(() => {
                     </span>
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
+                        <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>

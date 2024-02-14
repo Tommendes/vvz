@@ -47,10 +47,10 @@ const gridData = ref([]); // Seus dados iniciais
 // Itens do grid
 const listaNomes = ref([
     { field: 'created_at', label: 'Data de criação' },
-    { field: 'evento', label: 'Tipo do evento', minWidth: '10rem' },
-    { field: 'classevento', label: 'Classe' },
-    { field: 'tabela_bd', label: 'Tabela' },
-    { field: 'id_registro', label: 'Registro' },
+    // { field: 'evento', label: 'Tipo do evento', minWidth: '10rem' },
+    // { field: 'classevento', label: 'Classe' },
+    // { field: 'tabela_bd', label: 'Tabela' },
+    // { field: 'id_registro', label: 'Registro' },
     { field: 'user', label: 'Usuário' }
 ]);
 // Inicializa os filtros do grid
@@ -191,7 +191,7 @@ const showEvent = (evento) => {
 
 <template>
     <Breadcrumb :items="[{ label: 'Todos os Eventos', to: `/${userData.schema_description}/eventos` }]" />
-    <div class="card">
+    <div class="card w-95">
         <DataTable
             style="font-size: 1rem"
             :value="gridData"
@@ -209,7 +209,6 @@ const showEvent = (evento) => {
             @sort="onSort($event)"
             @filter="onFilter($event)"
             filterDisplay="row"
-            tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
@@ -221,7 +220,7 @@ const showEvent = (evento) => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
                             :id="nome.field"
@@ -230,8 +229,7 @@ const showEvent = (evento) => {
                             v-model="filterModel.value"
                             :options="nome.list"
                             @change="filterCallback()"
-                            :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
+                            :class="nome.class"                            
                             placeholder="Pesquise..."
                         />
                     </template>
@@ -245,11 +243,10 @@ const showEvent = (evento) => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
@@ -266,3 +263,17 @@ const showEvent = (evento) => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+}
+</style>
+<style>
+.container{
+    overflow-x: hidden;
+}
+.p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
+    display: none;
+}
+</style>

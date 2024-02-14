@@ -46,8 +46,8 @@ const gridData = ref([]); // Seus dados iniciais
 // Itens do grid
 const listaNomes = ref([
     { field: 'fornecedor', label: 'Fornecedor', minWidth: '15rem' },
-    { field: 'nome_comum', label: 'Nome Comum', minWidth: '10rem' },
-    { field: 'descricao', label: 'Descrição', minWidth: '15rem' }
+    { field: 'nome_comum', label: 'Nome Comum' },
+    // { field: 'descricao', label: 'Descrição', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -149,7 +149,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Produtos', to: route.fullPath }]" />
-    <div class="card">
+    <div class="card w-95">
         <ProdutoForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 1rem"
@@ -168,14 +168,13 @@ watchEffect(() => {
             @sort="onSort($event)"
             @filter="onFilter($event)"
             filterDisplay="row"
-            tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
         >
             <!-- scrollHeight="420px" -->
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column gap-3">
                     <!-- <Dropdown
                         filter
                         placeholder="Filtrar por Área de Atuação..."
@@ -194,7 +193,7 @@ watchEffect(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
                             :id="nome.field"
@@ -204,7 +203,6 @@ watchEffect(() => {
                             :options="nome.list"
                             @change="filterCallback()"
                             :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
                             placeholder="Pesquise..."
                         />
                     </template>
@@ -218,11 +216,10 @@ watchEffect(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
@@ -249,3 +246,14 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+}
+</style>
+<style>
+.p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
+    display: none;
+}
+</style>

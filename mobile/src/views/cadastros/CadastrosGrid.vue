@@ -205,7 +205,7 @@ watchEffect(() => {
             <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end flex-column gap-3">
-                    <div class="flex justify-content-between">
+                    <div class="flex flex-column gap-3">
                         <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="novoRegistro()" />
                         <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                         <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />

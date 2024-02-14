@@ -257,7 +257,6 @@ watchEffect(() => {
                             @change="filterCallback()"
                             :class="nome.class"
                             :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
-                            placeholder="Pesquise..."
                             showClear
                         />
                     </template>
@@ -303,5 +302,16 @@ watchEffect(() => {
 .w-95{
  width: 95vw;
  max-width: 100%;
+}
+</style>
+<style>
+.container{
+    overflow-x: hidden;
+}
+.p-column-filter-menu-button, .p-column-filter-clear-button {
+    display: none;
+}
+.p-dropdown-clear-icon {
+    display: none;
 }
 </style>

@@ -35,11 +35,11 @@ const itemData = ref({});
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'descricao', label: 'Proponente', minWidth: '11rem' },
-    { field: 'documento', label: 'Proposta', minWidth: '8rem' },
-    { field: 'nome', label: 'Cliente', minWidth: '12rem' },
-    // { field: 'pessoa_contato', label: 'Contato', minWidth: '12rem' },
-    { field: 'email_contato', label: 'Email', minWidth: '12rem' }
+    // { field: 'descricao', label: 'Proponente' },
+    { field: 'documento', label: 'Proposta' },
+    { field: 'nome', label: 'Cliente' },
+    // { field: 'pessoa_contato', label: 'Contato' },
+    // { field: 'email_contato', label: 'Email' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -142,7 +142,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Propostas', to: route.fullPath }]" />
-    <div class="card">
+    <div class="card w-95">
         <PropostaForm @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 1rem"
@@ -161,21 +161,20 @@ watchEffect(() => {
             @sort="onSort($event)"
             @filter="onFilter($event)"
             filterDisplay="row"
-            tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
             scrollable
         >
             <!-- scrollHeight="420px" -->
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column gap-3">
                     <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                         <Dropdown
                             :id="nome.field"
@@ -185,7 +184,6 @@ watchEffect(() => {
                             :options="nome.list"
                             @change="filterCallback()"
                             :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
                             placeholder="Pesquise..."
                         />
                     </template>
@@ -199,11 +197,10 @@ watchEffect(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
@@ -229,3 +226,9 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+}
+</style>

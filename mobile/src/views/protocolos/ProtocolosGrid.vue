@@ -93,7 +93,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Protocolos', to: route.fullPath }]" />
-    <div class="card">
+    <div class="card w-95">
         <ProtocoloForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 1rem"
@@ -115,7 +115,7 @@ onBeforeMount(() => {
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
+                        <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
                     </span>
                 </div>
             </template>
@@ -156,5 +156,9 @@ onBeforeMount(() => {
 .foundMark {
     background-color: yellow;
     padding: 0;
+}
+.w-95{
+    width: 95vw;
+    max-width: 100%;
 }
 </style>
