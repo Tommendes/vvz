@@ -473,66 +473,62 @@ watch(selectedCadastro, (value) => {
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-3 mx-auto text-center" :class="itemData.url_logo ? ' image-on' : ''">
+                        <div class="col-12 mx-auto text-center" :class="itemData.url_logo ? ' image-on' : ''">
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultProduto.png'}`" width="200" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
-                        <div class="col-9">
-                            <div class="p-fluid grid">
-                                <div class="col-12 md:col-3">
-                                    <label for="nome_comum">Nome curto</label>
-                                    <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome_comum" id="nome_comum" type="text" maxlength="25" />
-                                </div>
-                                <div class="col-12 md:col-9">
-                                    <label for="id_fornecedor">Fornecedor</label>
-                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <AutoComplete v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
-                                    <div class="p-inputgroup flex-1" v-else>
-                                        <InputText disabled v-model="nomeCliente" />
-                                        <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
-                                    </div>
-                                </div>
-                                <div class="col-12 md:col-3">
-                                    <label for="produto">Produto/Serviço</label>
-                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="produto" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.produto" :options="dropdownProduto" />
-                                </div>
-                                <div class="col-12 md:col-3">
-                                    <label for="id_params_unidade">Unidade</label>
-                                    <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <Dropdown
-                                        v-else-if="itemData.produto == 1"
-                                        id="id_params_unidade"
-                                        :disabled="mode == 'view'"
-                                        placeholder="Selecione a unidade"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        v-model="itemData.id_params_unidade"
-                                        :options="dropdownUnidades"
-                                    />
-                                    <p v-else v-html="'Mão de Obra'" class="p-inputtext p-component p-filled disabled"></p>
-                                </div>
-                                <div class="col-12 md:col-3">
-                                    <label for="ncm">NCM</label>
-                                    <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ncm" id="ncm" type="text" />
-                                    <p v-else v-html="itemData.ncm || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
-                                </div>
-                                <div class="col-12 md:col-3">
-                                    <label for="cean">cEAN</label>
-                                    <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cean" id="cean" type="text" />
-                                    <p v-else v-html="itemData.cean || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
-                                </div>
-                                <div class="col-12 md:col-12" v-if="itemData.descricao || mode != 'view'">
-                                    <label for="descricao">Descrição</label>
-                                    <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                                    <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
-                                </div>
+                        <div class="col-12 md:col-3">
+                            <label for="nome_comum">Nome curto</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome_comum" id="nome_comum" type="text" maxlength="25" />
+                        </div>
+                        <div class="col-12 md:col-9">
+                            <label for="id_fornecedor">Fornecedor</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <AutoComplete v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <div class="p-inputgroup flex-1" v-else>
+                                <InputText disabled v-model="nomeCliente" />
+                                <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                             </div>
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="produto">Produto/Serviço</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <Dropdown v-else id="produto" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.produto" :options="dropdownProduto" />
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="id_params_unidade">Unidade</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Dropdown
+                                v-else-if="itemData.produto == 1"
+                                id="id_params_unidade"
+                                :disabled="mode == 'view'"
+                                placeholder="Selecione a unidade"
+                                optionLabel="label"
+                                optionValue="value"
+                                v-model="itemData.id_params_unidade"
+                                :options="dropdownUnidades"
+                            />
+                            <p v-else v-html="'Mão de Obra'" class="p-inputtext p-component p-filled disabled"></p>
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="ncm">NCM</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ncm" id="ncm" type="text" />
+                            <p v-else v-html="itemData.ncm || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
+                        </div>
+                        <div class="col-12 md:col-3">
+                            <label for="cean">cEAN</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cean" id="cean" type="text" />
+                            <p v-else v-html="itemData.cean || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
+                        </div>
+                        <div class="col-12 md:col-12" v-if="itemData.descricao || mode != 'view'">
+                            <label for="descricao">Descrição</label>
+                            <Skeleton v-if="loading" height="2rem"></Skeleton>
+                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
                 </div>

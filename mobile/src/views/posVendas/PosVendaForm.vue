@@ -415,7 +415,7 @@ watch(selectedCadastro, (value) => {
 
 <template>
     <Breadcrumb v-if="!['expandedFormMode', 'new'].includes(mode) && !props.idCadastro" :items="breadItems" />
-    <div class="card">
+    <div class="card w-90">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
@@ -629,3 +629,14 @@ watch(selectedCadastro, (value) => {
         </form>
     </div>
 </template>
+<style scoped>
+.w-90{
+    width: 98vw;
+    max-width: 100%;
+}
+</style>
+<style>
+.container{
+    overflow-x: hidden;
+}
+</style>

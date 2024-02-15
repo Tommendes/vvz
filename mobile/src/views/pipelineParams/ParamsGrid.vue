@@ -60,7 +60,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: route.fullPath }]" />
-    <div class="card">
+    <div class="card w-95">
         <ParamForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 1rem"
@@ -77,12 +77,12 @@ onBeforeMount(() => {
             :globalFilterFields="['id', 'descricao']"
         >
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column gap-3">
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
+                        <InputText class="w-full" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
@@ -110,3 +110,9 @@ onBeforeMount(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+}
+</style>

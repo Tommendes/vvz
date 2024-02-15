@@ -337,14 +337,14 @@ const onImageRightClick = (event) => {
     />
     <div class="card">
         <form @submit.prevent="saveData">
-            <div class="grid">
-                <div class="col-3">
-                    <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                    <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultLogomarca.png'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
-                    <ContextMenu ref="menu" :model="items" />
-                </div>
-                <div class="col-9">
+            <div class="grid">                
+                <div class="col-12">
                     <div class="p-fluid grid">
+                        <div class="col-12 mt-4 text-center">
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultLogomarca.png'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                            <ContextMenu ref="menu" :model="items" />
+                        </div>
                         <div class="col-12">
                             <label for="razaosocial">{{ labels.razaosocial }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
@@ -374,10 +374,6 @@ const onImageRightClick = (event) => {
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.nr">{{ errorMessages.nr }}</small>
                         </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="p-fluid grid">
                         <div class="col-12 md:col-2">
                             <label for="complnr">Complemento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>

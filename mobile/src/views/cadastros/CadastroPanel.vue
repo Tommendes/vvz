@@ -167,5 +167,6 @@ onBeforeMount(() => {
 }
 .w-95{
     width: 95vw !important;
+    max-width: 100%;
 }
 </style>
