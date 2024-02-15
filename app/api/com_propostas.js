@@ -59,7 +59,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
-        delete body.hash; delete body.tblName
+         
         // body.nascimento = moment(body.nascimento).format("DD/MM/YYYY")
         const { changeUpperCase, removeAccentsObj } = app.api.facilities
         body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
@@ -95,7 +95,7 @@ module.exports = app => {
                 })
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -214,7 +214,7 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id,pp.descricao,p.documento,p.versao,pv.pv_nr,c.nome,c.cpf_cnpj,tbl1.pessoa_contato,tbl1.telefone_contato,tbl1.email_contato,TO_BASE64('${tabela}') tblName,SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .select(app.db.raw(`tbl1.id,pp.descricao,p.documento,p.versao,pv.pv_nr,c.nome,c.cpf_cnpj,tbl1.pessoa_contato,tbl1.telefone_contato,tbl1.email_contato`))
             .join({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'p.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'p.id_cadastros')
@@ -245,7 +245,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')

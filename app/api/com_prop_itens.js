@@ -48,7 +48,7 @@ module.exports = app => {
         }
 
         if (body.item_ativo == 0) delete body.item
-        delete body.hash; delete body.tblName
+         
         if (body.id) {
             try {
                 if (body.item_ativo == 1) existsOrError(String(body.item), 'Item não informado')
@@ -111,7 +111,7 @@ module.exports = app => {
             //     return res.status(400).send(error)
             // }
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -171,7 +171,7 @@ module.exports = app => {
 
         
         const ret = app.db({ tbl1: tabelaDomain })
-        .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl3.localizacao, tbl3.tombamento, tbl2.nome_comum, tbl2.descricao descricao_produto, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+        .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl3.localizacao, tbl3.tombamento, tbl2.nome_comum, tbl2.descricao descricao_produto`))
         .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
         .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
         .where({ 'tbl1.id_com_propostas': id_com_propostas })
@@ -208,7 +208,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id })
             .whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_ITEM_INACTIVE]).first()
             .then(body => {

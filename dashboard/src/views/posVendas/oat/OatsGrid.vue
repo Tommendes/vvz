@@ -9,9 +9,9 @@ const filters = ref(null);
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/pv-oat/${props.itemDataRoot.id}`);
 // Props do template
 const props = defineProps(['itemDataRoot', 'toOpenOat']); // O próprio pv
+const urlBase = ref(`${baseApiUrl}/pv-oat/${props.itemDataRoot.id}`);
 import { useDialog } from 'primevue/usedialog';
 // Inicializa os filtros
 const initFilters = () => {

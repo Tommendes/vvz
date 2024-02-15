@@ -1,8 +1,8 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'com_agentes'
-    const tabelaAlias = 'Agentes'
+    const tabela = 'comis_pipeline'
+    const tabelaAlias = 'Comissionamento'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -14,25 +14,31 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.comercial >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && (uParams.comissoes >= 2 || uParams.comercial >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            if (body.id) isMatchOrError(uParams && (uParams.comercial >= 3 || uParams.comissoes >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.comercial >= 2 || uParams.comissoes >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
+
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
 
         try {
-            existsOrError(body.id_cadastros, 'Id_cadastros não encontrada ')
-            if (body.id_cadastros < 0) throw "Id_cadastros inválido"
-            existsOrError(body.dsr, '  DSR não encontrado')
-            if (body.dsr.length > 1) throw 'DSR inválido'
-
+            existsOrError(body.id_pipeline, 'Registro de Pipeline não informado')
+            const pipeline = await app.db(tabelaPipelineDomain).where({ id: body.id_pipeline, status: STATUS_ACTIVE }).first()
+            existsOrError(pipeline, 'Registro de Pipeline não encontrado')
+            existsOrError(body.base_representacao, 'Valor base da representação não informado')
+            if (body.base_representacao <= 0) throw 'Valor base da comissão da representação deve ser maior que zero'
+            if (body.base_representacao > pipeline.valor_representacao) throw 'O valor não pode ser maior que o valor da comissão do representante informada no registro do Pipeline'
+            existsOrError((String(body.base_agentes)), 'Valor base dos agentes não informado')
+            if (body.base_agentes < 0) throw 'Valor base da comissão dos agentes não pode ser negativo'
+            if (body.base_agentes > pipeline.valor_agente) throw 'O valor base da comissão dos agentes não pode ser maior que o valor da comissão dos agentes informada no registro do Pipeline'
         } catch (error) {
+            app.api.logger.logError({log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true }});
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -62,8 +68,15 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         } else {
+            const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE }).first()
+            try {
+                notExistsOrError(unique, `Registro de Pipeline já foi relacionado para comissionamento`)
+            } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                return res.status(400).send(error)
+            }
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -100,7 +113,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comissoes >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.comercial >= 1 || uParams.comissoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -114,7 +127,7 @@ module.exports = app => {
         count = count[0][0].count
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
 
         ret.where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
@@ -132,7 +145,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comissoes >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.comercial >= 1 || uParams.comissoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -140,7 +153,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
@@ -164,33 +177,33 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const registro = { status: STATUS_DELETE }
+        const notOnComissoes = await app.db({ tbl1: `${dbPrefix}_${uParams.schema_name}.comissoes` }).where({ 'tbl1.id_comis_pipeline': req.params.id }).first()
+        try {
+            notExistsOrError(notOnComissoes, `Registro de ${tabelaAlias} não pode ser excluído, pois está vinculado`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(400).send(error)
+        }
         try {
             // registrar o evento na tabela de eventos
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento'],
-                "last": last,
-                "next": registro,
+            const { createEvent } = app.api.sisEvents
+            await createEvent({
                 "request": req,
                 "evento": {
-                    "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
-                    "tabela_bd": tabela,
+                    id_user: user.id,
+                    evento: `Exclusão de registro de comissionamento ${JSON.stringify(last)}`,
+                    classevento: `Remove`,
+                    id_registro: req.params.id,
+                    tabela_bd: tabela
                 }
             })
-            const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
-                .where({ id: req.params.id })
-            existsOrError(rowsUpdated, 'Registro não foi encontrado')
-
+            await app.db(tabelaDomain)
+                .del()
+                .where({ id: req.params.id, status: STATUS_ACTIVE })
             res.status(204).send()
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }

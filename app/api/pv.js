@@ -48,7 +48,7 @@ module.exports = app => {
 
         const status_pv_force = body.status_pv_force; // Status forçado para edição
         const status_pv = body.status_pv; // Último status do registro
-        delete body.status_pv; delete body.pipeline_params_force; delete body.status_pv_force; delete body.hash; delete body.tblName;
+        delete body.status_pv; delete body.pipeline_params_force; delete body.status_pv_force;  
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {
@@ -269,8 +269,7 @@ module.exports = app => {
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, tbl1.observacao, tbl1.status, pp.descricao AS tipo_doc, p.documento, c.nome, c.cpf_cnpj, tbl1.pv_nr, tbl1.tipo,
-            (SELECT ps.status_pv FROM ${tabelaPvStatusDomain} ps WHERE ps.id_pv = tbl1.id ORDER BY ps.created_at DESC, ps.status_pv DESC LIMIT 1)  last_status_pv,
-            SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            (SELECT ps.status_pv FROM ${tabelaPvStatusDomain} ps WHERE ps.id_pv = tbl1.id ORDER BY ps.created_at DESC, ps.status_pv DESC LIMIT 1)  last_status_pv`))
             .leftJoin({ p: tabelaPipelineDomain }, 'p.id', '=', 'tbl1.id_pipeline')
             .leftJoin({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'p.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
@@ -299,7 +298,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id })
             .whereNot({ 'tbl1.status': STATUS_DELETE }).first()
             .then(body => {

@@ -1,8 +1,8 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'com_terceiros'
-    const tabelaAlias = 'Terceiros'
+    const tabela = 'comIS_agentes'
+    const tabelaAlias = 'Agente'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -14,27 +14,22 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && (uParams.comercial >= 3 || uParams.comissoes >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && (uParams.comercial >= 2 || uParams.comissoes >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.comercial >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.comissoes >= 2 || uParams.comercial >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-
-            existsOrError(body.id_pipeline, 'Documento não encontrado')
-            if (body.id_pipeline < 0 && body.id_pipeline.length > 11) throw "Documento inválido"
-            existsOrError(body.id_com_agentes, 'Id_com_agentes não encontrado')
-            if (body.id_com_agentes < 0 && body.id_com_agentes.length > 11) throw "Id_com_agentes inválido"
-
+            existsOrError(body.id_cadastros, 'Cadastros não encontrado')
+            existsOrError(String(body.dsr), 'DSR não encontrado')
         } catch (error) {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
+         
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -64,8 +59,14 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         } else {
+            const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, status: STATUS_ACTIVE }).first()
+            try {
+                notExistsOrError(unique, `Agente já cadastrado`)
+            } catch (error) {
+                return res.status(400).send(error)
+            }
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -96,33 +97,26 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comercial >= 1 || uParams.comissoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.comissoes >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
-
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
-
-        ret.where({ status: STATUS_ACTIVE })
+            .select(app.db.raw(`tbl1.*`))
+            .where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
             .limit(limit).offset(page * limit - limit)
             .then(body => {
-                return res.json({ data: body, count: count, limit })
+                const count = body.length
+                return res.json({ data: body, count: count })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -134,15 +128,15 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comercial >= 1 || uParams.comissoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.comissoes >= 1 || uParams.comercial >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+        app.db({ tbl1: tabelaDomain })
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
@@ -159,40 +153,41 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comercial >= 4 || uParams.comissoes >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.comissoes >= 4 || uParams.comercial >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const registro = { status: STATUS_DELETE }
+        const notOnComissoes = await app.db({ tbl1: `${dbPrefix}_${uParams.schema_name}.comissoes` }).where({ 'tbl1.id_comis_agentes': req.params.id }).first()
+        try {
+            notExistsOrError(notOnComissoes, `Registro de ${tabelaAlias} não pode ser excluído, pois está vinculado`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(400).send(error)
+        }
         try {
             // registrar o evento na tabela de eventos
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento'],
-                "last": last,
-                "next": registro,
+            const { createEvent } = app.api.sisEvents
+            await createEvent({
                 "request": req,
                 "evento": {
-                    "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
-                    "tabela_bd": tabela,
+                    id_user: user.id,
+                    evento: `Exclusão de registro de agente ${JSON.stringify(last)}`,
+                    classevento: `Remove`,
+                    id_registro: req.params.id,
+                    tabela_bd: tabela
                 }
             })
-            const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
-                .where({ id: req.params.id })
-            existsOrError(rowsUpdated, 'Registro não foi encontrado')
+            await app.db(tabelaDomain)
+                .del()
+                .where({ id: req.params.id, status: STATUS_ACTIVE })
 
-            res.status(204).send()
+            res.status(204)
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }

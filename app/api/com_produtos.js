@@ -44,7 +44,7 @@ module.exports = app => {
             }
         const delete_imagem = body.delete_imagem
         const url_logo = body.url_logo
-        delete body.hash; delete body.tblName; delete body.endereco; delete body.url_logo; delete body.delete_imagem;
+          delete body.endereco; delete body.url_logo; delete body.delete_imagem;
         if (body.id) {
             const { createEventUpd } = app.api.sisEvents
             // Variáveis da edição de um registro
@@ -122,7 +122,7 @@ module.exports = app => {
                 return res.status(400).send(error)
             }
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -222,7 +222,7 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*,c.nome fornecedor,c.cpf_cnpj,TO_BASE64('${tabela}') tblName,SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .select(app.db.raw(`tbl1.*,c.nome fornecedor,c.cpf_cnpj`))
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_fornecedor')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
@@ -251,7 +251,7 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo`))
             .leftJoin({ upl: tabelaUploadsDomain }, function () {
                 this.on('tbl1.id_uploads_imagem', '=', 'upl.id')
                     .andOn('upl.status', '=', STATUS_ACTIVE)

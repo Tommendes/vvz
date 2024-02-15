@@ -43,7 +43,7 @@ module.exports = app => {
 
         app.db.raw(`CREATE DATABASE ${schemaNameAndUser};`)
             .then(async () => {
-                const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+                const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
                 req.body = {
                     'created_at': new Date(),
                     'status': 10,
