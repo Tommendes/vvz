@@ -51,8 +51,6 @@ const loadData = async () => {
                         delete itemData.value.created_at;
                         delete itemData.value.updated_at;
                         delete itemData.value.old_id;
-                        delete itemData.value.hash;
-                        delete itemData.value.tblName;
                         itemData.value.comp_ativa = true;
                         itemData.value.compoe_valor = true;
                     }

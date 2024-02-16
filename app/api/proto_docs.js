@@ -45,7 +45,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName; delete body.items;
+          delete body.items;
 
         if (body.id) {
             // Variáveis da edição de um registro
@@ -77,7 +77,7 @@ module.exports = app => {
                 })
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -124,7 +124,7 @@ module.exports = app => {
         const tabelaProtocoloDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProtocolo}`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, tbl1.tp_documento, tbl1.descricao, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.id, tbl1.tp_documento, tbl1.descricao`))
 
         ret.where({ 'tbl1.status': STATUS_ACTIVE, id_protocolos: id_protocolos })
             .join({ tbl2: tabelaProtocoloDomain }, 'tbl2.id', 'tbl1.id_protocolos')
@@ -151,7 +151,7 @@ module.exports = app => {
         const id_protocolos = req.params.id_protocolos
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_protocolos': id_protocolos }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')

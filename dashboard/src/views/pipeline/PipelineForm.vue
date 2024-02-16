@@ -60,7 +60,6 @@ const urlBase = ref(`${baseApiUrl}/pipeline`);
 // Itens do breadcrumb
 const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]);
 const calcTypeRepres = ref('R$');
-const calcTypeAgente = ref('R$');
 
 // Andamento do registro
 import { andamentoRegistroPipeline } from '@/global';
@@ -340,6 +339,13 @@ const itemDataStatusPreload = ref([
         color: '#4cd07d'
     },
     {
+        status: '70',
+        action: 'Comissionamento',
+        label: 'Comissionamento',
+        icon: 'fa-solid fa-money-bill-transfer',
+        color: '#689F38'
+    },
+    {
         status: '80',
         action: 'Liquidação',
         label: 'Liquidado',
@@ -503,27 +509,14 @@ const registroIdentico = async () => {
     // await listAgentesNegocio();
     // defaultWarn('Verifique se o número do documento deve ser editado');
 };
-const itemsComiss = [
-    {
-        label: 'Agente interno',
-        icon: 'fa-solid fa-user',
-        command: () => {
-            defaultSuccess('Agente interno');
-        }
-    },
-    {
-        label: 'Terceiros',
-        icon: 'fa-solid fa-users',
-        command: () => {
-            defaultSuccess('Terceiros');
-        }
-    }
-];
 const toPai = async () => {
     window.location.href = `#/${userData.schema_description}/pipeline/${itemData.value.id_pai}`;
 };
 const toFilho = async (idFilho) => {
     window.location.href = `#/${userData.schema_description}/pipeline/${idFilho || itemData.value.id_filho}`;
+};
+const toComissionate = async () => {
+    defaultSuccess('Em desenvolvimento');
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
@@ -667,6 +660,7 @@ const createOat = async (pv) => {
         .post(url, obj)
         .then((res) => {
             const oat = res.data;
+            console.log(oat);
             defaultSuccess(`OAT de montagem ${pv.pv_nr.toString().padStart(6, '0')}.${oat.nr_oat.toString().padStart(3, '0')} criada com sucesso.`);
             reload();
         })
@@ -803,6 +797,12 @@ const getEventos = async () => {
                                 : '');
                     else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
                     else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
+                    else if (element.classevento.toLowerCase() == 'commissioning') 
+                        element.evento =
+                            `Lançamento de comissão` +
+                            (userData.comissoes >= 1
+                                ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                                : '');
                     element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
                 });
             } else {
@@ -1079,7 +1079,7 @@ watch(route, (value) => {
                             </div>
                         </template>
                         <p class="mb-3" v-if="itemData.old_id">
-                            <spam>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</spam>
+                            <span>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</span>
                             <span style="font-size: 20px">&#128521;</span>
                         </p>
                         <p class="m-0">
@@ -1167,16 +1167,16 @@ watch(route, (value) => {
                                 raised
                                 @click="toProposal()"
                             />
-                            <SplitButton
+                            <Button
                                 label="Comissionar"
-                                v-if="itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10"
+                                v-if="userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10"
                                 :disabled="itemDataLastStatus.status_params >= 89"
                                 class="w-full mb-3"
-                                :icon="`fa-solid fa-money-bill-transfer ${itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10 ? 'fa-shake' : ''}`"
+                                :icon="`fa-solid fa-money-bill-transfer ${userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10 ? 'fa-shake' : ''}`"
                                 severity="success"
                                 text
                                 raised
-                                :model="itemsComiss"
+                                @click="toComissionate()"
                             />
                             <Button
                                 label="Criar OAT de Montagem"

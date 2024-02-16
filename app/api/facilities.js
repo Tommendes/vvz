@@ -112,9 +112,21 @@ module.exports = app => {
 
     function countOccurrences(str, term) { return str.split(term).length - 1 }
 
+    function formatCurrency(value, locale = { place: 'pt-BR', currency: 'BRL' }) {
+        value = value || 0;
+        // remova todos os caracteres não numéricos e converta para double
+        if (typeof value === 'string') value = parseFloat(value.replace(/\D/g, '')) / 100;
+        return value.toLocaleString(locale.place, { style: 'currency', currency: locale.currency });
+    }
+
+    function ceilTwoDecimals(num) {
+        return Math.ceil(num * 100) / 100;
+    }
+
     return {
         capitalizeFirstLetter, titleCase, removeAccents, removeAccentsObj,
         numbersOrZero, changeUpperCase, diffInDays, encryptPassword, comparePassword,
-        convertESocialTextToJson, getIdParam, getIdCidade, getIdCargos, countOccurrences
+        convertESocialTextToJson, getIdParam, getIdCidade, getIdCargos, countOccurrences,
+        formatCurrency, ceilTwoDecimals
     }
 }

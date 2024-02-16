@@ -29,7 +29,7 @@ module.exports = app => {
         body.compoe_valor = body.compoe_valor == true ? 1 : 0
 
         if (body.comp_ativa == 0) delete body.compos_nr
-        delete body.hash; delete body.tblName; delete body.old_id;
+          delete body.old_id;
 
         try {
             existsOrError(String(body.localizacao), 'Descrição curta não informada')
@@ -98,7 +98,7 @@ module.exports = app => {
             //     return res.status(400).send(error)
             // }
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -147,7 +147,7 @@ module.exports = app => {
         const id_com_propostas = req.params.id_com_propostas
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id_com_propostas': id_com_propostas })
             .whereIn('tbl1.comp_ativa', [STATUS_COMP_ACTIVE, STATUS_COMP_INACTIVE])
             .orderBy('tbl1.ordem', 'desc')
@@ -173,7 +173,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id })
             .whereIn('tbl1.comp_ativa', [STATUS_COMP_ACTIVE, STATUS_COMP_INACTIVE]).first()
             .then(body => {

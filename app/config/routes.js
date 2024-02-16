@@ -379,30 +379,43 @@ module.exports = app => {
         .post(app.api.com_prop_itens.getByFunction)
 
     /**
-     * Rota de com_agentes
+     * Rota de comis_pipeline
      */
-    app.route('/com-agentes')
+    app.route('/comis-pipeline')
         .all(app.config.passport.authenticate())
-        .post(app.api.com_agentes.save)
-        .get(app.api.com_agentes.get)
-    app.route('/com-agentes/:id')
+        .post(app.api.comis_pipeline.save)
+        .get(app.api.comis_pipeline.get)
+    app.route('/comis-pipeline/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.com_agentes.save)
-        .get(app.api.com_agentes.getById)
-        .delete(app.api.com_agentes.remove)
+        .put(app.api.comis_pipeline.save)
+        .get(app.api.comis_pipeline.getById)
+        .delete(app.api.comis_pipeline.remove)
 
     /**
-    * Rota de com_terceiros
+     * Rota de comis_agentes
+     */
+    app.route('/comis-agentes')
+        .all(app.config.passport.authenticate())
+        .post(app.api.comis_agentes.save)
+        .get(app.api.comis_agentes.get)
+    app.route('/comis-agentes/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.comis_agentes.save)
+        .get(app.api.comis_agentes.getById)
+        .delete(app.api.comis_agentes.remove)
+
+    /**
+    * Rota de comissoes
     */
-    app.route('/com-terceiros')
+    app.route('/comissoes')
         .all(app.config.passport.authenticate())
-        .post(app.api.com_terceiros.save)
-        .get(app.api.com_terceiros.get)
-    app.route('/com-terceiros/:id')
+        .post(app.api.comissoes.save)
+        .get(app.api.comissoes.get)
+    app.route('/comissoes/:id')
         .all(app.config.passport.authenticate())
-        .put(app.api.com_terceiros.save)
-        .get(app.api.com_terceiros.getById)
-        .delete(app.api.com_terceiros.remove)
+        .put(app.api.comissoes.save)
+        .get(app.api.comissoes.getById)
+        .delete(app.api.comissoes.remove)
 
     /**
     * Rota de pv

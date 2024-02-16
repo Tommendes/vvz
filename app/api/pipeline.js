@@ -4,7 +4,7 @@ const ftp = require('basic-ftp');
 const path = require('path')
 
 module.exports = app => {
-    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
+    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_COMISSIONADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
     const { TIPO_PV_SUPORTE, TIPO_PV_MONTAGEM, TIPO_PV_VENDAS } = require('./pv.js')(app)
     const { existsOrError, booleanOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'pipeline'
@@ -70,7 +70,7 @@ module.exports = app => {
         }
         const status_params = body.status_params; // Último status do registro
         const status_params_force = body.status_params_force || body.status_params; // Status forçado para edição
-        delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force; delete body.hash; delete body.tblName;
+        delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force;  
         delete body.id_pv; delete body.id_oat;
         if (body.id) {
             // Variáveis da edição de um registro            
@@ -423,8 +423,7 @@ module.exports = app => {
                 lpad(tbl1.documento,${digitsOfAFolder},'0') documento, lpad(tbl2.documento,${digitsOfAFolder},'0') doc_pai, 
                 lpad(tbl3.documento,${digitsOfAFolder},'0') doc_filho, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
                 DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
-                (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  last_status_params,
-                SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+                (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) last_status_params`))
             // localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             //Localizar registros pai
@@ -462,7 +461,7 @@ module.exports = app => {
         const tabelaOatDomain = `${dbPrefix}_${uParams.schema_name}.pv_oat`
         if (Number(req.params.id) > 0) {
             const ret = app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+                .select(app.db.raw(`tbl1.*`))
                 .where({ 'tbl1.id': req.params.id })
                 .whereNot({ 'tbl1.status': STATUS_DELETE })
                 .first()

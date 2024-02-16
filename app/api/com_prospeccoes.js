@@ -46,7 +46,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
+         
         delete body.name; delete body.nome; delete body.cpf_cnpj; delete body.logradouro; delete body.nr; delete body.bairro; delete body.cidade; delete body.uf;
         if (body.id) {
             // Variáveis da edição de um registro
@@ -78,7 +78,7 @@ module.exports = app => {
                 })
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -220,8 +220,7 @@ module.exports = app => {
         totalRecords = await totalRecords
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.periodo, tbl1.pessoa, tbl1.contato, tbl1.data_visita,
-            SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .select(app.db.raw(`tbl1.id, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.periodo, tbl1.pessoa, tbl1.contato, tbl1.data_visita`))
             .join({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_agente')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')
@@ -253,8 +252,7 @@ module.exports = app => {
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadastros}`
         const tabelaCadEnderecosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaCadEnderecos}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.periodo, tbl1.pessoa, tbl1.contato, tbl1.data_visita,
-                                 SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) AS hash`))
+            .select(app.db.raw(`tbl1.*, u.name, c.nome, c.cpf_cnpj, ce.logradouro, ce.nr, ce.bairro, ce.cidade, ce.uf, tbl1.periodo, tbl1.pessoa, tbl1.contato, tbl1.data_visita`))
             .join({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_agente')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')

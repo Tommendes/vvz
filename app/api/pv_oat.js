@@ -71,7 +71,7 @@ module.exports = app => {
 
         const status_pv_oat_force = body.status_pv_oat_force; // Status forçado para edição
         const status_pv_oat = body.status_pv_oat; // Último status do registro
-        delete body.status_pv_oat; delete body.pipeline_params_force; delete body.status_pv_oat_force; delete body.hash; delete body.tblName;
+        delete body.status_pv_oat; delete body.pipeline_params_force; delete body.status_pv_oat_force;  
         if (body.nr_oat) body.nr_oat = body.nr_oat.toString().padStart(6, '0')
         if (body.id) {
             // Variáveis da edição de um registro            
@@ -208,7 +208,7 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
 
         ret.where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pv': id_pv })
             .groupBy('tbl1.id')
@@ -236,7 +236,7 @@ module.exports = app => {
         const id_pv = req.params.id_pv
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pv': id_pv }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')

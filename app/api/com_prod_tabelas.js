@@ -33,7 +33,7 @@ module.exports = app => {
             } catch (error) {
                 return res.status(400).send(error)
             }
-        delete body.hash; delete body.tblName
+         
         if (body.id) {
             const { createEventUpd } = app.api.sisEvents
             // Variáveis da edição de um registro
@@ -74,7 +74,7 @@ module.exports = app => {
                 return res.status(400).send(error)
             }
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -118,7 +118,7 @@ module.exports = app => {
         const id_com_produtos = req.params.id_com_produtos
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_com_produtos': id_com_produtos })
             .orderBy('tbl1.ini_validade', 'desc')
             .then(body => {
@@ -144,7 +144,7 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')

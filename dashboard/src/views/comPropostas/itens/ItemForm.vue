@@ -55,8 +55,6 @@ const loadData = async () => {
                         delete itemData.value.item;
                         delete itemData.value.updated_at;
                         delete itemData.value.old_id;
-                        delete itemData.value.hash;
-                        delete itemData.value.tblName;
                         itemData.value.item_ativo = true;
                         itemData.value.compoe_valor = true;
                         itemData.value.desconto_total = '0,00';

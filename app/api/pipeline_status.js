@@ -12,6 +12,7 @@ module.exports = app => {
     const STATUS_CONVERTIDO = 10;
     const STATUS_PEDIDO = 20;
     const STATUS_LIQUIDADO = 80;
+    const STATUS_COMISSIONADO = 70;
     const STATUS_CANCELADO = 89;
     const STATUS_EXCLUIDO = 99;
 
@@ -38,7 +39,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        delete body.hash; delete body.tblName
+         
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -69,7 +70,7 @@ module.exports = app => {
                 })
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
@@ -119,7 +120,7 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         const tabelaEvents = `${dbPrefix}_api.sis_events`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`u.name, tbl1.*, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`u.name, tbl1.*`))
             .leftJoin({ se: tabelaEvents }, 'se.id', 'tbl1.evento')
             .leftJoin({ u: tabelaUsers }, 'u.id', 'se.id_user')
             .where({ id_pipeline: id_pipeline })
@@ -152,7 +153,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, TO_BASE64('${tabela}') tblName, SUBSTRING(SHA(CONCAT(tbl1.id,'${tabela}')),8,6) as hash`))
+            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
@@ -269,6 +270,7 @@ module.exports = app => {
         STATUS_CONVERTIDO,
         STATUS_PROPOSTA,
         STATUS_PEDIDO,
+        STATUS_COMISSIONADO,
         STATUS_LIQUIDADO,
         STATUS_CANCELADO
     }

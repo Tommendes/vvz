@@ -137,7 +137,7 @@ module.exports = app => {
 
                 // Dados necessários agrupados
                 // Criação de um novo registro
-                const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+                const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
                 // Variáveis da criação de um novo registro
                 body.evento = nextEventID.count + 1
@@ -190,7 +190,7 @@ module.exports = app => {
 
                         // Criação do registro da senha
                         const userKey = {}
-                        const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('count(*) as count')).first()
+                        const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
                         userKey.evento = nextEventID.count + 1
                         userKey.password = password
                         userKey.status = STATUS_ACTIVE
