@@ -21,10 +21,10 @@ const urlBase = ref(`${baseApiUrl}/protocolos`);
 const urlBaseProtoDocs = ref(`${baseApiUrl}/proto-docs`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'nome', label: 'Destinatário', minWidth: '15rem' },
-    { field: 'titulo', label: 'Título', minWidth: '15rem' },
-    { field: 'descricao', label: 'Descrição', minWidth: '30rem' },
-    { field: 'registro', label: 'Protocolo', minWidth: '10rem' }
+    { field: 'nome', label: 'Destinatário' },
+    { field: 'titulo', label: 'Título' },
+    // { field: 'descricao', label: 'Descrição' },
+    { field: 'registro', label: 'Protocolo' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -64,27 +64,6 @@ const loadData = () => {
     }, Math.random() * 1000);
 };
 const mode = ref('grid');
-const searchInPage = () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const contentElement = document.getElementByTagName('tbody');
-
-    if (searchTerm) {
-        const contentText = contentElement.innerText.toLowerCase();
-
-        if (contentText.includes(searchTerm)) {
-            // Criamos uma expressão regular global (g) para encontrar todas as correspondências
-            const regex = new RegExp(searchTerm, 'g');
-
-            // Usamos o método replace para envolver as correspondências com uma tag de destaque
-            contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
-
-            // Definimos o foco de volta no campo de input
-            document.getElementById('searchInput').focus();
-        } else {
-            alert('Nenhuma correspondência encontrada.');
-        }
-    }
-};
 onBeforeMount(() => {
     initFilters();
     loadData();
@@ -110,12 +89,12 @@ onBeforeMount(() => {
             :globalFilterFields="['nome', 'titulo', 'descricao', 'registro']"
         >
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column gap-3">
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." @input="searchInPage" />
+                        <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
@@ -127,10 +106,9 @@ onBeforeMount(() => {
                     :filterMatchMode="'contains'"
                     sortable
                     :dataType="nome.type"
-                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}; max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
                 >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                         <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />

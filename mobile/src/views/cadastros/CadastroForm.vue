@@ -457,7 +457,7 @@ watchEffect(() => {
 
 <template>
     <div class="grid">
-        <form @submit.prevent="saveData">
+        <form @submit.prevent="saveData" class="max-w-full">
             <div class="col-12">
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
@@ -687,7 +687,6 @@ watchEffect(() => {
         color: var(--gray-900);
     }
 }
-
 .animation-color {
     animation: animation-color 5s linear;
 }

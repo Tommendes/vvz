@@ -56,9 +56,9 @@ const formIsValid = () => {
     return true;
 };
 const getDropdownLabel = (value) => {
-    if (!value) return undefined;
+    if (!value || !dropdownTipo.value) return undefined;
     const selectedOption = dropdownTipo.value.find((option) => option.value === value);
-    return selectedOption.label || undefined;
+    return selectedOption ? selectedOption.label : undefined;
 };
 // Mensages de erro
 const errorMessages = ref({});

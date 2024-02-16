@@ -120,7 +120,7 @@ onBeforeMount(async () => {
     <Breadcrumb :items="breadItems" />
     <div class="grid">
         <div class="col-12">
-            <div class="card">
+            <div class="card w-95">
                 <h3 v-if="itemDataPipelineParams && itemDataPipelineParams.descricao && itemDataPipeline && itemDataPipeline.documento">{{ itemDataPipelineParams.descricao.replaceAll('_', ' ') }} {{ itemDataPipeline.documento }}</h3>
                 <TabView lazy>
                     <TabPanel :disabled="!itemData.id">
@@ -163,3 +163,9 @@ onBeforeMount(async () => {
         </div>
     </div>
 </template>
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+}
+</style>
