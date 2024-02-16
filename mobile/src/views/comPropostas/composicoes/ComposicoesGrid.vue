@@ -20,11 +20,10 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-prop-compos`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'comp_ativa', label: 'Ativo', minWidth: '5rem', tagged: true },
-    { field: 'compoe', label: 'Compõe', minWidth: '5rem', tagged: true },
-    { field: 'compos_nr', label: 'Número', minWidth: '5rem' },
-    { field: 'localizacao', label: 'Descrição um', minWidth: '15rem' },
-    { field: 'tombamento', label: 'Descrição dois', minWidth: '15rem' }
+    { field: 'comp_ativa', label: 'Ativo', tagged: true },
+    { field: 'compoe', label: 'Compõe', tagged: true },
+    { field: 'compos_nr', label: 'Número' },
+    { field: 'localizacao', label: 'Descrição um' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -98,19 +97,19 @@ onBeforeMount(() => {
             :globalFilterFields="['compos_nr', 'localizacao', 'tombamento']"
         >
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column gap-3">
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newCompos" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
+                        <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                         <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />

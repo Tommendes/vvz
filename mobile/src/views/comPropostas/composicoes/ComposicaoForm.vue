@@ -113,13 +113,13 @@ onMounted(() => {
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-8">
-                            <div class="flex justify-content-start gap-5">
-                                <div class="switch-label" v-if="String(itemData.compos_nr)">Número da composição: {{ itemData.compos_nr }}</div>
-                                <div class="switch-label">
+                            <div class="flex flex-wrap gap-5">
+                                <div class="text-2xl font-medium" v-if="String(itemData.compos_nr)">Número da composição: {{ itemData.compos_nr }}</div>
+                                <div class="text-2xl font-medium">
                                     Composição ativa
                                     <InputSwitch id="comp_ativa" :disabled="mode == 'view'" v-model="itemData.comp_ativa" />
                                 </div>
-                                <div class="switch-label">
+                                <div class="text-2xl font-medium">
                                     Compõe valor
                                     <InputSwitch id="compoe_valor" :disabled="mode == 'view'" v-model="itemData.compoe_valor" />
                                 </div>
