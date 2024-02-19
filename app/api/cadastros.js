@@ -67,7 +67,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
-          delete body.ibge;
+        delete body.ibge;
         // body.nascimento = moment(body.nascimento).format("DD/MM/YYYY")
         const { changeUpperCase, removeAccentsObj } = app.api.facilities
         body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
@@ -390,6 +390,7 @@ module.exports = app => {
 
         const fieldName = req.query.fld
         const value = req.query.vl
+        const literal = req.query.literal || false
         const select = req.query.slct
 
         const first = req.query.first && req.query.first == true
@@ -401,9 +402,11 @@ module.exports = app => {
             const selectArr = select.split(',').map(s => s.trim())
             ret.select(selectArr)
         }
-
-        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
-            .where({ status: STATUS_ACTIVE })
+        
+        if (literal) ret.where(app.db.raw(`${fieldName} = "${value.toString()}"`))
+        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+        
+        ret.where({ status: STATUS_ACTIVE })
 
         if (first) {
             ret.first()
