@@ -23,8 +23,8 @@ const limitDescription = 50;
 // Itens do grid
 const listaNomes = ref([
     // { field: 'item', label: 'Composição/Item' },
-    { field: 'item_ativo', label: 'Ativo', tagged: true },
-    { field: 'compoe', label: 'Compõe', tagged: true },
+    // { field: 'item_ativo', label: 'Ativo', tagged: true },
+    // { field: 'compoe', label: 'Compõe', tagged: true },
     { field: 'nome_comum', label: 'Produto' },
     { field: 'descricao', label: 'Descrição Adicional', maxLength: limitDescription },
     // { field: 'quantidade', label: 'Quantidade' }
@@ -113,7 +113,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id_com_prop_compos', 'descricao', 'quantidade', 'valor_unitario', 'item']"
+            :globalFilterFields="['id_com_prop_compos', 'descricao']"
         >
             <template #header>
                 <div class="flex flex-column gap-3">

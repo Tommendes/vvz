@@ -113,7 +113,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id_fin_lanc', 'valor', 'valor_da_retencao']"
+            :globalFilterFields="['valor', 'valor_da_retencao']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">

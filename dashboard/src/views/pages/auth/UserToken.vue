@@ -167,12 +167,12 @@ const moveToNextInput = (index) => {
                             v-if="tokenTimeLeft > 0"
                             rounded
                             label="Registrar"
-                            icon="pi pi-sign-in"
+                            icon="fa-solid fa-arrow-right-to-bracket"
                             :disabled="!(token1 && token2 && token3 && token4 && token5 && token6 && token7 && token8)"
                             type="submit"
                             class="w-full p-3 text-xl mt-3 mb-3 gap-5"
                         ></Button>
-                        <Button v-else rounded label="Solicite outro token por e-mail" icon="pi pi-sign-in" @click="getNewToken" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
+                        <Button v-else rounded label="Solicite outro token por e-mail" icon="fa-solid fa-arrow-right-to-bracket" @click="getNewToken" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
                     </form>
                 </div>
             </div>

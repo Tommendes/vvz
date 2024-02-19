@@ -5,7 +5,7 @@ const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
 const home = ref({
-    icon: 'pi pi-home',
+    icon: 'fa-solid fa-house',
     to: `/${userData.schema_description}`
 });
 const pilha = defineProps(['items']);

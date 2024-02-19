@@ -145,9 +145,9 @@ onMounted(() => {
             <template #header="{ chooseCallback, uploadCallback, clearCallback, files }">
                 <div class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2">
                     <div class="flex gap-2">
-                        <Button @click="chooseCallback()" icon="pi pi-images" rounded outlined></Button>
-                        <Button @click="uploadEvent(uploadCallback)" icon="pi pi-cloud-upload" rounded outlined severity="success" :disabled="!files || files.length === 0"></Button>
-                        <Button @click="clearCallback()" icon="pi pi-times" rounded outlined severity="danger" :disabled="!files || files.length === 0"></Button>
+                        <Button @click="chooseCallback()" icon="fa-solid fa-image" rounded outlined></Button>
+                        <Button @click="uploadEvent(uploadCallback)" icon="fa-solid fa-cloud" rounded outlined severity="success" :disabled="!files || files.length === 0"></Button>
+                        <Button @click="clearCallback()" icon="fa-solid fa-x" rounded outlined severity="danger" :disabled="!files || files.length === 0"></Button>
                     </div>
                     <ProgressBar :value="totalSizePercent" :showValue="false" :class="['md:w-20rem h-1rem w-full md:ml-auto', { 'exceeded-progress-bar': totalSizePercent > 100 }]">
                         <span class="white-space-nowrap">{{ totalSize }}B / 1Mb</span></ProgressBar
@@ -165,7 +165,7 @@ onMounted(() => {
                             <span class="font-semibold">{{ file.name }}</span>
                             <div>{{ formatSize(file.size) }}</div>
                             <Badge value="Pendente" severity="warning" />
-                            <Button icon="pi pi-times" @click="onRemoveTemplatingFile(file, removeFileCallback, index)" outlined rounded severity="danger" />
+                            <Button icon="fa-solid fa-x" @click="onRemoveTemplatingFile(file, removeFileCallback, index)" outlined rounded severity="danger" />
                         </div>
                     </div>
                 </div>
@@ -180,7 +180,7 @@ onMounted(() => {
                             <div>{{ formatSize(file.size) }}</div>
                             <Badge value="Completo" class="mt-3" severity="success" />
                             <Button
-                                icon="pi pi-times"
+                                icon="fa-solid fa-x"
                                 @click="
                                     removeUploadedFileCallback(index);
                                     onClearTemplatingUpload(file, removeFileCallback, index);
@@ -195,7 +195,7 @@ onMounted(() => {
             </template>
             <template #empty>
                 <div class="flex align-items-center justify-content-center flex-column">
-                    <i class="pi pi-cloud-upload border-2 border-circle p-5 text-8xl text-400 border-400" />
+                    <i class="fa-solid fa-cloud border-2 border-circle p-5 text-8xl text-400 border-400" />
                     <p class="mt-4 mb-0">Arraste e solte arquivos para aqui para fazer o upload.</p>
                 </div>
             </template>
