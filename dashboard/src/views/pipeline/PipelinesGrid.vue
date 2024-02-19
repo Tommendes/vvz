@@ -53,7 +53,9 @@ const statusNegocio = ref(null); // Situação de negócio selecionada
 // Obter parâmetros do BD
 const optionParams = async (query) => {
     const url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
-    return await axios.get(url);
+    setTimeout(async () => {
+        return await axios.get(url);
+    }, Math.random() * 1000 + 250);
 };
 // Obter Agentes de negócio
 const getAgentes = async () => {
