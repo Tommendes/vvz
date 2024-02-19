@@ -46,7 +46,7 @@ const close = () => {
                 Se deseja acesso total, permita o acesso à sua localização.
             </p>
             <template #footer>
-                <Button label="Ok" @click="close" icon="pi pi-check" class="p-button-outlined" />
+                <Button label="Ok" @click="close" icon="fa-solid fa-check" class="p-button-outlined" />
             </template>
         </Dialog>
         <DynamicDialog />

@@ -173,7 +173,7 @@ const searchCadastros = (event) => {
                 return registro.name.toLowerCase().includes(event.query.toLowerCase());
             });
         }
-    }, 250);
+    }, 150);
 };
 const getCadastroBySearchedId = async (idCadastro) => {
     const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
@@ -241,7 +241,7 @@ const searchTitulos = (event) => {
                 return registro.name.toLowerCase().includes(event.query.toString().toLowerCase());
             });
         }
-    }, 250);
+    }, 150);
 };
 const getTitulos = async () => {
     try {
