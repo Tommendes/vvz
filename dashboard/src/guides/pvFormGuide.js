@@ -9,7 +9,7 @@ export const guide = `
     <ul>
         <li><strong>Número do PV:</strong> É o número sequencial gerado dinamicamente na criação do registro e não pode ser editado.</li>
         <li><strong>Cliente:</strong> Você pode selecionar um cadastro associado ao registro. Se não houver cadastro
-            registrado, você deve adicioná-lo. A criação do cadastro está disponível <i class="fa-solid fa-angles-right fa-fade"></i> <a href="/${userData.schema_description}/cadastros" class="font-bold">aqui</a> e depois clicando no botão <span class="text-xs p-button p-button-sm p-button-info p-button-outlined"><i class="pi pi-plus"></i> Novo Registro</span>.</li>
+            registrado, você deve adicioná-lo. A criação do cadastro está disponível <i class="fa-solid fa-angles-right fa-fade"></i> <a href="/${userData.schema_description}/cadastros" class="font-bold">aqui</a> e depois clicando no botão <span class="text-xs p-button p-button-sm p-button-info p-button-outlined"><i class="fa-solid fa-plus"></i> Novo Registro</span>.</li>
         <li><strong>Tipo do Pós-venda:</strong> Escolha o tipo de registro do pipeline a partir da lista.</li>
         <li><strong>Documento:</strong> Insira ou visualize o documento relacionado ao registro.</li>
         <li><strong>Descrição:</strong> Adicione informações detalhadas sobre o registro.</li>

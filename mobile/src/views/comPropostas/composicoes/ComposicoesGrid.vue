@@ -135,3 +135,8 @@ onBeforeMount(() => {
         </div>
     </div>
 </template>
+<style>
+.container{
+    overflow-x: hidden;
+}
+</style>

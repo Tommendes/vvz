@@ -33,21 +33,21 @@ const itemsMessages = ref([]);
 const items = ref([
     {
         label: 'Ver perfil',
-        icon: 'pi pi-refresh',
+        icon: 'fa-solid fa-rotate-right',
         command: () => {
             toast.add({ severity: 'info', summary: 'Success', detail: 'Ver perfil', life: 3000 });
         }
     },
     {
         label: 'Sair do sistema',
-        icon: 'pi pi-times',
+        icon: 'fa-solid fa-x',
         command: () => {
             logout();
         }
     },
     {
         label: 'Trocar senha',
-        icon: 'pi pi-external-link',
+        icon: 'fa-solid fa-arrow-up-right-from-square',
         command: async () => {
             await axios
                 .post(urlRequestRequestPassReset.value, { cpf: userData.cpf })
@@ -242,7 +242,7 @@ onBeforeMount(() => {
         </button>
 
         <button class="p-link layout-topbar-menu-button layout-topbar-button" @click="onTopBarMenuButton()">
-            <i class="pi pi-ellipsis-v"></i>
+            <i class="fa-solid fa-ellipsis-vertical"></i>
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">

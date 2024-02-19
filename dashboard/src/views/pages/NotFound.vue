@@ -12,11 +12,11 @@ const router = useRouter();
             <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, rgba(33, 150, 243, 0.4) 10%, rgba(33, 150, 243, 0) 30%)">
                 <div class="w-full surface-card py-8 px-5 sm:px-8 flex flex-column align-items-center" style="border-radius: 53px">
                     <span class="text-blue-500 font-bold text-3xl">404</span>
-                    <h1 class="text-900 font-bold text-3xl lg:text-5xl mb-2">Não Encontrado&nbsp;<i class="pi pi-cog pi-spin" style="font-size: 2rem"></i></h1>
+                    <h1 class="text-900 font-bold text-3xl lg:text-5xl mb-2">Não Encontrado&nbsp;<i class="fa-solid fa-gear" style="font-size: 2rem"></i></h1>
                     <div class="text-600 mb-5">O recurso solicitado não está disponível</div>
                     <router-link to="/" class="w-full flex align-items-center py-5 border-300 border-bottom-1">
                         <span class="flex justify-content-center align-items-center bg-cyan-400 border-round" style="height: 3.5rem; width: 3.5rem">
-                            <i class="text-50 pi pi-table text-2xl"></i>
+                            <i class="text-50 fa-solid fa-table-cells-large text-2xl"></i>
                         </span>
                         <span class="ml-4 flex flex-column">
                             <span class="text-900 lg:text-xl font-medium mb-0 block">Perguntas frequentes</span>
@@ -25,7 +25,7 @@ const router = useRouter();
                     </router-link>
                     <router-link to="/" class="w-full flex align-items-center py-5 border-300 border-bottom-1">
                         <span class="flex justify-content-center align-items-center bg-orange-400 border-round" style="height: 3.5rem; width: 3.5rem">
-                            <i class="pi pi-question-circle text-50 text-2xl"></i>
+                            <i class="fa-regular fa-circle-question text-50 text-2xl"></i>
                         </span>
                         <span class="ml-4 flex flex-column">
                             <span class="text-900 lg:text-xl font-medium mb-0">Central de soluções</span>
@@ -34,7 +34,7 @@ const router = useRouter();
                     </router-link>
                     <router-link to="/" class="w-full flex align-items-center mb-5 py-5 border-300 border-bottom-1">
                         <span class="flex justify-content-center align-items-center bg-indigo-400 border-round" style="height: 3.5rem; width: 3.5rem">
-                            <i class="pi pi-unlock text-50 text-2xl"></i>
+                            <i class="fa-solid fa-unlock text-50 text-2xl"></i>
                         </span>
                         <span class="ml-4 flex flex-column">
                             <span class="text-900 lg:text-xl font-medium mb-0">Gerenciador de permissões</span>

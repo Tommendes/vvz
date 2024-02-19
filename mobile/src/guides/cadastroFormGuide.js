@@ -29,13 +29,13 @@ export const guide = `
     </ul>
     <p><strong>Opções de dados Disponíveis:</strong></p>
     <ul>
-        <li><i class="pi pi-fw pi-id-card mr-2"><strong></i>Dados básicos:</strong> Veja informações detalhadas do registro, caso esteja em modo de
+        <li><i class="fa-solid fa-id-card mr-2"><strong></i>Dados básicos:</strong> Veja informações detalhadas do registro, caso esteja em modo de
             edição.</li>
-        <li><i class="pi pi-at mr-2"></i><strong>Contatos adicionais:</strong> Informe contatos extras como e-mails, telefones, páginas web, mídias sociais e etc.</li>
-        <li><i class="pi pi-map mr-2"></i><strong>Endereços:</strong> Utilize esta aba para informar quantos endereços forem necessários especificando, por exemplo, se eles são de faturamento, entrega, cobrança e etc.</li>
-        <li><i class="pi pi-paperclip mr-2"></i><strong>Pipeline:</strong> Nesta aba, tenha acesso a todo histórico comercial do cliente/fornecedor.</li>
-        <li><i class="pi pi-cart-plus mr-2"></i><strong>Pós-vendas:</strong> Todos os eventos de pós-vendas (suporte, montagens e mensagens aos agentes comerciais que atendem ao cliente/fornecedor) estão acessíveis aqui.</li>
-        <li><i class="pi pi-map-marker mr-2"></i><strong>Prospecções e visitas ao cliente:</strong> Os agentes de vendas registram as visitas e esta aba contém esses dados que podem ser utilizados para, por exemplo acompanhar os trabalhos de prospecção.</li>
+        <li><i class="fa-solid fa-at mr-2"></i><strong>Contatos adicionais:</strong> Informe contatos extras como e-mails, telefones, páginas web, mídias sociais e etc.</li>
+        <li><i class="fa-regular fa-map mr-2"></i><strong>Endereços:</strong> Utilize esta aba para informar quantos endereços forem necessários especificando, por exemplo, se eles são de faturamento, entrega, cobrança e etc.</li>
+        <li><i class="fa-solid fa-paperclip mr-2"></i><strong>Pipeline:</strong> Nesta aba, tenha acesso a todo histórico comercial do cliente/fornecedor.</li>
+        <li><i class="fa-solid fa-cart-plus mr-2"></i><strong>Pós-vendas:</strong> Todos os eventos de pós-vendas (suporte, montagens e mensagens aos agentes comerciais que atendem ao cliente/fornecedor) estão acessíveis aqui.</li>
+        <li><i class="fa-regular fa-map mr-2"></i><strong>Prospecções e visitas ao cliente:</strong> Os agentes de vendas registram as visitas e esta aba contém esses dados que podem ser utilizados para, por exemplo acompanhar os trabalhos de prospecção.</li>
     </ul>
         <p>Esta página oferece um conjunto de recursos para gerenciar cadastros de maneira eficiente.
             Certifique-se de usar as ações apropriadas de acordo com suas necessidades. Se tiver alguma dúvida, não hesite

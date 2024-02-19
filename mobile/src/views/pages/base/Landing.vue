@@ -97,7 +97,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-yellow-200 mb-3"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-users text-2xl text-yellow-700"></i>
+                                    <i class="fa-solid fa-users text-2xl text-yellow-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Easy to Use</h5>
                                 <span class="text-600">Posuere morbi leo urna molestie.</span>
@@ -111,7 +111,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-cyan-200 mb-3"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-palette text-2xl text-cyan-700"></i>
+                                    <i class="fa-solid fa-palette text-2xl text-cyan-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Fresh Design</h5>
                                 <span class="text-600">Semper risus in hendrerit.</span>
@@ -125,7 +125,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-indigo-200"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-map text-2xl text-indigo-700"></i>
+                                    <i class="fa-regular fa-map text-2xl text-indigo-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Well Documented</h5>
                                 <span class="text-600">Non arcu risus quis varius quam quisque.</span>
@@ -153,7 +153,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-orange-200 mb-3"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-star text-2xl text-orange-700"></i>
+                                    <i class="fa-regular fa-star text-2xl text-orange-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Clean Code</h5>
                                 <span class="text-600">Condimentum lacinia quis vel eros.</span>
@@ -167,7 +167,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-pink-200 mb-3"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-moon text-2xl text-pink-700"></i>
+                                    <i class="fa-regular fa-moon text-2xl text-pink-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Dark Mode</h5>
                                 <span class="text-600">Convallis tellus id interdum velit laoreet.</span>
@@ -181,7 +181,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-teal-200 mb-3"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-shopping-cart text-2xl text-teal-700"></i>
+                                    <i class="fa-solid fa-cart-shopping text-2xl text-teal-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Ready to Use</h5>
                                 <span class="text-600">Mauris sit amet massa vitae.</span>
@@ -195,7 +195,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-blue-200 mb-3"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-globe text-2xl text-blue-700"></i>
+                                    <i class="fa-solid fa-globe text-2xl text-blue-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Modern Practices</h5>
                                 <span class="text-600">Elementum nibh tellus molestie nunc non.</span>
@@ -209,7 +209,7 @@ const logoUrl = computed(() => {
                             <div class="p-3 surface-card h-full" style="border-radius: 8px">
                                 <div class="flex align-items-center justify-content-center bg-purple-200 mb-3"
                                     style="width: 3.5rem; height: 3.5rem; border-radius: 10px">
-                                    <i class="pi pi-eye text-2xl text-purple-700"></i>
+                                    <i class="fa-solid fa-eye text-2xl text-purple-700"></i>
                                 </div>
                                 <h5 class="mb-2 text-900">Privacy</h5>
                                 <span class="text-600">Neque egestas congue quisque.</span>
@@ -246,11 +246,10 @@ const logoUrl = computed(() => {
                         style="border-radius: 8px">
                         <img src="/demo/images/landing/mockup.svg" class="w-11" alt="mockup mobile" />
                     </div>
-
                     <div class="col-12 lg:col-6 my-auto flex flex-column lg:align-items-end text-center lg:text-right">
                         <div class="flex align-items-center justify-content-center bg-purple-200 align-self-center lg:align-self-end"
                             style="width: 4.2rem; height: 4.2rem; border-radius: 10px">
-                            <i class="pi pi-mobile text-5xl text-purple-700"></i>
+                            <i class="fa-solid fa-mobile-screen-button text-5xl text-purple-700"></i>
                         </div>
                         <h2 class="line-height-1 text-900 text-4xl font-normal">Congue Quisque Egestas</h2>
                         <span class="text-700 text-2xl line-height-3 ml-0 md:ml-2" style="max-width: 650px">Lectus arcu
@@ -263,7 +262,7 @@ const logoUrl = computed(() => {
                     <div class="col-12 lg:col-6 my-auto flex flex-column text-center lg:text-left lg:align-items-start">
                         <div class="flex align-items-center justify-content-center bg-yellow-200 align-self-center lg:align-self-start"
                             style="width: 4.2rem; height: 4.2rem; border-radius: 10px">
-                            <i class="pi pi-desktop text-5xl text-yellow-700"></i>
+                            <i class="fa-solid fa-display text-5xl text-yellow-700"></i>
                         </div>
                         <h2 class="line-height-1 text-900 text-4xl font-normal">Celerisque Eu Ultrices</h2>
                         <span class="text-700 text-2xl line-height-3 mr-0 md:mr-2" style="max-width: 650px">Adipiscing
@@ -271,7 +270,6 @@ const logoUrl = computed(() => {
                             Suspendisse in est ante in. Mauris pharetra et ultrices neque ornare aenean euismod elementum
                             nisi.</span>
                     </div>
-
                     <div class="flex justify-content-end flex-order-1 sm:flex-order-2 col-12 lg:col-6 bg-yellow-100 p-0"
                         style="border-radius: 8px">
                         <img src="/demo/images/landing/mockup-desktop.svg" class="w-11" alt="mockup" />
@@ -284,7 +282,6 @@ const logoUrl = computed(() => {
                     <h2 class="text-900 font-normal mb-2">Matchless Pricing</h2>
                     <span class="text-600 text-2xl">Amet consectetur adipiscing elit...</span>
                 </div>
-
                 <div class="grid justify-content-between mt-8 md:mt-0">
                     <div class="col-12 lg:col-4 p-0 md:p-3">
                         <div class="p-3 flex flex-column border-200 pricing-card cursor-pointer border-2 hover:border-primary transition-duration-300 transition-all"
@@ -300,19 +297,19 @@ const logoUrl = computed(() => {
                             <Divider class="w-full bg-surface-200"></Divider>
                             <ul class="my-5 list-none p-0 flex text-900 flex-column">
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Responsive Layout</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Unlimited Push Messages</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">50 Support Ticket</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Free Shipping</span>
                                 </li>
                             </ul>
@@ -333,19 +330,19 @@ const logoUrl = computed(() => {
                             <Divider class="w-full bg-surface-200"></Divider>
                             <ul class="my-5 list-none p-0 flex text-900 flex-column">
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Responsive Layout</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Unlimited Push Messages</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">50 Support Ticket</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Free Shipping</span>
                                 </li>
                             </ul>
@@ -366,19 +363,19 @@ const logoUrl = computed(() => {
                             <Divider class="w-full bg-surface-200"></Divider>
                             <ul class="my-5 list-none p-0 flex text-900 flex-column">
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Responsive Layout</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Unlimited Push Messages</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">50 Support Ticket</span>
                                 </li>
                                 <li class="py-2">
-                                    <i class="pi pi-check text-xl text-cyan-500 mr-2"></i>
+                                    <i class="fa-solid fa-check text-xl text-cyan-500 mr-2"></i>
                                     <span class="text-xl line-height-3">Free Shipping</span>
                                 </li>
                             </ul>
@@ -396,7 +393,6 @@ const logoUrl = computed(() => {
                             <h4 class="font-medium text-3xl text-900">SAKAI</h4>
                         </a>
                     </div>
-
                     <div class="col-12 md:col-10 lg:col-7">
                         <div class="grid text-center md:text-left">
                             <div class="col-12 md:col-3">

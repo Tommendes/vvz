@@ -9,6 +9,8 @@ import ComposicoesGrid from './composicoes/ComposicoesGrid.vue';
 import ItensGrid from './itens/ItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { userKey } from '@/global';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -122,37 +124,37 @@ onBeforeMount(async () => {
         <div class="col-12">
             <div class="card w-95">
                 <h3 v-if="itemDataPipelineParams && itemDataPipelineParams.descricao && itemDataPipeline && itemDataPipeline.documento">{{ itemDataPipelineParams.descricao.replaceAll('_', ' ') }} {{ itemDataPipeline.documento }}</h3>
-                <TabView lazy>
-                    <TabPanel :disabled="!itemData.id">
+                <Accordion :activeIndex="0" lazy>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-regular fa-address-card mr-2"></i>
                             <span>Dados básicos</span>
                         </template>
                         <PropostaForm :padroes="false" @changed="loadData()" />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
+                    </AccordionTab>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-sitemap mr-2"></i>
                             <span>Composições</span>
                         </template>
                         <ComposicoesGrid />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
+                    </AccordionTab>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-list-ol mr-2"></i>
                             <span>Itens</span>
                         </template>
                         <ItensGrid />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
+                    </AccordionTab>
+                    <AccordionTab :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-cog mr-2"></i>
                             <i class="fa-solid fa-print mr-2"></i>
                             <span>Termos e Impressão</span>
                         </template>
                         <PropostaForm :padroes="true" @changed="loadData()" />
-                    </TabPanel>
-                </TabView>
+                    </AccordionTab>
+                </Accordion>
             </div>
             <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                 <p>route.name {{ route.name }}</p>

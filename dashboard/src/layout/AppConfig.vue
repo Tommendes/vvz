@@ -91,17 +91,17 @@ if (userGL && userGL.geolocation.latitude && userGL.geolocation.longitude) {
 
 <template>
     <button class="layout-config-button p-link hidden" id="btnTglAppConfig" type="button" @click="onConfigButtonClick()">
-        <i class="pi pi-cog"></i>
+        <i class="fa-solid fa-gear"></i>
     </button>
 
     <Sidebar v-model:visible="visible" position="right" :transitionOptions="'.3s cubic-bezier(0, 0, 0.2, 1)'" class="layout-config-sidebar w-20rem">
         <h5>Tamanho da fonte</h5>
         <div class="flex align-items-center">
-            <Button icon="pi pi-minus" type="button" @click="decrementScale()" class="p-button-text p-button-rounded w-2rem h-2rem mr-2" :disabled="layoutConfig.scale.value === scales[0]"></Button>
+            <Button icon="fa-solid fa-minus" type="button" @click="decrementScale()" class="p-button-text p-button-rounded w-2rem h-2rem mr-2" :disabled="layoutConfig.scale.value === scales[0]"></Button>
             <div class="flex gap-2 align-items-center">
-                <i class="pi pi-circle-fill text-300" v-for="s in scales" :key="s" :class="{ 'text-primary-500': s === layoutConfig.scale.value }"></i>
+                <i class="fa-solid fa-circle text-300" v-for="s in scales" :key="s" :class="{ 'text-primary-500': s === layoutConfig.scale.value }"></i>
             </div>
-            <Button icon="pi pi-plus" type="button" pButton @click="incrementScale()" class="p-button-text p-button-rounded w-2rem h-2rem ml-2" :disabled="layoutConfig.scale.value === scales[scales.length - 1]"></Button>
+            <Button icon="fa-solid fa-plus" type="button" pButton @click="incrementScale()" class="p-button-text p-button-rounded w-2rem h-2rem ml-2" :disabled="layoutConfig.scale.value === scales[scales.length - 1]"></Button>
         </div>
 
         <template v-if="!simple">
