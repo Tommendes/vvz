@@ -20,20 +20,19 @@ const masks = ref({
     })
 });
 
+// Campos de formulário
+const itemData = inject('itemData');
+// Modo do formulário
+const mode = ref('grid');
+
 import { defineProps } from 'vue';
 const props = defineProps({
+    mode: String,
     padroes: {
         type: Boolean,
         default: false
     }
 });
-
-// Campos de formulário
-const itemData = inject('itemData');
-// const itemDataPipeline = inject('itemDataPipeline');
-// const itemDataPipelineParams = inject('itemDataPipelineParams');
-// Modo do formulário
-const mode = inject('mode');
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings

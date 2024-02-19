@@ -46,9 +46,9 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'codigo', label:' Código da despesa ou receita', minWidth: '25rem' },
-    { field: 'tipo', label:' Despesa ou receita', minWidth: '25rem' },
-    { field: 'descricao', label:' Descrição do centro de custo', minWidth: '25rem' }
+    { field: 'codigo', label:' Código da despesa ou receita' },
+    { field: 'tipo', label:' Despesa ou receita' },
+    { field: 'descricao', label:' Descrição do centro de custo' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -101,7 +101,7 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Comissões', to: route.fullPath }]" />
-    <div class="card">
+    <div class="card w-95">
         <ComissaoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 1rem"
@@ -118,19 +118,19 @@ onBeforeMount(() => {
             :globalFilterFields="['codigo', 'tipo', 'descricao']"
         >
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column gap-3">
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
+                        <InputText class="w-full" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" >
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                         <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
@@ -152,3 +152,9 @@ onBeforeMount(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+}
+</style>

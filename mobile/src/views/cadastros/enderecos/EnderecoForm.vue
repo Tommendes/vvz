@@ -50,22 +50,6 @@ const loadData = async () => {
         }
     }, Math.random() * 1000);
 };
-
-// const loadData = async () => {
-//     if (itemData && itemData.id) {
-//         const url = `${urlBase.value}/${itemData.value.id}`;
-//         await axios.get(url).then((res) => {
-//             const body = res.data;
-//             if (body && body.id) {
-//                 body.id = String(body.id);
-//                 itemData.value = body;
-//             } else {
-//                 defaultWarn('Registro não localizado');
-//                 router.push({ path: `/${userData.schema_description}/cadastros` });
-//             }
-//         });
-//     }
-// };
 const formIsValid = () => {
     if (!validateCep()) return false;
     return true;
@@ -183,7 +167,7 @@ onBeforeMount(() => {
 
 <template>
     <div class="grid">
-        <form @submit.prevent="saveData">
+        <form @submit.prevent="saveData" class="max-w-full">
             <div class="col-12">
                 <h5>{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">

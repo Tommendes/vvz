@@ -22,12 +22,12 @@ const urlBase = ref(`${baseApiUrl}/com-prop-itens`);
 const limitDescription = 50;
 // Itens do grid
 const listaNomes = ref([
-    { field: 'item', label: 'Composição/Item', minWidth: '5rem' },
-    { field: 'item_ativo', label: 'Ativo', minWidth: '5rem', tagged: true },
-    { field: 'compoe', label: 'Compõe', minWidth: '5rem', tagged: true },
-    { field: 'nome_comum', label: 'Produto', minWidth: '8rem' },
-    { field: 'descricao', label: 'Descrição Adicional', minWidth: '15rem', maxLength: limitDescription },
-    { field: 'quantidade', label: 'Quantidade', minWidth: '15rem' }
+    // { field: 'item', label: 'Composição/Item' },
+    { field: 'item_ativo', label: 'Ativo', tagged: true },
+    { field: 'compoe', label: 'Compõe', tagged: true },
+    { field: 'nome_comum', label: 'Produto' },
+    { field: 'descricao', label: 'Descrição Adicional', maxLength: limitDescription },
+    // { field: 'quantidade', label: 'Quantidade' }
     // { field: 'valor_unitario', label: 'Valor Unitário', minWidth: '15rem' },
 ]);
 // Inicializa os filtros do grid
@@ -116,12 +116,12 @@ onBeforeMount(() => {
             :globalFilterFields="['id_com_prop_compos', 'descricao', 'quantidade', 'valor_unitario', 'item']"
         >
             <template #header>
-                <div class="flex justify-content-end gap-3">
+                <div class="flex flex-column gap-3">
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newItem" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
+                        <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
