@@ -263,6 +263,7 @@ module.exports = app => {
             .where({ status: STATUS_ACTIVE })
             .groupBy(app.db.raw(`SUBSTRING_INDEX(descricao, "_", 1)`))
             .orderBy(app.db.raw(`SUBSTRING_INDEX(descricao, "_", 1)`))
+            console.log(ret.toString())
         ret.then(body => {
             const quant = body.length
             return res.json({ data: body, quant })

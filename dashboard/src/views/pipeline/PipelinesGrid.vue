@@ -53,9 +53,7 @@ const statusNegocio = ref(null); // Situação de negócio selecionada
 // Obter parâmetros do BD
 const optionParams = async (query) => {
     const url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
-    setTimeout(async () => {
-        return await axios.get(url);
-    }, Math.random() * 1000 + 250);
+    return await axios.get(url);
 };
 // Obter Agentes de negócio
 const getAgentes = async () => {
@@ -78,37 +76,41 @@ const loadOptions = async () => {
 };
 const filtrarUnidades = async () => {
     // Unidades de negócio
-    await optionParams({
-        func: 'gun',
-        tipoDoc: tipoDoc.value,
-        unidade: unidade.value
-    }).then((res) => {
-        dropdownUnidades.value = [];
-        res.data.data.map((item) => {
-            dropdownUnidades.value.push({
-                value: item.descricao,
-                label: item.descricao
+    setTimeout(async () => {
+        await optionParams({
+            func: 'gun',
+            tipoDoc: tipoDoc.value,
+            unidade: unidade.value
+        }).then((res) => {
+            dropdownUnidades.value = [];
+            res.data.data.map((item) => {
+                dropdownUnidades.value.push({
+                    value: item.descricao,
+                    label: item.descricao
+                });
             });
         });
-    });
+    }, Math.random() * 1000 + 250);
     filtrarUnidadesDescricao();
 };
 const filtrarUnidadesDescricao = async () => {
     // Unidades de negócio por tipo
-    await optionParams({
-        func: 'ubt',
-        tipoDoc: tipoDoc.value,
-        unidade: unidade.value
-    }).then((res) => {
-        dropdownUnidadesFilter.value = [];
-        res.data.data.map((item) => {
-            const label = item.descricao.toString().replaceAll(/_/g, ' ');
-            dropdownUnidadesFilter.value.push({
-                value: item.descricao,
-                label: label
+    setTimeout(async () => {
+        await optionParams({
+            func: 'ubt',
+            tipoDoc: tipoDoc.value,
+            unidade: unidade.value
+        }).then((res) => {
+            dropdownUnidadesFilter.value = [];
+            res.data.data.map((item) => {
+                const label = item.descricao.toString().replaceAll(/_/g, ' ');
+                dropdownUnidadesFilter.value.push({
+                    value: item.descricao,
+                    label: label
+                });
             });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 
 // Itens do grid
