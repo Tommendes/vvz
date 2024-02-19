@@ -196,7 +196,7 @@ const searchProdutos = (event) => {
                 return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
             });
         }
-    }, 250);
+    }, 150);
 };
 const getProdutoBySearchedId = async (idProduto) => {
     const qry = idProduto ? `fld=tbl1.id&vl=${idProduto}` : 'fld=1&vl=1';
