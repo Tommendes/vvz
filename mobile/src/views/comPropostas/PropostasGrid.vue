@@ -227,8 +227,8 @@ watchEffect(() => {
     </div>
 </template>
 <style scoped>
-.w-95{
+/* .w-95{
     width: 95vw;
     max-width: 100%;
-}
+} */
 </style>

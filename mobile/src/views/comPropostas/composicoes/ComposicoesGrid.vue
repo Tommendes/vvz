@@ -20,8 +20,8 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/com-prop-compos`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'comp_ativa', label: 'Ativo', tagged: true },
-    { field: 'compoe', label: 'Compõe', tagged: true },
+    // { field: 'comp_ativa', label: 'Ativo', tagged: true },
+    // { field: 'compoe', label: 'Compõe', tagged: true },
     { field: 'compos_nr', label: 'Número' },
     { field: 'localizacao', label: 'Descrição um' }
 ]);
@@ -94,7 +94,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['compos_nr', 'localizacao', 'tombamento']"
+            :globalFilterFields="['compos_nr', 'localizacao']"
         >
             <template #header>
                 <div class="flex flex-column gap-3">

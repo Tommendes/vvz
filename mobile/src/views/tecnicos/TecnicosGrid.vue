@@ -124,7 +124,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['tecnico', 'telefone_contato', 'email_contato']"
+            :globalFilterFields="['tecnico', 'telefone_contato']"
         >
             <template #header>
                 <div class="flex flex-column gap-3">

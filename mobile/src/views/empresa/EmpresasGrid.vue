@@ -80,7 +80,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['razaosocial', 'fantasia', 'cpf_cnpj_empresa']"
+            :globalFilterFields="['fantasia', 'cpf_cnpj_empresa']"
         >
             <template #header>
                 <div class="flex flex-column gap-3">
