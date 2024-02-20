@@ -10,9 +10,8 @@ import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 const router = useRouter();
-const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -41,6 +40,10 @@ onMounted(() => {
     clearFilter();
 });
 
+const dropdownTipoCadastro = ref([]); // Dropdown de tipo de cadastro
+const dropdownAtuacao = ref([]); // Dropdown de área de atuação
+const tipoCadastro = ref(null); // Tipo de cadastro
+const areaAtuacao = ref(null); // Área de atuação
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
@@ -67,7 +70,7 @@ const listaNomes = ref([
     { field: 'tipo_cadas', label: 'Tipo Cadastro', showDefault: false },
     { field: 'cpf_cnpj', label: 'CPF/CNPJ', showDefault: true },
     { field: 'nome', label: 'Nome', showDefault: true },
-    { field: 'atuacao', label: 'Área de atuação', showDefault: false },
+    { field: 'atuacao', label: 'Área de atuação', showDefault: false, list: dropdownAtuacao.value },
     // { field: 'email', label: 'Email', showDefault: true },
     { field: 'telefone', label: 'Telefone', showDefault: true, mask: 'telefone' },
     { field: 'aniversario', label: 'Aniv/Fundação', showDefault: true, list: dropdownMes.value }
@@ -83,10 +86,6 @@ const initFilters = () => {
 const filters = ref({});
 const lazyParams = ref({});
 const urlFilters = ref('');
-const dropdownTipoCadastro = ref([]); // Dropdown de tipo de cadastro
-const dropdownAtuacao = ref([]); // Dropdown de área de atuação
-const tipoCadastro = ref(null); // Tipo de cadastro
-const areaAtuacao = ref(null); // Área de atuação
 
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
@@ -101,19 +100,23 @@ const loadOptions = async () => {
 };
 const filtrarTiposCadastro = async () => {
     // Tipo de adastro
-    await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownTipoCadastro.value.push({ value: item.id, label: item.label });
+    setTimeout(async () => {
+        await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownTipoCadastro.value.push({ value: item.id, label: item.label });
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 const filtrarAtuacao = async () => {
     // Áreas de atuação
-    await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownAtuacao.value.push({ value: item.id, label: item.label });
+    setTimeout(async () => {
+        await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownAtuacao.value.push({ value: item.id, label: item.label });
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 // Limpa os filtros do grid
 const clearFilter = () => {
@@ -150,7 +153,8 @@ const loadLazyData = () => {
                     if (element.aniversario == null) element.aniversario = '';
                     if (element.telefone == null) element.telefone = '';
                     // Converte data en para pt
-                    if (element.aniversario) element.aniversario = moment(element.aniversario).format('DD/MM/YYYY');
+                    const now = new Date();
+                    if (element.aniversario) element.aniversario = `${moment(element.aniversario).format('DD/MM/YYYY')} (${moment(now).diff(element.aniversario, 'years')} anos)`;
                     if (element.email) element.email = renderizarHTML(element.email);
                 });
                 loading.value = false;
@@ -277,7 +281,7 @@ watchEffect(() => {
                     <template v-for="nome in listaNomes" :key="nome">
                         <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :class="nome.class" :style="``" />
+                                <Dropdown :id="nome.field" filter optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :class="nome.class" :style="``" />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                                 <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" :style="``" />
