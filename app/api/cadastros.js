@@ -67,7 +67,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
-          delete body.ibge;
+        delete body.ibge;
         // body.nascimento = moment(body.nascimento).format("DD/MM/YYYY")
         const { changeUpperCase, removeAccentsObj } = app.api.facilities
         body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
@@ -153,6 +153,7 @@ module.exports = app => {
         let rows = 10
         let sortField = app.db.raw('tbl1.nome, tbl1.cpf_cnpj')
         let sortOrder = 'asc'
+        let sortByAnivFundacao = undefined
         if (req.query) {
             queryes = req.query
             query = ''
@@ -202,8 +203,12 @@ module.exports = app => {
                                 break;
                         }
                         let queryField = key.split(':')[1]
-                        if (queryField == 'atuacao') queryField = 'lp.label'
-                        else if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
+                        if (queryField == 'atuacao') {
+                            queryField = 'id_params_atuacao'
+                            operator = `= '${value}'`
+                        }
+                        // else 
+                        // if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
                         query += `${queryField} ${operator} AND `
                     }
                 } else if (key.split(':')[0] == 'params') {
@@ -214,7 +219,11 @@ module.exports = app => {
                             break;
                     }
                 } else if (key.split(':')[0] == 'sort') {
-                    sortField = key.split(':')[1].split('=')[0]
+                    if (['aniversario'].includes(key.split(':')[1])) {
+                        sortField = app.db.raw('extract(day from tbl1.aniversario)')
+                        sortByAnivFundacao = app.db.raw('extract(year from tbl1.aniversario)')
+                    }
+                    else sortField = key.split(':')[1].split('=')[0]
                     sortOrder = queryes[key]
                 }
             }
@@ -242,7 +251,8 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
             .groupBy('tbl1.id')
             .orderBy(sortField, sortOrder)
-            .limit(rows).offset((page + 1) * rows - rows)
+        if (sortByAnivFundacao) ret.orderBy(sortByAnivFundacao, sortOrder)
+        ret.limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
         })
@@ -390,6 +400,7 @@ module.exports = app => {
 
         const fieldName = req.query.fld
         const value = req.query.vl
+        const literal = req.query.literal || false
         const select = req.query.slct
 
         const first = req.query.first && req.query.first == true
@@ -402,8 +413,10 @@ module.exports = app => {
             ret.select(selectArr)
         }
 
-        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
-            .where({ status: STATUS_ACTIVE })
+        if (literal) ret.where(app.db.raw(`${fieldName} = "${value.toString()}"`))
+        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+
+        ret.where({ status: STATUS_ACTIVE })
 
         if (first) {
             ret.first()

@@ -76,37 +76,41 @@ const loadOptions = async () => {
 };
 const filtrarUnidades = async () => {
     // Unidades de negócio
-    await optionParams({
-        func: 'gun',
-        tipoDoc: tipoDoc.value,
-        unidade: unidade.value
-    }).then((res) => {
-        dropdownUnidades.value = [];
-        res.data.data.map((item) => {
-            dropdownUnidades.value.push({
-                value: item.descricao,
-                label: item.descricao
+    setTimeout(async () => {
+        await optionParams({
+            func: 'gun',
+            tipoDoc: tipoDoc.value,
+            unidade: unidade.value
+        }).then((res) => {
+            dropdownUnidades.value = [];
+            res.data.data.map((item) => {
+                dropdownUnidades.value.push({
+                    value: item.descricao,
+                    label: item.descricao
+                });
             });
         });
-    });
+    }, Math.random() * 1000 + 250);
     filtrarUnidadesDescricao();
 };
 const filtrarUnidadesDescricao = async () => {
     // Unidades de negócio por tipo
-    await optionParams({
-        func: 'ubt',
-        tipoDoc: tipoDoc.value,
-        unidade: unidade.value
-    }).then((res) => {
-        dropdownUnidadesFilter.value = [];
-        res.data.data.map((item) => {
-            const label = item.descricao.toString().replaceAll(/_/g, ' ');
-            dropdownUnidadesFilter.value.push({
-                value: item.descricao,
-                label: label
+    setTimeout(async () => {
+        await optionParams({
+            func: 'ubt',
+            tipoDoc: tipoDoc.value,
+            unidade: unidade.value
+        }).then((res) => {
+            dropdownUnidadesFilter.value = [];
+            res.data.data.map((item) => {
+                const label = item.descricao.toString().replaceAll(/_/g, ' ');
+                dropdownUnidadesFilter.value.push({
+                    value: item.descricao,
+                    label: label
+                });
             });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 
 // Itens do grid
