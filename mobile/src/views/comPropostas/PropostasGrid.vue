@@ -238,3 +238,9 @@ watchEffect(() => {
     max-width: 100%;
 }
 </style>
+<style>
+.p-column-filter-menu-button, .p-column-filter-clear-button {
+    margin-left: 0.5rem;
+    display: none;
+}
+</style>

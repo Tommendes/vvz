@@ -546,10 +546,10 @@ watch(selectedCadastro, (value) => {
                                 <Card class="bg-blue-200">
                                     <template #content>
                                         <div class="grid">
-                                            <div class="col-6">
+                                            <div class="col-12">
                                                 <h3>Preços do produto</h3>
                                                 <div class="grid">
-                                                    <div class="col-4">
+                                                    <div class="col-6">
                                                         <label for="valor_compra">Valor de Compra</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                                                         <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
@@ -570,7 +570,7 @@ watch(selectedCadastro, (value) => {
                                                             <span disabled v-html="itemDataProdTabelas.valor_compra" class="p-inputtext p-component" />
                                                         </div>
                                                     </div>
-                                                    <div class="col-4">
+                                                    <div class="col-6">
                                                         <label for="valor_venda">Valor de Venda</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                                                         <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
@@ -591,7 +591,7 @@ watch(selectedCadastro, (value) => {
                                                             <span disabled v-html="itemDataProdTabelas.valor_venda" class="p-inputtext p-component" />
                                                         </div>
                                                     </div>
-                                                    <div class="col-4">
+                                                    <div class="col-6">
                                                         <label for="ini_validade">Validade inicial</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                                                         <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
@@ -607,6 +607,7 @@ watch(selectedCadastro, (value) => {
                                                             <Button type="button" v-if="modeTabelas == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="modeTabelas = 'edit'" />
                                                             <Button
                                                                 type="button"
+                                                                class="bg-white"
                                                                 v-if="modeTabelas != 'view'"
                                                                 label="Salvar"
                                                                 icon="fa-solid fa-floppy-disk"
@@ -616,17 +617,17 @@ watch(selectedCadastro, (value) => {
                                                                 :disabled="!formTabelasIsValid()"
                                                                 @click="saveDataProdTabelas"
                                                             />
-                                                            <Button type="button" v-if="modeTabelas != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reloadDataProdTabelas" />
+                                                            <Button class="bg-white" type="button" v-if="modeTabelas != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reloadDataProdTabelas" />
                                                         </div>
                                                     </div>
                                                     <div class="col-12" v-else>
                                                         <div class="flex justify-content-center flex-wrap gap-3">
-                                                            <Button class="w-full" type="button" label="Nova Tabela" severity="success" text raised @click="newDataProdTabelas" />
+                                                            <Button class="w-full bg-white" type="button" label="Nova Tabela" severity="success" text raised @click="newDataProdTabelas" />
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-12">
                                                 <h4>Últimos ajustes</h4>
                                                 <ol>
                                                     <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">

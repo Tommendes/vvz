@@ -39,6 +39,13 @@ const getItem = (data) => {
     itemData.value = data;
     router.push({ path: `/${userData.schema_description}/pipeline-param/${data.id}` })
 };
+//Scrool quando criar um Novo Registro
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
@@ -78,7 +85,7 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex flex-column gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
