@@ -618,8 +618,8 @@ onMounted(() => {
         </div>
         <!-- Vendas Recentes -->
         <div class="col-12 xl:col-6 xl:col-3">
-            <div class="card">
-                <div class="flex justify-content-between align-items-center mb-5">
+            <div class="card pr-2 pl-2">
+                <div class="flex justify-content-between align-items-center pl-5 pr-5 mb-5">
                     <h5>
                         Vendas recentes<br /><span v-if="!biData.recentSales.loading" class="text-green-500 font-ligth text-xs"> Últimas {{ biData.recentSales.rows }} vendas</span>
                     </h5>
@@ -629,24 +629,24 @@ onMounted(() => {
                     </div>
                 </div>
                 <DataTable :value="biData.recentSales.data" :rows="biData.recentSales.rows" :paginator="false" responsiveLayout="scroll">
-                    <Column style="width: 10%">
+                    <!-- <Column>
                         <template #header> Representação </template>
                         <template #body="slotProps">
                             <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/DefaultLogomarca.png'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
                         </template>
-                    </Column>
-                    <Column style="width: 45%">
+                    </Column> -->
+                    <Column>
                         <template #header> Documento </template>
                         <template #body="slotProps"> {{ slotProps.data.representacao }} {{ slotProps.data.documento }} </template>
                     </Column>
-                    <Column style="width: 15%">
+                    <Column>
                         <template #header> Bruto </template>
                         <template #body="slotProps">
                             {{ formatCurrency(slotProps.data.valor_bruto) }}
                         </template>
                     </Column>
-                    <Column field="agente" header="Agente" style="width: 25%"></Column>
-                    <Column style="width: 5%">
+                    <Column field="agente" header="Agente" style="width: 5px"></Column>
+                    <Column style="width: 1px">
                         <template #header> Ir </template>
                         <template #body="slotProps">
                             <Button icon="fa-solid fa-magnifying-glass" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para seguir'" />

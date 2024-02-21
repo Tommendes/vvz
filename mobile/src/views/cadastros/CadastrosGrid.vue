@@ -181,7 +181,7 @@ watchEffect(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: route.fullPath }]" />
-    <div id="w-95" class="card">
+    <div class="card w-95">
         <CadastroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             :value="gridData"
@@ -214,7 +214,6 @@ watchEffect(() => {
                         filter
                         placeholder="Filtrar por Tipo de Cadastro..."
                         :showClear="tipoCadastro"
-                        style="min-width: 50vw"
                         id="tipoCadastro"
                         optionLabel="label"
                         optionValue="value"
@@ -226,7 +225,6 @@ watchEffect(() => {
                         filter
                         placeholder="Filtrar por Área de Atuação..."
                         :showClear="areaAtuacao"
-                        style="min-width: 50vw"
                         id="areaAtuacao"
                         optionLabel="label"
                         optionValue="value"
@@ -237,7 +235,7 @@ watchEffect(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" style="max-width: 80vw">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type">
                     <template #filter="{ filterModel, filterCallback }">
                         <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
@@ -246,7 +244,7 @@ watchEffect(() => {
                     </template>
                 </Column>
             </template>
-            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+            <Column headerStyle="text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="router.push({ path: `/${userData.schema_description}/cadastro/${data.id}` })" title="Clique para mais opções" />
                 </template>
@@ -254,3 +252,16 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+</style>
+<style>
+.container{
+    overflow-x: hidden;
+}
+</style>

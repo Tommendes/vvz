@@ -422,7 +422,7 @@ onMounted(() => {
                     </template>
                     <template #body="{ data }">
                         <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                        <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                        <span class="pl-2" v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>
@@ -452,6 +452,8 @@ onMounted(() => {
 .w-95{
     width: 95vw !important;
     max-width: 100% !important;
+    margin-left: auto;
+    margin-right: auto;
 }
 </style>
 <style>
@@ -460,5 +462,11 @@ onMounted(() => {
 }
 .container{
     overflow-x: hidden;
+}
+.p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.5rem;
+}
+.p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
+    display: none;
 }
 </style>

@@ -169,5 +169,13 @@ onBeforeMount(async () => {
 .w-95{
     width: 95vw;
     max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+</style>
+<style>
+.layout-main {
+    flex: 1 1 auto;
+    width: 95vw;
 }
 </style>

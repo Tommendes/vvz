@@ -80,7 +80,7 @@ onBeforeMount(() => {
         ]"
     />
     <div class="grid w-95">
-        <div class="col-12">
+        <div class="col-12 p-0">
             <div class="card">
                 <Accordion :activeIndex="0" lazy>
                     <AccordionTab>
@@ -168,5 +168,7 @@ onBeforeMount(() => {
 .w-95{
     width: 95vw !important;
     max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 </style>
