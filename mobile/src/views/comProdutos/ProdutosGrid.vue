@@ -36,6 +36,13 @@ onBeforeMount(() => {
 onMounted(() => {
     clearFilter();
 });
+//Scrool quando criar um Novo Registro
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
 
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
@@ -189,7 +196,7 @@ watchEffect(() => {
                     /> -->
                     <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">

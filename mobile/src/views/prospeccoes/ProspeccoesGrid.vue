@@ -137,6 +137,13 @@ const onFilter = () => {
     mountUrlFilters();
     loadLazyData();
 };
+//Scrool quando criar um Novo Registro
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+};
 const mode = ref('grid');
 const mountUrlFilters = () => {
     let url = '?';
@@ -197,7 +204,7 @@ watchEffect(() => {
             ref="dt"
             dataKey="id"
             :totalRecords="totalRecords"
-            :rows="5"
+            :rows="15"
             :loading="loading"
             @page="onPage($event)"
             @sort="onSort($event)"
@@ -209,7 +216,7 @@ watchEffect(() => {
         >
             <template #header>
                 <div class="flex flex-column-reverse gap-1">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />
                     <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                 </div>

@@ -42,6 +42,13 @@ const totalRecords = ref(0); // O total de registros (deve ser atualizado com o 
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
+//Scrool quando criar um Novo Registro
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
 // Lista de tipos
 const dropdownTipos = ref([
     { label: 'Suporte', value: '0' },
@@ -219,7 +226,7 @@ watchEffect(() => {
             ref="dt"
             dataKey="id"
             :totalRecords="totalRecords"
-            :rows=5
+            :rows=15
             :loading="loading"
             @page="onPage($event)"
             @sort="onSort($event)"
@@ -234,7 +241,7 @@ watchEffect(() => {
                 <div class="flex flex-column-reverse gap-3">
                     <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">

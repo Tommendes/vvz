@@ -298,7 +298,7 @@ watch(selectedCadastro, (value) => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="breadItems" />
-    <div class="card p-0 border-none">
+    <div class="card w-95">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
@@ -396,3 +396,14 @@ watch(selectedCadastro, (value) => {
         </form>
     </div>
 </template>
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+}
+</style>
+<style>
+.container{
+    overflow-x: hidden;
+}
+</style>
