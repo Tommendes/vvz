@@ -222,13 +222,14 @@ const loadLazyData = () => {
                     dropdownStatus.value.forEach((item) => {
                         if (item.value == element.last_status_params) element.last_status_params = item.label;
                     });
-                    if (element.descricao)
+                    if (element.descricao) {
                         element.descricao = element.descricao
                             .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
                             .replaceAll('Este documento foi liquidado quando foi versionado.', '')
                             .replaceAll('Segue a descrição original do documento:', '')
                             .trim();
-                    else element.descricao = '';
+                        // element.descricao = element.descricao.substr(0, limitDescription);
+                    } else element.descricao = '';
                     if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
                     else element.valor_bruto = '';
                     if (element.agente) element.agente = element.agente.trim();
@@ -553,13 +554,17 @@ const customFilterOptions = ref({ filterclear: false });
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
                         </div>
                     </template>
-                    <template #empty> <h2>Sem dados a apresentar para o filtro/período selecionado</h2> </template>
-                    <template #loading> <h2>Carregando dados. Por favor aguarde...</h2> </template>
+                    <template #empty>
+                        <h2>Sem dados a apresentar para o filtro/período selecionado</h2>
+                    </template>
+                    <template #loading>
+                        <h2>Carregando dados. Por favor aguarde...</h2>
+                    </template>
                     <template v-for="nome in listaNomes" :key="nome">
                         <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
                                 <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                                <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                                <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                             </template>
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                                 <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" showClear placeholder="Pesquise..." />

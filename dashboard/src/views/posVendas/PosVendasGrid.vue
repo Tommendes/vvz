@@ -74,7 +74,7 @@ const listaNomes = ref([
     { field: 'tipo', label: 'Tipo', list: dropdownTipos.value },
     { field: 'pv_nr', label: 'Número' },
     { field: 'last_status_pv', label: 'Situação', list: dropdownSituacoes.value },
-    { field: 'observacao', label: 'Observações' }
+    { field: 'observacao', label: 'Observações', maxLength: 150 }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -271,7 +271,7 @@ watchEffect(() => {
                             <template #body="{ data }">
                                 <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                                 <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                                <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length == nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                                <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                             </template>
                         </Column>
                     </template>

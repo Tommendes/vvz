@@ -86,9 +86,12 @@ INSERT INTO vivazul_bceaa5.local_params (
 ) (SELECT 0,1,NOW(),NULL,10,'tipo_cadastro',tipo,tipo FROM vivazul_lynkos.cadastros 
 	WHERE LENGTH(TRIM(tipo)) > 0 AND tipo IS NOT NULL GROUP BY tipo ORDER BY tipo);
 /*id_atuacao*/
+SET FOREIGN_KEY_CHECKS=0; 
+DELETE FROM vivazul_bceaa5.local_params WHERE grupo = 'id_atuacao';
+SET FOREIGN_KEY_CHECKS=1; 
 INSERT INTO vivazul_bceaa5.local_params (
   id,evento,created_at,updated_at,STATUS,grupo,parametro,label
-) (SELECT 0,1,NOW(),NULL,10,'id_atuacao',label,label FROM vivazul_lynkos.params 
+) (SELECT 0,1,NOW(),NULL,10,'id_atuacao',id,label FROM vivazul_lynkos.params 
 	WHERE grupo = 'catu' AND LENGTH(TRIM(parametro)) > 0 AND parametro IS NOT NULL GROUP BY parametro ORDER BY parametro);
 /*tipo_contato*/
 INSERT INTO vivazul_bceaa5.local_params (
@@ -140,7 +143,7 @@ INSERT INTO vivazul_bceaa5.cadastros (
 	  0,1,FROM_UNIXTIME(created_at)created_at,updated_at,STATUS,
 	  IF((SELECT COUNT(id) FROM vivazul_lynkos.ged WHERE id_cadastro = vivazul_lynkos.cadastros.id) > 0, 0, 1)prospecto,
 	  COALESCE((SELECT id FROM vivazul_bceaa5.local_params WHERE parametro = tipo AND grupo = 'tipo_cadastro'),4)id_params_tipo,
-	  COALESCE((SELECT id FROM vivazul_bceaa5.local_params WHERE parametro = cadas_atuacao_id AND grupo = 'id_atuacao'),1)id_params_atuacao,
+	  COALESCE((SELECT id FROM vivazul_bceaa5.local_params WHERE parametro = cadas_atuacao_id AND grupo = 'id_atuacao'),117)id_params_atuacao,
 	  IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)cpf_cnpj,rg_ie,cadas_nome,
 	  COALESCE((SELECT id FROM vivazul_api.params WHERE LOWER(label) = LOWER(sexo) AND meta = 'sexo'), 3)id_params_sexo,
 	  aniversario,4,obs,
@@ -152,6 +155,14 @@ INSERT INTO vivazul_bceaa5.cadastros (
 	ORDER BY created_at DESC, IF((cpf_cnpj = '' OR cpf_cnpj IS NULL), (SELECT LPAD(id,11,'0')), cpf_cnpj)
 	LIMIT 0, 9999999 
   ) ;
+/*Corrigir cadastros.id_params_atuacao*/
+SET FOREIGN_KEY_CHECKS=0; 
+UPDATE `vivazul_lynkos`.`cadastros` SET cadas_atuacao_id = NULL WHERE LENGTH(TRIM(cadas_atuacao_id)) = 0;
+UPDATE vivazul_bceaa5.cadastros SET id_params_atuacao = COALESCE((SELECT cadas_atuacao_id FROM `vivazul_lynkos`.`cadastros` WHERE id = old_id),117);
+UPDATE vivazul_bceaa5.cadastros SET id_params_atuacao = COALESCE((SELECT id FROM local_params WHERE grupo = 'id_atuacao' AND parametro = id_params_atuacao),117);
+UPDATE vivazul_bceaa5.`local_params` SET parametro = label WHERE grupo = 'id_atuacao';
+SET FOREIGN_KEY_CHECKS=1; 
+
  /*Remover espaços extras em nomes de cadastros*/
 UPDATE vivazul_bceaa5.cadastros SET nome = TRIM(nome);
 /*Importa os contatos dos cadastros*/  
