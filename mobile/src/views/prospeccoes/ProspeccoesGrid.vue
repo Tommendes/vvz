@@ -286,4 +286,8 @@ svg{
 .p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
     display: none;
 }
+.layout-wrapper .layout-main-container {
+    padding-left: 0;
+    padding-right: 0;
+}
 </style>

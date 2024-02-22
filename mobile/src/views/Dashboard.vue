@@ -771,4 +771,8 @@ onMounted(() => {
 .container[data-v-7a7a37b1]{
     overflow-x: hidden;
 }
+.layout-main {
+    margin-left: auto;
+    margin-right: auto;
+}
 </style>

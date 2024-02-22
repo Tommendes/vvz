@@ -7,6 +7,7 @@ import { isValidEmail } from '@/global';
 import moment from 'moment';
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
+import Editor from 'primevue/editor';
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -408,7 +409,16 @@ watch(selectedCadastro, (value) => {
 .container{
     overflow-x: hidden;
 }
+.layout-main {
+    width: 95vw;
+}
 .layout-wrapper {
     width: 95vw;
+    padding-left: 0;
+    padding-right: 0;
+}
+.layout-wrapper .layout-main-container {
+    padding-left: 0;
+    padding-right: 0;
 }
 </style>

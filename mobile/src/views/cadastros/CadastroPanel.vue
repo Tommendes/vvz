@@ -172,3 +172,9 @@ onBeforeMount(() => {
     margin-right: auto;
 }
 </style>
+<style>
+.layout-wrapper .layout-main-container {
+    padding-left: 0;
+    padding-right: 0;
+}
+</style>
