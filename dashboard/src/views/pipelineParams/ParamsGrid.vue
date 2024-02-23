@@ -20,6 +20,14 @@ const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/pipeline-params`);
+
+//Scrool quando um Novo Registro for criado
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+};
 // Itens do grid
 const listaNomes = ref([
     // { field: 'id', label: 'Id do Prarâmetro', minWidth: '20rem' },
@@ -79,7 +87,7 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop() " />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />

@@ -26,6 +26,13 @@ const listaNomes = ref([
     { field: 'descricao', label: 'Descrição', minWidth: '30rem' },
     { field: 'registro', label: 'Protocolo', minWidth: '10rem' }
 ]);
+//Scrool quando um Novo Registro for criado
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+};
 // Inicializa os filtros do grid
 const initFilters = () => {
     filters.value = { global: { value: '', matchMode: FilterMatchMode.CONTAINS } };
@@ -111,7 +118,7 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop() " />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />

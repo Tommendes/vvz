@@ -737,7 +737,7 @@ onMounted(() => {
                     <div class="flex flex-column gap-2">
                         <label for="biPeriod" style="text-align: end">Período de Exibição Geral</label>
                         <div class="inputGroup">
-                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full mb-3" @update:modelValue="applyBiParams(), scrollToTop()" />
+                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full mb-3" @update:modelValue="applyBiParams(), scrollToTop()" />  
                             <Calendar
                                 aria-describedby="username-help"
                                 showIcon
