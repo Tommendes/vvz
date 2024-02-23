@@ -9,6 +9,7 @@ import html2canvas from 'html2canvas';
 
 // Cookies do usuário
 import { userKey } from '@/global';
+
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -226,9 +227,8 @@ const getPedidosLastBi = async () => {
     });
     biData.value.recentSales.loading = false;
 };
-
 const irRecentSale = (id) => {
-    window.open(`#/${userData.schema_description}/pipeline/${id}`, '_blank');
+    window.location.href = `#/${userData.schema_description}/pipeline/${id}`;
 };
 
 const irPipelineFilter = (tpd, perDi, perDf, tDoc) => {

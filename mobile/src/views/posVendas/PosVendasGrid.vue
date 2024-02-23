@@ -263,7 +263,7 @@ watchEffect(() => {
                             :options="nome.list"
                             @change="filterCallback()"
                             :class="nome.class"
-                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`overflow: hidden`"
                             showClear
                         />
                     </template>
@@ -277,7 +277,7 @@ watchEffect(() => {
                             placeholder="dd/mm/aaaa"
                             mask="99/99/9999"
                             @input="filterCallback()"
-                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`overflow: hidden`"
                         />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
@@ -287,7 +287,7 @@ watchEffect(() => {
                             @keydown.enter="filterCallback()"
                             class="p-column-filter"
                             placeholder="Pesquise..."
-                            :style="`max-width: ${nome.maxWidth ? nome.maxWidth : '6rem'}; overflow: hidden`"
+                            :style="`overflow: hidden`"
                         />
                     </template>
                     <template #body="{ data }">
