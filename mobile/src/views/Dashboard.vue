@@ -77,8 +77,8 @@ const getBiPeriod = () => {
         biPeriod.value = dateArray;
         biPeriod.value.dataPt = datesPt;
         biPeriod.value.dataEn = dataEn;
-    } else {
-        applyBiParams();
+    } else if (!biPeriod.value) {
+        applyBiParams(); // Chama applyBiParams só se biPeriod.value estiver indefinido
     }
 };
 
@@ -106,6 +106,14 @@ const getBiPeriodVG = () => {
     } else {
         applyBiParamsVG();
     }
+};
+
+//Scrool quando um Novo Registro for criado
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
 };
 
 const biData = ref({
@@ -450,11 +458,13 @@ onMounted(() => {
                         <i class="fa fa-users text-gray-500 text-xl"></i>
                     </div>
                 </div>
+
                 <div>
                     <Skeleton v-if="biData.cadastros.loading" width="20rem" height="2rem"></Skeleton>
                     <span v-else class="text-green-500 font-medium">{{ biData.cadastros.novos }} cadastros </span>
                     <span v-if="!biData.cadastros.loading" class="text-500">neste mês</span>
                 </div>
+
                 <div>
                     <Skeleton v-if="biData.cadastros.loading" width="20rem" height="1rem"></Skeleton>
                     <span v-else class="text-green-500 font-ligth text-xs">{{ biData.cadastros.noPeriodo }} novos </span>
@@ -718,17 +728,16 @@ onMounted(() => {
                 <Chart type="line" :data="lineData" :options="lineOptions" />
             </div>
         </div>
-
-        <div class="col-12 md:col-offset-6 md:col-6 xl:col-offset-8 xl:col-4">
+        <div class="col-12 m-auto md:col-6 xl:col-offset-8 xl:col-4">
             <div class="card">
                 <div class="flex align-items-center justify-content-between mb-4">
                     <h5>Padrões do Dashboard</h5>
                 </div>
-                <div class="flex justify-content-end mb-5">
+                <div class="flex justify-content-center mb-5">
                     <div class="flex flex-column gap-2">
                         <label for="biPeriod" style="text-align: end">Período de Exibição Geral</label>
-                        <InputGroup>
-                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full md:w-16rem mr-2 mb-2" @update:modelValue="applyBiParams()" />
+                        <div class="inputGroup">
+                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full mb-3" @update:modelValue="applyBiParams(), scrollToTop()" />
                             <Calendar
                                 aria-describedby="username-help"
                                 showIcon
@@ -737,10 +746,10 @@ onMounted(() => {
                                 selectionMode="range"
                                 :manualInput="true"
                                 showButtonBar
-                                class="custom-calendar w-full md:w-16rem"
+                                class="custom-calendar w-full"
                                 @update:modelValue="applyBiParams()"
                             />
-                        </InputGroup>
+                        </div>
                         <!-- <p>{{ biPeriod }}</p> -->
                         <small id="username-help">Selecione acima o período desejado para apresentar os resultados</small>
                     </div>
