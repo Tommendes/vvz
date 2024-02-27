@@ -198,7 +198,6 @@ const showMessage = (body) => {
         },
         onClose: async (options) => {
             if (options.data.label == messagesButtoms.value[0].label) {
-                console.log(options.data);
                 const bodyTo = {
                     title: options.data.title,
                     msg: options.data.message,
@@ -274,6 +273,7 @@ onBeforeMount(() => {
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
             <Button
+                id="hide-on-small-screen1"
                 v-if="newMessages > 0"
                 type="button"
                 :icon="`fa-regular fa-bell fa-2xl ${newMessages ? 'fa-shake' : ''}`"
@@ -284,7 +284,15 @@ onBeforeMount(() => {
                 aria-haspopup="true"
                 @click="toggleMenuMessages"
             />
-            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages" class="p-link layout-topbar-button">
+            <Button
+                id="hide-on-small-screen2"
+                v-else-if="newMessages == 0 && itemsMessages.length > 0"
+                type="button" label="Toggle"
+                @click="toggleMenuMessages"
+                aria-haspopup="true"
+                aria-controls="overlay_menumessages"
+                class="p-link layout-topbar-button"
+            >
                 <i class="fa-regular fa-bell"></i>
             </Button>
             <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
@@ -306,5 +314,11 @@ onBeforeMount(() => {
 <style scoped>
 .fa-regular .fa-bell .fa-shake {
     font-size: 1.5rem;
+}
+/* Condição para esconder as "mensagens" das reticências */
+@media (max-width: 991px) {
+    #hide-on-small-screen1, #hide-on-small-screen2 {
+        display: none;
+    }
 }
 </style>
