@@ -232,18 +232,45 @@ onBeforeMount(() => {
 
 <template>
     <div class="layout-topbar">
-        <router-link to="/" class="layout-topbar-logo">
-            <img :src="logoUrl" alt="logo" />
-            <span>{{ appName }}</span>
-        </router-link>
+        <div class="flex gap-4">
+            <router-link to="/" class="layout-topbar-logo">
+                <img :src="logoUrl" alt="logo" />
+                <span>{{ appName }}</span>
+            </router-link>
+            <button class="p-link layout-menu-button layout-topbar-button" @click="onMenuToggle()">
+                <i class="fa-solid fa-bars fa-lg"></i>
+            </button>
+        </div>
 
-        <button class="p-link layout-menu-button layout-topbar-button" @click="onMenuToggle()">
-            <i class="fa-solid fa-bars fa-lg"></i>
-        </button>
+        <div class="flex flex-row-reverse">
+            <button class="p-link layout-topbar-menu-button layout-topbar-button" @click="onTopBarMenuButton()">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
 
-        <button class="p-link layout-topbar-menu-button layout-topbar-button" @click="onTopBarMenuButton()">
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-        </button>
+            <Button
+                v-if="newMessages > 0"
+                class="p-link layout-topbar-menu-button layout-topbar-button fa-regular fa-bell fa-shake text-white"
+                type="button"
+                :icon="`fa-regular fa-bell fa-2xl ${newMessages ? 'fa-shake' : ''}`"
+                :severity="`${newMessages > 0 ? 'info' : ''}`"
+                rounded
+                size="large"
+                :badge="String(newMessages) || '0'"
+                aria-haspopup="true"
+                @click="toggleMenuMessages"
+            />
+            <Button
+                v-else-if="newMessages == 0 && itemsMessages.length > 0"
+                type="button" label="Toggle"
+                @click="toggleMenuMessages"
+                aria-haspopup="true"
+                aria-controls="overlay_menumessages"
+                class="p-link layout-topbar-menu-button layout-topbar-button"
+            >
+                <i class="fa-regular fa-bell"></i>
+            </Button>
+
+        </div>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
             <Button
