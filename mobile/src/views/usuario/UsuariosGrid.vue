@@ -70,24 +70,15 @@ const loadData = () => {
     }, Math.random() * 1000);
 };
 const mode = ref('grid');
-// const searchInPage = () => {
-//     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
-//     const contentElement = document.getElementByTagName('tbody');
-//     if (searchTerm) {
-//         const contentText = contentElement.innerText.toLowerCase();
-
-//         if (contentText.includes(searchTerm)) {
-//             // Criamos uma expressão regular global (g) para encontrar todas as correspondências
-//             const regex = new RegExp(searchTerm, 'g');
-
-//             // Usamos o método replace para envolver as correspondências com uma tag de destaque
-//             contentElement.innerHTML = contentText.replace(regex, (match) => `<span style="background-color: yellow">${match}</span>`);
-
-//             // Definimos o foco de volta no campo de input
-//             document.getElementById('searchInput').focus();
+// const imprimir = (valorDoCampo) => {
+    
+//     if (valorDoCampo) {
+//         const primeiroCaractere = valorDoCampo.charAt(0);
+//         if (!isNaN(primeiroCaractere)) {
+//             console.log("É cpf")
 //         } else {
-//             alert('Nenhuma correspondência encontrada.');
+//             console.log("Não é cpf")
 //         }
 //     }
 // };
@@ -113,7 +104,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['name', 'cpf', 'email', 'telefone']"
+            :globalFilterFields="['name', 'cpf']"
         >
             <template #header>
                 <div class="flex justify-content-end flex-column gap-3">
@@ -123,7 +114,7 @@ onBeforeMount(() => {
                     </span>
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
+                        <InputText class="w-full" id="searchInput" @input="imprimir(filters.global.value)" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
@@ -161,10 +152,6 @@ onBeforeMount(() => {
     </div>
 </template>
 <style scoped>
-.foundMark {
-    background-color: yellow;
-    padding: 0;
-}
 #screen{
     width: 95vw;
 }
