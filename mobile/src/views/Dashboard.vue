@@ -389,15 +389,17 @@ const loadStats = () => {
     getBiPeriod();
     getBiPeriodVG();
     setTimeout(async () => {
-        await getCadastrosBi();
-        await getPropectosBi();
-        await getPropostasBi();
-        await getPedidosBi();
-        await getPedidosLastBi();
-        await getTopSellersBi();
-        await getTopProposalsBi();
-        await getTopSellingBi();
-        await getSalesOverviewBi();
+        if (biPeriodVG.value.dataEn.di && biPeriodVG.value.dataEn.df) {
+            await getCadastrosBi();
+            await getPropectosBi();
+            await getPropostasBi();
+            await getPedidosBi();
+            await getPedidosLastBi();
+            await getTopSellersBi();
+            await getTopProposalsBi();
+            await getTopSellingBi();
+            await getSalesOverviewBi();
+        }
     }, Math.random() * 1000 + 250);
 };
 
