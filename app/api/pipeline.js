@@ -37,6 +37,11 @@ module.exports = app => {
 
         const pipeline_params_force = body.pipeline_params_force
 
+        let valor = "6.246,24";
+        valor = valor.replace(/\./g, '').replace(',', '.');
+        let numero = parseFloat(valor);
+        console.log(numero);  // Saída: 6246.24
+
         if (body.valor_agente) body.valor_agente = body.valor_agente.replace(",", ".");
         if (body.valor_representacao) body.valor_representacao = body.valor_representacao.replace(",", ".");
         if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(",", ".");
@@ -904,6 +909,7 @@ module.exports = app => {
             totalSell = Math.round(totalSell * 100) / 100
             // Ordene biTopSelling por percentual
             // biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
+            // console.log(biTopSelling);
 
             return res.send({ data: biTopSelling, totalSell, totalSellQuantity })
         } catch (error) {
@@ -1010,7 +1016,7 @@ module.exports = app => {
                 // })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
                 .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC LIMIT 1) = ${STATUS_PEDIDO}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
                 .orderBy(app.db.raw('representacao, mes'))

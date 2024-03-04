@@ -251,7 +251,7 @@ const applyBiTopSeilling = async (moreOrLess) => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellings: { rows: biData.value.topSellings.rows } }));
     await getTopSellingBi(moreOrLess);
-    getSalesOverviewBi();
+    await getSalesOverviewBi();
 };
 
 const applyBiTopSellers = (moreOrLess) => {
@@ -289,6 +289,8 @@ const getTopSellingBi = async (moreOrLess) => {
         biData.value.topSellings.totalSell = data.totalSell;
         biData.value.topSellings.totalSellQuantity = data.totalSellQuantity;
         if (moreOrLess == 'all') biData.value.topSellings.rows = data.data.length;
+        let biParams = JSON.parse(localStorage.getItem('__biParams'));
+        localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellings: { rows: biData.value.topSellings.rows } }));
     });
     biData.value.topSellings.loading = false;
 };
@@ -308,6 +310,8 @@ const getTopSellersBi = async (moreOrLess) => {
         biData.value.topSellers.totalSell = data.totalSell;
         biData.value.topSellers.totalSellQuantity = data.totalSellQuantity;
         if (moreOrLess == 'all') biData.value.topSellers.rows = data.data.length;
+        let biParams = JSON.parse(localStorage.getItem('__biParams'));
+        localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellers: { rows: biData.value.topSellers.rows } }));
     });
     biData.value.topSellers.loading = false;
 };
@@ -327,6 +331,8 @@ const getTopProposalsBi = async (moreOrLess) => {
         biData.value.topProposals.totalProposed = data.totalProposed;
         biData.value.topProposals.totalProposedQuantity = data.totalProposedQuantity;
         if (moreOrLess == 'all') biData.value.topProposals.rows = data.data.length;
+        let biParams = JSON.parse(localStorage.getItem('__biParams'));
+        localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topProposals: { rows: biData.value.topProposals.rows } }));
     });
     biData.value.topProposals.loading = false;
 };
@@ -727,19 +733,22 @@ onMounted(() => {
             <div class="card" id="divChart">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h4>Visão geral de vendas sobre os produtos mais vendidos</h4>
-                    <SplitButton label="Exportar" :model="chartExportItems" icon="fa-solid fa-ellipsis-vertical" @click="exportToPNG" text severity="info"></SplitButton>
-                    <Calendar
-                        aria-describedby="username-help"
-                        showIcon
-                        dateFormat="dd/mm/yy"
-                        v-model="biPeriodVG"
-                        selectionMode="range"
-                        :numberOfMonths="2"
-                        :manualInput="true"
-                        showButtonBar
-                        class="custom-calendar"
-                        @update:modelValue="applyBiParamsVG()"
-                    />
+                    <div class="p-inputgroup">
+                        <SplitButton label="Exportar" :model="chartExportItems" icon="fa-solid fa-ellipsis-vertical" @click="exportToPNG" text severity="info"></SplitButton>
+                        <Dropdown v-model="biPeriodVG" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="mr-2 ml-2" @update:modelValue="applyBiParamsVG()" />
+                        <Calendar
+                            aria-describedby="username-help"
+                            showIcon
+                            dateFormat="dd/mm/yy"
+                            v-model="biPeriodVG"
+                            selectionMode="range"
+                            :numberOfMonths="2"
+                            :manualInput="true"
+                            showButtonBar
+                            class="custom-calendar"
+                            @update:modelValue="applyBiParamsVG()"
+                        />
+                    </div>
                 </div>
                 <Chart type="line" :data="lineData" :options="lineOptions" />
             </div>
