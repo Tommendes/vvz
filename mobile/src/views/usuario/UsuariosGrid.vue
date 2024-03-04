@@ -28,9 +28,7 @@ const urlBase = ref(`${baseApiUrl}/users`);
 // Itens do grid
 const listaNomes = ref([
     { field: 'name', label: 'Nome' },
-    { field: 'cpf', label: 'CPF' },
-    // { field: 'email', label: 'Email', minWidth: '25rem' },
-    // { field: 'telefone', label: 'Telefone', minWidth: '15rem' }
+    { field: 'cpf', label: 'CPF' }
 ]);
 //Scrool quando criar um Novo Registro
 const scrollToTop = () => {
@@ -71,17 +69,6 @@ const loadData = () => {
 };
 const mode = ref('grid');
 
-// const imprimir = (valorDoCampo) => {
-    
-//     if (valorDoCampo) {
-//         const primeiroCaractere = valorDoCampo.charAt(0);
-//         if (!isNaN(primeiroCaractere)) {
-//             console.log("É cpf")
-//         } else {
-//             console.log("Não é cpf")
-//         }
-//     }
-// };
 onBeforeMount(() => {
     initFilters();
     loadData();
