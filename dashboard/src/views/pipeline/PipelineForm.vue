@@ -149,7 +149,7 @@ const saveData = async () => {
     const url = `${urlBase.value}${id}`;
 
     itemData.value.documento = String(itemData.value.documento);
-    convertFloatFields('en');
+    // convertFloatFields('en');
     let preparedBody = {
         ...itemData.value,
         pipeline_params_force: itemDataParam.value
