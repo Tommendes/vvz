@@ -80,11 +80,12 @@ module.exports = app => {
         )
         const data = jsIntegration.execute()
             .then(async (data) => {
+                console.log('data', data);
                 const { createEvent } = app.api.sisEvents
                 evento = await createEvent({
                     "request": req,
                     "evento": {
-                        id_user: user.id,
+                        id_user: uParams.id,
                         evento: `Impressão de OAT`,
                         classevento: `printing`,
                         id_registro: idOat,
@@ -159,7 +160,7 @@ module.exports = app => {
                 evento = await createEvent({
                     "request": req,
                     "evento": {
-                        id_user: user.id,
+                        id_user: uParams.id,
                         evento: `Impressão de Proposta`,
                         classevento: `printing`,
                         id_registro: idProposta,
@@ -234,7 +235,7 @@ module.exports = app => {
             evento = await createEvent({
                 "request": req,
                 "evento": {
-                    id_user: user.id,
+                    id_user: uParams.id,
                     evento: `Impressão de Resumo do Proposta`,
                     classevento: `printing`,
                     id_registro: idProposta,
