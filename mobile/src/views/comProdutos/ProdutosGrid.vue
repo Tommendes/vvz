@@ -3,10 +3,9 @@ import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
-import moment from 'moment';
 import ProdutoForm from './ProdutoForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
-import { renderizarHTML, removeHtmlTags } from '@/global';
+import { removeHtmlTags } from '@/global';
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -182,18 +181,6 @@ watchEffect(() => {
             <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex flex-column gap-3">
-                    <!-- <Dropdown
-                        filter
-                        placeholder="Filtrar por Área de Atuação..."
-                        :showClear="areaAtuacao"
-                        style="min-width: 200px"
-                        id="areaAtuacao"
-                        optionLabel="label"
-                        optionValue="value"
-                        v-model="areaAtuacao"
-                        :options="dropdownAtuacao"
-                        @change="loadLazyData()"
-                    /> -->
                     <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />

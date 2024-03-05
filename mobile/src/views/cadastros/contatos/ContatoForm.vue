@@ -46,11 +46,10 @@ const validateTelefone = () => {
     return true;
 };
 // Validar formulário
-const formIsValid = () => {
-    // Se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'celular' ou 'telefone', então o campo itemData.meio deve ser validado pelo maska telefone
-    // Mas se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'e-mail', então o campo itemData.meio deve ser validado pelo isValidEmail
+const formIsValid = () => {    
     let label = getDropdownLabel(itemData.value.id_params_tipo);
     if (label) label = label.toString().toLowerCase();
+    // Se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'celular' ou 'telefone', então o campo itemData.meio deve ser validado pelo maska telefone, mas se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'e-mail', então o campo itemData.meio deve ser validado pelo isValidEmail
     if (label == 'e-mail') return validateEmail();
     if (label == 'telefone' || label == 'celular') return validateTelefone();
     return true;

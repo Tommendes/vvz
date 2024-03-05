@@ -59,24 +59,6 @@ const loadData = async () => {
     }, Math.random() * 1000);
 };
 
-// const loadData = async () => {
-//     if (route.params.id || itemData.value.id) {
-//         if (route.params.id) itemData.value.id = route.params.id;
-//         const url = `${urlBase.value}/${itemData.value.id}`;
-
-//         await axios.get(url).then((res) => {
-//             const body = res.data;
-//             if (body && body.id) {
-//                 body.id = String(body.id);
-//                 itemData.value = body;
-//                 loading.value.form = false;
-//             } else {
-//                 defaultWarn('Registro não localizado');
-//                 router.push({ path: `/${userData.schema_description}/comissoes` });
-//             }
-//         });
-//     } else loading.value.form = false;
-// };
 // Salvar dados do formulário
 const saveData = async () => {
     if (!formIsValid()) {
