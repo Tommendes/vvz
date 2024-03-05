@@ -87,7 +87,7 @@ module.exports = app => {
                         id_user: user.id,
                         evento: `Impressão de OAT`,
                         classevento: `printing`,
-                        id_registro: oat.id,
+                        id_registro: idOat,
                         tabela_bd: 'pv_oat'
                     }
                 })
@@ -162,7 +162,7 @@ module.exports = app => {
                         id_user: user.id,
                         evento: `Impressão de Proposta`,
                         classevento: `printing`,
-                        id_registro: proposta.id,
+                        id_registro: idProposta,
                         tabela_bd: 'com_propostas'
                     }
                 })
@@ -235,9 +235,9 @@ module.exports = app => {
                 "request": req,
                 "evento": {
                     id_user: user.id,
-                    evento: `Impressão de Reumo do Proposta`,
+                    evento: `Impressão de Resumo do Proposta`,
                     classevento: `printing`,
-                    id_registro: proposta.id,
+                    id_registro: idProposta,
                     tabela_bd: 'com_propostas'
                 }
             })
