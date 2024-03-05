@@ -79,19 +79,19 @@ module.exports = app => {
             optionParameters // Optional parameters
         )
         const data = jsIntegration.execute()
-            .then(async (data) => {
-                console.log('data', data);
-                const { createEvent } = app.api.sisEvents
-                evento = await createEvent({
-                    "request": req,
-                    "evento": {
-                        id_user: uParams.id,
-                        evento: `Impressão de OAT`,
-                        classevento: `printing`,
-                        id_registro: idOat,
-                        tabela_bd: 'pv_oat'
-                    }
-                })
+            .then( (data) => {
+                // console.log('data', data);
+                // const { createEvent } = app.api.sisEvents
+                // evento = await createEvent({
+                //     "request": req,
+                //     "evento": {
+                //         id_user: uParams.id,
+                //         evento: `Impressão de OAT`,
+                //         classevento: `printing`,
+                //         id_registro: idOat,
+                //         tabela_bd: 'pv_oat'
+                //     }
+                // })
                 res.setHeader("Content-Type", `application/${exportType}`);
                 res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
                 res.setHeader("Content-Length", data.length);
