@@ -2,7 +2,7 @@
 import { inject, onBeforeMount, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { isValidEmail, formatCurrency } from '@/global';
+import { isValidEmail } from '@/global';
 import { defaultSuccess, defaultWarn } from '@/toast';
 
 // Cookies do usuário
@@ -223,7 +223,7 @@ watchEffect(() => {});
                         </div>
                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                             <span class="p-inputgroup-addon">R$</span>
-                            <span disabled v-html="formatCurrency(itemData.desconto_total || 0)" id="desconto_total" class="p-inputtext p-component disabled" />
+                            <span disabled v-html="itemData.desconto_total || '0,00'" id="desconto_total" class="p-inputtext p-component disabled" />
                         </div>
                     </div>
                     <div class="col-12 md:col-2">

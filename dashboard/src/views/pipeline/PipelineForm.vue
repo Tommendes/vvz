@@ -5,7 +5,7 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
-import { userKey, formatValor } from '@/global';
+import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -68,14 +68,6 @@ import { andamentoRegistroPipeline } from '@/global';
 import { useDialog } from 'primevue/usedialog';
 const dialog = useDialog();
 
-const convertFloatFields = (result = 'pt') => {
-    itemData.value.valor_bruto = formatValor(itemData.value.valor_bruto, result);
-    itemData.value.valor_liq = formatValor(itemData.value.valor_liq, result);
-    itemData.value.valor_representacao = formatValor(itemData.value.valor_representacao, result);
-    itemData.value.valor_agente = formatValor(itemData.value.valor_agente, result);
-    itemData.value.perc_represent = formatValor(itemData.value.perc_represent, result);
-};
-
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
@@ -90,7 +82,6 @@ const loadData = async () => {
                     body.id = String(body.id);
 
                     itemData.value = body;
-                    convertFloatFields();
                     selectedCadastro.value = {
                         code: itemData.value.id_cadastros,
                         name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
@@ -161,7 +152,6 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                convertFloatFields();
                 emit('changed');
                 if (route.name != 'cadastro' && mode.value == 'new') {
                     router.push({
