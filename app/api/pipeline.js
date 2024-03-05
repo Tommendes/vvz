@@ -37,11 +37,6 @@ module.exports = app => {
 
         const pipeline_params_force = body.pipeline_params_force
 
-        let valor = "6.246,24";
-        valor = valor.replace(/\./g, '').replace(',', '.');
-        let numero = parseFloat(valor);
-        console.log(numero);  // Saída: 6246.24
-
         if (body.valor_agente) body.valor_agente = body.valor_agente.replace(",", ".");
         if (body.valor_representacao) body.valor_representacao = body.valor_representacao.replace(",", ".");
         if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(",", ".");
@@ -189,6 +184,12 @@ module.exports = app => {
                         id_pipeline: recordId,
                         status_params: STATUS_PEDIDO,
                     });
+                    
+                    newRecordWithID.valor_liq = parseFloat(newRecordWithID.valor_liq).toFixed(2).replace('.', ',')
+                    newRecordWithID.valor_bruto = parseFloat(newRecordWithID.valor_bruto).toFixed(2).replace('.', ',')
+                    newRecordWithID.valor_agente = parseFloat(newRecordWithID.valor_agente).toFixed(2).replace('.', ',')
+                    newRecordWithID.valor_representacao = parseFloat(newRecordWithID.valor_representacao).toFixed(2).replace('.', ',')
+                    newRecordWithID.perc_represent = parseFloat(newRecordWithID.perc_represent).toFixed(2).replace('.', ',')
 
                     return res.json(newRecordWithID);
                 }
@@ -269,7 +270,14 @@ module.exports = app => {
                 //     };
                 //     await trx(tabelaPipelineStatusDomain).insert(bodyStatus);
                 // }
-                const newRecordWithID = { ...newRecord, id: recordId }
+                const newRecordWithID = { ...newRecord, id: recordId }                
+                    
+                newRecordWithID.valor_liq = parseFloat(newRecordWithID.valor_liq).toFixed(2).replace('.', ',')
+                newRecordWithID.valor_bruto = parseFloat(newRecordWithID.valor_bruto).toFixed(2).replace('.', ',')
+                newRecordWithID.valor_agente = parseFloat(newRecordWithID.valor_agente).toFixed(2).replace('.', ',')
+                newRecordWithID.valor_representacao = parseFloat(newRecordWithID.valor_representacao).toFixed(2).replace('.', ',')
+                newRecordWithID.perc_represent = parseFloat(newRecordWithID.perc_represent).toFixed(2).replace('.', ',')
+
                 return res.json(newRecordWithID);
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
@@ -480,6 +488,11 @@ module.exports = app => {
                         let oat = await app.db(tabelaOatDomain).select({ 'id_oat': 'id' }).where({ id_pv: pv, status: STATUS_ACTIVE }).first()
                         if (oat) body = { ...body, id_oat: oat.id_oat }
                     }
+                    body.valor_liq = parseFloat(body.valor_liq).toFixed(2).replace('.', ',')
+                    body.valor_bruto = parseFloat(body.valor_bruto).toFixed(2).replace('.', ',')
+                    body.valor_agente = parseFloat(body.valor_agente).toFixed(2).replace('.', ',')
+                    body.valor_representacao = parseFloat(body.valor_representacao).toFixed(2).replace('.', ',')
+                    body.perc_represent = parseFloat(body.perc_represent).toFixed(2).replace('.', ',')
                     return res.json(body)
                 })
                 .catch(error => {
@@ -907,9 +920,6 @@ module.exports = app => {
                 element.percentualQuantity = Math.round((element.quantidade / totalSellQuantity) * 100)
             });
             totalSell = Math.round(totalSell * 100) / 100
-            // Ordene biTopSelling por percentual
-            // biTopSelling.sort((a, b) => (a.percentual < b.percentual) ? 1 : -1)
-            // console.log(biTopSelling);
 
             return res.send({ data: biTopSelling, totalSell, totalSellQuantity })
         } catch (error) {

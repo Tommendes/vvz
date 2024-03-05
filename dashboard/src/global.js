@@ -93,11 +93,12 @@ export function validarDataPTBR(data) {
     }
 }
 
-export function formatCurrency(value, locale = { place: 'pt-BR', currency: 'BRL' }) {
+export function formatCurrency(value, locale = { place: 'pt-BR', currency: 'BRL', styleReturn: 'currency' }) {
     value = value || 0;
     // remova todos os caracteres não numéricos e converta para double
     if (typeof value === 'string') value = parseFloat(value.replace(/\D/g, '')) / 100;
-    return value.toLocaleString(locale.place, { style: 'currency', currency: locale.currency });
+    // Mostrar opçõe style: 'currency', 'decimal', 'percent'
+    return value.toLocaleString(locale.place, { style: locale.style, currency: locale.currency });
 }
 // Verifique o horario e informe: Bom dia, boa tarde ou boa noite
 export const saudation = () => {
