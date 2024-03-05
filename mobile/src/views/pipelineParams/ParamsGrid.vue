@@ -22,6 +22,7 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/pipeline-params`);
 // Itens do grid
 const listaNomes = ref([
+    // { field: 'created_at', label: 'Data de Criação', minWidth: '20rem', type: 'date' },
     { field: 'descricao', label: 'Descrição' }
 ]);
 // Inicializa os filtros do grid
@@ -81,7 +82,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id', 'descricao']"
+            :globalFilterFields="['descricao']"
         >
             <template #header>
                 <div class="flex flex-column gap-3">

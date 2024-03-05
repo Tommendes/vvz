@@ -30,7 +30,7 @@ const scrollToTop = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    // { field: 'id', label: 'Id do Prarâmetro', minWidth: '20rem' },
+    // { field: 'created_at', label: 'Data de Criação', minWidth: '20rem' },
     { field: 'descricao', label: 'Descrição', minWidth: '60rem' }
 ]);
 // Inicializa os filtros do grid
@@ -83,7 +83,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['id', 'descricao']"
+            :globalFilterFields="['descricao']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
