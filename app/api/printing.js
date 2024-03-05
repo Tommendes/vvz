@@ -79,7 +79,18 @@ module.exports = app => {
             optionParameters // Optional parameters
         )
         const data = jsIntegration.execute()
-            .then((data) => {
+            .then(async (data) => {
+                const { createEvent } = app.api.sisEvents
+                evento = await createEvent({
+                    "request": req,
+                    "evento": {
+                        id_user: user.id,
+                        evento: `Impressão de OAT`,
+                        classevento: `printing`,
+                        id_registro: oat.id,
+                        tabela_bd: 'pv_oat'
+                    }
+                })
                 res.setHeader("Content-Type", `application/${exportType}`);
                 res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
                 res.setHeader("Content-Length", data.length);
@@ -143,7 +154,18 @@ module.exports = app => {
             optionParameters // Optional parameters
         )
         const data = jsIntegration.execute()
-            .then((data) => {
+            .then(async (data) => {
+                const { createEvent } = app.api.sisEvents
+                evento = await createEvent({
+                    "request": req,
+                    "evento": {
+                        id_user: user.id,
+                        evento: `Impressão de Proposta`,
+                        classevento: `printing`,
+                        id_registro: proposta.id,
+                        tabela_bd: 'com_propostas'
+                    }
+                })
                 res.setHeader("Content-Type", `application/${exportType}`);
                 res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
                 res.setHeader("Content-Length", data.length);
@@ -207,7 +229,18 @@ module.exports = app => {
             optionParameters // Optional parameters
         )
         const data = jsIntegration.execute()
-            .then((data) => {
+        .then(async (data) => {
+            const { createEvent } = app.api.sisEvents
+            evento = await createEvent({
+                "request": req,
+                "evento": {
+                    id_user: user.id,
+                    evento: `Impressão de Reumo do Proposta`,
+                    classevento: `printing`,
+                    id_registro: proposta.id,
+                    tabela_bd: 'com_propostas'
+                }
+            })
                 res.setHeader("Content-Type", `application/${exportType}`);
                 res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
                 res.setHeader("Content-Length", data.length);
