@@ -414,6 +414,11 @@ const onImageRightClick = (event) => {
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.im" id="im" type="text" />
                         </div>
+                        <!-- <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
+                            <label for="ie_st">I.E. do Substituto Tributário</label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie_st" id="ie_st" type="text" />
+                        </div> -->
                         <!-- <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
                             <label for="cnae">CNAE</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>

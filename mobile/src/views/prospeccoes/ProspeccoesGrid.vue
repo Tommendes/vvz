@@ -55,11 +55,7 @@ const dropdownPeriodo = ref([
 // Itens do grid
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente' },
-    // { field: 'pessoa', label: 'Pessoa contatada' },
-    // { field: 'contato', label: 'Forma de Contato', minWidth: '12rem' },
-    // { field: 'periodo', label: 'Período da visita', minWidth: '8rem', list: dropdownPeriodo.value },
     { field: 'data_visita', label: 'Data da visita', type: 'date' },
-    // { field: 'agente', label: 'Agente' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {

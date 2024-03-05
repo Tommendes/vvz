@@ -6,7 +6,7 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import { renderizarHTML } from '@/global';
-import MenssageForm from './MessageForm.vue';
+import MessageForm from './MessageForm.vue';
 
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -108,8 +108,8 @@ onBeforeMount(() => {
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Mensagens', to: route.fullPath }]" />
-    <div class="card">
-        <MenssageForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+    <div class="card w-95">
+        <MessageForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 1rem"
             :value="gridData"
@@ -196,3 +196,12 @@ onBeforeMount(() => {
         </DataTable>
     </div>
 </template>
+
+<style scoped>
+.w-95{
+    width: 95vw;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+</style>

@@ -64,8 +64,6 @@ const dropdownPeriodo = ref([
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente', minWidth: '15rem' },
     { field: 'pessoa', label: 'Pessoa contatada', minWidth: '11rem' },
-    // { field: 'contato', label: 'Forma de Contato', minWidth: '12rem' },
-    // { field: 'periodo', label: 'Período da visita', minWidth: '8rem', list: dropdownPeriodo.value },
     { field: 'data_visita', label: 'Data da visita', minWidth: '8rem', type: 'date' },
     { field: 'agente', label: 'Agente', minWidth: '5rem', maxWidth: '5rem' }
 ]);
@@ -107,8 +105,7 @@ const loadLazyData = () => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 gridData.value.forEach((element) => {
-                    // Exibe dado com máscara
-                    // Converte data en para pt
+                    // Exibe dado com máscara e converte data en para pt
                     if (element.data_visita) element.data_visita = moment(element.data_visita).format('DD/MM/YYYY');
                     if (!element.pessoa) element.pessoa = '';
                     if (element.contato) element.contato = renderizarHTML(element.contato);

@@ -117,7 +117,6 @@ const scrollToTop = () => {
         });
     } else {
         scrollTime += 1;
-        console.log("scrollTime recebeu + 1")
     }
 };
 
@@ -191,7 +190,6 @@ const getCadastrosBi = async () => {
         biData.value.cadastros.novos = data.novos;
     });
     biData.value.cadastros.loading = false;
-    console.log("Rodou 1");
 };
 
 const getPropectosBi = async () => {
@@ -204,7 +202,6 @@ const getPropectosBi = async () => {
         biData.value.prospectos.novos = data.novos;
     });
     biData.value.prospectos.loading = false;
-    console.log("Rodou 2");
 };
 
 const getPropostasBi = async () => {
@@ -217,7 +214,6 @@ const getPropostasBi = async () => {
         biData.value.propostas.novos = data.novos;
     });
     biData.value.propostas.loading = false;
-    console.log("Rodou 3");
 };
 
 const getPedidosBi = async () => {
@@ -230,7 +226,6 @@ const getPedidosBi = async () => {
         biData.value.pedidos.novos = data.novos;
     });
     biData.value.pedidos.loading = false;
-    console.log("Rodou 4");
 };
 
 const getPedidosLastBi = async () => {
@@ -306,7 +301,6 @@ const getTopSellingBi = async () => {
         biData.value.topSellings.totalSellQuantity = data.totalSellQuantity;
     });
     biData.value.topSellings.loading = false;
-    console.log("Rodou 5");
 };
 
 const getTopSellersBi = async () => {
@@ -325,7 +319,6 @@ const getTopSellersBi = async () => {
         biData.value.topSellers.totalSellQuantity = data.totalSellQuantity;
     });
     biData.value.topSellers.loading = false;
-    console.log("Rodou 6");
 };
 
 const getTopProposalsBi = async () => {
@@ -344,7 +337,6 @@ const getTopProposalsBi = async () => {
         biData.value.topProposals.totalProposedQuantity = data.totalProposedQuantity;
     });
     biData.value.topProposals.loading = false;
-    console.log("Rodou 7");
 };
 
 const getSalesOverviewBi = async () => {
@@ -358,7 +350,6 @@ const getSalesOverviewBi = async () => {
         lineData.datasets = data.datasets;
     });
     biData.value.salesOverview.loading = false;
-    console.log("Rodou 8");
 };
 const lineData = reactive({
     labels: [],
@@ -790,6 +781,13 @@ onMounted(() => {
     </div>
 </template>
 
+<style scoped>
+@media (min-width: 992px) {
+  .w-screen {
+    width: 85vw !important;
+  }
+}
+</style>
 <style>
 .container[data-v-7a7a37b1]{
     overflow-x: hidden;

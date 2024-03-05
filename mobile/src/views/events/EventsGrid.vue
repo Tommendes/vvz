@@ -46,12 +46,12 @@ const gridData = ref([]); // Seus dados iniciais
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'created_at', label: 'Data de criação' },
-    // { field: 'evento', label: 'Tipo do evento', minWidth: '10rem' },
+    { field: 'evento', label: 'Tipo do evento', minWidth: '10rem' },
+    { field: 'user', label: 'Usuário' }
+    // { field: 'created_at', label: 'Data de criação' },
     // { field: 'classevento', label: 'Classe' },
     // { field: 'tabela_bd', label: 'Tabela' },
     // { field: 'id_registro', label: 'Registro' },
-    { field: 'user', label: 'Usuário' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {

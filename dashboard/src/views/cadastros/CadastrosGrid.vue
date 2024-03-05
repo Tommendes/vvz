@@ -296,7 +296,7 @@ watchEffect(() => {
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" style="0.6rem">
+                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" :style="0.6rem">
                         <template #body="{ data }">
                             <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="router.push({ path: `/${userData.schema_description}/cadastro/${data.id}` })" title="Clique para mais opções" />
                         </template>

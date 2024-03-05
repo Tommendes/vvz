@@ -79,8 +79,8 @@ const dropdownSituacoes = ref([
 const listaNomes = ref([
     { field: 'nome', label: 'Cliente', minWidth: '2rem' },
     { field: 'pv_nr', label: 'Número' },
-    // { field: 'pipeline', label: 'Pipeline' },
     { field: 'tipo', label: 'Tipo', list: dropdownTipos.value },
+    // { field: 'pipeline', label: 'Pipeline' },
     // { field: 'last_status_pv', label: 'Situação', list: dropdownSituacoes.value }
 ]);
 // Inicializa os filtros do grid

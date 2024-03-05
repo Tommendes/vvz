@@ -25,6 +25,7 @@ onBeforeMount(() => {
 onMounted(() => {
     clearFilter();
 });
+// Função scrool após clicar em Novo Registro
 const scrollToTop = () => {
     window.scrollTo({
         top: 0,
@@ -41,9 +42,9 @@ const itemData = ref({});
 
 // Itens do grid
 const listaNomes = ref([
-    // { field: 'descricao', label: 'Proponente' },
     { field: 'documento', label: 'Proposta' },
     { field: 'nome', label: 'Cliente' },
+    // { field: 'descricao', label: 'Proponente' },
     // { field: 'pessoa_contato', label: 'Contato' },
     // { field: 'email_contato', label: 'Email' }
 ]);
