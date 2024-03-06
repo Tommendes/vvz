@@ -82,7 +82,7 @@ module.exports = app => {
                     "evento": {
                         id_user: uParams.id,
                         evento: `Impressão de OAT`,
-                        classevento: `printing`,
+                        classevento: `printing-oat`,
                         id_registro: idOat,
                         tabela_bd: 'pv_oat'
                     }
@@ -157,7 +157,7 @@ module.exports = app => {
                     "evento": {
                         id_user: uParams.id,
                         evento: `Impressão de Proposta`,
-                        classevento: `printing`,
+                        classevento: `printing-proposal`,
                         id_registro: idProposta,
                         tabela_bd: 'com_propostas'
                     }
@@ -232,7 +232,7 @@ module.exports = app => {
                     "evento": {
                         id_user: uParams.id,
                         evento: `Impressão de Resumo do Proposta`,
-                        classevento: `printing`,
+                        classevento: `printing-proposal-resume`,
                         id_registro: idProposta,
                         tabela_bd: 'com_propostas'
                     }
