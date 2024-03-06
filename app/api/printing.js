@@ -32,7 +32,6 @@ module.exports = app => {
     const getReportOat = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        console.log('uParams', uParams);
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de OAT"`)
@@ -45,7 +44,6 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        console.log('body', body);
         const dbSchema = `${dbPrefix}_${uParams.schema_name}`
         const usuario = uParams.name
         const idEmpresa = 1
@@ -57,17 +55,18 @@ module.exports = app => {
             .join({ pv: tabelaPvDomain }, 'pv.id', 'oat.id_pv')
             .select(app.db.raw(`pv.pv_nr, oat.nr_oat`))
             .where({ 'oat.id': idOat, 'oat.status': STATUS_ACTIVE }).first()
-        console.log('oat', oat);
+
+
         moment.locale('pt-br');
         const fileName = oat.pv_nr.toString().padStart(6, '0') + '_' + oat.nr_oat.toString().padStart(3, '0') + '_' + moment().format('DDMMYYYY_HHmmss')
-        console.log('fileName', fileName);
+
         const optionParameters = {
             "usuario": usuario,
             "idEmpresa": empresa.id,
             "idOat": idOat,
             "dbSchema": dbSchema
         }
-        console.log('optionParameters', optionParameters);
+
         const exportType = body.exportType || 'pdf'
         const fileRootName = 'reports/Vivazul/pv/oat/Oat'
 
@@ -79,7 +78,6 @@ module.exports = app => {
             jasperServerK, // Password
             optionParameters // Optional parameters
         )
-        console.log('jsIntegration', jsIntegration);
         const data = jsIntegration.execute()
             .then(async (data) => {
                 const { createEvent } = app.api.sisEvents
@@ -231,18 +229,18 @@ module.exports = app => {
             optionParameters // Optional parameters
         )
         const data = jsIntegration.execute()
-            .then(async (data) => {
-                const { createEvent } = app.api.sisEvents
-                evento = await createEvent({
-                    "request": req,
-                    "evento": {
-                        id_user: uParams.id,
-                        evento: `Impressão de Resumo do Proposta`,
-                        classevento: `printing`,
-                        id_registro: idProposta,
-                        tabela_bd: 'com_propostas'
-                    }
-                })
+        .then(async (data) => {
+            const { createEvent } = app.api.sisEvents
+            evento = await createEvent({
+                "request": req,
+                "evento": {
+                    id_user: uParams.id,
+                    evento: `Impressão de Resumo do Proposta`,
+                    classevento: `printing`,
+                    id_registro: idProposta,
+                    tabela_bd: 'com_propostas'
+                }
+            })
                 res.setHeader("Content-Type", `application/${exportType}`);
                 res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
                 res.setHeader("Content-Length", data.length);
