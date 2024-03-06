@@ -372,10 +372,9 @@ const imprimirOat = async () => {
     await axios
         .post(url, { idOat: itemData.value.id, encoding: 'base64', exportType: 'pdf' })
         .then((res) => {
-            downloadPDF(res.data, `OAT_${itemData.value.nr_oat}.pdf`);
-            // const body = res.data;
-            // let pdfWindow = window.open('');
-            // pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
+            const body = res.data;
+            let pdfWindow = window.open('');
+            pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
         .catch((error) => {
             if (typeof error.response.data == 'string') defaultWarn(error.response.data);
@@ -386,14 +385,6 @@ const imprimirOat = async () => {
                 defaultWarn('Erro ao carregar dados!');
             }
         });
-};
-
-const downloadPDF = (pdf, fileName) => {
-    const linkSource = `data:application/pdf;base64,${pdf}`;
-    const downloadLink = document.createElement('a');
-    downloadLink.href = linkSource;
-    downloadLink.download = fileName;
-    downloadLink.click();
 };
 // Fchar formulário
 const closeDialog = () => {
