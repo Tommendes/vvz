@@ -80,7 +80,7 @@ module.exports = app => {
         )
         const data = jsIntegration.execute()
             .then(async (data) => {
-                console.log('data', data);
+                console.log('data', Buffer.from(data).toString('base64'));
                 const { createEvent } = app.api.sisEvents
                 evento = await createEvent({
                     "request": req,
