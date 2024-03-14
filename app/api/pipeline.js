@@ -7,6 +7,7 @@ module.exports = app => {
     const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_COMISSIONADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
     const { TIPO_PV_SUPORTE, TIPO_PV_MONTAGEM, TIPO_PV_VENDAS } = require('./pv.js')(app)
     const { existsOrError, booleanOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
+    const { formatCurrency } = require('./facilities.js')(app)
     const tabela = 'pipeline'
     const tabelaAlias = 'Pipeline'
     const tabelaStatus = 'pipeline_status'
@@ -70,7 +71,7 @@ module.exports = app => {
         }
         const status_params = body.status_params; // Último status do registro
         const status_params_force = body.status_params_force || body.status_params; // Status forçado para edição
-        delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force;  
+        delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force;
         delete body.id_pv; delete body.id_oat;
         if (body.id) {
             // Variáveis da edição de um registro            
@@ -184,7 +185,7 @@ module.exports = app => {
                         id_pipeline: recordId,
                         status_params: STATUS_PEDIDO,
                     });
-                    
+
                     newRecordWithID.valor_liq = parseFloat(newRecordWithID.valor_liq).toFixed(2).replace('.', ',')
                     newRecordWithID.valor_bruto = parseFloat(newRecordWithID.valor_bruto).toFixed(2).replace('.', ',')
                     newRecordWithID.valor_agente = parseFloat(newRecordWithID.valor_agente).toFixed(2).replace('.', ',')
@@ -270,8 +271,8 @@ module.exports = app => {
                 //     };
                 //     await trx(tabelaPipelineStatusDomain).insert(bodyStatus);
                 // }
-                const newRecordWithID = { ...newRecord, id: recordId }                
-                    
+                const newRecordWithID = { ...newRecord, id: recordId }
+
                 newRecordWithID.valor_liq = parseFloat(newRecordWithID.valor_liq).toFixed(2).replace('.', ',')
                 newRecordWithID.valor_bruto = parseFloat(newRecordWithID.valor_bruto).toFixed(2).replace('.', ',')
                 newRecordWithID.valor_agente = parseFloat(newRecordWithID.valor_agente).toFixed(2).replace('.', ',')
@@ -452,6 +453,13 @@ module.exports = app => {
             .limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
             const length = body.length
+            body.forEach(element => {
+                element.valor_liq = parseFloat(element.valor_liq).toFixed(2).replace('.', ',')
+                element.valor_bruto = parseFloat(element.valor_bruto).toFixed(2).replace('.', ',')
+                element.valor_agente = parseFloat(element.valor_agente).toFixed(2).replace('.', ',')
+                element.valor_representacao = parseFloat(element.valor_representacao).toFixed(2).replace('.', ',')
+                element.perc_represent = parseFloat(element.perc_represent).toFixed(2).replace('.', ',')
+            });
             return res.json({ data: body, totalRecords: totalRecords.count || length, sumRecords: totalRecords.sum || 0 })
         }).catch(error => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -478,23 +486,23 @@ module.exports = app => {
                 .where({ 'tbl1.id': req.params.id })
                 .whereNot({ 'tbl1.status': STATUS_DELETE })
                 .first()
-                ret.then(async (body) => {
-                    if (!body) return res.status(404).send('Registro não encontrado')
-                    body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
-                    let pv = await app.db(tabelaPvDomain).select({ 'id_pv': 'id' }).where({ id_pipeline: body.id, tipo: TIPO_PV_MONTAGEM, status: STATUS_ACTIVE }).first()
-                    if (pv) {
-                        pv = pv.id_pv;
-                        body = { ...body, id_pv: pv }
-                        let oat = await app.db(tabelaOatDomain).select({ 'id_oat': 'id' }).where({ id_pv: pv, status: STATUS_ACTIVE }).first()
-                        if (oat) body = { ...body, id_oat: oat.id_oat }
-                    }
-                    body.valor_liq = parseFloat(body.valor_liq).toFixed(2).replace('.', ',')
-                    body.valor_bruto = parseFloat(body.valor_bruto).toFixed(2).replace('.', ',')
-                    body.valor_agente = parseFloat(body.valor_agente).toFixed(2).replace('.', ',')
-                    body.valor_representacao = parseFloat(body.valor_representacao).toFixed(2).replace('.', ',')
-                    body.perc_represent = parseFloat(body.perc_represent).toFixed(2).replace('.', ',')
-                    return res.json(body)
-                })
+            ret.then(async (body) => {
+                if (!body) return res.status(404).send('Registro não encontrado')
+                body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
+                let pv = await app.db(tabelaPvDomain).select({ 'id_pv': 'id' }).where({ id_pipeline: body.id, tipo: TIPO_PV_MONTAGEM, status: STATUS_ACTIVE }).first()
+                if (pv) {
+                    pv = pv.id_pv;
+                    body = { ...body, id_pv: pv }
+                    let oat = await app.db(tabelaOatDomain).select({ 'id_oat': 'id' }).where({ id_pv: pv, status: STATUS_ACTIVE }).first()
+                    if (oat) body = { ...body, id_oat: oat.id_oat }
+                }
+                body.valor_liq = parseFloat(body.valor_liq).toFixed(2).replace('.', ',')
+                body.valor_bruto = parseFloat(body.valor_bruto).toFixed(2).replace('.', ',')
+                body.valor_agente = parseFloat(body.valor_agente).toFixed(2).replace('.', ',')
+                body.valor_representacao = parseFloat(body.valor_representacao).toFixed(2).replace('.', ',')
+                body.perc_represent = parseFloat(body.perc_represent).toFixed(2).replace('.', ',')
+                return res.json(body)
+            })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
@@ -894,7 +902,7 @@ module.exports = app => {
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`pp.id,u.name agente,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade `))
+                .select(app.db.raw(`u.id,u.name agente,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade `))
                 .join({ pp: tabelaParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
@@ -1029,7 +1037,7 @@ module.exports = app => {
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
-                .orderBy(app.db.raw('representacao, mes'))
+                .orderBy(app.db.raw(`representacao, DATE_FORMAT(tbl1.created_at, '%y'), DATE_FORMAT(tbl1.created_at, '%m')`))
             const formatData = await formatDataForChart(biSalesOverview)
             return res.send(formatData)
         } catch (error) {
@@ -1092,6 +1100,18 @@ module.exports = app => {
             });
 
             await client.ensureDir(body.path);
+            // registrar o evento na tabela de eventos
+            const { createEvent } = app.api.sisEvents
+            createEvent({
+                "request": req,
+                "evento": {
+                    "id_user": user.id,
+                    "evento": `Criação de pasta no servidor ftp`,
+                    "classevento": `mkFolder`,
+                    "id_registro": body.id_pipeline
+                }
+            })
+
             return res.send(`Pasta criada com sucesso no caminho: ${body.path}`);
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -1164,7 +1184,7 @@ module.exports = app => {
             if (list.length == 0) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.send(list);
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${body.path}. Error: ${error}`, sConsole: true } })
             if (error.code == 'EHOSTUNREACH') return res.status(200).send(`Servidor de arquivos temporariamente indisponível`);
             else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.status(200).send(error)

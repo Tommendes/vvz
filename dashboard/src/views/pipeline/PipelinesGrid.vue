@@ -185,18 +185,7 @@ const scrollToTop = () => {
 const loadLazyData = () => {
     loading.value = true;
     setTimeout(() => {
-        // let urlQueryes = '';
-        // let objetcQueryes = Object.keys(queryUrl.value);
-        // if (objetcQueryes.length > 0) {
-        //     urlQueryes = Object.keys(queryUrl.value)
-        //         .map((key) => `${key}=${queryUrl.value[key]}`)
-        //         .join('&');
-        //     // Pesquise filters.value, identifique a atribua o valor de acordo com o que foi passado na URL (queryUrl.value)
-        //     Object.keys(filters.value).forEach((key) => {
-        //         if (queryUrl.value[key]) filters.value[key].value = queryUrl.value[key];
-        //     });
-        // }
-        const url = `${urlBase.value}${urlFilters.value}`; //${urlQueryes}
+        const url = `${urlBase.value}${urlFilters.value}`;
         axios
             .get(url)
             .then(async (axiosRes) => {
@@ -230,8 +219,9 @@ const loadLazyData = () => {
                             .trim();
                         // element.descricao = element.descricao.substr(0, limitDescription);
                     } else element.descricao = '';
-                    if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
-                    else element.valor_bruto = '';
+                    // element.valor_bruto = formatCurrency(element.valor_bruto, { place: 'pt-BR', currency: 'BRL', styleReturn: 'decimal' });
+                    // if (element.valor_bruto && element.valor_bruto >= 0) element.valor_bruto = formatCurrency(element.valor_bruto);
+                    // else element.valor_bruto = '';
                     if (element.agente) element.agente = element.agente.trim();
                     else element.agente = '';
                 });
@@ -303,10 +293,10 @@ let dataToExcelExport = [
     {
         sheet: 'Pipeline',
         columns: [
-            { label: 'Cliente', value: (row) => row.cliente },
-            { label: 'Tipo', value: (row) => row.tipo },
-            { label: 'Proposta', value: (row) => row.doc_pai || '' },
-            { label: 'Pedido', value: (row) => row.doc_filho || '' },
+            { label: 'Cliente', value: (row) => row.nome },
+            { label: 'Tipo', value: (row) => row.tipo_doc },
+            { label: 'Proposta', value: (row) => row.doc_pai },
+            { label: 'Pedido', value: (row) => row.doc_filho },
             { label: 'Documento', value: (row) => row.documento },
             { label: 'R$ Bruto', value: (row) => row.valor_bruto, format: 'R$ #,##0.00' },
             { label: 'Descrição', value: (row) => row.descricao },
@@ -319,36 +309,14 @@ let dataToExcelExport = [
 ];
 
 const exportXls = () => {
-    const toExport = dt.value;
+    // const toExport = dt.value;
+    const toExport = gridData;
     dataToExcelExport[0].content = [];
     toExport.value.forEach((element) => {
-        let last_status_params = '';
-        let descricao = '';
-        dropdownStatus.value.forEach((item) => {
-            if (item.value == element.last_status_params) last_status_params = item.label;
-        });
-        if (element.descricao)
-            descricao = element.descricao
-                .replaceAll('Este documento foi versionado. Estes são os dados do documento original:', '')
-                .replaceAll('Este documento foi liquidado quando foi versionado.', '')
-                .replaceAll('Segue a descrição original do documento:', '')
-                .trim();
-
-        let valorBruto = element.valor_bruto;
-        if (typeof valorBruto === 'string') valorBruto = parseFloat(valorBruto.replace(/\D/g, '')) / 100;
-        valorBruto = valorBruto || 0;
-        dataToExcelExport[0].content.push({
-            cliente: element.nome,
-            tipo: element.tipo_doc.replaceAll('_', ' '),
-            proposta: element.doc_pai || '',
-            pedido: element.doc_filho || '',
-            documento: element.documento,
-            valor_bruto: valorBruto, // .replaceAll('R$', '').replaceAll('.', '').replaceAll(',', '.'), // formatCurrency(element.valor_bruto),
-            descricao: removeHtmlTags(descricao),
-            agente: element.agente,
-            status_created_at: element.status_created_at,
-            last_status_params: last_status_params
-        });
+        element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
+        element.descricao = removeHtmlTags(element.descricao);
+        element.documento = removeHtmlTags(element.documento);
+        dataToExcelExport[0].content.push(element);
     });
     let settings = {
         fileName: dataToExcelExport[0].sheet // Name of the resulting spreadsheet
