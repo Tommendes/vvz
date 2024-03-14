@@ -112,11 +112,12 @@ module.exports = app => {
 
     function countOccurrences(str, term) { return str.split(term).length - 1 }
 
-    function formatCurrency(value, locale = { place: 'pt-BR', currency: 'BRL' }) {
+    function formatCurrency(value, locale = { place: 'pt-BR', currency: 'BRL', styleReturn: 'currency' }) {
         value = value || 0;
         // remova todos os caracteres não numéricos e converta para double
         if (typeof value === 'string') value = parseFloat(value.replace(/\D/g, '')) / 100;
-        return value.toLocaleString(locale.place, { style: 'currency', currency: locale.currency });
+        // Mostrar opçõe style: 'currency', 'decimal', 'percent'
+        return value.toLocaleString(locale.place, { style: locale.styleReturn, currency: locale.currency });
     }
 
     function ceilTwoDecimals(num) {
