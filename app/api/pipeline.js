@@ -1172,7 +1172,7 @@ module.exports = app => {
             if (list.length == 0) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.send(list);
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${body.path}. Error: ${error}`, sConsole: true } })
             if (error.code == 'EHOSTUNREACH') return res.status(200).send(`Servidor de arquivos temporariamente indisponível`);
             else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.status(200).send(error)
