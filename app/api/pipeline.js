@@ -1101,17 +1101,6 @@ module.exports = app => {
 
             await client.ensureDir(body.path);
             // Registrar o evento na tabela de eventos
-            let eventPayload = {
-                notTo: ['created_at', 'evento'],
-                next: newRecordWithID,
-                request: req,
-                evento: {
-                    evento: 'Novo registro',
-                    tabela_bd: tabela,
-                },
-                trx: trx
-            };
-
             const { createEvent } = app.api.sisEvents
             evento = await createEvent({
                 "request": req,
