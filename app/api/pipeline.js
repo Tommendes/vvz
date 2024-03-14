@@ -1100,6 +1100,18 @@ module.exports = app => {
             });
 
             await client.ensureDir(body.path);
+            // registrar o evento na tabela de eventos
+            const { createEvent } = app.api.sisEvents
+            createEvent({
+                "request": req,
+                "evento": {
+                    "id_user": user.id,
+                    "evento": `Criação de pasta no servidor ftp`,
+                    "classevento": `mkFolder`,
+                    "id_registro": body.id_pipeline
+                }
+            })
+
             return res.send(`Pasta criada com sucesso no caminho: ${body.path}`);
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
