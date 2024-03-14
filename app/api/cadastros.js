@@ -208,7 +208,7 @@ module.exports = app => {
                             operator = `= '${value}'`
                         }
                         // else 
-                        // if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
+                        if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
                         query += `${queryField} ${operator} AND `
                     }
                 } else if (key.split(':')[0] == 'params') {
