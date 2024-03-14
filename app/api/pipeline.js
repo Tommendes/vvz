@@ -1037,7 +1037,7 @@ module.exports = app => {
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
-                .orderBy(app.db.raw('representacao, mes'))
+                .orderBy(app.db.raw(`representacao, DATE_FORMAT(tbl1.created_at, '%y'), DATE_FORMAT(tbl1.created_at, '%m')`))
             const formatData = await formatDataForChart(biSalesOverview)
             return res.send(formatData)
         } catch (error) {
