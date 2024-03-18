@@ -114,7 +114,7 @@ const filtrarUnidadesDescricao = async () => {
 };
 
 // Itens do grid
-const limitDescription = 150;
+const limitDescription = 250;
 const limitNome = 25;
 
 // Lista de tipos

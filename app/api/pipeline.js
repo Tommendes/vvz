@@ -1100,15 +1100,16 @@ module.exports = app => {
             });
 
             await client.ensureDir(body.path);
-            // registrar o evento na tabela de eventos
+            // Registrar o evento na tabela de eventos
             const { createEvent } = app.api.sisEvents
-            createEvent({
+            evento = await createEvent({
                 "request": req,
                 "evento": {
-                    "id_user": user.id,
-                    "evento": `Criação de pasta no servidor ftp`,
-                    "classevento": `mkFolder`,
-                    "id_registro": body.id_pipeline
+                    id_user: uParams.id,
+                    evento: `Criação de pasta no servidor ftp`,
+                    classevento: `mkFolder`,
+                    id_registro: body.id_pipeline,
+                    tabela_bd: 'pipeline'
                 }
             })
 
