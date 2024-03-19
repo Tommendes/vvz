@@ -6,6 +6,7 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail, capitalizeFirst } from '@/global';
 import moment from 'moment';
 import { guide } from '@/guides/cadastroFormGuide.js';
+import EditorComponent from '@/components/EditorComponent.vue';
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -585,7 +586,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-12" v-if="(itemData.observacao && itemData.observacao.length) || mode != 'view'">
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 80px" aria-describedby="editor-error" />
+                        <EditorComponent v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 80px" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled p-disabled"></p>
                     </div>
 
@@ -683,10 +684,12 @@ watchEffect(() => {
         background-color: var(--blue-500);
         color: var(--gray-50);
     }
+
     50% {
         background-color: var(--yellow-500);
         color: var(--gray-900);
     }
+
     100% {
         background-color: var(--surface-200);
         color: var(--gray-900);

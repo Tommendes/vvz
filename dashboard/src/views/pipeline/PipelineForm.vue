@@ -5,6 +5,7 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
+import EditorComponent from '@/components/EditorComponent.vue';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -1040,7 +1041,7 @@ watch(route, (value) => {
                         <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
                             <label for="descricao">Descrição</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>

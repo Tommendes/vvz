@@ -6,6 +6,7 @@ import axios from '@/axios-interceptor';
 const urlBase = ref(`${baseApiUrl}/com-propostas`);
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
+import EditorComponent from '@/components/EditorComponent.vue';
 
 const dialogRef = inject('dialogRef');
 const itemData = ref({});
@@ -114,23 +115,23 @@ const saveData = async () => {
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="saudacao_inicial">Saudação Inicial</label>
-                        <Editor v-model="itemData.saudacao_inicial" id="saudacao_inicial" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.saudacao_inicial" id="saudacao_inicial" editorStyle="height: 160px" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="observacoes_finais">Observacoes Finais</label>
-                        <Editor v-model="itemData.observacoes_finais" id="observacoes_finais" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.observacoes_finais" id="observacoes_finais" editorStyle="height: 160px" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="garantia">Garantia</label>
-                        <Editor v-model="itemData.garantia" id="garantia" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.garantia" id="garantia" editorStyle="height: 160px" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="conclusao">Conclusão</label>
-                        <Editor v-model="itemData.conclusao" id="conclusao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.conclusao" id="conclusao" editorStyle="height: 160px" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="assinatura">Assinatura</label>
-                        <Editor v-model="itemData.assinatura" id="assinatura" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.assinatura" id="assinatura" editorStyle="height: 160px" aria-describedby="editor-error" />
                     </div>
                 </div>
             </div>

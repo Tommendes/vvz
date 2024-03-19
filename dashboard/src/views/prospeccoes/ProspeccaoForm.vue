@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
+import EditorComponent from '@/components/EditorComponent.vue';
 import moment from 'moment';
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
@@ -371,7 +372,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
                             <label for="observacoes">Observações</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes" id="observacoes" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacoes" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>

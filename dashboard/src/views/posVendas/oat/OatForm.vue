@@ -3,6 +3,7 @@ import { onBeforeMount, ref, onMounted, inject } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
+import EditorComponent from '@/components/EditorComponent.vue';
 
 import { andamentoRegistroPv, andamentoRegistroPvOat, formatValor } from '@/global';
 import { useRouter } from 'vue-router';
@@ -469,7 +470,7 @@ onMounted(() => {
                     <div class="col-12 md:col-12">
                         <label for="descricao">Descrição dos serviços</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Editor v-else-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 320px" aria-describedby="editor-error"></Editor>
+                        <EditorComponent v-else-if="mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 320px" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                     </div>
                 </div>
