@@ -101,7 +101,13 @@ onBeforeMount(() => {
                     </span>
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
-                        <InputText class="w-full" id="searchInput" @input="imprimir(filters.global.value)" v-model="filters['global'].value" v-maska data-maska="###.###.###-##', '##.###.###/####-##'" placeholder="Pesquise..." />
+                        <InputText
+                            class="w-full"
+                            id="searchInput"
+                            @input="imprimir(filters.global.value)"
+                            v-model="filters['global'].value"
+                            placeholder="Pesquise..."
+                        />
                     </span>
                 </div>
             </template>

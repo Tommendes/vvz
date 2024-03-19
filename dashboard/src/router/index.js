@@ -110,12 +110,12 @@ const routes = [
             {
                 path: '/:client/comissoes',
                 name: 'comissoes',
-                component: () => import('@/views/comissoes/ComissoesGrid.vue')
+                component: () => import('@/views/comissoes copy/ComissoesGrid.vue')
             },
             {
                 path: '/:client/comissao/:id',
                 name: 'comissao',
-                component: () => import('@/views/comissoes/ComissaoForm.vue')
+                component: () => import('@/views/comissoes copy/ComissaoForm.vue')
             },
             {
                 path: '/:client/retencoes',
