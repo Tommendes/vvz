@@ -70,7 +70,7 @@ const loadData = async () => {
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
-            element.meioRenderizado = renderizarHTML(element.meio);
+            if (element.meio) element.meioRenderizado = renderizarHTML(element.meio);
         });
         loading.value = false;
     });
@@ -148,13 +148,13 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
+            <!-- <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.tipo }}
                     </div>
                 </template>
-            </Column>
+            </Column> -->
             <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
@@ -162,13 +162,20 @@ onBeforeMount(() => {
                     </div>
                 </template>
             </Column>
-            <Column field="meio" header="Meio" sortable style="min-width: 30rem">
+            <Column field="departamento" header="Departamento" sortable style="min-width: 14rem">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.departamento }}
+                    </div>
+                </template>
+            </Column>
+            <!-- <Column field="meio" header="Meio" sortable style="min-width: 30rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         <span v-html="data.meioRenderizado" />
                     </div>
                 </template>
-            </Column>
+            </Column> -->
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" icon="fa-solid fa-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
