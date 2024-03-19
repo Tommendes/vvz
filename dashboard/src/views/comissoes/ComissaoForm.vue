@@ -3,6 +3,7 @@ import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
+import EditorComponent from '@/components/EditorComponent.vue';
 
 // Cookies de usuário
 import { userKey } from '@/global';
@@ -176,7 +177,7 @@ const items = ref([
                         <div class="col-12 md:col-12">
                             <label for="descricao">Descrição do centro de custo</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Editor v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>

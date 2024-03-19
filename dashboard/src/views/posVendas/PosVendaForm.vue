@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { userKey } from '@/global';
+import EditorComponent from '@/components/EditorComponent.vue';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -464,7 +465,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-12" v-if="itemData.observacao || mode != 'view'">
                             <label for="observacao">Observação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacao || ''" class="p-inputtext p-component p-filled p-disabled" />
                         </div>
                     </div>

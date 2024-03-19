@@ -5,6 +5,7 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import moment from 'moment';
+import EditorComponent from '@/components/EditorComponent.vue';
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -273,7 +274,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-12" v-if="itemData.msg || ['edit', 'new'].includes(mode)">
                             <label for="msg">Mensagem</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg" class="p-inputtext p-component p-filled"></p>
                         </div>
                         <div class="col-12 md:col-5" v-if="itemData.valid_to && !errorMessages.valid_to">
@@ -284,7 +285,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-12" v-if="itemData.valid_to && !errorMessages.valid_to">
                             <label for="msg_future">Mensagem Futura</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future" id="msg_future" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future" id="msg_future" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg_future" class="p-inputtext p-component p-filled"></p>
                         </div>
                         <div class="col-12">

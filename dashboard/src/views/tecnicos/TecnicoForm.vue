@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
+import EditorComponent from '@/components/EditorComponent.vue';
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
@@ -165,7 +166,7 @@ watchEffect(() => {});
                         <div class="col-12 md:col-12" v-if="itemData.observacao || ['edit', 'new'].includes(mode)">
                             <label for="observacao">Observação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Editor v-else-if="!loading && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
