@@ -67,7 +67,6 @@ module.exports = app => {
             // Criação de um novo registro
             const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
-            body.id_cadastros = req.params.id_cadastros
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE

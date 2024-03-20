@@ -68,6 +68,7 @@ const loadData = async () => {
             });
         }
     }, Math.random() * 1000);
+    itemData.value = { ...itemData.value, id_cadastros: props.itemDataRoot.id_cadastros };
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -75,6 +76,7 @@ const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
+    itemData.value = { ...itemData.value, id_cadastros: props.itemDataRoot.id_cadastros };
     const obj = { ...itemData.value };
     axios[method](url, obj)
         .then((res) => {
@@ -119,7 +121,6 @@ onBeforeMount(() => {
     loadData();
     loadOptions();
     mode.value = props.modeRoot || 'view';
-    itemData.value = { ...itemData.value, id_cadastros: props.itemDataRoot.id_cadastros };
 });
 const setCancelBtnLabel = () => {
     let ret = '';
