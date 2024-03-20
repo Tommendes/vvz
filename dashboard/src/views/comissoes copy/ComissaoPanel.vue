@@ -3,12 +3,9 @@ import { onBeforeMount, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
-import ComissaoForm from './ComissaoForm.vue';
-// import ContatosGrid from './contatos/ContatosGrid.vue';
-// import EnderecosGrid from './enderecos/EnderecosGrid.vue';
-// import PipelinesGrid from '../pipeline/PipelinesGrid.vue';
-// import PosVendasGrid from '../posVendas/PosVendasGrid.vue';
-// import ProspeccoesGrid from '../prospeccoes/ProspeccoesGrid.vue';
+import AgentesGrid from './comisAgentes/AgentesGrid.vue';
+import PipelinesGrid from './comisPipeline/PipelinesGrid.vue';
+import StatusGrid from '../comissStatus/StatusGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -54,26 +51,12 @@ onBeforeMount(() => {
         <div class="col-12">
             <div class="card">
                 <TabView lazy>
-                    <TabPanel>
-                        <template #header>
-                            <i class="fa-regular fa-address-card mr-2"></i>
-                            <span>Dados básicos</span>
-                        </template>
-                        <ComissaoForm/>
-                    </TabPanel>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-at mr-2"></i>
-                            <span>Contatos Adicionais</span>
+                            <span>Pipeline</span>
                         </template>
-                        <ContatosGrid v-if="itemData.id" :itemDataRoot="itemData" />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
-                        <template #header>
-                            <i class="fa-solid fa-map-pin mr-2"></i>
-                            <span>Endereços Adicionais</span>
-                        </template>
-                        <EnderecosGrid v-if="itemData.id" :itemDataRoot="itemData" />
+                        <AgentesGrid v-if="itemData.id" :itemDataRoot="itemData" />
                     </TabPanel>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
@@ -85,16 +68,9 @@ onBeforeMount(() => {
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-cart-plus mr-2"></i>
-                            <span>Pós-vendas</span>
+                            <span>Status</span>
                         </template>
-                        <PosVendasGrid v-if="itemData.id" :idCadastro="itemData.id" />
-                    </TabPanel>
-                    <TabPanel :disabled="!itemData.id">
-                        <template #header>
-                            <i class="fa-solid fa-map-location-dot mr-2"></i>
-                            <span>Prospecções e visitas ao cliente</span>
-                        </template>
-                        <ProspeccoesGrid v-if="itemData.id" :idCadastro="itemData.id" />
+                        <StatusGrid v-if="itemData.id" :idCadastro="itemData.id" />
                     </TabPanel>
                 </TabView>
             </div>

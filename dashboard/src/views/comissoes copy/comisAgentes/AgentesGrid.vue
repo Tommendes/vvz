@@ -4,39 +4,32 @@ import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
-import EnderecoForm from './EnderecoForm.vue';
-
+import AgenteForm from './AgenteForm.vue';
+import { renderizarHTML } from '@/global';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
+
 const filters = ref(null);
 const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
-const loading = ref(true);
-// Props do template
+const loading = ref(false);
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 });
-const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/comis-agentes/${props.itemDataRoot.id}`);
 const mode = ref('grid');
-// Máscaras
-import { Mask } from 'maska';
-const masks = ref({
-    cep: new Mask({
-        mask: '##.###-###'
-    })
-});
+// Props do template
+// Ref do gridData
+const dt = ref(null);
 // Inicializa os filtros
 const initFilters = () => {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        id_params_tipo: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        cep: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        logradouro: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        nr: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        cidade: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        bairro: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        uf: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
+        tipo: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        pessoa: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        departamento: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        meio: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
     };
 };
 // Inicializa os filtros
@@ -73,19 +66,16 @@ const getItem = (data) => {
 // Carrega os dados da grid
 const loadData = async () => {
     const url = `${urlBase.value}`;
+    loading.value = true;
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
-            element.endereco = '';
-            if (element.logradouro) element.endereco += element.logradouro;
-            if (element.nr) element.endereco += `, ${element.nr}`;
-            if (element.complnr && element.complnr.trim().length > 0) element.endereco += `, ${element.complnr.trim()}`;
-            if (element.cep && element.cep.trim().length >= 8) element.cep = masks.value.cep.masked(element.cep);
+            element.meioRenderizado = renderizarHTML(element.meio);
         });
         loading.value = false;
     });
 };
-// Excluir registro
+// Exclui o registro
 const deleteRow = () => {
     confirm.require({
         group: 'templating',
@@ -96,9 +86,9 @@ const deleteRow = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(() => {
+            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(async () => {
                 defaultSuccess('Registro excluído com sucesso!');
-                loadData();
+                await loadData();
             });
         },
         reject: () => {
@@ -118,8 +108,8 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <div class="card" style="min-width: 100%">
-        <EnderecoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
+    <div class="card">
+        <AgenteForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
             style="font-size: 1rem"
             ref="dt"
@@ -136,9 +126,9 @@ onBeforeMount(() => {
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
             scrollable
-            scrollHeight="415px"
-            :globalFilterFields="['id_params_tipo', 'cep', 'logradouro', 'nr', 'cidade', 'bairro', 'uf']"
+            :globalFilterFields="['tipo', 'pessoa', 'departamento', 'meio']"
         >
+            <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
@@ -158,28 +148,27 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <Column field="allFields" header="Endereços" sortable style="min-width: 470px">
-                <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.endereco }}
-                    </div>
-                </template>
-            </Column>
-            <Column field="cidade" header="Cidade" sortable style="min-width: 250px">
-                <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">{{ data.cidade }}{{ data.uf ? `, ${data.uf}` : '' }}</div>
-                </template>
-            </Column>
-            <Column field="tipo" header="TIPO" sortable style="min-width: 120px">
+            <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.tipo }}
                     </div>
                 </template>
             </Column>
-            <template #filter="{ filterModel }">
-                <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por informações" />
-            </template>
+            <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.pessoa }}
+                    </div>
+                </template>
+            </Column>
+            <Column field="meio" header="Meio" sortable style="min-width: 30rem">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        <span v-html="data.meioRenderizado" />
+                    </div>
+                </template>
+            </Column>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" icon="fa-solid fa-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />

@@ -4,7 +4,6 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRouter } from 'vue-router';
-import { isValidEmail } from '@/global';
 const router = useRouter();
 // Cookies de usuário
 import { userKey } from '@/global';
@@ -14,8 +13,6 @@ const userData = JSON.parse(json);
 const itemData = inject('itemData');
 // Modo do formulário
 const mode = inject('mode');
-// Dropdowns
-const dropdownTipo = ref([]);
 // Props do template
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
@@ -27,38 +24,9 @@ const masks = ref({
         mask: ['(##) ####-####', '(##) #####-####']
     })
 });
-// Validar e-mail
-const validateEmail = () => {
-    errorMessages.value.meio = null;
-    if (itemData.value.meio && !isValidEmail(itemData.value.meio)) {
-        errorMessages.value.meio = 'Formato de e-mail inválido';
-        return false;
-    }
-    return true;
-};
-// Validar telefone
-const validateTelefone = () => {
-    errorMessages.value.meio = null;
-    if (itemData.value.meio && itemData.value.meio.length > 0 && ![10, 11].includes(itemData.value.meio.replace(/([^\d])+/gim, '').length)) {
-        errorMessages.value.meio = `Formato de ${getDropdownLabel(itemData.value.id_params_tipo)} inválido`;
-        return false;
-    }
-    return true;
-};
 // Validar formulário
 const formIsValid = () => {
-    // Se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'celular' ou 'telefone', então o campo itemData.meio deve ser validado pelo maska telefone
-    // Mas se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'e-mail', então o campo itemData.meio deve ser validado pelo isValidEmail
-    let label = getDropdownLabel(itemData.value.id_params_tipo);
-    if (label) label = label.toString().toLowerCase();
-    if (label == 'e-mail') return validateEmail();
-    if (label == 'telefone' || label == 'celular') return validateTelefone();
     return true;
-};
-const getDropdownLabel = (value) => {
-    if (!value) return undefined;
-    const selectedOption = dropdownTipo.value.find((option) => option.value === value);
-    return selectedOption.label || undefined;
 };
 // Mensages de erro
 const errorMessages = ref({});
@@ -66,7 +34,7 @@ const errorMessages = ref({});
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/comis-agentes/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 
 const loadData = async () => {
@@ -80,7 +48,7 @@ const loadData = async () => {
                     itemData.value = body;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                    router.push({ path: `/${userData.schema_description}/comissoes` });
                 }
             });
         }
@@ -113,25 +81,9 @@ const saveData = async () => {
             defaultWarn(err.response.data);
         });
 };
-// Obter parâmetros do BD
-const optionLocalParams = async (query) => {
-    const selects = query.select ? `&slct=${query.select}` : undefined;
-    const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-    return await axios.get(url);
-};
 // Carregar opções do formulário
-const loadOptions = async () => {
-    // Tipo Contato
-    await optionLocalParams({ field: 'grupo', value: 'tipo_contato', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownTipo.value.push({ value: item.id, label: item.label });
-        });
-    });
-};
-// Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
-    loadOptions();
 });
 </script>
 
