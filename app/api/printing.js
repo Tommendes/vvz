@@ -76,15 +76,14 @@ module.exports = app => {
         )
         const data = jsIntegration.execute()
             .then(async (data) => {
-                const { createEvent } = app.api.sisEvents
-                evento = await createEvent({
+                const { createEventPrint } = app.api.sisEvents
+                createEventPrint({
+                    "notTo": ['created_at', 'evento'],
+                    "next": oat,
                     "request": req,
                     "evento": {
-                        id_user: uParams.id,
-                        evento: `Impressão de OAT`,
-                        classevento: `printing-oat`,
-                        id_registro: idOat,
-                        tabela_bd: 'pv_oat'
+                        "classevento": `printing-oat`,
+                        "evento": `Impressão de OAT`,
                     }
                 })
                 res.setHeader("Content-Type", `application/${exportType}`);
@@ -151,15 +150,14 @@ module.exports = app => {
         )
         const data = jsIntegration.execute()
             .then(async (data) => {
-                const { createEvent } = app.api.sisEvents
-                evento = await createEvent({
+                const { createEventPrint } = app.api.sisEvents
+                createEventPrint({
+                    "notTo": ['created_at', 'evento'],
+                    "next": proposta,
                     "request": req,
                     "evento": {
-                        id_user: uParams.id,
-                        evento: `Impressão de Proposta`,
-                        classevento: `printing-proposal`,
-                        id_registro: idProposta,
-                        tabela_bd: 'com_propostas'
+                        "classevento": `printing-proposal`,
+                        "evento": `Impressão de Proposta`,
                     }
                 })
                 res.setHeader("Content-Type", `application/${exportType}`);
@@ -226,15 +224,15 @@ module.exports = app => {
         )
         const data = jsIntegration.execute()
             .then(async (data) => {
-                const { createEvent } = app.api.sisEvents
-                evento = await createEvent({
+                // registrar o evento na tabela de eventos
+                const { createEventPrint } = app.api.sisEvents
+                createEventPrint({
+                    "notTo": ['created_at', 'evento'],
+                    "next": proposta,
                     "request": req,
                     "evento": {
-                        id_user: uParams.id,
-                        evento: `Impressão de Resumo do Proposta`,
-                        classevento: `printing-proposal-resume`,
-                        id_registro: idProposta,
-                        tabela_bd: 'com_propostas'
+                        "classevento": `printing-proposal-resume`,
+                        "evento": `Impressão de Resumo do Proposta`,
                     }
                 })
                 res.setHeader("Content-Type", `application/${exportType}`);

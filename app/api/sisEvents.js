@@ -287,6 +287,53 @@ module.exports = app => {
         }
     }
 
+    const createEventPrint = async (req, res) => {
+        const evento = req.evento
+        const next = req.next
+        const request = req.request
+        const notTo = req.notTo
+        let eventoDescr = ''
+        let fields = ''
+        for (newest in next) {
+            if (notTo.indexOf(newest) < 0)
+                fields += `${newest}: ${next[newest]}, `;
+        }
+        if (fields.length >= 2 && fields.substr(0, fields.length - 2).length > 0) {
+            // remove a virgula e espaço inseridos ao final da string
+            eventoDescr += fields.substr(0, fields.length - 2)
+
+            evento.id_user = !(request && request.user && request.user.id) ? next.id : request.user.id
+            evento.evento = evento.evento || `${evento.evento}: ${eventoDescr}`
+            evento.classevento = evento.classevento || "Printing"
+            evento.ip = request.ip
+            evento.id_registro = next.id
+
+            if (envLocalhost) {
+                evento.geo_lt = null
+                evento.geo_ln = null
+            } else {
+                const url = `http://api.ipstack.com/${request.ip}?access_key=73ec9b93dcb973e011c965b8a25f08e4`
+                const ipstack = await axios.get(url).catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
+                evento.geo_lt = ipstack.data.latitude
+                evento.geo_ln = ipstack.data.longitude
+            }
+            evento.created_at = new Date()
+
+            try {
+                const trx = req.trx
+                let dba = undefined
+                if (trx) dba = await trx(tabelaSisEvents).insert(evento)
+                else dba = await app.db(tabelaSisEvents).insert(evento)
+                return dba[0]
+            } catch (error) {
+                res.status(500).send(error)
+            }
+        }
+    }
+
     const createEvent = async (req, res) => {
         const request = req.request
         const evento = req.evento
@@ -296,13 +343,13 @@ module.exports = app => {
         } else {
             const url = `http://api.ipstack.com/${request.ip}?access_key=379f7af2dcb3b36d1f4c8b9e8d421dfb`
             const ipstack = await axios.get(url).catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)
             })
             evento.geo_lt = ipstack.data.latitude
             evento.geo_ln = ipstack.data.longitude
         }
-        evento.created_at = new Date()
+        evento.created_at = new Date()        
 
         try {
             const trx = req.trx
@@ -344,5 +391,5 @@ module.exports = app => {
             })
     }
 
-    return { createEventUpd, createEventIns, createEventRemove, createEvent, get, getById, getByField, getEventosDoRegistro }
+    return { createEventUpd, createEventIns, createEventRemove, createEventPrint, createEvent, get, getById, getByField, getEventosDoRegistro }
 }

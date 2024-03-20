@@ -35,10 +35,10 @@ module.exports = app => {
         let comisAgentes = { total: 0 }
         let comissPipeline = { base_agentes: 0 }
         try {
-            existsOrError(body.id_comis_pipeline, 'Comissionamento não informado')
+            existsOrError(body.id_comis_pipeline, 'Origem do comissionamento não informado')
             // Verificar se o comis_pipeline existe
             comissPipeline = await app.db(tabelaComisPipeline).where({ id: body.id_comis_pipeline, status: STATUS_ACTIVE }).first()
-            existsOrError(comissPipeline, 'Comissionamento não encontrado')
+            existsOrError(comissPipeline, 'Origem do comissionamento não encontrado')
             if (![0, 1].includes(body.agente_representante)) throw 'Se é a representação não informado'
             // Recupera o registro da comissão do representante em comis_pipeline caso exista
             const comisRepres = await app.db(tabelaDomain).where({ id_comis_pipeline: body.id_comis_pipeline, agente_representante: '1', status: STATUS_ACTIVE }).first()

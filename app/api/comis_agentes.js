@@ -113,7 +113,6 @@ module.exports = app => {
             .select(app.db.raw(`tbl1.*`))
             .where({ status: STATUS_ACTIVE })
             .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
             .then(body => {
                 const count = body.length
                 return res.json({ data: body, count: count })
