@@ -1,8 +1,9 @@
 <script setup>
-import { onBeforeMount, ref, inject } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
+import ContatosItensGrid from './itens/ContatosItensGrid.vue';
 import { useRouter } from 'vue-router';
 import { isValidEmail } from '@/global';
 const router = useRouter();
@@ -10,22 +11,14 @@ const router = useRouter();
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
-// Campos de formulário
-const itemData = inject('itemData');
-// Modo do formulário
-const mode = inject('mode');
+const mode = ref('view');
+const itemData = ref({});
 // Dropdowns
 const dropdownTipo = ref([]);
 // Props do template
 const props = defineProps({
-    itemDataRoot: Object // O próprio cadastro
-});
-
-import { Mask } from 'maska';
-const masks = ref({
-    telefone: new Mask({
-        mask: ['(##) ####-####', '(##) #####-####']
-    })
+    itemDataRoot: Object, // O próprio cadastro,
+    modeRoot: String // Modo do formulário
 });
 // Validar e-mail
 const validateEmail = () => {
@@ -45,16 +38,6 @@ const validateTelefone = () => {
     }
     return true;
 };
-// Validar formulário
-const formIsValid = () => {
-    // Se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'celular' ou 'telefone', então o campo itemData.meio deve ser validado pelo maska telefone
-    // Mas se o valor do dropdown dropdownTipo que contém o itemData.id_params_tipo for do tipo 'e-mail', então o campo itemData.meio deve ser validado pelo isValidEmail
-    let label = getDropdownLabel(itemData.value.id_params_tipo);
-    if (label) label = label.toString().toLowerCase();
-    if (label == 'e-mail') return validateEmail();
-    if (label == 'telefone' || label == 'celular') return validateTelefone();
-    return true;
-};
 const getDropdownLabel = (value) => {
     if (!value) return undefined;
     const selectedOption = dropdownTipo.value.find((option) => option.value === value);
@@ -71,8 +54,8 @@ const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
 
 const loadData = async () => {
     setTimeout(async () => {
-        if (itemData && itemData.id) {
-            const url = `${urlBase.value}/${itemData.value.id}`;
+        if (props.itemDataRoot && props.itemDataRoot.id) {
+            const url = `${urlBase.value}/${props.itemDataRoot.id}`;
             await axios.get(url).then((res) => {
                 const body = res.data;
                 if (body && body.id) {
@@ -85,17 +68,15 @@ const loadData = async () => {
             });
         }
     }, Math.random() * 1000);
+    itemData.value = { ...itemData.value, id_cadastros: props.itemDataRoot.id_cadastros };
 };
 // Salvar dados do formulário
 const saveData = async () => {
     // Se o formulário não for válido, não salva
-    if (!formIsValid()) {
-        defaultWarn('Verifique os campos obrigatórios');
-        return;
-    }
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
+    itemData.value = { ...itemData.value, id_cadastros: props.itemDataRoot.id_cadastros };
     const obj = { ...itemData.value };
     axios[method](url, obj)
         .then((res) => {
@@ -103,7 +84,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                mode.value = 'view';
+                mode.value = 'edit';
                 emit('changed');
             } else {
                 defaultWarn('Erro ao salvar registro');
@@ -128,23 +109,46 @@ const loadOptions = async () => {
         });
     });
 };
+const doCancel = () => {
+    if (['new', 'view'].includes(mode.value)) {
+        emit('cancel');
+    } else if (mode.value == 'edit') {
+        mode.value = 'view';
+    }
+};
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
     loadOptions();
+    mode.value = props.modeRoot || 'view';
 });
+const setCancelBtnLabel = () => {
+    let ret = '';
+    switch (mode.value) {
+        case 'new':
+            ret = 'inclusão';
+            break;
+        case 'edit':
+            ret = 'edição';
+            break;
+        default:
+            ret = 'exibição';
+            break;
+    }
+    return ret;
+};
 </script>
 
 <template>
-    <form @submit.prevent="saveData">
+    <form @submit.prevent="saveData" @keydown.enter.prevent>
         <div class="grid">
             <div class="col-12">
                 <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
-                    <div class="field col-12 md:col-2">
+                    <!-- <div class="field col-12 md:col-2">
                         <label for="id_params_tipo">Tipo de Contato</label>
                         <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
-                    </div>
+                    </div> -->
                     <div class="field col-12 md:col-2">
                         <label for="pessoa">Pessoa</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
@@ -153,30 +157,31 @@ onBeforeMount(() => {
                         <label for="departamento">Departamento</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.departamento" id="departamento" type="text" />
                     </div>
-                    <div class="field col-12 md:col-6" v-if="getDropdownLabel(itemData.id_params_tipo) && getDropdownLabel(itemData.id_params_tipo).toLowerCase() == 'e-mail'">
+                    <!-- <div class="field col-12 md:col-6" v-if="getDropdownLabel(itemData.id_params_tipo) && getDropdownLabel(itemData.id_params_tipo).toLowerCase() == 'e-mail'">
                         <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" @input="validateEmail()" />
                         <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
-                    </div>
-                    <div class="field col-12 md:col-6" v-else-if="getDropdownLabel(itemData.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(itemData.id_params_tipo).toLowerCase())">
+                    </div> -->
+                    <!-- <div class="field col-12 md:col-6" v-else-if="getDropdownLabel(itemData.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(itemData.id_params_tipo).toLowerCase())">
                         <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.meio" id="meio" type="text" @input="validateTelefone()" />
                         <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
-                    </div>
-                    <div class="field col-12 md:col-6" v-else>
+                    </div> -->
+                    <!-- <div class="field col-12 md:col-6" v-else>
                         <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) || 'Meio' }} de contato</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" />
-                    </div>
-                    <div class="field col-12 md:col-12">
+                    </div> -->
+                    <div class="field col-12 md:col-8">
                         <label for="observacao">Observação</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
+                        <div class="p-inputgroup flex-1">
+                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
+                            <Button type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" v-tooltip.top="'Clique para editar o contato'" />
+                            <Button type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" v-tooltip.top="'Clique para salvar o contato'" />
+                            <Button type="button" icon="fa-solid fa-ban" severity="danger" @click="doCancel()" v-tooltip.top="`Clique para cancelar a ${setCancelBtnLabel()} do contato`" />
+                        </div>
                     </div>
                 </div>
-                <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode = 'view'" />
-                </div>
+                <ContatosItensGrid v-if="itemData.id" :itemDataRoot="itemData" />
                 <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
                     <p>mode: {{ mode }}</p>
                     <p>itemData: {{ itemData }}</p>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, provide } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -10,7 +10,6 @@ import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
 const filters = ref(null);
-const menu = ref();
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(false);
@@ -38,30 +37,13 @@ initFilters();
 const clearFilter = () => {
     initFilters();
 };
-// Itens do menu de contexto
-const itemsButtons = ref([
-    {
-        label: 'Ver',
-        icon: 'fa-regular fa-eye fa-beat-fade',
-        command: () => {
-            mode.value = 'edit';
-        }
-    },
-    {
-        label: 'Excluir',
-        icon: 'fa-solid fa-fire fa-fade',
-        command: ($event) => {
-            deleteRow($event);
-        }
-    }
-]);
-// Abre o menu de contexto
-const toggle = (event) => {
-    menu.value.toggle(event);
-};
 // Obtém o item selecionado
-const getItem = (data) => {
-    itemData.value = data;
+const viewItem = (data) => {
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = data;
+        mode.value = 'edit';
+    }, 100);
 };
 // Carrega os dados da grid
 const loadData = async () => {
@@ -70,13 +52,13 @@ const loadData = async () => {
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
         gridData.value.forEach((element) => {
-            element.meioRenderizado = renderizarHTML(element.meio);
+            if (element.meio) element.meioRenderizado = renderizarHTML(element.meio);
         });
         loading.value = false;
     });
 };
 // Exclui o registro
-const deleteRow = () => {
+const deleteItem = (row) => {
     confirm.require({
         group: 'templating',
         header: 'Confirmar exclusão',
@@ -86,7 +68,7 @@ const deleteRow = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(async () => {
+            axios.delete(`${urlBase.value}/${row.id}`).then(async () => {
                 defaultSuccess('Registro excluído com sucesso!');
                 await loadData();
             });
@@ -96,10 +78,13 @@ const deleteRow = () => {
         }
     });
 };
-// Carrega os dados do formulário
-provide('itemData', itemData);
-// Carrega o modo do formulário
-provide('mode', mode);
+const setNewContact = () => {
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = { id_cadastros: props.itemDataRoot.id };
+        mode.value = 'new';
+    }, 100);
+};
 // Carrega as operações básicas do formulário
 onBeforeMount(() => {
     initFilters();
@@ -109,7 +94,7 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
-        <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
+        <ContatoForm @changed="loadData" @cancel="mode = 'grid'" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="itemData" :modeRoot="mode" />
         <DataTable
             style="font-size: 1rem"
             ref="dt"
@@ -132,29 +117,20 @@ onBeforeMount(() => {
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button
-                        type="button"
-                        icon="fa-solid fa-plus"
-                        label="Novo Registro"
-                        outlined
-                        @click="
-                            itemData = { id_cadastros: props.itemDataRoot.id };
-                            mode = 'new';
-                        "
-                    />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo contato" outlined @click="setNewContact" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
             </template>
-            <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
+            <!-- <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         {{ data.tipo }}
                     </div>
                 </template>
-            </Column>
+            </Column> -->
             <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
@@ -162,17 +138,26 @@ onBeforeMount(() => {
                     </div>
                 </template>
             </Column>
-            <Column field="meio" header="Meio" sortable style="min-width: 30rem">
+            <Column field="departamento" header="Departamento" sortable style="min-width: 14rem">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-2 text-lg">
+                        {{ data.departamento }}
+                    </div>
+                </template>
+            </Column>
+            <!-- <Column field="meio" header="Meio" sortable style="min-width: 30rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
                         <span v-html="data.meioRenderizado" />
                     </div>
                 </template>
-            </Column>
+            </Column> -->
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="fa-solid fa-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
-                    <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
+                    <div class="p-inputgroup flex-1 gap-2">
+                        <Button type="button" icon="fa-regular fa-eye fa-beat-fade" rounded class="p-button-outlined" severity="default" v-tooltip.top="'Clique para ver o contato'" @click="viewItem(data)" />
+                        <Button type="button" icon="fa-solid fa-fire fa-fade" rounded class="p-button-outlined" severity="danger" v-tooltip.top="'Clique para excluir o contato'" @click="deleteItem(data)" />
+                    </div>
                 </template>
             </Column>
         </DataTable>

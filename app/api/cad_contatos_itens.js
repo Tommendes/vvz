@@ -1,8 +1,9 @@
 const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'cad_contatos'
-    const tabelaAlias = 'Contatos'
+    const tabela = 'cad_contatos_itens'
+    const tabelaContatos = 'cad_contatos'
+    const tabelaAlias = 'Opções de Contato'
     const tabelaLocalParams = 'local_params'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
@@ -13,6 +14,7 @@ module.exports = app => {
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
+        if (req.params.id_cad_contatos) body.id_cad_contatos = req.params.id_cad_contatos
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && uParams.cadastros >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
@@ -24,14 +26,20 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-            // existsOrError(body.id_params_tipo, 'Tipo do contato não informado')
-            existsOrError(body.pessoa, 'Pessoa não informado')
-            // existsOrError(body.meio, 'Meio não informada')
+            existsOrError(body.id_params_tipo, 'Tipo do contato não informado')
+            existsOrError(body.meio, 'Meio não informada')
         } catch (error) {
             return res.status(400).send(error)
         }
-
         
+        try {
+            const unique = await app.db(tabelaDomain).where({ id_cad_contatos: body.id_cad_contatos, id_params_tipo: body.id_params_tipo, meio: body.meio, status: STATUS_ACTIVE }).first()
+            if (unique && unique.id != body.id) {
+                return res.status(400).send('Meio de contato já cadastrado')
+            }
+        } catch (error) {
+            return res.status(400).send(error)            
+        }
         
         delete body.tipo;
         delete body.meioRenderizado;
@@ -67,6 +75,7 @@ module.exports = app => {
             // Criação de um novo registro
             const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
+            body.id_cad_contatos = req.params.id_cad_contatos
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
@@ -106,15 +115,15 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        const id_cadastros = req.params.id_cadastros
+        const id_cad_contatos = req.params.id_cad_contatos
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaLocalParams}`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            // .select(app.db.raw(`tbl1.*, lp.label tipo`))
+            .select(app.db.raw(`tbl1.*, lp.label tipo`))
 
-        ret//.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_tipo')
-            .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_cadastros': id_cadastros })
+        ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_tipo')
+            .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_cad_contatos': id_cad_contatos })
             .groupBy('tbl1.id')
             .then(body => {
                 return res.json({ data: body })
