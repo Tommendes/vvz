@@ -13,7 +13,6 @@ module.exports = app => {
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
-        if (req.params.id_cadastros) body.id_cadastros = req.params.id_cadastros
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && uParams.cadastros >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)

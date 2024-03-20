@@ -650,7 +650,6 @@ const createOat = async (pv) => {
         .post(url, obj)
         .then((res) => {
             const oat = res.data;
-            console.log(oat);
             defaultSuccess(`OAT de montagem ${pv.pv_nr.toString().padStart(6, '0')}.${oat.nr_oat.toString().padStart(3, '0')} criada com sucesso.`);
             reload();
         })

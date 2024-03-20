@@ -138,7 +138,7 @@ const loadOptions = async () => {
         });
     });
 };
-const newItem = () => {
+const setNewItem = () => {
     mode.value = 'grid';
     setTimeout(() => {
         mode.value = 'new';
@@ -153,7 +153,14 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
-        <ContatoItemForm @newItem="loadData" :itemDataRoot="props.itemDataRoot" v-if="mode == 'new'" />
+        <ContatoItemForm
+            @newItem="
+                loadData();
+                setNewItem();
+            "
+            :itemDataRoot="props.itemDataRoot"
+            v-if="mode == 'new'"
+        />
         <DataTable
             ref="dt"
             v-model:editingRows="editingRows"
@@ -174,7 +181,7 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo meio de contato" outlined @click="newItem" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo meio de contato" outlined @click="setNewItem()" />
                 </div>
             </template>
             <Column v-if="userData.admin >= 3" header="Object do contato" style="width: 20%">

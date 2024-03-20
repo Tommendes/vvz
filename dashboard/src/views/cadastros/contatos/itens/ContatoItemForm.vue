@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref, inject } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -9,7 +9,7 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 // Campos de formulário
-const itemData = inject('itemData');
+const itemData = ref({});
 // Emit do template
 const emit = defineEmits(['newItem']);
 // Dropdowns
@@ -65,7 +65,6 @@ const saveData = async () => {
     }
     const url = `${urlBase.value}`;
     const obj = { ...itemData.value };
-    console.log('url', url);
     axios
         .post(url, obj)
         .then((res) => {
