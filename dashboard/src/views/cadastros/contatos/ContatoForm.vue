@@ -119,6 +119,7 @@ onBeforeMount(() => {
     loadData();
     loadOptions();
     mode.value = props.modeRoot || 'view';
+    itemData.value = { ...itemData.value, id_cadastros: props.itemDataRoot.id_cadastros };
 });
 const setCancelBtnLabel = () => {
     let ret = '';
