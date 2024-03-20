@@ -4,7 +4,7 @@ import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
-import ContatoForm from './ContatoForm.vue';
+import StatusForm from './StatusForm.vue';
 import { renderizarHTML } from '@/global';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
@@ -17,7 +17,7 @@ const loading = ref(false);
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 });
-const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/comiss-status/${props.itemDataRoot.id}`);
 const mode = ref('grid');
 // Props do template
 // Ref do gridData
@@ -109,7 +109,7 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
-        <ContatoForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
+        <StatusForm @changed="loadData" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="props.itemDataRoot" />
         <DataTable
             style="font-size: 1rem"
             ref="dt"

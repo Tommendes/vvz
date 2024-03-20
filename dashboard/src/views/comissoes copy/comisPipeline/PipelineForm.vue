@@ -1,7 +1,6 @@
 <script setup>
 import { onBeforeMount, ref, inject } from 'vue';
 import { baseApiUrl } from '@/env';
-import { getViaCep } from '@/getCep';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRouter } from 'vue-router';
@@ -31,7 +30,7 @@ const props = defineProps({
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/comis-pipeline/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
     setTimeout(async () => {
@@ -44,30 +43,13 @@ const loadData = async () => {
                     itemData.value = body;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                    router.push({ path: `/${userData.schema_description}/comissoes` });
                 }
             });
         }
     }, Math.random() * 1000);
 };
-
-// const loadData = async () => {
-//     if (itemData && itemData.id) {
-//         const url = `${urlBase.value}/${itemData.value.id}`;
-//         await axios.get(url).then((res) => {
-//             const body = res.data;
-//             if (body && body.id) {
-//                 body.id = String(body.id);
-//                 itemData.value = body;
-//             } else {
-//                 defaultWarn('Registro não localizado');
-//                 router.push({ path: `/${userData.schema_description}/cadastros` });
-//             }
-//         });
-//     }
-// };
 const formIsValid = () => {
-    if (!validateCep()) return false;
     return true;
 };
 // Salvar dados do formulário
@@ -79,8 +61,7 @@ const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
-    const obj = { ...itemData.value };
-    if (obj.cep) obj.cep = masks.value.cep.unmasked(obj.cep);
+    const obj = { ...itemData.value };    
     await axios[method](url, obj)
         .then((res) => {
             const body = res.data;
@@ -102,62 +83,6 @@ const saveData = async () => {
                 defaultWarn('Erro ao carregar dados!');
             }
         });
-};
-// Validar data cep
-const validateCep = () => {
-    errorMessages.value.cep = null;
-    // Testa o formato do cep
-    if (itemData.value.cep && itemData.value.cep.length > 0 && !masks.value.cep.completed(itemData.value.cep)) {
-        errorMessages.value.cep = 'Formato de cep inválido';
-        return false;
-    }
-    return true;
-};
-const buscarCEP = async () => {
-    if (!validateCep()) return;
-    const cep = itemData.value.cep.replace(/[^0-9]/g, '');
-
-    if (cep !== '') {
-        try {
-            // Limpar os campos enquanto aguarda a resposta
-            itemData.value.logradouro = '...';
-            itemData.value.bairro = '...';
-            itemData.value.cidade = '...';
-            itemData.value.uf = '...';
-            itemData.value.ibge = '...';
-
-            // Consultar API externa
-            const url = `${baseApiUrl}/cad-enderecos/f-a/gvc`;
-            const response = await axios.post(url, { cep: cep });
-
-            if (response.data.cep) {
-                // Atualizar os campos com os valores da consulta.
-                itemData.value.logradouro = response.data.logradouro;
-                itemData.value.bairro = response.data.bairro;
-                itemData.value.cidade = response.data.localidade;
-                itemData.value.uf = response.data.uf;
-                itemData.value.ibge = response.data.ibge;
-            } else {
-                // CEP pesquisado não foi encontrado.
-                limparFormularioCEP();
-                defaultWarn(response.data);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar informações do CEP', error);
-            limparFormularioCEP();
-            defaultWarn('Erro ao buscar informações do CEP');
-        }
-    } else {
-        // CEP sem valor, limpar formulário.
-        limparFormularioCEP();
-    }
-};
-
-const limparFormularioCEP = () => {
-    itemData.value.logradouro = '';
-    itemData.value.bairro = '';
-    itemData.value.cidade = '';
-    itemData.value.uf = '';
 };
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {

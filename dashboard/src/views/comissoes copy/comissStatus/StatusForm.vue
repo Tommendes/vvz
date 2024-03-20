@@ -66,7 +66,7 @@ const errorMessages = ref({});
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/cad-contatos/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/comiss-status/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 
 const loadData = async () => {
@@ -80,7 +80,7 @@ const loadData = async () => {
                     itemData.value = body;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                    router.push({ path: `/${userData.schema_description}/comissoes` });
                 }
             });
         }
@@ -141,36 +141,7 @@ onBeforeMount(() => {
             <div class="col-12">
                 <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
-                    <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo">Tipo de Contato</label>
-                        <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="pessoa">Pessoa</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
-                    </div>
-                    <div class="field col-12 md:col-2">
-                        <label for="departamento">Departamento</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.departamento" id="departamento" type="text" />
-                    </div>
-                    <div class="field col-12 md:col-6" v-if="getDropdownLabel(itemData.id_params_tipo) && getDropdownLabel(itemData.id_params_tipo).toLowerCase() == 'e-mail'">
-                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" @input="validateEmail()" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
-                    </div>
-                    <div class="field col-12 md:col-6" v-else-if="getDropdownLabel(itemData.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(itemData.id_params_tipo).toLowerCase())">
-                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.meio" id="meio" type="text" @input="validateTelefone()" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
-                    </div>
-                    <div class="field col-12 md:col-6" v-else>
-                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) || 'Meio' }} de contato</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" />
-                    </div>
-                    <div class="field col-12 md:col-12">
-                        <label for="observacao">Observação</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
-                    </div>
+                    <!-- campos -->
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
