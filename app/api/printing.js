@@ -53,7 +53,7 @@ module.exports = app => {
         const tabelaPvDomain = `${dbPrefix}_${uParams.schema_name}.pv`
         const oat = await app.db({ oat: tabelaPvOatDomain })
             .join({ pv: tabelaPvDomain }, 'pv.id', 'oat.id_pv')
-            .select(app.db.raw(`pv.pv_nr, oat.nr_oat`))
+            .select(app.db.raw(`pv.id, pv.pv_nr, oat.nr_oat`))
             .where({ 'oat.id': idOat, 'oat.status': STATUS_ACTIVE }).first()
         moment.locale('pt-br');
         const fileName = oat.pv_nr.toString().padStart(6, '0') + '_' + oat.nr_oat.toString().padStart(3, '0') + '_' + moment().format('DDMMYYYY_HHmmss')
@@ -84,6 +84,7 @@ module.exports = app => {
                     "evento": {
                         "classevento": `printing-oat`,
                         "evento": `Impressão de OAT`,
+                        "tabela_bd": "pv_oat",
                     }
                 })
                 res.setHeader("Content-Type", `application/${exportType}`);
@@ -123,7 +124,7 @@ module.exports = app => {
         const tabelaComPropostasDomain = `${dbPrefix}_${uParams.schema_name}.com_propostas`
         const proposta = await app.db({ proposta: tabelaComPropostasDomain })
             .join({ pipeline: tabelaPipelineDomain }, 'pipeline.id', 'proposta.id_pipeline')
-            .select(app.db.raw(`pipeline.documento`))
+            .select(app.db.raw(`proposta.id, pipeline.documento`))
             .where({ 'proposta.id': idProposta, 'proposta.status': STATUS_ACTIVE }).first()
 
 
@@ -158,6 +159,7 @@ module.exports = app => {
                     "evento": {
                         "classevento": `printing-proposal`,
                         "evento": `Impressão de Proposta`,
+                        "tabela_bd": "com_propostas",
                     }
                 })
                 res.setHeader("Content-Type", `application/${exportType}`);
@@ -197,7 +199,7 @@ module.exports = app => {
         const tabelaComPropostasDomain = `${dbPrefix}_${uParams.schema_name}.com_propostas`
         const proposta = await app.db({ proposta: tabelaComPropostasDomain })
             .join({ pipeline: tabelaPipelineDomain }, 'pipeline.id', 'proposta.id_pipeline')
-            .select(app.db.raw(`pipeline.documento`))
+            .select(app.db.raw(`proposta.id, pipeline.documento`))
             .where({ 'proposta.id': idProposta, 'proposta.status': STATUS_ACTIVE }).first()
 
 
@@ -233,6 +235,7 @@ module.exports = app => {
                     "evento": {
                         "classevento": `printing-proposal-resume`,
                         "evento": `Impressão de Resumo do Proposta`,
+                        "tabela_bd": "com_propostas",
                     }
                 })
                 res.setHeader("Content-Type", `application/${exportType}`);

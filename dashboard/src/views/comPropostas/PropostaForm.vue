@@ -298,12 +298,17 @@ watchEffect(() => {});
                         <span v-if="props.padroes" v-html="guide2" />
                     </p>
                 </Fieldset>
-            </div>
-            <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
-                <h5>FormData</h5>
-                <p>props.padroes: {{ props.padroes }}</p>
-                <p>mode: {{ mode }}</p>
-                <p>itemData: {{ itemData }}</p>
+                <Fieldset class="bg-green-200" v-if="userData.admin >= 2" toggleable :collapsed="true">
+                    <template #legend>
+                        <div class="flex align-items-center text-primary">
+                            <span class="fa-solid fa-circle-info mr-2"></span>
+                            <span class="font-bold text-lg">FormData</span>
+                        </div>
+                    </template>
+                    <p>props.padroes: {{ props.padroes }}</p>
+                    <p>mode: {{ mode }}</p>
+                    <p>itemData: {{ itemData }}</p>
+                </Fieldset>
             </div>
         </div>
     </form>
