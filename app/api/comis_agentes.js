@@ -110,8 +110,9 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*`))
-            .where({ status: STATUS_ACTIVE })
+            .join({ tbl2: `${dbPrefix}_${uParams.schema_name}.cadastros` }, 'tbl2.id', 'tbl1.id_cadastros')
+            .select(app.db.raw(`tbl2.nome, tbl2.cpf_cnpj, tbl2.email, tbl2.telefone, tbl1.*`))
+            .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
             .then(body => {
                 const count = body.length

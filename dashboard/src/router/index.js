@@ -108,14 +108,24 @@ const routes = [
                 component: () => import('@/views/registros/RegistroForm.vue')
             },
             {
+                path: '/:client/comiss-agentes',
+                name: 'comiss-agentes',
+                component: () => import('@/views/comissAgentes/AgentesGrid.vue')
+            },
+            {
+                path: '/:client/comiss-agente/:id',
+                name: 'comiss-agente',
+                component: () => import('@/views/comissAgentes/AgenteForm.vue')
+            },
+            {
                 path: '/:client/comissoes',
                 name: 'comissoes',
-                component: () => import('@/views/comissoes copy/ComissoesGrid.vue')
+                component: () => import('@/views/comissoes/ComissoesGrid.vue')
             },
             {
                 path: '/:client/comissao/:id',
                 name: 'comissao',
-                component: () => import('@/views/comissoes copy/ComissaoForm.vue')
+                component: () => import('@/views/comissoes/ComissaoForm.vue')
             },
             {
                 path: '/:client/retencoes',
