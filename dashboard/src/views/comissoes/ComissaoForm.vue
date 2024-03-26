@@ -1,9 +1,8 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import EditorComponent from '@/components/EditorComponent.vue';
 
 // Cookies de usuário
 import { userKey } from '@/global';
@@ -23,61 +22,34 @@ const mode = ref('view');
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
-const loading = ref({
-    form: true,
-    accepted: null,
-    email: null,
-    telefone: null
-});
-// Props do template
-const props = defineProps({
-    mode: String
-});
+const loading = ref(false);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/fin-cc`);
+const urlBase = ref(`${baseApiUrl}/comis-agentes`);
 // Carragamento de dados do form
 
 const loadData = async () => {
+    loading.value = true;
     setTimeout(async () => {
         if (route.params.id || itemData.value.id) {
-            if (route.params.id) itemData.value.id = route.params.id;
-            const url = `${urlBase.value}/${itemData.value.id}`;
+            const id = route.params.id || itemData.value.id;
+            const url = `${urlBase.value}/${id}`;
 
             await axios.get(url).then((res) => {
                 const body = res.data;
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    loading.value.form = false;
+                    loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/comissoes` });
+                    router.push({ path: `/${userData.schema_description}/comiss-agentes` });
                 }
             });
-        } else loading.value.form = false;
-    }, Math.random() * 1000);
+        } else loading.value = false;
+    }, Math.random() * 100 + 250);
 };
-
-// const loadData = async () => {
-//     if (route.params.id || itemData.value.id) {
-//         if (route.params.id) itemData.value.id = route.params.id;
-//         const url = `${urlBase.value}/${itemData.value.id}`;
-
-//         await axios.get(url).then((res) => {
-//             const body = res.data;
-//             if (body && body.id) {
-//                 body.id = String(body.id);
-//                 itemData.value = body;
-//                 loading.value.form = false;
-//             } else {
-//                 defaultWarn('Registro não localizado');
-//                 router.push({ path: `/${userData.schema_description}/comissoes` });
-//             }
-//         });
-//     } else loading.value.form = false;
-// };
 // Salvar dados do formulário
 const saveData = async () => {
     if (!formIsValid()) {
@@ -93,7 +65,6 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/lancamento/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
                 defaultWarn('Erro ao salvar registro');
@@ -105,8 +76,8 @@ const saveData = async () => {
 };
 // DropDown Tipo
 const dropdownTipo = ref([
-    { value: 0, label: 'Despesa' },
-    { value: 1, label: 'Receita' }
+    { value: 0, label: 'Não' },
+    { value: 1, label: 'Sim' }
 ]);
 // Validar formulário
 const formIsValid = () => {
@@ -123,33 +94,6 @@ const reload = () => {
 onBeforeMount(() => {
     loadData();
 });
-onMounted(() => {
-    if (props.mode && props.mode != mode.value) mode.value = props.mode;
-    else {
-        if (itemData.value.id) mode.value = 'view';
-        else mode.value = 'new';
-    }
-});
-// Observar alterações nos dados do formulário
-watchEffect(() => {});
-const menu = ref();
-const preview = ref(false);
-const items = ref([
-    {
-        label: 'View',
-        icon: 'fa-solid fa-magnifying-glass',
-        command: () => {
-            alert('Enviar nova imagem');
-        }
-    },
-    {
-        label: 'Delete',
-        icon: 'fa-solid fa-trash',
-        command: () => {
-            alert('Excluir imagem');
-        }
-    }
-]);
 </script>
 <template>
     <Breadcrumb

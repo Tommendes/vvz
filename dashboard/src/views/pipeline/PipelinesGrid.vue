@@ -352,8 +352,8 @@ const getSeverity = (status_created_at) => {
     return 'danger';
 };
 const goField = (data) => {
-    idPipeline.value = data.id;
-    router.push({ path: `/${userData.schema_description}/pipeline/${data.id}` });
+    // idPipeline.value = data.id;
+    window.open(`#/${userData.schema_description}/pipeline/${data.id}`, '_blank');
 };
 // Carrega os dados do filtro do grid
 watchEffect(() => {
@@ -423,7 +423,7 @@ const customFilterOptions = ref({ filterclear: false });
             <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]" />
         </div>
         <div class="col-12">
-            <PipelineForm
+            <!-- <PipelineForm
                 :mode="mode"
                 :idCadastro="props.idCadastro"
                 :idPipeline="idPipeline"
@@ -433,7 +433,8 @@ const customFilterOptions = ref({ filterclear: false });
                     idPipeline = undefined;
                 "
                 v-if="mode == 'new' || idPipeline"
-            />
+            /> -->
+            <PipelineForm :mode="mode" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         </div>
 
         <div class="col-12">

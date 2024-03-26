@@ -6,6 +6,9 @@ import { defaultError } from '@/toast';
 import PropostaForm from './PropostaForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { removeHtmlTags } from '@/global';
+import Prompts from '@/components/Prompts.vue';
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -145,6 +148,58 @@ const exportCSV = () => {
 watchEffect(() => {
     mountUrlFilters();
 });
+
+const dialogRef = ref(null);
+const messagesButtoms = ref([
+    {
+        label: 'Ok',
+        icon: 'fa-solid fa-check',
+        severity: 'success'
+    },
+    {
+        label: 'Selecionar/Criar registro no Pipeline',
+        icon: 'fa-regular fa-trash-can',
+        severity: 'default'
+    }
+]);
+const showMessage = (body) => {
+    dialogRef.value = dialog.open(Prompts, {
+        data: {
+            body: body
+        },
+        props: {
+            header: body.label,
+            style: {
+                width: '50vw'
+            },
+            breakpoints: {
+                '960px': '75vw',
+                '640px': '90vw'
+            },
+            modal: true
+        },
+        onClose: async (options) => {
+            if (options.data.label == messagesButtoms.value[0].label) {
+                /* empty */
+            } else if (options.data.label == messagesButtoms.value[1].label) {
+                router.push({ path: `/${userData.schema_description}/pipeline` });
+            }
+        }
+    });
+};
+const newProposal = () => {
+    // messagesButtoms.value.forEach((elementButton) => {
+    //     // Adicionar ao elementButton o id da mensagem
+    //     elementButton.id = element.id;
+    //     elementButton.message = element.msg;
+    //     elementButton.title = element.title;
+    // });
+    showMessage({
+        label: 'Nova Proposta',
+        message: `Para criar uma nova proposta, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para a tela de cadastro de propostas no Pipeline. Lá você poderá criar uma nova proposta ou selecionar uma proposta existente.`,
+        buttons: messagesButtoms.value
+    });
+};
 </script>
 
 <template>
@@ -152,10 +207,6 @@ watchEffect(() => {
         <div class="col-12">
             <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todas as Propostas', to: route.fullPath }]" />
         </div>
-        <div class="col-12">
-            <PropostaForm @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
-        </div>
-
         <div class="col-12">
             <div class="card">
                 <DataTable
@@ -184,7 +235,7 @@ watchEffect(() => {
                         <div class="flex justify-content-end gap-3">
                             <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                             <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop() " />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newProposal()" />
                         </div>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">

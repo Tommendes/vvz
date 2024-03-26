@@ -51,11 +51,12 @@ initFilters();
 const clearFilter = () => {
     initFilters();
 };
-const goField = () => {
-    router.push({ path: `/${userData.schema_description}/comiss-agente/${itemData.value.id}` });
-};
 const getItem = (data) => {
-    itemData.value = data;
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = data;
+        mode.value = 'view';
+    }, 100);
 };
 const loadData = () => {
     setTimeout(() => {
@@ -72,16 +73,32 @@ const loadData = () => {
     }, Math.random() * 1000);
 };
 const mode = ref('grid');
+const breadCrumbItems = ref([]);
+const refreshBreadcrumb = () => {
+    breadCrumbItems.value = [{ label: 'Todos os Agentes', to: route.fullPath }];
+};
+const newAgent = () => {
+    mode.value = 'new';
+    scrollToTop();
+    refreshBreadcrumb();
+    breadCrumbItems.value.push({ label: 'Novo Registro' });
+};
 onBeforeMount(() => {
+    refreshBreadcrumb();
     initFilters();
     loadData();
 });
+const reload = () => {
+    mode.value = 'grid';
+    refreshBreadcrumb();
+    loadData();
+};
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Usuários', to: route.fullPath }]" />
+    <Breadcrumb :items="breadCrumbItems" />
     <div class="card">
-        <AgenteForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <AgenteForm :mode="mode" :itemDataRoot="itemData" @changed="loadData" @cancel="reload" v-if="['new', 'view'].includes(mode)" />
         <DataTable
             style="font-size: 1rem"
             :value="gridData"
@@ -98,7 +115,7 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newAgent" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
@@ -125,7 +142,7 @@ onBeforeMount(() => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="fa-solid fa-bars" rounded v-on:click="getItem(data)" @click="goField" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" icon="fa-solid fa-bars" rounded @click="getItem(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

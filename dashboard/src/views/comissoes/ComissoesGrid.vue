@@ -46,9 +46,9 @@ const deleteRow = () => {
 };
 // Itens do grid
 const listaNomes = ref([
-    { field: 'codigo', label:' Código da despesa ou receita', minWidth: '25rem' },
-    { field: 'tipo', label:' Despesa ou receita', minWidth: '25rem' },
-    { field: 'descricao', label:' Descrição do centro de custo', minWidth: '25rem' }
+    { field: 'codigo', label: ' Código da despesa ou receita', minWidth: '25rem' },
+    { field: 'tipo', label: ' Despesa ou receita', minWidth: '25rem' },
+    { field: 'descricao', label: ' Descrição do centro de custo', minWidth: '25rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -87,8 +87,7 @@ const loadData = () => {
     loading.value = true;
     axios.get(`${urlBase.value}`).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        gridData.value.forEach((element) => {
-        });
+        gridData.value.forEach((element) => {});
         loading.value = false;
     });
 };

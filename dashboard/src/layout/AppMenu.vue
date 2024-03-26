@@ -55,7 +55,8 @@ const setMenuByUser = async () => {
         if (itemUserData.value.financeiro >= 1) itemMenu.items.push({ label: 'Movimentação Financeira', icon: 'fa-solid fa-money-bill', to: `/${userData.schema_description}/registros` });
         model.value.push(itemMenu);
     }
-    if (itemUserData.value.financeiro >= 1 || itemUserData.value.comissoes >= 1) {
+    // if (itemUserData.value.financeiro >= 1 || itemUserData.value.comissoes >= 1) {
+    if (itemUserData.value.admin >= 2) {
         const itemMenu = { label: 'Comissionamento', items: [] };
         if (itemUserData.value.comissoes >= 1) itemMenu.items.push({ label: 'Comissões', icon: 'fa-solid fa-dollar', to: `/${userData.schema_description}/comissoes` });
         if (itemUserData.value.comissoes >= 1) itemMenu.items.push({ label: 'Agentes', icon: 'fa-solid fa-users', to: `/${userData.schema_description}/comiss-agentes` });
