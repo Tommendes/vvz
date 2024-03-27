@@ -198,7 +198,6 @@ const showMessage = (body) => {
         },
         onClose: async (options) => {
             if (options.data.label == messagesButtoms.value[0].label) {
-                console.log(options.data);
                 const bodyTo = {
                     title: options.data.title,
                     msg: options.data.message,
