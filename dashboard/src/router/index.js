@@ -43,7 +43,7 @@ const routes = [
             {
                 path: '/:client/pipeline/:id',
                 name: 'pipeline-one',
-                component: () => import('@/views/pipeline/PipelineForm.vue')
+                component: () => import('@/views/pipeline/PipelinePanel.vue')
             },
             {
                 path: '/:client/propostas',
@@ -111,11 +111,6 @@ const routes = [
                 path: '/:client/comiss-agentes',
                 name: 'comiss-agentes',
                 component: () => import('@/views/comissAgentes/AgentesGrid.vue')
-            },
-            {
-                path: '/:client/comiss-agente/:id',
-                name: 'comiss-agente',
-                component: () => import('@/views/comissAgentes/AgenteForm.vue')
             },
             {
                 path: '/:client/comissoes',

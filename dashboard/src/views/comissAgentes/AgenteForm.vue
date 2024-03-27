@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref } from 'vue';
+import { onBeforeMount, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -57,6 +57,7 @@ const loadData = async () => {
                     itemData.value = body;
                     itemData.value.agente_representante = body.agente_representante ? 1 : 0;
                     itemData.value.dsr = body.dsr ? 1 : 0;
+                    itemData.value.ordem = body.ordem.padStart(3, '0').toString();
                     await getNomeCliente();
                     loading.value = false;
                 } else {
@@ -81,6 +82,7 @@ const saveData = async () => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
+                emit('changed');
                 itemData.value = body;
                 mode.value = 'view';
             } else {
@@ -190,6 +192,12 @@ const reload = () => {
 onBeforeMount(() => {
     loadData();
 });
+// Observar alterações na propriedade selectedCadastro
+watch(selectedCadastro, (value) => {
+    if (value) {
+        itemData.value.id_cadastros = value.code;
+    }
+});
 </script>
 
 <template>
@@ -199,16 +207,9 @@ onBeforeMount(() => {
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-9">
-                            <label for="id_cadastros">Agente</label>
+                            <label for="id_cadastros">Nome</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete
-                                v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
-                                v-model="selectedCadastro"
-                                optionLabel="name"
-                                :suggestions="filteredCadastros"
-                                @complete="searchCadastros"
-                                forceSelection
-                            />
+                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
@@ -220,7 +221,7 @@ onBeforeMount(() => {
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="cpf" type="text" v-maska data-maska="###" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="agente_representante">Representante</label>
+                            <label for="agente_representante">É Representação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_representante" :options="dropdownSN" placeholder="Selecione..." />
                         </div>

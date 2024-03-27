@@ -5,10 +5,11 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import AgenteForm from './AgenteForm.vue';
+import { renderizarHTML } from '@/global';
 
-import { useRouter, useRoute } from 'vue-router';
-const router = useRouter();
+import { useRoute } from 'vue-router';
 const route = useRoute();
+
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -27,11 +28,13 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/comis-agentes`);
 // Itens do grid
 const listaNomes = ref([
+    { field: 'ordem', label: 'Ordem' },
     { field: 'nome', label: 'Nome' },
     { field: 'cpf_cnpj', label: 'CPF' },
     { field: 'email', label: 'Email' },
     { field: 'telefone', label: 'Telefone' },
-    { field: 'agente_representante', label: 'Representante' }
+    { field: 'dsr', label: 'DSR', tagged: true },
+    { field: 'agente_representante', label: 'Representante', tagged: true }
 ]);
 //Scrool quando um Novo Registro for criado
 const scrollToTop = () => {
@@ -67,10 +70,14 @@ const loadData = () => {
             gridData.value.forEach((element) => {
                 if (element.cpf_cnpj && element.cpf_cnpj.trim().length >= 8) element.cpf_cnpj = masks.value.cpf_cnpj.masked(element.cpf_cnpj);
                 element.agente_representante = element.agente_representante && element.agente_representante == '1' ? 'Sim' : 'Não';
+                element.dsr = element.dsr && element.dsr == '1' ? 'Sim' : 'Não';
+                element.ordem = element.ordem.padStart(3, '0').toString();
+                element.email = renderizarHTML(element.email);
+                element.telefone = renderizarHTML(element.telefone, { to: element.nome, from: userData.name });
             });
             loading.value = false;
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 100 + 250);
 };
 const mode = ref('grid');
 const breadCrumbItems = ref([]);
@@ -93,6 +100,14 @@ const reload = () => {
     refreshBreadcrumb();
     loadData();
 };
+const getSeverity = (value) => {
+    switch (value) {
+        case 'Sim':
+            return 'success';
+        default:
+            return 'danger';
+    }
+};
 </script>
 
 <template>
@@ -111,7 +126,7 @@ const reload = () => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['name', 'cpf_cnpj', 'email', 'telefone']"
+            :globalFilterFields="['name', 'cpf_cnpj', 'email', 'telefone', 'ordem']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">

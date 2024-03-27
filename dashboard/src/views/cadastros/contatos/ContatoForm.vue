@@ -83,7 +83,10 @@ const saveData = async () => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
-                itemData.value = body;
+                itemData.value = {};
+                setTimeout(() => {
+                    itemData.value = body;
+                }, 100);
                 mode.value = 'edit';
                 emit('changed');
             } else {
@@ -145,10 +148,6 @@ const setCancelBtnLabel = () => {
             <div class="col-12">
                 <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
-                    <!-- <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo">Tipo de Contato</label>
-                        <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
-                    </div> -->
                     <div class="field col-12 md:col-2">
                         <label for="pessoa">Pessoa</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
@@ -157,20 +156,6 @@ const setCancelBtnLabel = () => {
                         <label for="departamento">Departamento</label>
                         <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.departamento" id="departamento" type="text" />
                     </div>
-                    <!-- <div class="field col-12 md:col-6" v-if="getDropdownLabel(itemData.id_params_tipo) && getDropdownLabel(itemData.id_params_tipo).toLowerCase() == 'e-mail'">
-                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" @input="validateEmail()" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
-                    </div> -->
-                    <!-- <div class="field col-12 md:col-6" v-else-if="getDropdownLabel(itemData.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(itemData.id_params_tipo).toLowerCase())">
-                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.meio" id="meio" type="text" @input="validateTelefone()" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
-                    </div> -->
-                    <!-- <div class="field col-12 md:col-6" v-else>
-                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) || 'Meio' }} de contato</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.meio" id="meio" type="text" />
-                    </div> -->
                     <div class="field col-12 md:col-8">
                         <label for="observacao">Observação</label>
                         <div class="p-inputgroup flex-1">

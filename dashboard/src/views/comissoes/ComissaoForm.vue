@@ -2,138 +2,100 @@
 import { onBeforeMount, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn } from '@/toast';
-
+import { defaultWarn } from '@/toast';
+import { useRoute } from 'vue-router';
+const route = useRoute();
 // Cookies de usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
-
-import Breadcrumb from '@/components/Breadcrumb.vue';
-
-import { useRoute, useRouter } from 'vue-router';
-const route = useRoute();
-const router = useRouter();
-
 // Campos de formulário
 const itemData = ref({});
-// Modo do formulário
-const mode = ref('view');
-// Mensages de erro
-const errorMessages = ref({});
-// Loadings
-const loading = ref(false);
-// Emit do template
-const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/comis-agentes`);
+const urlBase = ref(`${baseApiUrl}/comis-pipeline/${route.params.id}`);
+const loading = ref(false);
 // Carragamento de dados do form
-
 const loadData = async () => {
     loading.value = true;
     setTimeout(async () => {
-        if (route.params.id || itemData.value.id) {
-            const id = route.params.id || itemData.value.id;
-            const url = `${urlBase.value}/${id}`;
-
-            await axios.get(url).then((res) => {
+        const url = `${urlBase.value}`;
+        await axios
+            .get(url)
+            .then(async (res) => {
                 const body = res.data;
-                if (body && body.id) {
-                    body.id = String(body.id);
-                    itemData.value = body;
-                    loading.value = false;
-                } else {
-                    defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/comiss-agentes` });
+                body.id = String(body.id);
+
+                itemData.value = body;
+            })
+            .catch((error) => {
+                if (typeof error == 'string') defaultWarn(error);
+                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                else {
+                    console.log(error);
+                    defaultWarn('Erro ao carregar dados!');
                 }
             });
-        } else loading.value = false;
     }, Math.random() * 100 + 250);
-};
-// Salvar dados do formulário
-const saveData = async () => {
-    if (!formIsValid()) {
-        defaultWarn('Verifique os campos obrigatórios');
-        return;
-    }
-    const method = itemData.value.id ? 'put' : 'post';
-    const id = itemData.value.id ? `/${itemData.value.id}` : '';
-    const url = `${urlBase.value}${id}`;
-    axios[method](url, itemData.value)
-        .then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                defaultSuccess('Registro salvo com sucesso');
-                itemData.value = body;
-                mode.value = 'view';
-            } else {
-                defaultWarn('Erro ao salvar registro');
-            }
-        })
-        .catch((err) => {
-            defaultWarn(err.response.data);
-        });
-};
-// DropDown Tipo
-const dropdownTipo = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
-]);
-// Validar formulário
-const formIsValid = () => {
-    return true;
-};
-// Recarregar dados do formulário
-const reload = () => {
-    mode.value = 'view';
-    errorMessages.value = {};
-    loadData();
-    emit('cancel');
+    loading.value = false;
 };
 // Carregar dados do formulário
 onBeforeMount(() => {
     loadData();
 });
 </script>
+
 <template>
-    <Breadcrumb
-        v-if="mode != 'new'"
-        :items="[
-            { label: 'Registros', to: `/${userData.schema_description}/registros` },
-            { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
-        ]"
-    />
-    <div class="card">
-        <form @submit.prevent="saveData">
-            <div class="grid">
-                <div class="col-12">
-                    <div class="p-fluid grid">
-                        <div class="col-12 md:col-6">
-                            <label for="codigo">Código da despesa ou receita</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.codigo" id="codigo" type="text" />
+    <form @submit.prevent="saveData" @keydow.enter.prevent>
+        <div class="grid">
+            <div class="col-12">
+                <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }}
+                    (apenas suporte)</h5>
+                <div class="p-fluid formgrid grid">
+                    <div class="field col-12 md:col-5">
+                        <label for="id_params_tipo">Tipo de Contato</label>
+                        <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value"
+                            v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione...">
+                        </Dropdown>
+                    </div>
+                    <div class="field col-12 md:col-7"
+                        v-if="getDropdownLabel(itemData.id_params_tipo) && getDropdownLabel(itemData.id_params_tipo).toLowerCase() == 'e-mail'">
+                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
+                        <div class="p-inputgroup flex-1">
+                            <InputText autocomplete="no" v-model="itemData.meio" id="meio" type="text"
+                                @input="validateEmail()" />
+                            <Button icon="fa-solid fa-floppy-disk" severity="success"
+                                v-tooltip.top="'Clique para salvar o contato'" @click="saveData()" />
                         </div>
-                        <div class="col-12 md:col-6">
-                            <label for="tipo">Despesa ou receita</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <Dropdown v-else id="tipo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTipo" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio
+                            }}</small>
+                    </div>
+                    <div class="field col-12 md:col-7"
+                        v-else-if="getDropdownLabel(itemData.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(itemData.id_params_tipo).toLowerCase())">
+                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) }} de contato</label>
+                        <div class="p-inputgroup flex-1">
+                            <InputText autocomplete="no" v-maska data-maska="['(##) ####-####', '(##) #####-####']"
+                                v-model="itemData.meio" id="meio" type="text" @input="validateTelefone()" />
+                            <Button icon="fa-solid fa-floppy-disk" severity="success"
+                                v-tooltip.top="'Clique para salvar o contato'" @click="saveData()" />
                         </div>
-                        <div class="col-12 md:col-12">
-                            <label for="descricao">Descrição do centro de custo</label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <EditorComponent v-else-if="!loading.form && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
+                        <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio
+                            }}</small>
+                    </div>
+                    <div class="field col-12 md:col-7" v-else>
+                        <label for="meio">{{ getDropdownLabel(itemData.id_params_tipo) || 'Meio' }} de contato</label>
+                        <div class="p-inputgroup flex-1">
+                            <InputText autocomplete="no" v-model="itemData.meio" id="meio" type="text" />
+                            <Button icon="fa-solid fa-floppy-disk" severity="success"
+                                v-tooltip.top="'Clique para salvar o contato'" @click="saveData()" />
                         </div>
                     </div>
                 </div>
-                <div class="col-12">
-                    <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
-                    </div>
+                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <p>itemData: {{ itemData }}</p>
+                    <p v-if="props.itemDataRoot">itemDataRoot: {{ props.itemDataRoot }}</p>
                 </div>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </template>

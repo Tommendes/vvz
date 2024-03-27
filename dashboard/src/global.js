@@ -122,7 +122,7 @@ export function renderizarHTML(conteudo, options) {
         return `<a href="mailto:${conteudo}" title="Clique para iniciar um email">${conteudo}</a>`;
     } else if (telefoneMask.completed(conteudo.replace(/\D/g, '')) && options) {
         // Verifique o horario e informe: Bom dia, boa tarde ou boa noite
-        return `<a href="https://api.whatsapp.com/send/?phone=55${telefoneMask.unmasked(conteudo.replace(/\D/g, ''))}
+        return `<a href="https://api.whatsapp.com/send/?phone=55${telefoneMask.unmasked(conteudo.trim().replace(/\D/g, ''))}
         &text=Olá${options && options.to ? ', ' + options.to : ''}! ${saudation()}. ${options && options.from ? '%0A' + options.from + ' aqui!%0A%0A' : '%0A%0A'}&type=phone_number&app_absent=0
         " target="_blank" title="Clique para iniciar uma conversa">${telefoneMask.masked(conteudo)} <i class="fa-brands fa-whatsapp"></i></a>`;
     } else {

@@ -24,6 +24,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPipeline = `${dbPrefix}_${uParams.schema_name}.pipeline`
         const tabelaComisPipeline = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`
         const tabelaComisAgentes = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
 
@@ -32,16 +33,21 @@ module.exports = app => {
 
         delete body.isInvalid;
 
+        let comisRepres = {}
         let comisAgentes = { total: 0 }
-        let comissPipeline = { base_agentes: 0 }
+        let comissPipeline = { valor_agente: 0 }
+        let pipeline = {}
         try {
             existsOrError(body.id_comis_pipeline, 'Origem do comissionamento não informado')
             // Verificar se o comis_pipeline existe
             comissPipeline = await app.db(tabelaComisPipeline).where({ id: body.id_comis_pipeline, status: STATUS_ACTIVE }).first()
             existsOrError(comissPipeline, 'Origem do comissionamento não encontrado')
+            // Verificar se o pipeline existe
+            pipeline = await app.db(tabelaPipeline).where({ id: comissPipeline.id_pipeline, status: STATUS_ACTIVE }).first()
+            existsOrError(pipeline, 'Registro de Pipeline não encontrado')
             if (![0, 1].includes(body.agente_representante)) throw 'Se é a representação não informado'
             // Recupera o registro da comissão do representante em comis_pipeline caso exista
-            const comisRepres = await app.db(tabelaDomain).where({ id_comis_pipeline: body.id_comis_pipeline, agente_representante: '1', status: STATUS_ACTIVE }).first()
+            comisRepres = await app.db(tabelaDomain).where({ id_comis_pipeline: body.id_comis_pipeline, agente_representante: '1', status: STATUS_ACTIVE }).first()
             // Recupera os registros das comissões dos não representantes do pedido em comis_pipeline
             comisAgentes = await app.db(tabelaDomain)
                 .sum('valor as total')
@@ -58,12 +64,12 @@ module.exports = app => {
             existsOrError(body.valor, 'Valor da comissão não informado')
             if (body.valor <= 0) throw 'Valor da comissão deve ser maior que zero'
             // Verificar se o valor da comissão é maior que o valor base de comissPipeline
-            if (body.agente_representante === 1 && body.valor > comissPipeline.base_representacao) throw `O valor não pode ser maior que o valor da comissão de representante (${formatCurrency(comissPipeline.base_representacao)}) informada no registro do Pipeline`
-            else if (body.agente_representante === 0 && (body.valor + comisAgentes.total) > comissPipeline.base_agentes) {
+            if (body.agente_representante === 1 && body.valor > pipeline.valor_representacao) throw `O valor não pode ser maior que o valor da comissão de representante (${formatCurrency(pipeline.valor_representacao)}) informada no registro do Pipeline`
+            else if (body.agente_representante === 0 && (body.valor + comisAgentes.total) > pipeline.valor_agente) {
                 let answer = `A soma do comissionamento de agentes já registrado para este Pipeline (${formatCurrency(comisAgentes.total)}) mais `
                 if (comisAgentes.total > 0) answer += `o `
                 else answer = `O `
-                let sumError = `valor informado para neste comissionamento (${formatCurrency(ceilTwoDecimals(body.valor).toFixed(2))}) ultrapassa o valor (${formatCurrency(comissPipeline.base_agentes)}) para comissionamento dos agentes informada no registro do Pipeline`
+                let sumError = `valor informado para neste comissionamento (${formatCurrency(ceilTwoDecimals(body.valor).toFixed(2))}) ultrapassa o valor (${formatCurrency(comissPipeline.valor_agente)}) para comissionamento dos agentes informada no registro do Pipeline`
                 throw `${answer} ${sumError}`
             }
         } catch (error) {
@@ -112,7 +118,7 @@ module.exports = app => {
                         if (ret > 0) {
                             req.uParams = uParams
                             const errorInValidation = await validateComissPipeline(req)
-                            body = { ...body, isInvalid: errorInValidation}
+                            body = { ...body, isInvalid: errorInValidation }
                             return res.status(200).send(body)
                         }
                         else res.status(200).send(`${tabelaAlias} não encontrado`)
@@ -181,7 +187,7 @@ module.exports = app => {
                         body.id = ret[0]
                         req.uParams = uParams
                         const errorInValidation = await validateComissPipeline(req)
-                        body = { ...body, isInvalid: errorInValidation}
+                        body = { ...body, isInvalid: errorInValidation }
                         // registrar o evento na tabela de eventos
                         const { createEventIns } = app.api.sisEvents
                         createEventIns({
@@ -258,11 +264,11 @@ module.exports = app => {
             .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(async (body) => {
-                if (!body) return res.status(404).send('Registro não encontrado')                
+                if (!body) return res.status(404).send('Registro não encontrado')
                 req.uParams = uParams
                 req.body = body
                 const errorInValidation = await validateComissPipeline(req)
-                body = { ...body, isInvalid: errorInValidation}
+                body = { ...body, isInvalid: errorInValidation }
 
                 return res.json(body)
             })
@@ -312,7 +318,7 @@ module.exports = app => {
                 .where({ id: req.params.id })
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
-            if (errorInValidation) res.status(200).send({ success: true ,isInvalid: errorInValidation })
+            if (errorInValidation) res.status(200).send({ success: true, isInvalid: errorInValidation })
             else res.status(204).send()
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
@@ -324,11 +330,12 @@ module.exports = app => {
         let body = { ...req.body }
         const uParams = { ...req.uParams }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaPipeline = `${dbPrefix}_${uParams.schema_name}.pipeline`
         const tabelaComisPipeline = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`
         const errorInValidation = {}
 
         let comisAgentes = { total: 0 }
-        let comissPipeline = { base_agentes: 0 }
+        let comissPipeline = { valor_agente: 0 }
         try {
             existsOrError(body.id_comis_pipeline, 'Comissionamento não informado')
         } catch (error) {
@@ -336,12 +343,14 @@ module.exports = app => {
             return res.status(400).send(error)
         }
         // Verificar se o comis_pipeline existe
-        comissPipeline = await app.db(tabelaComisPipeline).where({ id: body.id_comis_pipeline, status: STATUS_ACTIVE }).first()
+        comissPipeline = await app.db({tbl1: tabelaComisPipeline})
+            .join(tabelaPipeline, 'tbl1.id_pipeline', 'pipeline.id')
+            .where({ 'tbl1.id': body.id_comis_pipeline, 'tbl1.status': STATUS_ACTIVE }).first()
         comisAgentes = await app.db(tabelaDomain).sum('valor as total')
             .where({ id_comis_pipeline: body.id_comis_pipeline, agente_representante: '0', status: STATUS_ACTIVE }).first() || { total: 0 }
 
-        if (comisAgentes.total > comissPipeline.base_agentes) {
-            errorInValidation.sumError = `Existe um erro no somatório do comissionamento dos agentes. A soma (${formatCurrency(comisAgentes.total)}) ultrapassa o valor (${formatCurrency(comissPipeline.base_agentes)}) para comissionamento dos agentes informada no registro do Pipeline`
+        if (comisAgentes.total > comissPipeline.valor_agente) {
+            errorInValidation.sumError = `Existe um erro no somatório do comissionamento dos agentes. A soma (${formatCurrency(comisAgentes.total)}) ultrapassa o valor (${formatCurrency(comissPipeline.valor_agente)}) para comissionamento dos agentes informada no registro do Pipeline`
         }
 
         return errorInValidation;

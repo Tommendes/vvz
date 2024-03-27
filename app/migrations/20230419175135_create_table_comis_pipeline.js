@@ -9,8 +9,6 @@ exports.up = function (knex, Promise) {
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_pipeline', 10).unsigned().notNull().comment('Documento relacionado ').references('id').inTable('pipeline').onUpdate('Cascade').onDelete('NO ACTION')
-        table.decimal('base_representacao', 10, 2).comment('Valor base de cálculo da comissão da representação')
-        table.decimal('base_agentes', 10, 2).comment('Valor base de cálculo da comissão dos agentes')
         table.string('observacao').comment('Observação do registro')
     })
 };

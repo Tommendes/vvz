@@ -28,12 +28,12 @@ module.exports = app => {
             existsOrError(body.id_pipeline, 'Registro de Pipeline não informado')
             const pipeline = await app.db(tabelaPipelineDomain).where({ id: body.id_pipeline, status: STATUS_ACTIVE }).first()
             existsOrError(pipeline, 'Registro de Pipeline não encontrado')
-            existsOrError(body.base_representacao, 'Valor base da representação não informado')
-            if (body.base_representacao <= 0) throw 'Valor base da comissão da representação deve ser maior que zero'
-            if (body.base_representacao > pipeline.valor_representacao) throw 'O valor não pode ser maior que o valor da comissão do representante informada no registro do Pipeline'
-            existsOrError((String(body.base_agentes)), 'Valor base dos agentes não informado')
-            if (body.base_agentes < 0) throw 'Valor base da comissão dos agentes não pode ser negativo'
-            if (body.base_agentes > pipeline.valor_agente) throw 'O valor base da comissão dos agentes não pode ser maior que o valor da comissão dos agentes informada no registro do Pipeline'
+            // existsOrError(body.base_representacao, 'Valor base da representação não informado')
+            // if (body.base_representacao <= 0) throw 'Valor base da comissão da representação deve ser maior que zero'
+            // if (body.base_representacao > pipeline.valor_representacao) throw 'O valor não pode ser maior que o informado como comissão do representante no registro do Pipeline'
+            // existsOrError((String(body.base_agentes)), 'Valor base dos agentes não informado')
+            // if (body.base_agentes < 0) throw 'Valor base da comissão dos agentes não pode ser negativo'
+            // if (body.base_agentes > pipeline.valor_agente) throw 'O valor total da comissão dos agentes não pode ser maior que o informado no registro do Pipeline'
         } catch (error) {
             app.api.logger.logError({log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true }});
             return res.status(400).send(error)
@@ -69,12 +69,8 @@ module.exports = app => {
                 })
         } else {
             const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE }).first()
-            try {
-                notExistsOrError(unique, `Registro de Pipeline já foi relacionado para comissionamento`)
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                return res.status(400).send(error)
-            }
+            // Verifica se já existe um registro com o mesmo id_pipeline e retorna o registro
+            if (unique) return res.json(unique)
             // Criação de um novo registro
             const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 

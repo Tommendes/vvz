@@ -55,7 +55,7 @@ const unidadeLabel = ref(undefined);
 // Props do template
 const props = defineProps(['mode', 'idPipeline', 'idCadastro']);
 // Emit do template
-const emit = defineEmits(['changed', 'cancel']);
+const emit = defineEmits(['changed', 'cancel', 'comissioning']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pipeline`);
 // Itens do breadcrumb
@@ -485,14 +485,17 @@ const itemNovo = [
     }
 ];
 const registroIdentico = async () => {
-    delete itemData.value.id;
-    delete itemData.value.evento;
-    delete itemData.value.documento;
-    delete itemData.value.id_filho;
-    delete itemData.value.id_pai;
-    delete itemData.value.created_at;
-    delete itemData.value.updated_at;
-    itemDataParam.value.obrig_valor = 0;
+    itemData.value = {
+        id_cadastros: itemData.value.id_cadastros
+    };
+    // delete itemData.value.id;
+    // delete itemData.value.evento;
+    // delete itemData.value.documento;
+    // delete itemData.value.id_filho;
+    // delete itemData.value.id_pai;
+    // delete itemData.value.created_at;
+    // delete itemData.value.updated_at;
+    itemDataParam.value = {};
     itemDataLastStatus.value = {};
     mode.value = 'clone';
     // Unidades de negócio
@@ -509,8 +512,22 @@ const toPai = async () => {
 const toFilho = async (idFilho) => {
     window.location.href = `#/${userData.schema_description}/pipeline/${idFilho || itemData.value.id_filho}`;
 };
+
+const itemDataComissionamento = ref({});
 const toComissionate = async () => {
-    defaultSuccess('Em desenvolvimento');
+    await axios
+        .post(`${baseApiUrl}/comis-pipeline`, { id_pipeline: itemData.value.id })
+        .then((res) => {
+            if (res.data && res.data.id) {
+                // defaultSuccess('Comissionamento criado com sucesso');
+                itemDataComissionamento.value = res.data;
+                emit('comissioning', itemDataComissionamento.value);
+            } else defaultWarn('Erro ao criar comissionamento');
+        })
+        .catch((error) => {
+            console.log(error);
+            defaultWarn(error.response.data);
+        });
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
@@ -836,8 +853,8 @@ watch(route, (value) => {
 </script>
 
 <template>
-    <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
-    <div class="card">
+    <!-- <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'expandedFormMode')" /> -->
+    <div>
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div :class="`${['new', 'expandedFormMode'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">
@@ -865,7 +882,7 @@ watch(route, (value) => {
                             </div>
                         </div>
                         <div :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
-                            <label for="id_pipeline_params">Tipo</label>
+                            <label for="id_pipeline_params">Tipo ou Unidade de negócio</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <p v-else-if="['view', 'expandedFormMode'].includes(mode) && unidadeLabel" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`" v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
                                 {{ unidadeLabel }}
@@ -885,7 +902,7 @@ watch(route, (value) => {
                             />
                         </div>
                         <div :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
-                            <label for="id_com_agentes">Agente</label>
+                            <label for="id_com_agentes">Agente de vendas</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown
                                 v-else
@@ -900,8 +917,8 @@ watch(route, (value) => {
                                 :disabled="['view', 'expandedFormMode'].includes(mode)"
                             />
                         </div>
-                        <div class="col-12 lg:col-2" v-if="itemData.documento || (['new', 'edit'].includes(mode) && itemDataParam.autom_nr == 0)">
-                            <label for="documento">Documento</label>
+                        <div class="col-12 lg:col-2" v-if="itemData.documento || (['new', 'clone', 'edit'].includes(mode) && itemDataParam.autom_nr == 0)">
+                            <label for="documento">Nº do Documento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <p v-else-if="itemDataParam.autom_nr || mode == 'expandedFormMode'" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
                                 {{ itemData.documento }}
@@ -925,7 +942,7 @@ watch(route, (value) => {
                                     </div>
                                 </div>
                                 <div :class="`col-12 lg:col-6`">
-                                    <label for="valor_bruto">Bruto</label>
+                                    <label for="valor_bruto">Valor Bruto</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
@@ -946,7 +963,7 @@ watch(route, (value) => {
                                     </div>
                                 </div>
                                 <div :class="`col-12 lg:col-6`">
-                                    <label for="valor_liq">Líquido</label>
+                                    <label for="valor_liq">Valor Líquido</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
@@ -968,7 +985,7 @@ watch(route, (value) => {
                                     </div>
                                 </div>
                                 <div :class="`col-12 lg:col-4`">
-                                    <label for="valor_representacao">Valor base da representação</label>
+                                    <label for="valor_representacao">Comissão do representante</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
@@ -1005,7 +1022,7 @@ watch(route, (value) => {
                                     </div>
                                 </div>
                                 <div :class="`col-12 lg:col-4`">
-                                    <label for="perc_represent">Comissão da representação</label>
+                                    <label for="perc_represent">Percentual de Comissão do representante</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">%</span>
@@ -1026,7 +1043,7 @@ watch(route, (value) => {
                                     </div>
                                 </div>
                                 <div :class="`col-12 lg:col-4`">
-                                    <label for="valor_agente">Valor base dos agentes</label>
+                                    <label for="valor_agente">Comissão dos agentes</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
@@ -1042,7 +1059,7 @@ watch(route, (value) => {
                             </div>
                         </div>
                         <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
-                            <label for="descricao">Descrição</label>
+                            <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <EditorComponent v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
@@ -1079,7 +1096,13 @@ watch(route, (value) => {
                             <span v-html="guide" />
                         </p>
                     </Fieldset>
-                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="true" v-if="userData.admin >= 2">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-circle-info mr-2"></span>
+                                <span class="font-bold text-lg">FormData</span>
+                            </div>
+                        </template>
                         <p>{{ route.name }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
@@ -1092,7 +1115,8 @@ watch(route, (value) => {
                         <p>hasFolder {{ hasFolder }}</p>
                         <p>editCadastro {{ editCadastro }}</p>
                         <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
-                    </div>
+                        <p>itemDataComissionamento: {{ itemDataComissionamento }}</p>
+                    </Fieldset>
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
                     <Fieldset :toggleable="true" class="mb-3">
@@ -1121,7 +1145,7 @@ watch(route, (value) => {
                                 raised
                                 @click="router.push(`/${userData.schema_description}/cadastro/${itemData.id_cadastros}`)"
                             />
-                            <Button label="Novo Registro Idêntico" v-if="!itemData.id_pai" type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised @click="registroIdentico" />
+                            <Button label="Novo Registro para o Cliente" v-if="itemData.id && !itemData.id_pai" type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised @click="registroIdentico" />
                             <!-- <SplitButton label="Novo Registro Idêntico" v-if="!itemData.id_pai" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" /> -->
                             <Button
                                 :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
@@ -1259,7 +1283,7 @@ watch(route, (value) => {
                             />
                         </div>
                     </Fieldset>
-                    <Fieldset :toggleable="true" class="mb-3">
+                    <Fieldset :toggleable="true" class="mb-3" v-if="itemData.id">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="fa-solid fa-clock mr-2"></span>
@@ -1279,7 +1303,7 @@ watch(route, (value) => {
                             <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ userData.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
                         </Timeline>
                     </Fieldset>
-                    <Fieldset :toggleable="true">
+                    <Fieldset :toggleable="true" v-if="itemData.id">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="fa-solid fa-clock mr-2"></span>

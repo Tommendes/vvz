@@ -94,7 +94,7 @@ onBeforeMount(() => {
 
 <template>
     <div class="card">
-        <ContatoForm @changed="loadData" @cancel="mode = 'grid'" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="itemData" :modeRoot="mode" />
+        <ContatoForm @changed="loadData()" @cancel="mode = 'grid'" v-if="['new', 'edit'].includes(mode) && props.itemDataRoot.id" :itemDataRoot="itemData" :modeRoot="mode" />
         <DataTable
             style="font-size: 1rem"
             ref="dt"
@@ -124,13 +124,6 @@ onBeforeMount(() => {
                     </span>
                 </div>
             </template>
-            <!-- <Column field="tipo" header="Tipo de Contato" sortable style="min-width: 14rem">
-                <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        {{ data.tipo }}
-                    </div>
-                </template>
-            </Column> -->
             <Column field="pessoa" header="Pessoa" sortable style="min-width: 20rem">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2 text-lg">
@@ -145,13 +138,6 @@ onBeforeMount(() => {
                     </div>
                 </template>
             </Column>
-            <!-- <Column field="meio" header="Meio" sortable style="min-width: 30rem">
-                <template #body="{ data }">
-                    <div class="flex flex-wrap gap-2 text-lg">
-                        <span v-html="data.meioRenderizado" />
-                    </div>
-                </template>
-            </Column> -->
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <div class="p-inputgroup flex-1 gap-2">

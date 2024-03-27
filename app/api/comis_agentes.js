@@ -23,12 +23,17 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-            existsOrError(body.id_cadastros, 'Cadastros não encontrado')
-            existsOrError(String(body.dsr), 'DSR não encontrado')
+            existsOrError(body.id_cadastros, 'Cadastro não informado')
+            existsOrError(String(body.dsr), 'DSR não informado')
+            existsOrError(String(body.agente_representante), 'Se é represntação não informado')
+            existsOrError(String(body.ordem), 'Número de ordem não informado')
         } catch (error) {
             return res.status(400).send(error)
         }
 
+        const uniqueOrdem = await app.db(tabelaDomain).where({ ordem: Number(body.ordem), status: STATUS_ACTIVE }).first()
+        if (body.id && uniqueOrdem && uniqueOrdem.id != body.id) return res.status(400).send('Número de ordem já registrado')
+        else if (!body.id && uniqueOrdem) return res.status(400).send('Número de ordem já registrado')
          
         if (body.id) {
             // Variáveis da edição de um registro

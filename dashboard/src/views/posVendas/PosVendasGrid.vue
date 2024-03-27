@@ -14,6 +14,7 @@ const userData = JSON.parse(json);
 
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -25,16 +26,6 @@ const masks = ref({
 const urlBase = ref(`${baseApiUrl}/pv`);
 const props = defineProps(['idCadastro']);
 const idRegs = ref(null); // Id do registro selecionado
-
-onBeforeMount(() => {
-    // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
-    if (props.idCadastro) listaNomes.value = listaNomes.value.filter((item) => !['nome'].includes(item.field));
-    // Inicializa os filtros do grid
-    initFilters();
-});
-onMounted(() => {
-    clearFilter();
-});
 
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
@@ -202,25 +193,38 @@ const goField = (data) => {
 watchEffect(() => {
     mountUrlFilters();
 });
+const breadCrumbItems = ref([]);
+const refreshBreadcrumb = () => {
+    breadCrumbItems.value = [{ label: 'Todos os Agentes', to: route.fullPath }];
+};
+const newPostSales = () => {
+    mode.value = 'new';
+    scrollToTop();
+    refreshBreadcrumb();
+    breadCrumbItems.value.push({ label: 'Novo Registro' });
+};
+const reload = () => {
+    mode.value = 'grid';
+    idRegs.value = undefined;
+    refreshBreadcrumb();
+};
+onBeforeMount(() => {
+    refreshBreadcrumb();
+    // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente
+    if (props.idCadastro) listaNomes.value = listaNomes.value.filter((item) => !['nome'].includes(item.field));
+    // Inicializa os filtros do grid
+    initFilters();
+});
+onMounted(() => {
+    clearFilter();
+});
 </script>
 
 <template>
+    <Breadcrumb :items="breadCrumbItems" />
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Pós-Vendas', to: `/${userData.schema_description}/pos-venda` }]" />
-        </div>
-        <div class="col-12">
-            <PosVendaForm
-                :mode="mode"
-                :idCadastro="props.idCadastro"
-                :idRegs="idRegs"
-                @changed="loadLazyData()"
-                @cancel="
-                    mode = 'grid';
-                    idRegs = undefined;
-                "
-                v-if="mode == 'new' || idRegs"
-            />
+            <PosVendaForm :mode="mode" :idCadastro="props.idCadastro" :idRegs="idRegs" @changed="loadLazyData()" @cancel="reload" v-if="mode == 'new' || idRegs" />
         </div>
 
         <div class="col-12">
@@ -250,7 +254,7 @@ watchEffect(() => {
                         <div class="flex justify-content-end gap-3">
                             <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                             <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop() " />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newPostSales" />
                         </div>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">

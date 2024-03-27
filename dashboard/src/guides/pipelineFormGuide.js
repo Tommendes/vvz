@@ -13,7 +13,7 @@ export const guide = `
         <li><strong>Agente:</strong> Selecione um agente associado ao registro.</li>
         <li><strong>Documento:</strong> Insira ou visualize o documento relacionado ao registro.</li>
         <!-- <li><strong>Versão:</strong> Veja a versão do registro, se aplicável.</li> -->
-        <li><strong>Valores de Comissão:</strong> Configure os valores brutos e líquidos, bem como os valores ou percentuais da representação e agentes, se
+        <li><strong>Valores do registro:</strong> Configure os valores brutos e líquidos, bem como os valores ou percentuais da representação e agentes, se
             aplicável.</li>
         <li><strong>Descrição:</strong> Adicione informações detalhadas sobre o registro.</li>
     </ul>
