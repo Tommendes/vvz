@@ -122,6 +122,7 @@ const dropdownStatus = ref([
     { label: 'Pendente', value: '0' },
     { label: 'Convertido', value: '10' },
     { label: 'Pedido', value: '20' },
+    { label: 'Pedido Comissionado', value: '70' },
     { label: 'Liquidado', value: '80' },
     { label: 'Cancelado', value: '89' }
     // { label: 'Excluído', value: '99' }
@@ -564,7 +565,7 @@ const customFilterOptions = ref({ filterclear: false });
 </template>
 <style scoped>
 .tagQualify {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
 }
 
 .tagRes {

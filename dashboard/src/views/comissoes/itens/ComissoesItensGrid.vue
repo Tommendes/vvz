@@ -3,22 +3,21 @@ import { ref, onBeforeMount } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { renderizarHTML } from '@/global';
 import { useConfirm } from 'primevue/useconfirm';
-import ContatoItemForm from './ContatoItemForm.vue';
+// import ComissaotemForm from './ComissaotemForm.vue';
 const confirm = useConfirm();
-import { isValidEmail } from '@/global';
 const gridData = ref(null);
 const editingRows = ref([]);
 const props = defineProps({
     itemDataRoot: Object // O próprio cadastro
 });
-const urlBase = ref(`${baseApiUrl}/cad-contatos-itens/${props.itemDataRoot.id}`);
+const urlBase = ref(`${baseApiUrl}/comissoes`);
 const mode = ref('grid');
 // Dropdowns
-const dropdownTipo = ref([]);
+const dropdownAgentes = ref([]);
 // Cookies de usuário
 import { userKey } from '@/global';
+import moment from 'moment';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 // Props do template
@@ -27,14 +26,14 @@ const dt = ref(null);
 // Carrega os dados da grid
 const loadData = async () => {
     mode.value = 'grid';
-    const url = `${urlBase.value}`;
+    const url = `${urlBase.value}?field:id_pipeline=equals:${props.itemDataRoot.id}`;
     await axios.get(url).then((axiosRes) => {
         gridData.value = axiosRes.data.data;
-        loadOptions();
-        gridData.value.forEach((element) => {
-            if (['telefone', 'celular'].includes(element.tipo.toLowerCase())) element.meioRenderizado = renderizarHTML(element.meio, { to: props.itemDataRoot.pessoa, from: userData.name });
-            else element.meioRenderizado = renderizarHTML(element.meio);
-        });
+        // loadOptions();
+        // gridData.value.forEach((element) => {
+        //     if (['telefone', 'celular'].includes(element.tipo.toLowerCase())) element.meioRenderizado = renderizarHTML(element.meio, { to: props.itemDataRoot.pessoa, from: userData.name });
+        //     else element.meioRenderizado = renderizarHTML(element.meio);
+        // });
     });
 };
 const onRowEditInit = () => {};
@@ -42,7 +41,6 @@ const onRowEditSave = (event) => {
     // Se o formulário não for válido, não salva
     let { newData, index } = event;
     if (!formIsValid(newData)) {
-        defaultWarn('Verifique os campos obrigatórios');
         return;
     } else {
         gridData.value[index] = newData;
@@ -58,6 +56,14 @@ const saveData = async (data) => {
     const id = data.id ? `/${data.id}` : '';
     const url = `${urlBase.value}${id}`;
     const obj = { ...data };
+    delete obj.id_pipeline;
+    delete obj.agente;
+    delete obj.unidade;
+    delete obj.documento;
+    delete obj.last_status_comiss;
+    if (obj.liquidar_aprox) obj.liquidar_em = moment(obj.liquidar_aprox, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    else obj.liquidar_em = null;
+    delete obj.liquidar_aprox;
     axios[method](url, obj)
         .then((res) => {
             const body = res.data;
@@ -73,36 +79,14 @@ const saveData = async (data) => {
             defaultWarn(err.response.data);
         });
 };
-// Validar e-mail
-const validateEmail = (value) => {
-    if (value && !isValidEmail(value)) {
-        defaultWarn('Formato de e-mail inválido');
-        return false;
-    }
-    return true;
-};
-// Validar telefone
-const validateTelefone = (value) => {
-    if (value && value.length > 0 && ![10, 11].includes(value.replace(/([^\d])+/gim, '').length)) {
-        defaultWarn(`Formato de Telefone/Celular inválido`);
-        return false;
-    }
-    return true;
-};
 // Validar formulário
 const formIsValid = (data) => {
-    // Se o valor do dropdown dropdownTipo que contém o data.id_params_tipo for do tipo 'celular' ou 'telefone', então o campo data.meio deve ser validado pelo maska telefone
-    // Mas se o valor do dropdown dropdownTipo que contém o data.id_params_tipo for do tipo 'e-mail', então o campo data.meio deve ser validado pelo isValidEmail
-    let label = getDropdownLabel(data.id_params_tipo);
-    if (label) label = label.toString().toLowerCase();
-    if (label == 'e-mail') return validateEmail(data.meio);
-    if (label == 'telefone' || label == 'celular') return validateTelefone(data.meio);
-    return true;
-};
-const getDropdownLabel = (value) => {
-    if (!value) return undefined;
-    const selectedOption = dropdownTipo.value.find((option) => option.value === value);
-    return selectedOption.label || undefined;
+    const liquidarEmIsValid = data.liquidar_aprox ? moment(data.liquidar_aprox, 'DD/MM/YYYY', true).isValid() : true;
+    if (!liquidarEmIsValid) {
+        defaultWarn('Data de liquidação inválida');
+        return false;
+    }
+    return liquidarEmIsValid;
 };
 // Exclui o registro
 const deleteRow = (data) => {
@@ -125,18 +109,14 @@ const deleteRow = (data) => {
         }
     });
 };
-// Obter parâmetros do BD
-const optionLocalParams = async (query) => {
-    const selects = query.select ? `&slct=${query.select}` : undefined;
-    const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-    return await axios.get(url);
-};
-// Carregar opções do formulário
-const loadOptions = async () => {
-    // Tipo Contato
-    await optionLocalParams({ field: 'grupo', value: 'tipo_contato', select: 'id,label' }).then((res) => {
+// Listar unidades de negócio
+const listAgentesComissionamento = async () => {
+    let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name&order=name`;
+    if (mode.value == 'new') url += '&status=10';
+    await axios.get(url).then((res) => {
+        dropdownAgentes.value = [];
         res.data.data.map((item) => {
-            dropdownTipo.value.push({ value: item.id, label: item.label });
+            dropdownAgentes.value.push({ value: item.id, label: item.name });
         });
     });
 };
@@ -147,22 +127,23 @@ const setNewItem = () => {
     }, 100);
 };
 // Carrega as operações básicas do formulário
-onBeforeMount(() => {
-    loadData();
-    loadOptions();
+onBeforeMount(async () => {
+    await loadData();
+    // Agentes de negócio
+    await listAgentesComissionamento();
 });
 </script>
 
 <template>
     <div class="card">
-        <ContatoItemForm
+        <!-- <ComissaotemForm
             @newItem="
                 loadData();
                 setNewItem();
             "
             :itemDataRoot="props.itemDataRoot"
             v-if="mode == 'new'"
-        />
+        /> -->
         <DataTable
             ref="dt"
             v-model:editingRows="editingRows"
@@ -183,44 +164,39 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo meio de contato" outlined @click="setNewItem()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" outlined @click="setNewItem()" />
                 </div>
             </template>
-            <Column v-if="userData.admin >= 3" header="Object do contato" style="width: 20%">
-                <template #body="{ data }">
-                    {{ data }}
-                </template>
-            </Column>
-            <Column v-if="userData.admin >= 3" field="id" header="ID" style="width: 5%">
+            <Column v-if="userData.admin >= 2" field="id" header="ID" style="width: 5%">
                 <template #editor="{ data, field }">
                     <span v-html="data[field]" />
                 </template>
             </Column>
-            <Column field="tipo" header="Tipo de Contato" style="width: 20%; min-width: 8rem">
+            <Column field="agente" header="Agente" style="width: 20%; min-width: 8rem">
                 <template #body="{ data, field }">
                     <span v-html="data[field]" />
                 </template>
                 <template #editor="{ data, field }">
-                    <Dropdown id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="data.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..." />
+                    <Dropdown id="id_comis_agentes" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="data.id_comis_agentes" :options="dropdownAgentes" placeholder="Selecione..." />
                 </template>
             </Column>
-            <Column field="meio" header="Meio de Contato" style="width: 40%; min-width: 8rem">
-                <template #body="{ data }">
-                    <span v-html="data.meioRenderizado" />
+            <Column field="valor" header="Valor" style="width: 20%; min-width: 8rem">
+                <template #body="{ data, field }">
+                    <span v-html="data[field]" />
                 </template>
                 <template #editor="{ data, field }">
-                    <InputText v-if="getDropdownLabel(data.id_params_tipo) && getDropdownLabel(data.id_params_tipo).toLowerCase() == 'e-mail'" v-model="data[field]" autocomplete="no" id="meio" type="text" @blur="validateEmail(data[field])" />
-                    <InputText
-                        v-else-if="getDropdownLabel(data.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(data.id_params_tipo).toLowerCase())"
-                        v-model="data[field]"
-                        autocomplete="no"
-                        v-maska
-                        data-maska="['(##) ####-####', '(##) #####-####']"
-                        id="meio"
-                        type="text"
-                        @blur="validateTelefone(data[field])"
-                    />
-                    <InputText v-else v-model="data[field]" autocomplete="no" :disabled="mode == 'view'" id="meio" type="text" />
+                    <InputText v-model="data[field]" id="valor" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                </template>
+            </Column>
+            <Column field="liquidar_aprox" header="Liquidação Aproximada" style="width: 20%; min-width: 8rem">
+                <template #body="{ data, field }">
+                    <span v-html="data[field]" />
+                </template>
+                <template #editor="{ data, field }">
+                    <div class="p-inputgroup">
+                        <InputText v-model="data[field]" id="liquidar_aprox" v-maska data-maska="##/##/####" type="text" />
+                        <Button icon="pi pi-times" severity="danger" @click="data[field] = null" />
+                    </div>
                 </template>
             </Column>
             <Column :rowEditor="true" style="width: 5%; min-width: 8rem" bodyStyle="text-align:center" />

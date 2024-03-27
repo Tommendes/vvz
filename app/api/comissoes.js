@@ -1,4 +1,5 @@
 const { dbPrefix } = require("../.env")
+const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const { STATUS_COMISSIONADO } = require('./pipeline_status.js')(app)
@@ -40,7 +41,10 @@ module.exports = app => {
         try {
             existsOrError(body.id_comis_pipeline, 'Origem do comissionamento não informado')
             // Verificar se o comis_pipeline existe
-            comissPipeline = await app.db(tabelaComisPipeline).where({ id: body.id_comis_pipeline, status: STATUS_ACTIVE }).first()
+            comissPipeline = await app.db({ tbl1: tabelaComisPipeline })
+                .join(tabelaPipeline, 'tbl1.id_pipeline', 'pipeline.id')
+                .where({ 'tbl1.id': body.id_comis_pipeline, 'tbl1.status': STATUS_ACTIVE }).first()
+
             existsOrError(comissPipeline, 'Origem do comissionamento não encontrado')
             // Verificar se o pipeline existe
             pipeline = await app.db(tabelaPipeline).where({ id: comissPipeline.id_pipeline, status: STATUS_ACTIVE }).first()
@@ -69,18 +73,31 @@ module.exports = app => {
                 let answer = `A soma do comissionamento de agentes já registrado para este Pipeline (${formatCurrency(comisAgentes.total)}) mais `
                 if (comisAgentes.total > 0) answer += `o `
                 else answer = `O `
-                let sumError = `valor informado para neste comissionamento (${formatCurrency(ceilTwoDecimals(body.valor).toFixed(2))}) ultrapassa o valor (${formatCurrency(comissPipeline.valor_agente)}) para comissionamento dos agentes informada no registro do Pipeline`
-                throw `${answer} ${sumError}`
+                let sumError = `valor informado para este comissionamento (${formatCurrency(ceilTwoDecimals(body.valor).toFixed(2))}) ultrapassa o valor (${formatCurrency(comisAgentes.total)} + ${formatCurrency(ceilTwoDecimals(body.valor).toFixed(2))} = ${formatCurrency(ceilTwoDecimals(comisAgentes.total + body.valor).toFixed(2))}) para comissionamento dos agentes informada no registro do Pipeline`
+                throw `${answer} ${sumError}. Corrija o valor informado antes de prosseguir`
+            }
+            // Se body.liquidar_em for declarado, deve ser validado com moment e não pode ser inferior à data atual pois é data de previsão de liquidação
+            if (body.liquidar_em) {
+                const date = moment().format('YYYY-MM-DD')
+                const dtLiquidacao = moment(body.liquidar_em);
+                if (!dtLiquidacao.isValid()) throw 'Data de liquidação inválida. Favor verificar'
+                if (dtLiquidacao.format('YYYY-MM-DD') < date) throw 'Data de liquidação não pode ser menor que a data atual'
             }
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error)
         }
 
+        console.log('body', body);
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
             const last = await app.db(tabelaDomain).where({ id: body.id }).first()
+            try {
+                existsOrError(last, `${tabelaAlias} (${body.id}) não encontrada`)
+            } catch (error) {
+                return res.status(400).send(error)
+            }
             // Verificar se o registro é de representante e se está sendo alterado para não representante. Se sim, parar tudo pois primeiro precisa ser alterado o registro de representante
             try {
                 if (last.agente_representante === 1 && body.agente_representante === 0) throw `Este atualmente é o registro de comissão do representante. Mas parece que essa informação está sendo alterada. Antes de prosseguir, acesse o registro desejado e informe que aquele é o novo registro de comissão da representação, ou marque a opção para que essa seja o registro.`
@@ -215,7 +232,6 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -228,21 +244,143 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
+        const tabelaComissPipelineDomain = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`
+        const tabelaComissAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
+        const tabelaPipelineParams = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
+        const tabelaCadastros = `${dbPrefix}_${uParams.schema_name}.cadastros`
+
+        let queryes = undefined
+        let query = undefined
+        let page = 0
+        let rows = 10
+        let sortField = app.db.raw('tbl1.created_at')
+        let sortOrder = 'desc'
+        let sortByAnivFundacao = undefined
+        if (req.query) {
+            queryes = req.query
+            query = ''
+            for (const key in queryes) {
+                let operator = queryes[key].split(':')[0]
+                let value = queryes[key].split(':')[1]
+                if (key.split(':')[0] == 'field') {
+                    let queryField = key.split(':')[1]
+                    if (['liquidar_aprox'].includes(queryField)) {
+                        value = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[1].split(',') : queryes[key].split(':')[1].split(',')
+                        let valueI = moment(value[0]);
+                        let valueF = moment(value[1]);
+
+                        if (valueI.isValid()) valueI = valueI.format('YYYY-MM-DD')
+                        if (valueF.isValid()) valueF = valueF.format('YYYY-MM-DD')
+                        else valueF = valueI
+
+                        switch (operator) {
+                            case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
+                                break;
+                            case 'dateBefore': operator = `< "${valueI}"`
+                                break;
+                            case 'dateAfter': operator = `> "${valueF}"`
+                                break;
+                            default: operator = `between "${valueI}" and "${valueF}"`
+                                break;
+                        }
+                        query += `date(tbl1.liquidar_em) ${operator} AND `
+                    } else if (['unidade'].includes(queryField)) {
+                        queryField = 'tbl5.descricao'
+                        operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                        query += `${queryField} ${operator} AND `
+                    } else if (['documento', 'unidade'].includes(queryField)) {
+                        // remover todos os caracteres não numéricos e converter para número
+                        const valor = value.replaceAll(/([^\d])+/gim, "")
+                        // Receber caracteres não numéricos	
+                        const texto = value.toString().replaceAll(valor, '').trim().replace(' ', '.+').replaceAll(/([\d])+/gim, "")
+                        if (texto.length > 0) query += `tbl5.descricao regexp("${texto.toString().replace(' ', '.+')}") AND `
+                        if (valor.length > 0) query += `(cast(tbl3.documento as unsigned) like "%${Number(valor)}%" or cast(tbl3.documento as unsigned) like "%${Number(valor)}%" or cast(tbl3.documento as unsigned) like "%${Number(valor)}%") AND `
+                    } else {
+                        if (queryField == 'valor') value = value.replace('.', '').replace(',', '.')
+                        switch (queryField) {
+                            case 'agente_representante': queryField = 'tbl1.nome'
+                                break;
+                            case 'agente': queryField = 'tbl6.nome'
+                                break;
+                            case 'valor': queryField = 'tbl1.valor'
+                                break;
+                        }
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'endsWith': operator = `like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+
+                        query += `${queryField} ${operator} AND `
+                    }
+                } else if (key.split(':')[0] == 'params') {
+                    switch (key.split(':')[1]) {
+                        case 'page': page = Number(queryes[key]);
+                            break;
+                        case 'rows': rows = Number(queryes[key]);
+                            break;
+                    }
+                } else if (key.split(':')[0] == 'sort') {
+                    if (['liquidar_aprox'].includes(key.split(':')[1])) {
+                        sortField = app.db.raw('tbl1.liquidar_em')
+                    } else if (['documento'].includes(key.split(':')[1])) {
+                        sortField = app.db.raw('tbl5.descricao, tbl3.documento')
+                    }
+                    else sortField = key.split(':')[1].split('=')[0]
+                    sortOrder = queryes[key]
+                }
+            }
+            query = query.slice(0, -5).trim()
+        }
+        let filterCnpj = undefined
+        let filter = req.query.filter
+        if (filter) {
+            filter = filter.trim()
+            filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
+        }
+
+        const totalRecords = await app.db({ tbl1: tabelaDomain })
+            .countDistinct('tbl1.id as count').first()
+            .join({ tbl2: tabelaComissPipelineDomain }, 'tbl1.id_comis_pipeline', 'tbl2.id')
+            .join({ tbl3: tabelaPipelineDomain }, 'tbl2.id_pipeline', 'tbl3.id')
+            .join({ tbl4: tabelaComissAgentesDomain }, 'tbl1.id_comis_agentes', 'tbl4.id')
+            .join({ tbl5: tabelaPipelineParams }, 'tbl5.id', 'tbl3.id_pipeline_params')
+            .join({ tbl6: tabelaCadastros }, 'tbl6.id', 'tbl4.id_cadastros')
+            .whereRaw(query ? query : '1=1')
+
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*`))
-
-        ret.where({ status: STATUS_ACTIVE })
+            .join({ tbl2: tabelaComissPipelineDomain }, 'tbl1.id_comis_pipeline', 'tbl2.id')
+            .join({ tbl3: tabelaPipelineDomain }, 'tbl2.id_pipeline', 'tbl3.id')
+            .join({ tbl4: tabelaComissAgentesDomain }, 'tbl1.id_comis_agentes', 'tbl4.id')
+            .join({ tbl5: tabelaPipelineParams }, 'tbl5.id', 'tbl3.id_pipeline_params')
+            .join({ tbl6: tabelaCadastros }, 'tbl6.id', 'tbl4.id_cadastros')
+            .select('tbl1.id', 'tbl1.id_comis_agentes', 'tbl1.id_comis_pipeline', 'tbl1.desconto', 'tbl1.observacao', 'tbl1.liquidar_em',
+                { id_pipeline: 'tbl3.id' }, 'tbl6.nome as agente', 'tbl5.descricao as unidade', 'tbl3.documento', app.db.raw('format(tbl1.valor, 2, "pt_BR")valor'), 'tbl1.agente_representante', app.db.raw(`DATE_FORMAT(SUBSTRING_INDEX(tbl1.liquidar_em,' ',1),'%d/%m/%Y') AS liquidar_aprox`))
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
             .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
-            .then(body => {
-                return res.json({ data: body, count: count, limit })
+            .orderBy(sortField, sortOrder)
+        if (sortByAnivFundacao) ret.orderBy(sortByAnivFundacao, sortOrder)
+        ret.limit(rows).offset((page + 1) * rows - rows)
+        ret.then(body => {
+            // enviar uma propriedade last_status_comiss com valor randômico entre [0, 20, 80, 89]
+            body = body.map(item => {
+                item.last_status_comiss = [0, 20, 80, 89][Math.floor(Math.random() * 4)]
+                return item
             })
+            return res.json({ data: body, totalRecords: totalRecords.count })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })
@@ -334,6 +472,7 @@ module.exports = app => {
         const tabelaComisPipeline = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`
         const errorInValidation = {}
 
+        const agenteRepresentante = body.agente_representante || 0
         let comisAgentes = { total: 0 }
         let comissPipeline = { valor_agente: 0 }
         try {
@@ -343,14 +482,14 @@ module.exports = app => {
             return res.status(400).send(error)
         }
         // Verificar se o comis_pipeline existe
-        comissPipeline = await app.db({tbl1: tabelaComisPipeline})
+        comissPipeline = await app.db({ tbl1: tabelaComisPipeline })
             .join(tabelaPipeline, 'tbl1.id_pipeline', 'pipeline.id')
             .where({ 'tbl1.id': body.id_comis_pipeline, 'tbl1.status': STATUS_ACTIVE }).first()
-        comisAgentes = await app.db(tabelaDomain).sum('valor as total')
-            .where({ id_comis_pipeline: body.id_comis_pipeline, agente_representante: '0', status: STATUS_ACTIVE }).first() || { total: 0 }
+        comisAgentes = await app.db({ tbl1: tabelaDomain }).sum('valor as total')
+            .where({ 'tbl1.id': body.id_comis_pipeline, 'tbl1.status': STATUS_ACTIVE, 'tbl1.agente_representante': agenteRepresentante, 'tbl1.status': STATUS_ACTIVE }).first() || { total: 0 }
 
         if (comisAgentes.total > comissPipeline.valor_agente) {
-            errorInValidation.sumError = `Existe um erro no somatório do comissionamento dos agentes. A soma (${formatCurrency(comisAgentes.total)}) ultrapassa o valor (${formatCurrency(comissPipeline.valor_agente)}) para comissionamento dos agentes informada no registro do Pipeline`
+            errorInValidation.sumError = `Existe um erro no somatório do comissionamento ${agenteRepresentante ? 'da representação' : 'dos agentes'}. A soma (${formatCurrency(comisAgentes.total)}) ultrapassa o valor (${formatCurrency(comissPipeline.valor_agente)}) para comissionamento ${agenteRepresentante ? 'da representação' : 'dos agentes'} informada no registro do Pipeline`
         }
 
         return errorInValidation;

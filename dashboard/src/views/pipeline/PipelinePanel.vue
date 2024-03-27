@@ -1,9 +1,10 @@
 <script setup>
-import { onBeforeMount, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
+import ComissoesItensGrid from '../comissoes/itens/ComissoesItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -116,7 +117,7 @@ onMounted(async () => {
         await listAgentesNegocio();
     }, Math.random() * 1000);
 });
-const comissioning = async (value) => {
+const commissioning = async (value) => {
     if (value.id) {
         itemDataComissionamento.value = value;
         flashComissionamento();
@@ -136,7 +137,7 @@ const comissioning = async (value) => {
                             <i class="fa-regular fa-address-card mr-2"></i>
                             <span>Dados do Registro</span>
                         </template>
-                        <PipelineForm @comissioning="comissioning" />
+                        <PipelineForm @commissioning="commissioning" />
                     </TabPanel>
                     <TabPanel v-if="itemDataComissionamento.id">
                         <template #header>
@@ -146,6 +147,7 @@ const comissioning = async (value) => {
                             </div>
                         </template>
                         <h2 class="m-0">Comissões do pedido {{ unidadeLabel + ' ' + itemData.documento + (userData.admin >= 2 ? `: (${itemData.id})` : '') }}</h2>
+                        <ComissoesItensGrid class="mt-3" itemDataRoot="itemData" />
                         <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
                             <template #legend>
                                 <div class="flex align-items-center text-primary">

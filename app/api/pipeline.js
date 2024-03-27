@@ -44,7 +44,6 @@ module.exports = app => {
         if (body.perc_represent) body.perc_represent = body.perc_represent.replace(",", ".");
         if (body.valor_liq) body.valor_liq = body.valor_liq.replace(",", ".");
 
-
         try {
             existsOrError(body.id_cadastros, 'Cadastro não informado')
             existsOrError(body.id_pipeline_params, 'Tipo de documento não informado')
@@ -320,10 +319,11 @@ module.exports = app => {
                 let operator = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[0] : queryes[key].split(':')[0]
                 let value = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[1] : queryes[key].split(':')[1]
                 key.split(':').forEach(element => {
+                    let queryField = key.split(':')[1]
                     if (element == 'field') {
-                        if (['unidade'].includes(key.split(':')[1]) || ['descricaoUnidade'].includes(key.split(':')[1])) {
+                        if (['unidade'].includes(queryField) || ['descricaoUnidade'].includes(queryField)) {
                             query += `(SUBSTRING_INDEX(pp.descricao, '_', 1) = '${value}' or lower(pp.descricao) = lower('${value}')) AND `
-                        } else if (['status_created_at'].includes(key.split(':')[1])) {
+                        } else if (['status_created_at'].includes(queryField)) {
                             value = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[1].split(',') : queryes[key].split(':')[1].split(',')
                             let valueI = moment(value[0]);
                             let valueF = moment(value[1]);
@@ -344,8 +344,7 @@ module.exports = app => {
                             }
                             query += `date(tbl1.created_at) ${operator} AND `
                         } else {
-                            if (['valor_bruto'].includes(key.split(':')[1])) value = value.replace(",", ".")
-                            let queryField = key.split(':')[1]
+                            if (['valor_bruto'].includes(queryField)) value = value.replace(",", ".")
                             switch (operator) {
                                 case 'startsWith': operator = `like "${value}%"`
                                     break;

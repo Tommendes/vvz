@@ -226,6 +226,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const underscore = req.query.underscore || 1
         const doc_venda = req.query.doc_venda || undefined
         const gera_baixa = req.query.gera_baixa || undefined
         const descricao = req.query.descricao || undefined
@@ -234,7 +235,7 @@ module.exports = app => {
 
         if (doc_venda) ret.where({ doc_venda: doc_venda })
         if (gera_baixa) ret.where({ gera_baixa: gera_baixa })
-        if (descricao && descricao != '-1') ret.where(app.db.raw(`SUBSTRING_INDEX(descricao, '_', 1) = '${descricao}'`))
+        if (descricao && descricao != '-1') ret.where(app.db.raw(`REPLACE(SUBSTRING_INDEX(descricao, "_", ${underscore}), '_', ' ') = '${descricao}'`))
         if (status) ret.where({ status: status })
         else ret.where({ status: STATUS_ACTIVE })
 
@@ -258,11 +259,12 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const underscore = req.query.underscore || 1
         const ret = app.db(tabelaDomain)
-            .select(app.db.raw(`SUBSTRING_INDEX(descricao, "_", 1) as descricao`))
+            .select(app.db.raw(`REPLACE(SUBSTRING_INDEX(descricao, "_", ${underscore}), '_', ' ') as descricao`))
             .where({ status: STATUS_ACTIVE })
-            .groupBy(app.db.raw(`SUBSTRING_INDEX(descricao, "_", 1)`))
-            .orderBy(app.db.raw(`SUBSTRING_INDEX(descricao, "_", 1)`))
+            .groupBy(app.db.raw(`REPLACE(SUBSTRING_INDEX(descricao, "_", ${underscore}), '_', ' ')`))
+            .orderBy(app.db.raw(`REPLACE(SUBSTRING_INDEX(descricao, "_", ${underscore}), '_', ' ')`))
         ret.then(body => {
             const quant = body.length
             return res.json({ data: body, quant })

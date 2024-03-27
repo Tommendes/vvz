@@ -3,10 +3,13 @@ import { onBeforeMount, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
-import ComissaoForm from './ComissaoForm.vue';
-import { removeHtmlTags, formatCurrency } from '@/global';
+// import ComissaoForm from './ComissaoForm.vue';
+import { formatCurrency } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import moment from 'moment';
+import Prompts from '@/components/Prompts.vue';
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
 
 const screenWidth = ref(window.innerWidth);
 const isMobile = ref(window.matchMedia('(max-width: 767px)').matches);
@@ -33,8 +36,11 @@ const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
 const gridDataRaw = ref([]); // Dados sem formatação
 const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
-const dropdownUnidadesFilter = ref([]); // Itens do dropdown de Unidades de Negócio do grid
 const dropdownAgentes = ref([]); // Itens do dropdown de Agentes de Negócio do grid
+const dropdownSN = ref([
+    { value: '0', label: 'Não' },
+    { value: '1', label: 'Sim' }
+]);
 const tipoDoc = ref(null); // Tipo de documento selecionado
 const unidade = ref(null); // Unidade de negócio selecionada
 const periodo = ref(null); // Período selecionado
@@ -64,7 +70,6 @@ const getAgentes = async () => {
 // Carregar opções do formulário de pesquisa
 const loadOptions = async () => {
     filtrarUnidades();
-    filtrarUnidadesDescricao();
 };
 const filtrarUnidades = async () => {
     // Unidades de negócio
@@ -83,35 +88,22 @@ const filtrarUnidades = async () => {
             });
         });
     }, Math.random() * 1000 + 250);
-    filtrarUnidadesDescricao();
 };
-const filtrarUnidadesDescricao = async () => {
-    // Unidades de negócio por tipo
-    setTimeout(async () => {
-        await optionParams({
-            func: 'ubt',
-            tipoDoc: tipoDoc.value,
-            unidade: unidade.value
-        }).then((res) => {
-            dropdownUnidadesFilter.value = [];
-            res.data.data.map((item) => {
-                const label = item.descricao.toString().replaceAll(/_/g, ' ');
-                dropdownUnidadesFilter.value.push({
-                    value: item.descricao,
-                    label: label
-                });
-            });
-        });
-    }, Math.random() * 1000 + 250);
-};
-
+// Lista de tipos
+const dropdownStatus = ref([
+    { label: 'Pendente', value: '0' },
+    { label: 'Liquidar', value: '20' },
+    { label: 'Liquidado', value: '80' },
+    { label: 'Suspenso', value: '89' }
+    // { label: 'Excluído', value: '99' }
+]);
 const listaNomes = ref([
-    { field: 'id_comis_pipeline', label: 'Cliente', class: '' },
-    { field: 'agente_representante', label: 'Cliente', class: '' },
-    { field: 'id_comis_agentes', label: 'Agente', list: dropdownAgentes.value, class: '' },
-    { field: 'valor', label: 'Descrição' },
-    { field: 'desconto', label: 'Agente', class: '' },
-    { field: 'observacao', label: 'Situação', class: '' }
+    { field: 'agente', label: 'Agente', list: dropdownAgentes.value, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
+    { field: 'documento', label: 'Documento', class: isMobile.value || screenWidth.value < 840 ? 'hidden' : '' },
+    { field: 'valor', label: 'R$ Comissão', class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
+    { field: 'liquidar_aprox', label: 'Liquidação em', type: 'date', tagged: true, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
+    { field: 'agente_representante', label: 'É Representação', type: 'sn', list: dropdownSN.value, tagged: true, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
+    { field: 'last_status_comiss', label: 'Situação', list: dropdownStatus.value, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -150,13 +142,6 @@ const reload = () => {
     router.replace({ query: {} });
     clearFilter();
 };
-//Scrool quando criar um Novo Registro
-const scrollToTop = () => {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-};
 // Carrega os dados do grid
 const loadLazyData = () => {
     loading.value = true;
@@ -170,6 +155,16 @@ const loadLazyData = () => {
                 sumRecords.value = axiosRes.data.sumRecords;
                 gridData.value.forEach((element) => {
                     gridDataRaw.value.push({ ...element });
+                    // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
+                    const documento = element.documento;
+                    if (element.documento) element.documento = `${element.unidade.replaceAll('_', ' ')} ${documento}`;
+                    element.agente_representante = element.agente_representante == '1' ? 'Sim' : 'Não';
+                    // alterar o valor de element.last_status_comiss de acordo com o dropdownStatus
+                    dropdownStatus.value.forEach((item) => {
+                        if (item.value == element.last_status_comiss) element.last_status_comiss = item.label;
+                    });
+                    if (element.agente) element.agente = element.agente.trim();
+                    else element.agente = '';
                 });
                 loading.value = false;
             })
@@ -199,8 +194,6 @@ const onFilter = () => {
     mountUrlFilters();
     loadLazyData();
 };
-// Armazena o modo de operação do grid
-const mode = ref('grid');
 /**
  * Monta a url com os filtros
  */
@@ -210,7 +203,7 @@ const mountUrlFilters = () => {
         if (filters.value[key].value) {
             const macthMode = filters.value[key].matchMode || 'contains';
             let value = filters.value[key].value;
-            if (key && key == 'status_created_at') {
+            if (key && key == 'liquidar_aprox') {
                 const dI = value[0] || undefined;
                 const dF = value[1] || undefined;
                 value = `${moment(dI).format('YYYY-MM-DD')},${moment(dF).format('YYYY-MM-DD')}`;
@@ -224,12 +217,12 @@ const mountUrlFilters = () => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
-    if (tipoDoc.value) url += `field:doc_venda=equals:${tipoDoc.value}&`;
+    if (tipoDoc.value) url += `field:documento=equals:${tipoDoc.value}&`;
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
-    if (periodo.value) url += `field:status_created_at=contains:${periodo.value}&`;
+    if (periodo.value) url += `field:liquidar_aprox=contains:${periodo.value}&`;
     if (unidadeNegocio.value) url += `field:descricaoUnidade=equals:${unidadeNegocio.value}&`;
     if (agenteNegocio.value) url += `field:agente=equals:${agenteNegocio.value}&`;
-    if (statusNegocio.value) url += `field:last_status_params=equals:${statusNegocio.value}&`;
+    // if (statusNegocio.value) url += `field:last_status_comiss=equals:${statusNegocio.value}&`;
     urlFilters.value = `?${url}`;
 };
 
@@ -238,16 +231,12 @@ let dataToExcelExport = [
     {
         sheet: 'Pipeline',
         columns: [
-            { label: 'Cliente', value: (row) => row.nome },
-            { label: 'Tipo', value: (row) => row.tipo_doc },
-            { label: 'Proposta', value: (row) => row.doc_pai },
-            { label: 'Pedido', value: (row) => row.doc_filho },
-            { label: 'Documento', value: (row) => row.documento },
-            { label: 'R$ Bruto', value: (row) => row.valor_bruto, format: 'R$ #,##0.00' },
-            { label: 'Descrição', value: (row) => row.descricao },
             { label: 'Agente', value: (row) => row.agente },
-            { label: 'Data', value: (row) => row.status_created_at },
-            { label: 'Situação', value: (row) => row.last_status_params }
+            { label: 'Documento', value: (row) => row.documento },
+            { label: 'R$ Comissao', value: (row) => row.valor, format: 'R$ #,##0.00' },
+            { label: 'Liquidar em', value: (row) => row.liquidar_aprox },
+            { label: 'É Representação', value: (row) => (row.agente_representante ? 'Sim' : 'Não') },
+            { label: 'Situação', value: (row) => row.last_status_comiss }
         ],
         content: []
     }
@@ -258,9 +247,6 @@ const exportXls = () => {
     const toExport = gridData;
     dataToExcelExport[0].content = [];
     toExport.value.forEach((element) => {
-        element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
-        element.descricao = removeHtmlTags(element.descricao);
-        element.documento = removeHtmlTags(element.documento);
         dataToExcelExport[0].content.push(element);
     });
     let settings = {
@@ -272,28 +258,163 @@ const exportXls = () => {
     };
     xlsx(dataToExcelExport, settings);
 };
+
+// Determina a qualificação baseado no tempo de existência do registro (liquidar_aprox)
+// Se o registro tiver 120 dias ou mais, retorne 'danger'
+// Se o registro tiver 120 dias ou menos, retorne 'help'
+// Se o registro tiver 80 dias ou menos, retorne 'warning'
+// Se o registro tiver 40 dias ou menos, retorne 'info'
+// Se o registro tiver 7 dias ou menos, retorne 'success'
+const daysToQualify = ref([
+    { days: 7, qualify: 'success', label: '7 dias ou menos' },
+    { days: 39, qualify: 'info', label: 'Inferior a 40 dias' },
+    { days: 79, qualify: 'warning', label: 'Inferior a 80 dias' },
+    { days: 119, qualify: 'help', label: 'Inferior a 120 dias' },
+    { days: 120, qualify: 'danger', label: '120 dias ou mais' }
+]);
+const getSeverity = (field, type = 'date') => {
+    if (type == 'date') {
+        const ageInDays = moment().diff(moment(field, 'DD/MM/YYYY'), 'days');
+        for (let i = 0; i < daysToQualify.value.length; i++) {
+            const element = daysToQualify.value[i];
+            if (ageInDays <= element.days) {
+                return element.qualify;
+            }
+        }
+    } else if (type == 'number') {
+        if (field <= 7) return 'success';
+        if (field <= 39) return 'info';
+        if (field <= 79) return 'warning';
+        if (field <= 119) return 'help';
+        if (field >= 120) return 'danger';
+    } else if (type == 'sn') {
+        if (field == 'Sim') return 'success';
+        if (field == 'Não') return 'danger';
+    }
+    return 'danger';
+};
 const goField = (data) => {
-    window.open(`#/${userData.schema_description}/pipeline/${data.id}`, '_blank');
+    window.open(`#/${userData.schema_description}/pipeline/${data.id_pipeline}?resource=comiss`, '_blank');
 };
 // Carrega os dados do filtro do grid
 watchEffect(() => {
     mountUrlFilters();
 });
 onBeforeMount(() => {
+    // Inicializa os filtros do grid
     initFilters();
     loadOptions();
     getAgentes();
 });
+onBeforeUnmount(() => {
+    // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
+    window.removeEventListener('resize', updateScreenWidth);
+});
+
+// const queryUrl = ref('');
+onMounted(async () => {
+    window.addEventListener('resize', updateScreenWidth);
+    updateScreenWidth(); // Atualize a propriedade inicialmente
+
+    // queryUrl.value = route.query;
+    // Limpa os filtros do grid
+    clearFilter();
+    let load = false;
+    if (route.query.tpd && route.query.tpd.length) {
+        tipoDoc.value = route.query.tpd;
+        filters.value.doc_venda = { value: route.query.tpd, matchMode: 'equals' };
+        load = true;
+        filtrarUnidades();
+    }
+    if (route.query.per && route.query.per.length) {
+        const periodo = [];
+        periodo.push(moment(route.query.per.split(',')[0]).format('YYYY-MM-DDTHH:mm:ss'));
+        if (route.query.per.split(',')[1]) periodo.push(moment(route.query.per.split(',')[1]).format('YYYY-MM-DDTHH:mm:ss'));
+        else periodo.push(moment(route.query.per.split(',')[0]).format('YYYY-MM-DDTHH:mm:ss'));
+        periodo.value = periodo;
+        filters.value.liquidar_aprox = { value: periodo.value, matchMode: 'dateIs' };
+        load = true;
+    }
+    if (route.query.tdoc && route.query.tdoc.length) {
+        unidadeNegocio.value = route.query.tdoc;
+        filters.value.tipo_doc = { value: route.query.tdoc, matchMode: 'equals' };
+        load = true;
+    }
+    if (route.query.ag && route.query.ag.length) {
+        agenteNegocio.value = route.query.ag;
+        filters.value.agente = { value: route.query.ag, matchMode: 'equals' };
+        load = true;
+    }
+    if (route.query.stt && route.query.stt.length) {
+        statusNegocio.value = route.query.stt;
+        filters.value.last_status_comiss = { value: route.query.stt, matchMode: 'equals' };
+        load = true;
+    }
+    router.replace({ query: {} });
+    if (load) loadLazyData();
+});
 const customFilterOptions = ref({ filterclear: false });
+
+const dialogRef = ref(null);
+const messagesButtoms = ref([
+    {
+        label: 'Ok',
+        icon: 'fa-solid fa-check',
+        severity: 'success'
+    },
+    {
+        label: 'Selecionar/Criar registro no Pipeline',
+        icon: 'fa-regular fa-trash-can',
+        severity: 'default'
+    }
+]);
+const showMessage = (body) => {
+    dialogRef.value = dialog.open(Prompts, {
+        data: {
+            body: body
+        },
+        props: {
+            header: body.label,
+            style: {
+                width: '50vw'
+            },
+            breakpoints: {
+                '960px': '75vw',
+                '640px': '90vw'
+            },
+            modal: true
+        },
+        onClose: async (options) => {
+            if (options.data.label == messagesButtoms.value[0].label) {
+                /* empty */
+            } else if (options.data.label == messagesButtoms.value[1].label) {
+                router.push({ path: `/${userData.schema_description}/pipeline`, query: { tpd: '2' } });
+            }
+        }
+    });
+};
+const newCommissioning = () => {
+    // messagesButtoms.value.forEach((elementButton) => {
+    //     // Adicionar ao elementButton o id da mensagem
+    //     elementButton.id = element.id;
+    //     elementButton.message = element.msg;
+    //     elementButton.title = element.title;
+    // });
+    showMessage({
+        label: 'Novo Comisionamento',
+        message: `<p>Para registrar uma comissão, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`,
+        buttons: messagesButtoms.value
+    });
+};
 </script>
 
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb :items="[{ label: 'Todo o Comissionamento', to: `/${userData.schema_description}/comissoes` }]" />
+            <Breadcrumb :items="[{ label: 'Todo o Comissionamento', to: `/${userData.schema_description}/pipeline` }]" />
         </div>
         <!-- <div class="col-12">
-            <ComissaoForm :mode="mode" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+            <ComissaoForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         </div> -->
 
         <div class="col-12">
@@ -327,23 +448,7 @@ const customFilterOptions = ref({ filterclear: false });
                             <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
                         </div>
                         <div class="grid">
-                            <div class="col-6 md:col-3">
-                                <Dropdown
-                                    placeholder="Todos...?"
-                                    :showClear="!!tipoDoc"
-                                    class="flex-none flex"
-                                    id="doc_venda"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    v-model="tipoDoc"
-                                    :options="dropdownTiposDoc"
-                                    @change="
-                                        loadLazyData();
-                                        filtrarUnidades();
-                                    "
-                                />
-                            </div>
-                            <div class="col-6 md:col-3">
+                            <div class="col-12 md:col-3">
                                 <Dropdown
                                     filter
                                     placeholder="Filtrar por Representada..."
@@ -354,32 +459,14 @@ const customFilterOptions = ref({ filterclear: false });
                                     optionValue="value"
                                     v-model="unidade"
                                     :options="dropdownUnidades"
-                                    @change="
-                                        loadLazyData();
-                                        filtrarUnidadesDescricao();
-                                    "
-                                />
-                            </div>
-                            <div class="col-12 md:col-6">
-                                <Dropdown
-                                    filter
-                                    placeholder="Filtrar por Tipo..."
-                                    :showClear="!!unidadeNegocio"
-                                    class="flex-grow-1 flex"
-                                    id="unidade_tipos"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    v-model="unidadeNegocio"
-                                    :options="dropdownUnidadesFilter"
                                     @change="loadLazyData()"
                                 />
                             </div>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                             <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" @click="exportXls()" />
-                            <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined @click="clearFilter()" />
-                            <Button type="button" icon="fa-solid fa-refresh" label="Todo o pipeline" outlined @click="reload()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
+                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined @click="reload()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Comissionamento" outlined @click="newCommissioning()" />
                         </div>
                     </template>
                     <template #empty>
@@ -391,7 +478,7 @@ const customFilterOptions = ref({ filterclear: false });
                     <template v-for="nome in listaNomes" :key="nome">
                         <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                                <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field], nome.type)" />
                                 <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                             </template>
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
@@ -423,7 +510,7 @@ const customFilterOptions = ref({ filterclear: false });
 </template>
 <style scoped>
 .tagQualify {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
 }
 
 .tagRes {

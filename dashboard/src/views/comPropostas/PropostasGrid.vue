@@ -3,7 +3,6 @@ import { onBeforeMount, onMounted, provide, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
-import PropostaForm from './PropostaForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { removeHtmlTags } from '@/global';
 import Prompts from '@/components/Prompts.vue';

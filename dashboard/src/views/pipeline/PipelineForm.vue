@@ -55,7 +55,7 @@ const unidadeLabel = ref(undefined);
 // Props do template
 const props = defineProps(['mode', 'idPipeline', 'idCadastro']);
 // Emit do template
-const emit = defineEmits(['changed', 'cancel', 'comissioning']);
+const emit = defineEmits(['changed', 'cancel', 'commissioning']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pipeline`);
 // Itens do breadcrumb
@@ -100,6 +100,10 @@ const loadData = async () => {
                     breadItems.value = [{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }];
                     if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
+                    if (route.query.resource && route.query.resource == 'comiss') {
+                        toComissionate();
+                        // router.replace({ query: {} });
+                    }
                 })
                 .catch((error) => {
                     if (typeof error == 'string') defaultWarn(error);
@@ -332,8 +336,8 @@ const itemDataStatusPreload = ref([
     },
     {
         status: '70',
-        action: 'Comissionamento',
-        label: 'Comissionamento',
+        action: 'Comissionar',
+        label: 'Pedido Comissionado',
         icon: 'fa-solid fa-money-bill-transfer',
         color: '#689F38'
     },
@@ -398,113 +402,16 @@ const getPipelineParam = async () => {
         }, Math.random() * 100 + 250);
     }
 };
-const itemNovo = [
-    // {
-    //     label: 'Outro Cliente ou Tipo',
-    //     icon: 'fa-solid fa-plus',
-    //     command: async () => {
-    //         delete itemData.value.id;
-    //         delete itemData.value.id_filho;
-    //         delete itemData.value.id_pai;
-    //         delete itemData.value.documento;
-    //         itemData.value = {
-    //             id_pipeline_params: itemData.value.id_pipeline_params,
-    //             id_com_agentes: itemData.value.id_com_agentes,
-    //             valor_bruto: itemData.value.valor_bruto,
-    //             valor_liq: itemData.value.valor_liq,
-    //             valor_representacao: itemData.value.valor_representacao,
-    //             valor_agente: itemData.value.valor_agente,
-    //             perc_represent: itemData.value.perc_represent,
-    //             descricao: itemData.value.descricao
-    //         };
-    //         selectedCadastro.value = undefined;
-    //         itemDataLastStatus.value = {};
-    //         editCadastro.value = true;
-    //         mode.value = 'new';
-    //         // Unidades de negócio
-    //         await listUnidadesDescricao();
-    //         await listAgentesNegocio();
-    //     }
-    // },
-    // {
-    //     label: 'Mesmo Cliente e Outro Tipo',
-    //     icon: 'fa-regular fa-copy',
-    //     command: async () => {
-    //         delete itemData.value.id;
-    //         delete itemData.value.id_filho;
-    //         delete itemData.value.id_pai;
-    //         delete itemData.value.documento;
-    //         delete itemData.value.updated_at;
-    //         itemData.value = {
-    //             id_cadastros: itemData.value.id_cadastros,
-    //             id_pipeline_params: itemData.value.id_pipeline_params,
-    //             id_com_agentes: itemData.value.id_com_agentes,
-    //             valor_bruto: itemData.value.valor_bruto,
-    //             valor_liq: itemData.value.valor_liq,
-    //             valor_representacao: itemData.value.valor_representacao,
-    //             valor_agente: itemData.value.valor_agente,
-    //             perc_represent: itemData.value.perc_represent,
-    //             descricao: itemData.value.descricao
-    //         };
-    //         if (itemDataParam.value.doc_venda == 0) {
-    //             delete itemData.value.valor_bruto;
-    //             delete itemData.value.valor_liq;
-    //             delete itemData.value.valor_representacao;
-    //             delete itemData.value.valor_agente;
-    //             delete itemData.value.perc_represent;
-    //         }
-    //         itemDataLastStatus.value = {};
-    //         mode.value = 'new';
-    //         // Unidades de negócio
-    //         await listUnidadesDescricao();
-    //         await listAgentesNegocio();
-    //     }
-    // },
-    {
-        label: 'Mesmo Cliente e Tipo (Clonar)',
-        icon: 'fa-solid fa-copy',
-        command: async () => {
-            delete itemData.value.id;
-            delete itemData.value.evento;
-            delete itemData.value.documento;
-            delete itemData.value.id_filho;
-            delete itemData.value.id_pai;
-            delete itemData.value.created_at;
-            delete itemData.value.updated_at;
-            itemDataParam.value.obrig_valor = 0;
-            itemDataLastStatus.value = {};
-            mode.value = 'clone';
-            // Unidades de negócio
-            await listUnidadesDescricao();
-            await listAgentesNegocio();
-            // itemData.value.documento = String(itemData.value.documento);
-            // await saveData();
-            // await listAgentesNegocio();
-            // defaultWarn('Verifique se o número do documento deve ser editado');
-        }
-    }
-];
 const registroIdentico = async () => {
     itemData.value = {
         id_cadastros: itemData.value.id_cadastros
     };
-    // delete itemData.value.id;
-    // delete itemData.value.evento;
-    // delete itemData.value.documento;
-    // delete itemData.value.id_filho;
-    // delete itemData.value.id_pai;
-    // delete itemData.value.created_at;
-    // delete itemData.value.updated_at;
     itemDataParam.value = {};
     itemDataLastStatus.value = {};
     mode.value = 'clone';
     // Unidades de negócio
     await listUnidadesDescricao();
     await listAgentesNegocio();
-    // itemData.value.documento = String(itemData.value.documento);
-    // await saveData();
-    // await listAgentesNegocio();
-    // defaultWarn('Verifique se o número do documento deve ser editado');
 };
 const toPai = async () => {
     window.location.href = `#/${userData.schema_description}/pipeline/${itemData.value.id_pai}`;
@@ -521,7 +428,7 @@ const toComissionate = async () => {
             if (res.data && res.data.id) {
                 // defaultSuccess('Comissionamento criado com sucesso');
                 itemDataComissionamento.value = res.data;
-                emit('comissioning', itemDataComissionamento.value);
+                emit('commissioning', itemDataComissionamento.value);
             } else defaultWarn('Erro ao criar comissionamento');
         })
         .catch((error) => {
@@ -1146,7 +1053,6 @@ watch(route, (value) => {
                                 @click="router.push(`/${userData.schema_description}/cadastro/${itemData.id_cadastros}`)"
                             />
                             <Button label="Novo Registro para o Cliente" v-if="itemData.id && !itemData.id_pai" type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised @click="registroIdentico" />
-                            <!-- <SplitButton label="Novo Registro Idêntico" v-if="!itemData.id_pai" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised :model="itemNovo" /> -->
                             <Button
                                 :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
                                 v-if="itemData.id_filho || itemData.id_pai"
@@ -1186,7 +1092,7 @@ watch(route, (value) => {
                             />
                             <Button
                                 label="Comissionar"
-                                v-if="userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10"
+                                v-if="userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params >= 20 && itemDataLastStatus.status_params <= 70 && itemData.status == 10"
                                 :disabled="itemDataLastStatus.status_params >= 89"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-money-bill-transfer ${userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10 ? 'fa-shake' : ''}`"
