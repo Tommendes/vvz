@@ -1,20 +1,31 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultWarn } from '@/toast';
+import ComissaoItemForm from './ComissaoItemForm.vue';
+import { defaultWarn, defaultSuccess } from '@/toast';
 import { useConfirm } from 'primevue/useconfirm';
-// import ComissaotemForm from './ComissaotemForm.vue';
 const confirm = useConfirm();
 const gridData = ref(null);
-const editingRows = ref([]);
+const itemData = ref({});
+const itemDataGroup = ref({});
 const props = defineProps({
-    itemDataRoot: Object // O próprio cadastro
+    itemDataRoot: Object, // O próprio Pipeline
+    itemDataComissionamento: Object // O próprio Comissionamento
 });
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 const mode = ref('grid');
 // Dropdowns
 const dropdownAgentes = ref([]);
+// Lista de status
+// STATUS_NAO_PROGRAMADO = 10
+// STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20
+// STATUS_LIQUIDADO = 30
+const dropdownStatus = ref([
+    { label: 'Não programado', value: '10', severity: 'danger' },
+    { label: 'Em programação de liquidação', value: '20', severity: 'warning' },
+    { label: 'Liquidado', value: '30', severity: 'success' }
+]);
 // Cookies de usuário
 import { userKey } from '@/global';
 import moment from 'moment';
@@ -23,148 +34,165 @@ const userData = JSON.parse(json);
 // Props do template
 // Ref do gridData
 const dt = ref(null);
+const comissionamento = ref({ R: 0, A: 0 });
+const canAddCommission = ref(false);
 // Carrega os dados da grid
 const loadData = async () => {
     mode.value = 'grid';
     const url = `${urlBase.value}?field:id_pipeline=equals:${props.itemDataRoot.id}`;
-    await axios.get(url).then((axiosRes) => {
-        gridData.value = axiosRes.data.data;
-        // loadOptions();
-        // gridData.value.forEach((element) => {
-        //     if (['telefone', 'celular'].includes(element.tipo.toLowerCase())) element.meioRenderizado = renderizarHTML(element.meio, { to: props.itemDataRoot.pessoa, from: userData.name });
-        //     else element.meioRenderizado = renderizarHTML(element.meio);
-        // });
-    });
+    setTimeout(async () => {
+        // resete comissionamento
+        comissionamento.value = { R: 0, A: 0 };
+        await axios.get(url).then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            gridData.value.map((item) => {
+                const valor = item.valor ? Number(item.valor.replace(',', '.')) : 0;
+                if (item.agente_representante == 1) comissionamento.value.R += valor;
+                else comissionamento.value.A += valor;
+                const situacao = item.last_status_comiss;
+                item.situacao = getStatusField(situacao, 'label');
+            });
+            canAddCommission.value = comissionamento.value.R < Number(props.itemDataRoot.valor_representacao.replace(',', '.')) || comissionamento.value.A < Number(props.itemDataRoot.valor_agente.replace(',', '.'));
+        });
+    }, Math.random() * 1000 + 250);
 };
-const onRowEditInit = () => {};
-const onRowEditSave = (event) => {
-    // Se o formulário não for válido, não salva
-    let { newData, index } = event;
-    if (!formIsValid(newData)) {
-        return;
+defineExpose({ loadData }); // Expondo a função para o componente pai
+const viewItem = (data) => {
+    mode.value = 'grid';
+    setTimeout(() => {
+        itemData.value = { ...data };
+        mode.value = 'view';
+    }, 100);
+};
+const newItem = () => {
+    if (canAddCommission.value) {
+        mode.value = 'grid';
+        setTimeout(() => {
+            itemData.value = { id_comis_pipeline: props.itemDataRoot.id };
+            mode.value = 'new';
+        }, 100);
     } else {
-        gridData.value[index] = newData;
-        saveData(newData);
+        defaultWarn('Não há margem para mais comissionamento');
     }
 };
-const onRowEditCancel = () => {
-    loadData();
+const liquidateCommissions = () => {
+    confirm.require({
+        group: 'headless',
+        header: 'Confirmar liquidação total',
+        message: `Confirma a programação de liquidação deste${gridData.value.length > 1 ? 's' : ''} ${gridData.value.length} registros?`,
+        message2: 'Essa operação ainda poderá ser revertida enquanto não houver a liquidação total.',
+        message3: 'Informe abaixo a data prevista para liquidação.',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            liquidateGroup();
+        },
+        reject: () => {
+            return;
+        }
+    });
 };
-// Salvar dados do formulário
-const saveData = async (data) => {
-    const method = data.id ? 'put' : 'post';
-    const id = data.id ? `/${data.id}` : '';
-    const url = `${urlBase.value}${id}`;
-    const obj = { ...data };
-    delete obj.id_pipeline;
-    delete obj.agente;
-    delete obj.unidade;
-    delete obj.documento;
-    delete obj.last_status_comiss;
-    if (obj.liquidar_aprox) obj.liquidar_em = moment(obj.liquidar_aprox, 'DD/MM/YYYY').format('YYYY-MM-DD');
-    else obj.liquidar_em = null;
-    delete obj.liquidar_aprox;
-    axios[method](url, obj)
-        .then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                defaultSuccess('Registro salvo com sucesso');
-                data = body;
-            } else {
-                defaultWarn('Erro ao salvar registro');
-            }
-            loadData();
-        })
-        .catch((err) => {
-            defaultWarn(err.response.data);
+// Listar agentes de negócio
+const listAgentesComissionamento = async () => {
+    let url = `${baseApiUrl}/comis-agentes/f-a/gag?agente_representante`;
+    await axios.get(url).then((res) => {
+        dropdownAgentes.value = [];
+        res.data.map((item) => {
+            dropdownAgentes.value.push({ value: item.id, label: `${item.nome} (${item.ordem})` });
         });
+    });
 };
+
 // Validar formulário
-const formIsValid = (data) => {
-    const liquidarEmIsValid = data.liquidar_aprox ? moment(data.liquidar_aprox, 'DD/MM/YYYY', true).isValid() : true;
+const formIsValid = () => {
+    const liquidarEmIsValid = itemDataGroup.value.liquidar_em ? moment(itemDataGroup.value.liquidar_em, 'DD/MM/YYYY', true).isValid() : true;
     if (!liquidarEmIsValid) {
         defaultWarn('Data de liquidação inválida');
         return false;
     }
     return liquidarEmIsValid;
 };
-// Exclui o registro
-const deleteRow = (data) => {
-    confirm.require({
-        group: 'templating',
-        header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'fa-solid fa-check',
-        rejectIcon: 'fa-solid fa-xmark',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            axios.delete(`${urlBase.value}/${data.id}`).then(async () => {
-                defaultSuccess('Registro excluído com sucesso!');
-                await loadData();
-            });
-        },
-        reject: () => {
-            return false;
-        }
+
+const liquidateGroup = () => {
+    if (!formIsValid()) return;
+    const url = `${urlBase.value}`;
+    // const obj = { itemData: moment(itemData.value.liquidar_em, 'DD/MM/YYYY').format('YYYY-MM-DD') };
+    let obj = [];
+    const dateToLiquidate = moment(itemDataGroup.value.liquidar_em).format('YYYY-MM-DD');
+    gridData.value.forEach((element) => {
+        const newItem = { id: element.id, liquidar_em: dateToLiquidate };
+        obj.push(newItem);
+    });
+    axios.patch(url, obj).then((res) => {
+        defaultSuccess(res.data);
+        loadData();
     });
 };
-// Listar unidades de negócio
-const listAgentesComissionamento = async () => {
-    let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name&order=name`;
-    if (mode.value == 'new') url += '&status=10';
-    await axios.get(url).then((res) => {
-        dropdownAgentes.value = [];
-        res.data.data.map((item) => {
-            dropdownAgentes.value.push({ value: item.id, label: item.name });
-        });
-    });
+
+// Retornar o label de acordo com o value do DropDown
+const getAgentesLabel = (value) => {
+    const item = dropdownAgentes.value.find((item) => item.value == value);
+    return item ? item.label : '';
 };
-const setNewItem = () => {
-    mode.value = 'grid';
-    setTimeout(() => {
-        mode.value = 'new';
-    }, 100);
+const getStatusField = (value, field = 'label') => {
+    const item = dropdownStatus.value.find((item) => item.value == value);
+    return item ? item[field] : '';
 };
 // Carrega as operações básicas do formulário
 onBeforeMount(async () => {
-    await loadData();
-    // Agentes de negócio
-    await listAgentesComissionamento();
+    setTimeout(async () => {
+        await loadData();
+        await listAgentesComissionamento();
+    }, Math.random() * 100 + 250);
 });
 </script>
 
 <template>
+    <ConfirmDialog group="headless">
+        <template #container="{ message, acceptCallback, rejectCallback }">
+            <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
+                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                    <i class="pi pi-question text-5xl"></i>
+                </div>
+                <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
+                <p class="mb-1">{{ message.message }}</p>
+                <p class="mb-1">{{ message.message2 }}</p>
+                <p class="mb-1">{{ message.message3 }}</p>
+                <Calendar v-model="itemDataGroup.liquidar_em" showButtonBar dateFormat="dd/mm/yy" />
+                <p>{{ itemDataGroup.liquidar_em }}</p>
+                <div class="flex align-items-center gap-2 mt-4">
+                    <Button label="Confirmar" @click="acceptCallback"></Button>
+                    <Button label="Ainda não" outlined @click="rejectCallback"></Button>
+                </div>
+            </div>
+        </template>
+    </ConfirmDialog>
     <div class="card">
-        <!-- <ComissaotemForm
-            @newItem="
-                loadData();
-                setNewItem();
-            "
-            :itemDataRoot="props.itemDataRoot"
-            v-if="mode == 'new'"
-        /> -->
-        <DataTable
-            ref="dt"
-            v-model:editingRows="editingRows"
-            :value="gridData"
-            editMode="row"
-            dataKey="id"
-            @row-edit-init="onRowEditInit"
-            @row-edit-save="onRowEditSave"
-            @row-edit-cancel="onRowEditCancel"
-            :pt="{
-                table: { style: 'min-width: 50rem' },
-                column: {
-                    bodycell: ({ state }) => ({
-                        style: state['d_editing'] && 'padding-top: 0.6rem; padding-bottom: 0.6rem'
-                    })
-                }
-            }"
-        >
+        <ComissaoItemForm
+            @newItem="loadData"
+            @reload="loadData"
+            @cancel="loadData"
+            :parentMode="mode"
+            :itemDataRoot="itemData"
+            :itemDataComissionamento="itemDataComissionamento"
+            :itemDataPipeline="itemDataRoot"
+            :comissionamento="comissionamento"
+            v-if="['new', 'view', 'edit'].includes(mode)"
+        />
+        <DataTable ref="dt" :value="gridData" dataKey="id">
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" outlined @click="setNewItem()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" outlined @click="newItem()" v-tooltip.top="canAddCommission ? 'Clique para registrar uma nova comissão' : 'Não há margem para comissionamento'" />
+                    <Button
+                        type="button"
+                        icon="fa-solid fa-file-invoice-dollar fa-fade"
+                        label="Programar liquidação em grupo"
+                        outlined
+                        @click="liquidateCommissions()"
+                        v-tooltip.top="'Clique para informar a data de liquidação de todas as comissões abaixo'"
+                    />
                 </div>
             </template>
             <Column v-if="userData.admin >= 2" field="id" header="ID" style="width: 5%">
@@ -172,39 +200,51 @@ onBeforeMount(async () => {
                     <span v-html="data[field]" />
                 </template>
             </Column>
-            <Column field="agente" header="Agente" style="width: 20%; min-width: 8rem">
+            <Column field="agente_representante" header="Tipo" style="width: 20%; min-width: 8rem">
                 <template #body="{ data, field }">
-                    <span v-html="data[field]" />
+                    <span v-html="data[field] == '1' ? 'Representante' : 'Agente'" />
                 </template>
-                <template #editor="{ data, field }">
-                    <Dropdown id="id_comis_agentes" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="data.id_comis_agentes" :options="dropdownAgentes" placeholder="Selecione..." />
+            </Column>
+            <Column field="id_comis_agentes" header="Agente" style="width: 20%; min-width: 8rem">
+                <template #body="{ data, field }">
+                    <span v-html="getAgentesLabel(data[field])" />
                 </template>
             </Column>
             <Column field="valor" header="Valor" style="width: 20%; min-width: 8rem">
                 <template #body="{ data, field }">
                     <span v-html="data[field]" />
                 </template>
-                <template #editor="{ data, field }">
-                    <InputText v-model="data[field]" id="valor" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                </template>
             </Column>
-            <Column field="liquidar_aprox" header="Liquidação Aproximada" style="width: 20%; min-width: 8rem">
+            <Column field="liquidar_aprox" header="Liquidação em" style="width: 20%; min-width: 8rem">
                 <template #body="{ data, field }">
-                    <span v-html="data[field]" />
-                </template>
-                <template #editor="{ data, field }">
-                    <div class="p-inputgroup">
-                        <InputText v-model="data[field]" id="liquidar_aprox" v-maska data-maska="##/##/####" type="text" />
-                        <Button icon="pi pi-times" severity="danger" @click="data[field] = null" />
-                    </div>
+                    <span v-html="data[field]" v-tooltip.top="'Se informada uma data, o registro será liberado para pagamento nesta data'" />
                 </template>
             </Column>
-            <Column :rowEditor="true" style="width: 5%; min-width: 8rem" bodyStyle="text-align:center" />
-            <Column style="width: 5%; min-width: 8rem" bodyStyle="text-align:center">
+            <Column field="situacao" header="Situação" style="width: 20%; min-width: 8rem">
+                <template #body="{ data, field }">
+                    <tag :severity="getStatusField(data.last_status_comiss, 'severity')" :value="data[field]" />
+                </template>
+            </Column>
+            <Column style="width: 5%; min-width: 3rem">
                 <template #body="{ data }">
-                    <Button type="button" icon="fa-solid fa-trash" rounded class="p-button-outlined" severity="danger" v-tooltip.top="'Clique para excluir o contato'" @click="deleteRow(data)" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="viewItem(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>
+        <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
+            <template #legend>
+                <div class="flex align-items-center text-primary">
+                    <span class="fa-solid fa-circle-info mr-2"></span>
+                    <span class="font-bold text-lg">FormData</span>
+                </div>
+            </template>
+            <p>mode: {{ mode }}</p>
+            <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
+            <p>props.itemDataComissionamento: {{ props.itemDataComissionamento }}</p>
+            <p>gridData: {{ gridData }}</p>
+            <p>Comissionamento Representantes: {{ comissionamento.R }} = {{ comissionamento.R < Number(props.itemDataRoot.valor_representacao.replace(',', '.')) }}</p>
+            <p>Comissionamento Agentes: {{ comissionamento.A }} = {{ comissionamento.A < Number(props.itemDataRoot.valor_agente.replace(',', '.')) }}</p>
+            <p>canAddCommission: {{ canAddCommission }}</p>
+        </Fieldset>
     </div>
 </template>

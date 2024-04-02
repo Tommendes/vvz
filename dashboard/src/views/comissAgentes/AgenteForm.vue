@@ -45,8 +45,8 @@ const props = defineProps(['itemDataRoot']);
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    setTimeout(async () => {
-        if (route.params.id || props.itemDataRoot.id) {
+    if (route.params.id || (props.itemDataRoot && props.itemDataRoot.id)) {
+        setTimeout(async () => {
             const id = route.params.id || props.itemDataRoot.id;
             const url = `${urlBase.value}/${id}`;
 
@@ -65,8 +65,11 @@ const loadData = async () => {
                     router.push({ path: `/${userData.schema_description}/comiss-agentes` });
                 }
             });
-        } else loading.value = false;
-    }, Math.random() * 100 + 250);
+        }, Math.random() * 100 + 250);
+    } else {
+        loading.value = false;
+        mode.value = 'new';
+    }
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -92,6 +95,34 @@ const saveData = async () => {
         .catch((err) => {
             defaultWarn(err.response.data);
         });
+};
+// Excluir o item depois de confirmado
+const deleteItem = () => {
+    confirm.require({
+        group: 'templating',
+        header: 'Confirmação de exclusão',
+        message: 'Você tem certeza que deseja excluir este registro?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            const url = `${urlBase.value}/${itemData.value.id}`;
+            axios
+                .delete(url)
+                .then(() => {
+                    defaultSuccess('Registro excluído com sucesso');
+                    emit('changed');
+                    router.push({ path: `/${userData.schema_description}/comiss-agentes` });
+                })
+                .catch((err) => {
+                    defaultWarn(err.response.data);
+                });
+        },
+        reject: () => {
+            return false;
+        }
+    });
 };
 //DropDowns
 const dropdownSN = ref([
@@ -241,6 +272,7 @@ watch(selectedCadastro, (value) => {
                     <div class="card flex justify-content-center flex-wrap gap-3">
                         <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
                         <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode == 'view'" label="Excluir" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
                         <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>

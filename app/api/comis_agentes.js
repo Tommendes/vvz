@@ -34,7 +34,7 @@ module.exports = app => {
         const uniqueOrdem = await app.db(tabelaDomain).where({ ordem: Number(body.ordem), status: STATUS_ACTIVE }).first()
         if (body.id && uniqueOrdem && uniqueOrdem.id != body.id) return res.status(400).send('Número de ordem já registrado')
         else if (!body.id && uniqueOrdem) return res.status(400).send('Número de ordem já registrado')
-         
+
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -119,6 +119,8 @@ module.exports = app => {
             .select(app.db.raw(`tbl2.nome, tbl2.cpf_cnpj, tbl2.email, tbl2.telefone, tbl1.*`))
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
+            .orderBy('tbl1.agente_representante', 'desc')
+            .orderBy('tbl2.nome')
             .then(body => {
                 const count = body.length
                 return res.json({ data: body, count: count })
@@ -158,7 +160,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comissoes >= 4 || uParams.comercial >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.comercial >= 4 || uParams.comissoes >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -172,30 +174,79 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
+        const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
-            const { createEvent } = app.api.sisEvents
-            await createEvent({
+            req.uParams = uParams
+            req.body = last
+            const { createEventUpd } = app.api.sisEvents
+            const evento = await createEventUpd({
+                "notTo": ['created_at', 'updated_at', 'evento'],
+                "last": last,
+                "next": registro,
                 "request": req,
                 "evento": {
-                    id_user: user.id,
-                    evento: `Exclusão de registro de agente ${JSON.stringify(last)}`,
-                    classevento: `Remove`,
-                    id_registro: req.params.id,
-                    tabela_bd: tabela
+                    "classevento": "Remove",
+                    "evento": `Exclusão de registro de ${tabela}`,
+                    "tabela_bd": tabela,
                 }
             })
-            await app.db(tabelaDomain)
-                .del()
-                .where({ id: req.params.id, status: STATUS_ACTIVE })
+            const rowsUpdated = await app.db(tabelaDomain)
+                .update({
+                    status: registro.status,
+                    updated_at: new Date(),
+                    evento: evento
+                })
+                .where({ id: req.params.id })
+            existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
-            res.status(204)
+            res.status(200).send('Registro excluído com sucesso')
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
     }
 
-    return { save, get, getById, remove }
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'gag':
+                getAgentesVendas(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }
+
+    // Lista de agentes de negócios
+    const getAgentesVendas = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+        }
+
+        const agenteRepresentante = req.query.agente_representante || undefined
+
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        const ret = app.db({ tbl1: tabelaDomain }).select('tbl1.id', 'tbl2.nome', 'tbl1.agente_representante', 'tbl1.ordem')
+            .join({ tbl2: tabelaCadastrosDomain }, 'tbl1.id_cadastros', 'tbl2.id')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+        if (agenteRepresentante) ret.where({ 'tbl1.agente_representante': agenteRepresentante })
+        ret.orderBy('tbl2.nome')
+            .then(body => {
+                return res.json(body)
+            }).catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                return res.status(500).send(error)
+            })
+    }
+
+    return { save, get, getById, remove, getByFunction }
 }

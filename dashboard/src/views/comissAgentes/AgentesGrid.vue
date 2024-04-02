@@ -28,13 +28,12 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/comis-agentes`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'ordem', label: 'Ordem' },
-    { field: 'nome', label: 'Nome' },
+    { field: 'agente_representante', label: 'Rep/Agente', tagged: true },
+    { field: 'nome', label: 'Nome (Ordem)' },
     { field: 'cpf_cnpj', label: 'CPF' },
     { field: 'email', label: 'Email' },
     { field: 'telefone', label: 'Telefone' },
-    { field: 'dsr', label: 'DSR', tagged: true },
-    { field: 'agente_representante', label: 'Representante', tagged: true }
+    { field: 'dsr', label: 'DSR', tagged: true }
 ]);
 //Scrool quando um Novo Registro for criado
 const scrollToTop = () => {
@@ -59,6 +58,7 @@ const getItem = (data) => {
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'view';
+        scrollToTop();
     }, 100);
 };
 const loadData = () => {
@@ -69,9 +69,9 @@ const loadData = () => {
             gridData.value = axiosRes.data.data;
             gridData.value.forEach((element) => {
                 if (element.cpf_cnpj && element.cpf_cnpj.trim().length >= 8) element.cpf_cnpj = masks.value.cpf_cnpj.masked(element.cpf_cnpj);
-                element.agente_representante = element.agente_representante && element.agente_representante == '1' ? 'Sim' : 'Não';
+                element.agente_representante = element.agente_representante && element.agente_representante == '1' ? 'Representante' : 'Agente';
                 element.dsr = element.dsr && element.dsr == '1' ? 'Sim' : 'Não';
-                element.ordem = element.ordem.padStart(3, '0').toString();
+                element.nome = element.nome.trim() + ' (' + element.ordem.padStart(3, '0').toString() + ')';
                 element.email = renderizarHTML(element.email);
                 element.telefone = renderizarHTML(element.telefone, { to: element.nome, from: userData.name });
             });
@@ -85,10 +85,14 @@ const refreshBreadcrumb = () => {
     breadCrumbItems.value = [{ label: 'Todos os Agentes', to: route.fullPath }];
 };
 const newAgent = () => {
-    mode.value = 'new';
-    scrollToTop();
-    refreshBreadcrumb();
-    breadCrumbItems.value.push({ label: 'Novo Registro' });
+    mode.value = 'grid';
+    itemData.value = {};
+    setTimeout(() => {
+        mode.value = 'new';
+        scrollToTop();
+        refreshBreadcrumb();
+        breadCrumbItems.value.push({ label: 'Novo Registro' });
+    }, 100);
 };
 onBeforeMount(() => {
     refreshBreadcrumb();
@@ -103,6 +107,7 @@ const reload = () => {
 const getSeverity = (value) => {
     switch (value) {
         case 'Sim':
+        case 'Representante':
             return 'success';
         default:
             return 'danger';
@@ -113,7 +118,16 @@ const getSeverity = (value) => {
 <template>
     <Breadcrumb :items="breadCrumbItems" />
     <div class="card">
-        <AgenteForm :mode="mode" :itemDataRoot="itemData" @changed="loadData" @cancel="reload" v-if="['new', 'view'].includes(mode)" />
+        <AgenteForm
+            :mode="mode"
+            :itemDataRoot="itemData"
+            @changed="
+                mode = 'grid';
+                loadData();
+            "
+            @cancel="reload"
+            v-if="['new', 'view'].includes(mode)"
+        />
         <DataTable
             style="font-size: 1rem"
             :value="gridData"

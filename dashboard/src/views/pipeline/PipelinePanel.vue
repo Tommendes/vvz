@@ -22,6 +22,8 @@ const loading = ref(true);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pipeline`);
 
+const comissoesItensGrid = ref();
+
 // Itens do breadcrumb
 const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]);
 const itemDataParam = ref({});
@@ -124,6 +126,9 @@ const commissioning = async (value) => {
         activeTab.value = 1;
     }
 };
+const getRefreshComiss = () => {
+    comissoesItensGrid.value.loadData();
+};
 </script>
 
 <template>
@@ -141,13 +146,13 @@ const commissioning = async (value) => {
                     </TabPanel>
                     <TabPanel v-if="itemDataComissionamento.id">
                         <template #header>
-                            <div :class="classFlashComissionamento">
+                            <div :class="classFlashComissionamento" @click="getRefreshComiss">
                                 <i class="fa-regular fa-solid fa-dollar mr-2"></i>
                                 <span>Comissionamento</span>
                             </div>
                         </template>
                         <h2 class="m-0">Comissões do pedido {{ unidadeLabel + ' ' + itemData.documento + (userData.admin >= 2 ? `: (${itemData.id})` : '') }}</h2>
-                        <ComissoesItensGrid class="mt-3" itemDataRoot="itemData" />
+                        <ComissoesItensGrid ref="comissoesItensGrid" class="mt-3" :itemDataRoot="itemData" :itemDataComissionamento="itemDataComissionamento" />
                         <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
                             <template #legend>
                                 <div class="flex align-items-center text-primary">

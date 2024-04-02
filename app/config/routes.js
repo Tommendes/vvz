@@ -416,6 +416,10 @@ module.exports = app => {
         .put(app.api.comis_agentes.save)
         .get(app.api.comis_agentes.getById)
         .delete(app.api.comis_agentes.remove)
+    app.route('/comis-agentes/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.comis_agentes.getByFunction)
+        .post(app.api.comis_agentes.getByFunction)
 
     /**
     * Rota de comissoes
@@ -424,6 +428,7 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .post(app.api.comissoes.save)
         .get(app.api.comissoes.get)
+        .patch(app.api.comissoes.liquidateInGroup)
     app.route('/comissoes/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.comissoes.save)
