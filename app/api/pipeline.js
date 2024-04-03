@@ -450,6 +450,7 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
+            
         ret.then(body => {
             const length = body.length
             body.forEach(element => {
@@ -688,6 +689,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const biStt = req.query.stt
         const biPeriodDi = req.query.periodDi
@@ -773,6 +775,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const rows = req.query.rows || 5
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
@@ -817,6 +820,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
@@ -880,6 +884,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
@@ -944,6 +949,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf
@@ -1006,6 +1012,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const biPeriodDi = req.query.periodDi
         const biPeriodDf = req.query.periodDf

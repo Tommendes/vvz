@@ -7,6 +7,7 @@ import { defaultWarn, defaultSuccess } from '@/toast';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 const gridData = ref(null);
+const commissioningValues = ref(null);
 const itemData = ref({});
 const itemDataGroup = ref({});
 const props = defineProps({
@@ -15,6 +16,14 @@ const props = defineProps({
 });
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 const mode = ref('grid');
+
+//Scrool to top
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+};
 // Dropdowns
 const dropdownAgentes = ref([]);
 // Lista de status
@@ -34,25 +43,52 @@ const userData = JSON.parse(json);
 // Props do template
 // Ref do gridData
 const dt = ref(null);
-const comissionamento = ref({ R: 0, A: 0 });
+const comissionamento = ref({ R: { M: 0, S: 0 }, A: { M: 0, S: 0 } });
 const canAddCommission = ref(false);
 // Carrega os dados da grid
-const loadData = async () => {
+const reload = async () => {
     mode.value = 'grid';
+    loadData();
+};
+const loadData = async () => {
     const url = `${urlBase.value}?field:id_pipeline=equals:${props.itemDataRoot.id}`;
     setTimeout(async () => {
         // resete comissionamento
-        comissionamento.value = { R: 0, A: 0 };
+        comissionamento.value = { R: { M: 0, S: 0 }, A: { M: 0, S: 0 } };
+        getMaxCommissioningValue();
         await axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;
             gridData.value.map((item) => {
-                const valor = item.valor ? Number(item.valor.replace(',', '.')) : 0;
-                if (item.agente_representante == 1) comissionamento.value.R += valor;
-                else comissionamento.value.A += valor;
                 const situacao = item.last_status_comiss;
                 item.situacao = getStatusField(situacao, 'label');
             });
-            canAddCommission.value = comissionamento.value.R < Number(props.itemDataRoot.valor_representacao.replace(',', '.')) || comissionamento.value.A < Number(props.itemDataRoot.valor_agente.replace(',', '.'));
+        });
+    }, Math.random() * 1000 + 250);
+};
+const getMaxCommissioningValue = async () => {
+    setTimeout(async () => {
+        const url = `${urlBase.value}/f-a/gmc?id_pipeline=${props.itemDataRoot.id}`;
+        // resete comissionamento
+        comissionamento.value = { R: { M: 0, S: 0 }, A: { M: 0, S: 0 } };
+        await axios.get(url).then((axiosRes) => {
+            commissioningValues.value = axiosRes.data;
+            commissioningValues.value.forEach((element) => {
+                switch (element.repres_sum) {
+                    case 'repres_sum':
+                        comissionamento.value.R = { ...comissionamento.value.R, S: Number(element.valor) };
+                        break;
+                    case 'repres_max':
+                        comissionamento.value.R = { ...comissionamento.value.R, M: Number(element.valor) };
+                        break;
+                    case 'agentes_sum':
+                        comissionamento.value.A = { ...comissionamento.value.A, S: Number(element.valor) };
+                        break;
+                    case 'agentes_max':
+                        comissionamento.value.A = { ...comissionamento.value.A, M: Number(element.valor) };
+                        break;
+                }
+            });
+            canAddCommission.value = comissionamento.value.R.M > comissionamento.value.R.S || comissionamento.value.A.M > comissionamento.value.A.S;
         });
     }, Math.random() * 1000 + 250);
 };
@@ -62,6 +98,7 @@ const viewItem = (data) => {
     setTimeout(() => {
         itemData.value = { ...data };
         mode.value = 'view';
+        scrollToTop();
     }, 100);
 };
 const newItem = () => {
@@ -70,6 +107,7 @@ const newItem = () => {
         setTimeout(() => {
             itemData.value = { id_comis_pipeline: props.itemDataRoot.id };
             mode.value = 'new';
+            scrollToTop();
         }, 100);
     } else {
         defaultWarn('Não há margem para mais comissionamento');
@@ -77,7 +115,7 @@ const newItem = () => {
 };
 const liquidateCommissions = () => {
     confirm.require({
-        group: 'headless',
+        group: 'comisGroupLiquidateConfirm',
         header: 'Confirmar liquidação total',
         message: `Confirma a programação de liquidação deste${gridData.value.length > 1 ? 's' : ''} ${gridData.value.length} registros?`,
         message2: 'Essa operação ainda poderá ser revertida enquanto não houver a liquidação total.',
@@ -145,12 +183,12 @@ onBeforeMount(async () => {
     setTimeout(async () => {
         await loadData();
         await listAgentesComissionamento();
-    }, Math.random() * 100 + 250);
+    }, Math.random() * 1000 + 250);
 });
 </script>
 
 <template>
-    <ConfirmDialog group="headless">
+    <ConfirmDialog group="comisGroupLiquidateConfirm">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
                 <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
@@ -161,7 +199,6 @@ onBeforeMount(async () => {
                 <p class="mb-1">{{ message.message2 }}</p>
                 <p class="mb-1">{{ message.message3 }}</p>
                 <Calendar v-model="itemDataGroup.liquidar_em" showButtonBar dateFormat="dd/mm/yy" />
-                <p>{{ itemDataGroup.liquidar_em }}</p>
                 <div class="flex align-items-center gap-2 mt-4">
                     <Button label="Confirmar" @click="acceptCallback"></Button>
                     <Button label="Ainda não" outlined @click="rejectCallback"></Button>
@@ -172,13 +209,12 @@ onBeforeMount(async () => {
     <div class="card">
         <ComissaoItemForm
             @newItem="loadData"
-            @reload="loadData"
-            @cancel="loadData"
+            @updatedItem="loadData"
+            @reload="reload"
             :parentMode="mode"
             :itemDataRoot="itemData"
             :itemDataComissionamento="itemDataComissionamento"
             :itemDataPipeline="itemDataRoot"
-            :comissionamento="comissionamento"
             v-if="['new', 'view', 'edit'].includes(mode)"
         />
         <DataTable ref="dt" :value="gridData" dataKey="id">
@@ -242,8 +278,8 @@ onBeforeMount(async () => {
             <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
             <p>props.itemDataComissionamento: {{ props.itemDataComissionamento }}</p>
             <p>gridData: {{ gridData }}</p>
-            <p>Comissionamento Representantes: {{ comissionamento.R }} = {{ comissionamento.R < Number(props.itemDataRoot.valor_representacao.replace(',', '.')) }}</p>
-            <p>Comissionamento Agentes: {{ comissionamento.A }} = {{ comissionamento.A < Number(props.itemDataRoot.valor_agente.replace(',', '.')) }}</p>
+            <p>Comissionamento Representantes: {{ comissionamento.R.M }} > {{ comissionamento.R.S }} = {{ comissionamento.R.M > comissionamento.R.S }}</p>
+            <p>Comissionamento Agentes: {{ comissionamento.A.M }} > {{ comissionamento.A.S }} = {{ comissionamento.A.M > comissionamento.A.S }}</p>
             <p>canAddCommission: {{ canAddCommission }}</p>
         </Fieldset>
     </div>

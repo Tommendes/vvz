@@ -65,7 +65,7 @@ const loadData = async () => {
                     router.push({ path: `/${userData.schema_description}/comiss-agentes` });
                 }
             });
-        }, Math.random() * 100 + 250);
+        }, Math.random() * 1000 + 250);
     } else {
         loading.value = false;
         mode.value = 'new';
@@ -151,7 +151,7 @@ const getNomeCliente = async () => {
                 if (response.data.data.length > 0) {
                     nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
                 }
-            }, Math.random() * 100 + 250);
+            }, Math.random() * 1000 + 250);
         } catch (error) {
             console.error('Erro ao buscar cadastros:', error);
         }

@@ -37,6 +37,7 @@ module.exports = app => {
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de OAT"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const body = { ...req.body }
         try {
@@ -108,6 +109,7 @@ module.exports = app => {
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de Propostas"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const body = { ...req.body }
         try {
@@ -183,6 +185,7 @@ module.exports = app => {
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de Resumo de Propostas"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const body = { ...req.body }
         try {

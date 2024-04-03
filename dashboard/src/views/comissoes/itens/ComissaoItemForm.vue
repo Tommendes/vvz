@@ -19,20 +19,26 @@ const masks = ref({
     })
 });
 
+// Andamento do registro
+const STATUS_NAO_PROGRAMADO = 10;
+const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20;
+const STATUS_LIQUIDADO = 30;
+
 // Url base do form action
 const userData = JSON.parse(json);
 const loading = ref(false);
 // Campos de formulário
 const itemData = ref({});
+const comissionamento = ref({ R: { M: 0, S: 0 }, A: { M: 0, S: 0 } });
+const commissioningValues = ref(null);
 const canAddCommission = ref(false);
 // Emit do template
-const emit = defineEmits(['newItem', 'cancel', 'reload']);
+const emit = defineEmits(['newItem', 'updatedItem', 'reload']);
 const props = defineProps({
     itemDataPipeline: Object, // O próprio pipeline
     itemDataRoot: Object, // O próprio registro
     itemDataComissionamento: Object,
-    parentMode: String,
-    comissionamento: Object
+    parentMode: String
 });
 const maxCommission = ref(0);
 const urlBase = ref(`${baseApiUrl}/comissoes`);
@@ -43,14 +49,19 @@ const mode = ref('view');
 // Carrega os dados do form
 const loadData = async () => {
     loading.value = true;
-    if (props.itemDataRoot.id) {
-        const url = `${urlBase.value}/${props.itemDataRoot.id}`;
-        await axios.get(url).then((axiosRes) => {
-            itemData.value = axiosRes.data;
-            if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
-        });
+    const id = props.itemDataRoot.id || itemData.value.id;
+    if (id) {
+        const url = `${urlBase.value}/${id}`;
+        setTimeout(async () => {
+            await axios.get(url).then(async (axiosRes) => {
+                itemData.value = axiosRes.data;
+                if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
+                // Lista o andamento do registro
+            });
+            await listStatusRegistro();
+        }, Math.random * 1000 + 250);
     } else itemData.value.id_comis_pipeline = props.itemDataComissionamento.id;
-    setMaxCommissioning();
+    getMaxCommissioningValue();
     loading.value = false;
 };
 
@@ -74,16 +85,20 @@ const saveData = async () => {
     if (obj.liquidar_em) obj.liquidar_em = moment(obj.liquidar_em, 'DD/MM/YYYY').format('YYYY-MM-DD');
     else obj.liquidar_em = null;
     axios[method](url, obj)
-        .then((res) => {
-            const body = res.data;
-            if (body && body.id) {
+        .then(async (res) => {
+            itemData.value = res.data;
+            if (itemData.value && itemData.value.id) {
+                if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
+                if (itemData.value.valor) itemData.value.valor = itemData.value.valor.replace('.', ',');
                 defaultSuccess('Registro salvo com sucesso');
                 if (mode.value == 'new') emit('newItem');
-                else emit('reload');
+                else emit('updatedItem');
+                mode.value = 'view';
+                await listStatusRegistro();
+                getMaxCommissioningValue();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
-            loadData();
         })
         .catch((err) => {
             defaultWarn(err.response.data);
@@ -94,7 +109,7 @@ const deleteItem = () => {
     confirm.require({
         group: 'templating',
         header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja excluir este registro?',
+        message: 'Você tem certeza que deseja EXCLUIR este registro?',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -103,6 +118,34 @@ const deleteItem = () => {
             axios.delete(`${urlBase.value}/${itemData.value.id}`).then(async () => {
                 defaultSuccess('Registro excluído com sucesso!');
                 emit('reload');
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+// Liquida o registro
+const liquidateItem = () => {
+    const body = {
+        id_comissoes: itemData.value.id,
+        status_comis: STATUS_LIQUIDADO
+    };
+    confirm.require({
+        group: 'comisLiquidateConfirm',
+        header: 'Confirmar liquidação',
+        message: 'Você tem certeza que deseja LIQUIDAR este registro?',
+        message2: '<strong>Esta operação não poderá ser desfeita e a comissão será liberada para pagamento</strong>',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            // itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
+            // await saveData();
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, body).then(async () => {
+                emit('updatedItem');
+                await loadData();
             });
         },
         reject: () => {
@@ -124,38 +167,148 @@ const getAgentesField = (value, field) => {
     const item = dropdownAgentes.value.find((item) => item.value == value);
     return item ? item[field] : '';
 };
-const setAR = () => {
+const getAR = () => {
     itemData.value.agente_representante = getAgentesField(itemData.value.id_comis_agentes, 'ar');
-    setMaxCommissioning();
+    getMaxCommissioningValue();
 };
-const setMaxCommissioning = () => {
-    if ([0, 1].includes(itemData.value.agente_representante)) {
-        let maxValue = 0.0;
-        if (itemData.value.agente_representante == 1) maxValue = (Number(props.itemDataPipeline.valor_representacao.replace(',', '.')) - props.comissionamento.R).toFixed(2);
-        else maxValue = (Number(props.itemDataPipeline.valor_agente.replace(',', '.')) - props.comissionamento.A).toFixed(2);
-        canAddCommission.value = maxValue > 0;
-        if (mode.value != 'new') maxValue = Number(maxValue) + Number(itemData.value.valor.replace(',', '.'));
-        maxCommission.value = formatCurrency(((maxValue / 100) * 100).toFixed(2));
-    }
+
+const getMaxCommissioningValue = async () => {
+    loading.value = true;
+    setTimeout(async () => {
+        const url = `${urlBase.value}/f-a/gmc?id_pipeline=${props.itemDataPipeline.id}`;
+        // resete comissionamento
+        comissionamento.value = { R: { M: 0, S: 0 }, A: { M: 0, S: 0 } };
+        await axios.get(url).then((axiosRes) => {
+            commissioningValues.value = axiosRes.data;
+            commissioningValues.value.forEach((element) => {
+                switch (element.repres_sum) {
+                    case 'repres_sum':
+                        comissionamento.value.R = { ...comissionamento.value.R, S: Number(element.valor) };
+                        break;
+                    case 'repres_max':
+                        comissionamento.value.R = { ...comissionamento.value.R, M: Number(element.valor) };
+                        break;
+                    case 'agentes_sum':
+                        comissionamento.value.A = { ...comissionamento.value.A, S: Number(element.valor) };
+                        break;
+                    case 'agentes_max':
+                        comissionamento.value.A = { ...comissionamento.value.A, M: Number(element.valor) };
+                        break;
+                }
+            });
+            if (itemData.value.agente_representante == 1 && comissionamento.value.R.M > comissionamento.value.R.S) canAddCommission.value = true;
+            else if (itemData.value.agente_representante == 0 && comissionamento.value.A.M > comissionamento.value.A.S) canAddCommission.value = true;
+            else canAddCommission.value = false;
+        });
+        if (itemData.value.agente_representante == 1) maxCommission.value = Number(comissionamento.value.R.M - comissionamento.value.R.S).toFixed(2);
+        else if (itemData.value.agente_representante == 0) maxCommission.value = Number(comissionamento.value.A.M - comissionamento.value.A.S).toFixed(2);
+        if (mode.value != 'new') maxCommission.value = Number(maxCommission.value) + Number(itemData.value.valor.replace(',', '.'));
+        maxCommission.value = maxCommission.value ? maxCommission.value : '0,00';
+        maxCommission.value = formatCurrency(maxCommission.value);
+    }, Math.random() * 1000 + 250);
+    loading.value = false;
 };
 // Recarregar dados do formulário
 const reload = () => {
-    emit('cancel');
+    emit('reload');
 };
+
+/**
+ * Status do registro
+ */
+// Preload de status do registro
+const itemDataStatus = ref([]);
+const itemDataLastStatus = ref({});
+/*
+const STATUS_NAO_PROGRAMADO = 10
+const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20
+const STATUS_LIQUIDADO = 30
+*/
+const itemDataStatusPreload = ref([
+    {
+        status: '10',
+        action: 'Criação',
+        label: 'Criado - Não programado',
+        icon: 'fa-solid fa-plus',
+        color: '#3b82f6'
+    },
+    {
+        status: '20',
+        action: 'Programação',
+        label: 'Em programação de liquidação',
+        icon: 'fa-solid fa-shopping-cart',
+        color: '#4cd07d'
+    },
+    {
+        status: '30',
+        action: 'Liquidação',
+        label: 'Liquidado',
+        icon: 'fa-solid fa-check',
+        color: '#607D8B'
+    }
+]);
+// Listar status do registro
+const listStatusRegistro = async () => {
+    setTimeout(async () => {
+        const url = `${baseApiUrl}/comis-status/${props.itemDataRoot.id || itemData.value.id}`;
+        console.log(url);
+        await axios.get(url).then((res) => {
+            if (res.data && res.data.data.length > 0) {
+                itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
+                itemData.value.status_comis = itemDataLastStatus.value.status_comis;
+                itemDataStatus.value = [];
+                res.data.data.forEach((element) => {
+                    const status = itemDataStatusPreload.value.filter((item) => {
+                        return item.status == element.status_comis;
+                    });
+                    itemDataStatus.value.push({
+                        // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                        date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                        user: element.name,
+                        status: status[0].label,
+                        statusCode: element.status_comis,
+                        icon: status[0].icon,
+                        color: status[0].color
+                    });
+                });
+            }
+        });
+    }, Math.random() * 1000 + 250);
+};
+/**
+ * Fim de status do registro
+ */
+
 // Carregar dados do formulário
 onBeforeMount(() => {
     mode.value = props.parentMode;
     setTimeout(async () => {
         await loadData();
         await listAgentesComissionamento();
-    }, Math.random() * 100 + 250);
+    }, Math.random() * 1000 + 250);
 });
 </script>
 
 <template>
+    <ConfirmDialog group="comisLiquidateConfirm">
+        <template #container="{ message, acceptCallback, rejectCallback }">
+            <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
+                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                    <i class="pi pi-question fa-fade text-5xl"></i>
+                </div>
+                <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
+                <p class="mb-0" v-html="message.message" />
+                <p class="mb-0" v-html="message.message2" />
+                <div class="flex align-items-center gap-2 mt-4">
+                    <Button label="Confirmar" @click="acceptCallback"></Button>
+                    <Button label="Ainda não" outlined @click="rejectCallback"></Button>
+                </div>
+            </div>
+        </template>
+    </ConfirmDialog>
     <form @submit.prevent="saveData" @keydow.enter.prevent>
         <div class="grid">
-            <div class="col-12">
+            <div :class="`col-12 md:col-${itemDataStatus.length > 0 ? '8' : '12'}`">
                 <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
                     <!-- <div class="field col-12 md:col-6">
@@ -180,7 +333,7 @@ onBeforeMount(() => {
                             v-model="itemData.id_comis_agentes"
                             :options="dropdownAgentes"
                             :disabled="['view'].includes(mode)"
-                            @change="setAR()"
+                            @change="getAR()"
                         />
                     </div>
                     <div class="field col-12 md:col-4">
@@ -205,30 +358,55 @@ onBeforeMount(() => {
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" v-if="mode == 'view'" label="Excluir" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
-                    <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                    <Button type="submit" v-if="mode != 'view' && canAddCommission" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" label="Liquidar" icon="fa-solid fa-bolt fa-fade" severity="success" text raised @click="liquidateItem" />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" label="Excluir" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
+                    <Button type="button" v-if="mode == 'new' || itemDataLastStatus.status_comis < 30" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                    <Button type="button" v-else label="Sair" icon="fa-solid fa-door-open" text raised @click="reload" />
                 </div>
-                <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
+            </div>
+            <div v-if="itemDataStatus.length > 0" class="col-12 md:col-4">
+                <Fieldset :toggleable="true" class="mb-3" v-if="itemData.id">
                     <template #legend>
                         <div class="flex align-items-center text-primary">
-                            <span class="fa-solid fa-circle-info mr-2"></span>
-                            <span class="font-bold text-lg">FormData</span>
+                            <span class="fa-solid fa-clock mr-2"></span>
+                            <span class="font-bold text-lg">Andamento do Registro</span>
                         </div>
                     </template>
-                    <p>parentMode: {{ parentMode }}</p>
-                    <p>mode: {{ mode }}</p>
-                    <p>itemDataPipeline: {{ props.itemDataPipeline }}</p>
-                    <p>itemData: {{ itemData }}</p>
-                    <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
-                    <p>props.itemDataComissionamento: {{ props.itemDataComissionamento }}</p>
-                    <p>Comissionamento Representantes: {{ comissionamento.R }} = {{ comissionamento.R < Number(props.itemDataPipeline.valor_representacao.replace(',', '.')) }}</p>
-                    <p>Comissionamento Agentes: {{ comissionamento.A }} = {{ comissionamento.A < Number(props.itemDataPipeline.valor_agente.replace(',', '.')) }}</p>
-                    <p>canAddCommission: {{ canAddCommission }}</p>
-                    <p>maxCommission: {{ maxCommission }}</p>
+                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                    <Timeline v-else :value="itemDataStatus">
+                        <template #marker="slotProps">
+                            <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                                <i :class="slotProps.item.icon"></i>
+                            </span>
+                        </template>
+                        <template #opposite="slotProps">
+                            <small class="p-text-secondary">{{ slotProps.item.date }}</small>
+                        </template>
+                        <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ userData.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
+                    </Timeline>
                 </Fieldset>
             </div>
+            <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
+                <template #legend>
+                    <div class="flex align-items-center text-primary">
+                        <span class="fa-solid fa-circle-info mr-2"></span>
+                        <span class="font-bold text-lg">FormData</span>
+                    </div>
+                </template>
+                <p>parentMode: {{ parentMode }}</p>
+                <p>mode: {{ mode }}</p>
+                <p>itemDataPipeline: {{ props.itemDataPipeline }}</p>
+                <p>itemData: {{ itemData }}</p>
+                <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
+                <p>props.itemDataComissionamento: {{ props.itemDataComissionamento }}</p>
+                <p>Comissionamento Representantes: {{ comissionamento.R.M }} > {{ comissionamento.R.S }} = {{ comissionamento.R.M > comissionamento.R.S }}</p>
+                <p>Comissionamento Agentes: {{ comissionamento.A.M }} > {{ comissionamento.A.S }} = {{ comissionamento.A.M > comissionamento.A.S }}</p>
+                <p>canAddCommission: {{ canAddCommission }}</p>
+                <p>maxCommission: {{ maxCommission }}</p>
+                <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
+            </Fieldset>
         </div>
     </form>
 </template>

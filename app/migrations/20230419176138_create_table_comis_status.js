@@ -6,8 +6,8 @@ exports.up = function(knex, Promise) {
         table.increments('id').primary()
         table.integer('evento').notNull()
         table.string('created_at').notNull()
-        table.integer('id_comissoes',10).unsigned().comment('Documento pai').references('id').inTable('pv').onUpdate('Cascade').onDelete('NO ACTION')
-        table.integer('status_comis',10).unsigned().defaultTo(10).notNull().comment('Status do comissionamento (Lançado:10; Pago:20; Cancelado:99)')
+        table.integer('id_comissoes',10).unsigned().comment('Documento pai').references('id').inTable('comissoes').onUpdate('Cascade').onDelete('Cascade')
+        table.integer('status_comis',10).unsigned().defaultTo(10).notNull().comment('Status do comissionamento (Lançado:10; Programado:20; Liquidado:30)')
     })
 };
 

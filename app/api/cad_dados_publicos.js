@@ -185,6 +185,7 @@ module.exports = app => {
             if (!uParams) throw `${noAccessMsg} "Pesquisa de CNPJ"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
 
         const cnpj = req.body.cnpj;

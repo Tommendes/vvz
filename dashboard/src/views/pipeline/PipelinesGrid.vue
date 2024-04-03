@@ -28,6 +28,7 @@ const urlBase = ref(`${baseApiUrl}/pipeline`);
 const props = defineProps(['idCadastro']);
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
+const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000, 9999999]); // Opções de registros por página
 const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
@@ -367,6 +368,8 @@ onBeforeMount(() => {
     initFilters();
     loadOptions();
     getAgentes();
+    // remover último item se user não for admin
+    if (userData.admin < 2) rowsPerPageOptions.value.pop();
 });
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
@@ -454,7 +457,7 @@ const customFilterOptions = ref({ filterclear: false });
                     :filters="filters"
                     responsiveLayout="scroll"
                     :totalRecords="totalRecords"
-                    :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
+                    :rowsPerPageOptions="rowsPerPageOptions"
                     @page="onPage($event)"
                     @sort="onSort($event)"
                     @filter="onFilter($event)"

@@ -221,6 +221,7 @@ module.exports = app => {
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de parâmetros"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const fieldName = req.query.fld
         const value = req.query.vl

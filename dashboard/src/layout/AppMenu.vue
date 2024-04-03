@@ -71,9 +71,9 @@ const setMenuByUser = async () => {
     }
     if (itemUserData.value.admin >= 1) {
         const itemMenu = { label: 'Suporte', items: [] };
-        itemMenu.items.push({ label: 'Artigos', icon: 'fa-solid fa-bookmark', to: `/${userData.schema_description}/suporte/articles` });
+        // itemMenu.items.push({ label: 'Artigos', icon: 'fa-solid fa-bookmark', to: `/${userData.schema_description}/suporte/articles` });
         itemMenu.items.push({ label: 'Mensagens', icon: 'fa-solid fa-envelope', to: `/${userData.schema_description}/messages` });
-        itemMenu.items.push({ label: 'Reviews', icon: 'fa-solid fa-sync', to: `/${userData.schema_description}/suporte/reviews` });
+        // itemMenu.items.push({ label: 'Reviews', icon: 'fa-solid fa-sync', to: `/${userData.schema_description}/suporte/reviews` });
         model.value.push(itemMenu);
     }
 };

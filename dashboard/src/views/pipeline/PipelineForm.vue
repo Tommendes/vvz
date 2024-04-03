@@ -237,7 +237,7 @@ const getNomeCliente = async () => {
                 if (response.data.data.length > 0) {
                     nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
                 }
-            }, Math.random() * 100 + 250);
+            }, Math.random() * 1000 + 250);
         } catch (error) {
             console.error('Erro ao buscar cadastros:', error);
         }
@@ -399,7 +399,7 @@ const getPipelineParam = async () => {
                 if (res.data && res.data.id) itemDataParam.value = res.data;
                 // if (itemDataParam.value.autom_nr != 1) itemNovo.pop();
             });
-        }, Math.random() * 100 + 250);
+        }, Math.random() * 1000 + 250);
     }
 };
 const registroIdentico = async () => {

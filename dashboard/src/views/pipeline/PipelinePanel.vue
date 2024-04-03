@@ -41,7 +41,7 @@ const getPipelineParam = async () => {
                 if (res.data && res.data.id) itemDataParam.value = res.data;
                 // if (itemDataParam.value.autom_nr != 1) itemNovo.pop();
             });
-        }, Math.random() * 100 + 250);
+        }, Math.random() * 1000 + 250);
     }
 };
 // Listar unidades de negócio
@@ -152,7 +152,9 @@ const getRefreshComiss = () => {
                             </div>
                         </template>
                         <h2 class="m-0">Comissões do pedido {{ unidadeLabel + ' ' + itemData.documento + (userData.admin >= 2 ? `: (${itemData.id})` : '') }}</h2>
-                        <ComissoesItensGrid ref="comissoesItensGrid" class="mt-3" :itemDataRoot="itemData" :itemDataComissionamento="itemDataComissionamento" />
+                        <div class="mt-3">
+                            <ComissoesItensGrid ref="comissoesItensGrid" :itemDataRoot="itemData" :itemDataComissionamento="itemDataComissionamento" />
+                        </div>
                         <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
                             <template #legend>
                                 <div class="flex align-items-center text-primary">

@@ -69,7 +69,7 @@ module.exports = app => {
                 .where({ id_comis_pipeline: body.id_comis_pipeline, agente_representante: body.agente_representante, status: STATUS_ACTIVE }).first()
             comisAgentes = { total: comisAgentes.total || 0 }
             // Se não existir comissão de representante, não pode ser cadastrado comissão de não representante
-            if (!comisRepres && body.agente_representante === 0) throw 'Informe primeiro o agente representante ou marque a opção para que essa seja a comissão da representação'
+            // if (!comisRepres && body.agente_representante === 0) throw 'Informe primeiro o agente representante ou marque a opção para que essa seja a comissão da representação'
             // Se existir comissão de representante, não pode ser cadastrado comissão de representante exceto se for uma edição
             // if (comisRepres && body.agente_representante === 1 && body.id != comisRepres.id && !body.alterar_agente_representante) throw 'Já existe um agente representante cadastrado. Deseja alterar?'
             existsOrError(body.id_comis_agentes, 'Agente não informado')
@@ -107,6 +107,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
+        delete body.status_comis;
 
         if (body.id) {
             try {
@@ -161,7 +162,12 @@ module.exports = app => {
                         return res.status(500).send(error)
                     })
 
-                if (last.liquidar_em != body.liquidar_em) {
+                const last_status_comiss = await app.db(tabelaComissaoStatusDomain)
+                    .select(`status_comis`)
+                    .where({ id_comissoes: body.id })
+                    .orderBy('created_at', 'desc')
+                    .first()
+                if (last.liquidar_em != body.liquidar_em || !last_status_comiss || (last_status_comiss.status_comis == 10 && body.liquidar_em)) {
                     // Inserir na tabela de status de pipeline a informação de comissionamento            
                     await trx(tabelaComissaoStatusDomain).insert({
                         evento: evento || 1,
@@ -213,7 +219,7 @@ module.exports = app => {
                     }
                 })
 
-                trx(tabelaDomain)
+                await trx(tabelaDomain)
                     .insert(body)
                     .then(async (ret) => {
                         body.id = ret[0]
@@ -231,6 +237,7 @@ module.exports = app => {
                                 "tabela_bd": tabela,
                             }
                         })
+
                         return res.json(body)
                     })
                     .catch(error => {
@@ -243,7 +250,7 @@ module.exports = app => {
                     evento: evento || 1,
                     created_at: new Date(),
                     id_comissoes: body.id,
-                    status_comis: STATUS_NAO_PROGRAMADO,
+                    status_comis: body.liquidar_em ? STATUS_EM_PROGRAMACAO_LIQUIDACAO : STATUS_NAO_PROGRAMADO
                 });
 
                 // Inserir na tabela de status de pipeline a informação de comissionamento
@@ -401,7 +408,7 @@ module.exports = app => {
             .select('tbl1.id', 'tbl1.id_comis_agentes', 'tbl1.id_comis_pipeline', 'tbl1.desconto', 'tbl1.observacao', 'tbl1.liquidar_em',
                 { id_pipeline: 'tbl3.id' }, 'tbl6.nome as agente', 'tbl5.descricao as unidade', 'tbl3.documento',
                 app.db.raw('format(tbl1.valor, 2, "pt_BR")valor'), 'tbl1.agente_representante', app.db.raw(`DATE_FORMAT(SUBSTRING_INDEX(tbl1.liquidar_em,' ',1),'%d/%m/%Y') AS liquidar_aprox`),
-                app.db.raw(`(SELECT ps.status_comis FROM ${tabelaComissStatussDomain} ps WHERE ps.id_comissoes = tbl1.id ORDER BY ps.created_at DESC, ps.status_comis DESC LIMIT 1) last_status_comiss`))
+                app.db.raw(`(select status_comis from ${tabelaComissStatussDomain} where id_comissoes = tbl1.id order by created_at desc, status_comis desc limit 1) last_status_comiss`))
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
             .groupBy('tbl1.id')
@@ -599,5 +606,74 @@ module.exports = app => {
         return res.status(200).send('Programação de liquidação bem sucedida')
     }
 
-    return { save, get, getById, remove, liquidateInGroup }
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'gmc':
+                getMaxCommissioningValue(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }
+
+    // Retorna os dados de valores efetivados e máximos de comissionamento
+    const getMaxCommissioningValue = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de valores de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const idPipeline = req.query.id_pipeline || undefined;
+
+        try {
+            existsOrError(idPipeline, 'Pipeline não informado')
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`;
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`;
+        const tabelaComissPipelineDomain = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`;
+
+        const represSum = app.db({ c: tabelaDomain })
+            .select(app.db.raw("'repres_sum'"))
+            .sum('valor as valor')
+            .join({ cp: tabelaComissPipelineDomain }, 'cp.id', '=', 'c.id_comis_pipeline')
+            .where({ 'cp.id_pipeline': idPipeline, 'c.agente_representante': 1 });
+
+        const represMax = app.db({ p: tabelaPipelineDomain })
+            .select(app.db.raw("'repres_max'"))
+            .select('valor_representacao as valor')
+            .where({ id: idPipeline });
+
+        const agentesSum = app.db({ c: tabelaDomain })
+            .select(app.db.raw("'agentes_sum'"))
+            .sum('valor as valor')
+            .join({ cp: tabelaComissPipelineDomain }, 'cp.id', '=', 'c.id_comis_pipeline')
+            .where({ 'cp.id_pipeline': idPipeline, 'c.agente_representante': 0 });
+
+        const agentesMax = app.db({ p: tabelaPipelineDomain })
+            .select(app.db.raw("'agentes_max'"))
+            .select('valor_agente as valor')
+            .where({ id: idPipeline });
+
+        const unionQuery = app.db.union([represSum, represMax, agentesSum, agentesMax]);
+
+
+        unionQuery.then(body => {
+            return res.json(body)
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(500).send(error);
+        });
+    }
+
+    return { save, get, getById, remove, liquidateInGroup, getByFunction }
 }

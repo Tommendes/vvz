@@ -224,6 +224,7 @@ module.exports = app => {
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de unidades de negócios"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const underscore = req.query.underscore || 1
@@ -257,6 +258,7 @@ module.exports = app => {
             isMatchOrError(uParams, `${noAccessMsg} "Exibição de unidades de negócios"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const underscore = req.query.underscore || 1
