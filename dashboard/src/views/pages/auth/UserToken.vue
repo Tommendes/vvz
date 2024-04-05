@@ -10,14 +10,7 @@ const router = useRouter();
 const route = useRoute();
 
 const idUser = ref('');
-const token1 = ref('');
-const token2 = ref('');
-const token3 = ref('');
-const token4 = ref('');
-const token5 = ref('');
-const token6 = ref('');
-const token7 = ref('');
-const token8 = ref('');
+const token = ref('');
 const tokenTimeMinutesLeft = ref(0);
 const tokenTimeLeft = ref(0);
 const tokenTimeMessage = ref('');
@@ -35,12 +28,12 @@ onMounted(async () => {
 
 const unlock = async () => {
     const urlTo = `${urlUnlock.value}${idUser.value}`;
-    if (token1.value && token2.value && token3.value && token4.value && token5.value && token6.value && token7.value && token8.value) {
+    if (token.value) {
         // Se preencheu todos os dados obrigatórios
         if (idUser.value) {
             axios
                 .post(urlTo, {
-                    token: (token1.value + token2.value + token3.value + token4.value + token5.value + token6.value + token7.value + token8.value).toUpperCase()
+                    token: token.value.toUpperCase()
                 })
                 .then((body) => {
                     const user = body.data;
@@ -99,13 +92,6 @@ const getNewToken = async () => {
             return defaultError(error.response.data.msg);
         });
 };
-
-const moveToNextInput = (index) => {
-    const nextInput = document.querySelector(`#token${index + 1}`);
-    if (nextInput !== null) {
-        nextInput.focus();
-    }
-};
 </script>
 
 <template>
@@ -124,31 +110,18 @@ const moveToNextInput = (index) => {
                             {{ tokenTimeMessage }}
                         </span>
                     </div>
-
                     <form @submit.prevent="unlock" class="max-w-30rem">
                         <div class="formgrid grid" v-if="tokenTimeLeft > 0">
                             <div class="field col-12">
                                 <label for="token1" class="block text-900 text-xl font-medium mb-2">Seu token</label>
                                 <div v-focustrap class="flex flex-wrap justify-content-center card-container blue-container gap-1">
-                                    <InputText
-                                        autofocus
-                                        v-model="token1"
-                                        id="token1"
-                                        autocomplete="off"
-                                        maxlength="1"
-                                        :size="1"
-                                        @input="moveToNextInput(1)"
-                                        pattern="[0-9a-zA-Z]{1}"
-                                        class="centered-input"
-                                        style="max-width: 30px; text-transform: uppercase"
-                                    />
-                                    <InputText v-model="token2" id="token2" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(2)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token3" id="token3" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(3)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token4" id="token4" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(4)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token5" id="token5" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(5)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token6" id="token6" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(6)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token7" id="token7" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(7)" pattern="[0-9a-zA-Z]{1}" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
-                                    <InputText v-model="token8" id="token8" autocomplete="off" maxlength="1" :size="1" @input="unlock" class="centered-input" style="max-width: 30px; text-transform: uppercase" />
+                                    <div class="card flex justify-content-center">
+                                        <InputOtp v-model="token" :length="8">
+                                            <template #default="{ attrs, events }">
+                                                <input type="text" v-bind="attrs" v-on="events" class="custom-otp-input" pattern="[0-9a-zA-Z]{1}" style="max-width: 30px; text-transform: uppercase" />
+                                            </template>
+                                        </InputOtp>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -158,20 +131,10 @@ const moveToNextInput = (index) => {
                         </div>
 
                         <div class="flex align-items-center justify-content-between mb-2">
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
-                            <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/forgot')"> Recuperar a senha </Button>
                         </div>
 
-                        <Button
-                            v-if="tokenTimeLeft > 0"
-                            rounded
-                            label="Registrar"
-                            icon="fa-solid fa-arrow-right-to-bracket"
-                            :disabled="!(token1 && token2 && token3 && token4 && token5 && token6 && token7 && token8)"
-                            type="submit"
-                            class="w-full p-3 text-xl mt-3 mb-3 gap-5"
-                        ></Button>
+                        <Button v-if="tokenTimeLeft > 0" rounded label="Registrar" icon="fa-solid fa-arrow-right-to-bracket" :disabled="!token" type="submit" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
                         <Button v-else rounded label="Solicite outro token por e-mail" icon="fa-solid fa-arrow-right-to-bracket" @click="getNewToken" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
                     </form>
                 </div>
@@ -183,5 +146,21 @@ const moveToNextInput = (index) => {
 <style scoped>
 .centered-input .p-inputtext {
     text-align: center;
+}
+
+.custom-otp-input {
+    width: 40px;
+    font-size: 36px;
+    border: 0 none;
+    appearance: none;
+    text-align: center;
+    transition: all 0.2s;
+    background: transparent;
+    border-bottom: 2px solid var(--surface-500);
+}
+
+.custom-otp-input:focus {
+    outline: 0 none;
+    border-bottom-color: var(--primary-color);
 }
 </style>

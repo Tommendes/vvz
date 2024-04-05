@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watchEffect } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { appName } from '@/global';
 import { useRoute, useRouter } from 'vue-router';
 import { baseApiUrl } from '@/env';
@@ -10,14 +10,7 @@ const router = useRouter();
 const route = useRoute();
 
 const idUser = ref('');
-const token1 = ref('');
-const token2 = ref('');
-const token3 = ref('');
-const token4 = ref('');
-const token5 = ref('');
-const token6 = ref('');
-const token7 = ref('');
-const token8 = ref('');
+const token = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const tokenTimeMinutesLeft = ref(0);
@@ -40,12 +33,12 @@ onMounted(async () => {
 
 const passReset = async () => {
     const urlTo = `${urlUnlock.value}${idUser.value}`;
-    if (token1.value && token2.value && token3.value && token4.value && token5.value && token6.value && token7.value && token8.value) {
+    if (token.value) {
         // Se preencheu todos os dados obrigatórios
         if (idUser.value) {
             axios
                 .put(urlTo, {
-                    token: (token1.value + token2.value + token3.value + token4.value + token5.value + token6.value + token7.value + token8.value).toUpperCase(),
+                    token: token.value.toUpperCase(),
                     password: password.value,
                     confirmPassword: confirmPassword.value
                 })
@@ -82,7 +75,7 @@ const getTokenTime = async () => {
                             tokenTimeMessage.value = `Dentro de ${tokenTimeLeft.value + 1} segundos, informe o token enviado por e-mail`;
                         }
                     } else tokenTimeLeftMessage.value = `Seu token venceu.<br>Clique abaixo para solicitar novo token`;
-                }, Math.random() * 1000);
+                }, 1000);
             })
             .catch((error) => {
                 const data = error.response.data;
@@ -107,31 +100,6 @@ const getNewToken = async () => {
             return defaultError(error.response.data.msg);
         });
 };
-
-const moveToNextInput = (index) => {
-    let nextInput = undefined;
-    if (typeof index === 'number') {
-        nextInput = document.querySelector(`#token${index + 1}`);
-    } else {
-        nextInput = document.querySelector(`#${index}`);
-    }
-    if (nextInput !== null) {
-        nextInput.focus();
-    }
-};
-watchEffect(() => {
-    if (route.query.tkn) {
-        token1.value = route.query.tkn[0];
-        token2.value = route.query.tkn[1];
-        token3.value = route.query.tkn[2];
-        token4.value = route.query.tkn[3];
-        token5.value = route.query.tkn[4];
-        token6.value = route.query.tkn[5];
-        token7.value = route.query.tkn[6];
-        token8.value = route.query.tkn[7];
-        moveToNextInput(`password`);
-    }
-});
 </script>
 
 <template>
@@ -154,16 +122,15 @@ watchEffect(() => {
                     <form @submit.prevent="passReset" class="max-w-35rem">
                         <div class="formgrid grid" v-if="tokenTimeLeft > 0">
                             <div class="field col-12">
-                                <label for="token1" class="block text-900 mb-2">Seu token</label>
+                                <label for="token" class="block text-900 mb-2">Seu token</label>
                                 <div v-focustrap class="flex flex-wrap justify-content-center card-container blue-container gap-1">
-                                    <InputText autofocus v-model="token1" id="token1" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(1)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
-                                    <InputText v-model="token2" id="token2" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(2)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
-                                    <InputText v-model="token3" id="token3" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(3)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
-                                    <InputText v-model="token4" id="token4" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(4)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
-                                    <InputText v-model="token5" id="token5" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(5)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
-                                    <InputText v-model="token6" id="token6" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(6)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
-                                    <InputText v-model="token7" id="token7" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput(7)" pattern="[0-9a-zA-Z]{1}" class="token-input" />
-                                    <InputText v-model="token8" id="token8" autocomplete="off" maxlength="1" :size="1" @input="moveToNextInput('password')" class="token-input" />
+                                    <div class="card flex justify-content-center">
+                                        <InputOtp v-model="token" :length="8">
+                                            <template #default="{ attrs, events }">
+                                                <input type="text" v-bind="attrs" v-on="events" class="custom-otp-input" pattern="[0-9a-zA-Z]{1}" style="max-width: 30px; text-transform: uppercase" />
+                                            </template>
+                                        </InputOtp>
+                                    </div>
                                 </div>
 
                                 <div class="formgrid grid">
@@ -185,7 +152,6 @@ watchEffect(() => {
 
                         <div class="flex align-items-center justify-content-between mb-2" v-if="!route.params.client">
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
-                            <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
                         </div>
 
                         <Button
@@ -193,7 +159,7 @@ watchEffect(() => {
                             rounded
                             label="Registrar"
                             icon="fa-solid fa-arrow-right-to-bracket"
-                            :disabled="!(token1 && token2 && token3 && token4 && token5 && token6 && token7 && token8)"
+                            :disabled="!(token && token.length == 8 && password && password.length > 5 && confirmPassword && confirmPassword.length > 5)"
                             type="submit"
                             class="w-full p-3 text-xl mt-3 mb-3 gap-5"
                         ></Button>
@@ -211,5 +177,21 @@ watchEffect(() => {
     font-size: 0.8rem;
     max-width: 35px;
     text-transform: uppercase;
+}
+
+.custom-otp-input {
+    width: 40px;
+    font-size: 36px;
+    border: 0 none;
+    appearance: none;
+    text-align: center;
+    transition: all 0.2s;
+    background: transparent;
+    border-bottom: 2px solid var(--surface-500);
+}
+
+.custom-otp-input:focus {
+    outline: 0 none;
+    border-bottom-color: var(--primary-color);
 }
 </style>
