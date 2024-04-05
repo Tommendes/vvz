@@ -81,14 +81,15 @@ module.exports = app => {
             if (Number(body.valor) <= 0) throw 'Valor da comissão deve ser maior que zero'
             // Verificar se o valor da comissão é maior que o valor base de comissPipeline
             if (body.agente_representante == 1 && Number(body.valor) > pipeline.valor_representacao) throw `O valor não pode ser maior que o valor da comissão de representante (${formatCurrency(pipeline.valor_representacao)}) informada no registro do Pipeline`
-            else if (body.agente_representante == 0 && (Number(body.valor) + (comisAgentes.total - Number(valorAnterior))) > pipeline.valor_agente) {
+            else if (body.agente_representante == 0 && (Number(body.valor) + Number((comisAgentes.total - valorAnterior).toFixed(2))) > pipeline.valor_agente) {
+                // log de cada item de: Number(body.valor) + Number((comisAgentes.total - valorAnterior).toFixed(2))) > pipeline.valor_agente inclusive o teste
                 let answer = `A soma do comissionamento dos agentes (${formatCurrency(comisAgentes.total)}) já registrado para este Pipeline mais `
                 if (comisAgentes.total > 0) answer += `o `
                 else answer = `O `
                 let sumError = `valor informado agora ultrapassa o máximo permitido de ${formatCurrency(ceilTwoDecimals(pipeline.valor_agente).toFixed(2))}`
                 throw `${answer} ${sumError}. Corrija o valor desta comissão antes de prosseguir`
             }
-            else if (body.agente_representante == 1 && (Number(body.valor) + (comisAgentes.total - Number(valorAnterior))) > pipeline.valor_representacao) {
+            else if (body.agente_representante == 1 && (Number(body.valor) + Number((comisAgentes.total - valorAnterior).toFixed(2))) > pipeline.valor_representacao) {
                 let answer = `A soma do comissionamento dos representantes (${formatCurrency(comisAgentes.total)}) já registrado para este Pipeline mais `
                 if (comisAgentes.total > 0) answer += `o `
                 else answer = `O `
@@ -122,6 +123,9 @@ module.exports = app => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
                 return res.status(400).send(error)
             }
+
+            const bodyStatus = body.bodyStatus || undefined
+            delete body.bodyStatus
 
             const { createEventUpd } = app.api.sisEvents
             const evento = await createEventUpd({
@@ -176,6 +180,16 @@ module.exports = app => {
                         status_comis: body.liquidar_em ? STATUS_EM_PROGRAMACAO_LIQUIDACAO : STATUS_NAO_PROGRAMADO,
                     });
                 }
+                if (bodyStatus) {
+                    // Inserir na tabela de status de pipeline a informação de liquidação            
+                    await trx(tabelaComissaoStatusDomain).insert({
+                        evento: evento || 1,
+                        created_at: new Date(),
+                        id_comissoes: body.id,
+                        status_comis: STATUS_LIQUIDADO
+                    });
+                }
+
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
@@ -553,54 +567,58 @@ module.exports = app => {
 
         const { createEventUpd } = app.api.sisEvents
         Object.values(data).forEach(async (element) => {
-            try {
-                existsOrError(element.id, 'Registro não informado')
-                existsOrError(element.liquidar_em, 'Data da liquidação não informada')
-                if (!moment(element.liquidar_em, 'YYYY-MM-DD', true).isValid()) throw 'Data de liquidação inválida'
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-                return res.status(400).send(error)
-            }
-            const last = await app.db(tabelaDomain).where({ id: element.id }).first()
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento',],
-                "last": last,
-                "next": element,
-                "request": req,
-                "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
-                    "tabela_bd": tabela,
+            if (element.last_status_comiss < 30) {
+                delete element.last_status_comiss;
+                try {
+                    existsOrError(element.id, 'Registro não informado')
+                    existsOrError(element.liquidar_em, 'Data da liquidação não informada')
+                    if (!moment(element.liquidar_em, 'YYYY-MM-DD', true).isValid()) throw 'Data de liquidação inválida'
+                } catch (error) {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+                    return res.status(400).send(error)
                 }
-            })
-            element.evento = evento
-            element.updated_at = new Date()
-            app.db.transaction(async (trx) => {
-                await trx(tabelaDomain)
-                    .update(element)
-                    .where({ id: element.id })
-                    .then(async (ret) => {
-                        if (ret > 0) {
-                            return true
-                        }
-                        else res.status(200).send(`${tabelaAlias} não encontrado`)
-                    })
-                    .catch(error => {
-                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                        return res.status(500).send(error)
-                    })
+                const last = await app.db(tabelaDomain).where({ id: element.id }).first()
+                const evento = await createEventUpd({
+                    "notTo": ['created_at', 'updated_at', 'evento',],
+                    "last": last,
+                    "next": element,
+                    "request": req,
+                    "evento": {
+                        "evento": `Alteração de cadastro de ${tabela}`,
+                        "tabela_bd": tabela,
+                    }
+                })
+                element.evento = evento
+                element.updated_at = new Date()
+                app.db.transaction(async (trx) => {
+                    await trx(tabelaDomain)
+                        .update(element)
+                        .where({ id: element.id })
+                        .then(async (ret) => {
+                            if (ret > 0) {
+                                console.log('ret', ret);
+                                return true
+                            }
+                            else res.status(200).send(`${tabelaAlias} não encontrado`)
+                        })
+                        .catch(error => {
+                            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                            return res.status(500).send(error)
+                        })
 
-                // Inserir na tabela de status um registro de programação de liquidação                    
-                await trx(tabelaComissaoStatusDomain).insert({
-                    evento: evento || 1,
-                    created_at: new Date(),
-                    id_comissoes: element.id,
-                    status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO,
+                    // Inserir na tabela de status um registro de programação de liquidação                    
+                    await trx(tabelaComissaoStatusDomain).insert({
+                        evento: evento || 1,
+                        created_at: new Date(),
+                        id_comissoes: element.id,
+                        status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO,
+                    });
+                }).catch((error) => {
+                    // Se ocorrer um erro, faça rollback da transação
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+                    return res.status(500).send(error);
                 });
-            }).catch((error) => {
-                // Se ocorrer um erro, faça rollback da transação
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-                return res.status(500).send(error);
-            });
+            }
         })
 
         return res.status(200).send('Programação de liquidação bem sucedida')

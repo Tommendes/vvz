@@ -17,6 +17,8 @@ const props = defineProps({
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 const mode = ref('grid');
 
+import { guide } from '@/guides/comissoesGrid.js';
+
 //Scrool to top
 const scrollToTop = () => {
     window.scrollTo({
@@ -27,12 +29,14 @@ const scrollToTop = () => {
 // Dropdowns
 const dropdownAgentes = ref([]);
 // Lista de status
-// STATUS_NAO_PROGRAMADO = 10
-// STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20
-// STATUS_LIQUIDADO = 30
+
+// Andamento do registro
+const STATUS_NAO_PROGRAMADO = 10;
+const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20;
+const STATUS_LIQUIDADO = 30;
 const dropdownStatus = ref([
     { label: 'Não programado', value: '10', severity: 'danger' },
-    { label: 'Em programação de liquidação', value: '20', severity: 'warning' },
+    { label: 'Programado para liquidação', value: '20', severity: 'warning' },
     { label: 'Liquidado', value: '30', severity: 'success' }
 ]);
 // Cookies de usuário
@@ -50,6 +54,7 @@ const reload = async () => {
     mode.value = 'grid';
     loadData();
 };
+// Carrega os dados da grid
 const loadData = async () => {
     const url = `${urlBase.value}?field:id_pipeline=equals:${props.itemDataRoot.id}`;
     setTimeout(async () => {
@@ -65,6 +70,7 @@ const loadData = async () => {
         });
     }, Math.random() * 1000 + 250);
 };
+// Carrega os valores máximos de comissionamento
 const getMaxCommissioningValue = async () => {
     setTimeout(async () => {
         const url = `${urlBase.value}/f-a/gmc?id_pipeline=${props.itemDataRoot.id}`;
@@ -93,6 +99,7 @@ const getMaxCommissioningValue = async () => {
     }, Math.random() * 1000 + 250);
 };
 defineExpose({ loadData }); // Expondo a função para o componente pai
+// Visualizar item
 const viewItem = (data) => {
     mode.value = 'grid';
     setTimeout(() => {
@@ -101,6 +108,7 @@ const viewItem = (data) => {
         scrollToTop();
     }, 100);
 };
+// Adicionar novo item
 const newItem = () => {
     if (canAddCommission.value) {
         mode.value = 'grid';
@@ -113,13 +121,36 @@ const newItem = () => {
         defaultWarn('Não há margem para mais comissionamento');
     }
 };
-const liquidateCommissions = () => {
+// Agendar liquidação em grupo
+const scheduleGroupSettlement = () => {
     confirm.require({
         group: 'comisGroupLiquidateConfirm',
-        header: 'Confirmar liquidação total',
-        message: `Confirma a programação de liquidação deste${gridData.value.length > 1 ? 's' : ''} ${gridData.value.length} registros?`,
-        message2: 'Essa operação ainda poderá ser revertida enquanto não houver a liquidação total.',
-        message3: 'Informe abaixo a data prevista para liquidação.',
+        header: 'Programar liquidação dos pendentes',
+        message: [
+            `Confirma a programação de liquidação deste${pendingCommissionsQuantity() > 1 ? 's' : ''} ${pendingCommissionsQuantity()} registros pendentes?`,
+            'Essa operação ainda poderá ser revertida enquanto não houver a liquidação total.',
+            'Informe abaixo a data prevista para liquidação.'
+        ],
+        isCalendar: true,
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            scheduleGroup();
+        },
+        reject: () => {
+            return;
+        }
+    });
+};
+// Executar liquidação em grupo
+const executeGroupSettlement = () => {
+    confirm.require({
+        group: 'comisGroupLiquidateConfirm',
+        header: 'Liquidação total dos pendentes',
+        message: [`Confirma a liquidação deste${pendingCommissionsQuantity() > 1 ? 's' : ''} ${pendingCommissionsQuantity()} registros?`, 'Essa operação <strong>NÃO PODERÁ SER REVERTIDA</strong>.', 'Informe abaixo a data prevista para liquidação.'],
+        isCalendar: false,
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -153,20 +184,44 @@ const formIsValid = () => {
     return liquidarEmIsValid;
 };
 
-const liquidateGroup = () => {
+// Programar liquidação em grupo
+const scheduleGroup = () => {
     if (!formIsValid()) return;
     const url = `${urlBase.value}`;
-    // const obj = { itemData: moment(itemData.value.liquidar_em, 'DD/MM/YYYY').format('YYYY-MM-DD') };
     let obj = [];
     const dateToLiquidate = moment(itemDataGroup.value.liquidar_em).format('YYYY-MM-DD');
     gridData.value.forEach((element) => {
-        const newItem = { id: element.id, liquidar_em: dateToLiquidate };
-        obj.push(newItem);
+        if (element.last_status_comiss < 30) {
+            const newItem = { id: element.id, liquidar_em: dateToLiquidate, last_status_comiss: element.last_status_comiss };
+            obj.push(newItem);
+        }
     });
     axios.patch(url, obj).then((res) => {
         defaultSuccess(res.data);
         loadData();
     });
+};
+// Liquidar em grupo
+const liquidateGroup = async () => {
+    if (!formIsValid()) return;
+    let shouldLoadData = true;
+    for (const element of gridData.value) {
+        if (element.last_status_comiss < 30) {
+            if (element.last_status_comiss < 20) {
+                infoDialogisVisible.value = true;
+                shouldLoadData = false;
+                break;
+            }
+            const bodyStatus = {
+                id_comissoes: element.id,
+                status_comis: STATUS_LIQUIDADO
+            };
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus);
+        }
+    }
+    if (shouldLoadData) {
+        await loadData();
+    }
 };
 
 // Retornar o label de acordo com o value do DropDown
@@ -178,6 +233,13 @@ const getStatusField = (value, field = 'label') => {
     const item = dropdownStatus.value.find((item) => item.value == value);
     return item ? item[field] : '';
 };
+const pendingCommissionsQuantity = () => {
+    return gridData.value.filter((item) => item.last_status_comiss < 30).length;
+};
+const hasPendingCommissions = () => {
+    return gridData.value.some((item) => item.last_status_comiss < 30);
+};
+const infoDialogisVisible = ref(false);
 // Carrega as operações básicas do formulário
 onBeforeMount(async () => {
     setTimeout(async () => {
@@ -188,6 +250,44 @@ onBeforeMount(async () => {
 </script>
 
 <template>
+    <Dialog
+        id="InfoDialog"
+        v-model:visible="infoDialogisVisible"
+        modal
+        :pt="{
+            root: 'border-none',
+            mask: {
+                style: 'backdrop-filter: blur(5px)'
+            }
+        }"
+    >
+        <template #container="{ closeCallback }">
+            <div class="flex flex-column px-5 py-5 gap-4" style="border-radius: 12px; background-image: radial-gradient(circle at left top, var(--blue-400), var(--blue-700), var(--blue-400)); color: #fff">
+                <div class="block mx-auto text-8xl">
+                    <i class="fa-solid fa-circle-info fa-fade"></i>
+                </div>
+                <div class="block mx-auto text-2xl">
+                    <p class="mb-3 text-center text-white">Ainda resta informar a data de liquidação de um ou mais registros</p>
+                    <p class="mb-3 text-center text-white">Favor informar primeiro</p>
+                    <p class="mb-3 text-center text-white">Se desejar, pode programar em grupo com o botão abaixo<br />e depois executar a liquidação total novamente</p>
+                </div>
+
+                <div class="flex justify-content-center align-items-center gap-3">
+                    <Button label="Ok" @click="closeCallback" text class="w-10rem p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10"></Button>
+                    <Button
+                        type="button"
+                        icon="fa-solid fa-file-invoice-dollar fa-fade"
+                        label="Programar liquidação em grupo"
+                        v-on:click="closeCallback"
+                        @click="scheduleGroupSettlement()"
+                        text
+                        v-tooltip.top="'Clique para liquidar todas as comissões pendentes'"
+                        class="p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10"
+                    />
+                </div>
+            </div>
+        </template>
+    </Dialog>
     <ConfirmDialog group="comisGroupLiquidateConfirm">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
@@ -195,10 +295,8 @@ onBeforeMount(async () => {
                     <i class="pi pi-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
-                <p class="mb-1">{{ message.message }}</p>
-                <p class="mb-1">{{ message.message2 }}</p>
-                <p class="mb-1">{{ message.message3 }}</p>
-                <Calendar v-model="itemDataGroup.liquidar_em" showButtonBar dateFormat="dd/mm/yy" />
+                <p class="mb-1" v-for="(item, index) in message.message" :key="index" v-html="item" />
+                <Calendar v-if="message.isCalendar" v-model="itemDataGroup.liquidar_em" showButtonBar dateFormat="dd/mm/yy" />
                 <div class="flex align-items-center gap-2 mt-4">
                     <Button label="Confirmar" @click="acceptCallback"></Button>
                     <Button label="Ainda não" outlined @click="rejectCallback"></Button>
@@ -220,14 +318,31 @@ onBeforeMount(async () => {
         <DataTable ref="dt" :value="gridData" dataKey="id">
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" outlined @click="newItem()" v-tooltip.top="canAddCommission ? 'Clique para registrar uma nova comissão' : 'Não há margem para comissionamento'" />
                     <Button
+                        type="button"
+                        icon="fa-solid fa-plus"
+                        label="Nova Comissão"
+                        :outlined="canAddCommission"
+                        @click="newItem()"
+                        v-tooltip.top="canAddCommission ? 'Clique para registrar uma nova comissão' : 'Não há margem para comissionamento'"
+                    />
+                    <Button
+                        v-if="gridData && gridData.length > 0"
                         type="button"
                         icon="fa-solid fa-file-invoice-dollar fa-fade"
                         label="Programar liquidação em grupo"
-                        outlined
-                        @click="liquidateCommissions()"
-                        v-tooltip.top="'Clique para informar a data de liquidação de todas as comissões abaixo'"
+                        :outlined="hasPendingCommissions"
+                        @click="scheduleGroupSettlement()"
+                        v-tooltip.top="'Clique para informar a data de liquidação de todas as comissões pendentes'"
+                    />
+                    <Button
+                        v-if="gridData && gridData.length > 0"
+                        type="button"
+                        icon="fa-solid fa-bolt fa-fade"
+                        label="Liquidar os pendentes"
+                        :outlined="hasPendingCommissions"
+                        @click="executeGroupSettlement()"
+                        v-tooltip.top="'Clique para liquidar todas as comissões pendentes'"
                     />
                 </div>
             </template>
@@ -267,6 +382,19 @@ onBeforeMount(async () => {
                 </template>
             </Column>
         </DataTable>
+        <div class="col-12">
+            <Fieldset class="bg-green-200" toggleable :collapsed="true">
+                <template #legend>
+                    <div class="flex align-items-center text-primary">
+                        <span class="fa-solid fa-circle-info mr-2"></span>
+                        <span class="font-bold text-lg">Instruções</span>
+                    </div>
+                </template>
+                <p class="m-0">
+                    <span v-html="guide" />
+                </p>
+            </Fieldset>
+        </div>
         <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
             <template #legend>
                 <div class="flex align-items-center text-primary">

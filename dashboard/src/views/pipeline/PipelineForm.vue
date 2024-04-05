@@ -1091,7 +1091,7 @@ watch(route, (value) => {
                                 @click="toProposal()"
                             />
                             <Button
-                                label="Comissionar"
+                                label="Comissionamento"
                                 v-if="userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params >= 20 && itemDataLastStatus.status_params <= 70 && itemData.status == 10"
                                 :disabled="itemDataLastStatus.status_params >= 89"
                                 class="w-full mb-3"

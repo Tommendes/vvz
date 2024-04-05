@@ -107,7 +107,6 @@ module.exports = app => {
         if (limit) {
             ret.limit(limit)
         }
-        console.log(ret.toString())
         ret.then(body => {
             const count = body.length
             return res.json({ data: body, count })

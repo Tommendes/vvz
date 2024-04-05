@@ -8,6 +8,9 @@ import { formatCurrency } from '@/global';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
+
+import { guide } from '@/guides/comissaoForm.js';
+
 // Cookies de usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -29,6 +32,8 @@ const userData = JSON.parse(json);
 const loading = ref(false);
 // Campos de formulário
 const itemData = ref({});
+// Eventos do registro
+const itemDataEventos = ref({});
 const comissionamento = ref({ R: { M: 0, S: 0 }, A: { M: 0, S: 0 } });
 const commissioningValues = ref(null);
 const canAddCommission = ref(false);
@@ -58,11 +63,51 @@ const loadData = async () => {
                 if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
                 // Lista o andamento do registro
             });
+            // Lista o andamento do registro
             await listStatusRegistro();
+            // Eventos do registro
+            await getEventos();
         }, Math.random * 1000 + 250);
     } else itemData.value.id_comis_pipeline = props.itemDataComissionamento.id;
     getMaxCommissioningValue();
     loading.value = false;
+};
+
+// Lista os eventos do registro
+const getEventos = async () => {
+    setTimeout(async () => {
+        const id = props.itemDataRoot.id || itemData.value.id;
+        const url = `${baseApiUrl}/sis-events/${id}/comissoes/get-events`;
+        await axios.get(url).then((res) => {
+            if (res.data && res.data.length > 0) {
+                itemDataEventos.value = res.data;
+                itemDataEventos.value.forEach((element) => {
+                    if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
+                    else if (element.classevento.toLowerCase() == 'update')
+                        element.evento =
+                            `Edição do registro` +
+                            (userData.gestor >= 1
+                                ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                                : '');
+                    else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
+                    else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
+                    else if (element.classevento.toLowerCase() == 'commissioning')
+                        element.evento =
+                            `Lançamento de comissão` +
+                            (userData.comissoes >= 1
+                                ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                                : '');
+                    element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
+                });
+            } else {
+                itemDataEventos.value = [
+                    {
+                        evento: 'Não há registro de log eventos para este registro'
+                    }
+                ];
+            }
+        });
+    }, Math.random() * 1000);
 };
 
 // Validar formulário
@@ -127,7 +172,7 @@ const deleteItem = () => {
 };
 // Liquida o registro
 const liquidateItem = () => {
-    const body = {
+    const bodyStatus = {
         id_comissoes: itemData.value.id,
         status_comis: STATUS_LIQUIDADO
     };
@@ -141,12 +186,18 @@ const liquidateItem = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: async () => {
-            // itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
-            // await saveData();
-            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, body).then(async () => {
+            if (!itemData.value.liquidar_em) {
+                itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
+                itemData.value.bodyStatus = bodyStatus;
+                await saveData();
                 emit('updatedItem');
                 await loadData();
-            });
+            } else {
+                await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                    emit('updatedItem');
+                    await loadData();
+                });
+            }
         },
         reject: () => {
             return false;
@@ -212,6 +263,10 @@ const getMaxCommissioningValue = async () => {
 const reload = () => {
     emit('reload');
 };
+const cancel = () => {
+    if (mode.value == 'view') emit('reload');
+    else if (mode.value == 'edit') mode.value = 'view';
+};
 
 /**
  * Status do registro
@@ -228,14 +283,14 @@ const itemDataStatusPreload = ref([
     {
         status: '10',
         action: 'Criação',
-        label: 'Criado - Não programado',
+        label: 'Criado',
         icon: 'fa-solid fa-plus',
         color: '#3b82f6'
     },
     {
         status: '20',
         action: 'Programação',
-        label: 'Em programação de liquidação',
+        label: 'Programado para liquidação',
         icon: 'fa-solid fa-shopping-cart',
         color: '#4cd07d'
     },
@@ -251,7 +306,6 @@ const itemDataStatusPreload = ref([
 const listStatusRegistro = async () => {
     setTimeout(async () => {
         const url = `${baseApiUrl}/comis-status/${props.itemDataRoot.id || itemData.value.id}`;
-        console.log(url);
         await axios.get(url).then((res) => {
             if (res.data && res.data.data.length > 0) {
                 itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
@@ -311,14 +365,6 @@ onBeforeMount(() => {
             <div :class="`col-12 md:col-${itemDataStatus.length > 0 ? '8' : '12'}`">
                 <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
-                    <!-- <div class="field col-12 md:col-6">
-                        <label for="agente_representante">Agente Representante</label>
-                        <InputText autocomplete="no" v-model="itemData.agente_representante" id="agente_representante" type="text" />
-                    </div> -->
-                    <!-- <div class="field col-12 md:col-3">
-                        <label for="alterar_agente_representante">Alterar Agente Representante</label>
-                        <InputText autocomplete="no" v-model="itemData.alterar_agente_representante" id="alterar_agente_representante" type="text" />
-                    </div> -->
                     <div class="field col-12 md:col-12">
                         <label for="id_comis_agentes">Agente/Representante Comissionado</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
@@ -359,10 +405,10 @@ onBeforeMount(() => {
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
                     <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view' && canAddCommission" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" label="Liquidar" icon="fa-solid fa-bolt fa-fade" severity="success" text raised @click="liquidateItem" />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" label="Excluir" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
-                    <Button type="button" v-if="mode == 'new' || itemDataLastStatus.status_comis < 30" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                    <Button type="submit" v-if="mode == 'edit' || (mode == 'new' && canAddCommission)" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" label="Liquidar" icon="fa-solid fa-bolt fa-fade" severity="success" text raised @click="liquidateItem" />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" label="Excluir" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
+                    <Button type="button" v-if="['new', 'edit'].includes(mode)" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
                     <Button type="button" v-else label="Sair" icon="fa-solid fa-door-open" text raised @click="reload" />
                 </div>
             </div>
@@ -388,6 +434,33 @@ onBeforeMount(() => {
                     </Timeline>
                 </Fieldset>
             </div>
+            <div class="col-12">
+                <Fieldset class="bg-green-200" toggleable :collapsed="true">
+                    <template #legend>
+                        <div class="flex align-items-center text-primary">
+                            <span class="fa-solid fa-circle-info mr-2"></span>
+                            <span class="font-bold text-lg">Instruções</span>
+                        </div>
+                    </template>
+                    <p class="m-0">
+                        <span v-html="guide" />
+                    </p>
+                </Fieldset>
+            </div>
+            <div v-if="itemDataEventos.length > 0" class="col-12 md:col-12">
+                <Fieldset class="bg-orange-200 mb-3" toggleable :collapsed="true">
+                    <template #legend>
+                        <div class="flex align-items-center text-primary">
+                            <span class="fa-solid fa-circle-info mr-2"></span>
+                            <span class="font-bold text-lg">Eventos do registro</span>
+                        </div>
+                    </template>
+                    <div class="m-0" v-for="item in itemDataEventos" :key="item.id">
+                        <h4 v-if="item.data">Em {{ item.data }}: {{ item.user }}</h4>
+                        <p v-html="item.evento" class="mb-3" />
+                    </div>
+                </Fieldset>
+            </div>
             <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
                 <template #legend>
                     <div class="flex align-items-center text-primary">
@@ -399,6 +472,7 @@ onBeforeMount(() => {
                 <p>mode: {{ mode }}</p>
                 <p>itemDataPipeline: {{ props.itemDataPipeline }}</p>
                 <p>itemData: {{ itemData }}</p>
+                <p>itemDataEventos: {{ itemDataEventos }}</p>
                 <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
                 <p>props.itemDataComissionamento: {{ props.itemDataComissionamento }}</p>
                 <p>Comissionamento Representantes: {{ comissionamento.R.M }} > {{ comissionamento.R.S }} = {{ comissionamento.R.M > comissionamento.R.S }}</p>
