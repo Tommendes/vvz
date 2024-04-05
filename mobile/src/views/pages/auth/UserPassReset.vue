@@ -127,7 +127,7 @@ const getNewToken = async () => {
                                     <div class="card flex justify-content-center">
                                         <InputOtp v-model="token" :length="8">
                                             <template #default="{ attrs, events }">
-                                                <input type="text" v-bind="attrs" v-on="events" class="custom-otp-input" pattern="[0-9a-zA-Z]{1}" style="max-width: 30px; text-transform: uppercase" />
+                                                <input type="text" v-bind="attrs" v-on="events" class="custom-otp-input" pattern="[0-9a-zA-Z]{1}" style="max-width: 26px; text-transform: uppercase" />
                                             </template>
                                         </InputOtp>
                                     </div>
@@ -181,7 +181,7 @@ const getNewToken = async () => {
 
 .custom-otp-input {
     width: 40px;
-    font-size: 36px;
+    font-size: 24px;
     border: 0 none;
     appearance: none;
     text-align: center;
