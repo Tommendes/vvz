@@ -713,7 +713,7 @@ onMounted(() => {
         <!-- Gráfico -->
         <div class="col-12" v-if="lineData.labels.length > 0">
             <div class="card" id="divChart">
-                <div class="flex justify-content-between align-items-center mb-5">
+                <div class="flex justify-content-between flex-column align-items-center mb-5">
                     <h5>Visão geral de vendas sobre os produtos mais vendidos</h5>
                     <div class="text-right">
                         <SplitButton label="Exportar" :model="chartExportItems" icon="fa-solid fa-ellipsis-vertical" @click="exportToPNG" text severity="info"></SplitButton>
@@ -725,7 +725,7 @@ onMounted(() => {
                             selectionMode="range"
                             :manualInput="true"
                             showButtonBar
-                            class="custom-calendar"
+                            class="custom-calendar block"
                             @update:modelValue="applyBiParamsVG()"
                         />
                     </div>
@@ -751,7 +751,7 @@ onMounted(() => {
                                 selectionMode="range"
                                 :manualInput="true"
                                 showButtonBar
-                                class="custom-calendar w-full"
+                                class="custom-calendar w-full block"
                                 @update:modelValue="applyBiParams()"
                             />
                         </div>
@@ -770,7 +770,7 @@ onMounted(() => {
                             selectionMode="range"
                             :manualInput="true"
                             showButtonBar
-                            class="custom-calendar"
+                            class="custom-calendar p-2"
                             @update:modelValue="applyBiParamsVG()"
                         />
                         <small id="username-help">Selecione acima o período desejado para apresentar os resultados no gráfico.</small>
@@ -783,7 +783,7 @@ onMounted(() => {
 
 <style scoped>
 @media (min-width: 992px) {
-  .w-screen {
+.w-screen {
     width: 85vw !important;
   }
 }

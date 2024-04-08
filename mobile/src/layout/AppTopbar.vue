@@ -236,13 +236,13 @@ onBeforeMount(() => {
                 <img :src="logoUrl" alt="logo" />
                 <span>{{ appName }}</span>
             </router-link>
-            <button class="p-link layout-menu-button layout-topbar-button" @click="onMenuToggle()">
+            <button class="p-link layout-menu-button layout-topbar-button border-none bg-transparent" @click="onMenuToggle()">
                 <i class="fa-solid fa-bars fa-lg"></i>
             </button>
         </div>
 
         <div class="flex flex-row-reverse">
-            <button class="p-link layout-topbar-menu-button layout-topbar-button" @click="onTopBarMenuButton()">
+            <button class="p-link layout-topbar-menu-button layout-topbar-button border-none bg-transparent" @click="onTopBarMenuButton()">
                 <i class="fa-solid fa-ellipsis-vertical"></i>
             </button>
 
@@ -296,12 +296,12 @@ onBeforeMount(() => {
                 <i class="fa-regular fa-bell"></i>
             </Button>
             <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
-            <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
+            <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button border-none bg-transparent">
                 <i class="fa-regular fa-user"></i>
                 <span>Perfil</span>
             </Button>
             <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
-            <button @click="toggleAppConfig()" class="p-link layout-topbar-button">
+            <button @click="toggleAppConfig()" class="p-link layout-topbar-button border-none bg-transparent">
                 <i :class="`fa-solid fa-user-gear ${userLayer ? '' : 'fa-shake'}`"></i>
                 <span>Configurações</span>
             </button>
@@ -311,7 +311,16 @@ onBeforeMount(() => {
     </div>
 </template>
 
+<style>
+ul{
+    list-style: none;
+}
+</style>
+
 <style scoped>
+.bg-transparent{
+    background-color: transparent;
+}
 .fa-regular .fa-bell .fa-shake {
     font-size: 1.5rem;
 }

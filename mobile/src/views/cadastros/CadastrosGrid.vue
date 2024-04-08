@@ -264,4 +264,10 @@ watchEffect(() => {
 .container{
     overflow-x: hidden;
 }
+ol{
+    list-style: none;
+}
+/* li{
+    display: inline;
+} */
 </style>
