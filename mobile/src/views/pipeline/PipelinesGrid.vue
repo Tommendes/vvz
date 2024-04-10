@@ -338,7 +338,7 @@ onMounted(() => {
                 </div>
                 <div class="flex flex-column justify-content-end gap-3">
                     <Dropdown
-                        placeholder="Todos...?"
+                        placeholder="Todos..."
                         :showClear="!!tipoDoc"
                         id="doc_venda"
                         optionLabel="label"
@@ -440,7 +440,7 @@ onMounted(() => {
                     />
                 </div>
             </template>
-            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" style="0.6rem">
+            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
@@ -457,6 +457,19 @@ onMounted(() => {
 }
 </style>
 <style>
+.p-dropdown{ /* Filtro do grid  */
+    display: flex;
+    align-items: center;
+}
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
+    display: inline; /* Estilização do nav */
+}
+#pv_id_5{
+    width: 4rem;
+}
 .p-column-filter-clear-button {
     display: none;
 }

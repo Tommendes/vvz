@@ -742,7 +742,7 @@ onMounted(() => {
                     <div class="flex flex-column gap-2">
                         <label for="biPeriod" style="text-align: end">Período de Exibição Geral</label>
                         <div class="inputGroup">
-                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full mb-3" @update:modelValue="applyBiParams()" />  
+                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full mb-3 flex align-items-center" @update:modelValue="applyBiParams()" />
                             <Calendar
                                 aria-describedby="username-help"
                                 showIcon
@@ -789,6 +789,36 @@ onMounted(() => {
 }
 </style>
 <style>
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+/* Início do ajuste nos calendários*/
+.p-datepicker-calendar{
+    width: 100%;
+}
+.p-datepicker-header{
+    text-align: center;
+}
+.p-datepicker-month, .p-datepicker-year{
+    border: none;
+    background-color: transparent;
+}
+.p-datepicker-title{
+    display: inline;
+}
+/* Fim do ajuste nos calendários*/
+/* Início da estilização das mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim da estilização das mensagens */
+li{
+    display: list-item;
+}
 .container[data-v-7a7a37b1]{
     overflow-x: hidden;
 }
