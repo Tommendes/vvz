@@ -138,7 +138,6 @@ onBeforeMount(() => {
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
-                        <i class="fa-solid fa-magnifying-glass" />
                         <InputText class="w-full" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
@@ -177,6 +176,23 @@ onBeforeMount(() => {
 }
 </style>
 <style>
+/* Mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim Mensagens */
+nav>ol{ /* Nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+}
+.p-column-filter-menu{
+    display: inline; /* Ícone de filtro do grid*/
+}
 .container{
     overflow-x: hidden;
 }

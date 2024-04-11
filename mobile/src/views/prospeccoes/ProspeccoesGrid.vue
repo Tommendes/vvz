@@ -261,6 +261,7 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
+
 <style scoped>
 #w-95{
     width: 95vw;
@@ -269,7 +270,24 @@ watchEffect(() => {
     margin-right: auto;
 }
 </style>
+
 <style>
+/* Estilização  */
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+/* Início da estilização das mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim da estilização das mensagens */
+nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
+    display: inline; /* Estilização do nav */
+}
 .container{
     overflow-x: hidden;
 }

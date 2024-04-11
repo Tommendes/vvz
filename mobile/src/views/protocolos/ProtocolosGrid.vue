@@ -100,7 +100,6 @@ onBeforeMount(() => {
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop()" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
-                        <i class="fa-solid fa-magnifying-glass" />
                         <InputText class="w-full" id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
@@ -147,5 +146,21 @@ onBeforeMount(() => {
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
+}
+</style>
+
+<style>
+/* Mensagens do navbar */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim Mensagens do navbar */
+nav>ol{ /* Nav */
+    display: flex;
+    list-style: none;
 }
 </style>

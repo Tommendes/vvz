@@ -46,7 +46,7 @@ const gridData = ref([]); // Seus dados iniciais
 
 // Itens do grid
 const listaNomes = ref([
-    { field: 'evento', label: 'Tipo do evento', minWidth: '10rem' },
+    { field: 'evento', label: 'Tipo do evento' },
     { field: 'user', label: 'Usuário' }
     // { field: 'created_at', label: 'Data de criação' },
     // { field: 'classevento', label: 'Classe' },
@@ -272,6 +272,22 @@ const showEvent = (evento) => {
 }
 </style>
 <style>
+/* Mensagens do navbar */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim Mensagens do navbar */
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+nav>ol{ /* Nav */
+    display: flex;
+    list-style: none;
+}
 .container{
     overflow-x: hidden;
 }

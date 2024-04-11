@@ -242,6 +242,28 @@ watchEffect(() => {
 }
 </style>
 <style>
+/* Mensagens do navbar */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
+    display: inline;
+}
+#pv_id_5{
+    width: 4rem;    
+}
+/* Fim Mensagens do navbar */
+
+nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
+    display: inline; /* Estilização do nav */
+}
+#pv_id_5{
+    width: 4rem;
+}
 .p-column-filter-menu-button, .p-column-filter-clear-button {
     margin-left: 0.5rem;
     display: none;

@@ -100,7 +100,6 @@ onBeforeMount(() => {
                         <Button class="ml-1 w-full" type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     </span>
                     <span class="p-input-icon-left">
-                        <i class="fa-solid fa-magnifying-glass" />
                         <InputText
                             class="w-full"
                             id="searchInput"
@@ -150,6 +149,26 @@ onBeforeMount(() => {
 }
 </style>
 <style>
+/* Mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim Mensagens */
+nav>ol{ /* Nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+}
+.p-column-filter-menu{
+    display: inline; /* Ícone de filtro do grid*/
+}
+.p-datatable-table{
+    width: 100%; /* Largura da tabela */
+}
 .container{
     overflow-x: hidden;
 }

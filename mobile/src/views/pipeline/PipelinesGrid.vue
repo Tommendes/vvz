@@ -338,7 +338,7 @@ onMounted(() => {
                 </div>
                 <div class="flex flex-column justify-content-end gap-3">
                     <Dropdown
-                        placeholder="Todos...?"
+                        placeholder="Todos..."
                         :showClear="!!tipoDoc"
                         id="doc_venda"
                         optionLabel="label"
@@ -440,7 +440,7 @@ onMounted(() => {
                     />
                 </div>
             </template>
-            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" style="0.6rem">
+            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
@@ -457,16 +457,29 @@ onMounted(() => {
 }
 </style>
 <style>
-.p-column-filter-clear-button {
-    display: none;
+nav>ol{
+    display: flex;
 }
-.container{
-    overflow-x: hidden;
+.p-dropdown{ /* Dropdown de filtro do grid  */
+    display: flex;
+    align-items: center;
 }
-.p-datatable .p-datatable-tbody > tr > td {
-    padding: 0.5rem;
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
 }
-.p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
-    display: none;
+/* Mensagens do navbar */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
 }
+.p-menuitem-link{
+    display: flex;
+}
+nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
+    display: inline;
+}
+#pv_id_5{
+    width: 4rem;    
+}
+/* Fim Mensagens do navbar */
 </style>

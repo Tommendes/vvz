@@ -261,7 +261,29 @@ watchEffect(() => {
 }
 </style>
 <style>
+nav>ol{
+    display: flex;
+}
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+/* Mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim Mensagens */
 .container{
     overflow-x: hidden;
+}
+ol{
+    list-style: none;
 }
 </style>

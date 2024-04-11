@@ -713,7 +713,7 @@ onMounted(() => {
         <!-- Gráfico -->
         <div class="col-12" v-if="lineData.labels.length > 0">
             <div class="card" id="divChart">
-                <div class="flex justify-content-between align-items-center mb-5">
+                <div class="flex justify-content-between flex-column align-items-center mb-5">
                     <h5>Visão geral de vendas sobre os produtos mais vendidos</h5>
                     <div class="text-right">
                         <SplitButton label="Exportar" :model="chartExportItems" icon="fa-solid fa-ellipsis-vertical" @click="exportToPNG" text severity="info"></SplitButton>
@@ -725,7 +725,7 @@ onMounted(() => {
                             selectionMode="range"
                             :manualInput="true"
                             showButtonBar
-                            class="custom-calendar"
+                            class="custom-calendar block"
                             @update:modelValue="applyBiParamsVG()"
                         />
                     </div>
@@ -742,7 +742,7 @@ onMounted(() => {
                     <div class="flex flex-column gap-2">
                         <label for="biPeriod" style="text-align: end">Período de Exibição Geral</label>
                         <div class="inputGroup">
-                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full mb-3" @update:modelValue="applyBiParams()" />  
+                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full mb-3 flex align-items-center" @update:modelValue="applyBiParams()" />
                             <Calendar
                                 aria-describedby="username-help"
                                 showIcon
@@ -751,7 +751,7 @@ onMounted(() => {
                                 selectionMode="range"
                                 :manualInput="true"
                                 showButtonBar
-                                class="custom-calendar w-full"
+                                class="custom-calendar w-full block"
                                 @update:modelValue="applyBiParams()"
                             />
                         </div>
@@ -770,7 +770,7 @@ onMounted(() => {
                             selectionMode="range"
                             :manualInput="true"
                             showButtonBar
-                            class="custom-calendar"
+                            class="custom-calendar p-2"
                             @update:modelValue="applyBiParamsVG()"
                         />
                         <small id="username-help">Selecione acima o período desejado para apresentar os resultados no gráfico.</small>
@@ -783,12 +783,42 @@ onMounted(() => {
 
 <style scoped>
 @media (min-width: 992px) {
-  .w-screen {
+.w-screen {
     width: 85vw !important;
   }
 }
 </style>
 <style>
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+/* Início do ajuste nos calendários*/
+.p-datepicker-calendar{
+    width: 100%;
+}
+.p-datepicker-header{
+    text-align: center;
+}
+.p-datepicker-month, .p-datepicker-year{
+    border: none;
+    background-color: transparent;
+}
+.p-datepicker-title{
+    display: inline;
+}
+/* Fim do ajuste nos calendários*/
+/* Início da estilização das mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim da estilização das mensagens */
+li{
+    display: list-item;
+}
 .container[data-v-7a7a37b1]{
     overflow-x: hidden;
 }
