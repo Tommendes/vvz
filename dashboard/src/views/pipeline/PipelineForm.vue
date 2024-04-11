@@ -268,9 +268,9 @@ const searchCadastros = (event) => {
 };
 const getCadastroBySearchedId = async (idCadastro) => {
     const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
-    setTimeout(() => {
-        try {
-            const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
+    try {
+        const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
+        setTimeout(async () => {
             const response = await axios.get(url);
             cadastros.value = response.data.data.map((element) => {
                 return {
@@ -278,10 +278,10 @@ const getCadastroBySearchedId = async (idCadastro) => {
                     name: element.nome + ' - ' + element.cpf_cnpj
                 };
             });
-        } catch (error) {
-            console.error('Erro ao buscar cadastros:', error);
-        }
-    }, Math.random() * 1000 + 250;
+        }, Math.random() * 1000 + 250);
+    } catch (error) {
+        console.error('Erro ao buscar cadastros:', error);
+    }
 };
 const confirmEditCadastro = () => {
     confirm.require({
@@ -372,28 +372,28 @@ const itemDataStatusPreload = ref([
 // Listar status do registro
 const listStatusRegistro = async () => {
     const url = `${baseApiUrl}/pipeline-status/${route.params.id}`;
-    setTimeout(() => {
+    setTimeout(async () => {
         await axios.get(url).then((res) => {
             if (res.data && res.data.data.length > 0) {
-            itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
-            itemData.value.status_params = itemDataLastStatus.value.status_params;
-            itemDataStatus.value = [];
-            res.data.data.forEach((element) => {
-                const status = itemDataStatusPreload.value.filter((item) => {
-                    return item.status == element.status_params;
+                itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
+                itemData.value.status_params = itemDataLastStatus.value.status_params;
+                itemDataStatus.value = [];
+                res.data.data.forEach((element) => {
+                    const status = itemDataStatusPreload.value.filter((item) => {
+                        return item.status == element.status_params;
+                    });
+                    itemDataStatus.value.push({
+                        // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                        date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                        user: element.name,
+                        status: status[0].label,
+                        statusCode: element.status_params,
+                        icon: status[0].icon,
+                        color: status[0].color
+                    });
                 });
-                itemDataStatus.value.push({
-                    // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
-                    date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
-                    user: element.name,
-                    status: status[0].label,
-                    statusCode: element.status_params,
-                    icon: status[0].icon,
-                    color: status[0].color
-                });
-            });
-        }
-    });
+            }
+        });
     }, Math.random() * 1000 + 250);
 };
 /**
@@ -430,19 +430,21 @@ const toFilho = async (idFilho) => {
 
 const itemDataComissionamento = ref({});
 const toComissionate = async () => {
-    await axios
-        .post(`${baseApiUrl}/comis-pipeline`, { id_pipeline: itemData.value.id })
-        .then((res) => {
-            if (res.data && res.data.id) {
-                // defaultSuccess('Comissionamento criado com sucesso');
-                itemDataComissionamento.value = res.data;
-                emit('commissioning', itemDataComissionamento.value);
-            } else defaultWarn('Erro ao criar comissionamento');
-        })
-        .catch((error) => {
-            console.log(error);
-            defaultWarn(error.response.data);
-        });
+    setTimeout(async () => {
+        await axios
+            .post(`${baseApiUrl}/comis-pipeline`, { id_pipeline: itemData.value.id })
+            .then((res) => {
+                if (res.data && res.data.id) {
+                    // defaultSuccess('Comissionamento criado com sucesso');
+                    itemDataComissionamento.value = res.data;
+                    emit('commissioning', itemDataComissionamento.value);
+                } else defaultWarn('Erro ao criar comissionamento');
+            })
+            .catch((error) => {
+                console.log(error);
+                defaultWarn(error.response.data);
+            });
+    }, Math.random() * 1000 + 250);
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
@@ -640,7 +642,7 @@ const lstFolder = async () => {
                     }
                     hostAccessible.value = false;
                 });
-        }, Math.random() * 1000);
+        }, Math.random() * 1000 + 250);
 };
 
 const mkFolder = async () => {
@@ -738,7 +740,7 @@ const getEventos = async () => {
                 ];
             }
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 // Carregar dados do formulário
