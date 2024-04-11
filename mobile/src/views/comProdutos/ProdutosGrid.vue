@@ -249,6 +249,33 @@ watchEffect(() => {
 }
 </style>
 <style>
+/* Mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim Mensagens */
+nav>ol{ /* Nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+}
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+#pv_id_5{
+    width: 4rem;    
+}
+.layout-overlay{ /* Remoção de rolagem horizontal */
+    max-width: 100vw;
+}
+.layout-main-container{ /* Ajuste de largura da página */
+    padding-left: 0 !important;
+    padding-right: 0;
+}
 .p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
     display: none;
 }

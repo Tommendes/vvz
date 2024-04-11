@@ -314,6 +314,20 @@ watchEffect(() => {
 }
 </style>
 <style>
+/* Mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim Mensagens */
+nav>ol{ /* Nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+}
 .container{
     overflow-x: hidden;
 }

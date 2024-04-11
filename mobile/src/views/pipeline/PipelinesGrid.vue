@@ -457,29 +457,29 @@ onMounted(() => {
 }
 </style>
 <style>
-.p-dropdown{ /* Filtro do grid  */
+nav>ol{
+    display: flex;
+}
+.p-dropdown{ /* Dropdown de filtro do grid  */
     display: flex;
     align-items: center;
 }
 .p-dropdown-items-wrapper{
     overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
 }
+/* Mensagens do navbar */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
 nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
-    display: inline; /* Estilização do nav */
+    display: inline;
 }
 #pv_id_5{
-    width: 4rem;
+    width: 4rem;    
 }
-.p-column-filter-clear-button {
-    display: none;
-}
-.container{
-    overflow-x: hidden;
-}
-.p-datatable .p-datatable-tbody > tr > td {
-    padding: 0.5rem;
-}
-.p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
-    display: none;
-}
+/* Fim Mensagens do navbar */
 </style>
