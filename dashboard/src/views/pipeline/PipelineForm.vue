@@ -128,7 +128,7 @@ const loadData = async () => {
             };
             await getNomeCliente();
         }
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
     await listAgentesNegocio();
 
     if (!itemData.value.valor_bruto) itemData.value.valor_bruto = 0;
@@ -200,26 +200,30 @@ const listUnidadesDescricao = async () => {
     const query = { func: 'ubt', tipoDoc: undefined, unidade: undefined };
     let url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
     if (mode.value == 'new') url += '&status=10';
-    await axios.get(url).then((res) => {
-        dropdownUnidades.value = [];
-        res.data.data.map((item) => {
-            const label = item.descricao.toString().replaceAll(/_/g, ' ') + (userData.admin >= 1 ? ` (${item.id})` : '');
-            const itemList = { value: item.id, label: label };
-            if (item.id == itemData.value.id_pipeline_params) unidadeLabel.value = label;
-            dropdownUnidades.value.push(itemList);
+    setTimeout(async () => {
+        await axios.get(url).then((res) => {
+            dropdownUnidades.value = [];
+            res.data.data.map((item) => {
+                const label = item.descricao.toString().replaceAll(/_/g, ' ') + (userData.admin >= 1 ? ` (${item.id})` : '');
+                const itemList = { value: item.id, label: label };
+                if (item.id == itemData.value.id_pipeline_params) unidadeLabel.value = label;
+                dropdownUnidades.value.push(itemList);
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 // Listar unidades de negócio
 const listAgentesNegocio = async () => {
     let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name&order=name`;
     if (mode.value == 'new') url += '&status=10';
-    await axios.get(url).then((res) => {
-        dropdownAgentes.value = [];
-        res.data.data.map((item) => {
-            dropdownAgentes.value.push({ value: item.id, label: item.name });
+    setTimeout(async () => {
+        await axios.get(url).then((res) => {
+            dropdownAgentes.value = [];
+            res.data.data.map((item) => {
+                dropdownAgentes.value.push({ value: item.id, label: item.name });
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 /**
  * Autocomplete de cadastros
@@ -264,18 +268,20 @@ const searchCadastros = (event) => {
 };
 const getCadastroBySearchedId = async (idCadastro) => {
     const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
-    try {
-        const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
-        const response = await axios.get(url);
-        cadastros.value = response.data.data.map((element) => {
-            return {
-                code: element.id,
-                name: element.nome + ' - ' + element.cpf_cnpj
-            };
-        });
-    } catch (error) {
-        console.error('Erro ao buscar cadastros:', error);
-    }
+    setTimeout(() => {
+        try {
+            const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
+            const response = await axios.get(url);
+            cadastros.value = response.data.data.map((element) => {
+                return {
+                    code: element.id,
+                    name: element.nome + ' - ' + element.cpf_cnpj
+                };
+            });
+        } catch (error) {
+            console.error('Erro ao buscar cadastros:', error);
+        }
+    }, Math.random() * 1000 + 250;
 };
 const confirmEditCadastro = () => {
     confirm.require({
@@ -366,8 +372,9 @@ const itemDataStatusPreload = ref([
 // Listar status do registro
 const listStatusRegistro = async () => {
     const url = `${baseApiUrl}/pipeline-status/${route.params.id}`;
-    await axios.get(url).then((res) => {
-        if (res.data && res.data.data.length > 0) {
+    setTimeout(() => {
+        await axios.get(url).then((res) => {
+            if (res.data && res.data.data.length > 0) {
             itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
             itemData.value.status_params = itemDataLastStatus.value.status_params;
             itemDataStatus.value = [];
@@ -387,6 +394,7 @@ const listStatusRegistro = async () => {
             });
         }
     });
+    }, Math.random() * 1000 + 250);
 };
 /**
  * Fim de status do registro
