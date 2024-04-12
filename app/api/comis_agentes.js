@@ -25,11 +25,13 @@ module.exports = app => {
         try {
             existsOrError(body.id_cadastros, 'Cadastro não informado')
             existsOrError(String(body.dsr), 'DSR não informado')
-            existsOrError(String(body.agente_representante), 'Se é represntação não informado')
+            existsOrError(String(body.agente_representante), 'Se é representação não informado')
             existsOrError(String(body.ordem), 'Número de ordem não informado')
         } catch (error) {
             return res.status(400).send(error)
         }
+
+        body.ordem = body.ordem.padStart(3, '0')
 
         const uniqueOrdem = await app.db(tabelaDomain).where({ ordem: Number(body.ordem), status: STATUS_ACTIVE }).first()
         if (body.id && uniqueOrdem && uniqueOrdem.id != body.id) return res.status(400).send('Número de ordem já registrado')
