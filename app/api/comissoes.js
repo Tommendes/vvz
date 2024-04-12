@@ -43,6 +43,8 @@ module.exports = app => {
         let last = {}
         if (body.id) last = await app.db(tabelaDomain).where({ id: body.id }).first()
         const valorAnterior = last.valor || 0 // Valor anterior do registro
+        if (body.valor_base) body.valor_base = body.valor_base.replace(",", ".");
+        if (body.percentual) body.percentual = body.percentual.replace(",", ".");
         if (body.valor) body.valor = body.valor.replace(",", ".");
         try {
             existsOrError(body.id_pipeline, 'Pipeline não informado')
