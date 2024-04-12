@@ -488,3 +488,15 @@ const onImageRightClick = (event) => {
         </form>
     </div>
 </template>
+<style scoped>
+label{
+    display: block;
+}
+input{
+    width: 100%;
+}
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
+</style>

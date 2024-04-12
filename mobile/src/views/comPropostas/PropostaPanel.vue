@@ -174,6 +174,28 @@ onBeforeMount(async () => {
 }
 </style>
 <style>
+/* Mensagens */
+ul#overlay_messages_list{
+    padding: 0px;
+    margin: 0;
+}
+.p-menuitem-link{
+    display: flex;
+}
+/* Fim Mensagens */
+
+ol{
+    list-style: none;
+}
+nav>ol{ /* Ajuste  nav */
+    display: flex;
+}
+div.p-accordion-tab{
+    padding: 25px;
+}
+a#pv_id_3_0_header_action, a#pv_id_3_1_header_action, a#pv_id_3_2_header_action, a#pv_id_3_3_header_action, a#pv_id_3_4_header_action, a#pv_id_3_4_header_action, a#pv_id_3_5_header_action{
+    background-color: transparent;
+}
 .layout-main {
     flex: 1 1 auto;
     width: 95vw;

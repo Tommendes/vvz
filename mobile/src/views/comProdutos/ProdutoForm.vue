@@ -664,4 +664,14 @@ watch(selectedCadastro, (value) => {
     border: dashed;
     border-radius: 5%;
 }
+label{
+    display: block;
+}
+input{
+    width: 100%;
+}
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
 </style>

@@ -344,4 +344,21 @@ watchEffect(() => {});
     border-color: black;
     background-color: #e9eef1;
 }
+
+label{
+    display: block;
+}
+input{
+    width: 100%;
+}
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
+</style>
+
+<style>
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
 </style>

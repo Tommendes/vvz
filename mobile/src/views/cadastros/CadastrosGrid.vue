@@ -261,7 +261,7 @@ watchEffect(() => {
 }
 </style>
 <style>
-nav>ol{
+nav>ol{ /* Ajuste  nav */
     display: flex;
 }
 .p-dropdown{ /* Dropdown do filtro do grid  */
@@ -285,5 +285,9 @@ ul#overlay_messages_list{
 }
 ol{
     list-style: none;
+}
+tr.p-row-even>td{ /* Ajuste na largura da coluna*/
+    display: table-column;
+    max-width: 80%;
 }
 </style>

@@ -219,7 +219,7 @@ watchEffect(() => {
             </template>
             <template v-for="nome in listaNomes" :key="nome">
                 <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" >
-                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
+                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }" >
                         <Dropdown
                             :id="nome.field"
                             optionLabel="label"
@@ -304,4 +304,17 @@ svg{
     padding-left: 0;
     padding-right: 0;
 }
+
+/* tr>th.p-sortable-column{
+    width: 50%;
+    display: inline-table;
+}
+tr>th.p-filter-column{
+    width: 50%;
+    display: inline-table;
+}
+tbody.p-datatable-tbody{
+    width: 90%;
+    display: block;
+} */
 </style>

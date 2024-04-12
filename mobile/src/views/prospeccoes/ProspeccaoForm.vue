@@ -404,6 +404,12 @@ watch(selectedCadastro, (value) => {
     margin-left: auto;
     margin-right: auto;
 }
+label{
+    display: block;
+}
+input{
+    width: 100%;
+}
 </style>
 <style>
 .container{

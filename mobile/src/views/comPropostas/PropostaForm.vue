@@ -283,7 +283,28 @@ watchEffect(() => {});
         </div>
     </form>
 </template>
+<style scoped>
+label{
+    display: block;
+}
+input{
+    width: 100%;
+}
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
+</style>
+
 <style>
+div.layout-main-container{
+    max-width: 100vw;
+    padding-left: 0 !important;
+    padding-right: 0;
+}
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
 .disabled {
     opacity: 0.6;
 }
