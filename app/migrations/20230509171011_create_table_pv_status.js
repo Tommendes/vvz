@@ -10,7 +10,7 @@ exports.up = function(knex, Promise) {
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_pv',10).unsigned().comment('Documento pai')
         table.integer('status_pv',10).unsigned().notNull().comment('Status do PV')
-        table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('Cascade')
     })
 };
 

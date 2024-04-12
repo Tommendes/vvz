@@ -3,7 +3,6 @@ import { onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import Breadcrumb from '../../components/Breadcrumb.vue';
 import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
 import EditorComponent from '@/components/EditorComponent.vue';
 import { userKey } from '@/global';
@@ -100,10 +99,6 @@ const loadData = async () => {
                     breadItems.value = [{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }];
                     if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
-                    if (route.query.resource && route.query.resource == 'comiss') {
-                        toComissionate();
-                        // router.replace({ query: {} });
-                    }
                 })
                 .catch((error) => {
                     if (typeof error == 'string') defaultWarn(error);
@@ -128,7 +123,7 @@ const loadData = async () => {
             };
             await getNomeCliente();
         }
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
     await listAgentesNegocio();
 
     if (!itemData.value.valor_bruto) itemData.value.valor_bruto = 0;
@@ -138,6 +133,8 @@ const loadData = async () => {
     if (!itemData.value.perc_represent) itemData.value.perc_represent = 0;
     loading.value = false;
 };
+
+defineExpose({ loadData }); // Expondo a função para o componente pai
 // Salvar dados do formulário
 const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
@@ -200,26 +197,30 @@ const listUnidadesDescricao = async () => {
     const query = { func: 'ubt', tipoDoc: undefined, unidade: undefined };
     let url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
     if (mode.value == 'new') url += '&status=10';
-    await axios.get(url).then((res) => {
-        dropdownUnidades.value = [];
-        res.data.data.map((item) => {
-            const label = item.descricao.toString().replaceAll(/_/g, ' ') + (userData.admin >= 1 ? ` (${item.id})` : '');
-            const itemList = { value: item.id, label: label };
-            if (item.id == itemData.value.id_pipeline_params) unidadeLabel.value = label;
-            dropdownUnidades.value.push(itemList);
+    setTimeout(async () => {
+        await axios.get(url).then((res) => {
+            dropdownUnidades.value = [];
+            res.data.data.map((item) => {
+                const label = item.descricao.toString().replaceAll(/_/g, ' ') + (userData.admin >= 1 ? ` (${item.id})` : '');
+                const itemList = { value: item.id, label: label };
+                if (item.id == itemData.value.id_pipeline_params) unidadeLabel.value = label;
+                dropdownUnidades.value.push(itemList);
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 // Listar unidades de negócio
 const listAgentesNegocio = async () => {
     let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name&order=name`;
     if (mode.value == 'new') url += '&status=10';
-    await axios.get(url).then((res) => {
-        dropdownAgentes.value = [];
-        res.data.data.map((item) => {
-            dropdownAgentes.value.push({ value: item.id, label: item.name });
+    setTimeout(async () => {
+        await axios.get(url).then((res) => {
+            dropdownAgentes.value = [];
+            res.data.data.map((item) => {
+                dropdownAgentes.value.push({ value: item.id, label: item.name });
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 /**
  * Autocomplete de cadastros
@@ -266,13 +267,15 @@ const getCadastroBySearchedId = async (idCadastro) => {
     const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
     try {
         const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
-        const response = await axios.get(url);
-        cadastros.value = response.data.data.map((element) => {
-            return {
-                code: element.id,
-                name: element.nome + ' - ' + element.cpf_cnpj
-            };
-        });
+        setTimeout(async () => {
+            const response = await axios.get(url);
+            cadastros.value = response.data.data.map((element) => {
+                return {
+                    code: element.id,
+                    name: element.nome + ' - ' + element.cpf_cnpj
+                };
+            });
+        }, Math.random() * 1000 + 250);
     } catch (error) {
         console.error('Erro ao buscar cadastros:', error);
     }
@@ -366,27 +369,29 @@ const itemDataStatusPreload = ref([
 // Listar status do registro
 const listStatusRegistro = async () => {
     const url = `${baseApiUrl}/pipeline-status/${route.params.id}`;
-    await axios.get(url).then((res) => {
-        if (res.data && res.data.data.length > 0) {
-            itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
-            itemData.value.status_params = itemDataLastStatus.value.status_params;
-            itemDataStatus.value = [];
-            res.data.data.forEach((element) => {
-                const status = itemDataStatusPreload.value.filter((item) => {
-                    return item.status == element.status_params;
+    setTimeout(async () => {
+        await axios.get(url).then((res) => {
+            if (res.data && res.data.data.length > 0) {
+                itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
+                itemData.value.status_params = itemDataLastStatus.value.status_params;
+                itemDataStatus.value = [];
+                res.data.data.forEach((element) => {
+                    const status = itemDataStatusPreload.value.filter((item) => {
+                        return item.status == element.status_params;
+                    });
+                    itemDataStatus.value.push({
+                        // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                        date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                        user: element.name,
+                        status: status[0].label,
+                        statusCode: element.status_params,
+                        icon: status[0].icon,
+                        color: status[0].color
+                    });
                 });
-                itemDataStatus.value.push({
-                    // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
-                    date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
-                    user: element.name,
-                    status: status[0].label,
-                    statusCode: element.status_params,
-                    icon: status[0].icon,
-                    color: status[0].color
-                });
-            });
-        }
-    });
+            }
+        });
+    }, Math.random() * 1000 + 250);
 };
 /**
  * Fim de status do registro
@@ -418,23 +423,6 @@ const toPai = async () => {
 };
 const toFilho = async (idFilho) => {
     window.location.href = `#/${userData.schema_description}/pipeline/${idFilho || itemData.value.id_filho}`;
-};
-
-const itemDataComissionamento = ref({});
-const toComissionate = async () => {
-    await axios
-        .post(`${baseApiUrl}/comis-pipeline`, { id_pipeline: itemData.value.id })
-        .then((res) => {
-            if (res.data && res.data.id) {
-                // defaultSuccess('Comissionamento criado com sucesso');
-                itemDataComissionamento.value = res.data;
-                emit('commissioning', itemDataComissionamento.value);
-            } else defaultWarn('Erro ao criar comissionamento');
-        })
-        .catch((error) => {
-            console.log(error);
-            defaultWarn(error.response.data);
-        });
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
@@ -632,7 +620,7 @@ const lstFolder = async () => {
                     }
                     hostAccessible.value = false;
                 });
-        }, Math.random() * 1000);
+        }, Math.random() * 1000 + 250);
 };
 
 const mkFolder = async () => {
@@ -730,7 +718,7 @@ const getEventos = async () => {
                 ];
             }
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 // Carregar dados do formulário
@@ -891,7 +879,7 @@ watch(route, (value) => {
                                         <span disabled v-html="itemData.valor_liq" id="valor_liq" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-4`">
+                                <!-- <div :class="`col-12 lg:col-4`">
                                     <label for="valor_representacao">Comissão do representante</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
@@ -962,7 +950,7 @@ watch(route, (value) => {
                                         <span class="p-inputgroup-addon">R$</span>
                                         <span disabled v-html="itemData.valor_agente" id="valor_agente" class="p-inputtext p-component" />
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                         <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
@@ -1022,7 +1010,6 @@ watch(route, (value) => {
                         <p>hasFolder {{ hasFolder }}</p>
                         <p>editCadastro {{ editCadastro }}</p>
                         <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
-                        <p>itemDataComissionamento: {{ itemDataComissionamento }}</p>
                     </Fieldset>
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
@@ -1089,17 +1076,6 @@ watch(route, (value) => {
                                 text
                                 raised
                                 @click="toProposal()"
-                            />
-                            <Button
-                                label="Comissionamento"
-                                v-if="userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params >= 20 && itemDataLastStatus.status_params <= 70 && itemData.status == 10"
-                                :disabled="itemDataLastStatus.status_params >= 89"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-money-bill-transfer ${userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10 ? 'fa-shake' : ''}`"
-                                severity="success"
-                                text
-                                raised
-                                @click="toComissionate()"
                             />
                             <Button
                                 label="Criar OAT de Montagem"
@@ -1209,7 +1185,7 @@ watch(route, (value) => {
                             <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ userData.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
                         </Timeline>
                     </Fieldset>
-                    <Fieldset :toggleable="true" v-if="itemData.id">
+                    <Fieldset :toggleable="true" :collapsed="true" v-if="itemData.id">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="fa-solid fa-clock mr-2"></span>

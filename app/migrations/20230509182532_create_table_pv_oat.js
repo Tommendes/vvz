@@ -21,7 +21,7 @@ exports.up = function(knex, Promise) {
         table.text('descricao').comment('Descrição dos serviços')
         table.decimal('valor_total',10,2).comment('Valor dos serviços')
         table.string('aceite_do_cliente',255).comment('Data do aceite')
-        table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('Cascade')
         table.foreign('id_cadastro_endereco').references('id').inTable('cad_enderecos').onUpdate('Cascade').onDelete('NO ACTION')
         table.foreign('id_tecnico').references('id').inTable('pv_tecnicos').onUpdate('Cascade').onDelete('NO ACTION')
         

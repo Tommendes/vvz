@@ -31,42 +31,33 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipeline = `${dbPrefix}_${uParams.schema_name}.pipeline`
-        const tabelaComisPipeline = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`
         const tabelaComisAgentes = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
 
-        body.desconto = body.desconto || 0
         body.agente_representante = body.agente_representante || 0
-
-        delete body.isInvalid;
 
         let comisRepres = {}
         let comisAgentes = { total: 0 }
-        let comissPipeline = { valor_agente: 0 }
         let pipeline = {}
         let last = {}
         if (body.id) last = await app.db(tabelaDomain).where({ id: body.id }).first()
         const valorAnterior = last.valor || 0 // Valor anterior do registro
+        if (body.valor_base) body.valor_base = body.valor_base.replace(",", ".");
+        if (body.percentual) body.percentual = body.percentual.replace(",", ".");
         if (body.valor) body.valor = body.valor.replace(",", ".");
         try {
-            existsOrError(body.id_comis_pipeline, 'Origem do comissionamento não informado')
-            // Verificar se o comis_pipeline existe
-            comissPipeline = await app.db({ tbl1: tabelaComisPipeline })
-                .join(tabelaPipeline, 'tbl1.id_pipeline', 'pipeline.id')
-                .where({ 'tbl1.id': body.id_comis_pipeline, 'tbl1.status': STATUS_ACTIVE }).first()
-
-            existsOrError(comissPipeline, 'Origem do comissionamento não encontrado')
+            existsOrError(body.id_pipeline, 'Pipeline não informado')
             // Verificar se o pipeline existe
-            pipeline = await app.db(tabelaPipeline).where({ id: comissPipeline.id_pipeline, status: STATUS_ACTIVE }).first()
+            pipeline = await app.db(tabelaPipeline).where({ id: body.id_pipeline, status: STATUS_ACTIVE }).first()
             existsOrError(pipeline, 'Registro de Pipeline não encontrado')
             if (![0, 1].includes(body.agente_representante)) throw 'Se é a representação não informado'
-            // Recupera o registro da comissão do representante em comis_pipeline caso exista
-            comisRepres = await app.db(tabelaDomain).where({ id_comis_pipeline: body.id_comis_pipeline, agente_representante: '1', status: STATUS_ACTIVE }).first()
-            // Recupera os registros das comissões dos não representantes do pedido em comis_pipeline
+            // Recupera o registro da comissão do representante em comissões caso exista
+            comisRepres = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, agente_representante: '1', status: STATUS_ACTIVE }).first()
+            // Recupera os registros das comissões dos não representantes do pedido em comissões
             comisAgentes = await app.db(tabelaDomain)
                 .sum('valor as total')
-                .where({ id_comis_pipeline: body.id_comis_pipeline, agente_representante: body.agente_representante, status: STATUS_ACTIVE }).first()
+                .where({ id_pipeline: body.id_pipeline, agente_representante: body.agente_representante, status: STATUS_ACTIVE }).first()
             comisAgentes = { total: comisAgentes.total || 0 }
             // Se não existir comissão de representante, não pode ser cadastrado comissão de não representante
             // if (!comisRepres && body.agente_representante === 0) throw 'Informe primeiro o agente representante ou marque a opção para que essa seja a comissão da representação'
@@ -77,26 +68,12 @@ module.exports = app => {
             const existsComissAgentes = await app.db(tabelaComisAgentes).where({ id: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
             existsOrError(existsComissAgentes, 'Agente não encontrado')
             // Validações do valor da comissão
+            existsOrError(body.valor_base, 'Valor base de cálculo da comissão não informado')
+            existsOrError(body.percentual, 'Percentual sobre a base não informado')
             existsOrError(body.valor, 'Valor da comissão não informado')
+            if (Number(body.valor_base) <= 0) throw 'Valor base de cálculo da comissão deve ser maior que zero'
+            if (Number(body.percentual) <= 0) throw 'Percentual sobre a base deve ser maior que zero'
             if (Number(body.valor) <= 0) throw 'Valor da comissão deve ser maior que zero'
-            // Verificar se o valor da comissão é maior que o valor base de comissPipeline
-            if (body.agente_representante == 1 && Number(body.valor) > pipeline.valor_representacao) throw `O valor não pode ser maior que o valor da comissão de representante (${formatCurrency(pipeline.valor_representacao)}) informada no registro do Pipeline`
-            else if (body.agente_representante == 0 && (Number(body.valor) + Number((comisAgentes.total - valorAnterior).toFixed(2))) > pipeline.valor_agente) {
-                // log de cada item de: Number(body.valor) + Number((comisAgentes.total - valorAnterior).toFixed(2))) > pipeline.valor_agente inclusive o teste
-                let answer = `A soma do comissionamento dos agentes (${formatCurrency(comisAgentes.total)}) já registrado para este Pipeline mais `
-                if (comisAgentes.total > 0) answer += `o `
-                else answer = `O `
-                let sumError = `valor informado agora ultrapassa o máximo permitido de ${formatCurrency(ceilTwoDecimals(pipeline.valor_agente).toFixed(2))}`
-                throw `${answer} ${sumError}. Corrija o valor desta comissão antes de prosseguir`
-            }
-            else if (body.agente_representante == 1 && (Number(body.valor) + Number((comisAgentes.total - valorAnterior).toFixed(2))) > pipeline.valor_representacao) {
-                let answer = `A soma do comissionamento dos representantes (${formatCurrency(comisAgentes.total)}) já registrado para este Pipeline mais `
-                if (comisAgentes.total > 0) answer += `o `
-                else answer = `O `
-                let sumError = `valor informado agora ultrapassa o máximo permitido de ${formatCurrency(ceilTwoDecimals(pipeline.valor_representacao).toFixed(2))}`
-                throw `${answer} ${sumError}. Corrija o valor desta comissão antes de prosseguir`
-            }
-            // Se body.liquidar_em for declarado, deve ser validado com moment e não pode ser inferior à data atual pois é data de previsão de liquidação
             if (body.liquidar_em) {
                 const date = moment().format('YYYY-MM-DD')
                 const dtLiquidacao = moment(body.liquidar_em);
@@ -144,9 +121,8 @@ module.exports = app => {
                     delete body.alterar_agente_representante;
                     await trx(tabelaDomain)
                         .update({ agente_representante: 0 })
-                        .where({ id_comis_pipeline: body.id_comis_pipeline, status: STATUS_ACTIVE })
+                        .where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE })
                 }
-
                 body.evento = evento
                 body.updated_at = new Date()
                 await trx(tabelaDomain)
@@ -155,8 +131,6 @@ module.exports = app => {
                     .then(async (ret) => {
                         if (ret > 0) {
                             req.uParams = uParams
-                            const errorInValidation = await validateComissPipeline(req)
-                            body = { ...body, isInvalid: errorInValidation }
                             return res.status(200).send(body)
                         }
                         else res.status(200).send(`${tabelaAlias} não encontrado`)
@@ -166,28 +140,58 @@ module.exports = app => {
                         return res.status(500).send(error)
                     })
 
-                const last_status_comiss = await app.db(tabelaComissaoStatusDomain)
-                    .select(`status_comis`)
+                const lastStatusComiss = await app.db(tabelaComissaoStatusDomain)
+                    .select(`status_comis`, 'id')
                     .where({ id_comissoes: body.id })
                     .orderBy('created_at', 'desc')
                     .first()
-                if (last.liquidar_em != body.liquidar_em || !last_status_comiss || (last_status_comiss.status_comis == 10 && body.liquidar_em)) {
+                // Se não havia status de comissionamento então insere um novo
+                if (!lastStatusComiss) {
+                    await trx(tabelaComissaoStatusDomain).insert({
+                        evento: evento || 1,
+                        created_at: new Date(),
+                        id_comissoes: body.id,
+                        status_comis: STATUS_NAO_PROGRAMADO,
+                    });
+                    if (bodyStatus && bodyStatus.status_comis == STATUS_EM_PROGRAMACAO_LIQUIDACAO || body.liquidar_em) {
+                        await trx(tabelaComissaoStatusDomain).insert({
+                            evento: evento || 1,
+                            created_at: new Date(),
+                            id_comissoes: body.id,
+                            status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO,
+                        });
+                    }
+                }
+                // Se havia um status e era == 10 e body.liquidar_em foi informado então insere um novo status
+                if (lastStatusComiss && (lastStatusComiss.status_comis == STATUS_COMISSIONADO || body.liquidar_em)) {
                     // Inserir na tabela de status de pipeline a informação de comissionamento            
                     await trx(tabelaComissaoStatusDomain).insert({
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: body.id,
-                        status_comis: body.liquidar_em ? STATUS_EM_PROGRAMACAO_LIQUIDACAO : STATUS_NAO_PROGRAMADO,
+                        status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO
                     });
                 }
-                if (bodyStatus) {
-                    // Inserir na tabela de status de pipeline a informação de liquidação            
+                // Se havia um status e era == 10 e body.liquidar_em foi informado então insere um novo status
+                if (lastStatusComiss && (bodyStatus && bodyStatus.status_comis == STATUS_LIQUIDADO) && (lastStatusComiss.status_comis == STATUS_COMISSIONADO || body.liquidar_em)) {
+                    if (lastStatusComiss.status_comis == STATUS_COMISSIONADO)
+                        await trx(tabelaComissaoStatusDomain).insert({
+                            evento: evento || 1,
+                            created_at: new Date(),
+                            id_comissoes: body.id,
+                            status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO
+                        });
+                    // Inserir na tabela de status de pipeline a informação de comissionamento            
                     await trx(tabelaComissaoStatusDomain).insert({
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: body.id,
                         status_comis: STATUS_LIQUIDADO
                     });
+                }
+                // Se havia um status e era 20 e bodyStatus.status_comis == 10 então exclui o status 20                
+                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_EM_PROGRAMACAO_LIQUIDACAO && (bodyStatus && bodyStatus.status_comis == STATUS_COMISSIONADO || !body.liquidar_em)) {
+                    await trx(tabelaComissaoStatusDomain).del().where({ id: lastStatusComiss.id });
                 }
 
             }).catch((error) => {
@@ -196,20 +200,20 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } else {
-            const unique = await app.db(tabelaDomain).where({ id_comis_pipeline: body.id_comis_pipeline, id_comis_agentes: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
-            try {
-                notExistsOrError(unique, `Comissão já registrada para este agente`)
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-                return res.status(400).send(error)
-            }
+            // const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
+            // try {
+            //     notExistsOrError(unique, `Comissão já registrada para este agente`)
+            // } catch (error) {
+            //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            //     return res.status(400).send(error)
+            // }
 
             app.db.transaction(async (trx) => {
                 if (body.alterar_agente_representante) {
                     delete body.alterar_agente_representante;
                     await trx(tabelaDomain)
                         .update({ agente_representante: 0 })
-                        .where({ id_comis_pipeline: body.id_comis_pipeline, status: STATUS_ACTIVE })
+                        .where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE })
                 }
                 // Criação de um novo registro
                 const nextEventID = await trx(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
@@ -228,7 +232,7 @@ module.exports = app => {
                         id_user: user.id,
                         evento: `Commissionamento de Pipeline`,
                         classevento: `commissioning`,
-                        id_registro: comissPipeline.id_pipeline,
+                        id_registro: body.id_pipeline,
                         tabela_bd: 'pipeline'
                     }
                 })
@@ -238,8 +242,6 @@ module.exports = app => {
                     .then(async (ret) => {
                         body.id = ret[0]
                         req.uParams = uParams
-                        const errorInValidation = await validateComissPipeline(req)
-                        body = { ...body, isInvalid: errorInValidation }
                         // registrar o evento na tabela de eventos
                         const { createEventIns } = app.api.sisEvents
                         createEventIns({
@@ -264,17 +266,27 @@ module.exports = app => {
                     evento: evento || 1,
                     created_at: new Date(),
                     id_comissoes: body.id,
-                    status_comis: body.liquidar_em ? STATUS_EM_PROGRAMACAO_LIQUIDACAO : STATUS_NAO_PROGRAMADO
+                    status_comis: STATUS_NAO_PROGRAMADO
                 });
+                // Inserir na tabela de status de pipeline a informação de programação de pagamento
+                if (body.liquidar_em)
+                    await trx(tabelaComissaoStatusDomain).insert({
+                        evento: evento || 1,
+                        created_at: new Date(),
+                        id_comissoes: body.id,
+                        status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO
+                    });
 
                 // Inserir na tabela de status de pipeline a informação de comissionamento
-                await trx(tabelaPipelineStatusDomain).insert({
-                    evento: evento || 1,
-                    status: STATUS_ACTIVE,
-                    created_at: new Date(),
-                    id_pipeline: comissPipeline.id_pipeline,
-                    status_params: STATUS_COMISSIONADO,
-                });
+                const hasCommisioningStatus = await app.db(tabelaPipelineStatusDomain).where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE, status_params: STATUS_COMISSIONADO }).first()
+                if (!hasCommisioningStatus)
+                    await trx(tabelaPipelineStatusDomain).insert({
+                        evento: evento || 1,
+                        status: STATUS_ACTIVE,
+                        created_at: new Date(),
+                        id_pipeline: body.id_pipeline,
+                        status_params: STATUS_COMISSIONADO,
+                    });
 
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
@@ -297,138 +309,44 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
+        try {
+            existsOrError(req.query.id_pipeline, 'Pipeline não informado')
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(400).send(error)
+        }
+
+        const idPipeline = req.query.id_pipeline
+
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
-        const tabelaComissPipelineDomain = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`
         const tabelaComissAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
         const tabelaComissStatussDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
         const tabelaPipelineParams = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
         const tabelaCadastros = `${dbPrefix}_${uParams.schema_name}.cadastros`
-
-        let queryes = undefined
-        let query = undefined
-        let page = 0
-        let rows = 10
-        let sortField = app.db.raw('tbl1.created_at')
-        let sortOrder = 'desc'
-        let sortByAnivFundacao = undefined
-        if (req.query) {
-            queryes = req.query
-            query = ''
-            for (const key in queryes) {
-                let operator = queryes[key].split(':')[0]
-                let value = queryes[key].split(':')[1]
-                if (key.split(':')[0] == 'field') {
-                    let queryField = key.split(':')[1]
-                    if (['liquidar_aprox'].includes(queryField)) {
-                        value = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[1].split(',') : queryes[key].split(':')[1].split(',')
-                        let valueI = moment(value[0]);
-                        let valueF = moment(value[1]);
-
-                        if (valueI.isValid()) valueI = valueI.format('YYYY-MM-DD')
-                        if (valueF.isValid()) valueF = valueF.format('YYYY-MM-DD')
-                        else valueF = valueI
-
-                        switch (operator) {
-                            case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
-                                break;
-                            case 'dateBefore': operator = `< "${valueI}"`
-                                break;
-                            case 'dateAfter': operator = `> "${valueF}"`
-                                break;
-                            default: operator = `between "${valueI}" and "${valueF}"`
-                                break;
-                        }
-                        query += `date(tbl1.liquidar_em) ${operator} AND `
-                    } else if (['unidade'].includes(queryField)) {
-                        queryField = 'tbl5.descricao'
-                        operator = `regexp("${value.toString().replace(' ', '.+')}")`
-                        query += `${queryField} ${operator} AND `
-                    } else if (['documento', 'unidade'].includes(queryField)) {
-                        // remover todos os caracteres não numéricos e converter para número
-                        const valor = value.replaceAll(/([^\d])+/gim, "")
-                        // Receber caracteres não numéricos	
-                        const texto = value.toString().replaceAll(valor, '').trim().replace(' ', '.+').replaceAll(/([\d])+/gim, "")
-                        if (texto.length > 0) query += `tbl5.descricao regexp("${texto.toString().replace(' ', '.+')}") AND `
-                        if (valor.length > 0) query += `(cast(tbl3.documento as unsigned) like "%${Number(valor)}%" or cast(tbl3.documento as unsigned) like "%${Number(valor)}%" or cast(tbl3.documento as unsigned) like "%${Number(valor)}%") AND `
-                    } else {
-                        if (queryField == 'valor') value = value.replace('.', '').replace(',', '.')
-                        switch (queryField) {
-                            case 'agente_representante': queryField = 'tbl1.nome'
-                                break;
-                            case 'agente': queryField = 'tbl6.nome'
-                                break;
-                            case 'valor': queryField = 'tbl1.valor'
-                                break;
-                        }
-                        switch (operator) {
-                            case 'startsWith': operator = `like '${value}%'`
-                                break;
-                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
-                                break;
-                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
-                                break;
-                            case 'endsWith': operator = `like '%${value}'`
-                                break;
-                            case 'notEquals': operator = `!= '${value}'`
-                                break;
-                            default: operator = `= '${value}'`
-                                break;
-                        }
-
-                        query += `${queryField} ${operator} AND `
-                    }
-                } else if (key.split(':')[0] == 'params') {
-                    switch (key.split(':')[1]) {
-                        case 'page': page = Number(queryes[key]);
-                            break;
-                        case 'rows': rows = Number(queryes[key]);
-                            break;
-                    }
-                } else if (key.split(':')[0] == 'sort') {
-                    if (['liquidar_aprox'].includes(key.split(':')[1])) {
-                        sortField = app.db.raw('tbl1.liquidar_em')
-                    } else if (['documento'].includes(key.split(':')[1])) {
-                        sortField = app.db.raw('tbl5.descricao, tbl3.documento')
-                    }
-                    else sortField = key.split(':')[1].split('=')[0]
-                    sortOrder = queryes[key]
-                }
-            }
-            query = query.slice(0, -5).trim()
-        }
-        let filterCnpj = undefined
-        let filter = req.query.filter
-        if (filter) {
-            filter = filter.trim()
-            filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
-        }
-
         const totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
-            .join({ tbl2: tabelaComissPipelineDomain }, 'tbl1.id_comis_pipeline', 'tbl2.id')
-            .join({ tbl3: tabelaPipelineDomain }, 'tbl2.id_pipeline', 'tbl3.id')
+            .join({ tbl3: tabelaPipelineDomain }, 'tbl1.id_pipeline', 'tbl3.id')
             .join({ tbl4: tabelaComissAgentesDomain }, 'tbl1.id_comis_agentes', 'tbl4.id')
             .join({ tbl5: tabelaPipelineParams }, 'tbl5.id', 'tbl3.id_pipeline_params')
             .join({ tbl6: tabelaCadastros }, 'tbl6.id', 'tbl4.id_cadastros')
-            .whereRaw(query ? query : '1=1')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .join({ tbl2: tabelaComissPipelineDomain }, 'tbl1.id_comis_pipeline', 'tbl2.id')
-            .join({ tbl3: tabelaPipelineDomain }, 'tbl2.id_pipeline', 'tbl3.id')
+            .join({ tbl3: tabelaPipelineDomain }, 'tbl1.id_pipeline', 'tbl3.id')
             .join({ tbl4: tabelaComissAgentesDomain }, 'tbl1.id_comis_agentes', 'tbl4.id')
             .join({ tbl5: tabelaPipelineParams }, 'tbl5.id', 'tbl3.id_pipeline_params')
             .join({ tbl6: tabelaCadastros }, 'tbl6.id', 'tbl4.id_cadastros')
-            .select('tbl1.id', 'tbl1.id_comis_agentes', 'tbl1.id_comis_pipeline', 'tbl1.desconto', 'tbl1.observacao', 'tbl1.liquidar_em',
+            .select('tbl1.id', 'tbl1.parcela', 'tbl1.id_comis_agentes', 'tbl1.id_pipeline', 'tbl1.liquidar_em',
                 { id_pipeline: 'tbl3.id' }, 'tbl6.nome as agente', 'tbl5.descricao as unidade', 'tbl3.documento',
-                app.db.raw('format(tbl1.valor, 2, "pt_BR")valor'), 'tbl1.agente_representante', app.db.raw(`DATE_FORMAT(SUBSTRING_INDEX(tbl1.liquidar_em,' ',1),'%d/%m/%Y') AS liquidar_aprox`),
+                app.db.raw('format(tbl1.valor, 2, "pt_BR")valor'), app.db.raw('format(tbl1.valor_base, 2, "pt_BR")valor_base'), app.db.raw('format(tbl1.percentual, 2, "pt_BR")percentual'),
+                'tbl1.agente_representante', app.db.raw(`DATE_FORMAT(SUBSTRING_INDEX(tbl1.liquidar_em,' ',1),'%d/%m/%Y') AS liquidar_aprox`),
                 app.db.raw(`(select status_comis from ${tabelaComissStatussDomain} where id_comissoes = tbl1.id order by created_at desc, status_comis desc limit 1) last_status_comiss`))
-            .where({ 'tbl1.status': STATUS_ACTIVE })
-            .whereRaw(query ? query : '1=1')
+            .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pipeline': idPipeline })
             .groupBy('tbl1.id')
-            .orderBy(sortField, sortOrder)
-        if (sortByAnivFundacao) ret.orderBy(sortByAnivFundacao, sortOrder)
-        ret.limit(rows).offset((page + 1) * rows - rows)
+            .orderBy('last_status_comiss')
+            .orderBy('tbl1.liquidar_em')
+            .orderBy('tbl1.id', 'desc')
 
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
@@ -457,9 +375,9 @@ module.exports = app => {
                 if (!body) return res.status(404).send('Registro não encontrado')
                 req.uParams = uParams
                 req.body = body
+                body.valor_base = parseFloat(body.valor_base).toFixed(2).replace('.', ',')
+                body.percentual = parseFloat(body.percentual).toFixed(2).replace('.', ',')
                 body.valor = parseFloat(body.valor).toFixed(2).replace('.', ',')
-                const errorInValidation = await validateComissPipeline(req)
-                body = { ...body, isInvalid: errorInValidation }
 
                 return res.json(body)
             })
@@ -481,13 +399,14 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
         const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
             req.uParams = uParams
             req.body = last
-            const errorInValidation = await validateComissPipeline(req)
             const { createEventUpd } = app.api.sisEvents
             const evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento'],
@@ -507,47 +426,22 @@ module.exports = app => {
                     evento: evento
                 })
                 .where({ id: req.params.id })
+
+            const countComiss = await app.db(tabelaDomain)
+                .count('id as count')
+                .where({ id_pipeline: last.id_pipeline, status: STATUS_ACTIVE })
+                .first()
+            if (!countComiss || countComiss.count == 0) {
+                await app.db(tabelaPipelineStatusDomain).update({ status: STATUS_DELETE }).where({ id_pipeline: last.id_pipeline, status_params: STATUS_COMISSIONADO })
+            }
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
-            if (errorInValidation) res.status(200).send({ success: true, isInvalid: errorInValidation })
-            else res.status(204).send()
+            res.status(204).send()
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             res.status(400).send(error)
         }
     }
-
-    const validateComissPipeline = async (req) => {
-        let body = { ...req.body }
-        const uParams = { ...req.uParams }
-        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaPipeline = `${dbPrefix}_${uParams.schema_name}.pipeline`
-        const tabelaComisPipeline = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`
-        const errorInValidation = {}
-
-        const agenteRepresentante = body.agente_representante || 0
-        let comisAgentes = { total: 0 }
-        let comissPipeline = { valor_agente: 0 }
-        try {
-            existsOrError(body.id_comis_pipeline, 'Comissionamento não informado')
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-            return res.status(400).send(error)
-        }
-        // Verificar se o comis_pipeline existe
-        comissPipeline = await app.db({ tbl1: tabelaComisPipeline })
-            .join(tabelaPipeline, 'tbl1.id_pipeline', 'pipeline.id')
-            .where({ 'tbl1.id': body.id_comis_pipeline, 'tbl1.status': STATUS_ACTIVE }).first()
-        comisAgentes = await app.db({ tbl1: tabelaDomain }).sum('valor as total')
-            .where({ 'tbl1.id': body.id_comis_pipeline, 'tbl1.status': STATUS_ACTIVE, 'tbl1.agente_representante': agenteRepresentante, 'tbl1.status': STATUS_ACTIVE }).first() || { total: 0 }
-
-        if (comisAgentes.total > comissPipeline.valor_agente) {
-            errorInValidation.sumError = `Existe um erro no somatório do comissionamento ${agenteRepresentante ? 'da representação' : 'dos agentes'}. A soma (${formatCurrency(comisAgentes.total)}) ultrapassa o valor (${formatCurrency(comissPipeline.valor_agente)}) para comissionamento ${agenteRepresentante ? 'da representação' : 'dos agentes'} informada no registro do Pipeline`
-        }
-
-        return errorInValidation;
-    }
-
 
     const liquidateInGroup = async (req, res) => {
         let user = req.user
@@ -567,7 +461,7 @@ module.exports = app => {
 
         const { createEventUpd } = app.api.sisEvents
         Object.values(data).forEach(async (element) => {
-            if (element.last_status_comiss < 30) {
+            if (element.last_status_comiss < STATUS_LIQUIDADO) {
                 delete element.last_status_comiss;
                 try {
                     existsOrError(element.id, 'Registro não informado')
@@ -596,7 +490,6 @@ module.exports = app => {
                         .where({ id: element.id })
                         .then(async (ret) => {
                             if (ret > 0) {
-                                console.log('ret', ret);
                                 return true
                             }
                             else res.status(200).send(`${tabelaAlias} não encontrado`)
@@ -627,70 +520,10 @@ module.exports = app => {
     const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
-            case 'gmc':
-                getMaxCommissioningValue(req, res)
-                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
         }
-    }
-
-    // Retorna os dados de valores efetivados e máximos de comissionamento
-    const getMaxCommissioningValue = async (req, res) => {
-        let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        try {
-            // Alçada do usuário
-            if (!uParams) throw `${noAccessMsg} "Exibição de valores de ${tabelaAlias}"`
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            return res.status(401).send(error)
-        }
-
-        const idPipeline = req.query.id_pipeline || undefined;
-
-        try {
-            existsOrError(idPipeline, 'Pipeline não informado')
-        } catch (error) {
-            return res.status(400).send(error)
-        }
-
-        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`;
-        const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`;
-        const tabelaComissPipelineDomain = `${dbPrefix}_${uParams.schema_name}.comis_pipeline`;
-
-        const represSum = app.db({ c: tabelaDomain })
-            .select(app.db.raw("'repres_sum'"))
-            .sum('valor as valor')
-            .join({ cp: tabelaComissPipelineDomain }, 'cp.id', '=', 'c.id_comis_pipeline')
-            .where({ 'cp.id_pipeline': idPipeline, 'c.agente_representante': 1 });
-
-        const represMax = app.db({ p: tabelaPipelineDomain })
-            .select(app.db.raw("'repres_max'"))
-            .select('valor_representacao as valor')
-            .where({ id: idPipeline });
-
-        const agentesSum = app.db({ c: tabelaDomain })
-            .select(app.db.raw("'agentes_sum'"))
-            .sum('valor as valor')
-            .join({ cp: tabelaComissPipelineDomain }, 'cp.id', '=', 'c.id_comis_pipeline')
-            .where({ 'cp.id_pipeline': idPipeline, 'c.agente_representante': 0 });
-
-        const agentesMax = app.db({ p: tabelaPipelineDomain })
-            .select(app.db.raw("'agentes_max'"))
-            .select('valor_agente as valor')
-            .where({ id: idPipeline });
-
-        const unionQuery = app.db.union([represSum, represMax, agentesSum, agentesMax]);
-
-
-        unionQuery.then(body => {
-            return res.json(body)
-        }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-            return res.status(500).send(error);
-        });
     }
 
     return { save, get, getById, remove, liquidateInGroup, getByFunction }

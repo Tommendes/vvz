@@ -195,7 +195,7 @@ watchEffect(() => {
 });
 const breadCrumbItems = ref([]);
 const refreshBreadcrumb = () => {
-    breadCrumbItems.value = [{ label: 'Todos os Agentes', to: route.fullPath }];
+    breadCrumbItems.value = [{ label: 'Todos os Pós-vendas', to: route.fullPath }];
 };
 const newPostSales = () => {
     mode.value = 'new';

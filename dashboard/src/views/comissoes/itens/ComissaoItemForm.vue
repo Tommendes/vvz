@@ -3,25 +3,25 @@ import { onBeforeMount, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-
-import { formatCurrency } from '@/global';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
-
-import { guide } from '@/guides/comissaoForm.js';
+import { useRoute } from 'vue-router';
+const route = useRoute();
 
 // Cookies de usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 
 import { Mask } from 'maska';
+import { watchEffect } from 'vue';
 const masks = ref({
     data: new Mask({
         mask: '##/##/####'
     })
 });
-
+// Função de emitir eventos
+const emit = defineEmits(['newItem', 'cancel', 'refreshPipeline']);
 // Andamento do registro
 const STATUS_NAO_PROGRAMADO = 10;
 const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20;
@@ -32,30 +32,38 @@ const userData = JSON.parse(json);
 const loading = ref(false);
 // Campos de formulário
 const itemData = ref({});
+const showTimeLine = ref(false);
 // Eventos do registro
 const itemDataEventos = ref({});
-const comissionamento = ref({ R: { M: 0, S: 0 }, A: { M: 0, S: 0 } });
-const commissioningValues = ref(null);
 const canAddCommission = ref(false);
-// Emit do template
-const emit = defineEmits(['newItem', 'updatedItem', 'reload']);
 const props = defineProps({
-    itemDataPipeline: Object, // O próprio pipeline
-    itemDataRoot: Object, // O próprio registro
-    itemDataComissionamento: Object,
-    parentMode: String
+    itemDataRoot: Object // O próprio registro
 });
-const maxCommission = ref(0);
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 // Dropdowns
 const dropdownAgentes = ref([]);
-const mode = ref('view');
+// Até 10 parcelas
+const dropdownParcelas = ref([
+    { value: 'U', label: `Unica` },
+    { value: '1', label: `1` },
+    { value: '2', label: `2` },
+    { value: '3', label: `3` },
+    { value: '4', label: `4` },
+    { value: '5', label: `5` },
+    { value: '6', label: `6` },
+    { value: '7', label: `7` },
+    { value: '8', label: `8` },
+    { value: '9', label: `9` },
+    { value: '10', label: `10` }
+]);
+const mode = ref('new');
 
 // Carrega os dados do form
 const loadData = async () => {
     loading.value = true;
     const id = props.itemDataRoot.id || itemData.value.id;
     if (id) {
+        mode.value = 'view';
         const url = `${urlBase.value}/${id}`;
         setTimeout(async () => {
             await axios.get(url).then(async (axiosRes) => {
@@ -68,8 +76,7 @@ const loadData = async () => {
             // Eventos do registro
             await getEventos();
         }, Math.random * 1000 + 250);
-    } else itemData.value.id_comis_pipeline = props.itemDataComissionamento.id;
-    getMaxCommissioningValue();
+    } else itemData.value.id_pipeline = route.params.id;
     loading.value = false;
 };
 
@@ -131,16 +138,21 @@ const saveData = async () => {
     else obj.liquidar_em = null;
     axios[method](url, obj)
         .then(async (res) => {
+            emit('refreshPipeline');
+            if (method == 'post') {
+                emit('newItem');
+                return;
+            }
+            emit('cancel');
             itemData.value = res.data;
             if (itemData.value && itemData.value.id) {
                 if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
+                if (itemData.value.valor_base) itemData.value.valor_base = itemData.value.valor_base.replace('.', ',');
+                if (itemData.value.percentual) itemData.value.percentual = itemData.value.percentual.replace('.', ',');
                 if (itemData.value.valor) itemData.value.valor = itemData.value.valor.replace('.', ',');
                 defaultSuccess('Registro salvo com sucesso');
-                if (mode.value == 'new') emit('newItem');
-                else emit('updatedItem');
                 mode.value = 'view';
                 await listStatusRegistro();
-                getMaxCommissioningValue();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -154,7 +166,7 @@ const deleteItem = () => {
     confirm.require({
         group: 'templating',
         header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja EXCLUIR este registro?',
+        message: 'Confirma que deseja EXCLUIR este registro?',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -162,7 +174,8 @@ const deleteItem = () => {
         accept: () => {
             axios.delete(`${urlBase.value}/${itemData.value.id}`).then(async () => {
                 defaultSuccess('Registro excluído com sucesso!');
-                emit('reload');
+                emit('cancel');
+                emit('refreshPipeline');
             });
         },
         reject: () => {
@@ -177,9 +190,9 @@ const liquidateItem = () => {
         status_comis: STATUS_LIQUIDADO
     };
     confirm.require({
-        group: 'comisLiquidateConfirm',
+        group: `comisLiquidateConfirm-${itemData.value.id}`,
         header: 'Confirmar liquidação',
-        message: 'Você tem certeza que deseja LIQUIDAR este registro?',
+        message: 'Confirma que deseja LIQUIDAR este registro?',
         message2: '<strong>Esta operação não poderá ser desfeita e a comissão será liberada para pagamento</strong>',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
@@ -190,14 +203,70 @@ const liquidateItem = () => {
                 itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
                 itemData.value.bodyStatus = bodyStatus;
                 await saveData();
-                emit('updatedItem');
                 await loadData();
             } else {
                 await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
-                    emit('updatedItem');
                     await loadData();
+                    emit('cancel');
                 });
             }
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+const programateItem = () => {
+    const bodyStatus = {
+        id_comissoes: itemData.value.id,
+        status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO
+    };
+    confirm.require({
+        group: `comisLiquidateConfirm-${itemData.value.id}`,
+        header: 'Confirmar liquidação',
+        message: 'Confirma que deseja LIQUIDAR este registro?',
+        message2: '<strong>Esta operação ainda poderá ser desfeita cancelando a liquidação</strong>',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            if (!itemData.value.liquidar_em) {
+                itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
+                itemData.value.bodyStatus = bodyStatus;
+                await saveData();
+                await loadData();
+            } else {
+                await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                    await loadData();
+                    emit('cancel');
+                });
+            }
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+const unprogramateItem = () => {
+    const bodyStatus = {
+        id_comissoes: itemData.value.id,
+        status_comis: STATUS_NAO_PROGRAMADO
+    };
+    confirm.require({
+        group: `comisLiquidateConfirm-${itemData.value.id}`,
+        header: 'Confirmar',
+        message: 'Confirma que deseja CANCELAR esta liquidação?',
+        message2: '<strong>Você poderá liquidar novamente a qualquer momento</strong>',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            itemData.value.liquidar_em = null;
+            itemData.value.bodyStatus = bodyStatus;
+            await saveData();
+            await loadData();
         },
         reject: () => {
             return false;
@@ -214,58 +283,10 @@ const listAgentesComissionamento = async () => {
         });
     });
 };
-const getAgentesField = (value, field) => {
-    const item = dropdownAgentes.value.find((item) => item.value == value);
-    return item ? item[field] : '';
-};
-const getAR = () => {
-    itemData.value.agente_representante = getAgentesField(itemData.value.id_comis_agentes, 'ar');
-    getMaxCommissioningValue();
-};
-
-const getMaxCommissioningValue = async () => {
-    loading.value = true;
-    setTimeout(async () => {
-        const url = `${urlBase.value}/f-a/gmc?id_pipeline=${props.itemDataPipeline.id}`;
-        // resete comissionamento
-        comissionamento.value = { R: { M: 0, S: 0 }, A: { M: 0, S: 0 } };
-        await axios.get(url).then((axiosRes) => {
-            commissioningValues.value = axiosRes.data;
-            commissioningValues.value.forEach((element) => {
-                switch (element.repres_sum) {
-                    case 'repres_sum':
-                        comissionamento.value.R = { ...comissionamento.value.R, S: Number(element.valor) };
-                        break;
-                    case 'repres_max':
-                        comissionamento.value.R = { ...comissionamento.value.R, M: Number(element.valor) };
-                        break;
-                    case 'agentes_sum':
-                        comissionamento.value.A = { ...comissionamento.value.A, S: Number(element.valor) };
-                        break;
-                    case 'agentes_max':
-                        comissionamento.value.A = { ...comissionamento.value.A, M: Number(element.valor) };
-                        break;
-                }
-            });
-            if (itemData.value.agente_representante == 1 && comissionamento.value.R.M > comissionamento.value.R.S) canAddCommission.value = true;
-            else if (itemData.value.agente_representante == 0 && comissionamento.value.A.M > comissionamento.value.A.S) canAddCommission.value = true;
-            else canAddCommission.value = false;
-        });
-        if (itemData.value.agente_representante == 1) maxCommission.value = Number(comissionamento.value.R.M - comissionamento.value.R.S).toFixed(2);
-        else if (itemData.value.agente_representante == 0) maxCommission.value = Number(comissionamento.value.A.M - comissionamento.value.A.S).toFixed(2);
-        if (mode.value != 'new') maxCommission.value = Number(maxCommission.value) + Number(itemData.value.valor.replace(',', '.'));
-        maxCommission.value = maxCommission.value ? maxCommission.value : '0,00';
-        maxCommission.value = formatCurrency(maxCommission.value);
-    }, Math.random() * 1000 + 250);
-    loading.value = false;
-};
 // Recarregar dados do formulário
-const reload = () => {
-    emit('reload');
-};
-const cancel = () => {
-    if (mode.value == 'view') emit('reload');
-    else if (mode.value == 'edit') mode.value = 'view';
+const cancel = async () => {
+    if (itemData.value.id) await loadData();
+    else emit('cancel');
 };
 
 /**
@@ -335,20 +356,32 @@ const listStatusRegistro = async () => {
 
 // Carregar dados do formulário
 onBeforeMount(() => {
-    mode.value = props.parentMode;
     setTimeout(async () => {
         await loadData();
         await listAgentesComissionamento();
     }, Math.random() * 1000 + 250);
 });
+// calcule o valor da comissão ao alterar o valor base ou o percentual. Lembrando que valor_base e percentual estão no formato 0,99 e precisam ser convertidos para o calculo. E depois de feito o calculo, o valor da comissão deve ser formatado para 0,99
+// Como sugestão, podesse armazenar os valores em duas variáveis separadas, uma para o valor base e outra para o percentual, e depois fazer o calculo e armazenar o valor da comissão em uma terceira variável
+// Por fim o valor da comissão deve ser formatado para 0,99 em itemData.value.valor
+watchEffect(() => {
+    if (itemData.value.valor_base && itemData.value.percentual) {
+        const valorBase = parseFloat(itemData.value.valor_base.replace(',', '.'));
+        const percentual = parseFloat(itemData.value.percentual.replace(',', '.'));
+        const valor = valorBase * (percentual / 100);
+        itemData.value.valor = valor.toFixed(2).replace('.', ',');
+    } else {
+        itemData.value.valor = '';
+    }
+});
 </script>
 
 <template>
-    <ConfirmDialog group="comisLiquidateConfirm">
+    <ConfirmDialog :group="`comisLiquidateConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
                 <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
-                    <i class="pi pi-question fa-fade text-5xl"></i>
+                    <i class="pi pi-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
                 <p class="mb-0" v-html="message.message" />
@@ -360,127 +393,136 @@ onBeforeMount(() => {
             </div>
         </template>
     </ConfirmDialog>
-    <form @submit.prevent="saveData" @keydow.enter.prevent>
-        <div class="grid">
-            <div :class="`col-12 md:col-${itemDataStatus.length > 0 ? '8' : '12'}`">
-                <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
-                <div class="p-fluid formgrid grid">
-                    <div class="field col-12 md:col-12">
-                        <label for="id_comis_agentes">Agente/Representante Comissionado</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Dropdown
-                            v-else
-                            filter
-                            placeholder="Selecione..."
-                            :showClear="!!itemData.id_comis_agentes"
-                            id="unidade_tipos"
-                            optionLabel="label"
-                            optionValue="value"
-                            v-model="itemData.id_comis_agentes"
-                            :options="dropdownAgentes"
-                            :disabled="['view'].includes(mode)"
-                            @change="getAR()"
-                        />
-                    </div>
-                    <div class="field col-12 md:col-4">
-                        <label for="valor">Valor Máximo da Comissão ({{ maxCommission }})</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor" id="valor" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                    </div>
-                    <div class="field col-12 md:col-4">
-                        <label for="desconto">Descontar</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto" id="desconto" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                    </div>
-                    <div class="field col-12 md:col-4">
-                        <label for="liquidar_em">Liquidar em</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.liquidar_em" showIcon :showOnFocus="false" showButtonBar dateFormat="dd/mm/yy" />
-                    </div>
-                    <div class="field col-12 md:col-12">
-                        <label for="observacao">Observação</label>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
-                    </div>
-                </div>
-                <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode == 'edit' || (mode == 'new' && canAddCommission)" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" label="Liquidar" icon="fa-solid fa-bolt fa-fade" severity="success" text raised @click="liquidateItem" />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" label="Excluir" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
-                    <Button type="button" v-if="['new', 'edit'].includes(mode)" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
-                    <Button type="button" v-else label="Sair" icon="fa-solid fa-door-open" text raised @click="reload" />
-                </div>
-            </div>
-            <div v-if="itemDataStatus.length > 0" class="col-12 md:col-4">
-                <Fieldset :toggleable="true" class="mb-3" v-if="itemData.id">
-                    <template #legend>
-                        <div class="flex align-items-center text-primary">
-                            <span class="fa-solid fa-clock mr-2"></span>
-                            <span class="font-bold text-lg">Andamento do Registro</span>
-                        </div>
-                    </template>
-                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Timeline v-else :value="itemDataStatus">
-                        <template #marker="slotProps">
-                            <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
-                                <i :class="slotProps.item.icon"></i>
-                            </span>
-                        </template>
-                        <template #opposite="slotProps">
-                            <small class="p-text-secondary">{{ slotProps.item.date }}</small>
-                        </template>
-                        <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ userData.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
-                    </Timeline>
-                </Fieldset>
-            </div>
-            <div class="col-12">
-                <Fieldset class="bg-green-200" toggleable :collapsed="true">
-                    <template #legend>
-                        <div class="flex align-items-center text-primary">
-                            <span class="fa-solid fa-circle-info mr-2"></span>
-                            <span class="font-bold text-lg">Instruções</span>
-                        </div>
-                    </template>
-                    <p class="m-0">
-                        <span v-html="guide" />
-                    </p>
-                </Fieldset>
-            </div>
-            <div v-if="itemDataEventos.length > 0" class="col-12 md:col-12">
-                <Fieldset class="bg-orange-200 mb-3" toggleable :collapsed="true">
-                    <template #legend>
-                        <div class="flex align-items-center text-primary">
-                            <span class="fa-solid fa-circle-info mr-2"></span>
-                            <span class="font-bold text-lg">Eventos do registro</span>
-                        </div>
-                    </template>
-                    <div class="m-0" v-for="item in itemDataEventos" :key="item.id">
-                        <h4 v-if="item.data">Em {{ item.data }}: {{ item.user }}</h4>
-                        <p v-html="item.evento" class="mb-3" />
-                    </div>
-                </Fieldset>
-            </div>
-            <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
-                <template #legend>
-                    <div class="flex align-items-center text-primary">
-                        <span class="fa-solid fa-circle-info mr-2"></span>
-                        <span class="font-bold text-lg">FormData</span>
-                    </div>
-                </template>
-                <p>parentMode: {{ parentMode }}</p>
-                <p>mode: {{ mode }}</p>
-                <p>itemDataPipeline: {{ props.itemDataPipeline }}</p>
-                <p>itemData: {{ itemData }}</p>
-                <p>itemDataEventos: {{ itemDataEventos }}</p>
-                <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
-                <p>props.itemDataComissionamento: {{ props.itemDataComissionamento }}</p>
-                <p>Comissionamento Representantes: {{ comissionamento.R.M }} > {{ comissionamento.R.S }} = {{ comissionamento.R.M > comissionamento.R.S }}</p>
-                <p>Comissionamento Agentes: {{ comissionamento.A.M }} > {{ comissionamento.A.S }} = {{ comissionamento.A.M > comissionamento.A.S }}</p>
-                <p>canAddCommission: {{ canAddCommission }}</p>
-                <p>maxCommission: {{ maxCommission }}</p>
-                <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
-            </Fieldset>
+    <Dialog v-model:visible="showTimeLine" modal header="Timeline do registro" :style="{ width: '25rem' }">
+        <Timeline :value="itemDataStatus">
+            <template #marker="slotProps">
+                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                    <i :class="slotProps.item.icon"></i>
+                </span>
+            </template>
+            <template #opposite="slotProps">
+                <small class="p-text-secondary">{{ slotProps.item.date }}</small>
+            </template>
+            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ userData.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
+        </Timeline>
+        <div class="flex justify-content-center gap-2 mt-3">
+            <Button type="button" label="Fechar" severity="" @click="showTimeLine = false"></Button>
         </div>
+    </Dialog>
+    <form @submit.prevent="saveData">
+        <div class="flex gap-1 mb-2">
+            <div class="flex-grow-1 flex align-items-center justify-content-center">
+                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-user"></i></div>
+                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                    <Dropdown
+                        v-else
+                        filter
+                        placeholder="Selecione o agente"
+                        :showClear="!!itemData.id_comis_agentes"
+                        id="unidade_tipos"
+                        optionLabel="label"
+                        optionValue="value"
+                        v-model="itemData.id_comis_agentes"
+                        :options="dropdownAgentes"
+                        :disabled="['view'].includes(mode)"
+                    />
+                </div>
+            </div>
+            <div class="flex-none flex">
+                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">R$</div>
+                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                    <InputText
+                        v-else
+                        autocomplete="no"
+                        :disabled="mode == 'view'"
+                        v-model="itemData.valor_base"
+                        id="valor_base"
+                        type="text"
+                        v-maska
+                        data-maska="0,99"
+                        data-maska-tokens="0:\d:multiple|9:\d:optional"
+                        placeholder="Valor base"
+                        @keydown.enter.prevent
+                    />
+                </div>
+            </div>
+            <div class="flex-none flex">
+                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">%</div>
+                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                    <InputText
+                        v-else
+                        autocomplete="no"
+                        :disabled="mode == 'view'"
+                        v-model="itemData.percentual"
+                        id="percentual"
+                        type="text"
+                        v-maska
+                        data-maska="0,99"
+                        data-maska-tokens="0:\d:multiple|9:\d:optional"
+                        placeholder="Percentual"
+                        @keydown.enter.prevent
+                    />
+                </div>
+            </div>
+            <div class="flex-none flex">
+                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">R$</div>
+                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                    <spam class="p-inputtext p-component p-filled p-variant-filled" v-else>{{ itemData.valor }}</spam>
+                </div>
+            </div>
+            <div class="flex-none flex">
+                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-list-ol"></i></div>
+                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                    <Dropdown v-else filter placeholder="Parrcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
+                </div>
+            </div>
+            <div class="flex-none flex" v-if="mode != 'new'">
+                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-calendar-check"></i></div>
+                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                    <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.liquidar_em" :showOnFocus="true" showButtonBar dateFormat="dd/mm/yy" />
+                </div>
+            </div>
+            <div class="flex-none flex">
+                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
+                    <Button type="submit" v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)" v-tooltip.top="'Salvar registro'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" v-tooltip.top="'Editar registro'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 20 && ['view'].includes(mode)" v-tooltip.top="'Liquidar pagamento'" icon="fa-regular fa-calendar-check" severity="success" text raised @click="programateItem" />
+                    <Button
+                        type="button"
+                        v-else-if="itemDataLastStatus.status_comis == 20 && ['view'].includes(mode)"
+                        v-tooltip.top="'Cancelar liquidação'"
+                        icon="fa-regular fa-calendar-xmark"
+                        severity="warning"
+                        text
+                        raised
+                        @click="unprogramateItem"
+                    />
+                    <!-- <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Liquidar comissão'" icon="fa-solid fa-bolt" severity="success" text raised @click="liquidateItem" /> -->
+                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
+                    <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline do registro'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Excluir registro'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
+                </div>
+            </div>
+        </div>
+        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="userData.admin >= 3">
+            <template #legend>
+                <div class="flex align-items-center text-primary">
+                    <span class="fa-solid fa-circle-info mr-2"></span>
+                    <span class="font-bold text-lg">FormData</span>
+                </div>
+            </template>
+            <p>mode: {{ mode }}</p>
+            <p>itemData: {{ itemData }}</p>
+            <p>itemDataEventos: {{ itemDataEventos }}</p>
+            <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
+            <p>canAddCommission: {{ canAddCommission }}</p>
+            <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
+        </Fieldset>
     </form>
 </template>
