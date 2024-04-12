@@ -14,6 +14,7 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 
 import { Mask } from 'maska';
+import { watchEffect } from 'vue';
 const masks = ref({
     data: new Mask({
         mask: '##/##/####'
@@ -346,6 +347,19 @@ onBeforeMount(() => {
         await listAgentesComissionamento();
     }, Math.random() * 1000 + 250);
 });
+// calcule o valor da comissão ao alterar o valor base ou o percentual. Lembrando que valor_base e percentual estão no formato 0,99 e precisam ser convertidos para o calculo. E depois de feito o calculo, o valor da comissão deve ser formatado para 0,99
+// Como sugestão, podesse armazenar os valores em duas variáveis separadas, uma para o valor base e outra para o percentual, e depois fazer o calculo e armazenar o valor da comissão em uma terceira variável
+// Por fim o valor da comissão deve ser formatado para 0,99 em itemData.value.valor
+watchEffect(() => {
+    if (itemData.value.valor_base && itemData.value.percentual) {
+        const valorBase = parseFloat(itemData.value.valor_base.replace(',', '.'));
+        const percentual = parseFloat(itemData.value.percentual.replace(',', '.'));
+        const valor = valorBase * (percentual / 100);
+        itemData.value.valor = valor.toFixed(2).replace('.', ',');
+    } else {
+        itemData.value.valor = '';
+    }
+});
 </script>
 
 <template>
@@ -443,19 +457,7 @@ onBeforeMount(() => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">R$</div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <InputText
-                        v-else
-                        autocomplete="no"
-                        :disabled="mode == 'view'"
-                        v-model="itemData.valor"
-                        id="valor"
-                        type="text"
-                        v-maska
-                        data-maska="0,99"
-                        data-maska-tokens="0:\d:multiple|9:\d:optional"
-                        placeholder="Comissão"
-                        @keydown.enter.prevent
-                    />
+                    <spam class="p-inputtext p-component p-filled p-variant-filled" v-else>{{ itemData.valor }}</spam>
                 </div>
             </div>
             <div class="flex-none flex">

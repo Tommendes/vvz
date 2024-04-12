@@ -392,19 +392,6 @@ module.exports = app => {
         .post(app.api.com_prop_itens.getByFunction)
 
     /**
-     * Rota de comis_pipeline
-     */
-    app.route('/comis-pipeline')
-        .all(app.config.passport.authenticate())
-        .post(app.api.comis_pipeline.save)
-        .get(app.api.comis_pipeline.get)
-    app.route('/comis-pipeline/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.comis_pipeline.save)
-        .get(app.api.comis_pipeline.getById)
-        .delete(app.api.comis_pipeline.remove)
-
-    /**
      * Rota de comis_agentes
      */
     app.route('/comis-agentes')
