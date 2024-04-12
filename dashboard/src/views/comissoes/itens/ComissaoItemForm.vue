@@ -42,6 +42,20 @@ const props = defineProps({
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 // Dropdowns
 const dropdownAgentes = ref([]);
+// Até 10 parcelas
+const dropdownParcelas = ref([
+    { value: 'U', label: `Unica` },
+    { value: '1', label: `1` },
+    { value: '2', label: `2` },
+    { value: '3', label: `3` },
+    { value: '4', label: `4` },
+    { value: '5', label: `5` },
+    { value: '6', label: `6` },
+    { value: '7', label: `7` },
+    { value: '8', label: `8` },
+    { value: '9', label: `9` },
+    { value: '10', label: `10` }
+]);
 const mode = ref('new');
 
 // Carrega os dados do form
@@ -404,7 +418,7 @@ watchEffect(() => {
                     <Dropdown
                         v-else
                         filter
-                        placeholder="Selecione..."
+                        placeholder="Selecione o agente"
                         :showClear="!!itemData.id_comis_agentes"
                         id="unidade_tipos"
                         optionLabel="label"
@@ -458,6 +472,13 @@ watchEffect(() => {
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">R$</div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                     <spam class="p-inputtext p-component p-filled p-variant-filled" v-else>{{ itemData.valor }}</spam>
+                </div>
+            </div>
+            <div class="flex-none flex">
+                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-list-ol"></i></div>
+                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                    <Dropdown v-else filter placeholder="Parrcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>
             <div class="flex-none flex" v-if="mode != 'new'">
