@@ -100,7 +100,6 @@ const loadData = async () => {
     loading.value = false;
 };
 const refreshPipeline = async () => {
-    defaultSuccess('Pipeline atualizado');
     pipelineForm.value.loadData();
 };
 
