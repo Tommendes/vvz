@@ -3,7 +3,6 @@ import { onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import Breadcrumb from '../../components/Breadcrumb.vue';
 import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
 import EditorComponent from '@/components/EditorComponent.vue';
 import { userKey } from '@/global';
@@ -100,10 +99,6 @@ const loadData = async () => {
                     breadItems.value = [{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }];
                     if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
-                    if (route.query.resource && route.query.resource == 'comiss') {
-                        toComissionate();
-                        // router.replace({ query: {} });
-                    }
                 })
                 .catch((error) => {
                     if (typeof error == 'string') defaultWarn(error);
@@ -138,6 +133,8 @@ const loadData = async () => {
     if (!itemData.value.perc_represent) itemData.value.perc_represent = 0;
     loading.value = false;
 };
+
+defineExpose({ loadData }); // Expondo a função para o componente pai
 // Salvar dados do formulário
 const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
@@ -426,25 +423,6 @@ const toPai = async () => {
 };
 const toFilho = async (idFilho) => {
     window.location.href = `#/${userData.schema_description}/pipeline/${idFilho || itemData.value.id_filho}`;
-};
-
-const itemDataComissionamento = ref({});
-const toComissionate = async () => {
-    setTimeout(async () => {
-        await axios
-            .post(`${baseApiUrl}/comis-pipeline`, { id_pipeline: itemData.value.id })
-            .then((res) => {
-                if (res.data && res.data.id) {
-                    // defaultSuccess('Comissionamento criado com sucesso');
-                    itemDataComissionamento.value = res.data;
-                    emit('commissioning', itemDataComissionamento.value);
-                } else defaultWarn('Erro ao criar comissionamento');
-            })
-            .catch((error) => {
-                console.log(error);
-                defaultWarn(error.response.data);
-            });
-    }, Math.random() * 1000 + 250);
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
@@ -901,7 +879,7 @@ watch(route, (value) => {
                                         <span disabled v-html="itemData.valor_liq" id="valor_liq" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-4`">
+                                <!-- <div :class="`col-12 lg:col-4`">
                                     <label for="valor_representacao">Comissão do representante</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
@@ -972,7 +950,7 @@ watch(route, (value) => {
                                         <span class="p-inputgroup-addon">R$</span>
                                         <span disabled v-html="itemData.valor_agente" id="valor_agente" class="p-inputtext p-component" />
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                         <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
@@ -1032,7 +1010,6 @@ watch(route, (value) => {
                         <p>hasFolder {{ hasFolder }}</p>
                         <p>editCadastro {{ editCadastro }}</p>
                         <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
-                        <p>itemDataComissionamento: {{ itemDataComissionamento }}</p>
                     </Fieldset>
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
@@ -1099,17 +1076,6 @@ watch(route, (value) => {
                                 text
                                 raised
                                 @click="toProposal()"
-                            />
-                            <Button
-                                label="Comissionamento"
-                                v-if="userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params >= 20 && itemDataLastStatus.status_params <= 70 && itemData.status == 10"
-                                :disabled="itemDataLastStatus.status_params >= 89"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-money-bill-transfer ${userData.comissoes >= 2 && itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params == 20 && itemData.status == 10 ? 'fa-shake' : ''}`"
-                                severity="success"
-                                text
-                                raised
-                                @click="toComissionate()"
                             />
                             <Button
                                 label="Criar OAT de Montagem"
@@ -1219,7 +1185,7 @@ watch(route, (value) => {
                             <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ userData.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
                         </Timeline>
                     </Fieldset>
-                    <Fieldset :toggleable="true" v-if="itemData.id">
+                    <Fieldset :toggleable="true" :collapsed="true" v-if="itemData.id">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="fa-solid fa-clock mr-2"></span>

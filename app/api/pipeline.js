@@ -381,7 +381,7 @@ module.exports = app => {
                                     default: operator = `= "${value}"`
                                         break;
                                 }
-                                query += `(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) ${operator} AND `
+                                query += `(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = ${STATUS_ACTIVE} ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) ${operator} AND `
                             } else {
                                 if (queryField == 'agente') queryField = 'u.name'
                                 else if (queryField == 'descricao') queryField = 'tbl1.descricao'
@@ -436,7 +436,7 @@ module.exports = app => {
                 lpad(tbl1.documento,${digitsOfAFolder},'0') documento, lpad(tbl2.documento,${digitsOfAFolder},'0') doc_pai, 
                 lpad(tbl3.documento,${digitsOfAFolder},'0') doc_filho, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
                 DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
-                (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) last_status_params`))
+                (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = ${STATUS_ACTIVE} ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) last_status_params`))
             // localizar registros de agentes
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             //Localizar registros pai
@@ -450,7 +450,6 @@ module.exports = app => {
             .orderBy(app.db.raw(sortField), sortOrder)
             .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
-            
         ret.then(body => {
             const length = body.length
             body.forEach(element => {

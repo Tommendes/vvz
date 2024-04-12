@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultWarn } from '@/toast';
+import { defaultWarn, defaultSuccess } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import ComissoesItensGrid from '../comissoes/itens/ComissoesItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
@@ -13,16 +13,13 @@ const userData = JSON.parse(json);
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
-const activeTab = ref(0);
-const mode = ref('grid');
-
 const itemData = ref({});
-const itemDataComissionamento = ref({});
 const loading = ref(true);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pipeline`);
 
 const comissoesItensGrid = ref();
+const pipelineForm = ref();
 
 // Itens do breadcrumb
 const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]);
@@ -102,10 +99,9 @@ const loadData = async () => {
     }, Math.random() * 1000);
     loading.value = false;
 };
-
-const classFlashComissionamento = ref('');
-const flashComissionamento = () => {
-    classFlashComissionamento.value = 'animation-color animation-fill-none flex align-items-center justify-content-center font-bold border-round px-5';
+const refreshPipeline = async () => {
+    defaultSuccess('Pipeline atualizado');
+    pipelineForm.value.loadData();
 };
 
 // Carregar dados do formulário
@@ -119,16 +115,6 @@ onMounted(async () => {
         await listAgentesNegocio();
     }, Math.random() * 1000);
 });
-const commissioning = async (value) => {
-    if (value.id) {
-        itemDataComissionamento.value = value;
-        flashComissionamento();
-        activeTab.value = 1;
-    }
-};
-const getRefreshComiss = () => {
-    comissoesItensGrid.value.loadData();
-};
 </script>
 
 <template>
@@ -136,61 +122,21 @@ const getRefreshComiss = () => {
     <div class="grid" :style="route.name == 'cadastro' ? 'min-width: 100rem;' : ''">
         <div class="col-12">
             <div class="card">
-                <TabView v-model:activeIndex="activeTab">
-                    <TabPanel>
-                        <template #header>
-                            <i class="fa-regular fa-address-card mr-2"></i>
-                            <span>Dados do Registro</span>
-                        </template>
-                        <PipelineForm @commissioning="commissioning" />
-                    </TabPanel>
-                    <TabPanel v-if="itemDataComissionamento.id">
-                        <template #header>
-                            <div :class="classFlashComissionamento" @click="getRefreshComiss">
-                                <i class="fa-regular fa-solid fa-dollar mr-2"></i>
-                                <span>Comissionamento</span>
+                <PipelineForm ref="pipelineForm" />
+                <div v-if="itemData.id">
+                    <div class="p-fluid grid">
+                        <div class="col-12" style="text-align: center">
+                            <div class="flex align-items-end flex-wrap card-container purple-container">
+                                <span class="p-inputtext p-component p-filled surface-100">
+                                    <i class="fa-solid fa-angles-down fa-shake"></i> Comissionamento
+                                    <i class="fa-solid fa-angles-down fa-shake" />
+                                </span>
                             </div>
-                        </template>
-                        <h2 class="m-0">Comissões do pedido {{ unidadeLabel + ' ' + itemData.documento + (userData.admin >= 2 ? `: (${itemData.id})` : '') }}</h2>
-                        <div class="mt-3">
-                            <ComissoesItensGrid ref="comissoesItensGrid" :itemDataRoot="itemData" :itemDataComissionamento="itemDataComissionamento" />
                         </div>
-                        <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="userData.admin >= 2">
-                            <template #legend>
-                                <div class="flex align-items-center text-primary">
-                                    <span class="fa-solid fa-circle-info mr-2"></span>
-                                    <span class="font-bold text-lg">FormData</span>
-                                </div>
-                            </template>
-                            <p>{{ route.name }}</p>
-                            <p>mode: {{ mode }}</p>
-                            <p>itemData: {{ itemData }}</p>
-                            <p>itemDataComissionamento: {{ itemDataComissionamento }}</p>
-                        </Fieldset>
-                    </TabPanel>
-                </TabView>
+                    </div>
+                    <ComissoesItensGrid v-if="route.name == 'pipeline-one'" ref="comissoesItensGrid" :itemDataRoot="itemData" @refreshPipeline="refreshPipeline()" />
+                </div>
             </div>
         </div>
     </div>
 </template>
-
-<style scoped>
-@keyframes animation-color {
-    0% {
-        background-color: var(--blue-500);
-        color: var(--gray-50);
-    }
-    50% {
-        background-color: var(--yellow-500);
-        color: var(--gray-900);
-    }
-    100% {
-        background-color: var(--surface-200);
-        color: var(--gray-900);
-    }
-}
-
-.animation-color {
-    animation: animation-color 5s linear;
-}
-</style>

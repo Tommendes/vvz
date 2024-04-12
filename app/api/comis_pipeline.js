@@ -173,7 +173,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const notOnComissoes = await app.db({ tbl1: `${dbPrefix}_${uParams.schema_name}.comissoes` }).where({ 'tbl1.id_comis_pipeline': req.params.id }).first()
+        const notOnComissoes = await app.db({ tbl1: `${dbPrefix}_${uParams.schema_name}.comissoes` }).where({ 'tbl1.id_pipeline': req.params.id }).first()
         try {
             notExistsOrError(notOnComissoes, `Registro de ${tabelaAlias} não pode ser excluído, pois está vinculado`)
         } catch (error) {
