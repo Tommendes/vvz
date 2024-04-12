@@ -35,9 +35,9 @@ const STATUS_NAO_PROGRAMADO = 10;
 const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20;
 const STATUS_LIQUIDADO = 30;
 const dropdownStatus = ref([
-    { label: 'Não programado', value: '10', severity: 'danger' },
-    { label: 'Programado para liquidação', value: '20', severity: 'warning' },
-    { label: 'Liquidado', value: '30', severity: 'success' }
+    { label: 'Criado/Lançado', value: '10', severity: 'danger' },
+    { label: 'Liquidado', value: '20', severity: 'warning' },
+    { label: 'Encerrado', value: '30', severity: 'success' }
 ]);
 // Cookies de usuário
 import { userKey } from '@/global';
@@ -353,7 +353,7 @@ onBeforeMount(async () => {
             </Column>
             <Column field="agente_representante" header="Tipo" style="width: 20%; min-width: 8rem">
                 <template #body="{ data, field }">
-                    <span v-html="data[field] == '1' ? 'Representante' : 'Agente'" />
+                    <span v-html="data[field] == '1' ? 'Representação' : 'Agente'" />
                 </template>
             </Column>
             <Column field="id_comis_agentes" header="Agente" style="width: 20%; min-width: 8rem">

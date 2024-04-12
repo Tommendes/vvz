@@ -28,9 +28,9 @@ const dropdownAgentes = ref([]);
 // Andamento do registro
 const STATUS_LIQUIDADO = 30;
 const dropdownStatus = ref([
-    { label: 'Não programado', value: '10', severity: 'danger' },
-    { label: 'Programado para liquidação', value: '20', severity: 'warning' },
-    { label: 'Liquidado', value: '30', severity: 'success' }
+    { label: 'Criado/Lançado', value: '10', severity: 'danger' },
+    { label: 'Liquidado', value: '20', severity: 'warning' },
+    { label: 'Encerrado', value: '30', severity: 'success' }
 ]);
 // Cookies de usuário
 import { userKey } from '@/global';

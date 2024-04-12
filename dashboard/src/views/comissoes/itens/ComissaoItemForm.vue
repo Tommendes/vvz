@@ -279,7 +279,7 @@ const listAgentesComissionamento = async () => {
     await axios.get(url).then((res) => {
         dropdownAgentes.value = [];
         res.data.map((item) => {
-            dropdownAgentes.value.push({ value: item.id, label: `${item.nome} (${item.ordem})`, ar: item.agente_representante });
+            dropdownAgentes.value.push({ value: item.id, label: `${item.apelido || item.nome} (${item.ordem})`, ar: item.agente_representante });
         });
     });
 };
@@ -310,15 +310,15 @@ const itemDataStatusPreload = ref([
     },
     {
         status: '20',
-        action: 'Programação',
-        label: 'Programado para liquidação',
+        action: 'Liquidação',
+        label: 'Liquidado',
         icon: 'fa-solid fa-shopping-cart',
         color: '#4cd07d'
     },
     {
         status: '30',
-        action: 'Liquidação',
-        label: 'Liquidado',
+        action: 'Encerramento',
+        label: 'Enderrado',
         icon: 'fa-solid fa-check',
         color: '#607D8B'
     }
@@ -478,7 +478,7 @@ watchEffect(() => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-list-ol"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Dropdown v-else filter placeholder="Parrcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
+                    <Dropdown v-else filter placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>
             <div class="flex-none flex" v-if="mode != 'new'">

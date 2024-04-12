@@ -120,9 +120,10 @@ module.exports = app => {
             .join({ tbl2: `${dbPrefix}_${uParams.schema_name}.cadastros` }, 'tbl2.id', 'tbl1.id_cadastros')
             .select(app.db.raw(`tbl2.nome, tbl2.cpf_cnpj, tbl2.email, tbl2.telefone, tbl1.*`))
             .where({ 'tbl1.status': STATUS_ACTIVE })
-            .groupBy('tbl1.id')
-            .orderBy('tbl1.agente_representante', 'desc')
+            .orderBy('tbl1.agente_representante')
+            .orderBy('tbl1.ordem')
             .orderBy('tbl2.nome')
+            .groupBy('tbl1.id')
             .then(body => {
                 const count = body.length
                 return res.json({ data: body, count: count })
@@ -237,7 +238,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
-        const ret = app.db({ tbl1: tabelaDomain }).select('tbl1.id', 'tbl2.nome', 'tbl1.agente_representante', 'tbl1.ordem')
+        const ret = app.db({ tbl1: tabelaDomain }).select('tbl1.id', 'tbl2.nome', 'tbl1.apelido', 'tbl1.agente_representante', 'tbl1.ordem')
             .join({ tbl2: tabelaCadastrosDomain }, 'tbl1.id_cadastros', 'tbl2.id')
             .where({ 'tbl1.status': STATUS_ACTIVE })
         if (agenteRepresentante) ret.where({ 'tbl1.agente_representante': agenteRepresentante })

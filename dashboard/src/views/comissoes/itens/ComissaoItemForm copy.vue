@@ -289,15 +289,15 @@ const itemDataStatusPreload = ref([
     },
     {
         status: '20',
-        action: 'Programação',
-        label: 'Programado para liquidação',
+        action: 'Liquidação',
+        label: 'Liquidado',
         icon: 'fa-solid fa-shopping-cart',
         color: '#4cd07d'
     },
     {
         status: '30',
-        action: 'Liquidação',
-        label: 'Liquidado',
+        action: 'Encerramento',
+        label: 'Enderrado',
         icon: 'fa-solid fa-check',
         color: '#607D8B'
     }
@@ -366,7 +366,7 @@ onBeforeMount(() => {
                 <h5 v-if="itemData.id">{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-12">
-                        <label for="id_comis_agentes">Agente/Representante Comissionado</label>
+                        <label for="id_comis_agentes">Agente/Representação Comissionado</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                         <Dropdown
                             v-else

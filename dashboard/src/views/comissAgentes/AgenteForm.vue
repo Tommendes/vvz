@@ -129,6 +129,12 @@ const dropdownSN = ref([
     { value: 0, label: 'Não' },
     { value: 1, label: 'Sim' }
 ]);
+const dropdownTiposAR = ref([
+    { value: 0, label: 'Agente' },
+    { value: 1, label: 'Representação' },
+    { value: 2, label: 'Representada' },
+    { value: 3, label: 'Terceiro' }
+]);
 // Validar formulário
 const formIsValid = () => {
     return true;
@@ -237,7 +243,7 @@ watch(selectedCadastro, (value) => {
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-9">
+                        <div class="col-12 md:col-7">
                             <label for="id_cadastros">Nome</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
@@ -247,14 +253,19 @@ watch(selectedCadastro, (value) => {
                             </div>
                         </div>
                         <div class="col-12 md:col-3">
+                            <label for="apelido">Nome curto</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="apelido" />
+                        </div>
+                        <div class="col-12 md:col-2">
                             <label for="ordem">Ordem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="cpf" type="text" v-maska data-maska="###" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="ordem" type="text" v-maska data-maska="###" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="agente_representante">É Representação</label>
+                            <label for="agente_representante">Tipo</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_representante" :options="dropdownSN" placeholder="Selecione..." />
+                            <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_representante" :options="dropdownTiposAR" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="dsr">Destacar o "Descanso semanal remunerado" (DSR)</label>
@@ -262,9 +273,9 @@ watch(selectedCadastro, (value) => {
                             <Dropdown v-else id="dsr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.dsr" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <div class="col-12">
-                            <label for="observacao">Observação</label>
+                            <label for="observacao">Observações</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="observacao" type="text" />
                         </div>
                     </div>
                 </div>

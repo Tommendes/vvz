@@ -71,6 +71,7 @@ module.exports = app => {
             existsOrError(body.valor_base, 'Valor base de cálculo da comissão não informado')
             existsOrError(body.percentual, 'Percentual sobre a base não informado')
             existsOrError(body.valor, 'Valor da comissão não informado')
+            existsOrError(body.parcela, 'Parcela (Unica ou outra) não informado')
             if (Number(body.valor_base) <= 0) throw 'Valor base de cálculo da comissão deve ser maior que zero'
             if (Number(body.percentual) <= 0) throw 'Percentual sobre a base deve ser maior que zero'
             if (Number(body.valor) <= 0) throw 'Valor da comissão deve ser maior que zero'
@@ -340,11 +341,12 @@ module.exports = app => {
             .select('tbl1.id', 'tbl1.parcela', 'tbl1.id_comis_agentes', 'tbl1.id_pipeline', 'tbl1.liquidar_em',
                 { id_pipeline: 'tbl3.id' }, 'tbl6.nome as agente', 'tbl5.descricao as unidade', 'tbl3.documento',
                 app.db.raw('format(tbl1.valor, 2, "pt_BR")valor'), app.db.raw('format(tbl1.valor_base, 2, "pt_BR")valor_base'), app.db.raw('format(tbl1.percentual, 2, "pt_BR")percentual'),
-                'tbl1.agente_representante', app.db.raw(`DATE_FORMAT(SUBSTRING_INDEX(tbl1.liquidar_em,' ',1),'%d/%m/%Y') AS liquidar_aprox`),
+                'tbl4.agente_representante', app.db.raw(`DATE_FORMAT(SUBSTRING_INDEX(tbl1.liquidar_em,' ',1),'%d/%m/%Y') AS liquidar_aprox`),
                 app.db.raw(`(select status_comis from ${tabelaComissStatussDomain} where id_comissoes = tbl1.id order by created_at desc, status_comis desc limit 1) last_status_comiss`))
             .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pipeline': idPipeline })
             .groupBy('tbl1.id')
-            .orderBy('last_status_comiss')
+            .orderBy(app.db.raw('cast(tbl4.agente_representante as unsigned)'))
+            .orderBy('tbl1.parcela')
             .orderBy('tbl1.liquidar_em')
             .orderBy('tbl1.id', 'desc')
 
