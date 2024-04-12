@@ -279,6 +279,10 @@ const listAgentesComissionamento = async () => {
     await axios.get(url).then((res) => {
         dropdownAgentes.value = [];
         res.data.map((item) => {
+            // Preciso retornar apenas o primeir e segundo nome. Mas tem que ter cuidado pois o nome pode ser composto por apenas um nome
+            const nome = item.nome.split(' ');
+            if (nome.length > 1) item.nome = `${nome[0]} ${nome[1]}`;
+            else item.nome = nome[0];
             dropdownAgentes.value.push({ value: item.id, label: `${item.apelido || item.nome} (${item.ordem})`, ar: item.agente_representante });
         });
     });
