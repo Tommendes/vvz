@@ -460,7 +460,7 @@ watchEffect(() => {
                     <spam class="p-inputtext p-component p-filled p-variant-filled" v-else>{{ itemData.valor }}</spam>
                 </div>
             </div>
-            <div class="flex-none flex">
+            <div class="flex-none flex" v-if="mode != 'new'">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-calendar-check"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
