@@ -173,6 +173,12 @@ onBeforeMount(() => {
 }
 </style>
 <style>
+div.p-accordion-tab{
+    padding: 25px;
+}
+a#pv_id_3_0_header_action, a#pv_id_3_1_header_action, a#pv_id_3_2_header_action, a#pv_id_3_3_header_action, a#pv_id_3_4_header_action, a#pv_id_3_4_header_action, a#pv_id_3_5_header_action{
+    background-color: transparent;
+}
 .layout-wrapper .layout-main-container {
     padding-left: 0;
     padding-right: 0;

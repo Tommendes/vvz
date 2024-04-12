@@ -1275,7 +1275,12 @@ watch(route, (value) => {
         color: var(--gray-900);
     }
 }
-
+label{
+    display: block;
+}
+input{
+    width: 100%;
+}
 .animation-color {
     animation: animation-color 5s linear;
 }

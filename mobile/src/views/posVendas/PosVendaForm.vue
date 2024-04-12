@@ -634,6 +634,16 @@ watch(selectedCadastro, (value) => {
     width: 98vw;
     max-width: 100%;
 }
+label{
+    display: block;
+}
+input{
+    width: 100%;
+}
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
 </style>
 <style>
 .container{
