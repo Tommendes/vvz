@@ -277,7 +277,7 @@ onBeforeMount(async () => {
             @click="scheduleGroupSettlement()"
             v-tooltip.top="'Clique para liberar o pagamento de todas as comissões pendentes'"
         />
-        <Button
+        <!-- <Button
             v-if="gridData && gridData.length > 0"
             type="button"
             icon="fa-solid fa-bolt"
@@ -286,7 +286,7 @@ onBeforeMount(async () => {
             :disabled="!hasPendingCommissions()"
             @click="executeGroupSettlement()"
             v-tooltip.top="'Clique para liquidar todas as comissões pendentes'"
-        />
+        /> -->
     </div>
     <ComissaoItemForm v-if="mode == 'newItem'" @cancel="cancelNewItem()" @newItem="reload()" @refreshPipeline="refreshPipeline()" :itemDataRoot="itemData" />
     <div v-if="gridData && gridData.length > 0">

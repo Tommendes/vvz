@@ -200,13 +200,13 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } else {
-            const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
-            try {
-                notExistsOrError(unique, `Comissão já registrada para este agente`)
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-                return res.status(400).send(error)
-            }
+            // const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
+            // try {
+            //     notExistsOrError(unique, `Comissão já registrada para este agente`)
+            // } catch (error) {
+            //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            //     return res.status(400).send(error)
+            // }
 
             app.db.transaction(async (trx) => {
                 if (body.alterar_agente_representante) {

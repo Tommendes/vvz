@@ -152,7 +152,7 @@ const deleteItem = () => {
     confirm.require({
         group: 'templating',
         header: 'Confirmar exclusão',
-        message: 'Você tem certeza que deseja EXCLUIR este registro?',
+        message: 'Confirma que deseja EXCLUIR este registro?',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -178,7 +178,7 @@ const liquidateItem = () => {
     confirm.require({
         group: `comisLiquidateConfirm-${itemData.value.id}`,
         header: 'Confirmar liquidação',
-        message: 'Você tem certeza que deseja LIQUIDAR este registro?',
+        message: 'Confirma que deseja LIQUIDAR este registro?',
         message2: '<strong>Esta operação não poderá ser desfeita e a comissão será liberada para pagamento</strong>',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
@@ -209,9 +209,9 @@ const programateItem = () => {
     };
     confirm.require({
         group: `comisLiquidateConfirm-${itemData.value.id}`,
-        header: 'Confirmar liberação',
-        message: 'Você tem certeza que deseja LIBERAR este registro para liquidação?',
-        message2: '<strong>Esta operação ainda poderá ser desfeita cancelando a programação</strong>',
+        header: 'Confirmar liquidação',
+        message: 'Confirma que deseja LIQUIDAR este registro?',
+        message2: '<strong>Esta operação ainda poderá ser desfeita cancelando a liquidação</strong>',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -242,8 +242,8 @@ const unprogramateItem = () => {
     confirm.require({
         group: `comisLiquidateConfirm-${itemData.value.id}`,
         header: 'Confirmar',
-        message: 'Você tem certeza que deseja RETIRAR este registro da programação?',
-        message2: '<strong>Você poderá liberar novamente a liquidação a qualquer momento</strong>',
+        message: 'Confirma que deseja CANCELAR esta liquidação?',
+        message2: '<strong>Você poderá liquidar novamente a qualquer momento</strong>',
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -471,18 +471,18 @@ watchEffect(() => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Button type="submit" v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)" v-tooltip.top="'Salvar registro'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                     <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" v-tooltip.top="'Editar registro'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 20 && ['view'].includes(mode)" v-tooltip.top="'Liberar pagamento'" icon="fa-regular fa-calendar-check" severity="warning" text raised @click="programateItem" />
+                    <Button type="button" v-if="itemDataLastStatus.status_comis < 20 && ['view'].includes(mode)" v-tooltip.top="'Liquidar pagamento'" icon="fa-regular fa-calendar-check" severity="success" text raised @click="programateItem" />
                     <Button
                         type="button"
                         v-else-if="itemDataLastStatus.status_comis == 20 && ['view'].includes(mode)"
-                        v-tooltip.top="'Excluir liberação de pagamento'"
+                        v-tooltip.top="'Cancelar liquidação'"
                         icon="fa-regular fa-calendar-xmark"
                         severity="warning"
                         text
                         raised
                         @click="unprogramateItem"
                     />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Liquidar comissão'" icon="fa-solid fa-bolt" severity="success" text raised @click="liquidateItem" />
+                    <!-- <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Liquidar comissão'" icon="fa-solid fa-bolt" severity="success" text raised @click="liquidateItem" /> -->
                     <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
                     <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline do registro'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
                     <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Excluir registro'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
