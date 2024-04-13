@@ -23,7 +23,8 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-            existsOrError(body.id_cadastros, 'Cadastro não informado')
+            if (!(body.apelido || body.id_cadastros)) throw 'Cadastro ou nome curto devem ser informados'
+            // existsOrError(body.id_cadastros, 'Cadastro não informado')
             existsOrError(String(body.dsr), 'DSR não informado')
             existsOrError(String(body.agente_representante), 'Se é representação não informado')
             existsOrError(String(body.ordem), 'Número de ordem não informado')
