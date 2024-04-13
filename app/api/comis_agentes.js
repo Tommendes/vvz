@@ -23,7 +23,7 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-            if (!(body.apelido || body.id_cadastros)) throw 'Cadastro ou nome curto devem ser informados'
+            if (!(body.apelido || body.id_cadastros)) throw 'O registro no cadastro ou um nome curto devem ser informados'
             // existsOrError(body.id_cadastros, 'Cadastro não informado')
             existsOrError(String(body.dsr), 'DSR não informado')
             existsOrError(String(body.agente_representante), 'Se é representação não informado')
@@ -67,7 +67,13 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         } else {
-            const unique = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, status: STATUS_ACTIVE }).first()
+            const unique = await app.db(tabelaDomain)
+                .orWhere(function () {
+                    this.orWhere({ id_cadastros: body.id_cadastros || 0 })
+                        .orWhere({ apelido: body.apelido || '' })
+                })
+                .where({ status: STATUS_ACTIVE })
+                .first()
             try {
                 notExistsOrError(unique, `Agente já cadastrado`)
             } catch (error) {
@@ -80,6 +86,7 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
+            body.apelido = body.apelido ? body.apelido.toUpperCase() : undefined
             delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
@@ -118,7 +125,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .join({ tbl2: `${dbPrefix}_${uParams.schema_name}.cadastros` }, 'tbl2.id', 'tbl1.id_cadastros')
+            .leftJoin({ tbl2: `${dbPrefix}_${uParams.schema_name}.cadastros` }, 'tbl2.id', 'tbl1.id_cadastros')
             .select(app.db.raw(`tbl2.nome, tbl2.cpf_cnpj, tbl2.email, tbl2.telefone, tbl1.*`))
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .orderBy('tbl1.agente_representante')

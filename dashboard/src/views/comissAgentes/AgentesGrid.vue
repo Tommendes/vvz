@@ -79,9 +79,9 @@ const loadData = () => {
                 element.dsr = String(element.dsr);
                 element.dsr = element.dsr == '1' ? 'Sim' : 'Não';
                 element.apelido = (element.apelido || element.nome).trim();
-                element.nome = element.nome.trim() + ' (' + element.ordem.padStart(3, '0').toString() + ')';
-                element.email = renderizarHTML(element.email);
-                element.telefone = renderizarHTML(element.telefone, { to: element.nome, from: userData.name });
+                if (element.nome && element.ordem) element.nome = element.nome.trim() + ' (' + element.ordem.padStart(3, '0').toString() + ')';
+                if (element.email) element.email = renderizarHTML(element.email);
+                if (element.telefone) element.telefone = renderizarHTML(element.telefone, { to: element.nome, from: userData.name });
             });
             loading.value = false;
         });
@@ -154,7 +154,7 @@ const getSeverity = (value) => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['name', 'cpf_cnpj', 'email', 'telefone', 'ordem']"
+            :globalFilterFields="['name', 'apelido', 'ordem']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
