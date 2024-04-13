@@ -275,7 +275,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12">
                             <label for="observacao">Observações</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="observacao" type="text" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacoes" id="observacao" type="text" />
                         </div>
                     </div>
                 </div>
