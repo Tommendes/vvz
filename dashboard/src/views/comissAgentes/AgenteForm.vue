@@ -255,12 +255,12 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-3">
                             <label for="apelido">Nome curto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="apelido" />
+                            <InputText v-else uppercase autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="apelido" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="ordem">Ordem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="ordem" type="text" v-maska data-maska="###" />
+                            <InputText v-else uppercase autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="ordem" type="text" v-maska data-maska="###" />
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="agente_representante">Tipo</label>
@@ -275,7 +275,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12">
                             <label for="observacao">Observações</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="observacao" type="text" />
+                            <InputText v-else uppercase autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="observacao" type="text" />
                         </div>
                     </div>
                 </div>
