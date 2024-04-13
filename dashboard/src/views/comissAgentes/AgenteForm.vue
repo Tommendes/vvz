@@ -55,7 +55,7 @@ const loadData = async () => {
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    itemData.value.agente_representante = body.agente_representante ? 1 : 0;
+                    itemData.value.agente_representante = String(itemData.value.agente_representante);
                     itemData.value.dsr = body.dsr ? 1 : 0;
                     itemData.value.ordem = body.ordem.padStart(3, '0').toString();
                     await getNomeCliente();
