@@ -183,4 +183,13 @@ a#pv_id_3_0_header_action, a#pv_id_3_1_header_action, a#pv_id_3_2_header_action,
     padding-left: 0;
     padding-right: 0;
 }
+nav>ol{ /* Ajuste  nav */
+    display: flex;
+    padding-left: 0;
+    align-items: center;
+    justify-content: center;
+}
+div.card{
+    padding: 15px; /* Reduzindo padding para grid panel caber na tela */
+}
 </style>

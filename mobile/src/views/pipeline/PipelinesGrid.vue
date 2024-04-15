@@ -457,6 +457,15 @@ onMounted(() => {
 }
 </style>
 <style>
+input{
+    width: 100%;
+}
+th{
+    max-width: 4rem; /* Tamanho das colunas */
+}
+.p-column-filter-menu-button, .p-column-filter-clear-button {
+    display: none; /* Removendo botões dos filtros do grid */
+}
 nav>ol{
     display: flex;
 }

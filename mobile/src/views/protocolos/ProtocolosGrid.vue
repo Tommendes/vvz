@@ -163,4 +163,11 @@ nav>ol{ /* Nav */
     display: flex;
     list-style: none;
 }
+.layout-main-container{ /* Removendo rolagem lateral */
+    padding-left: 0 !important;
+    padding-right: 0;
+}
+th{
+    width: 8rem;
+}
 </style>

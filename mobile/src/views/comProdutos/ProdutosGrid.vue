@@ -276,6 +276,12 @@ nav>ol{ /* Nav */
     padding-left: 0 !important;
     padding-right: 0;
 }
+th{
+    max-width: 4rem; /* Tamanho das colunas */
+}
+.p-column-filter{
+    width: 100%;
+}
 .p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
     display: none;
 }
