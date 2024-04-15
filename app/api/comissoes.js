@@ -201,13 +201,13 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } else {
-            // const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
-            // try {
-            //     notExistsOrError(unique, `Comissão já registrada para este agente`)
-            // } catch (error) {
-            //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-            //     return res.status(400).send(error)
-            // }
+            const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, parcela: body.parcela, status: STATUS_ACTIVE }).first()
+            try {
+                notExistsOrError(unique, `Comissão já registrada para este agente`)
+            } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+                return res.status(400).send(error)
+            }
 
             app.db.transaction(async (trx) => {
                 if (body.alterar_agente_representante) {
@@ -337,7 +337,7 @@ module.exports = app => {
             .join({ tbl3: tabelaPipelineDomain }, 'tbl1.id_pipeline', 'tbl3.id')
             .join({ tbl4: tabelaComissAgentesDomain }, 'tbl1.id_comis_agentes', 'tbl4.id')
             .join({ tbl5: tabelaPipelineParams }, 'tbl5.id', 'tbl3.id_pipeline_params')
-            .join({ tbl6: tabelaCadastros }, 'tbl6.id', 'tbl4.id_cadastros')
+            .leftJoin({ tbl6: tabelaCadastros }, 'tbl6.id', 'tbl4.id_cadastros')
             .select('tbl1.id', 'tbl1.parcela', 'tbl1.id_comis_agentes', 'tbl1.id_pipeline', 'tbl1.liquidar_em',
                 { id_pipeline: 'tbl3.id' }, 'tbl6.nome as agente', 'tbl5.descricao as unidade', 'tbl3.documento',
                 app.db.raw('format(tbl1.valor, 2, "pt_BR")valor'), app.db.raw('format(tbl1.valor_base, 2, "pt_BR")valor_base'), app.db.raw('format(tbl1.percentual, 2, "pt_BR")percentual'),

@@ -250,13 +250,14 @@ module.exports = app => {
             .leftJoin({ tbl2: tabelaCadastrosDomain }, 'tbl1.id_cadastros', 'tbl2.id')
             .where({ 'tbl1.status': STATUS_ACTIVE })
         // if (agenteRepresentante) ret.where({ 'tbl1.agente_representante': agenteRepresentante })
-        ret.orderBy('tbl2.nome')
-            .then(body => {
-                return res.json(body)
-            }).catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
-            })
+        ret.orderBy(app.db.raw('COALESCE(tbl1.apelido,tbl2.nome)'))
+            .orderBy('ordem')
+        ret.then(body => {
+            return res.json(body)
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
     }
 
     return { save, get, getById, remove, getByFunction }
