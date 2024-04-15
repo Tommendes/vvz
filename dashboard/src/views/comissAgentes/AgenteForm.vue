@@ -55,7 +55,7 @@ const loadData = async () => {
                 if (body && body.id) {
                     body.id = String(body.id);
                     itemData.value = body;
-                    itemData.value.agente_representante = body.agente_representante ? 1 : 0;
+                    itemData.value.agente_representante = String(itemData.value.agente_representante);
                     itemData.value.dsr = body.dsr ? 1 : 0;
                     itemData.value.ordem = body.ordem.padStart(3, '0').toString();
                     await getNomeCliente();
@@ -129,9 +129,15 @@ const dropdownSN = ref([
     { value: 0, label: 'Não' },
     { value: 1, label: 'Sim' }
 ]);
+const dropdownTiposAR = ref([
+    { value: '0', label: 'Representação' },
+    { value: '1', label: 'Representada' },
+    { value: '2', label: 'Agente' },
+    { value: '3', label: 'Terceiro' }
+]);
 // Validar formulário
 const formIsValid = () => {
-    return true;
+    return itemData.value.ordem && ['0', '1', '2', '3'].includes(itemData.value.agente_representante) && [0, 1].includes(itemData.value.dsr);// && (itemData.value.id_cadastros || itemData.value.apelido);
 };
 
 /**
@@ -237,8 +243,8 @@ watch(selectedCadastro, (value) => {
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
-                        <div class="col-12 md:col-9">
-                            <label for="id_cadastros">Nome</label>
+                        <div class="col-12 md:col-7">
+                            <label for="id_cadastros">Registro no cadastro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
@@ -247,24 +253,29 @@ watch(selectedCadastro, (value) => {
                             </div>
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="ordem">Ordem</label>
+                            <label for="apelido">Nome curto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="cpf" type="text" v-maska data-maska="###" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="apelido" />
+                        </div>
+                        <div class="col-12 md:col-2">
+                            <label for="ordem">Ordem<small id="text-error" class="p-error"> *</small></label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="ordem" type="text" v-maska data-maska="###" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="agente_representante">É Representação</label>
+                            <label for="agente_representante">Tipo<small id="text-error" class="p-error"> *</small></label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_representante" :options="dropdownSN" placeholder="Selecione..." />
+                            <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_representante" :options="dropdownTiposAR" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="dsr">Destacar o "Descanso semanal remunerado" (DSR)</label>
+                            <label for="dsr">Destacar o "Descanso semanal remunerado" (DSR)<small id="text-error" class="p-error"> *</small></label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <Dropdown v-else id="dsr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.dsr" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <div class="col-12">
-                            <label for="observacao">Observação</label>
+                            <label for="observacao">Observações</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacao" id="observacao" type="text" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacoes" id="observacao" type="text" />
                         </div>
                     </div>
                 </div>

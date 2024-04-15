@@ -4,7 +4,7 @@ export const guide = `
     <p><strong>Formulário de Registro de Comissões</strong></p>
     <p>Esta página permite ao operador registrar informações relacionadas a comissões. Abaixo está uma descrição dos campos disponíveis e das opções fornecidas nesta página:</p>
     <ul>
-        <li><strong>Agente/Representante Comissionado:</strong> Selecione o agente ou representante comissionado.</li>
+        <li><strong>Tipo do Agente Comissionado:</strong> Selecione o tipo do agente comissionado.</li>
         <li><strong>Valor da Comissão:</strong> Campo para inserção do valor da comissão.</li>
         <li><strong>Descontar:</strong> Campo para inserção do valor a ser descontado, se aplicável.</li>
         <li><strong>Liquidar em:</strong> Selecione a data de liquidação. Esta informação é opcional no momento do registro.</li>

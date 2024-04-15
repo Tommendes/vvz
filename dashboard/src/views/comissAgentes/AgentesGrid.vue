@@ -28,11 +28,9 @@ const loading = ref(true);
 const urlBase = ref(`${baseApiUrl}/comis-agentes`);
 // Itens do grid
 const listaNomes = ref([
-    { field: 'agente_representante', label: 'Rep/Agente', tagged: true },
-    { field: 'nome', label: 'Nome (Ordem)' },
-    { field: 'cpf_cnpj', label: 'CPF' },
-    { field: 'email', label: 'Email' },
-    { field: 'telefone', label: 'Telefone' },
+    { field: 'agente_representante', label: 'Tipo Agente', tagged: true },
+    { field: 'apelido', label: 'Nome/Nome curto' },
+    { field: 'ordem', label: 'Ordem' },
     { field: 'dsr', label: 'DSR', tagged: true }
 ]);
 //Scrool quando um Novo Registro for criado
@@ -61,6 +59,12 @@ const getItem = (data) => {
         scrollToTop();
     }, 100);
 };
+const tiposAr = ref([
+    { value: '0', label: 'Representação' },
+    { value: '1', label: 'Representada' },
+    { value: '2', label: 'Agente' },
+    { value: '3', label: 'Terceiro' }
+]);
 const loadData = () => {
     setTimeout(() => {
         gridData.value = null;
@@ -69,11 +73,15 @@ const loadData = () => {
             gridData.value = axiosRes.data.data;
             gridData.value.forEach((element) => {
                 if (element.cpf_cnpj && element.cpf_cnpj.trim().length >= 8) element.cpf_cnpj = masks.value.cpf_cnpj.masked(element.cpf_cnpj);
-                element.agente_representante = element.agente_representante && element.agente_representante == '1' ? 'Representante' : 'Agente';
-                element.dsr = element.dsr && element.dsr == '1' ? 'Sim' : 'Não';
-                element.nome = element.nome.trim() + ' (' + element.ordem.padStart(3, '0').toString() + ')';
-                element.email = renderizarHTML(element.email);
-                element.telefone = renderizarHTML(element.telefone, { to: element.nome, from: userData.name });
+                // Localize em tiposAr o valor de agente_representante e retorne o label em element.agente_representante
+                element.agente_representante = String(element.agente_representante);
+                element.agente_representante = tiposAr.value.find((x) => x.value == element.agente_representante).label;
+                element.dsr = String(element.dsr);
+                element.dsr = element.dsr == '1' ? 'Sim' : 'Não';
+                element.apelido = (element.apelido || element.nome).trim();
+                if (element.nome && element.ordem) element.nome = element.nome.trim() + ' (' + element.ordem.padStart(3, '0').toString() + ')';
+                if (element.email) element.email = renderizarHTML(element.email);
+                if (element.telefone) element.telefone = renderizarHTML(element.telefone, { to: element.nome, from: userData.name });
             });
             loading.value = false;
         });
@@ -107,8 +115,14 @@ const reload = () => {
 const getSeverity = (value) => {
     switch (value) {
         case 'Sim':
-        case 'Representante':
+        case 'Representação':
             return 'success';
+        case 'Representada':
+            return 'warning';
+        case 'Agente':
+            return 'Info';
+        case 'Terceiro':
+            return 'secondary';
         default:
             return 'danger';
     }
@@ -140,7 +154,7 @@ const getSeverity = (value) => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['name', 'cpf_cnpj', 'email', 'telefone', 'ordem']"
+            :globalFilterFields="['name', 'apelido', 'ordem']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
