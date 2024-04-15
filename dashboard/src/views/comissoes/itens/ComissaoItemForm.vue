@@ -280,11 +280,13 @@ const listAgentesComissionamento = async () => {
         dropdownAgentes.value = [];
         res.data.map((item) => {
             // Preciso retornar apenas o primeir e segundo nome. Mas tem que ter cuidado pois o nome pode ser composto por apenas um nome
-            const nome = item.nome.split(' ');
-            if (nome.length > 1) {
-                ['de', 'da', 'do', 'dos', 'das'].includes(nome[1].toLowerCase()) ? nome.splice(1, 1) : [];
-                item.nome = `${nome[0]} ${nome[1]}`;
-            } else item.nome = nome[0];
+            if (item.nome) {
+                const nome = item.nome.split(' ');
+                if (nome.length > 1) {
+                    ['de', 'da', 'do', 'dos', 'das'].includes(nome[1].toLowerCase()) ? nome.splice(1, 1) : [];
+                    item.nome = `${nome[0]} ${nome[1]}`;
+                } else item.nome = nome[0];
+            }
             dropdownAgentes.value.push({ value: item.id, label: `${item.apelido || item.nome} (${item.ordem})`, ar: item.agente_representante });
         });
     });
@@ -477,7 +479,7 @@ watchEffect(() => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">R$</div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <spam class="p-inputtext p-component p-filled p-variant-filled" v-else>{{ itemData.valor }}</spam>
+                    <span class="p-inputtext p-component p-filled p-variant-filled" v-else>{{ itemData.valor }}</span>
                 </div>
             </div>
             <div class="flex-none flex">
