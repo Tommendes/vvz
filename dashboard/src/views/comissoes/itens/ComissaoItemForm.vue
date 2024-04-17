@@ -8,10 +8,9 @@ const confirm = useConfirm();
 import moment from 'moment';
 import { useRoute } from 'vue-router';
 const route = useRoute();
-
-// Cookies de usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 
 import { Mask } from 'maska';
 import { watchEffect } from 'vue';
@@ -28,7 +27,6 @@ const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20;
 const STATUS_LIQUIDADO = 30;
 
 // Url base do form action
-const userData = JSON.parse(json);
 const loading = ref(false);
 // Campos de formulário
 const itemData = ref({});
@@ -288,6 +286,10 @@ const listAgentesComissionamento = async () => {
                 } else item.nome = nome[0];
             }
             dropdownAgentes.value.push({ value: item.id, label: `${item.apelido || item.nome} (${item.ordem})`, ar: item.agente_representante });
+            // Ordene os itens em dropdownAgentes por ordem crescente e baseado em label
+            dropdownAgentes.value.sort((a, b) => {
+                return a.label.localeCompare(b.label);
+            });
         });
     });
 };
@@ -498,10 +500,30 @@ watchEffect(() => {
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <Button type="submit" v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)" v-tooltip.top="'Salvar registro'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" v-tooltip.top="'Editar registro'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 20 && ['view'].includes(mode)" v-tooltip.top="'Liquidar pagamento'" icon="fa-regular fa-calendar-check" severity="success" text raised @click="programateItem" />
                     <Button
+                        type="submit"
+                        :disabled="!(userData.comissoes >= 2)"
+                        v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)"
+                        v-tooltip.top="'Salvar registro'"
+                        icon="fa-solid fa-floppy-disk"
+                        severity="success"
+                        text
+                        raised
+                    />
+                    <Button type="button" :disabled="!(userData.comissoes >= 3)" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" v-tooltip.top="'Editar registro'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
+                    <Button
+                        type="button"
+                        :disabled="!(userData.financeiro >= 3)"
+                        v-if="itemDataLastStatus.status_comis < 20 && ['view'].includes(mode)"
+                        v-tooltip.top="'Liquidar pagamento'"
+                        icon="fa-regular fa-calendar-check"
+                        severity="success"
+                        text
+                        raised
+                        @click="programateItem"
+                    />
+                    <Button
+                        :disabled="!(userData.comissoes >= 3 || userData.financeiro >= 3)"
                         type="button"
                         v-else-if="itemDataLastStatus.status_comis == 20 && ['view'].includes(mode)"
                         v-tooltip.top="'Cancelar liquidação'"
@@ -514,7 +536,17 @@ watchEffect(() => {
                     <!-- <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Liquidar comissão'" icon="fa-solid fa-bolt" severity="success" text raised @click="liquidateItem" /> -->
                     <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
                     <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline do registro'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
-                    <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Excluir registro'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
+                    <Button
+                        type="button"
+                        :disabled="!(userData.financeiro >= 4)"
+                        v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)"
+                        v-tooltip.top="'Excluir registro'"
+                        icon="fa-solid fa-trash"
+                        severity="danger"
+                        text
+                        raised
+                        @click="deleteItem"
+                    />
                 </div>
             </div>
         </div>
