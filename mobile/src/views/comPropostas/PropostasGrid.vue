@@ -247,6 +247,13 @@ ul#overlay_messages_list{
     padding: 0px;
     margin: 0;
 }
+th{
+    max-width: 6rem;
+}
+input.p-variant-filled{
+    width: 100%;
+}
+
 .p-menuitem-link{
     display: flex;
 }

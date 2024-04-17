@@ -200,3 +200,12 @@ input{
     align-items: center;
 }
 </style>
+
+<style>
+nav>ol{ /* Nav */
+    display: flex;
+    list-style: none;
+    padding-left: 0;
+    align-items: center;
+}
+</style>

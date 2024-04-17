@@ -189,6 +189,9 @@ ol{
 }
 nav>ol{ /* Ajuste  nav */
     display: flex;
+    padding-left: 0;
+    align-items: center;
+    justify-content: center;
 }
 div.p-accordion-tab{
     padding: 25px;
@@ -199,5 +202,8 @@ a#pv_id_3_0_header_action, a#pv_id_3_1_header_action, a#pv_id_3_2_header_action,
 .layout-main {
     flex: 1 1 auto;
     width: 95vw;
+}
+div.card{
+    padding: 15px; /* Reduzindo padding para grid panel caber na tela */
 }
 </style>

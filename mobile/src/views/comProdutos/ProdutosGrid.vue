@@ -247,6 +247,10 @@ watchEffect(() => {
     margin-left: auto;
     margin-right: auto;
 }
+th.p-filter-column{ /* Tamanho das colunas */
+    min-width: 8rem;
+    max-width: 9rem;
+}
 </style>
 <style>
 /* Mensagens */
@@ -275,6 +279,10 @@ nav>ol{ /* Nav */
 .layout-main-container{ /* Ajuste de largura da página */
     padding-left: 0 !important;
     padding-right: 0;
+}
+
+.p-column-filter{
+    width: 100%;
 }
 .p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
     display: none;
