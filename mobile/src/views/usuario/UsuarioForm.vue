@@ -203,7 +203,7 @@ watchEffect(() => {});
             { label: itemData.name + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
-    <div class="card">
+    <div class="card w-95">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-12">
@@ -326,11 +326,13 @@ watchEffect(() => {});
     </div>
 </template>
 <style scoped>
+ .w-95{ /* Ajuste mobile*/
+    width: 95vw;
+}   
 .grid {
     margin-left: 0rem;
 }
-#secaodadosbasicos,
-#secaopermissao {
+#secaodadosbasicos, #secaopermissao {
     margin-left: -1rem;
     color: gray;
 }
@@ -344,7 +346,6 @@ watchEffect(() => {});
     border-color: black;
     background-color: #e9eef1;
 }
-
 label{
     display: block;
 }
@@ -360,5 +361,9 @@ input{
 <style>
 .p-dropdown-items-wrapper{
     overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+.layout-main-container{
+    padding-right: 0;
+    padding-left: 0px !important;
 }
 </style>

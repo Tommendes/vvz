@@ -137,15 +137,15 @@ onBeforeMount(() => {
     </div>
 </template>
 <style scoped>
-.foundMark {
-    background-color: yellow;
-    padding: 0;
-}
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
+}
+.foundMark {
+    background-color: yellow;
+    padding: 0;
 }
 </style>
 

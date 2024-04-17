@@ -264,7 +264,7 @@ const showEvent = (evento) => {
     </div>
 </template>
 <style scoped>
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
@@ -293,5 +293,11 @@ nav>ol{ /* Nav */
 }
 .p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
     display: none;
+}
+th{
+    max-width: 7rem;
+}
+input{
+    width: 100%;
 }
 </style>

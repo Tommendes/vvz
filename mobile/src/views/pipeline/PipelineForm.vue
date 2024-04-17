@@ -1287,7 +1287,6 @@ input{
     animation: animation-color 5s linear;
 }
 </style>
-
 <style>
 nav>ol{
     display: flex;

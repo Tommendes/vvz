@@ -253,7 +253,7 @@ watchEffect(() => {
     </div>
 </template>
 <style scoped>
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
@@ -264,13 +264,18 @@ watchEffect(() => {
 nav>ol{ /* Ajuste  nav */
     display: flex;
     list-style: none;
+    align-items: center;
+    padding-left: 0;
 }
-.p-dropdown{ /* Dropdown do filtro do grid  */
+.layout-topbar-button{ /* Botão "perfil"  */
+    max-height: 45px;
+}
+.p-dropdown{ /* Dropdown de filtros do grid  */
     display: flex;
     align-items: center;
 }
-.p-dropdown-items-wrapper{
-    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+.p-dropdown-items-wrapper{ /* Necessário para o Scrool do dropdown funcionar*/
+    overflow: auto;
 }
 /* Mensagens */
 ul#overlay_messages_list{
@@ -284,7 +289,7 @@ ul#overlay_messages_list{
 .container{
     overflow-x: hidden;
 }
-tr.p-row-even>td{ /* Ajuste na largura da coluna*/
+tr.p-row-even>td{ /* Ajuste na largura das colunas */
     display: table-column;
     max-width: 80%;
 }

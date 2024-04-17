@@ -166,7 +166,7 @@ onBeforeMount(async () => {
     </div>
 </template>
 <style scoped>
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
@@ -183,15 +183,12 @@ ul#overlay_messages_list{
     display: flex;
 }
 /* Fim Mensagens */
-
-ol{
-    list-style: none;
-}
 nav>ol{ /* Ajuste  nav */
     display: flex;
     padding-left: 0;
     align-items: center;
     justify-content: center;
+    list-style: none;
 }
 div.p-accordion-tab{
     padding: 25px;

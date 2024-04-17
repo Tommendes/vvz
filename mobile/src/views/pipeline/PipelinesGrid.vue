@@ -449,7 +449,7 @@ onMounted(() => {
     </div>
 </template>
 <style scoped>
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw !important;
     max-width: 100% !important;
     margin-left: auto;
@@ -457,31 +457,31 @@ onMounted(() => {
 }
 </style>
 <style>
-.layout-main-container{ /* Removendo rolagem lateral */
+.layout-main-container{ /* Rolagem lateral */
     padding-left: 0px !important;
     padding-right: 0px;
 }
-th.p-filter-column{ /* Aumentando espaço do filtro do Grid */
+th.p-filter-column{ /* Ajuste no filtro do Grid */
     padding-right: 0px !important;
 }
 input{
     width: 100%;
 }
 th{
-    max-width: 4rem; /* Tamanho das colunas */
+    max-width: 4rem; /* Largura das colunas */
 }
-.p-column-filter-menu-button, .p-column-filter-clear-button {
-    display: none; /* Removendo botões dos filtros do grid */
+.p-column-filter-menu-button, .p-column-filter-clear-button { /* Botões dos filtros do grid */
+    display: none;
 }
-nav>ol{
+nav>ol{ /* Ajuste Nav */
     display: flex;
+}
+.p-dropdown-items-wrapper{ /* Necessário para o Scrool do dropdown funcionar*/
+    overflow: auto;
 }
 .p-dropdown{ /* Dropdown de filtro do grid  */
     display: flex;
     align-items: center;
-}
-.p-dropdown-items-wrapper{
-    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
 }
 /* Mensagens do navbar */
 ul#overlay_messages_list{

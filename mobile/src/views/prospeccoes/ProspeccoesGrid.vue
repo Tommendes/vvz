@@ -263,7 +263,7 @@ watchEffect(() => {
 </template>
 
 <style scoped>
-#w-95{
+#w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
@@ -272,7 +272,6 @@ watchEffect(() => {
 </style>
 
 <style>
-/* Estilização  */
 .p-dropdown-items-wrapper{
     overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
 }
@@ -286,13 +285,19 @@ ul#overlay_messages_list{
 }
 /* Fim da estilização das mensagens */
 nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
-    display: inline; /* Estilização do nav */
+    display: inline; /* Ajuste do nav */
 }
-nav>ol{ /* Ajuste  nav */
+nav>ol{ /* Ajuste nav */
     display: flex;
     list-style: none;
     align-items: center;
     justify-content: flex-start;
+}
+th{  /* Largura das colunas */
+    max-width: 7rem;
+}
+input.p-inputtext{ /* Largura do input do Grid */
+    width: 100% !important;
 }
 .container{
     overflow-x: hidden;
@@ -306,14 +311,8 @@ svg{
 .p-column-filter-row .p-column-filter-menu-button, .p-column-filter-row .p-column-filter-clear-button {
     display: none;
 }
-.layout-wrapper .layout-main-container {
+.layout-wrapper, .layout-main-container {
     padding-left: 0;
     padding-right: 0;
-}
-th{  /* Largura das colunas */
-    max-width: 7rem;
-}
-input.p-inputtext{ /* Largura do input do Grid */
-    width: 100% !important;
 }
 </style>
