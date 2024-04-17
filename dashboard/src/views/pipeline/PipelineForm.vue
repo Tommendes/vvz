@@ -337,13 +337,13 @@ const itemDataStatusPreload = ref([
         icon: 'fa-solid fa-shopping-cart',
         color: '#4cd07d'
     },
-    {
-        status: '70',
-        action: 'Comissionar',
-        label: 'Pedido Comissionado',
-        icon: 'fa-solid fa-money-bill-transfer',
-        color: '#689F38'
-    },
+    // {
+    //     status: '70',
+    //     action: 'Comissionar',
+    //     label: 'Pedido Comissionado',
+    //     icon: 'fa-solid fa-money-bill-transfer',
+    //     color: '#689F38'
+    // },
     {
         status: '80',
         action: 'Liquidação',
