@@ -467,7 +467,7 @@ const statusRecord = async (status) => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger'
     };
-    if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_EXCLUIDO, andamentoRegistroPipeline.STATUS_LIQUIDADO].includes(status)) {
+    if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_EXCLUIDO, andamentoRegistroPipeline.STATUS_ENCERRADO].includes(status)) {
         let startMessage = '';
         if (andamentoRegistroPipeline.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
         confirm.require({
@@ -480,7 +480,7 @@ const statusRecord = async (status) => {
                     if (status == andamentoRegistroPipeline.STATUS_EXCLUIDO) {
                         toGrid();
                     } // Se for excluído, redireciona para o grid
-                    else if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_LIQUIDADO].includes(status)) {
+                    else if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_ENCERRADO].includes(status)) {
                         reload();
                     } // Se for cancelado ou liquidado, recarrega o registro
                     defaultSuccess(msgDone);
@@ -1111,7 +1111,7 @@ watch(route, (value) => {
                                 severity="success"
                                 text
                                 raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_LIQUIDADO)"
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_ENCERRADO)"
                             />
                             <Button
                                 label="Cancelar Registro"

@@ -4,7 +4,7 @@ const ftp = require('basic-ftp');
 const path = require('path')
 
 module.exports = app => {
-    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_COMISSIONADO, STATUS_LIQUIDADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
+    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_COMISSIONADO, STATUS_ENCERRADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
     const { TIPO_PV_SUPORTE, TIPO_PV_MONTAGEM, TIPO_PV_VENDAS } = require('./pv.js')(app)
     const { existsOrError, booleanOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const { formatCurrency } = require('./facilities.js')(app)
@@ -266,7 +266,7 @@ module.exports = app => {
                 //         status: STATUS_ACTIVE,
                 //         created_at: new Date(),
                 //         id_pipeline: recordId,
-                //         status_params: STATUS_LIQUIDADO,
+                //         status_params: STATUS_ENCERRADO,
                 //     };
                 //     await trx(tabelaPipelineStatusDomain).insert(bodyStatus);
                 // }

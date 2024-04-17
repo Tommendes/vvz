@@ -13,6 +13,11 @@ const itemDataGroup = ref({});
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 const mode = ref('grid');
 
+// Cookies de usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
 import { guide } from '@/guides/comissoesGrid.js';
 
 // Props do template
@@ -26,17 +31,13 @@ const dropdownAgentes = ref([]);
 // Lista de status
 
 // Andamento do registro
-const STATUS_LIQUIDADO = 30;
+const STATUS_ENCERRADO = 30;
 const dropdownStatus = ref([
     { label: 'Criado/Lançado', value: '10', severity: 'danger' },
     { label: 'Liquidado', value: '20', severity: 'warning' },
     { label: 'Encerrado', value: '30', severity: 'success' }
 ]);
-// Cookies de usuário
-import { userKey } from '@/global';
 import moment from 'moment';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
 // Carrega os dados da grid
 const reload = async () => {
     await loadData();
@@ -171,7 +172,7 @@ const liquidateGroup = async () => {
             if (element.liquidar_em) {
                 const bodyStatus = {
                     id_comissoes: element.id,
-                    status_comis: STATUS_LIQUIDADO
+                    status_comis: STATUS_ENCERRADO
                 };
                 await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus);
                 shouldLoadData = true;
@@ -266,7 +267,7 @@ onBeforeMount(async () => {
         </template>
     </ConfirmDialog>
     <div class="flex justify-content-end gap-3 mb-5">
-        <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" outlined @click="newItem()" v-tooltip.top="'Clique para registrar uma nova comissão'" />
+        <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" :disabled="!(userData.comissoes >= 2)" outlined @click="newItem()" v-tooltip.top="'Clique para registrar uma nova comissão'" />
         <Button
             v-if="gridData && gridData.length > 0"
             type="button"

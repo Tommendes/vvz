@@ -22,9 +22,9 @@ const masks = ref({
 // Função de emitir eventos
 const emit = defineEmits(['newItem', 'cancel', 'refreshPipeline']);
 // Andamento do registro
-const STATUS_NAO_PROGRAMADO = 10;
-const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20;
-const STATUS_LIQUIDADO = 30;
+const STATUS_ABERTO = 10;
+const STATUS_LIQUIDADO = 20;
+const STATUS_ENCERRADO = 30;
 
 // Url base do form action
 const loading = ref(false);
@@ -170,11 +170,16 @@ const deleteItem = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
-            axios.delete(`${urlBase.value}/${itemData.value.id}`).then(async () => {
-                defaultSuccess('Registro excluído com sucesso!');
-                emit('cancel');
-                emit('refreshPipeline');
-            });
+            axios
+                .delete(`${urlBase.value}/${itemData.value.id}`)
+                .then(async () => {
+                    defaultSuccess('Registro excluído com sucesso!');
+                    emit('cancel');
+                    emit('refreshPipeline');
+                })
+                .catch((err) => {
+                    defaultWarn(err.response.data);
+                });
         },
         reject: () => {
             return false;
@@ -185,7 +190,7 @@ const deleteItem = () => {
 const liquidateItem = () => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,
-        status_comis: STATUS_LIQUIDADO
+        status_comis: STATUS_ENCERRADO
     };
     confirm.require({
         group: `comisLiquidateConfirm-${itemData.value.id}`,
@@ -217,7 +222,7 @@ const liquidateItem = () => {
 const programateItem = () => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,
-        status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO
+        status_comis: STATUS_LIQUIDADO
     };
     confirm.require({
         group: `comisLiquidateConfirm-${itemData.value.id}`,
@@ -249,7 +254,7 @@ const programateItem = () => {
 const unprogramateItem = () => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,
-        status_comis: STATUS_NAO_PROGRAMADO
+        status_comis: STATUS_ABERTO
     };
     confirm.require({
         group: `comisLiquidateConfirm-${itemData.value.id}`,
@@ -306,9 +311,9 @@ const cancel = async () => {
 const itemDataStatus = ref([]);
 const itemDataLastStatus = ref({});
 /*
-const STATUS_NAO_PROGRAMADO = 10
-const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20
-const STATUS_LIQUIDADO = 30
+const STATUS_ABERTO = 10
+const STATUS_LIQUIDADO = 20
+const STATUS_ENCERRADO = 30
 */
 const itemDataStatusPreload = ref([
     {
@@ -523,7 +528,7 @@ watchEffect(() => {
                         @click="programateItem"
                     />
                     <Button
-                        :disabled="!(userData.comissoes >= 3 || userData.financeiro >= 3)"
+                        :disabled="!(userData.financeiro >= 3)"
                         type="button"
                         v-else-if="itemDataLastStatus.status_comis == 20 && ['view'].includes(mode)"
                         v-tooltip.top="'Cancelar liquidação'"
@@ -538,7 +543,7 @@ watchEffect(() => {
                     <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline do registro'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
                     <Button
                         type="button"
-                        :disabled="!(userData.financeiro >= 4)"
+                        :disabled="!(userData.comissoes >= 4)"
                         v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)"
                         v-tooltip.top="'Excluir registro'"
                         icon="fa-solid fa-trash"
