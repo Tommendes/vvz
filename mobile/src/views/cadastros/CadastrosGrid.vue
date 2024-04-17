@@ -263,6 +263,7 @@ watchEffect(() => {
 <style>
 nav>ol{ /* Ajuste  nav */
     display: flex;
+    list-style: none;
 }
 .p-dropdown{ /* Dropdown do filtro do grid  */
     display: flex;
@@ -282,9 +283,6 @@ ul#overlay_messages_list{
 /* Fim Mensagens */
 .container{
     overflow-x: hidden;
-}
-ol{
-    list-style: none;
 }
 tr.p-row-even>td{ /* Ajuste na largura da coluna*/
     display: table-column;

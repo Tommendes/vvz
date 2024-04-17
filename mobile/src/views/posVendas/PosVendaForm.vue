@@ -644,8 +644,22 @@ input{
     display: flex;
     align-items: center;
 }
+
 </style>
 <style>
+nav>ol{ /* Ajuste  nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+    padding-left: 0;
+}
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
 .container{
     overflow-x: hidden;
 }

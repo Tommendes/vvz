@@ -457,6 +457,13 @@ onMounted(() => {
 }
 </style>
 <style>
+.layout-main-container{ /* Removendo rolagem lateral */
+    padding-left: 0px !important;
+    padding-right: 0px;
+}
+th.p-filter-column{ /* Aumentando espaço do filtro do Grid */
+    padding-right: 0px !important;
+}
 input{
     width: 100%;
 }

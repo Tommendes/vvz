@@ -842,6 +842,7 @@ watch(route, (value) => {
                                 :showClear="!!itemData.id_pipeline_params"
                                 id="unidade_tipos"
                                 optionLabel="label"
+                                class="flex align-items-center"
                                 optionValue="value"
                                 v-model="itemData.id_pipeline_params"
                                 :options="dropdownUnidades"
@@ -860,12 +861,13 @@ watch(route, (value) => {
                                 id="unidade_tipos"
                                 optionLabel="label"
                                 optionValue="value"
+                                class="flex align-items-center"
                                 v-model="itemData.id_com_agentes"
                                 :options="dropdownAgentes"
                                 :disabled="['view', 'expandedFormMode'].includes(mode)"
                             />
                         </div>
-                        <div class="col-12 lg:col-2" v-if="itemData.documento || (['new', 'edit'].includes(mode) && itemDataParam.autom_nr == 0)">
+                        <div class="col-12" v-if="itemData.documento || (['new', 'edit'].includes(mode) && itemDataParam.autom_nr == 0)">
                             <label for="documento">Documento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <p v-else-if="itemDataParam.autom_nr || mode == 'expandedFormMode'" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
@@ -873,7 +875,7 @@ watch(route, (value) => {
                             </p>
                             <InputText v-else autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)" v-model="itemData.documento" id="documento" type="text" maxlength="10" />
                         </div>
-                        <div class="col-12 lg:col-1" v-if="itemData.versao">
+                        <div class="col-12" v-if="itemData.versao">
                             <label for="versao">Versão</label>
                             <p class="p-inputtext p-component p-filled">
                                 {{ itemData.versao }}
@@ -889,8 +891,8 @@ watch(route, (value) => {
                                         </span>
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-6`">
-                                    <label for="valor_bruto">Bruto</label>
+                                <div class="col-12 flex align-items-center pb-5">
+                                    <label class="w-6" for="valor_bruto">Bruto</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
@@ -910,8 +912,8 @@ watch(route, (value) => {
                                         <span disabled v-html="itemData.valor_bruto" id="valor_bruto" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-6`">
-                                    <label for="valor_liq">Líquido</label>
+                                <div class="col-12 flex align-items-center pb-5">
+                                    <label class="w-6" for="valor_liq">Líquido</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
@@ -932,8 +934,8 @@ watch(route, (value) => {
                                         <span disabled v-html="itemData.valor_liq" id="valor_liq" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-4`">
-                                    <label for="valor_representacao">Valor base da representação</label>
+                                <div class="col-12 flex align-items-center pb-5">
+                                    <label class="w-6" for="valor_representacao">Valor base da representação</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
@@ -969,8 +971,8 @@ watch(route, (value) => {
                                         <span disabled v-html="itemData.valor_representacao" id="valor_representacao" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-4`">
-                                    <label for="perc_represent">Comissão da representação</label>
+                                <div class="col-12 flex align-items-center pb-5">
+                                    <label class="w-6" for="perc_represent">Comissão da representação</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">%</span>
@@ -990,8 +992,8 @@ watch(route, (value) => {
                                         <span disabled v-html="itemData.perc_represent" id="perc_represent" class="p-inputtext p-component" />
                                     </div>
                                 </div>
-                                <div :class="`col-12 lg:col-4`">
-                                    <label for="valor_agente">Valor base dos agentes</label>
+                                <div class="col-12 flex align-items-center pb-5">
+                                    <label class="w-6" for="valor_agente">Valor base dos agentes</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
@@ -1283,5 +1285,21 @@ input{
 }
 .animation-color {
     animation: animation-color 5s linear;
+}
+</style>
+
+<style>
+nav>ol{
+    display: flex;
+    list-style: none;
+    padding-left: 0px;
+    align-items: center;
+}
+.layout-main-container{
+    padding-left: 0 !important;
+    padding-right: 0;
+}
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar */
 }
 </style>

@@ -247,6 +247,10 @@ watchEffect(() => {
     margin-left: auto;
     margin-right: auto;
 }
+th.p-filter-column{ /* Tamanho das colunas */
+    min-width: 8rem;
+    max-width: 9rem;
+}
 </style>
 <style>
 /* Mensagens */
@@ -276,9 +280,7 @@ nav>ol{ /* Nav */
     padding-left: 0 !important;
     padding-right: 0;
 }
-th{
-    max-width: 4rem; /* Tamanho das colunas */
-}
+
 .p-column-filter{
     width: 100%;
 }

@@ -288,6 +288,12 @@ ul#overlay_messages_list{
 nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
     display: inline; /* Estilização do nav */
 }
+nav>ol{ /* Ajuste  nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+    justify-content: flex-start;
+}
 .container{
     overflow-x: hidden;
 }
@@ -304,17 +310,10 @@ svg{
     padding-left: 0;
     padding-right: 0;
 }
-
-/* tr>th.p-sortable-column{
-    width: 50%;
-    display: inline-table;
+th{  /* Largura das colunas */
+    max-width: 7rem;
 }
-tr>th.p-filter-column{
-    width: 50%;
-    display: inline-table;
+input.p-inputtext{ /* Largura do input do Grid */
+    width: 100% !important;
 }
-tbody.p-datatable-tbody{
-    width: 90%;
-    display: block;
-} */
 </style>

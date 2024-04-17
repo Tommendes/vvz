@@ -337,4 +337,7 @@ nav>ol{ /* Nav */
 .p-dropdown-clear-icon {
     display: none;
 }
+input{
+    width: 100%;
+}
 </style>

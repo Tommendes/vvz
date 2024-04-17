@@ -427,4 +427,20 @@ input{
     padding-left: 0;
     padding-right: 0;
 }
+
+nav>ol{ /* Ajuste  nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 0;
+}
+
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
 </style>

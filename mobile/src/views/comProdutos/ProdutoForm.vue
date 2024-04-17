@@ -549,8 +549,8 @@ watch(selectedCadastro, (value) => {
                                             <div class="col-12">
                                                 <h3>Preços do produto</h3>
                                                 <div class="grid">
-                                                    <div class="col-6">
-                                                        <label for="valor_compra">Valor de Compra</label>
+                                                    <div class="col-12 flex align-items-center mb-3 mt-3">
+                                                        <label class="w-6" for="valor_compra">Valor de Compra</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                                                         <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                                             <span class="p-inputgroup-addon">R$</span>
@@ -570,8 +570,8 @@ watch(selectedCadastro, (value) => {
                                                             <span disabled v-html="itemDataProdTabelas.valor_compra" class="p-inputtext p-component" />
                                                         </div>
                                                     </div>
-                                                    <div class="col-6">
-                                                        <label for="valor_venda">Valor de Venda</label>
+                                                    <div class="col-12 flex flex align-items-center mb-3">
+                                                        <label class="w-6" for="valor_venda">Valor de Venda</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                                                         <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                                             <span class="p-inputgroup-addon">R$</span>
@@ -591,8 +591,8 @@ watch(selectedCadastro, (value) => {
                                                             <span disabled v-html="itemDataProdTabelas.valor_venda" class="p-inputtext p-component" />
                                                         </div>
                                                     </div>
-                                                    <div class="col-6">
-                                                        <label for="ini_validade">Validade inicial</label>
+                                                    <div class="col-12 flex align-items-center mb-3">
+                                                        <label class="w-6" for="ini_validade">Validade inicial</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                                                         <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                                             <InputText autocomplete="no" v-model="itemDataProdTabelas.ini_validade" id="ini_validade" type="text" v-maska data-maska="##/##/####" />
@@ -673,5 +673,25 @@ input{
 .p-dropdown{ /* Dropdown do filtro do grid  */
     display: flex;
     align-items: center;
+}
+</style>
+
+<style>
+nav>ol{ /* Ajuste  nav */
+    display: flex;
+    list-style: none;
+    padding-left: 0;
+    align-items: center;
+}
+.p-dropdown{ /* Dropdown do filtro do grid  */
+    display: flex;
+    align-items: center;
+}
+.p-dropdown-items-wrapper{
+    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+}
+div.layout-main-container{
+    padding-left: 0 !important;
+    padding-right: 0;
 }
 </style>
