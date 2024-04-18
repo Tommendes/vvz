@@ -11,7 +11,7 @@ module.exports = app => {
     const STATUS_REATIVADO = 1;
     const STATUS_CONVERTIDO = 10;
     const STATUS_PEDIDO = 20;
-    const STATUS_LIQUIDADO = 80;
+    const STATUS_ENCERRADO = 80;
     const STATUS_COMISSIONADO = 70;
     const STATUS_CANCELADO = 89;
     const STATUS_EXCLUIDO = 99;
@@ -272,7 +272,7 @@ module.exports = app => {
         STATUS_PROPOSTA,
         STATUS_PEDIDO,
         STATUS_COMISSIONADO,
-        STATUS_LIQUIDADO,
+        STATUS_ENCERRADO,
         STATUS_CANCELADO
     }
 }

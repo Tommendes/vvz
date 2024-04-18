@@ -6,9 +6,9 @@ module.exports = app => {
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
     // Andamento do registro        
-    const STATUS_NAO_PROGRAMADO = 10
-    const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20
-    const STATUS_LIQUIDADO = 30
+    const STATUS_ABERTO = 10
+    const STATUS_LIQUIDADO = 20
+    const STATUS_ENCERRADO = 30
 
     const get = async (req, res) => {
         let user = req.user
@@ -197,8 +197,8 @@ module.exports = app => {
 
     return {
         get, getByFunction,
-        STATUS_NAO_PROGRAMADO,
-        STATUS_EM_PROGRAMACAO_LIQUIDACAO,
-        STATUS_LIQUIDADO
+        STATUS_ABERTO,
+        STATUS_LIQUIDADO,
+        STATUS_ENCERRADO
     }
 }

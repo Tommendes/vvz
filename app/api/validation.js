@@ -75,11 +75,16 @@ module.exports = app => {
         return emailRegexp.test(valueA)
     }
 
+    function isValidEmail(email) {
+        const emailRegexp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+        return emailRegexp.test(email);
+    }
+
     const noAccessMsg = 'Ops!!! Parece que seu perfil não dá acesso a essa operação'
 
     return {
         cpfOrError, cnpjOrError, lengthOrError, existsOrError, booleanOrError, valueOrError, integerOrError,
         valueMinorOrError, valueMajorOrError,
-        notExistsOrError, equalsOrError, diffOrError, isMatchOrError, emailOrError, noAccessMsg
+        notExistsOrError, equalsOrError, diffOrError, isMatchOrError, emailOrError, isValidEmail, noAccessMsg
     }
 }

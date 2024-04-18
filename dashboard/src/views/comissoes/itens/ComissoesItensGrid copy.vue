@@ -31,9 +31,9 @@ const dropdownAgentes = ref([]);
 // Lista de status
 
 // Andamento do registro
-const STATUS_NAO_PROGRAMADO = 10;
-const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20;
-const STATUS_LIQUIDADO = 30;
+const STATUS_ABERTO = 10;
+const STATUS_LIQUIDADO = 20;
+const STATUS_ENCERRADO = 30;
 const dropdownStatus = ref([
     { label: 'Criado/Lançado', value: '10', severity: 'danger' },
     { label: 'Liquidado', value: '20', severity: 'warning' },
@@ -214,7 +214,7 @@ const liquidateGroup = async () => {
             }
             const bodyStatus = {
                 id_comissoes: element.id,
-                status_comis: STATUS_LIQUIDADO
+                status_comis: STATUS_ENCERRADO
             };
             await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus);
         }

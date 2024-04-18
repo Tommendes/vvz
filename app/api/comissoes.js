@@ -9,9 +9,9 @@ module.exports = app => {
     const tabelaAlias = 'Comissão'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
-    const STATUS_NAO_PROGRAMADO = 10
-    const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20
-    const STATUS_LIQUIDADO = 30
+    const STATUS_ABERTO = 10
+    const STATUS_LIQUIDADO = 20
+    const STATUS_ENCERRADO = 30
     const { ceilTwoDecimals, formatCurrency } = app.api.facilities
 
     const save = async (req, res) => {
@@ -22,8 +22,8 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && (uParams.comercial >= 3 || uParams.comissoes >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && (uParams.comercial >= 2 || uParams.comissoes >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.financeiro >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams &&  uParams.comissoes >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -33,7 +33,7 @@ module.exports = app => {
         const tabelaPipeline = `${dbPrefix}_${uParams.schema_name}.pipeline`
         const tabelaComisAgentes = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
+        // const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
 
         body.agente_representante = body.agente_representante || 0
 
@@ -152,14 +152,14 @@ module.exports = app => {
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: body.id,
-                        status_comis: STATUS_NAO_PROGRAMADO,
+                        status_comis: STATUS_ABERTO,
                     });
-                    if (bodyStatus && bodyStatus.status_comis == STATUS_EM_PROGRAMACAO_LIQUIDACAO || body.liquidar_em) {
+                    if (bodyStatus && bodyStatus.status_comis == STATUS_LIQUIDADO || body.liquidar_em) {
                         await trx(tabelaComissaoStatusDomain).insert({
                             evento: evento || 1,
                             created_at: new Date(),
                             id_comissoes: body.id,
-                            status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO,
+                            status_comis: STATUS_LIQUIDADO,
                         });
                     }
                 }
@@ -170,28 +170,28 @@ module.exports = app => {
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: body.id,
-                        status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO
+                        status_comis: STATUS_LIQUIDADO
                     });
                 }
                 // Se havia um status e era == 10 e body.liquidar_em foi informado então insere um novo status
-                if (lastStatusComiss && (bodyStatus && bodyStatus.status_comis == STATUS_LIQUIDADO) && (lastStatusComiss.status_comis == STATUS_COMISSIONADO || body.liquidar_em)) {
+                if (lastStatusComiss && (bodyStatus && bodyStatus.status_comis == STATUS_ENCERRADO) && (lastStatusComiss.status_comis == STATUS_COMISSIONADO || body.liquidar_em)) {
                     if (lastStatusComiss.status_comis == STATUS_COMISSIONADO)
                         await trx(tabelaComissaoStatusDomain).insert({
                             evento: evento || 1,
                             created_at: new Date(),
                             id_comissoes: body.id,
-                            status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO
+                            status_comis: STATUS_LIQUIDADO
                         });
                     // Inserir na tabela de status de pipeline a informação de comissionamento            
                     await trx(tabelaComissaoStatusDomain).insert({
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: body.id,
-                        status_comis: STATUS_LIQUIDADO
+                        status_comis: STATUS_ENCERRADO
                     });
                 }
                 // Se havia um status e era 20 e bodyStatus.status_comis == 10 então exclui o status 20                
-                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_EM_PROGRAMACAO_LIQUIDACAO && (bodyStatus && bodyStatus.status_comis == STATUS_COMISSIONADO || !body.liquidar_em)) {
+                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_LIQUIDADO && (bodyStatus && bodyStatus.status_comis == STATUS_COMISSIONADO || !body.liquidar_em)) {
                     await trx(tabelaComissaoStatusDomain).del().where({ id: lastStatusComiss.id });
                 }
 
@@ -267,7 +267,7 @@ module.exports = app => {
                     evento: evento || 1,
                     created_at: new Date(),
                     id_comissoes: body.id,
-                    status_comis: STATUS_NAO_PROGRAMADO
+                    status_comis: STATUS_ABERTO
                 });
                 // Inserir na tabela de status de pipeline a informação de programação de pagamento
                 if (body.liquidar_em)
@@ -275,19 +275,19 @@ module.exports = app => {
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: body.id,
-                        status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO
+                        status_comis: STATUS_LIQUIDADO
                     });
 
                 // Inserir na tabela de status de pipeline a informação de comissionamento
-                const hasCommisioningStatus = await app.db(tabelaPipelineStatusDomain).where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE, status_params: STATUS_COMISSIONADO }).first()
-                if (!hasCommisioningStatus)
-                    await trx(tabelaPipelineStatusDomain).insert({
-                        evento: evento || 1,
-                        status: STATUS_ACTIVE,
-                        created_at: new Date(),
-                        id_pipeline: body.id_pipeline,
-                        status_params: STATUS_COMISSIONADO,
-                    });
+                // const hasCommisioningStatus = await app.db(tabelaPipelineStatusDomain).where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE, status_params: STATUS_COMISSIONADO }).first()
+                // if (!hasCommisioningStatus)
+                //     await trx(tabelaPipelineStatusDomain).insert({
+                //         evento: evento || 1,
+                //         status: STATUS_ACTIVE,
+                //         created_at: new Date(),
+                //         id_pipeline: body.id_pipeline,
+                //         status_params: STATUS_COMISSIONADO,
+                //     });
 
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
@@ -304,7 +304,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comercial >= 1 || uParams.comissoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.comissoes >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -363,7 +363,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comercial >= 1 || uParams.comissoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.comissoes >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -394,7 +394,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comercial >= 4 || uParams.comissoes >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.comissoes >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -402,7 +402,7 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
-        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
+        // const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
         const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
@@ -429,13 +429,13 @@ module.exports = app => {
                 })
                 .where({ id: req.params.id })
 
-            const countComiss = await app.db(tabelaDomain)
-                .count('id as count')
-                .where({ id_pipeline: last.id_pipeline, status: STATUS_ACTIVE })
-                .first()
-            if (!countComiss || countComiss.count == 0) {
-                await app.db(tabelaPipelineStatusDomain).update({ status: STATUS_DELETE }).where({ id_pipeline: last.id_pipeline, status_params: STATUS_COMISSIONADO })
-            }
+            // const countComiss = await app.db(tabelaDomain)
+            //     .count('id as count')
+            //     .where({ id_pipeline: last.id_pipeline, status: STATUS_ACTIVE })
+            //     .first()
+            // if (!countComiss || countComiss.count == 0) {
+            //     await app.db(tabelaPipelineStatusDomain).update({ status: STATUS_DELETE }).where({ id_pipeline: last.id_pipeline, status_params: STATUS_COMISSIONADO })
+            // }
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
             res.status(204).send()
@@ -463,7 +463,7 @@ module.exports = app => {
 
         const { createEventUpd } = app.api.sisEvents
         Object.values(data).forEach(async (element) => {
-            if (element.last_status_comiss < STATUS_LIQUIDADO) {
+            if (element.last_status_comiss < STATUS_ENCERRADO) {
                 delete element.last_status_comiss;
                 try {
                     existsOrError(element.id, 'Registro não informado')
@@ -506,7 +506,7 @@ module.exports = app => {
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: element.id,
-                        status_comis: STATUS_EM_PROGRAMACAO_LIQUIDACAO,
+                        status_comis: STATUS_LIQUIDADO,
                     });
                 }).catch((error) => {
                     // Se ocorrer um erro, faça rollback da transação

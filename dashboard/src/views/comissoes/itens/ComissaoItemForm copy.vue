@@ -23,9 +23,9 @@ const masks = ref({
 });
 
 // Andamento do registro
-const STATUS_NAO_PROGRAMADO = 10;
-const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20;
-const STATUS_LIQUIDADO = 30;
+const STATUS_ABERTO = 10;
+const STATUS_LIQUIDADO = 20;
+const STATUS_ENCERRADO = 30;
 
 // Url base do form action
 const userData = JSON.parse(json);
@@ -174,7 +174,7 @@ const deleteItem = () => {
 const liquidateItem = () => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,
-        status_comis: STATUS_LIQUIDADO
+        status_comis: STATUS_ENCERRADO
     };
     confirm.require({
         group: 'comisLiquidateConfirm',
@@ -275,9 +275,9 @@ const cancel = () => {
 const itemDataStatus = ref([]);
 const itemDataLastStatus = ref({});
 /*
-const STATUS_NAO_PROGRAMADO = 10
-const STATUS_EM_PROGRAMACAO_LIQUIDACAO = 20
-const STATUS_LIQUIDADO = 30
+const STATUS_ABERTO = 10
+const STATUS_LIQUIDADO = 20
+const STATUS_ENCERRADO = 30
 */
 const itemDataStatusPreload = ref([
     {
