@@ -123,7 +123,7 @@ module.exports = app => {
                     const valorBaseUm = bodyMultiplicate.valor_base_um.replace(",", ".")
                     body.valor_base = valorBaseUm
                     body.valor = ceilTwoDecimals(valorBaseUm * body.percentual / 100)
-                    body.parcela = 1
+                    body.parcela = '1'
                     const novasParcelas = {
                         ...body,
                         valor_base: valorBaseDemais,
@@ -151,22 +151,22 @@ module.exports = app => {
                             id_comissoes: idComissoes,
                             status_comis: STATUS_ABERTO,
                         });
-
-                        console.log('newCommissioning', newCommissioning);
-                        // Evento de comissionamento do registro de pipeline
-                        const { createEvent } = app.api.sisEvents
-                        const evento = await createEvent({
-                            "request": req,
-                            "evento": {
-                                id_user: user.id,
-                                evento: `Parcelamento de comissão de Pipeline`,
-                                classevento: `Commissioning`,
-                                id_registro: idComissoes,
-                                tabela_bd: 'comissoes'
-                            }
-                        })
                     }
+
+                    // Evento de comissionamento do registro de pipeline
+                    const { createEvent } = app.api.sisEvents
+                    await createEvent({
+                        "request": req,
+                        "evento": {
+                            id_user: user.id,
+                            evento: `Comissionamento de Pipeline`,
+                            classevento: `Commissioning`,
+                            id_registro: body.id_pipeline,
+                            tabela_bd: 'pipeline'
+                        }
+                    })
                 }
+
                 await trx(tabelaDomain)
                     .update(body)
                     .where({ id: body.id })
@@ -187,7 +187,7 @@ module.exports = app => {
                     .where({ id_comissoes: body.id })
                     .orderBy('created_at', 'desc')
                     .first()
-                    
+
                 // Se não havia status de comissionamento então insere um novo
                 if (!lastStatusComiss) {
                     // console.log(1);
@@ -280,8 +280,8 @@ module.exports = app => {
                     "request": req,
                     "evento": {
                         id_user: user.id,
-                        evento: `Commissionamento de Pipeline`,
-                        classevento: `Insert`,
+                        evento: `Comissionamento de Pipeline`,
+                        classevento: `Commissioning`,
                         id_registro: body.id_pipeline,
                         tabela_bd: 'pipeline'
                     }

@@ -225,6 +225,9 @@ module.exports = app => {
             case 'gag':
                 getAgentesVendas(req, res)
                 break;
+            case 'gno':
+                getNextOrdem(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
@@ -258,6 +261,25 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(500).send(error)
         })
+    }
+
+    const getNextOrdem = async (req, res) => {
+        try {
+            let user = req.user
+            const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+            const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+            const numerosExistentes = await app.db(tabelaDomain).select(app.db.raw('cast(ordem as unsigned)ordem')).orderBy('ordem');
+            let proximoNumero = 1;
+            for (const numero of numerosExistentes) {
+                if (numero.ordem !== proximoNumero) return res.json({ ordem: proximoNumero.toString().padStart(3, '0')});
+                proximoNumero++;
+            }
+            return res.json(proximoNumero);
+
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
     }
 
     return { save, get, getById, remove, getByFunction }
