@@ -67,9 +67,17 @@ const loadData = async () => {
             });
         }, Math.random() * 1000 + 250);
     } else {
-        loading.value = false;
         mode.value = 'new';
+        await getNextOrdem();
+        loading.value = false;
     }
+};
+// retorna o próximo número de ordem
+const getNextOrdem = async () => {
+    const url = `${urlBase.value}/f-a/gno`;
+    await axios.get(url).then((res) => {
+        itemData.value.ordem = res.data.ordem;
+    });
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -137,7 +145,7 @@ const dropdownTiposAR = ref([
 ]);
 // Validar formulário
 const formIsValid = () => {
-    return itemData.value.ordem && ['0', '1', '2', '3'].includes(itemData.value.agente_representante) && [0, 1].includes(itemData.value.dsr);// && (itemData.value.id_cadastros || itemData.value.apelido);
+    return itemData.value.ordem && ['0', '1', '2', '3'].includes(itemData.value.agente_representante) && [0, 1].includes(itemData.value.dsr); // && (itemData.value.id_cadastros || itemData.value.apelido);
 };
 
 /**

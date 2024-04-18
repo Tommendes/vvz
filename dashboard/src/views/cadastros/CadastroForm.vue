@@ -470,7 +470,7 @@ watchEffect(() => {
                         <label for="cpf_cnpj">CPF/CNPJ<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
+                            <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
                             <Button
                                 v-if="labels.pfpj == 'pj'"
                                 :disabled="mode == 'view'"
@@ -485,12 +485,12 @@ watchEffect(() => {
                     <div class="field col-12 md:col-6">
                         <label for="nome">{{ labels.nome }}<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome" type="text" :class="`${animationDocNr}`" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome" type="text" :class="`${animationDocNr}`" class="uppercase" />
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="rg_ie">{{ labels.rg_ie }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie" type="text" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie" type="text" class="uppercase" />
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pf'">
                         <label for="id_params_sexo">Sexo<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
@@ -510,7 +510,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-2">
                         <label for="aniversario">{{ labels.aniversario }}<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" :class="`${animationDocNr}`" />
+                        <InputText v-else autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" :class="`${animationDocNr}`" class="uppercase" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="id_params_p_nascto">País de Origem<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
@@ -558,24 +558,25 @@ watchEffect(() => {
                             id="telefone"
                             type="text"
                             @input="validateTelefone()"
+                            class="uppercase"
                         />
                         <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
                     </div>
                     <div class="field col-12 md:col-4">
                         <label for="email">E-mail<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else :required="!itemData.prospecto" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
+                        <InputText v-else :required="!itemData.prospecto" class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
                         <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pj'">
                         <label for="cim">CIM</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cim" id="cim" type="text" />
+                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'" v-model="itemData.cim" id="cim" type="text" />
                     </div>
                     <div class="field col-12 md:col-5">
                         <label for="doc_esp">Outro Documento(Qual?)</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.doc_esp" id="doc_esp" type="text" />
+                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'" v-model="itemData.doc_esp" id="doc_esp" type="text" />
                     </div>
                     <div class="field col-12 md:col-1">
                         <label for="prospecto">Prospecto</label>
@@ -587,7 +588,7 @@ watchEffect(() => {
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <EditorComponent v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 80px" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled p-disabled"></p>
+                        <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled p-disabled uppercase"></p>
                     </div>
 
                     <hr />
@@ -608,29 +609,29 @@ watchEffect(() => {
                             type="text"
                             @input="validateCep()"
                             @blur="buscarCEP"
-                            :class="`${animationDocNr}`"
+                            :class="`${animationDocNr} uppercase`"
                         />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
                         <label for="logradouro">Logradouro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" :class="`${animationDocNr}`" />
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-1">
                         <label for="nr">Número<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" :class="`${animationDocNr}`" />
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="complnr">Complemento</label>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr" type="text" />
+                        <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr" type="text" />
                     </div>
                     <div class="field col-12 md:col-4">
                         <label for="bairro">Bairro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" :class="`${animationDocNr}`" />
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-4">
                         <label for="cidade">Cidade<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" :class="`${animationDocNr}`" />
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-1">
                         <label for="uf">UF<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
@@ -639,8 +640,8 @@ watchEffect(() => {
                     <div class="field col-12 md:col-12" v-if="(itemData.observacao_endereco && itemData.observacao_endereco.length) || mode != 'view'">
                         <label for="observacao_endereco">Observação do Endereço</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no" v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text" />
-                        <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled p-disabled"></p>
+                        <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no" v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text" class="uppercase" />
+                        <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled p-disabled uppercase"></p>
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">

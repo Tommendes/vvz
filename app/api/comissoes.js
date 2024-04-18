@@ -2,7 +2,7 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const { STATUS_COMISSIONADO } = require('./pipeline_status.js')(app)
+    // const { STATUS_COMISSIONADO } = require('./pipeline_status.js')(app)
     const tabela = 'comissoes'
     const tabelaStatusComiss = 'comis_status'
     const tabelaStatusPipeline = 'pipeline_status'
@@ -23,7 +23,7 @@ module.exports = app => {
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.financeiro >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams &&  uParams.comissoes >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && uParams.comissoes >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -37,8 +37,6 @@ module.exports = app => {
 
         body.agente_representante = body.agente_representante || 0
 
-        let comisRepres = {}
-        let comisAgentes = { total: 0 }
         let pipeline = {}
         let last = {}
         if (body.id) last = await app.db(tabelaDomain).where({ id: body.id }).first()
@@ -52,17 +50,6 @@ module.exports = app => {
             pipeline = await app.db(tabelaPipeline).where({ id: body.id_pipeline, status: STATUS_ACTIVE }).first()
             existsOrError(pipeline, 'Registro de Pipeline não encontrado')
             if (![0, 1].includes(body.agente_representante)) throw 'Se é a representação não informado'
-            // Recupera o registro da comissão do representante em comissões caso exista
-            comisRepres = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, agente_representante: '1', status: STATUS_ACTIVE }).first()
-            // Recupera os registros das comissões dos não representantes do pedido em comissões
-            comisAgentes = await app.db(tabelaDomain)
-                .sum('valor as total')
-                .where({ id_pipeline: body.id_pipeline, agente_representante: body.agente_representante, status: STATUS_ACTIVE }).first()
-            comisAgentes = { total: comisAgentes.total || 0 }
-            // Se não existir comissão de representante, não pode ser cadastrado comissão de não representante
-            // if (!comisRepres && body.agente_representante === 0) throw 'Informe primeiro o agente representante ou marque a opção para que essa seja a comissão da representação'
-            // Se existir comissão de representante, não pode ser cadastrado comissão de representante exceto se for uma edição
-            // if (comisRepres && body.agente_representante === 1 && body.id != comisRepres.id && !body.alterar_agente_representante) throw 'Já existe um agente representante cadastrado. Deseja alterar?'
             existsOrError(body.id_comis_agentes, 'Agente não informado')
             // Verificar se o comis_agentes existe
             const existsComissAgentes = await app.db(tabelaComisAgentes).where({ id: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
@@ -103,7 +90,12 @@ module.exports = app => {
             }
 
             const bodyStatus = body.bodyStatus || undefined
+            const bodyMultiplicate = body.bodyMultiplicate || undefined
             delete body.bodyStatus
+            delete body.bodyMultiplicate
+
+            // console.log('bodyMultiplicate', bodyMultiplicate);
+            // console.log('body', body);
 
             const { createEventUpd } = app.api.sisEvents
             const evento = await createEventUpd({
@@ -118,14 +110,63 @@ module.exports = app => {
             })
 
             app.db.transaction(async (trx) => {
-                if (body.alterar_agente_representante) {
-                    delete body.alterar_agente_representante;
-                    await trx(tabelaDomain)
-                        .update({ agente_representante: 0 })
-                        .where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE })
-                }
                 body.evento = evento
                 body.updated_at = new Date()
+                /*
+                    Se for uma multiplicação de registros, faça:
+                    1: Edite o valor_base para receber o bodyMultiplicate.valor_base_um e atualize o valor de acordo com o calculo entre o bodyMultiplicate.valor_base_um e o percentual e
+                    2: O número da parcela será 1 
+                    3: Crie N registros (bodyMultiplicate.parcelas) com os mesmos dados exceto que a parcela será 2, 3 e assim por diante e o valor da parcela será o valor do bodyMultiplicate.valor_base_demais
+                */
+                if (bodyMultiplicate) {
+                    const valorBaseDemais = bodyMultiplicate.valor_base_demais.replace(",", ".")
+                    const valorBaseUm = bodyMultiplicate.valor_base_um.replace(",", ".")
+                    body.valor_base = valorBaseUm
+                    body.valor = ceilTwoDecimals(valorBaseUm * body.percentual / 100)
+                    body.parcela = '1'
+                    const novasParcelas = {
+                        ...body,
+                        valor_base: valorBaseDemais,
+                        percentual: body.percentual,
+                        valor: ceilTwoDecimals(valorBaseDemais * body.percentual / 100)
+                    }
+
+                    for (let i = 2; i <= bodyMultiplicate.parcelas; i++) {
+                        novasParcelas.parcela = i
+                        novasParcelas.status = STATUS_ACTIVE
+                        delete novasParcelas.id
+                        delete novasParcelas.evento
+                        delete novasParcelas.updated_at
+                        novasParcelas.created_at = new Date()
+
+                        const nextEventID = await trx(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
+                        novasParcelas.evento = nextEventID.count + 1
+                        const newCommissioning = await trx(tabelaDomain).insert(novasParcelas)
+                        const idComissoes = newCommissioning[0]
+
+                        // Inserir na tabela de status a informação de comissionamento
+                        await trx(tabelaComissaoStatusDomain).insert({
+                            evento: novasParcelas.evento || 1,
+                            created_at: new Date(),
+                            id_comissoes: idComissoes,
+                            status_comis: STATUS_ABERTO,
+                        });
+                    }
+
+                    // Evento de comissionamento do registro de pipeline
+                    const { createEvent } = app.api.sisEvents
+                    await createEvent({
+                        "request": req,
+                        "evento": {
+                            id_user: user.id,
+                            evento: `Comissionamento de Pipeline`,
+                            classevento: `Commissioning`,
+                            id_registro: body.id_pipeline,
+                            tabela_bd: 'pipeline'
+                        }
+                    })
+                }
+
                 await trx(tabelaDomain)
                     .update(body)
                     .where({ id: body.id })
@@ -146,8 +187,10 @@ module.exports = app => {
                     .where({ id_comissoes: body.id })
                     .orderBy('created_at', 'desc')
                     .first()
+
                 // Se não havia status de comissionamento então insere um novo
                 if (!lastStatusComiss) {
+                    // console.log(1);
                     await trx(tabelaComissaoStatusDomain).insert({
                         evento: evento || 1,
                         created_at: new Date(),
@@ -164,7 +207,8 @@ module.exports = app => {
                     }
                 }
                 // Se havia um status e era == 10 e body.liquidar_em foi informado então insere um novo status
-                if (lastStatusComiss && (lastStatusComiss.status_comis == STATUS_COMISSIONADO || body.liquidar_em)) {
+                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_ABERTO && body.liquidar_em) {
+                    // console.log(2);
                     // Inserir na tabela de status de pipeline a informação de comissionamento            
                     await trx(tabelaComissaoStatusDomain).insert({
                         evento: evento || 1,
@@ -174,8 +218,9 @@ module.exports = app => {
                     });
                 }
                 // Se havia um status e era == 10 e body.liquidar_em foi informado então insere um novo status
-                if (lastStatusComiss && (bodyStatus && bodyStatus.status_comis == STATUS_ENCERRADO) && (lastStatusComiss.status_comis == STATUS_COMISSIONADO || body.liquidar_em)) {
-                    if (lastStatusComiss.status_comis == STATUS_COMISSIONADO)
+                if (lastStatusComiss && (bodyStatus && bodyStatus.status_comis == STATUS_ENCERRADO) && (lastStatusComiss.status_comis == STATUS_ABERTO || body.liquidar_em)) {
+                    // console.log(3);
+                    if (lastStatusComiss.status_comis == STATUS_ABERTO)
                         await trx(tabelaComissaoStatusDomain).insert({
                             evento: evento || 1,
                             created_at: new Date(),
@@ -191,8 +236,20 @@ module.exports = app => {
                     });
                 }
                 // Se havia um status e era 20 e bodyStatus.status_comis == 10 então exclui o status 20                
-                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_LIQUIDADO && (bodyStatus && bodyStatus.status_comis == STATUS_COMISSIONADO || !body.liquidar_em)) {
+                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_LIQUIDADO && (bodyStatus && bodyStatus.status_comis == STATUS_ABERTO || !body.liquidar_em)) {
+                    // console.log(4);
                     await trx(tabelaComissaoStatusDomain).del().where({ id: lastStatusComiss.id });
+                }
+                // Se havia um status e era 20 e bodyStatus.status_comis == 20 então exclui o status 20 anterior e lança outro para corresponder ao novo status
+                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_LIQUIDADO && (lastStatusComiss && lastStatusComiss.status_comis == STATUS_ABERTO && body.liquidar_em)) {
+                    // console.log(5);
+                    await trx(tabelaComissaoStatusDomain).del().where({ id: lastStatusComiss.id });
+                    await trx(tabelaComissaoStatusDomain).insert({
+                        evento: evento || 1,
+                        created_at: new Date(),
+                        id_comissoes: body.id,
+                        status_comis: STATUS_LIQUIDADO
+                    });
                 }
 
             }).catch((error) => {
@@ -201,21 +258,15 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } else {
-            const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, parcela: body.parcela, status: STATUS_ACTIVE }).first()
-            try {
-                notExistsOrError(unique, `Comissão já registrada para este agente`)
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-                return res.status(400).send(error)
-            }
+            // const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, parcela: body.parcela, status: STATUS_ACTIVE }).first()
+            // try {
+            //     notExistsOrError(unique, `Comissão já registrada para este agente`)
+            // } catch (error) {
+            //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            //     return res.status(400).send(error)
+            // }
 
             app.db.transaction(async (trx) => {
-                if (body.alterar_agente_representante) {
-                    delete body.alterar_agente_representante;
-                    await trx(tabelaDomain)
-                        .update({ agente_representante: 0 })
-                        .where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE })
-                }
                 // Criação de um novo registro
                 const nextEventID = await trx(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
                 body.evento = nextEventID.count + 1
@@ -223,16 +274,14 @@ module.exports = app => {
                 body.status = STATUS_ACTIVE
                 body.created_at = new Date()
 
-                // Evento de conversão do registro em pedido
-
                 // Evento de comissionamento do registro de pipeline
                 const { createEvent } = app.api.sisEvents
                 const evento = await createEvent({
                     "request": req,
                     "evento": {
                         id_user: user.id,
-                        evento: `Commissionamento de Pipeline`,
-                        classevento: `commissioning`,
+                        evento: `Comissionamento de Pipeline`,
+                        classevento: `Commissioning`,
                         id_registro: body.id_pipeline,
                         tabela_bd: 'pipeline'
                     }
