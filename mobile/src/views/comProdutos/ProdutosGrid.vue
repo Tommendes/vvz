@@ -240,6 +240,7 @@ watchEffect(() => {
         </DataTable>
     </div>
 </template>
+
 <style scoped>
 .w-95{ /* Ajuste mobile*/
     width: 95vw;
@@ -271,7 +272,7 @@ nav>ol{ /* Nav */
     overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
 }
 #pv_id_5{
-    width: 4rem;    
+    width: 4rem;
 }
 .layout-overlay{ /* Remoção de rolagem horizontal */
     max-width: 100vw;
@@ -280,7 +281,6 @@ nav>ol{ /* Nav */
     padding-left: 0 !important;
     padding-right: 0;
 }
-
 .p-column-filter{
     width: 100%;
 }

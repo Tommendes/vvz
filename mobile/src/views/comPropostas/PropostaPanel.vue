@@ -174,6 +174,16 @@ onBeforeMount(async () => {
 }
 </style>
 <style>
+nav>ol{ /* Ajuste nav */
+    display: flex;
+    padding-left: 0;
+    align-items: center;
+    justify-content: center;
+    list-style: none;
+}
+div.card{
+    padding: 15px; /* Reduzindo padding para grid panel caber na tela */
+}
 /* Mensagens */
 ul#overlay_messages_list{
     padding: 0px;
@@ -183,13 +193,6 @@ ul#overlay_messages_list{
     display: flex;
 }
 /* Fim Mensagens */
-nav>ol{ /* Ajuste  nav */
-    display: flex;
-    padding-left: 0;
-    align-items: center;
-    justify-content: center;
-    list-style: none;
-}
 div.p-accordion-tab{
     padding: 25px;
 }
@@ -199,8 +202,5 @@ a#pv_id_3_0_header_action, a#pv_id_3_1_header_action, a#pv_id_3_2_header_action,
 .layout-main {
     flex: 1 1 auto;
     width: 95vw;
-}
-div.card{
-    padding: 15px; /* Reduzindo padding para grid panel caber na tela */
 }
 </style>

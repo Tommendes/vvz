@@ -347,12 +347,12 @@ watch(selectedCadastro, (value) => {
                             <hr />
                             <h5>Registrado em: {{ dataRegistro }}</h5>
                         </div>
-                        <div class="col-12 md:col-6">
+                        <div class="col-12">
                             <label for="id_cadastros">Destinatário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
-                                <InputText disabled v-model="nomeCliente" />
+                                <InputText id="inputDest" disabled v-model="nomeCliente" class="w-full" />
                                 <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                         </div>
@@ -436,7 +436,7 @@ label{
 input{
     width: 100%;
 }
-.p-dropdown{ /* Dropdown do filtro do grid  */
+.p-dropdown{ /* Dropdown dos filtros do grid  */
     display: flex;
     align-items: center;
 }

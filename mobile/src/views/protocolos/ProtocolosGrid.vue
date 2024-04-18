@@ -167,7 +167,7 @@ nav>ol{ /* Nav */
     padding-left: 0 !important;
     padding-right: 0;
 }
-th{
+th{ /* Largura das colunas */
     width: 8rem;
 }
 </style>

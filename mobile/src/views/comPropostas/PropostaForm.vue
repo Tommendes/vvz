@@ -290,14 +290,14 @@ label{
 input{
     width: 100%;
 }
-.p-dropdown{ /* Dropdown do filtro do grid  */
+.p-dropdown{ /* Dropdown dos filtros do grid  */
     display: flex;
     align-items: center;
 }
 </style>
 
 <style>
-div.layout-main-container{
+div.layout-main-container{ /* Ajustes da tela */
     max-width: 100vw;
     padding-left: 0 !important;
     padding-right: 0;

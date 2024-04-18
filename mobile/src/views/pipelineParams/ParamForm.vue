@@ -363,7 +363,7 @@ label{
 input{
     width: 100%;
 }
-.p-dropdown{ /* Dropdown do filtro do grid  */
+.p-dropdown{ /* Dropdown dos filtros do grid */
     display: flex;
     align-items: center;
 }

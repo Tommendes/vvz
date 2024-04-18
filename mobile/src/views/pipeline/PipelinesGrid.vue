@@ -495,7 +495,7 @@ nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, na
     display: inline;
 }
 #pv_id_5{
-    width: 4rem;    
+    width: 4rem;
 }
 /* Fim Mensagens do navbar */
 </style>
