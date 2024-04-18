@@ -47,7 +47,7 @@ const reload = async () => {
 const loadData = async () => {
     const url = `${urlBase.value}?id_pipeline=${props.itemDataRoot.id}`;
     setTimeout(async () => {
-        gridData.value = [];
+        // gridData.value = [];
         setTimeout(() => {}, 100);
         await axios.get(url).then((axiosRes) => {
             gridData.value = axiosRes.data.data;

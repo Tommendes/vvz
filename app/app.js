@@ -50,48 +50,48 @@ Object.defineProperty(global, '__function', {
 const logError = fs.createWriteStream("./logs/uncaughtException.txt", { flags: 'a' });
 const logInfo = fs.createWriteStream("./logs/info.txt", { flags: 'a' });
 
-// process.on('uncaughtException', async (err) => {
-//     // Adicione lógica aqui para lidar com a exceção, como registrar em logs
-//     const log = `[${new Date().toISOString()}] Exceção não detectada/tratada: ${err.message}\n`;
-//     console.log(log);
-//     logError.write(log);
+process.on('uncaughtException', async (err) => {
+    // Adicione lógica aqui para lidar com a exceção, como registrar em logs
+    const log = `[${new Date().toISOString()}] Exceção não detectada/tratada: ${err.message}\n`;
+    console.log(log);
+    logError.write(log);
 
-//     try {
-//         // Enviar e-mail com detalhes da exceção
-//         await transporter.sendMail({
-//             from: `contato@vivazul.com.br`, // sender address
-//             to: `contato@tommendes.com.br`, // list of receivers
-//             subject: 'Erro na Aplicação Vivazul API - Exceção não detectada/tratada',
-//             text: `Exceção não detectada/tratada: ${err.message}\nDetalhes: ${err.stack}`
-//         });
-//         console.log(`[${new Date().toISOString()}] Email enviado com sucesso com exceção não detectada/tratada`);
-//     } catch (error) {
-//         const log = `[${new Date().toISOString()}] Falha ao tentar enviar email com exceção não detectada/tratada: ${error}\n`;
-//         console.log(log);
-//         logError.write(log);
-//     }
+    try {
+        // Enviar e-mail com detalhes da exceção
+        await transporter.sendMail({
+            from: `"${appName}" <contato@vivazul.com.br>`, // sender address
+            to: `contato@tommendes.com.br`, // list of receivers
+            subject: 'Erro na Aplicação Vivazul API - Exceção não detectada/tratada',
+            text: `Exceção não detectada/tratada: ${err.message}\nDetalhes: ${err.stack}`
+        });
+        console.log(`[${new Date().toISOString()}] Email enviado com sucesso com exceção não detectada/tratada`);
+    } catch (error) {
+        const log = `[${new Date().toISOString()}] Falha ao tentar enviar email com exceção não detectada/tratada: ${error}\n`;
+        console.log(log);
+        logError.write(log);
+    }
 
-//     // Reinicia a aplicação usando PM2
-//     try {
-//         await restartApp();
-//         const log = `[${new Date().toISOString()}] Aplicação reiniciada após exceção não detectada/tratada\n`;
-//         console.log(log);
-//         logInfo.write(log);
-//     } catch (error) {
-//         const log = `[${new Date().toISOString()}] Falha ao reiniciar a aplicação após exceção não detectada/tratada: ${error}\n`;
-//         console.log(log);
-//         logError.write(log);
+    // Reinicia a aplicação usando PM2
+    try {
+        await restartApp();
+        const log = `[${new Date().toISOString()}] Aplicação reiniciada após exceção não detectada/tratada\n`;
+        console.log(log);
+        logInfo.write(log);
+    } catch (error) {
+        const log = `[${new Date().toISOString()}] Falha ao reiniciar a aplicação após exceção não detectada/tratada: ${error}\n`;
+        console.log(log);
+        logError.write(log);
 
-//         process.exit(1); // Encerra a aplicação após a exceção não tratada
-//     }
-//     try {
-//         logError.end();
-//     } catch (error) {
-//         const log = `[${new Date().toISOString()}] Falha ao finalizar a gravação do log de erro: ${error}\n`;
-//         console.log(log);
-//         logError.write(log);
-//     }
-// });
+        process.exit(1); // Encerra a aplicação após a exceção não tratada
+    }
+    try {
+        logError.end();
+    } catch (error) {
+        const log = `[${new Date().toISOString()}] Falha ao finalizar a gravação do log de erro: ${error}\n`;
+        console.log(log);
+        logError.write(log);
+    }
+});
 
 async function restartApp() {
     return new Promise((resolve, reject) => {

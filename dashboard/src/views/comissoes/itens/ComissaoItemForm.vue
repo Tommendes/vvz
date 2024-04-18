@@ -8,7 +8,7 @@ const confirm = useConfirm();
 import moment from 'moment';
 import { useRoute } from 'vue-router';
 const route = useRoute();
-import { userKey } from '@/global';
+import { userKey, formatCurrency } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -30,6 +30,7 @@ const STATUS_ENCERRADO = 30;
 const loading = ref(false);
 // Campos de formulário
 const itemData = ref({});
+const itemDataUnmuted = ref({});
 const showTimeLine = ref(false);
 // Eventos do registro
 const itemDataEventos = ref({});
@@ -66,6 +67,7 @@ const loadData = async () => {
         setTimeout(async () => {
             await axios.get(url).then(async (axiosRes) => {
                 itemData.value = axiosRes.data;
+                itemDataUnmuted.value = { ...axiosRes.data };
                 if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
                 // Lista o andamento do registro
             });
@@ -143,6 +145,7 @@ const saveData = async () => {
             }
             emit('cancel');
             itemData.value = res.data;
+            itemDataUnmuted.value = { ...res.data };
             if (itemData.value && itemData.value.id) {
                 if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
                 if (itemData.value.valor_base) itemData.value.valor_base = itemData.value.valor_base.replace('.', ',');
@@ -276,6 +279,36 @@ const unprogramateItem = () => {
         }
     });
 };
+const bodyMultiplicate = ref({
+    status_comis: STATUS_ABERTO,
+    parcelas: 1,
+    valor_base_um: itemData.value.valor_base,
+    valor_base_demais: 0
+});
+const multiplicateItem = (event) => {
+    bodyMultiplicate.value.parcelas = 1;
+    bodyMultiplicate.value.id_comissoes = itemData.value.id;
+    confirm.require({
+        target: event.currentTarget,
+        group: `multiplicateItemConfirm-${itemData.value.id}`,
+        message: `Selecione abaixo a quantidade de parcelas.<br />O valor deste lançamento será dividido entre elas`,
+        icon: 'pi pi-exclamation-circle',
+        acceptIcon: 'pi pi-check',
+        rejectIcon: 'pi pi-times',
+        acceptLabel: 'Confirmar',
+        rejectLabel: 'Ainda não',
+        rejectClass: 'p-button-outlined p-button-sm',
+        acceptClass: 'p-button-sm',
+        accept: async () => {
+            itemData.value.bodyMultiplicate = bodyMultiplicate.value;
+            await saveData();
+            // await loadData();
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
 // Listar agentes de negócio
 const listAgentesComissionamento = async () => {
     let url = `${baseApiUrl}/comis-agentes/f-a/gag?agente_representante`;
@@ -376,9 +409,9 @@ onBeforeMount(() => {
         await listAgentesComissionamento();
     }, Math.random() * 1000 + 250);
 });
-// calcule o valor da comissão ao alterar o valor base ou o percentual. Lembrando que valor_base e percentual estão no formato 0,99 e precisam ser convertidos para o calculo. E depois de feito o calculo, o valor da comissão deve ser formatado para 0,99
-// Como sugestão, podesse armazenar os valores em duas variáveis separadas, uma para o valor base e outra para o percentual, e depois fazer o calculo e armazenar o valor da comissão em uma terceira variável
-// Por fim o valor da comissão deve ser formatado para 0,99 em itemData.value.valor
+// Calcule o valor da comissão ao alterar o valor base ou o percentual. Lembrando que valor_base e percentual estão no formato 0,99 e precisam ser convertidos para o calculo. E depois de feito o calculo, o valor da comissão deve ser formatado para 0,99
+// Como sugestão, pode-se armazenar os valores em duas variáveis separadas, uma para o valor base e outra para o percentual, e depois fazer o calculo e armazenar o valor da comissão em uma terceira variável
+// Por fim o valor da comissão deve ser formatado para 0,99 em itemData.value.valor.
 watchEffect(() => {
     if (itemData.value.valor_base && itemData.value.percentual) {
         const valorBase = parseFloat(itemData.value.valor_base.replace(',', '.'));
@@ -389,9 +422,54 @@ watchEffect(() => {
         itemData.value.valor = '';
     }
 });
+// Calcule bodyMultiplicate.valor_base_um e bodyMultiplicate.valor_base_demais considerando que o resultado não pode ser uma dízima. Considere que o usuári opode digitar uma quantidade em bodyMultiplicate.parcelas
+// que faça com que o valor da primeir aparcela possa ser alguns centavos a mais ou a menos do que o valor base dividido pela quantidade de parcelas. Daí, calcule o valor das demais parcelas
+watchEffect(() => {
+    if (bodyMultiplicate.value.parcelas > 1) {
+        const valorBase = parseFloat(itemData.value.valor_base.replace(',', '.'));
+        const parcelas = parseInt(bodyMultiplicate.value.parcelas);
+
+        // Calcular valor da primeira parcela
+        let valorBaseUm = Math.floor((valorBase / parcelas) * 100) / 100; // Arredonda para baixo
+        if (valorBaseUm * parcelas < valorBase) {
+            valorBaseUm = Math.ceil((valorBase / parcelas) * 100) / 100; // Arredonda para cima
+        }
+
+        // Calcular valor das demais parcelas
+        const valorBaseDemais = ((valorBase - valorBaseUm) / (parcelas - 1)).toFixed(2);
+
+        bodyMultiplicate.value.valor_base_um = valorBaseUm.toFixed(2).replace('.', ',');
+        bodyMultiplicate.value.valor_base_demais = valorBaseDemais.replace('.', ',');
+    }
+});
 </script>
 
 <template>
+    <ConfirmPopup :group="`multiplicateItemConfirm-${itemData.id}`">
+        <template #message="slotProps">
+            <div class="flex flex-column align-items-center w-full gap-3 border-bottom-1 surface-border p-3 mb-3 pb-0">
+                <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>
+                <div class="text-center text-xl" v-html="slotProps.message.message" />
+                <InputText
+                    :class="`mb-${bodyMultiplicate.parcelas > 1 ? '0' : '3'}`"
+                    autocomplete="no"
+                    v-model="bodyMultiplicate.parcelas"
+                    id="parcelas"
+                    type="number"
+                    v-maska
+                    data-maska="##"
+                    placeholder="Parcelas"
+                    min="1"
+                    max="10"
+                    @keydown.enter.prevent
+                />
+                <div class="text-center mb-3 text-xl" v-if="bodyMultiplicate.parcelas > 1">
+                    O valor da parcela 1 será atualizado para {{ formatCurrency(bodyMultiplicate.valor_base_um) }}<br />e {{ bodyMultiplicate.parcelas > 2 ? `as seguintes` : 'a próxima' }} para
+                    {{ formatCurrency(bodyMultiplicate.valor_base_demais) }}.<br />Se estiver de acordo, clique em confirmar, abaixo
+                </div>
+            </div>
+        </template>
+    </ConfirmPopup>
     <ConfirmDialog :group="`comisLiquidateConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
@@ -425,7 +503,7 @@ watchEffect(() => {
         </div>
     </Dialog>
     <form @submit.prevent="saveData">
-        <div class="flex gap-1 mb-2">
+        <div class="flex overflow-x-auto gap-1 mb-2">
             <div class="flex-grow-1 flex align-items-center justify-content-center">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-user"></i></div>
@@ -496,7 +574,7 @@ watchEffect(() => {
                     <Dropdown v-else filter placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>
-            <div class="flex-none flex" v-if="mode != 'new'">
+            <div class="flex-none flex" v-if="mode == 'edit' || itemData.liquidar_em" style="max-width: 11rem">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-calendar-check"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
@@ -509,18 +587,18 @@ watchEffect(() => {
                         type="submit"
                         :disabled="!(userData.comissoes >= 2)"
                         v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)"
-                        v-tooltip.top="'Salvar registro'"
+                        v-tooltip.top="'Salvar comissão'"
                         icon="fa-solid fa-floppy-disk"
                         severity="success"
                         text
                         raised
                     />
-                    <Button type="button" :disabled="!(userData.comissoes >= 3)" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" v-tooltip.top="'Editar registro'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
+                    <Button type="button" :disabled="!(userData.comissoes >= 3)" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" v-tooltip.top="'Editar comissão'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
                     <Button
                         type="button"
-                        :disabled="!(userData.financeiro >= 3)"
+                        :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
                         v-if="itemDataLastStatus.status_comis < 20 && ['view'].includes(mode)"
-                        v-tooltip.top="'Liquidar pagamento'"
+                        v-tooltip.top="'Liquidar comissão'"
                         icon="fa-regular fa-calendar-check"
                         severity="success"
                         text
@@ -528,7 +606,7 @@ watchEffect(() => {
                         @click="programateItem"
                     />
                     <Button
-                        :disabled="!(userData.financeiro >= 3)"
+                        :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
                         type="button"
                         v-else-if="itemDataLastStatus.status_comis == 20 && ['view'].includes(mode)"
                         v-tooltip.top="'Cancelar liquidação'"
@@ -539,13 +617,24 @@ watchEffect(() => {
                         @click="unprogramateItem"
                     />
                     <!-- <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Liquidar comissão'" icon="fa-solid fa-bolt" severity="success" text raised @click="liquidateItem" /> -->
+                    <Button
+                        type="button"
+                        :disabled="!(userData.comissoes >= 3)"
+                        v-if="itemDataLastStatus.status_comis == 10 && itemDataUnmuted.parcela == 'U' && ['view'].includes(mode)"
+                        v-tooltip.top="'Parcelar comissão'"
+                        icon="fa-solid fa-ellipsis-vertical"
+                        severity="success"
+                        text
+                        raised
+                        @click="multiplicateItem"
+                    />
                     <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
-                    <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline do registro'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
+                    <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline da comissão'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
                     <Button
                         type="button"
                         :disabled="!(userData.comissoes >= 4)"
                         v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)"
-                        v-tooltip.top="'Excluir registro'"
+                        v-tooltip.top="'Excluir comissão'"
                         icon="fa-solid fa-trash"
                         severity="danger"
                         text
