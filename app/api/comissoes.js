@@ -138,7 +138,6 @@ module.exports = app => {
                         delete novasParcelas.evento
                         delete novasParcelas.updated_at
                         novasParcelas.created_at = new Date()
-                        console.log('novasParcelas', novasParcelas);
 
                         const nextEventID = await trx(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
                         novasParcelas.evento = nextEventID.count + 1
@@ -188,7 +187,7 @@ module.exports = app => {
                     .where({ id_comissoes: body.id })
                     .orderBy('created_at', 'desc')
                     .first()
-                // console.log(lastStatusComiss);
+                    
                 // Se não havia status de comissionamento então insere um novo
                 if (!lastStatusComiss) {
                     // console.log(1);
@@ -259,13 +258,13 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } else {
-            const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, parcela: body.parcela, status: STATUS_ACTIVE }).first()
-            try {
-                notExistsOrError(unique, `Comissão já registrada para este agente`)
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-                return res.status(400).send(error)
-            }
+            // const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, parcela: body.parcela, status: STATUS_ACTIVE }).first()
+            // try {
+            //     notExistsOrError(unique, `Comissão já registrada para este agente`)
+            // } catch (error) {
+            //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            //     return res.status(400).send(error)
+            // }
 
             app.db.transaction(async (trx) => {
                 // Criação de um novo registro
