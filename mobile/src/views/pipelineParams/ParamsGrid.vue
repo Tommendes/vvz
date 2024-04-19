@@ -118,7 +118,12 @@ onBeforeMount(() => {
     </div>
 </template>
 <style scoped>
-.w-95{
+nav>ol{ /* Nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+}
+.w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
@@ -135,11 +140,6 @@ ul#overlay_messages_list{
     display: flex;
 }
 /* Fim Mensagens */
-nav>ol{ /* Nav */
-    display: flex;
-    list-style: none;
-    align-items: center;
-}
 .layout-overlay{ /* Remoção de rolagem horizontal */
     max-width: 100vw;
 }

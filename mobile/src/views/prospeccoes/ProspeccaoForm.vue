@@ -398,7 +398,7 @@ watch(selectedCadastro, (value) => {
     </div>
 </template>
 <style scoped>
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
@@ -412,11 +412,25 @@ input{
 }
 </style>
 <style>
-.container{
-    overflow-x: hidden;
+nav>ol{ /* Ajuste nav */
+    display: flex;
+    list-style: none;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 0;
 }
 .layout-main {
     width: 95vw;
+}
+.p-dropdown{ /* Dropdown dos filtros do grid  */
+    display: flex;
+    align-items: center;
+}
+.p-dropdown-items-wrapper{ /* Necessário para o Scrool do dropdown funcionar*/
+    overflow: auto;
+}
+.container{
+    overflow-x: hidden;
 }
 .layout-wrapper {
     width: 95vw;
@@ -426,21 +440,5 @@ input{
 .layout-wrapper .layout-main-container {
     padding-left: 0;
     padding-right: 0;
-}
-
-nav>ol{ /* Ajuste  nav */
-    display: flex;
-    list-style: none;
-    align-items: center;
-    justify-content: flex-start;
-    padding-left: 0;
-}
-
-.p-dropdown{ /* Dropdown do filtro do grid  */
-    display: flex;
-    align-items: center;
-}
-.p-dropdown-items-wrapper{
-    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
 }
 </style>

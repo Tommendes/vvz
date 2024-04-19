@@ -161,15 +161,14 @@ onBeforeMount(() => {
         color: var(--gray-900);
     }
 }
-
-.animation-color {
-    animation: animation-color 5s linear;
-}
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw !important;
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
+}
+.animation-color {
+    animation: animation-color 5s linear;
 }
 </style>
 <style>

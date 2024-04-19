@@ -167,8 +167,9 @@ onBeforeMount(() => {
         </DataTable>
     </div>
 </template>
+
 <style scoped>
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;

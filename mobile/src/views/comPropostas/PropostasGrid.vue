@@ -234,7 +234,7 @@ watchEffect(() => {
     </div>
 </template>
 <style scoped>
-.w-95{
+.w-95{ /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
@@ -242,34 +242,24 @@ watchEffect(() => {
 }
 </style>
 <style>
-/* Mensagens do navbar */
-ul#overlay_messages_list{
+ul#overlay_messages_list{ /* Mensagens do navbar */
     padding: 0px;
     margin: 0;
 }
-th{
+th{ /* Largura das colunas */
     max-width: 6rem;
+}
+#pv_id_5{
+    width: 4rem;
 }
 input.p-variant-filled{
     width: 100%;
 }
-
 .p-menuitem-link{
     display: flex;
 }
 nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
-    display: inline;
-}
-#pv_id_5{
-    width: 4rem;    
-}
-/* Fim Mensagens do navbar */
-
-nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a, nav>ol>li.p-menuitem-separator, nav>ol>li.p-menuitem, nav>ol>li.p-menuitem>a{
-    display: inline; /* Estilização do nav */
-}
-#pv_id_5{
-    width: 4rem;
+    display: inline; /* Itens do nav */
 }
 .p-column-filter-menu-button, .p-column-filter-clear-button {
     margin-left: 0.5rem;

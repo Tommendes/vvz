@@ -200,7 +200,6 @@ input{
     align-items: center;
 }
 </style>
-
 <style>
 nav>ol{ /* Nav */
     display: flex;
