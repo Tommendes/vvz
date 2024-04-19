@@ -39,7 +39,7 @@ const idPipeline = ref(null); // Id do registro selecionado
 const dropdownTiposDoc = ref([
     { label: 'Outros', value: '0' },
     { label: 'Propostas', value: '1' },
-    { label: 'Pedidos', value: '2' }
+    { label: 'Pedidos', value: '2' },
     { label: 'Assistência Técnica', value: '3' }
 ]);
 const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
