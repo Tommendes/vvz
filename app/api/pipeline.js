@@ -4,7 +4,7 @@ const ftp = require('basic-ftp');
 const path = require('path')
 
 module.exports = app => {
-    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_COMISSIONADO, STATUS_ENCERRADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
+    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PEDIDO_INTERNO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_COMISSIONADO, STATUS_ENCERRADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
     const { TIPO_PV_SUPORTE, TIPO_PV_MONTAGEM, TIPO_PV_VENDAS } = require('./pv.js')(app)
     const { existsOrError, booleanOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const { formatCurrency } = require('./facilities.js')(app)
@@ -247,14 +247,15 @@ module.exports = app => {
                     status_params: STATUS_PENDENTE,
                 });
 
-                if (pipeline_params_force.doc_venda == 2) {
+                if (('2', '3').includes(pipeline_params_force.doc_venda)) {
                     // Inserir na tabela de status um registro de pedido caso o pipeline_params_force.doc_venda = 2                    
+                    const statusParams = pipeline_params_force.doc_venda == 2 ? STATUS_PEDIDO : STATUS_PEDIDO_INTERNO
                     await trx(tabelaPipelineStatusDomain).insert({
                         evento: evento || 1,
                         status: STATUS_ACTIVE,
                         created_at: new Date(),
                         id_pipeline: recordId,
-                        status_params: STATUS_PEDIDO,
+                        status_params: statusParams,
                     });
                 }
                 /**

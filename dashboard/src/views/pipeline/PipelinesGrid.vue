@@ -123,6 +123,7 @@ const dropdownStatus = ref([
     { label: 'Pendente', value: '0' },
     { label: 'Convertido', value: '10' },
     { label: 'Pedido', value: '20' },
+    { label: 'Pedido Interno', value: '21' },
     // { label: 'Pedido Comissionado', value: '70' },
     { label: 'Liquidado', value: '80' },
     { label: 'Cancelado', value: '89' }
