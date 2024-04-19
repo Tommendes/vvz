@@ -40,6 +40,7 @@ const dropdownTiposDoc = ref([
     { label: 'Outros', value: '0' },
     { label: 'Propostas', value: '1' },
     { label: 'Pedidos', value: '2' }
+    { label: 'Assistência Técnica', value: '3' }
 ]);
 const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
 const dropdownUnidadesFilter = ref([]); // Itens do dropdown de Unidades de Negócio do grid
@@ -123,7 +124,7 @@ const dropdownStatus = ref([
     { label: 'Pendente', value: '0' },
     { label: 'Convertido', value: '10' },
     { label: 'Pedido', value: '20' },
-    { label: 'Pedido Interno', value: '21' },
+    { label: 'Assistência Técnica', value: '21' },
     // { label: 'Pedido Comissionado', value: '70' },
     { label: 'Liquidado', value: '80' },
     { label: 'Cancelado', value: '89' }
