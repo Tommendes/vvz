@@ -247,7 +247,7 @@ module.exports = app => {
                     status_params: STATUS_PENDENTE,
                 });
 
-                if (('2', '3').includes(pipeline_params_force.doc_venda.toString()) {
+                if (('2', '3').includes(pipeline_params_force.doc_venda.toString())) {
                     // Inserir na tabela de status um registro de pedido caso o pipeline_params_force.doc_venda = 2                    
                     const statusParams = pipeline_params_force.doc_venda == 2 ? STATUS_PEDIDO : STATUS_PEDIDO_INTERNO
                     await trx(tabelaPipelineStatusDomain).insert({
