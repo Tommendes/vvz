@@ -18,11 +18,14 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let body = { ...req.body }
+        const bodyMultiplicate = body.bodyMultiplicate || undefined
+        delete body.bodyMultiplicate
         delete body.id;
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.financeiro >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            if (bodyMultiplicate) isMatchOrError(uParams && (uParams.comissoes >= 2 || uParams.financeiro >= 2), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.financeiro >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
             else isMatchOrError(uParams && uParams.comissoes >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -79,9 +82,7 @@ module.exports = app => {
                 return res.status(400).send(error)
             }
             const bodyStatus = body.bodyStatus || undefined
-            const bodyMultiplicate = body.bodyMultiplicate || undefined
             delete body.bodyStatus
-            delete body.bodyMultiplicate
 
             // console.log('bodyMultiplicate', bodyMultiplicate);
             // console.log('body', body);
