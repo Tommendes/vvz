@@ -141,7 +141,7 @@ const formIsValid = () => {
     return liquidarEmIsValid;
 };
 
-// Programar liquidação em grupo
+// Liquidar em grupo
 const scheduleGroup = () => {
     if (!formIsValid()) return;
     const url = `${urlBase.value}`;
@@ -239,7 +239,7 @@ onBeforeMount(async () => {
                     <Button
                         type="button"
                         icon="fa-solid fa-file-invoice-dollar fa-fade"
-                        label="Programar liquidação em grupo"
+                        label="Liquidar todos"
                         v-on:click="closeCallback"
                         @click="scheduleGroupSettlement()"
                         text
@@ -272,7 +272,7 @@ onBeforeMount(async () => {
             v-if="gridData && gridData.length > 0"
             type="button"
             icon="fa-solid fa-file-invoice-dollar"
-            label="Programar liquidação em grupo"
+            label="Liquidar todos"
             :outlined="hasPendingCommissions()"
             :disabled="!hasPendingCommissions()"
             @click="scheduleGroupSettlement()"
