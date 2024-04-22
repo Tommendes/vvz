@@ -725,7 +725,7 @@ onMounted(() => {
                             selectionMode="range"
                             :manualInput="true"
                             showButtonBar
-                            class="custom-calendar block"
+                            class="custom-calendar w-full block"
                             @update:modelValue="applyBiParamsVG()"
                         />
                     </div>

@@ -264,7 +264,12 @@ onBeforeMount(() => {
                 @click="toggleMenuMessages"
                 aria-haspopup="true"
                 aria-controls="overlay_menumessages"
-                class="p-link layout-topbar-menu-button layout-topbar-button"
+                class="
+                    p-link
+                    layout-topbar-menu-button
+                    layout-topbar-button
+                    bg-transparent
+                "
             >
                 <i class="fa-regular fa-bell"></i>
             </Button>
