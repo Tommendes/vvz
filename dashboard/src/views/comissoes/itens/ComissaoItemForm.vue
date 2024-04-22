@@ -619,7 +619,7 @@ watchEffect(() => {
                     <!-- <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Liquidar comissão'" icon="fa-solid fa-bolt" severity="success" text raised @click="liquidateItem" /> -->
                     <Button
                         type="button"
-                        :disabled="!(userData.comissoes >= 3)"
+                        :disabled="!(userData.comissoes >= 2)"
                         v-if="itemDataLastStatus.status_comis == 10 && itemDataUnmuted.parcela == 'U' && ['view'].includes(mode)"
                         v-tooltip.top="'Parcelar comissão'"
                         icon="fa-solid fa-ellipsis-vertical"

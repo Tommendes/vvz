@@ -122,7 +122,7 @@ onMounted(async () => {
         <div class="col-12">
             <div class="card">
                 <PipelineForm ref="pipelineForm" />
-                <div v-if="itemData.id && itemDataParam.doc_venda == 2">
+                <div v-if="itemData.id && itemDataParam.doc_venda >= 2 && (userData.comissoes >= 1 || userData.financeiro >= 3)">
                     <div class="p-fluid grid">
                         <div class="col-12" style="text-align: center">
                             <div class="flex align-items-end flex-wrap card-container purple-container">

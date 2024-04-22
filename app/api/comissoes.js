@@ -18,11 +18,14 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let body = { ...req.body }
+        const bodyMultiplicate = body.bodyMultiplicate || undefined
+        delete body.bodyMultiplicate
         delete body.id;
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.financeiro >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            if (bodyMultiplicate) isMatchOrError(uParams && (uParams.comissoes >= 2 || uParams.financeiro >= 2), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.financeiro >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
             else isMatchOrError(uParams && uParams.comissoes >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -34,8 +37,6 @@ module.exports = app => {
         const tabelaComisAgentes = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         // const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
-
-        body.agente_representante = body.agente_representante || 0
 
         let pipeline = {}
         let last = {}
@@ -49,7 +50,6 @@ module.exports = app => {
             // Verificar se o pipeline existe
             pipeline = await app.db(tabelaPipeline).where({ id: body.id_pipeline, status: STATUS_ACTIVE }).first()
             existsOrError(pipeline, 'Registro de Pipeline não encontrado')
-            if (![0, 1].includes(body.agente_representante)) throw 'Se é a representação não informado'
             existsOrError(body.id_comis_agentes, 'Agente não informado')
             // Verificar se o comis_agentes existe
             const existsComissAgentes = await app.db(tabelaComisAgentes).where({ id: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
@@ -81,18 +81,8 @@ module.exports = app => {
             } catch (error) {
                 return res.status(400).send(error)
             }
-            // Verificar se o registro é de representante e se está sendo alterado para não representante. Se sim, parar tudo pois primeiro precisa ser alterado o registro de representante
-            try {
-                if (last.agente_representante === 1 && body.agente_representante === 0) throw `Este atualmente é o registro de comissão do representante. Mas parece que essa informação está sendo alterada. Antes de prosseguir, acesse o registro desejado e informe que aquele é o novo registro de comissão da representação, ou marque a opção para que essa seja o registro.`
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-                return res.status(400).send(error)
-            }
-
             const bodyStatus = body.bodyStatus || undefined
-            const bodyMultiplicate = body.bodyMultiplicate || undefined
             delete body.bodyStatus
-            delete body.bodyMultiplicate
 
             // console.log('bodyMultiplicate', bodyMultiplicate);
             // console.log('body', body);
