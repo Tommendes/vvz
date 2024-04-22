@@ -173,7 +173,7 @@ const dropdownDocVenda = ref([
     { value: 0, label: 'Não' },
     { value: 1, label: 'É proposta' },
     { value: 2, label: 'É pedido' },
-    { value: 2, label: 'Assistência técnica' }
+    { value: 3, label: 'Assistência técnica' }
 ]);
 const dropdownTipoSec = ref([]);
 
