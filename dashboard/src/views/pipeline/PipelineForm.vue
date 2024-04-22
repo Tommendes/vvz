@@ -337,6 +337,13 @@ const itemDataStatusPreload = ref([
         icon: 'fa-solid fa-shopping-cart',
         color: '#4cd07d'
     },
+    {
+        status: '21',
+        action: 'Criação',
+        label: 'Pedido AT criado',
+        icon: 'fa-solid fa-screwdriver-wrench',
+        color: '#4cd07d'
+    },
     // {
     //     status: '70',
     //     action: 'Comissionar',
