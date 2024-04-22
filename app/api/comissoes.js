@@ -35,8 +35,6 @@ module.exports = app => {
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         // const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
 
-        body.agente_representante = body.agente_representante || 0
-
         let pipeline = {}
         let last = {}
         if (body.id) last = await app.db(tabelaDomain).where({ id: body.id }).first()
@@ -49,7 +47,6 @@ module.exports = app => {
             // Verificar se o pipeline existe
             pipeline = await app.db(tabelaPipeline).where({ id: body.id_pipeline, status: STATUS_ACTIVE }).first()
             existsOrError(pipeline, 'Registro de Pipeline não encontrado')
-            if (![0, 1].includes(body.agente_representante)) throw 'Se é a representação não informado'
             existsOrError(body.id_comis_agentes, 'Agente não informado')
             // Verificar se o comis_agentes existe
             const existsComissAgentes = await app.db(tabelaComisAgentes).where({ id: body.id_comis_agentes, status: STATUS_ACTIVE }).first()
@@ -81,14 +78,6 @@ module.exports = app => {
             } catch (error) {
                 return res.status(400).send(error)
             }
-            // Verificar se o registro é de representante e se está sendo alterado para não representante. Se sim, parar tudo pois primeiro precisa ser alterado o registro de representante
-            try {
-                if (last.agente_representante === 1 && body.agente_representante === 0) throw `Este atualmente é o registro de comissão do representante. Mas parece que essa informação está sendo alterada. Antes de prosseguir, acesse o registro desejado e informe que aquele é o novo registro de comissão da representação, ou marque a opção para que essa seja o registro.`
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-                return res.status(400).send(error)
-            }
-
             const bodyStatus = body.bodyStatus || undefined
             const bodyMultiplicate = body.bodyMultiplicate || undefined
             delete body.bodyStatus
