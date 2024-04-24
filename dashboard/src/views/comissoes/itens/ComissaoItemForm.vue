@@ -25,6 +25,7 @@ const emit = defineEmits(['newItem', 'cancel', 'refreshPipeline']);
 const STATUS_ABERTO = 10;
 const STATUS_LIQUIDADO = 20;
 const STATUS_ENCERRADO = 30;
+const STATUS_FATURADO = 40;
 
 // Url base do form action
 const loading = ref(false);
@@ -53,7 +54,9 @@ const dropdownParcelas = ref([
     { value: '7', label: `7` },
     { value: '8', label: `8` },
     { value: '9', label: `9` },
-    { value: '10', label: `10` }
+    { value: '10', label: `10` },
+    { value: '11', label: `11` },
+    { value: '12', label: `12` }
 ]);
 const mode = ref('new');
 
@@ -189,6 +192,7 @@ const deleteItem = () => {
         }
     });
 };
+
 // Liquida o registro
 const liquidateItem = () => {
     const bodyStatus = {
@@ -279,6 +283,55 @@ const unprogramateItem = () => {
         }
     });
 };
+const setFiscalDone = () => {
+    const bodyStatus = {
+        id_comissoes: itemData.value.id,
+        status_comis: STATUS_FATURADO
+    };
+    confirm.require({
+        group: `setFiscalDoneConfirm-${itemData.value.id}`,
+        header: 'Confirmar faturamento',
+        message: 'Confirma que este registro foi FATURADO?',
+        message2: '<strong>Esta operação ainda poderá ser desfeita cancelando a informação</strong>',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                await loadData();
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+const setFiscalUnDone = () => {
+    const bodyStatus = {
+        id_comissoes: itemData.value.id,
+        status_comis: STATUS_FATURADO,
+        remove_status: true
+    };
+    confirm.require({
+        group: `setFiscalDoneConfirm-${itemData.value.id}`,
+        header: 'Exlcuir faturamento',
+        message: 'Confirma que este registro foi NÃO FOI FATURADO ou o faturamento foi CANCELADO?',
+        message2: '<strong>Você ainda poderá confirmar o faturamento posteriormente</strong>',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                await loadData();
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
 const bodyMultiplicate = ref({
     status_comis: STATUS_ABERTO,
     parcelas: 1,
@@ -289,8 +342,8 @@ const multiplicateItem = (event) => {
     bodyMultiplicate.value.parcelas = 1;
     bodyMultiplicate.value.id_comissoes = itemData.value.id;
     confirm.require({
+        group: `comisLiquidateConfirm-${itemData.value.id}`,
         target: event.currentTarget,
-        group: `multiplicateItemConfirm-${itemData.value.id}`,
         message: `Selecione abaixo a quantidade de parcelas.<br />O valor deste lançamento será dividido entre elas`,
         icon: 'fa-solid fa-circle-exclamation',
         acceptIcon: 'fa-solid fa-check',
@@ -350,25 +403,32 @@ const STATUS_ENCERRADO = 30
 */
 const itemDataStatusPreload = ref([
     {
-        status: '10',
+        status: STATUS_ABERTO,
         action: 'Criação',
         label: 'Criado',
         icon: 'fa-solid fa-plus',
         color: '#3b82f6'
     },
     {
-        status: '20',
+        status: STATUS_LIQUIDADO,
         action: 'Liquidação',
         label: 'Liquidado',
         icon: 'fa-solid fa-shopping-cart',
         color: '#4cd07d'
     },
     {
-        status: '30',
+        status: STATUS_ENCERRADO,
         action: 'Encerramento',
-        label: 'Enderrado',
+        label: 'Encerrado',
         icon: 'fa-solid fa-check',
         color: '#607D8B'
+    },
+    {
+        status: STATUS_FATURADO,
+        action: 'Faturamento',
+        label: 'Faturamento informado',
+        icon: 'fa-solid fa-cash-register',
+        color: '#45590d'
     }
 ]);
 // Listar status do registro
@@ -377,13 +437,16 @@ const listStatusRegistro = async () => {
         const url = `${baseApiUrl}/comis-status/${props.itemDataRoot.id || itemData.value.id}`;
         await axios.get(url).then((res) => {
             if (res.data && res.data.data.length > 0) {
-                itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
+                // Status_faturado não entra como status de comissionamento do registro
+                itemDataLastStatus.value = res.data.data[res.data.data.length - 1 - (res.data.data[res.data.data.length - 1].status_comis == STATUS_FATURADO)];
                 itemData.value.status_comis = itemDataLastStatus.value.status_comis;
                 itemDataStatus.value = [];
                 res.data.data.forEach((element) => {
                     const status = itemDataStatusPreload.value.filter((item) => {
                         return item.status == element.status_comis;
                     });
+                    // Se encontrato uma ocorrência de status_faturado, então o registro está faturado
+                    if (!itemDataLastStatus.value.faturado && element.status_comis == STATUS_FATURADO) itemDataLastStatus.value.faturado = true;
                     itemDataStatus.value.push({
                         // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
                         date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
@@ -445,7 +508,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <ConfirmPopup :group="`multiplicateItemConfirm-${itemData.id}`">
+    <ConfirmPopup :group="`-${itemData.id}`">
         <template #message="slotProps">
             <div class="flex flex-column align-items-center w-full gap-3 border-bottom-1 surface-border p-3 mb-3 pb-0">
                 <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>
@@ -471,6 +534,22 @@ watchEffect(() => {
         </template>
     </ConfirmPopup>
     <ConfirmDialog :group="`comisLiquidateConfirm-${itemData.id}`">
+        <template #container="{ message, acceptCallback, rejectCallback }">
+            <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
+                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                    <i class="pi pi-question text-5xl"></i>
+                </div>
+                <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
+                <p class="mb-0" v-html="message.message" />
+                <p class="mb-0" v-html="message.message2" />
+                <div class="flex align-items-center gap-2 mt-4">
+                    <Button label="Confirmar" @click="acceptCallback"></Button>
+                    <Button label="Ainda não" outlined @click="rejectCallback"></Button>
+                </div>
+            </div>
+        </template>
+    </ConfirmDialog>
+    <ConfirmDialog :group="`setFiscalDoneConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
                 <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
@@ -519,7 +598,11 @@ watchEffect(() => {
                         v-model="itemData.id_comis_agentes"
                         :options="dropdownAgentes"
                         :disabled="['view'].includes(mode)"
-                    />
+                    >
+                        <template #option="slotProps">
+                            <div class="p-dropdown-item">{{ slotProps.option.label }}</div>
+                        </template>
+                    </Dropdown>
                 </div>
             </div>
             <div class="flex-none flex">
@@ -574,13 +657,13 @@ watchEffect(() => {
                     <Dropdown v-else filter placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>
-            <div class="flex-none flex" v-if="mode == 'edit' || itemData.liquidar_em" style="max-width: 11rem">
+            <!-- <div class="flex-none flex" v-if="mode == 'edit' || itemData.liquidar_em" style="max-width: 11rem">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-calendar-check"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                     <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.liquidar_em" :showOnFocus="true" showButtonBar dateFormat="dd/mm/yy" />
                 </div>
-            </div>
+            </div> -->
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Button
@@ -593,11 +676,20 @@ watchEffect(() => {
                         text
                         raised
                     />
-                    <Button type="button" :disabled="!(userData.comissoes >= 3)" v-if="itemDataLastStatus.status_comis < 30 && mode == 'view'" v-tooltip.top="'Editar comissão'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
+                    <Button
+                        type="button"
+                        :disabled="!(userData.comissoes >= 3)"
+                        v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && mode == 'view'"
+                        v-tooltip.top="'Editar comissão'"
+                        icon="fa-regular fa-pen-to-square"
+                        text
+                        raised
+                        @click="mode = 'edit'"
+                    />
                     <Button
                         type="button"
                         :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
-                        v-if="itemDataLastStatus.status_comis < 20 && ['view'].includes(mode)"
+                        v-if="!itemData.liquidar_em && ['view'].includes(mode)"
                         v-tooltip.top="'Liquidar comissão'"
                         icon="fa-regular fa-calendar-check"
                         severity="success"
@@ -608,7 +700,7 @@ watchEffect(() => {
                     <Button
                         :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
                         type="button"
-                        v-else-if="itemDataLastStatus.status_comis == 20 && ['view'].includes(mode)"
+                        v-else-if="itemData.liquidar_em && ['view'].includes(mode)"
                         v-tooltip.top="'Cancelar liquidação'"
                         icon="fa-regular fa-calendar-xmark"
                         severity="warning"
@@ -620,20 +712,42 @@ watchEffect(() => {
                     <Button
                         type="button"
                         :disabled="!(userData.comissoes >= 2)"
-                        v-if="itemDataLastStatus.status_comis == 10 && itemDataUnmuted.parcela == 'U' && ['view'].includes(mode)"
-                        v-tooltip.top="'Parcelar comissão'"
+                        v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && itemDataUnmuted.parcela == 'U' && ['view'].includes(mode)"
+                        v-tooltip.top="[0, 1].includes(props.itemDataRoot.agente_representante) ? 'Parcelar recebimento' : 'Parcelar pagamento'"
                         icon="fa-solid fa-ellipsis-vertical"
                         severity="success"
                         text
                         raised
                         @click="multiplicateItem"
                     />
+                    <Button
+                        type="button"
+                        :disabled="!(userData.comissoes >= 3)"
+                        v-if="!itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
+                        v-tooltip.top="'Confirmar faturamento'"
+                        icon="fa-solid fa-cash-register"
+                        style="color: #45590d"
+                        text
+                        raised
+                        @click="setFiscalDone"
+                    />
+                    <Button
+                        type="button"
+                        :disabled="!(userData.comissoes >= 3)"
+                        v-if="itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
+                        v-tooltip.top="'Remover faturamento'"
+                        icon="fa-solid fa-cash-register"
+                        severity="warning"
+                        text
+                        raised
+                        @click="setFiscalUnDone"
+                    />
                     <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
                     <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline da comissão'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
                     <Button
                         type="button"
                         :disabled="!(userData.comissoes >= 4)"
-                        v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)"
+                        v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && ['view'].includes(mode)"
                         v-tooltip.top="'Excluir comissão'"
                         icon="fa-solid fa-trash"
                         severity="danger"
@@ -657,6 +771,14 @@ watchEffect(() => {
             <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
             <p>canAddCommission: {{ canAddCommission }}</p>
             <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
+            <p>faturado: {{ itemDataLastStatus.faturado }}</p>
         </Fieldset>
     </form>
 </template>
+
+<style scoped>
+.p-dropdown-item {
+    font-weight: 500;
+    padding: 0.25rem 0.25rem;
+}
+</style>

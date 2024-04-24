@@ -2,6 +2,7 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const { STATUS_ABERTO, STATUS_LIQUIDADO, STATUS_ENCERRADO, STATUS_FATURADO } = require('./comis_status.js')(app)
     // const { STATUS_COMISSIONADO } = require('./pipeline_status.js')(app)
     const tabela = 'comissoes'
     const tabelaStatusComiss = 'comis_status'
@@ -9,9 +10,6 @@ module.exports = app => {
     const tabelaAlias = 'Comissão'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
-    const STATUS_ABERTO = 10
-    const STATUS_LIQUIDADO = 20
-    const STATUS_ENCERRADO = 30
     const { ceilTwoDecimals, formatCurrency } = app.api.facilities
 
     const save = async (req, res) => {

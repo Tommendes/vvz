@@ -9,6 +9,7 @@ module.exports = app => {
     const STATUS_ABERTO = 10
     const STATUS_LIQUIDADO = 20
     const STATUS_ENCERRADO = 30
+    const STATUS_FATURADO = 40
 
     const get = async (req, res) => {
         let user = req.user
@@ -121,7 +122,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.comercial >= 3 || uParams.comissoes >= 3), `${noAccessMsg} "Alteração de status de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.comissoes >= 3, `${noAccessMsg} "Alteração de status de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -141,27 +142,52 @@ module.exports = app => {
         const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
         body.evento = nextEventID.count + 1
         body.created_at = new Date()
-        app.db(tabelaDomain)
-            .insert(body)
-            .then(ret => {
-                body.id = ret[0]
-                // registrar o evento na tabela de eventos
-                const { createEventIns } = app.api.sisEvents
-                createEventIns({
-                    "notTo": ['created_at', 'evento'],
-                    "next": body,
-                    "request": req,
-                    "evento": {
-                        "evento": `Novo registro`,
-                        "tabela_bd": tabela,
-                    }
+        if (body.remove_status) {
+            app.db(tabelaDomain)
+                .where({ id_comissoes: body.id_comissoes, status_comis: body.status_comis })
+                .del()
+                .then(ret => {
+                    body.id = ret[0]
+                    // registrar o evento na tabela de eventos
+                    const { createEventIns } = app.api.sisEvents
+                    createEventIns({
+                        "notTo": ['created_at', 'evento'],
+                        "next": body,
+                        "request": req,
+                        "evento": {
+                            "evento": `Exclusão de registro`,
+                            "tabela_bd": tabela,
+                        }
+                    })
+                    return res.json(body)
                 })
-                return res.json(body)
-            })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
-            })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
+        } else {
+            app.db(tabelaDomain)
+                .insert(body)
+                .then(ret => {
+                    body.id = ret[0]
+                    // registrar o evento na tabela de eventos
+                    const { createEventIns } = app.api.sisEvents
+                    createEventIns({
+                        "notTo": ['created_at', 'evento'],
+                        "next": body,
+                        "request": req,
+                        "evento": {
+                            "evento": `Novo registro`,
+                            "tabela_bd": tabela,
+                        }
+                    })
+                    return res.json(body)
+                })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
+        }
     }
 
     const getStatus = async (req, res) => {
@@ -184,10 +210,10 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         try {
             const body = await app.db(tabelaDomain)
-            .select(`status_comis`)
-            .where({ id_comissoes: req.query.id_comis })
-            .orderBy('created_at', 'desc')
-            .first()
+                .select(`status_comis`)
+                .where({ id_comissoes: req.query.id_comis })
+                .orderBy('created_at', 'desc')
+                .first()
             return res.json(body)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -199,6 +225,7 @@ module.exports = app => {
         get, getByFunction,
         STATUS_ABERTO,
         STATUS_LIQUIDADO,
-        STATUS_ENCERRADO
+        STATUS_ENCERRADO,
+        STATUS_FATURADO
     }
 }
