@@ -35,7 +35,8 @@ const STATUS_ENCERRADO = 30;
 const dropdownStatus = ref([
     { label: 'Criado/Lançado', value: '10', severity: 'danger' },
     { label: 'Liquidado', value: '20', severity: 'warning' },
-    { label: 'Encerrado', value: '30', severity: 'success' }
+    { label: 'Encerrado', value: '30', severity: 'success' },
+    { label: 'Faturado', value: '40', style: 'color: #45590d' }
 ]);
 import moment from 'moment';
 // Carrega os dados da grid
