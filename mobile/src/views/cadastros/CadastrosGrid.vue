@@ -296,4 +296,7 @@ tr.p-row-even>td{ /* Ajuste na largura das colunas */
     display: table-column;
     max-width: 80%;
 }
+.layout-topbar-menu-button{ /* ícone de mensagens */
+    min-width: 1rem;
+}
 </style>

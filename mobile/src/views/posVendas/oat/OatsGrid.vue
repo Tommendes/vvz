@@ -177,3 +177,8 @@ onMounted(() => {
         </DataTable>
     </div>
 </template>
+<style>
+th{ /* Largura das colunas */
+    max-width: 1rem;
+}
+</style>

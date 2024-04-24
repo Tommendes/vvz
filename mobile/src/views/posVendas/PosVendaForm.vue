@@ -657,10 +657,18 @@ nav>ol{ /* Ajuste  nav */
     display: flex;
     align-items: center;
 }
-.p-dropdown-items-wrapper{
-    overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
+.p-dropdown-items-wrapper{ /* Necessário para o Scrool do dropdown funcionar*/
+    overflow: auto;
 }
-.container{
+.p-timeline-event{ /* Ações do andamento do registro */
+    margin-bottom: 15px;
+}
+.p-timeline-event-separator{ /* ícones do andamento do registro */
+    margin-left: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+.container{ /* Rolagem lateral */
     overflow-x: hidden;
 }
 </style>

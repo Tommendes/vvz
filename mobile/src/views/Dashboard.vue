@@ -807,15 +807,13 @@ onMounted(() => {
     display: inline;
 }
 /* Fim do ajuste nos calendários*/
-/* Início da estilização das mensagens */
-ul#overlay_messages_list{
+ul#overlay_messages_list{ /* Mensagens */
     padding: 0px;
     margin: 0;
 }
-.p-menuitem-link{
+.p-menuitem-link{ /* Mensagens */
     display: flex;
 }
-/* Fim da estilização das mensagens */
 li{
     display: list-item;
 }
@@ -825,5 +823,8 @@ li{
 .layout-main {
     margin-left: auto;
     margin-right: auto;
+}
+.layout-topbar-menu-button{
+    min-width: 1rem;
 }
 </style>

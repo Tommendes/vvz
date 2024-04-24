@@ -335,4 +335,7 @@ ul{
         display: none;
     }
 }
+.layout-topbar-menu-button{ /* ícone de mensagens */
+    min-width: 1rem;
+}
 </style>
