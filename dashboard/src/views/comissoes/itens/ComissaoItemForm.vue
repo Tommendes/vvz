@@ -342,7 +342,7 @@ const multiplicateItem = (event) => {
     bodyMultiplicate.value.parcelas = 1;
     bodyMultiplicate.value.id_comissoes = itemData.value.id;
     confirm.require({
-        group: `comisLiquidateConfirm-${itemData.value.id}`,
+        group: `comisMultiplicateConfirm-${itemData.value.id}`,
         target: event.currentTarget,
         message: `Selecione abaixo a quantidade de parcelas.<br />O valor deste lançamento será dividido entre elas`,
         icon: 'fa-solid fa-circle-exclamation',
@@ -508,7 +508,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <ConfirmPopup :group="`-${itemData.id}`">
+    <ConfirmPopup :group="`comisMultiplicateConfirm-${itemData.id}`">
         <template #message="slotProps">
             <div class="flex flex-column align-items-center w-full gap-3 border-bottom-1 surface-border p-3 mb-3 pb-0">
                 <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>
