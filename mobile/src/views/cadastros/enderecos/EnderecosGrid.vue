@@ -151,7 +151,6 @@ onBeforeMount(() => {
                         "
                     />
                     <span class="p-input-icon-left">
-                        <i class="fa-solid fa-magnifying-glass" />
                         <InputText class="w-full" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>

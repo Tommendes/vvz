@@ -180,7 +180,10 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: `/${userData.schema_description}/cadastros` }]" />
+    <div class="w-95 mb-4">
+        <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: `/${userData.schema_description}/cadastros` }]" />
+    </div>
+
     <div class="card w-95">
         <CadastroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
@@ -292,5 +295,8 @@ ul#overlay_messages_list{
 tr.p-row-even>td{ /* Ajuste na largura das colunas */
     display: table-column;
     max-width: 80%;
+}
+.layout-topbar-menu-button{ /* ícone de mensagens */
+    min-width: 1rem;
 }
 </style>

@@ -143,7 +143,6 @@ onMounted(() => {
                 <div class="flex flex-column gap-3">
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
-                        <i class="fa-solid fa-magnifying-glass" />
                         <InputText class="w-full" v-model="filters['global'].value" placeholder="Pesquise..." />
                     </span>
                 </div>
@@ -178,3 +177,8 @@ onMounted(() => {
         </DataTable>
     </div>
 </template>
+<style>
+th{ /* Largura das colunas */
+    max-width: 1rem;
+}
+</style>

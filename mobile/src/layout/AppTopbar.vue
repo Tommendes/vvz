@@ -264,7 +264,12 @@ onBeforeMount(() => {
                 @click="toggleMenuMessages"
                 aria-haspopup="true"
                 aria-controls="overlay_menumessages"
-                class="p-link layout-topbar-menu-button layout-topbar-button"
+                class="
+                    p-link
+                    layout-topbar-menu-button
+                    layout-topbar-button
+                    bg-transparent
+                "
             >
                 <i class="fa-regular fa-bell"></i>
             </Button>
@@ -329,5 +334,8 @@ ul{
     #hide-on-small-screen1, #hide-on-small-screen2 {
         display: none;
     }
+}
+.layout-topbar-menu-button{ /* ícone de mensagens */
+    min-width: 1rem;
 }
 </style>

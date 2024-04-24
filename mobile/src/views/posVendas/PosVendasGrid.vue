@@ -314,21 +314,19 @@ watchEffect(() => {
 }
 </style>
 <style>
-/* Mensagens */
-ul#overlay_messages_list{
+ul#overlay_messages_list{ /* Mensagens */
     padding: 0px;
     margin: 0;
 }
-.p-menuitem-link{
+.p-menuitem-link{ /* Mensagens */
     display: flex;
 }
-/* Fim Mensagens */
-nav>ol{ /* Nav */
+nav>ol{ /* Nav de redirecionamento */
     display: flex;
     list-style: none;
     align-items: center;
 }
-.container{
+.container{ /* Rolagem lateral da página */
     overflow-x: hidden;
 }
 .p-column-filter-menu-button, .p-column-filter-clear-button {
