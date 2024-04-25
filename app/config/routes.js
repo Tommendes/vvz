@@ -4,6 +4,10 @@ module.exports = app => {
     app.post('/signup', app.api.user.signup)
     app.post('/signin', app.api.auth.signin)
     app.post('/validateToken', app.api.auth.validateToken)
+    app.get('/getIP', (req, res) => {
+        const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        res.json({ ip: ipAddress });
+    });
 
     /**
      * Schemas Control
