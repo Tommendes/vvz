@@ -1,8 +1,10 @@
 <script setup>
 import { useUserStore } from '@/stores/user';
+import { baseApiUrl } from '@/env';
 import { userKey, glKey } from '@/global';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 const router = useRouter();
 
@@ -23,9 +25,8 @@ const validateToken = async () => {
 const getIp = async () => {
     const json = localStorage.getItem(userKey);
     const userData = JSON.parse(json);
-    const store = useUserStore();
-    const userIp = await store.getIpAddress(userData);
-    console.log(userIp);
+    const userIp = await axios.get(`${baseApiUrl}/getIp`);
+    userData.ip = userIp.data.ip.split(',')[0];
 };
 
 onMounted(() => {
