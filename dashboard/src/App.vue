@@ -25,8 +25,9 @@ const validateToken = async () => {
 const getIp = async () => {
     const json = localStorage.getItem(userKey);
     const userData = JSON.parse(json);
-    const userIp = await axios.get(`${baseApiUrl}/getIp`);
-    userData.ip = userIp.data.ip.split(',')[0];
+    // const userIp = await axios.get(`${baseApiUrl}/getIp`);
+    const userIp = await axios.get(`https://api.vivazul.com.br/getIp`);
+    userData.ip = userIp.data;
 };
 
 onMounted(() => {

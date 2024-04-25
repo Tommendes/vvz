@@ -160,27 +160,17 @@ module.exports = app => {
                         fields += `${newest}: ${last[older]} => ${next[newest]}, `;
             }
         }
+
         // se campos foram alterados então registra
         if (force || (fields.length >= 2 && fields.substr(0, fields.length - 2).length > 0)) {
             // remove a virgula e espaço inseridos ao final da string
             evento.evento = force ? `${evento.evento}` : `${evento.evento} ${eventoDescr}: ${fields.substr(0, fields.length - 2)}`
-
             evento.id_user = !(request && request.user && request.user.id) ? last.id : request.user.id
             evento.classevento = evento.classevento || "Update"
-            evento.ip = request.ip
             evento.id_registro = last.id
-            if (envLocalhost) {
-                evento.geo_lt = null
-                evento.geo_ln = null
-            } else {
-                const url = `http://api.ipstack.com/${request.ip}?access_key=73ec9b93dcb973e011c965b8a25f08e4`
-                const ipstack = await axios.get(url).catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
-                evento.geo_lt = ipstack.data.latitude
-                evento.geo_ln = ipstack.data.longitude
-            }
+            evento.ip = request.headers['x-ip-address'] || request.ip
+            evento.geo_lt = request.headers['x-geo-lt']
+            evento.geo_ln = request.headers['x-geo-ln']
             evento.created_at = new Date()
 
             try {
@@ -214,21 +204,10 @@ module.exports = app => {
             evento.id_user = !(request && request.user && request.user.id) ? next.id : request.user.id
             evento.evento = `${evento.evento}: ${eventoDescr}`
             evento.classevento = "Insert"
-            evento.ip = request.ip
             evento.id_registro = next.id
-
-            if (envLocalhost) {
-                evento.geo_lt = null
-                evento.geo_ln = null
-            } else {
-                const url = `http://api.ipstack.com/${request.ip}?access_key=73ec9b93dcb973e011c965b8a25f08e4`
-                const ipstack = await axios.get(url).catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
-                evento.geo_lt = ipstack.data.latitude
-                evento.geo_ln = ipstack.data.longitude
-            }
+            evento.ip = request.headers['x-ip-address'] || request.ip
+            evento.geo_lt = request.headers['x-geo-lt']
+            evento.geo_ln = request.headers['x-geo-ln']
             evento.created_at = new Date()
 
             try {
@@ -259,20 +238,10 @@ module.exports = app => {
 
             evento.id_user = !(request && request.user && request.user.id) ? last.id : request.user.id
             evento.classevento = "Remove"
-            evento.ip = request.ip
             evento.id_registro = last.id
-            if (envLocalhost) {
-                evento.geo_lt = null
-                evento.geo_ln = null
-            } else {
-                const url = `http://api.ipstack.com/${request.ip}?access_key=73ec9b93dcb973e011c965b8a25f08e4`
-                const ipstack = await axios.get(url).catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
-                evento.geo_lt = ipstack.data.latitude
-                evento.geo_ln = ipstack.data.longitude
-            }
+            evento.ip = request.headers['x-ip-address'] || request.ip
+            evento.geo_lt = request.headers['x-geo-lt']
+            evento.geo_ln = request.headers['x-geo-ln']
             evento.created_at = new Date()
 
             try {
@@ -305,21 +274,10 @@ module.exports = app => {
             evento.id_user = !(request && request.user && request.user.id) ? next.id : request.user.id
             evento.evento = evento.evento || `${evento.evento}: ${eventoDescr}`
             evento.classevento = evento.classevento || "Printing"
-            evento.ip = request.ip
-            evento.id_registro = next.id
-
-            if (envLocalhost) {
-                evento.geo_lt = null
-                evento.geo_ln = null
-            } else {
-                const url = `http://api.ipstack.com/${request.ip}?access_key=73ec9b93dcb973e011c965b8a25f08e4`
-                const ipstack = await axios.get(url).catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
-                evento.geo_lt = ipstack.data.latitude
-                evento.geo_ln = ipstack.data.longitude
-            }
+            evento.id_registro = last.id
+            evento.ip = request.headers['x-ip-address'] || request.ip
+            evento.geo_lt = request.headers['x-geo-lt']
+            evento.geo_ln = request.headers['x-geo-ln']
             evento.created_at = new Date()
 
             try {
@@ -337,19 +295,10 @@ module.exports = app => {
     const createEvent = async (req, res) => {
         const request = req.request
         const evento = req.evento
-        if (envLocalhost) {
-            evento.geo_lt = null
-            evento.geo_ln = null
-        } else {
-            const url = `http://api.ipstack.com/${request.ip}?access_key=379f7af2dcb3b36d1f4c8b9e8d421dfb`
-            const ipstack = await axios.get(url).catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
-            })
-            evento.geo_lt = ipstack.data.latitude
-            evento.geo_ln = ipstack.data.longitude
-        }
-        evento.created_at = new Date()        
+        evento.ip = request.headers['x-ip-address'] || request.ip
+        evento.geo_lt = request.headers['x-geo-lt']
+        evento.geo_ln = request.headers['x-geo-ln']
+        evento.created_at = new Date()
 
         try {
             const trx = req.trx

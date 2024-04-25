@@ -35,9 +35,7 @@ export const useUserStore = defineStore('users', {
             const url = `${baseApiAuthUrl}/signin`;
             const urlIp = `https://api.vivazul.com.br/getIp`;
             let ip = await axios.get(urlIp);
-            console.log(ip.data);
             ip = ip.data.ip.split(',')[0];
-            console.log(ip);
             interceptor.interceptors.request.use((config) => {
                 config.headers['x-ip-address'] = ip;
                 return config;
@@ -48,6 +46,7 @@ export const useUserStore = defineStore('users', {
                     this.user = res.data;
                     if (this.user.id && this.user.isMatch) {
                         this.user.timeLogged = Math.floor(Date.now() / 1000);
+                        this.user.ip = ip;
                         interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
                         localStorage.setItem(userKey, JSON.stringify({ ...res.data, ip: ip }));
                         location.reload();
