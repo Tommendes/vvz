@@ -78,6 +78,14 @@ export const useUserStore = defineStore('users', {
                     return error;
                 });
         },
+        async getIpAddress(userData) {
+            try {
+                const response = await axios.get('https://api.ipify.org?format=json');
+                userData.ipSignin = response.data.ip;
+            } catch (error) {
+                console.error('Erro ao obter o endereço IP:', error);
+            }
+        },
         async validateToken(userData) {
             const url = `${baseApiAuthUrl}/validateToken`;
             // Pra validar movimentação/troca de IP

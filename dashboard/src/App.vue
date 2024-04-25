@@ -20,8 +20,17 @@ const validateToken = async () => {
     if (isTokenValid.value && !(geoLocationData && geoLocationData.geolocation)) open();
 };
 
+const getIp = async () => {
+    const json = localStorage.getItem(userKey);
+    const userData = JSON.parse(json);
+    const store = useUserStore();
+    const userIp = await store.getIpAddress(userData);
+    console.log(userIp);
+};
+
 onMounted(() => {
     validateToken();
+    getIp();
 });
 
 const display = ref(false);

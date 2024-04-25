@@ -556,9 +556,77 @@ module.exports = app => {
         return res.status(200).send('Programação de liquidação bem sucedida')
     }
 
+    const getPositioning = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        let data = { ...req.body }
+        // return res.status(201)
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.comissoes >= 1), `${noAccessMsg} "Consultas a ${tabelaAlias}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const agId = req.query.agId || undefined
+        const agGroup = req.query.agGroup || undefined
+
+        try {
+            if (agGroup && [0, 1, 2, 3].indexOf(agGroup) == -1) throw 'Grupo de agentes inválido'
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(400).send(error)
+        }
+
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaComissaoAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
+        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        try {
+            const subqueryPendente = app.db({ 'cms': tabelaDomain })
+                .select(app.db.raw('COALESCE(SUM(valor_base),0)'))
+                .whereRaw('cms.id_comis_agentes = ag.id')
+                .andWhere(app.db.raw(`(SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != 40 ORDER BY created_at DESC LIMIT 1) = 10`));
+
+            const subqueryLiquidado = app.db({ 'cms': tabelaDomain })
+                .select(app.db.raw('COALESCE(SUM(valor_base),0)'))
+                .whereRaw('cms.id_comis_agentes = ag.id')
+                .andWhere(app.db.raw(`(SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != 40 ORDER BY created_at DESC LIMIT 1) = 20`));
+
+            let query = app.db({ 'ag': tabelaComissaoAgentesDomain })
+                .select(
+                    'ag.id',
+                    app.db.raw('COALESCE(ag.apelido, ca.nome) AS nome_comum'),
+                    'ag.ordem',
+                    subqueryPendente.clone().as('total_pendente'),
+                    subqueryLiquidado.clone().as('total_liquidado')
+                )
+                .join({ 'cms': tabelaDomain }, 'cms.id_comis_agentes', 'ag.id')
+                .leftJoin({ 'ca': tabelaCadastrosDomain }, 'ca.id', 'ag.id_cadastros')
+                .where('cms.status', 10)
+
+            if (agId) query.where('ag.id', agId)
+            if (agGroup) query.where('ag.agente_representante', agGroup)
+
+            query = await query
+                .groupBy('ag.id')
+                .orderBy('ag.agente_representante')
+                .orderBy('ag.ordem');
+            // const res = await app.db.raw(query.toString())
+            res.status(200).send(query)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            res.status(400).send(error)
+        }
+    }
+
     const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
+            case 'gps':
+                getPositioning(req, res);
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;

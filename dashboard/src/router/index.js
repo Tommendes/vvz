@@ -115,7 +115,7 @@ const routes = [
             {
                 path: '/:client/comissoes',
                 name: 'comissoes',
-                component: () => import('@/views/comissoes/ComissoesGrid.vue')
+                component: () => import('@/views/comissoes/ComissoesPanel.vue')
             },
             {
                 path: '/:client/retencoes',

@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref } from 'vue';
+import { onBeforeMount, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -13,7 +13,6 @@ const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
 import { Mask } from 'maska';
-import { watchEffect } from 'vue';
 const masks = ref({
     data: new Mask({
         mask: '##/##/####'

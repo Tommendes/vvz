@@ -10,6 +10,7 @@ axios.interceptors.request.use((config) => {
     if (user && user.ip) {
         config.headers['x-ip-address'] = user.ip;
     }
+
     if (geoLocationData && geoLocationData.geolocation) {
         config.headers['x-geo-lt'] = geoLocationData.geolocation.latitude;
         config.headers['x-geo-ln'] = geoLocationData.geolocation.longitude;
