@@ -23,6 +23,9 @@ module.exports = app => {
             case 'resumo':
                 getReportProposalResume(req, res)
                 break;
+            case 'diarioComissionado':
+                getReportDiarioComissionado(req, res)
+                break;
             default:
                 res.status(404).send('Função inexitente')
                 break;
@@ -239,6 +242,115 @@ module.exports = app => {
                         "classevento": `printing-proposal-resume`,
                         "evento": `Impressão de Resumo do Proposta`,
                         "tabela_bd": "com_propostas",
+                    }
+                })
+                res.setHeader("Content-Type", `application/${exportType}`);
+                res.setHeader("Content-Disposition", `inline; filename=${fileName}.${exportType}`);
+                res.setHeader("Content-Length", data.length);
+                if (body.encoding == 'base64') res.send(Buffer.from(data).toString('base64'))
+                else
+                    res.send(data)
+            })
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+                res.send(error)
+            });
+    }
+
+    const getReportDiarioComissionado = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de Resumo de Propostas"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+        const body = { ...req.body }
+        try {
+            existsOrError(body.periodo, 'Período não informado')
+            existsOrError(body.ano, 'Ano não informado')
+            existsOrError(body.mes, 'Mês não informado')
+            if (body.tpAgenteRep && ![0, 1, 2, 3].includes(body.tpAgenteRep)) throw 'Tipo de Agente informado inválido'
+            if (body.idAgente) {
+                const agenteExistes = await app.db({ a: `${dbPrefix}_${uParams.schema_name}.comis_agentes` }).where({ 'a.id': body.idAgente }).first()
+                existsOrError(agenteExistes, 'Agente informado é não encontrado')
+
+            }
+            existsOrError(body.reportTitle, 'Título do Relatório não informado')
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+        console.log(body);
+        const dbSchema = `${dbPrefix}_${uParams.schema_name}`
+        const usuario = uParams.name
+        const idEmpresa = 1
+        const empresa = await app.db({ e: `${dbSchema}.empresa` }).select('e.*').where({ 'e.id': idEmpresa }).first()
+        const periodo = body.periodo
+        const ano = body.ano
+        const mes = body.mes
+        const tpAgenteRep = body.tpAgenteRep || 0
+        const idAgente = `ag.id IN (${body.idAgente})` || '1=1'
+        const reportTitle = body.reportTitle
+
+        moment.locale('pt-br');
+        let agenteLabel = ''
+        switch (tpAgenteRep) {
+            case 0:
+                agenteLabel = 'Representações'
+                break;
+            case 1:
+                agenteLabel = 'Representadas'
+                break;
+            case 2:
+                agenteLabel = 'Agentes'
+                break;
+            case 3:
+                agenteLabel = 'Terceiros'
+                break;
+            default:
+                agenteLabel = 'Não selecionado'
+                break;
+        }
+        const fileName = 'Diário_Auxiliar_Comissionado_' + agenteLabel + '_' + moment().format('DDMMYYYY_HHmmss')
+
+        const optionParameters = {
+            "usuario": usuario,
+            "idEmpresa": empresa.id,
+            "dbSchema": dbSchema,
+            "periodo": periodo,
+            "ano": ano,
+            "mes": mes,
+            "tpAgenteRep": tpAgenteRep,
+            "idAgente": idAgente,
+            "reportTitle": reportTitle,
+        }
+
+        const exportType = body.exportType || 'pdf'
+        const fileRootName = 'reports/Vivazul/comissionamento/DiarioAgente'
+
+        const jsIntegration = new JSIntegration(
+            jasperServerUrl, // URL of the Jasper Server'
+            fileRootName, // Path to the Report Unit
+            exportType, // Export type
+            jasperServerU, // User
+            jasperServerK, // Password
+            optionParameters // Optional parameters
+        )
+        // console.log(jsIntegration);
+        const data = jsIntegration.execute()
+            .then(async (data) => {
+                // registrar o evento na tabela de eventos
+                const { createEventPrint } = app.api.sisEvents
+                createEventPrint({
+                    "notTo": ['created_at', 'evento'],
+                    "next": {},
+                    "request": req,
+                    "evento": {
+                        "classevento": `printing-commisioning-daily`,
+                        "evento": `Impressão de Diário de Comissionamento de Agente`,
+                        "tabela_bd": "comissoes",
                     }
                 })
                 res.setHeader("Content-Type", `application/${exportType}`);

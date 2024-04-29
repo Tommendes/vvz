@@ -556,10 +556,81 @@ module.exports = app => {
         return res.status(200).send('Programação de liquidação bem sucedida')
     }
 
+    // const getPositioning = async (req, res) => {
+    //     let user = req.user
+    //     const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+    //     let data = { ...req.body }
+    //     // return res.status(201)
+    //     try {
+    //         // Alçada do usuário
+    //         isMatchOrError(uParams && (uParams.comissoes >= 1), `${noAccessMsg} "Consultas a ${tabelaAlias}"`)
+    //     } catch (error) {
+    //         app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+    //         return res.status(401).send(error)
+    //     }
+
+    //     const agId = req.query.agId || undefined
+    //     const agGroup = req.query.agGroup || undefined
+
+    //     try {
+    //         if (agGroup && [0, 1, 2, 3].indexOf(agGroup) == -1) throw 'Grupo de agentes inválido'
+    //     } catch (error) {
+    //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+    //         return res.status(400).send(error)
+    //     }
+
+    //     const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+    //     const tabelaComissaoAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
+    //     const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
+    //     const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+    //     try {
+    //         const subqueryPendente = app.db({ 'cms': tabelaDomain })
+    //             .select(app.db.raw('COALESCE(SUM(valor_base),0)'))
+    //             .whereRaw('cms.id_comis_agentes = ag.id')
+    //             .andWhere(app.db.raw(`(SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != 40 ORDER BY created_at DESC LIMIT 1) = 10`));
+
+    //         const subqueryLiquidado = app.db({ 'cms': tabelaDomain })
+    //             .select(app.db.raw('COALESCE(SUM(valor_base),0)'))
+    //             .whereRaw('cms.id_comis_agentes = ag.id')
+    //             .andWhere(app.db.raw(`(SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != 40 ORDER BY created_at DESC LIMIT 1) = 20`));
+
+    //         let query = app.db({ 'ag': tabelaComissaoAgentesDomain })
+    //             .select(
+    //                 'ag.id',
+    //                 'ag.agente_representante',
+    //                 app.db.raw('COALESCE(ag.apelido, ca.nome) AS nome_comum'),
+    //                 'ag.ordem',
+    //                 subqueryPendente.clone().as('total_pendente'),
+    //                 subqueryLiquidado.clone().as('total_liquidado')
+    //             )
+    //             .join({ 'cms': tabelaDomain }, 'cms.id_comis_agentes', 'ag.id')
+    //             .leftJoin({ 'ca': tabelaCadastrosDomain }, 'ca.id', 'ag.id_cadastros')
+    //             .where('cms.status', 10)
+    //             .groupBy('ag.id')
+    //             .orderBy('ag.agente_representante')
+
+    //         if (agId) query.where('ag.id', agId)
+    //         if (agGroup) query.where('ag.agente_representante', agGroup)
+
+    //         console.log(query.toString());
+
+    //         query = await query
+    //             .orderBy('ag.ordem');
+    //         // const res = await app.db.raw(query.toString())
+    //         res.status(200).send(query)
+    //     } catch (error) {
+    //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+    //         res.status(400).send(error)
+    //     }
+    // }
+
+
     const getPositioning = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let data = { ...req.body }
+        const dataInicio = req.query.dataInicio || undefined
+        const dataFinal = req.query.dataFinal || undefined
         // return res.status(201)
         try {
             // Alçada do usuário
@@ -568,57 +639,82 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
         const agId = req.query.agId || undefined
         const agGroup = req.query.agGroup || undefined
-
         try {
             if (agGroup && [0, 1, 2, 3].indexOf(agGroup) == -1) throw 'Grupo de agentes inválido'
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error)
         }
-
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaComissaoAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
-        try {
-            const subqueryPendente = app.db({ 'cms': tabelaDomain })
-                .select(app.db.raw('COALESCE(SUM(valor_base),0)'))
-                .whereRaw('cms.id_comis_agentes = ag.id')
-                .andWhere(app.db.raw(`(SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != 40 ORDER BY created_at DESC LIMIT 1) = 10`));
-
-            const subqueryLiquidado = app.db({ 'cms': tabelaDomain })
-                .select(app.db.raw('COALESCE(SUM(valor_base),0)'))
-                .whereRaw('cms.id_comis_agentes = ag.id')
-                .andWhere(app.db.raw(`(SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != 40 ORDER BY created_at DESC LIMIT 1) = 20`));
-
-            let query = app.db({ 'ag': tabelaComissaoAgentesDomain })
-                .select(
-                    'ag.id',
-                    app.db.raw('COALESCE(ag.apelido, ca.nome) AS nome_comum'),
-                    'ag.ordem',
-                    subqueryPendente.clone().as('total_pendente'),
-                    subqueryLiquidado.clone().as('total_liquidado')
+        let filterDatas = `1=1`
+        if (dataInicio && dataFinal) filterDatas = `created_at between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFinal, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
+        let query = app.db({ cms: tabelaDomain })
+            .select('ag.id', 'ag.agente_representante',
+                app.db.raw('COALESCE(ag.apelido, ca.nome) as nome_comum'),
+                'ag.ordem',
+                'cms.valor_base',
+                'ag.dsr',
+                'cms.valor',
+                app.db.raw(
+                    `@status_comiss := (SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != ${STATUS_FATURADO} ORDER BY created_at DESC LIMIT 1) as status_comiss`
+                ),
+                app.db.raw(
+                    `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != ${STATUS_FATURADO} ORDER BY created_at DESC LIMIT 1) as created_at`
                 )
-                .join({ 'cms': tabelaDomain }, 'cms.id_comis_agentes', 'ag.id')
-                .leftJoin({ 'ca': tabelaCadastrosDomain }, 'ca.id', 'ag.id_cadastros')
-                .where('cms.status', 10)
+            )
+            .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
+            .leftJoin({ ca: tabelaCadastrosDomain }, 'ca.id', 'ag.id_cadastros')
+            .where({ 'cms.status': STATUS_ACTIVE })
+            .orderBy('ag.agente_representante')
+            .orderBy('ag.ordem')
+            .orderBy('status_comiss', 'desc')
+            .orderBy('nome_comum')
+            .having(app.db.raw(`status_comiss = ${STATUS_ABERTO} OR (status_comiss = 20 AND ${filterDatas})`))
 
-            if (agId) query.where('ag.id', agId)
-            if (agGroup) query.where('ag.agente_representante', agGroup)
+        if (agId) query.where('ag.id', agId)
+        if (agGroup) query.where('ag.agente_representante', agGroup)
 
-            query = await query
-                .groupBy('ag.id')
-                .orderBy('ag.agente_representante')
-                .orderBy('ag.ordem');
-            // const res = await app.db.raw(query.toString())
-            res.status(200).send(query)
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-            res.status(400).send(error)
-        }
+        // console.log(query.toString());
+
+        query.then((rows) => {
+            // Percora o array rows e me retorne um novo array agrupando os registros pelo valor em id e status_comiss e somando o valor_base e também o valor de acordo com o status_comiss
+            // Depois, ordene por agente_representante e ordem
+            let data = []
+            rows.forEach(element => {
+                const index = data.findIndex(item => item.id === element.id)
+                if (index === -1) {
+                    data.push({
+                        id: element.id,
+                        agente_representante: element.agente_representante,
+                        nome_comum: element.nome_comum,
+                        ordem: element.ordem,
+                        valor_base: element.valor_base,
+                        total_liquidado: element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
+                        total_pendente: element.status_comiss === STATUS_ABERTO ? element.valor : 0,
+                        dsr: element.dsr,
+                        status_comiss: element.status_comiss,
+                        quant: 1
+                    })
+                } else {
+                    // Ao somar os valores, arredonde para 2 casas decimais
+                    data[index].valor_base += element.valor_base
+                    data[index].total_liquidado += element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
+                    data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0,
+                    data[index].quant++
+                }
+            });
+            return res.json(data)
+        })
+            .catch((error) => {
+                app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                return res.status(500).send(error)
+            })
+
     }
 
     const getByFunction = async (req, res) => {
