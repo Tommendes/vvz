@@ -1043,8 +1043,23 @@ module.exports = app => {
                 .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
-                .orderBy(app.db.raw(`representacao, DATE_FORMAT(tbl1.created_at, '%y'), DATE_FORMAT(tbl1.created_at, '%m')`))
+                .orderBy(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%y-%m')`))
+                // console.log(app.db({ tbl1: tabelaDomain })
+                // .select(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
+                // .join({ pp: tabelaParamsDomain }, function () {
+                //     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+                // })
+                // // .join({ ps: tabelaPipelineStatusDomain }, function () {
+                // //     this.on('ps.id_pipeline', '=', 'tbl1.id')
+                // // })
+                // .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
+                // .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+                // .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
+                // .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
+                // .groupBy(app.db.raw('mes, representacao'))
+                // .orderBy(app.db.raw(`representacao, DATE_FORMAT(tbl1.created_at, '%y-%m')`)).toString());
             const formatData = await formatDataForChart(biSalesOverview)
+            // console.log(formatData['datasets']);
             return res.send(formatData)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })

@@ -14,9 +14,9 @@ const printDiario = async (tpAgenteRep) => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/diarioComissionado`;
     const bodyRequest = {
-        periodo: 'Posição entre: 17/04/2024 e 16/05/2024',
-        ano: 2024,
-        mes: 5,
+        periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFinal}`,
+        ano: dataCorte.value.ano,
+        mes: dataCorte.value.mes,
         reportTitle: 'Diário Auxiliar de Comissionado',
         tpAgenteRep: tpAgenteRep,
         exportType: 'pdf',
@@ -39,6 +39,37 @@ const printDiario = async (tpAgenteRep) => {
             }
         });
 };
+const printPosicaoMensal = async () => {
+    defaultSuccess('Por favor aguarde...');
+    let url = `${baseApiUrl}/printing/posicaoMensal`;
+    const bodyRequest = {
+        periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFinal}`,
+        dataInicio: dataCorte.value.dataInicio,
+        dataFinal: dataCorte.value.dataFinal,
+        reportTitle: 'Posição Mensal de Comissionado',
+        exportType: 'pdf',
+        encoding: 'base64' // <- Adicionar à requisição para obter a impressão com o método do frontend
+    };
+    await axios
+        .post(url, bodyRequest)
+        .then((res) => {
+            const body = res.data;
+            let pdfWindow = window.open('');
+            pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
+        })
+        .catch((error) => {
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
+        });
+};
+const closeAll = () => {
+    defaultSuccess('Implementar encerramento de liquidações');
+}
 </script>
 
 <template>
@@ -47,7 +78,7 @@ const printDiario = async (tpAgenteRep) => {
             <h3>Painel de Comissões</h3>
             <div class="grid">
                 <div class="col-10">
-                    <ComissoesResume @dataCorte="defineDataCorte" />
+                    <ComissoesResume @dataCorte="defineDataCorte" id="divChart" />
                 </div>
                 <div class="col-2">
                     <Fieldset :toggleable="true" class="mb-3">
@@ -61,7 +92,7 @@ const printDiario = async (tpAgenteRep) => {
                         <Button label="Imprimir Diário - Representadas" outlined severity="warning" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printDiario(1)" />
                         <Button label="Imprimir Diário - Agentes" outlined severity="Info" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printDiario(2)" />
                         <Button label="Imprimir Diário - Terceiros" outlined severity="secondary" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printDiario(3)" />
-                        <Button label="Imprimir Posição Mensal" outlined severity="contrast" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printPosicao(4)" />
+                        <Button label="Imprimir Posição Mensal" outlined severity="contrast" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printPosicaoMensal()" />
                         <Button label="Encerrar Liquidações" outlined severity="danger" class="w-full m-2" type="button" icon="fa-regular fa-calendar-check" @click="closeAll()" />
                     </Fieldset>
                 </div>

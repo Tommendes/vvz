@@ -100,9 +100,11 @@ const printOnly = async (idAgente, tpAgenteRep) => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/diarioComissionado`;
     const bodyRequest = {
-        periodo: `Posição entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFinal}`,
+        periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFinal}`,
         ano: dataCorte.value.parametros.ano,
         mes: dataCorte.value.parametros.mes,
+        dataInicio: dataCorte.value.dataInicio,
+        dataFinal: dataCorte.value.dataFinal,
         reportTitle: 'Diário Auxiliar de Comissionado',
         tpAgenteRep: tpAgenteRep,
         idAgente: idAgente,
@@ -160,7 +162,7 @@ onMounted(async () => {
                 <div class="flex justify-content-between">
                     <div class="flex justify-content-start flex align-content-center flex-wrap">
                         <div class="flex align-items-center justify-content-center" v-if="dataCorte.parametros">
-                            <p class="text-2xl text-orange-500">Posição entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFinal }}</p>
+                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFinal }}</p>
                         </div>
                     </div>
                     <div class="flex justify-content-end">

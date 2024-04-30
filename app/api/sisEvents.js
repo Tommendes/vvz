@@ -274,7 +274,7 @@ module.exports = app => {
             evento.id_user = !(request && request.user && request.user.id) ? next.id : request.user.id
             evento.evento = evento.evento || `${evento.evento}: ${eventoDescr}`
             evento.classevento = evento.classevento || "Printing"
-            evento.id_registro = last.id
+            evento.id_registro = next && next.id ? next.id : null
             evento.ip = request.headers['x-ip-address'] || request.ip
             evento.geo_lt = request.headers['x-geo-lt']
             evento.geo_ln = request.headers['x-geo-ln']
