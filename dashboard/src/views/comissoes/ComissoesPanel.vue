@@ -99,5 +99,4 @@ const closeAll = () => {
             </div>
         </div>
     </div>
-    <p>rootdataCorte: {{ dataCorte }}</p>
 </template>
