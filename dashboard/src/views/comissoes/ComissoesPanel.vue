@@ -17,6 +17,8 @@ const printDiario = async (tpAgenteRep) => {
         periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFinal}`,
         ano: dataCorte.value.ano,
         mes: dataCorte.value.mes,
+        dataInicio: dataCorte.value.dataInicio,
+        dataFinal: dataCorte.value.dataFinal,
         reportTitle: 'Diário Auxiliar de Comissionado',
         tpAgenteRep: tpAgenteRep,
         exportType: 'pdf',

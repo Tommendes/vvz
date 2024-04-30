@@ -271,6 +271,8 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         const body = { ...req.body }
+
+        // console.log(JSON.stringify(body));
         try {
             existsOrError(body.periodo, 'Período não informado')
             existsOrError(body.ano, 'Ano não informado')
@@ -288,7 +290,6 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        // console.log(body);
         const dbSchema = `${dbPrefix}_${uParams.schema_name}`
         const usuario = uParams.name
         const idEmpresa = 1
@@ -426,7 +427,6 @@ module.exports = app => {
             "reportTitle": reportTitle,
         }
 
-        console.log(optionParameters);
         const exportType = body.exportType || 'pdf'
         const fileRootName = 'reports/Vivazul/comissionamento/PosicaoMensal'
 
@@ -438,7 +438,6 @@ module.exports = app => {
             jasperServerK, // Password
             optionParameters // Optional parameters
         )
-        console.log(jsIntegration);
         const data = jsIntegration.execute()
             .then(async (data) => {
                 // registrar o evento na tabela de eventos
