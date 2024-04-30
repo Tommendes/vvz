@@ -154,7 +154,6 @@ onMounted(async () => {
             rowGroupHeader:class="p-row-even bg-primary"
             scrollable
             scrollHeight="400px"
-            tableStyle="min-width: 80rem"
             removableSort
         >
             <template #header>
