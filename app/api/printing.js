@@ -297,8 +297,8 @@ module.exports = app => {
         const periodo = body.periodo
         const ano = body.ano
         const mes = body.mes
-        const dataInicio = body.dataInicio        
-        const dataFinal = body.dataFinal        
+        const dataInicio = moment(body.dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD')        
+        const dataFinal = moment(body.dataFinal, 'DD/MM/YYYY').format('YYYY-MM-DD')       
 
         const tpAgenteRep = body.tpAgenteRep || 0
         const idAgente = body.idAgente ? `ag.id IN (${body.idAgente})` : '1=1'
