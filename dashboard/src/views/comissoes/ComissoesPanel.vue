@@ -14,11 +14,11 @@ const printDiario = async (tpAgenteRep) => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/diarioComissionado`;
     const bodyRequest = {
-        periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFinal}`,
+        periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFim}`,
         ano: dataCorte.value.ano,
         mes: dataCorte.value.mes,
         dataInicio: dataCorte.value.dataInicio,
-        dataFinal: dataCorte.value.dataFinal,
+        dataFim: dataCorte.value.dataFim,
         reportTitle: 'Diário Auxiliar de Comissionado',
         tpAgenteRep: tpAgenteRep,
         exportType: 'pdf',
@@ -45,9 +45,9 @@ const printPosicaoMensal = async () => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/posicaoMensal`;
     const bodyRequest = {
-        periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFinal}`,
+        periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFim}`,
         dataInicio: dataCorte.value.dataInicio,
-        dataFinal: dataCorte.value.dataFinal,
+        dataFim: dataCorte.value.dataFim,
         reportTitle: 'Posição Mensal de Comissionado',
         exportType: 'pdf',
         encoding: 'base64' // <- Adicionar à requisição para obter a impressão com o método do frontend
@@ -101,4 +101,5 @@ const closeAll = () => {
             </div>
         </div>
     </div>
+    <p>{{ dataCorte }}</p>
 </template>

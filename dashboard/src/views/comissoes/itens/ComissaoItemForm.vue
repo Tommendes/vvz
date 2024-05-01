@@ -721,7 +721,7 @@ watchEffect(() => {
                     />
                     <Button
                         type="button"
-                        :disabled="!(userData.comissoes >= 3)"
+                        :disabled="!(userData.fiscal >= 3)"
                         v-if="!itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
                         v-tooltip.top="'Confirmar faturamento'"
                         icon="fa-solid fa-cash-register"
@@ -732,7 +732,7 @@ watchEffect(() => {
                     />
                     <Button
                         type="button"
-                        :disabled="!(userData.comissoes >= 3)"
+                        :disabled="!(userData.fiscal >= 3)"
                         v-if="itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
                         v-tooltip.top="'Remover faturamento'"
                         icon="fa-solid fa-cash-register"

@@ -630,7 +630,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let data = { ...req.body }
         const dataInicio = req.query.dataInicio || undefined
-        const dataFinal = req.query.dataFinal || undefined
+        const dataFim = req.query.dataFim || undefined
         // return res.status(201)
         try {
             // Alçada do usuário
@@ -652,7 +652,7 @@ module.exports = app => {
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         let filterDatas = `1=1`
-        if (dataInicio && dataFinal) filterDatas = `created_at between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFinal, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
+        if (dataInicio && dataFim) filterDatas = `created_at between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
         let query = app.db({ cms: tabelaDomain })
             .select('ag.id', 'ag.agente_representante',
                 app.db.raw('COALESCE(ag.apelido, ca.nome) as nome_comum'),

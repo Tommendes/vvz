@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -9,7 +9,7 @@ import moment from 'moment';
 import { onBeforeMount } from 'vue';
 
 const emit = defineEmits(['dataCorte']);
-const monthPicker = ref(moment().add(1, 'month').toDate());
+const monthPicker = ref(moment().toDate());
 const dataCorte = ref({});
 const loading = ref(true);
 const gridData = ref([]);
@@ -25,24 +25,16 @@ const initFilters = () => {
 const getLocalParams = async () => {
     await axios.get(`${baseApiUrl}/local-params/f-a/gbf?fld=grupo&vl=comis_corte&slct=id,parametro,label`).then(async (res) => {
         dataCorte.value = res.data.data[0];
-        // Data inínio é igual a data de corte considerando o mês em monthPicker.value
-        // Por exemplo: Se monthPicker está em qualquer data de abril de 2024 então concatene os valores e retorne a data de corte
-        const dataInicio = moment().set('date', dataCorte.value.parametro).set('month', monthPicker.value.getMonth()).set('year', monthPicker.value.getFullYear()).add(-1, 'months').format('DD/MM/YYYY');
-        // Data final é igual a dataInicio + 1 mês
-        const dataFinal = moment(dataInicio, 'DD/MM/YYYY').add(1, 'months').add(-1, 'days').format('DD/MM/YYYY');
-        const ano = Number(moment(dataFinal, 'DD/MM/YYYY').format('YYYY'));
-        const mes = Number(moment(dataFinal, 'DD/MM/YYYY').format('MM'));
-        dataCorte.value.parametros = { dataInicio, dataFinal, ano, mes };
-        emit('dataCorte', dataCorte.value);
-        await loadData();
+        await setMonthPeriod();
     });
 };
 
 const loadData = async () => {
     loading.value = true;
+    // console.log('dataCorte.value.parametros', dataCorte.value.parametros);
     const dataInicio = (dataCorte.value.parametros && dataCorte.value.parametros.dataInicio) || '';
-    const dataFinal = (dataCorte.value.parametros && dataCorte.value.parametros.dataFinal) || '';
-    const url = `${baseApiUrl}/comissoes/f-a/gps?dataInicio=${dataInicio}&dataFinal=${dataFinal}`;
+    const dataFim = (dataCorte.value.parametros && dataCorte.value.parametros.dataFim) || '';
+    const url = `${baseApiUrl}/comissoes/f-a/gps?dataInicio=${dataInicio}&dataFim=${dataFim}`;
     await axios.get(url).then((res) => {
         gridData.value = res.data;
         gridData.value.forEach((element) => {
@@ -67,6 +59,119 @@ const loadData = async () => {
         loading.value = false;
     });
 };
+
+const setMonthPeriod = async () => {
+    const today = moment(); // Obtém a data de hoje
+    const cutoffDay = 17; // Dia de corte
+
+    let newMonth = today.month() + 1; // Mês atual + 1
+    let newYear = today.year(); // Ano atual
+
+    // console.log('today.month()', today.month(), 'today', today.date(), 'cutoffDay', cutoffDay, 'newMonth', newMonth, 'newYear', newYear);
+
+    // Verifica se a data de hoje é maior ou igual ao dia de corte
+    if (today.date() >= cutoffDay) {
+        newMonth++; // Incrementa o mês
+        if (newMonth > 12) {
+            newMonth = 1; // Volta para janeiro se exceder dezembro
+            newYear++; // Incrementa o ano
+        }
+    }
+
+    // Atualiza os valores de dataCorte e monthPicker
+    const startDate = moment(`${cutoffDay}/${newMonth < 10 ? '0' : ''}${newMonth}/${newYear}`, 'DD/MM/YYYY').subtract(1, 'months');
+    const endDate = moment(startDate).add(1, 'months').subtract(1, 'days');
+
+    dataCorte.value.parametros = {
+        dataInicio: startDate.format('DD/MM/YYYY'),
+        dataFim: endDate.format('DD/MM/YYYY'),
+        ano: startDate.year(),
+        mes: endDate.month() + 1
+    };
+
+    // dataCorte.value.parametros = {
+    //     dataInicio: `${cutoffDay}/${newMonth < 10 ? '0' : ''}${newMonth}/${newYear}`,
+    //     dataFim: `${cutoffDay - 1}/${newMonth + 1 < 10 ? '0' : ''}${newMonth + 1}/${newYear}`,
+    //     ano: newYear,
+    //     mes: newMonth
+    // };
+
+    monthPicker.value = moment()
+        .set({ year: newYear, month: newMonth - 1, date: 1 })
+        .toDate();
+
+    console.log('dataCorte', dataCorte.value, 'monthPicker', monthPicker.value);
+    emit('dataCorte', dataCorte.value);
+
+    // Executa a operação loadData()
+    await loadData();
+};
+
+// Função para ajustar dataCorte.value e monthPicker.value quando o usuário alterar monthPicker.value manualmente
+const adjustDates = async () => {
+    const chosenDate = moment(monthPicker.value); // Obtém a data escolhida pelo usuário
+    const cutoffDay = 17; // Dia de corte
+
+    let newMonth = chosenDate.month() + 1; // Mês selecionado + 1
+    let newYear = chosenDate.year(); // Ano selecionado
+
+    // Verifica se a data escolhida é maior ou igual ao dia de corte
+    if (chosenDate.date() >= cutoffDay) {
+        newMonth++; // Incrementa o mês
+        if (newMonth > 12) {
+            newMonth = 1; // Volta para janeiro se exceder dezembro
+            newYear++; // Incrementa o ano
+        }
+    }
+
+    // Atualiza os valores de dataCorte e monthPicker
+    const startDate = moment(`${cutoffDay}/${newMonth < 10 ? '0' : ''}${newMonth}/${newYear}`, 'DD/MM/YYYY').subtract(1, 'months');
+    const endDate = moment(startDate).add(1, 'months').subtract(1, 'days');
+
+    dataCorte.value.parametros = {
+        dataInicio: startDate.format('DD/MM/YYYY'),
+        dataFim: endDate.format('DD/MM/YYYY'),
+        ano: startDate.year(),
+        mes: endDate.month() + 1
+    };
+
+    monthPicker.value = chosenDate.toDate();
+
+    // console.log('dataCorte', dataCorte.value, 'monthPicker', monthPicker.value);
+    emit('dataCorte', dataCorte.value);
+
+    // Executa a operação loadData()
+    await loadData();
+};
+
+// Chama setMonthPeriod() quando a página é carregada
+// setMonthPeriod();
+
+// Adiciona um observador para monthPicker.value
+// watch(monthPicker, adjustDates);
+
+// const setMonthPeriod = async () => {
+//     let dataInicio = (dataCorte.value && dataCorte.value.parametro) || '15';
+//     // Data início é igual a data de corte considerando o mês em monthPicker.value
+//     dataInicio = moment().set('date', dataInicio).set('month', monthPicker.value.getMonth()).set('year', monthPicker.value.getFullYear()).add(-1, 'months').format('DD/MM/YYYY');
+//     let dataFim = moment(dataInicio, 'DD/MM/YYYY').add(1, 'months').add(-1, 'days').format('DD/MM/YYYY');
+//     console.log('dataInicio', dataInicio, 'dataFim', dataFim);
+//     // Se a data de hoje for maior que dataFim, então adicione um mês a dataInicio, dataFim
+//     if (moment().isAfter(moment(dataFim, 'DD/MM/YYYY'))) {
+//         dataInicio = moment(dataInicio, 'DD/MM/YYYY').add(1, 'months').format('DD/MM/YYYY');
+//         dataFim = moment(dataInicio, 'DD/MM/YYYY').add(1, 'months').format('DD/MM/YYYY');
+//         console.log('dataInicio2', dataInicio, 'dataFim2', dataFim);
+//     }
+//     // Data final é igual a dataInicio + 1 mês
+//     // Ano da data final
+//     const ano = Number(moment(dataFim, 'DD/MM/YYYY').format('YYYY'));
+//     // Mês da data final
+//     const mes = Number(moment(dataFim, 'DD/MM/YYYY').format('MM'));
+//     // monthPicker.value = moment(dataFim, 'DD/MM/YYYY').toDate();
+//     dataCorte.value.parametros = { dataInicio, dataFim, ano, mes };
+//     emit('dataCorte', dataCorte.value);
+//     await loadData();
+// };
 const calculateCustomerTotal = (name) => {
     let total = 0;
 
@@ -100,11 +205,11 @@ const printOnly = async (idAgente, tpAgenteRep) => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/diarioComissionado`;
     const bodyRequest = {
-        periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFinal}`,
+        periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFim}`,
         ano: dataCorte.value.parametros.ano,
         mes: dataCorte.value.parametros.mes,
         dataInicio: dataCorte.value.parametros.dataInicio,
-        dataFinal: dataCorte.value.parametros.dataFinal,
+        dataFim: dataCorte.value.parametros.dataFim,
         reportTitle: 'Diário Auxiliar de Comissionado',
         tpAgenteRep: tpAgenteRep,
         idAgente: idAgente,
@@ -161,11 +266,11 @@ onMounted(async () => {
                 <div class="flex justify-content-between">
                     <div class="flex justify-content-start flex align-content-center flex-wrap">
                         <div class="flex align-items-center justify-content-center" v-if="dataCorte.parametros">
-                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFinal }}</p>
+                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFim }}</p>
                         </div>
                     </div>
                     <div class="flex justify-content-end">
-                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon iconDisplay="input" @update:modelValue="getLocalParams" />
+                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon iconDisplay="input" @update:modelValue="adjustDates" />
                         <IconField iconPosition="left">
                             <InputIcon>
                                 <i class="pi pi-search" />

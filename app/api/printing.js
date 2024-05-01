@@ -278,7 +278,7 @@ module.exports = app => {
             existsOrError(body.ano, 'Ano não informado')
             existsOrError(body.mes, 'Mês não informado')
             existsOrError(body.dataInicio, 'Data inicial das liquidações não informada')
-            existsOrError(body.dataFinal, 'Data final das liquidações não informada')
+            existsOrError(body.dataFim, 'Data final das liquidações não informada')
             existsOrError(body.reportTitle, 'Título do Relatório não informado')
             if (body.tpAgenteRep && ![0, 1, 2, 3].includes(body.tpAgenteRep)) throw 'Tipo de Agente informado inválido'
             if (body.idAgente) {
@@ -298,7 +298,7 @@ module.exports = app => {
         const ano = body.ano
         const mes = body.mes
         const dataInicio = moment(body.dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD')        
-        const dataFinal = moment(body.dataFinal, 'DD/MM/YYYY').format('YYYY-MM-DD')       
+        const dataFim = moment(body.dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')       
 
         const tpAgenteRep = body.tpAgenteRep || 0
         const idAgente = body.idAgente ? `ag.id IN (${body.idAgente})` : '1=1'
@@ -331,7 +331,7 @@ module.exports = app => {
             "dbSchema": dbSchema,
             "periodo": periodo,
             "dataInicio": dataInicio,
-            "dataFinal": dataFinal,
+            "dataFim": dataFim,
             "ano": ano,
             "mes": mes,
             "tpAgenteRep": tpAgenteRep,
@@ -392,7 +392,7 @@ module.exports = app => {
         try {
             existsOrError(body.periodo, 'Período não informado')
             existsOrError(body.dataInicio, 'Data inicial das liquidações não informada')
-            existsOrError(body.dataFinal, 'Data final das liquidações não informada')
+            existsOrError(body.dataFim, 'Data final das liquidações não informada')
             existsOrError(body.reportTitle, 'Título do Relatório não informado')
             if (body.tpAgenteRep && ![0, 1, 2, 3].includes(body.tpAgenteRep)) throw 'Tipo de Agente informado inválido'
             if (body.idAgente) {
@@ -411,7 +411,7 @@ module.exports = app => {
         const empresa = await app.db({ e: `${dbSchema}.empresa` }).select('e.*').where({ 'e.id': idEmpresa }).first()
         const periodo = body.periodo
         const dataInicio = moment(body.dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD')        
-        const dataFinal = moment(body.dataFinal, 'DD/MM/YYYY').format('YYYY-MM-DD')      
+        const dataFim = moment(body.dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')      
         const reportTitle = body.reportTitle
 
         moment.locale('pt-br');
@@ -423,7 +423,7 @@ module.exports = app => {
             "dbSchema": dbSchema,
             "periodo": periodo,
             "dataInicio": dataInicio,
-            "dataFinal": dataFinal,
+            "dataFim": dataFim,
             "reportTitle": reportTitle,
         }
 
