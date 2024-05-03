@@ -246,7 +246,7 @@ module.exports = app => {
                     id_pipeline: recordId,
                     status_params: STATUS_PENDENTE,
                 });
-                
+
                 if (pipeline_params_force.doc_venda == 2 || pipeline_params_force.doc_venda == 3) {
                     // Inserir na tabela de status um registro de pedido caso o pipeline_params_force.doc_venda = 2                    
                     const statusParams = pipeline_params_force.doc_venda == 2 ? STATUS_PEDIDO : STATUS_PEDIDO_INTERNO
@@ -311,8 +311,9 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('date(tbl1.created_at)')
+        let sortField = app.db.raw('DATE(@status_created_at)')
         let sortOrder = 'desc'
+        const ret = app.db({ tbl1: tabelaDomain })
         if (req.query) {
             queryes = req.query
             query = ''
@@ -343,7 +344,13 @@ module.exports = app => {
                                 default: operator = `between "${valueI}" and "${valueF}"`
                                     break;
                             }
-                            query += `date(tbl1.created_at) ${operator} AND `
+                            ret.whereExists(function () {
+                                this.select(app.db.raw(1))
+                                    .from({ ps: tabelaPipelineStatusDomain })
+                                    .whereRaw('ps.id_pipeline = tbl1.id')
+                                    .where('ps.status', 10)
+                                    .whereRaw(`DATE(ps.created_at) ${operator} `);
+                            })
                         } else {
                             if (['valor_bruto'].includes(queryField)) value = value.replace(",", ".")
                             switch (operator) {
@@ -403,7 +410,7 @@ module.exports = app => {
                     }
                     if (element == 'sort') {
                         sortField = key.split(':')[1].split('=')[0]
-                        if (sortField == 'status_created_at') sortField = 'date(tbl1.created_at)'
+                        // if (sortField == 'status_created_at') sortField = 'DATE(@status_created_at)'
                         sortOrder = queryes[key]
                     }
                 });
@@ -417,7 +424,7 @@ module.exports = app => {
             filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
         }
 
-        let totalRecords = await app.db({ tbl1: tabelaDomain })
+        let totalRecords = ret.clone()
             .countDistinct('tbl1.id as count')
             .sum('tbl1.valor_bruto as sum')
             .first()
@@ -430,15 +437,19 @@ module.exports = app => {
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
-            .whereRaw(query ? query : '1=1')
+        totalRecords = await totalRecords.whereRaw(query ? query : '1=1')
 
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
-                lpad(tbl1.documento,${digitsOfAFolder},'0') documento, lpad(tbl2.documento,${digitsOfAFolder},'0') doc_pai, 
-                lpad(tbl3.documento,${digitsOfAFolder},'0') doc_filho, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
-                DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
-                (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = ${STATUS_ACTIVE} ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) last_status_params`))
-            // localizar registros de agentes
+        // DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
+
+        // localizar registros de agentes
+        ret.select(app.db.raw(`tbl1.id, pp.descricao AS tipo_doc, pp.doc_venda, c.nome, c.cpf_cnpj, u.name agente, 
+        lpad(tbl1.documento,${digitsOfAFolder},'0') documento, lpad(tbl2.documento,${digitsOfAFolder},'0') doc_pai, 
+        lpad(tbl3.documento,${digitsOfAFolder},'0') doc_filho, tbl1.versao, tbl1.descricao, tbl1.valor_bruto, tbl1.descricao,
+        @last_status_params := (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps 
+            WHERE ps.id_pipeline = tbl1.id and ps.status = ${STATUS_ACTIVE} ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) last_status_params,
+        @status_created_at := (SELECT DATE_FORMAT(SUBSTRING_INDEX(ps.created_at,' ',1),'%d/%m/%Y') FROM ${tabelaPipelineStatusDomain} ps 
+            WHERE ps.id_pipeline = tbl1.id AND ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) status_created_at`
+        ))
             .leftJoin({ u: tabelaUsers }, 'u.id', '=', 'tbl1.id_com_agentes')
             //Localizar registros pai
             .leftJoin({ tbl2: tabelaDomain }, 'tbl1.id_pai', '=', 'tbl2.id')
@@ -448,11 +459,24 @@ module.exports = app => {
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
-            .orderBy(app.db.raw(sortField), sortOrder)
-            .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
+        if (sortField != 'status_created_at')
+            ret.orderBy(app.db.raw(sortField), sortOrder)
+        ret.orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
             .limit(rows).offset((page + 1) * rows - rows)
+        // console.log(ret.toString());
         ret.then(body => {
             const length = body.length
+            // se sortField == 'status_created_at' então ordene pelo valor em if body[X].status_created_at considerando o valor em sortOrder (ASC ou DESC)
+            if (sortField == 'status_created_at')
+                body.sort((a, b) => {
+                    let x = a.status_created_at
+                    let y = b.status_created_at
+                    if (sortOrder == 'desc')
+                        return (x > y) ? -1 : ((x < y) ? 1 : 0)
+                    else
+                        return (x < y) ? -1 : ((x > y) ? 1 : 0)
+                })
+
             body.forEach(element => {
                 element.valor_liq = parseFloat(element.valor_liq).toFixed(2).replace('.', ',')
                 element.valor_bruto = parseFloat(element.valor_bruto).toFixed(2).replace('.', ',')
@@ -1044,20 +1068,20 @@ module.exports = app => {
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
                 .orderBy(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%y-%m')`))
-                // console.log(app.db({ tbl1: tabelaDomain })
-                // .select(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
-                // .join({ pp: tabelaParamsDomain }, function () {
-                //     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
-                // })
-                // // .join({ ps: tabelaPipelineStatusDomain }, function () {
-                // //     this.on('ps.id_pipeline', '=', 'tbl1.id')
-                // // })
-                // .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
-                // .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                // .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
-                // .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
-                // .groupBy(app.db.raw('mes, representacao'))
-                // .orderBy(app.db.raw(`representacao, DATE_FORMAT(tbl1.created_at, '%y-%m')`)).toString());
+            // console.log(app.db({ tbl1: tabelaDomain })
+            // .select(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
+            // .join({ pp: tabelaParamsDomain }, function () {
+            //     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
+            // })
+            // // .join({ ps: tabelaPipelineStatusDomain }, function () {
+            // //     this.on('ps.id_pipeline', '=', 'tbl1.id')
+            // // })
+            // .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
+            // .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
+            // .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
+            // .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
+            // .groupBy(app.db.raw('mes, representacao'))
+            // .orderBy(app.db.raw(`representacao, DATE_FORMAT(tbl1.created_at, '%y-%m')`)).toString());
             const formatData = await formatDataForChart(biSalesOverview)
             // console.log(formatData['datasets']);
             return res.send(formatData)
