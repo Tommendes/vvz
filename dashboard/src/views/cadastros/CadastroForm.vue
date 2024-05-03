@@ -379,25 +379,25 @@ const reload = () => {
 };
 // Obter parâmetros do BD
 const optionParams = async (query) => {
-    let dados = {};
-    itemData.value.id = route.params.id;
-    const selects = query.select ? `&slct=${query.select}` : undefined;
-    const url = `${baseApiUrl}/params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
     setTimeout(async () => {
+        let dados = {};
+        itemData.value.id = route.params.id;
+        const selects = query.select ? `&slct=${query.select}` : undefined;
+        const url = `${baseApiUrl}/params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
         dados = await axios.get(url);
+        return dados;
     }, Math.random() * 1000 + 250);
-    return dados;
 };
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
-    let dados = {};
-    itemData.value.id = route.params.id;
-    const selects = query.select ? `&slct=${query.select}` : undefined;
-    const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
     setTimeout(async () => {
+        let dados = {};
+        itemData.value.id = route.params.id;
+        const selects = query.select ? `&slct=${query.select}` : undefined;
+        const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
         dados = await axios.get(url);
+        return dados;
     }, Math.random() * 1000 + 250);
-    return dados;
 };
 // Carregar opções do formulário
 const loadOptions = async () => {
