@@ -363,7 +363,7 @@ const multiplicateItem = (event) => {
 };
 // Listar agentes de negócio
 const listAgentesComissionamento = async () => {
-    let url = `${baseApiUrl}/comis-agentes/f-a/gag?agente_representante`;
+    let url = `${baseApiUrl}/comis-agentes/f-a/gag`;
     await axios.get(url).then((res) => {
         dropdownAgentes.value = [];
         res.data.map((item) => {
@@ -372,7 +372,7 @@ const listAgentesComissionamento = async () => {
                 const nome = item.nome.split(' ');
                 if (nome.length > 1) {
                     ['de', 'da', 'do', 'dos', 'das'].includes(nome[1].toLowerCase()) ? nome.splice(1, 1) : [];
-                    item.nome = `${nome[0]} ${nome[1]}`;
+                    item.nome = `${nome[0]} ${nome[1]} - ${item.cpf_cnpj}`;
                 } else item.nome = nome[0];
             }
             dropdownAgentes.value.push({ value: item.id, label: `${item.apelido || item.nome} (${item.ordem})`, ar: item.agente_representante });
