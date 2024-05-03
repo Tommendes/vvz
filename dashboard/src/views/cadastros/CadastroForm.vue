@@ -383,7 +383,9 @@ const optionParams = async (query) => {
     itemData.value.id = route.params.id;
     const selects = query.select ? `&slct=${query.select}` : undefined;
     const url = `${baseApiUrl}/params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-    dados = await axios.get(url);
+    setTimeout(async () => {
+        dados = await axios.get(url);
+    }, Math.random() * 1000 + 250);
     return dados;
 };
 // Obter parâmetros do BD
@@ -392,7 +394,9 @@ const optionLocalParams = async (query) => {
     itemData.value.id = route.params.id;
     const selects = query.select ? `&slct=${query.select}` : undefined;
     const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-    dados = await axios.get(url);
+    setTimeout(async () => {
+        dados = await axios.get(url);
+    }, Math.random() * 1000 + 250);
     return dados;
 };
 // Carregar opções do formulário
