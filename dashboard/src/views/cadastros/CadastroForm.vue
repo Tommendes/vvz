@@ -379,58 +379,64 @@ const reload = () => {
 };
 // Obter parâmetros do BD
 const optionParams = async (query) => {
-    setTimeout(async () => {
-        let dados = {};
-        itemData.value.id = route.params.id;
-        const selects = query.select ? `&slct=${query.select}` : undefined;
-        const url = `${baseApiUrl}/params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-        dados = await axios.get(url);
-        return dados;
-    }, Math.random() * 1000 + 250);
+    let dados = {};
+    itemData.value.id = route.params.id;
+    const selects = query.select ? `&slct=${query.select}` : undefined;
+    const url = `${baseApiUrl}/params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
+    dados = await axios.get(url);
+    return dados;
 };
 // Obter parâmetros do BD
 const optionLocalParams = async (query) => {
-    setTimeout(async () => {
-        let dados = {};
-        itemData.value.id = route.params.id;
-        const selects = query.select ? `&slct=${query.select}` : undefined;
-        const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-        dados = await axios.get(url);
-        return dados;
-    }, Math.random() * 1000 + 250);
+    let dados = {};
+    itemData.value.id = route.params.id;
+    const selects = query.select ? `&slct=${query.select}` : undefined;
+    const url = `${baseApiUrl}/local-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
+    dados = await axios.get(url);
+    return dados;
 };
 // Carregar opções do formulário
 const loadOptions = async () => {
-    // Sexo
-    await optionParams({ field: 'meta', value: 'sexo', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownSexo.value.push({ value: item.id, label: item.label });
+    setTimeout(async () => {
+        // Sexo
+        await optionParams({ field: 'meta', value: 'sexo', select: 'id,label' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownSexo.value.push({ value: item.id, label: item.label });
+            });
         });
-    });
-    // Pais nascimento
-    await optionParams({ field: 'meta', value: 'pais', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownPaisNascim.value.push({ value: item.id, label: item.label });
+    }, Math.random() * 1000 + 250);
+    setTimeout(async () => {
+        // Pais nascimento
+        await optionParams({ field: 'meta', value: 'pais', select: 'id,label' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownPaisNascim.value.push({ value: item.id, label: item.label });
+            });
         });
-    });
-    // Tipo Cadastro
-    await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownTipo.value.push({ value: item.id, label: item.label });
+    }, Math.random() * 1000 + 250);
+    setTimeout(async () => {
+        // Tipo Cadastro
+        await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownTipo.value.push({ value: item.id, label: item.label });
+            });
         });
-    });
-    // Área Atuação
-    await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownAtuacao.value.push({ value: item.id, label: item.label });
+    }, Math.random() * 1000 + 250);
+    setTimeout(async () => {
+        // Área Atuação
+        await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownAtuacao.value.push({ value: item.id, label: item.label });
+            });
         });
-    });
-    // Tipo Endereço
-    await optionLocalParams({ field: 'grupo', value: 'tipo_endereco', select: 'id,label' }).then((res) => {
-        res.data.data.map((item) => {
-            dropdownTipoEndereco.value.push({ value: item.id, label: item.label });
+    }, Math.random() * 1000 + 250);
+    setTimeout(async () => {
+        // Tipo Endereço
+        await optionLocalParams({ field: 'grupo', value: 'tipo_endereco', select: 'id,label' }).then((res) => {
+            res.data.data.map((item) => {
+                dropdownTipoEndereco.value.push({ value: item.id, label: item.label });
+            });
         });
-    });
+    }, Math.random() * 1000 + 250);
     loading.value.form = false;
 };
 // Carregar dados do formulário
