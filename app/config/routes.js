@@ -151,11 +151,11 @@ module.exports = app => {
     /**
      * Rota de cad_contatos_itens
      */
-    app.route('/cad-contatos-itens/:id_cad_contatos')
+    app.route('/cad-contatos-itens/:id_cadastros')
         .all(app.config.passport.authenticate())
         .post(app.api.cad_contatos_itens.save)
         .get(app.api.cad_contatos_itens.get)
-    app.route('/cad-contatos-itens/:id_cad_contatos/:id')
+    app.route('/cad-contatos-itens/:id_cadastros/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.cad_contatos_itens.save)
         .get(app.api.cad_contatos_itens.getById)

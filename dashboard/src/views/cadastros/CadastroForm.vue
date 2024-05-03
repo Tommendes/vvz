@@ -7,6 +7,7 @@ import { isValidEmail, capitalizeFirst } from '@/global';
 import moment from 'moment';
 import { guide } from '@/guides/cadastroFormGuide.js';
 import EditorComponent from '@/components/EditorComponent.vue';
+import ContatosItensGrid from './contatos/itens/ContatosItensGrid.vue';
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -510,7 +511,19 @@ watchEffect(() => {
                     <div class="field col-12 md:col-2">
                         <label for="aniversario">{{ labels.aniversario }}<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text" :class="`${animationDocNr}`" class="uppercase" />
+                        <InputText
+                            v-else
+                            autocomplete="no"
+                            :required="!itemData.prospecto"
+                            :disabled="mode == 'view'"
+                            v-maska
+                            data-maska="##/##/####"
+                            v-model="itemData.aniversario"
+                            id="aniversario"
+                            type="text"
+                            :class="`${animationDocNr}`"
+                            class="uppercase"
+                        />
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="id_params_p_nascto">País de Origem<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
@@ -574,7 +587,7 @@ watchEffect(() => {
                         <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'" v-model="itemData.cim" id="cim" type="text" />
                     </div>
                     <div class="field col-12 md:col-5">
-                        <label for="doc_esp">Outro Documento(Qual?)</label>
+                        <label for="doc_esp">Outro Documento(Especifique)</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'" v-model="itemData.doc_esp" id="doc_esp" type="text" />
                     </div>
@@ -642,6 +655,9 @@ watchEffect(() => {
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no" v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text" class="uppercase" />
                         <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled p-disabled uppercase"></p>
+                    </div>
+                    <div class="field col-12 md:col-12" v-if="itemData.id">
+                        <ContatosItensGrid :itemDataRoot="itemData" />
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">

@@ -2,7 +2,7 @@ const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'cad_contatos_itens'
-    const tabelaContatos = 'cad_contatos'
+    const tabelaCadastros = 'cadastros'
     const tabelaAlias = 'Opções de Contato'
     const tabelaLocalParams = 'local_params'
     const STATUS_ACTIVE = 10
@@ -14,7 +14,7 @@ module.exports = app => {
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
-        if (req.params.id_cad_contatos) body.id_cad_contatos = req.params.id_cad_contatos
+        if (req.params.id_cadastros) body.id_cadastros = req.params.id_cadastros
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && uParams.cadastros >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
@@ -26,21 +26,25 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-            existsOrError(body.id_params_tipo, 'Tipo do contato não informado')
-            existsOrError(body.meio, 'Meio não informada')
-        } catch (error) {
-            return res.status(400).send(error)
-        }
-        
-        try {
-            const unique = await app.db(tabelaDomain).where({ id_cad_contatos: body.id_cad_contatos, id_params_tipo: body.id_params_tipo, meio: body.meio, status: STATUS_ACTIVE }).first()
-            if (unique && unique.id != body.id) {
-                return res.status(400).send('Meio de contato já cadastrado')
+            existsOrError(body.id_cadastros, 'Cadastro não informado')
+            if (!(body.nome && (body.fixo || body.celular || body.email))) throw 'Preencha ao menos o nome e um dos meios de contato'
+            if (body.email) {
+                const uniqueEmail = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, email: body.email, status: STATUS_ACTIVE }).first()
+                if (uniqueEmail && uniqueEmail.id != body.id) throw 'E-mail já cadastrado'
+            }
+            if (body.celular) {
+                const uniqueCelular = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, celular: body.celular, status: STATUS_ACTIVE }).first()
+                if (uniqueCelular && uniqueCelular.id != body.id) throw 'Celular já cadastrado'
+            }
+            if (body.fixo) {
+                const uniqueFixo = await app.db(tabelaDomain).where({ id_cadastros: body.id_cadastros, fixo: body.fixo, status: STATUS_ACTIVE }).first()
+                if (uniqueFixo && uniqueFixo.id != body.id) throw 'Telefone fixo já cadastrado'
             }
         } catch (error) {
-            return res.status(400).send(error)            
+            console.log(error);
+            return res.status(400).send(error)
         }
-        
+
         delete body.tipo;
         delete body.meioRenderizado;
         if (body.id) {
@@ -75,7 +79,7 @@ module.exports = app => {
             // Criação de um novo registro
             const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
 
-            body.id_cad_contatos = req.params.id_cad_contatos
+            body.id_cadastros = req.params.id_cadastros
             body.evento = nextEventID.count + 1
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
@@ -115,15 +119,13 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        const id_cad_contatos = req.params.id_cad_contatos
+        const id_cadastros = req.params.id_cadastros
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaLocalParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaLocalParams}`
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, lp.label tipo`))
-
-        ret.join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_tipo')
-            .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_cad_contatos': id_cad_contatos })
+            .select('tbl1.id', 'tbl1.id_cadastros')
+            .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_cadastros': id_cadastros })
             .groupBy('tbl1.id')
             .then(body => {
                 return res.json({ data: body })
@@ -147,7 +149,6 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
