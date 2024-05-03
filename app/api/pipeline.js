@@ -467,7 +467,7 @@ module.exports = app => {
         ret.then(body => {
             const length = body.length
             // se sortField == 'status_created_at' então ordene pelo valor em if body[X].status_created_at considerando o valor em sortOrder (ASC ou DESC)
-            if (sortField == 'status_created_at')
+            // if (sortField == 'status_created_at')
                 body.sort((a, b) => {
                     let x = a.status_created_at
                     let y = b.status_created_at
