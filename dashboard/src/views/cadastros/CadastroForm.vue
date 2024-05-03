@@ -7,7 +7,7 @@ import { isValidEmail, capitalizeFirst } from '@/global';
 import moment from 'moment';
 import { guide } from '@/guides/cadastroFormGuide.js';
 import EditorComponent from '@/components/EditorComponent.vue';
-import ContatosItensGrid from './contatos/itens/ContatosItensGrid.vue';
+import ContatosGrid from './contatos/ContatosGrid.vue';
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -657,7 +657,7 @@ watchEffect(() => {
                         <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled p-disabled uppercase"></p>
                     </div>
                     <div class="field col-12 md:col-12" v-if="itemData.id">
-                        <ContatosItensGrid :itemDataRoot="itemData" />
+                        <ContatosGrid :itemDataRoot="itemData" />
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">

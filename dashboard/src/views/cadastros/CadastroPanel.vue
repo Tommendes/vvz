@@ -4,7 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
 import CadastroForm from './CadastroForm.vue';
-// import ContatosItensGrid from './contatos/ContatosItensGrid.vue';
+// import ContatosGrid from './contatos/ContatosGrid.vue';
 import EnderecosGrid from './enderecos/EnderecosGrid.vue';
 import PipelinesGrid from '../pipeline/PipelinesGrid.vue';
 import PosVendasGrid from '../posVendas/PosVendasGrid.vue';
@@ -109,7 +109,7 @@ onBeforeMount(() => {
                             <i class="fa-solid fa-at mr-2"></i>
                             <span>Contatos Adicionais</span>
                         </template>
-                        <ContatosItensGrid v-if="itemData.id" :itemDataRoot="itemData" />
+                        <ContatosGrid v-if="itemData.id" :itemDataRoot="itemData" />
                     </TabPanel> -->
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
