@@ -40,7 +40,7 @@ onBeforeMount(() => {
     <div class="flex overflow-x-auto gap-1 mb-2">
         <div class="flex-grow-1 flex align-items-center justify-content-center">
             <span class="text-center text-lg p-inputtext p-component surface-100">
-                <i class="fa-solid fa-angles-down fa-shake"></i> Contatos do cadastro
+                <i class="fa-solid fa-angles-down fa-shake"></i> Contatos adicionais do cadastro
                 <i class="fa-solid fa-angles-down fa-shake" />
             </span>
         </div>

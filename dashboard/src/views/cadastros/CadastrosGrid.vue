@@ -210,6 +210,10 @@ const novoRegistro = () => {
     mode.value = 'new';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
+const goField = (data) => {
+    // idPipeline.value = data.id;
+    window.open(`#/${userData.schema_description}/cadastro/${data.id}`, '_blank');
+};
 watchEffect(() => {
     mountUrlFilters();
 });
@@ -298,7 +302,7 @@ watchEffect(() => {
                     </template>
                     <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="router.push({ path: `/${userData.schema_description}/cadastro/${data.id}` })" title="Clique para mais opções" />
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" title="Clique para mais opções" />
                         </template>
                     </Column>
                 </DataTable>
