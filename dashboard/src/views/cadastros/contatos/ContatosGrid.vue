@@ -31,8 +31,10 @@ const newItem = () => {
     };
 };
 // Carrega as operações básicas do formulário
-onBeforeMount(async () => {
-    await loadData();
+onBeforeMount(() => {
+    setTimeout(async () => {
+        await loadData();
+    }, Math.random() * 1000 + 250);
 });
 </script>
 
