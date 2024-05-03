@@ -117,7 +117,7 @@ const filtrarUnidadesDescricao = async () => {
 
 // Itens do grid
 const limitDescription = 250;
-const limitNome = 25;
+const limitNome = 50;
 
 // Lista de tipos
 const dropdownStatus = ref([
@@ -206,7 +206,7 @@ const loadLazyData = () => {
                     if (element.doc_pai && element.doc_filho && ![element.doc_pai, element.doc_filho].includes(documento)) element.documento += `<br>(Registro: ${documento})`;
                     const nome = element.nome || undefined;
                     if (nome) {
-                        element.nome = nome.trim().substr(0, limitNome);
+                        element.nome = (userData.admin >= 1 ? `(${element.id})` : '') + nome.trim().substr(0, limitNome);
                         if (nome.length > limitNome) element.nome += ' ...';
                     }
                     if (!element.doc_pai) element.doc_pai = '';
@@ -467,6 +467,7 @@ const customFilterOptions = ref({ filterclear: false });
                     :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
                     scrollable
                     :filter-options="customFilterOptions"
+                    removableSort
                 >
                     <template #header>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">

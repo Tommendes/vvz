@@ -105,7 +105,7 @@ onBeforeMount(() => {
 });
 </script>
 
-<!-- <template>
+<template>
     <form @submit.prevent="saveData" @keydow.enter.prevent>
         <div class="grid">
             <div class="col-12">
@@ -146,104 +146,4 @@ onBeforeMount(() => {
             </div>
         </div>
     </form>
-</template> -->
-
-<template>
-    <form @submit.prevent="saveData">
-        <div class="flex overflow-x-auto gap-1 mb-2">
-            <div class="flex-grow-1 flex align-items-center justify-content-center">
-                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-user"></i></div>
-                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Dropdown v-else filter id="id_params_tipo" optionLabel="label" optionValue="value" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione...">
-                        <template #option="slotProps">
-                            <div class="p-dropdown-item">{{ slotProps.option.label }}</div>
-                        </template>
-                    </Dropdown>
-                </div>
-            </div>
-            <div class="flex-none flex">
-                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">R$</div>
-                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <div class="p-inputgroup flex-1" v-else>
-                        <InputText
-                            v-if="getDropdownLabel(itemData.id_params_tipo) && getDropdownLabel(itemData.id_params_tipo).toLowerCase() == 'e-mail'"
-                            autocomplete="no"
-                            v-model="itemData.meio"
-                            id="meio"
-                            type="text"
-                            @input="validateEmail()"
-                            @keydown.enter.prevent
-                            :placeholder="`${getDropdownLabel(itemData.id_params_tipo)} de contato`"
-                        />
-                        <InputText
-                            v-else-if="getDropdownLabel(itemData.id_params_tipo) && ['telefone', 'celular'].includes(getDropdownLabel(itemData.id_params_tipo).toLowerCase())"
-                            autocomplete="no"
-                            v-maska
-                            data-maska="['(##) ####-####', '(##) #####-####']"
-                            v-model="itemData.meio"
-                            id="meio"
-                            type="text"
-                            @input="validateTelefone()"
-                            @keydown.enter.prevent
-                            :placeholder="`${getDropdownLabel(itemData.id_params_tipo)} de contato`"
-                        />
-                        <InputText v-else autocomplete="no" v-model="itemData.meio" id="meio" type="text" @keydown.enter.prevent :placeholder="`${getDropdownLabel(itemData.id_params_tipo)} de contato`" />
-                        <Button icon="fa-solid fa-floppy-disk" severity="success" v-tooltip.top="'Clique para salvar o contato'" @click="saveData()" />
-                    </div>
-                    <small id="text-error" class="p-error" v-if="errorMessages.meio">{{ errorMessages.meio }}</small>
-                </div>
-            </div>
-            <div class="flex-none flex">
-                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <Button type="submit" :disabled="!(userData.cadastros >= 2)" v-if="['edit', 'new'].includes(mode)" v-tooltip.top="'Salvar contato'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button
-                        type="button"
-                        :disabled="!(userData.comissoes >= 3)"
-                        v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && mode == 'view'"
-                        v-tooltip.top="'Editar contato'"
-                        icon="fa-regular fa-pen-to-square"
-                        text
-                        raised
-                        @click="mode = 'edit'"
-                    />
-                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
-                    <Button
-                        type="button"
-                        :disabled="!(userData.comissoes >= 4)"
-                        v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && ['view'].includes(mode)"
-                        v-tooltip.top="'Excluir contato'"
-                        icon="fa-solid fa-trash"
-                        severity="danger"
-                        text
-                        raised
-                        @click="deleteItem"
-                    />
-                </div>
-            </div>
-        </div>
-        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="userData.admin >= 3">
-            <template #legend>
-                <div class="flex align-items-center text-primary">
-                    <span class="fa-solid fa-circle-info mr-2"></span>
-                    <span class="font-bold text-lg">FormData</span>
-                </div>
-            </template>
-            <p>mode: {{ mode }}</p>
-            <p>itemData: {{ itemData }}</p>
-            <p>itemDataEventos: {{ itemDataEventos }}</p>
-            <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
-            <p>canAddCommission: {{ canAddCommission }}</p>
-            <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
-            <p>faturado: {{ itemDataLastStatus.faturado }}</p>
-        </Fieldset>
-    </form>
 </template>
-
-<style scoped>
-.p-dropdown-item {
-    font-weight: 500;
-    padding: 0.25rem 0.25rem;
-}
-</style>

@@ -100,7 +100,7 @@ const setMonthPeriod = async () => {
         .set({ year: newYear, month: newMonth - 1, date: 1 })
         .toDate();
 
-    console.log('dataCorte', dataCorte.value, 'monthPicker', monthPicker.value);
+    // console.log('dataCorte', dataCorte.value, 'monthPicker', monthPicker.value);
     emit('dataCorte', dataCorte.value);
 
     // Executa a operação loadData()
@@ -136,42 +136,12 @@ const adjustDates = async () => {
     };
 
     monthPicker.value = chosenDate.toDate();
-
-    // console.log('dataCorte', dataCorte.value, 'monthPicker', monthPicker.value);
+    // Atualiza o valor de dataCorte no componente pai
     emit('dataCorte', dataCorte.value);
 
     // Executa a operação loadData()
     await loadData();
 };
-
-// Chama setMonthPeriod() quando a página é carregada
-// setMonthPeriod();
-
-// Adiciona um observador para monthPicker.value
-// watch(monthPicker, adjustDates);
-
-// const setMonthPeriod = async () => {
-//     let dataInicio = (dataCorte.value && dataCorte.value.parametro) || '15';
-//     // Data início é igual a data de corte considerando o mês em monthPicker.value
-//     dataInicio = moment().set('date', dataInicio).set('month', monthPicker.value.getMonth()).set('year', monthPicker.value.getFullYear()).add(-1, 'months').format('DD/MM/YYYY');
-//     let dataFim = moment(dataInicio, 'DD/MM/YYYY').add(1, 'months').add(-1, 'days').format('DD/MM/YYYY');
-//     console.log('dataInicio', dataInicio, 'dataFim', dataFim);
-//     // Se a data de hoje for maior que dataFim, então adicione um mês a dataInicio, dataFim
-//     if (moment().isAfter(moment(dataFim, 'DD/MM/YYYY'))) {
-//         dataInicio = moment(dataInicio, 'DD/MM/YYYY').add(1, 'months').format('DD/MM/YYYY');
-//         dataFim = moment(dataInicio, 'DD/MM/YYYY').add(1, 'months').format('DD/MM/YYYY');
-//         console.log('dataInicio2', dataInicio, 'dataFim2', dataFim);
-//     }
-//     // Data final é igual a dataInicio + 1 mês
-//     // Ano da data final
-//     const ano = Number(moment(dataFim, 'DD/MM/YYYY').format('YYYY'));
-//     // Mês da data final
-//     const mes = Number(moment(dataFim, 'DD/MM/YYYY').format('MM'));
-//     // monthPicker.value = moment(dataFim, 'DD/MM/YYYY').toDate();
-//     dataCorte.value.parametros = { dataInicio, dataFim, ano, mes };
-//     emit('dataCorte', dataCorte.value);
-//     await loadData();
-// };
 const calculateCustomerTotal = (name) => {
     let total = 0;
 

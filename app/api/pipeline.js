@@ -461,20 +461,20 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
         if (sortField != 'status_created_at')
             ret.orderBy(app.db.raw(sortField), sortOrder)
-        ret.orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
-            .limit(rows).offset((page + 1) * rows - rows)
+                .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
+                .limit(rows).offset((page + 1) * rows - rows)
         // console.log(ret.toString());
         ret.then(body => {
             const length = body.length
-            // se sortField == 'status_created_at' então ordene pelo valor em if body[X].status_created_at considerando o valor em sortOrder (ASC ou DESC)
-            // if (sortField == 'status_created_at')
+            // se sortField == 'status_created_at' então ordene pelo valor em if body[X].status_created_at considerando o valor em sortOrder (ASC ou DESC) e considerando que status_created_at é uma data no format 'dd/mm/yyyy'
+            if (sortField == 'status_created_at')
                 body.sort((a, b) => {
-                    let x = a.status_created_at
-                    let y = b.status_created_at
-                    if (sortOrder == 'desc')
-                        return (x > y) ? -1 : ((x < y) ? 1 : 0)
-                    else
+                    let x = moment(a.status_created_at, 'DD/MM/YYYY').toDate()
+                    let y = moment(b.status_created_at, 'DD/MM/YYYY').toDate()
+                    if (sortOrder == 'asc')
                         return (x < y) ? -1 : ((x > y) ? 1 : 0)
+                    else
+                        return (x > y) ? -1 : ((x < y) ? 1 : 0)
                 })
 
             body.forEach(element => {
