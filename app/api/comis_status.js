@@ -143,8 +143,9 @@ module.exports = app => {
         body.evento = nextEventID.count + 1
         body.created_at = new Date()
         if (body.remove_status) {
+            const bodyRemove = { id_comissoes: body.id_comissoes, status_comis: body.status_comis }
             app.db(tabelaDomain)
-                .where({ id_comissoes: body.id_comissoes, status_comis: body.status_comis })
+                .where(bodyRemove)
                 .del()
                 .then(ret => {
                     body.id = ret[0]

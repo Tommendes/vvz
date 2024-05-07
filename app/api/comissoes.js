@@ -82,9 +82,6 @@ module.exports = app => {
             const bodyStatus = body.bodyStatus || undefined
             delete body.bodyStatus
 
-            // console.log('bodyMultiplicate', bodyMultiplicate);
-            // console.log('body', body);
-
             const { createEventUpd } = app.api.sisEvents
             const evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento',],
@@ -178,36 +175,15 @@ module.exports = app => {
 
                 // Se não havia status de comissionamento então insere um novo
                 if (!lastStatusComiss) {
-                    // console.log(1);
                     await trx(tabelaComissaoStatusDomain).insert({
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: body.id,
                         status_comis: STATUS_ABERTO,
                     });
-                    if (bodyStatus && bodyStatus.status_comis == STATUS_LIQUIDADO || body.liquidar_em) {
-                        await trx(tabelaComissaoStatusDomain).insert({
-                            evento: evento || 1,
-                            created_at: new Date(),
-                            id_comissoes: body.id,
-                            status_comis: STATUS_LIQUIDADO,
-                        });
-                    }
-                }
-                // Se havia um status e era == 10 e body.liquidar_em foi informado então insere um novo status
-                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_ABERTO && body.liquidar_em) {
-                    // console.log(2);
-                    // Inserir na tabela de status de pipeline a informação de comissionamento            
-                    await trx(tabelaComissaoStatusDomain).insert({
-                        evento: evento || 1,
-                        created_at: new Date(),
-                        id_comissoes: body.id,
-                        status_comis: STATUS_LIQUIDADO
-                    });
                 }
                 // Se havia um status e era == 10 e body.liquidar_em foi informado então insere um novo status
                 if (lastStatusComiss && (bodyStatus && bodyStatus.status_comis == STATUS_ENCERRADO) && (lastStatusComiss.status_comis == STATUS_ABERTO || body.liquidar_em)) {
-                    // console.log(3);
                     if (lastStatusComiss.status_comis == STATUS_ABERTO)
                         await trx(tabelaComissaoStatusDomain).insert({
                             evento: evento || 1,
@@ -223,23 +199,6 @@ module.exports = app => {
                         status_comis: STATUS_ENCERRADO
                     });
                 }
-                // Se havia um status e era 20 e bodyStatus.status_comis == 10 então exclui o status 20                
-                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_LIQUIDADO && (bodyStatus && bodyStatus.status_comis == STATUS_ABERTO || !body.liquidar_em)) {
-                    // console.log(4);
-                    await trx(tabelaComissaoStatusDomain).del().where({ id: lastStatusComiss.id });
-                }
-                // Se havia um status e era 20 e bodyStatus.status_comis == 20 então exclui o status 20 anterior e lança outro para corresponder ao novo status
-                if (lastStatusComiss && lastStatusComiss.status_comis == STATUS_LIQUIDADO && (lastStatusComiss && lastStatusComiss.status_comis == STATUS_ABERTO && body.liquidar_em)) {
-                    // console.log(5);
-                    await trx(tabelaComissaoStatusDomain).del().where({ id: lastStatusComiss.id });
-                    await trx(tabelaComissaoStatusDomain).insert({
-                        evento: evento || 1,
-                        created_at: new Date(),
-                        id_comissoes: body.id,
-                        status_comis: STATUS_LIQUIDADO
-                    });
-                }
-
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
@@ -556,75 +515,6 @@ module.exports = app => {
         return res.status(200).send('Programação de liquidação bem sucedida')
     }
 
-    // const getPositioning = async (req, res) => {
-    //     let user = req.user
-    //     const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-    //     let data = { ...req.body }
-    //     // return res.status(201)
-    //     try {
-    //         // Alçada do usuário
-    //         isMatchOrError(uParams && (uParams.comissoes >= 1), `${noAccessMsg} "Consultas a ${tabelaAlias}"`)
-    //     } catch (error) {
-    //         app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-    //         return res.status(401).send(error)
-    //     }
-
-    //     const agId = req.query.agId || undefined
-    //     const agGroup = req.query.agGroup || undefined
-
-    //     try {
-    //         if (agGroup && [0, 1, 2, 3].indexOf(agGroup) == -1) throw 'Grupo de agentes inválido'
-    //     } catch (error) {
-    //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-    //         return res.status(400).send(error)
-    //     }
-
-    //     const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-    //     const tabelaComissaoAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
-    //     const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
-    //     const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
-    //     try {
-    //         const subqueryPendente = app.db({ 'cms': tabelaDomain })
-    //             .select(app.db.raw('COALESCE(SUM(valor_base),0)'))
-    //             .whereRaw('cms.id_comis_agentes = ag.id')
-    //             .andWhere(app.db.raw(`(SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != 40 ORDER BY created_at DESC LIMIT 1) = 10`));
-
-    //         const subqueryLiquidado = app.db({ 'cms': tabelaDomain })
-    //             .select(app.db.raw('COALESCE(SUM(valor_base),0)'))
-    //             .whereRaw('cms.id_comis_agentes = ag.id')
-    //             .andWhere(app.db.raw(`(SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != 40 ORDER BY created_at DESC LIMIT 1) = 20`));
-
-    //         let query = app.db({ 'ag': tabelaComissaoAgentesDomain })
-    //             .select(
-    //                 'ag.id',
-    //                 'ag.agente_representante',
-    //                 app.db.raw('COALESCE(ag.apelido, ca.nome) AS nome_comum'),
-    //                 'ag.ordem',
-    //                 subqueryPendente.clone().as('total_pendente'),
-    //                 subqueryLiquidado.clone().as('total_liquidado')
-    //             )
-    //             .join({ 'cms': tabelaDomain }, 'cms.id_comis_agentes', 'ag.id')
-    //             .leftJoin({ 'ca': tabelaCadastrosDomain }, 'ca.id', 'ag.id_cadastros')
-    //             .where('cms.status', 10)
-    //             .groupBy('ag.id')
-    //             .orderBy('ag.agente_representante')
-
-    //         if (agId) query.where('ag.id', agId)
-    //         if (agGroup) query.where('ag.agente_representante', agGroup)
-
-    //         console.log(query.toString());
-
-    //         query = await query
-    //             .orderBy('ag.ordem');
-    //         // const res = await app.db.raw(query.toString())
-    //         res.status(200).send(query)
-    //     } catch (error) {
-    //         app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-    //         res.status(400).send(error)
-    //     }
-    // }
-
-
     const getPositioning = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -679,8 +569,6 @@ module.exports = app => {
         if (agId) query.where('ag.id', agId)
         if (agGroup) query.where('ag.agente_representante', agGroup)
 
-        // console.log(query.toString());
-
         query.then((rows) => {
             // Percora o array rows e me retorne um novo array agrupando os registros pelo valor em id e status_comiss e somando o valor_base e também o valor de acordo com o status_comiss
             // Depois, ordene por agente_representante e ordem
@@ -704,8 +592,8 @@ module.exports = app => {
                     // Ao somar os valores, arredonde para 2 casas decimais
                     data[index].valor_base += element.valor_base
                     data[index].total_liquidado += element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
-                    data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0,
-                    data[index].quant++
+                        data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0,
+                        data[index].quant++
                 }
             });
             return res.json(data)

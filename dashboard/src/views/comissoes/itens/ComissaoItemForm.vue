@@ -240,17 +240,12 @@ const programateItem = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: async () => {
-            if (!itemData.value.liquidar_em) {
-                itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
-                itemData.value.bodyStatus = bodyStatus;
-                await saveData();
-                await loadData();
-            } else {
+            itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
+            saveData().then(async () => {
                 await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
                     await loadData();
-                    emit('cancel');
                 });
-            }
+            });
         },
         reject: () => {
             return false;
@@ -260,7 +255,8 @@ const programateItem = () => {
 const unprogramateItem = () => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,
-        status_comis: STATUS_ABERTO
+        status_comis: STATUS_LIQUIDADO,
+        remove_status: true
     };
     confirm.require({
         group: `comisLiquidateConfirm-${itemData.value.id}`,
@@ -273,9 +269,11 @@ const unprogramateItem = () => {
         acceptClass: 'p-button-danger',
         accept: async () => {
             itemData.value.liquidar_em = null;
-            itemData.value.bodyStatus = bodyStatus;
-            await saveData();
-            await loadData();
+            saveData().then(async () => {
+                await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                    await loadData();
+                });
+            });
         },
         reject: () => {
             return false;
@@ -711,7 +709,7 @@ watchEffect(() => {
                     <Button
                         type="button"
                         :disabled="!(userData.comissoes >= 2)"
-                        v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && itemDataUnmuted.parcela == 'U' && ['view'].includes(mode)"
+                        v-if="itemDataLastStatus.status_comis == STATUS_ABERTO && itemDataUnmuted.parcela == 'U' && ['view'].includes(mode)"
                         v-tooltip.top="[0, 1].includes(props.itemDataRoot.agente_representante) ? 'Parcelar recebimento' : 'Parcelar pagamento'"
                         icon="fa-solid fa-ellipsis-vertical"
                         severity="success"
@@ -757,7 +755,7 @@ watchEffect(() => {
                 </div>
             </div>
         </div>
-        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="userData.admin >= 3">
+        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="userData.admin >= 2">
             <template #legend>
                 <div class="flex align-items-center text-primary">
                     <span class="fa-solid fa-circle-info mr-2"></span>
