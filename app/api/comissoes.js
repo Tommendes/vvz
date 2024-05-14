@@ -89,7 +89,7 @@ module.exports = app => {
                 "next": body,
                 "request": req,
                 "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
+                    "evento": `Alteração de registro de ${tabela}`,
                     "tabela_bd": tabela,
                 }
             })
@@ -318,7 +318,7 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
         const tabelaComissAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
-        const tabelaComissStatussDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
+        const tabelaComissStatussDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         const tabelaPipelineParams = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
         const tabelaCadastros = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const totalRecords = await app.db({ tbl1: tabelaDomain })
@@ -397,7 +397,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
+        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelastatuscomiss}`
         // const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
         const registro = { status: STATUS_DELETE }
         try {
@@ -455,7 +455,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
+        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelastatuscomiss}`
 
         const { createEventUpd } = app.api.sisEvents
         Object.values(data).forEach(async (element) => {
@@ -476,7 +476,7 @@ module.exports = app => {
                     "next": element,
                     "request": req,
                     "evento": {
-                        "evento": `Alteração de cadastro de ${tabela}`,
+                        "evento": `Liquidação em grupo de ${tabela}`,
                         "tabela_bd": tabela,
                     }
                 })
@@ -539,7 +539,7 @@ module.exports = app => {
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaComissaoAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
-        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.comis_status`
+        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelastatuscomiss}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         let filterDatas = `1=1`
         if (dataInicio && dataFim) filterDatas = `created_at between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`

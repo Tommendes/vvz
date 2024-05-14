@@ -178,7 +178,7 @@ module.exports = app => {
                         "next": body,
                         "request": req,
                         "evento": {
-                            "evento": `Novo registro`,
+                            "evento": `Novo status`,
                             "tabela_bd": tabela,
                         }
                     })

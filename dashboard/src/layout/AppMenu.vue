@@ -1,6 +1,6 @@
 <script setup>
-import { onBeforeMount, onMounted, ref } from 'vue';
-import AppMenuItem from '.\/AppMenuItem.vue';
+import { onMounted, ref } from 'vue';
+import AppMenuItem from './AppMenuItem.vue';
 // Cookies de usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -90,12 +90,6 @@ const setMenuByUser = async () => {
 onMounted(async () => {
     await loadUserData();
 });
-// onMounted(() => {
-//     setTimeout(() => {
-//         // Se userAdmin.admin < 2, remover a última propriedade de model
-//         if (userData.admin < 2) model.value.pop();
-//     }, Math.random() * 1000);
-// });
 </script>
 
 <template>
@@ -104,11 +98,6 @@ onMounted(async () => {
             <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
             <li v-if="item.separator" class="menu-separator"></li>
         </template>
-        <!-- <li>
-            <a href="https://www.primefaces.org/primeblocks-vue/#/" target="_blank">
-                <img src="/layout/images/banner-primeblocks.png" alt="Prime Blocks" class="w-full mt-3" />
-            </a>
-        </li> -->
     </ul>
 </template>
 
