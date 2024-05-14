@@ -156,7 +156,7 @@ module.exports = app => {
                         "next": body,
                         "request": req,
                         "evento": {
-                            "evento": `Exclusão de registro`,
+                            "evento": `Exclusão de status: ${JSON.stringify(bodyRemove)}`,
                             "tabela_bd": tabela,
                         }
                     })
@@ -178,7 +178,7 @@ module.exports = app => {
                         "next": body,
                         "request": req,
                         "evento": {
-                            "evento": `Novo status`,
+                            "evento": `Novo status: ${JSON.stringify(body)}`,
                             "tabela_bd": tabela,
                         }
                     })
