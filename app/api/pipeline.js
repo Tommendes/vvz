@@ -1,6 +1,8 @@
 const { dbPrefix } = require("../.env")
 const moment = require('moment')
 const ftp = require('basic-ftp');
+const { Client } = require('basic-ftp');
+
 const path = require('path')
 
 module.exports = app => {
@@ -463,7 +465,6 @@ module.exports = app => {
             ret.orderBy(app.db.raw(sortField), sortOrder)
                 .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
                 .limit(rows).offset((page + 1) * rows - rows)
-        // console.log(ret.toString());
         ret.then(body => {
             const length = body.length
             // se sortField == 'status_created_at' então ordene pelo valor em if body[X].status_created_at considerando o valor em sortOrder (ASC ou DESC) e considerando que status_created_at é uma data no format 'dd/mm/yyyy'
@@ -1068,22 +1069,7 @@ module.exports = app => {
                 .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
                 .groupBy(app.db.raw('mes, representacao'))
                 .orderBy(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%y-%m')`))
-            // console.log(app.db({ tbl1: tabelaDomain })
-            // .select(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
-            // .join({ pp: tabelaParamsDomain }, function () {
-            //     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
-            // })
-            // // .join({ ps: tabelaPipelineStatusDomain }, function () {
-            // //     this.on('ps.id_pipeline', '=', 'tbl1.id')
-            // // })
-            // .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
-            // .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-            // .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY date(tbl1.created_at) DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
-            // .whereRaw(rows ? `pp.id in (${rows})` : `1=1`)
-            // .groupBy(app.db.raw('mes, representacao'))
-            // .orderBy(app.db.raw(`representacao, DATE_FORMAT(tbl1.created_at, '%y-%m')`)).toString());
             const formatData = await formatDataForChart(biSalesOverview)
-            // console.log(formatData['datasets']);
             return res.send(formatData)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -1112,39 +1098,31 @@ module.exports = app => {
 
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
         const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
-        const ftpParam = await app.db({ ftp: tabelaFtpDomain })
-            .select('host', 'port', 'user', 'pass', 'ssl')
-            .where({ id: pipelineParam.id_ftp }).first()
+
+        const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
-        body.ftp = ftpParam
-        body.ftp.path = pathDoc
-
-        body.ssl = body.ssl == 1 ? true : false
-
+        ftpParamsArray.forEach(ftpParam => {
+            ftpParam.path = pathDoc;
+        });
+        let clientFtp = undefined;
         try {
-            existsOrError(body.ftp, 'Dados de FTP não informados')
-            body = body.ftp
-            existsOrError(body.host, 'Host não informado')
-            existsOrError(body.port, 'Porta não informada')
-            existsOrError(body.user, 'Usuário não informado')
-            existsOrError(body.pass, 'Senha não informada')
-            booleanOrError(body.ssl, 'SSL não informado')
-            existsOrError(body.path, 'Caminho não informado')
+            existsOrError(ftpParamsArray, 'Dados de FTP não informados');
+
+            let connectionResult = await connectToFTP(ftpParamsArray, uParams);
+
+            if (!connectionResult.success) {
+                throw new Error('Nenhuma das opções de conexão FTP funcionou.');
+            }
+
+            clientFtp = connectionResult.client;
+            // if (clientFtp) console.log('Conexão FTP bem-sucedida');
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            return res.status(400).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(400).send(error.message);
         }
 
         try {
-            await client.access({
-                host: body.host,
-                port: body.port,
-                user: body.user,
-                password: body.pass,
-                secure: body.ssl == 1 ? true : false
-            });
-
-            await client.ensureDir(body.path);
+            await clientFtp.ensureDir(pathDoc);
             // Registrar o evento na tabela de eventos
             const { createEvent } = app.api.sisEvents
             evento = await createEvent({
@@ -1171,6 +1149,7 @@ module.exports = app => {
     // Lista arquivos da pasta no servidor ftp
     const lstFolder = async (req, res) => {
         let user = req.user
+        // console.log('user', user);
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
@@ -1194,39 +1173,30 @@ module.exports = app => {
         }
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
         const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
-        const ftpParam = await app.db({ ftp: tabelaFtpDomain })
-            .select('host', 'port', 'user', 'pass', 'ssl')
-            .where({ id: pipelineParam.id_ftp }).first()
-        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento)
-        body.ftp = ftpParam
-        body.ftp.path = pathDoc
-
-        body.ssl = body.ssl == 1 ? true : false
-
+        const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
+        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
+        ftpParamsArray.forEach(ftpParam => {
+            ftpParam.path = pathDoc;
+        });
+        let clientFtp = undefined;
         try {
-            existsOrError(body.ftp, 'Dados de FTP não informados')
-            body = body.ftp
-            existsOrError(body.host, 'Host não informado')
-            existsOrError(body.port, 'Porta não informada')
-            existsOrError(body.user, 'Usuário não informado')
-            existsOrError(body.pass, 'Senha não informada')
-            booleanOrError(body.ssl, 'SSL não informado')
-            existsOrError(body.path, 'Caminho não informado')
+            existsOrError(ftpParamsArray, 'Dados de FTP não informados');
+
+            let connectionResult = await connectToFTP(ftpParamsArray, uParams);
+
+            if (!connectionResult.success) {
+                throw new Error('Nenhuma das opções de conexão FTP funcionou.');
+            }
+
+            clientFtp = connectionResult.client;
+            // if (clientFtp) console.log('Conexão FTP bem-sucedida');
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            return res.status(400).send(error)
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(400).send(error.message);
         }
 
         try {
-            await client.access({
-                host: body.host,
-                port: body.port,
-                user: body.user,
-                password: body.pass,
-                secure: body.ssl == 1 ? true : false
-            });
-
-            const list = await client.list('/' + body.path);
+            const list = await clientFtp.list('/' + pathDoc);
             if (list.length == 0) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.send(list);
         } catch (error) {
@@ -1235,9 +1205,35 @@ module.exports = app => {
             else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.status(200).send(error)
         } finally {
-            client.close();
+            clientFtp.close();
         }
     }
+
+    const connectToFTP = async (ftpParamsArray, uParams) => {
+        for (let i = 0; i < ftpParamsArray.length; i++) {
+            const ftpParam = ftpParamsArray[i];
+            const client = new Client();
+            try {
+                const dataConnect = {
+                    host: ftpParam.host,
+                    port: ftpParam.port,
+                    user: ftpParam.user,
+                    password: ftpParam.pass,
+                    secure: ftpParam.ssl
+                }
+                // console.log(`Tentando conectar com os dados: ${JSON.stringify(dataConnect)}`);
+                await client.access(dataConnect);
+                // console.log(`Conexão FTP bem-sucedida com os dados: ${JSON.stringify(dataConnect)}`);
+                return { success: true, client }; // Retorna o cliente se a conexão for bem-sucedida
+            } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: Conexão FTP falhou para a opção ${i + 1}: ${error.message}`, sConsole: true } })
+                client.close(); // Fecha a conexão falhada
+            }
+        }
+        return { success: false }; // Retorna falso se todas as conexões falharem
+    }
+
+
 
     const formatDataForChart = async (result) => {
         const datasets = [];
