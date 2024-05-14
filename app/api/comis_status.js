@@ -147,16 +147,15 @@ module.exports = app => {
             app.db(tabelaDomain)
                 .where(bodyRemove)
                 .del()
-                .then(ret => {
-                    body.id = ret[0]
-                    // registrar o evento na tabela de eventos
-                    const { createEventIns } = app.api.sisEvents
-                    createEventIns({
-                        "notTo": ['created_at', 'evento'],
-                        "next": body,
+                .then(async (ret) => {
+                    const { createEventRemove } = app.api.sisEvents
+                    const evento = await createEventRemove({
+                        "last": await app.db(tabelaDomain)
+                            .where({ id_comissoes: body.id_comissoes }).first(),
                         "request": req,
                         "evento": {
-                            "evento": `Exclusão de status: ${JSON.stringify(bodyRemove)}`,
+                            "classevento": "Remove",
+                            "evento": `Exclusão de status de comissão`,
                             "tabela_bd": tabela,
                         }
                     })

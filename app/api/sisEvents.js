@@ -162,9 +162,9 @@ module.exports = app => {
         }
 
         // se campos foram alterados então registra
-        if (force || (fields.length >= 2 && fields.substr(0, fields.length - 2).length > 0)) {
+        if (force || (fields.length >= 2 && fields.substring(0, fields.length - 2).length > 0)) {
             // remove a virgula e espaço inseridos ao final da string
-            evento.evento = force ? `${evento.evento}` : `${evento.evento} ${eventoDescr}: ${fields.substr(0, fields.length - 2)}`
+            evento.evento = force ? `${evento.evento}` : `${evento.evento} ${eventoDescr}: ${fields.substring(0, fields.length - 2)}`
             evento.id_user = !(request && request.user && request.user.id) ? last.id : request.user.id
             evento.classevento = evento.classevento || "Update"
             evento.id_registro = last.id
@@ -197,9 +197,9 @@ module.exports = app => {
             if (notTo.indexOf(newest) < 0)
                 fields += `${newest}: ${next[newest]}, `;
         }
-        if (fields.length >= 2 && fields.substr(0, fields.length - 2).length > 0) {
+        if (fields.length >= 2 && fields.substring(0, fields.length - 2).length > 0) {
             // remove a virgula e espaço inseridos ao final da string
-            eventoDescr += fields.substr(0, fields.length - 2)
+            eventoDescr += fields.substring(0, fields.length - 2)
 
             evento.id_user = !(request && request.user && request.user.id) ? next.id : request.user.id
             evento.evento = `${evento.evento}: ${eventoDescr}`
@@ -232,9 +232,9 @@ module.exports = app => {
             fields += `${older}: ${last[older]}, `;
         }
         // se campos foram alterados então registra
-        if ((fields.length >= 2 && fields.substr(0, fields.length - 2).length > 0)) {
+        if ((fields.length >= 2 && fields.substring(0, fields.length - 2).length > 0)) {
             // remove a virgula e espaço inseridos ao final da string
-            evento.evento = `${evento.evento} ${eventoDescr}: ${fields.substr(0, fields.length - 2)}`
+            evento.evento = `${evento.evento} ${eventoDescr}: ${fields.substring(0, fields.length - 2)}`
 
             evento.id_user = !(request && request.user && request.user.id) ? last.id : request.user.id
             evento.classevento = "Remove"
@@ -251,6 +251,7 @@ module.exports = app => {
                 else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
+                console.log(error);
                 res.status(500).send(error)
             }
         }
@@ -267,9 +268,9 @@ module.exports = app => {
             if (notTo.indexOf(newest) < 0)
                 fields += `${newest}: ${next[newest]}, `;
         }
-        if (fields.length >= 2 && fields.substr(0, fields.length - 2).length > 0) {
+        if (fields.length >= 2 && fields.substring(0, fields.length - 2).length > 0) {
             // remove a virgula e espaço inseridos ao final da string
-            eventoDescr += fields.substr(0, fields.length - 2)
+            eventoDescr += fields.substring(0, fields.length - 2)
 
             evento.id_user = !(request && request.user && request.user.id) ? next.id : request.user.id
             evento.evento = evento.evento || `${evento.evento}: ${eventoDescr}`
