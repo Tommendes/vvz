@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -88,7 +88,7 @@ const loadData = async () => {
                     };
                     // Retorna os parâmetros do registro
                     await getPipelineParam();
-                    await lstFolder();
+                    // await lstFolder();
                     await getNomeCliente();
                     // Lista o andamento do registro
                     await listStatusRegistro();
@@ -750,6 +750,13 @@ watch(selectedCadastro, (value) => {
 watch(route, (value) => {
     if (value !== itemData.value.id) {
         reload();
+    }
+});
+watchEffect(() => {
+    if (itemDataParam.value) {
+        if (itemDataParam.value.gera_pasta >= 1) {
+            lstFolder();
+        }
     }
 });
 </script>
