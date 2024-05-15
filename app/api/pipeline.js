@@ -1128,7 +1128,7 @@ module.exports = app => {
             evento = await createEvent({
                 "request": req,
                 "evento": {
-                    id_user: uParams.id,
+                    id_user: user.id,
                     evento: `Criação de pasta no servidor ftp`,
                     classevento: `mkFolder`,
                     id_registro: body.id_pipeline,
