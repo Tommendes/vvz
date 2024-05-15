@@ -1106,12 +1106,12 @@ module.exports = app => {
         });
         let clientFtp = undefined;
         try {
-            existsOrError(ftpParamsArray, 'Dados de FTP não informados');
+            existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
 
             let connectionResult = await connectToFTP(ftpParamsArray, uParams);
 
             if (!connectionResult.success) {
-                throw new Error('Nenhuma das opções de conexão FTP funcionou.');
+                throw new Error('Não foi possível conectar ao servidor de arquivos neste momento');
             }
 
             clientFtp = connectionResult.client;
@@ -1180,12 +1180,12 @@ module.exports = app => {
         });
         let clientFtp = undefined;
         try {
-            existsOrError(ftpParamsArray, 'Dados de FTP não informados');
+            existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
 
             let connectionResult = await connectToFTP(ftpParamsArray, uParams);
 
             if (!connectionResult.success) {
-                throw new Error('Nenhuma das opções de conexão FTP funcionou.');
+                throw new Error('Não foi possível conectar ao servidor de arquivos neste momento');
             }
 
             clientFtp = connectionResult.client;
