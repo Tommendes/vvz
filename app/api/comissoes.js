@@ -397,7 +397,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelastatuscomiss}`
+        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         // const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusPipeline}`
         const registro = { status: STATUS_DELETE }
         try {
@@ -455,7 +455,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelastatuscomiss}`
+        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
 
         const { createEventUpd } = app.api.sisEvents
         Object.values(data).forEach(async (element) => {
@@ -539,7 +539,7 @@ module.exports = app => {
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaComissaoAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
-        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelastatuscomiss}`
+        const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         let filterDatas = `1=1`
         if (dataInicio && dataFim) filterDatas = `created_at between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
