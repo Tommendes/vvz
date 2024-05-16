@@ -1210,6 +1210,7 @@ module.exports = app => {
     }
 
     const connectToFTP = async (ftpParamsArray, uParams) => {
+        let allErrors = [];
         for (let i = 0; i < ftpParamsArray.length; i++) {
             const ftpParam = ftpParamsArray[i];
             const client = new Client();
@@ -1226,10 +1227,12 @@ module.exports = app => {
                 // console.log(`Conexão FTP bem-sucedida com os dados: ${JSON.stringify(dataConnect)}`);
                 return { success: true, client }; // Retorna o cliente se a conexão for bem-sucedida
             } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: Conexão FTP falhou para a opção ${i + 1}: ${error.message}`, sConsole: false } })
+                allErrors.push(`Conexão FTP falhou para a opção ${i + 1}: ${error.message}`);
                 client.close(); // Fecha a conexão falhada
             }
         }
+        // Se todas as conexões falharem, registre os erros do array allErrors e retorne falso
+        app.api.logger.logError({ log: { line: allErrors.join('; '), sConsole: false } })
         return { success: false }; // Retorna falso se todas as conexões falharem
     }
 
