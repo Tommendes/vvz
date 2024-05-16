@@ -1226,7 +1226,7 @@ module.exports = app => {
                 // console.log(`Conexão FTP bem-sucedida com os dados: ${JSON.stringify(dataConnect)}`);
                 return { success: true, client }; // Retorna o cliente se a conexão for bem-sucedida
             } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: Conexão FTP falhou para a opção ${i + 1}: ${error.message}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: Conexão FTP falhou para a opção ${i + 1}: ${error.message}`, sConsole: false } })
                 client.close(); // Fecha a conexão falhada
             }
         }
