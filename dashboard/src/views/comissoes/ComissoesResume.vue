@@ -243,11 +243,11 @@ onMounted(async () => {
                         <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon iconDisplay="input" @update:modelValue="adjustDates" />
                         <IconField iconPosition="left">
                             <InputIcon>
-                                <i class="pi pi-search" />
+                                <i class="fa-solid fa-magnifying-glass" />
                             </InputIcon>
                             <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                         </IconField>
-                        <Button type="button" icon="pi pi-filter-slash" label="Limpar" class="ml-2" outlined @click="initFilters()" />
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined @click="initFilters()" />
                     </div>
                     <!-- </div> -->
                 </div>
