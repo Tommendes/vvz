@@ -36,7 +36,6 @@ const printDiario = async (tpAgenteRep) => {
             else if (typeof error.response == 'string') defaultWarn(error.response);
             else if (typeof error == 'string') defaultWarn(error);
             else {
-                console.log(error);
                 defaultWarn('Erro ao carregar dados!');
             }
         });
@@ -64,14 +63,13 @@ const printPosicaoMensal = async () => {
             else if (typeof error.response == 'string') defaultWarn(error.response);
             else if (typeof error == 'string') defaultWarn(error);
             else {
-                console.log(error);
                 defaultWarn('Erro ao carregar dados!');
             }
         });
 };
 const closeAll = () => {
     defaultSuccess('Implementar encerramento de liquidações');
-}
+};
 </script>
 
 <template>

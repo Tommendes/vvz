@@ -31,7 +31,6 @@ const getLocalParams = async () => {
 
 const loadData = async () => {
     loading.value = true;
-    // console.log('dataCorte.value.parametros', dataCorte.value.parametros);
     const dataInicio = (dataCorte.value.parametros && dataCorte.value.parametros.dataInicio) || '';
     const dataFim = (dataCorte.value.parametros && dataCorte.value.parametros.dataFim) || '';
     const url = `${baseApiUrl}/comissoes/f-a/gps?dataInicio=${dataInicio}&dataFim=${dataFim}`;
@@ -67,8 +66,6 @@ const setMonthPeriod = async () => {
     let newMonth = today.month() + 1; // Mês atual + 1
     let newYear = today.year(); // Ano atual
 
-    // console.log('today.month()', today.month(), 'today', today.date(), 'cutoffDay', cutoffDay, 'newMonth', newMonth, 'newYear', newYear);
-
     // Verifica se a data de hoje é maior ou igual ao dia de corte
     if (today.date() >= cutoffDay) {
         newMonth++; // Incrementa o mês
@@ -99,8 +96,6 @@ const setMonthPeriod = async () => {
     monthPicker.value = moment()
         .set({ year: newYear, month: newMonth - 1, date: 1 })
         .toDate();
-
-    // console.log('dataCorte', dataCorte.value, 'monthPicker', monthPicker.value);
     emit('dataCorte', dataCorte.value);
 
     // Executa a operação loadData()
@@ -198,7 +193,6 @@ const printOnly = async (idAgente, tpAgenteRep) => {
             else if (typeof error.response == 'string') defaultWarn(error.response);
             else if (typeof error == 'string') defaultWarn(error);
             else {
-                console.log(error);
                 defaultWarn('Erro ao carregar dados!');
             }
         });

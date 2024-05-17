@@ -180,7 +180,7 @@ module.exports = app => {
                 else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${request.user.name}. Error: ${error}`, sConsole: true } });
                 res.status(500).send(error)
             }
         }
@@ -217,6 +217,7 @@ module.exports = app => {
                 else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${request.user.name}. Error: ${error}`, sConsole: true } });
                 res.status(500).send(error)
             }
         }
@@ -251,7 +252,7 @@ module.exports = app => {
                 else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
-                console.log(error);
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${request.user.name}. Error: ${error}`, sConsole: true } });
                 res.status(500).send(error)
             }
         }
@@ -288,6 +289,7 @@ module.exports = app => {
                 else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${request.user.name}. Error: ${error}`, sConsole: true } });
                 res.status(500).send(error)
             }
         }
@@ -308,6 +310,7 @@ module.exports = app => {
             else dba = await app.db(tabelaSisEvents).insert(evento)
             return dba[0]
         } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } });
             res.status(500).send(error)
         }
     }

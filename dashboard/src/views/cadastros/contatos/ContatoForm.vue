@@ -31,7 +31,6 @@ const loadData = async () => {
     loading.value = true;
     if (props.itemDataRoot.id) {
         const url = `${urlBase.value}/${props.itemDataRoot.id}`;
-        // console.log(url);
         axios
             .get(url)
             .then((res) => {

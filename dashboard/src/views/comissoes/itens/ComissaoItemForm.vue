@@ -70,8 +70,6 @@ const loadData = async () => {
             await axios.get(url).then(async (axiosRes) => {
                 itemData.value = axiosRes.data;
                 itemDataUnmuted.value = { ...axiosRes.data };
-                if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
-                // Lista o andamento do registro
             });
             // Lista o andamento do registro
             await listStatusRegistro();
@@ -121,12 +119,7 @@ const getEventos = async () => {
 
 // Validar formulário
 const formIsValid = () => {
-    const liquidarEmIsValid = itemData.value.liquidar_em ? moment(itemData.value.liquidar_em, 'DD/MM/YYYY', true).isValid() : true;
-    if (!liquidarEmIsValid) {
-        defaultWarn('Data de liquidação inválida');
-        return false;
-    }
-    return liquidarEmIsValid;
+    return true;
 };
 
 // Salvar dados do formulário
@@ -136,8 +129,6 @@ const saveData = async () => {
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
     const obj = { ...itemData.value };
-    if (obj.liquidar_em) obj.liquidar_em = moment(obj.liquidar_em, 'DD/MM/YYYY').format('YYYY-MM-DD');
-    else obj.liquidar_em = null;
     axios[method](url, obj)
         .then(async (res) => {
             emit('refreshPipeline');
@@ -149,7 +140,6 @@ const saveData = async () => {
             itemData.value = res.data;
             itemDataUnmuted.value = { ...res.data };
             if (itemData.value && itemData.value.id) {
-                if (itemData.value.liquidar_em) itemData.value.liquidar_em = masks.value.data.masked(moment(itemData.value.liquidar_em).format('DD/MM/YYYY'));
                 if (itemData.value.valor_base) itemData.value.valor_base = itemData.value.valor_base.replace('.', ',');
                 if (itemData.value.percentual) itemData.value.percentual = itemData.value.percentual.replace('.', ',');
                 if (itemData.value.valor) itemData.value.valor = itemData.value.valor.replace('.', ',');
@@ -208,17 +198,10 @@ const liquidateItem = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: async () => {
-            if (!itemData.value.liquidar_em) {
-                itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
-                itemData.value.bodyStatus = bodyStatus;
-                await saveData();
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
                 await loadData();
-            } else {
-                await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
-                    await loadData();
-                    emit('cancel');
-                });
-            }
+                emit('cancel');
+            });
         },
         reject: () => {
             return false;
@@ -240,11 +223,9 @@ const programateItem = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: async () => {
-            itemData.value.liquidar_em = moment().format('DD/MM/YYYY');
-            saveData().then(async () => {
-                await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
-                    await loadData();
-                });
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                await loadData();
+                emit('refreshPipeline');
             });
         },
         reject: () => {
@@ -268,11 +249,9 @@ const unprogramateItem = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: async () => {
-            itemData.value.liquidar_em = null;
-            saveData().then(async () => {
-                await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
-                    await loadData();
-                });
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                await loadData();
+                emit('refreshPipeline');
             });
         },
         reject: () => {
@@ -297,6 +276,7 @@ const setFiscalDone = () => {
         accept: async () => {
             await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
                 await loadData();
+                emit('refreshPipeline');
             });
         },
         reject: () => {
@@ -322,6 +302,7 @@ const setFiscalUnDone = () => {
         accept: async () => {
             await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
                 await loadData();
+                emit('refreshPipeline');
             });
         },
         reject: () => {
@@ -352,7 +333,6 @@ const multiplicateItem = (event) => {
         accept: async () => {
             itemData.value.bodyMultiplicate = bodyMultiplicate.value;
             await saveData();
-            // await loadData();
         },
         reject: () => {
             return false;
@@ -654,13 +634,6 @@ watchEffect(() => {
                     <Dropdown v-else filter placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>
-            <!-- <div class="flex-none flex" v-if="mode == 'edit' || itemData.liquidar_em" style="max-width: 11rem">
-                <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-calendar-check"></i></div>
-                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Calendar v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.liquidar_em" :showOnFocus="true" showButtonBar dateFormat="dd/mm/yy" />
-                </div>
-            </div> -->
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Button
@@ -686,7 +659,7 @@ watchEffect(() => {
                     <Button
                         type="button"
                         :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
-                        v-if="!itemData.liquidar_em && ['view'].includes(mode)"
+                        v-if="itemDataLastStatus.status_comis != STATUS_LIQUIDADO && ['view'].includes(mode)"
                         v-tooltip.top="'Liquidar comissão'"
                         icon="fa-regular fa-calendar-check"
                         severity="success"
@@ -697,7 +670,7 @@ watchEffect(() => {
                     <Button
                         :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
                         type="button"
-                        v-else-if="itemData.liquidar_em && ['view'].includes(mode)"
+                        v-else-if="itemDataLastStatus.status_comis == STATUS_LIQUIDADO && ['view'].includes(mode)"
                         v-tooltip.top="'Cancelar liquidação'"
                         icon="fa-regular fa-calendar-xmark"
                         severity="warning"

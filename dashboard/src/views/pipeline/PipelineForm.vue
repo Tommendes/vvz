@@ -105,7 +105,6 @@ const loadData = async () => {
                     else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
                     else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
                     else {
-                        console.log(error);
                         defaultWarn('Erro ao carregar dados!');
                     }
                     toGrid();
@@ -180,7 +179,6 @@ const saveData = async () => {
             else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
             else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
             else {
-                console.log(error);
                 defaultWarn('Erro ao carregar dados!');
             }
         });
@@ -515,7 +513,6 @@ const statusRecord = async (status) => {
                         await toFilho(body.data.id);
                     })
                     .catch((error) => {
-                        console.log(error);
                         defaultWarn(error.response.data);
                     });
             },
@@ -550,7 +547,6 @@ const createPv = async () => {
             else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
             else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
             else {
-                console.log(error);
                 defaultWarn('Erro ao criar termo de compromisso!');
             }
         });
@@ -581,7 +577,6 @@ const createOat = async (pv) => {
             else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
             else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
             else {
-                console.log(error);
                 defaultWarn('Erro ao criar termo de compromisso!');
             }
         });
@@ -622,7 +617,6 @@ const lstFolder = async () => {
                     else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
                     else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
                     else {
-                        console.log(error);
                         defaultWarn('Erro ao carregar dados!');
                     }
                     hostAccessible.value = false;

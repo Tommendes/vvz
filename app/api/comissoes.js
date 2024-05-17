@@ -60,12 +60,6 @@ module.exports = app => {
             if (Number(body.valor_base) <= 0) throw 'Valor base de cálculo da comissão deve ser maior que zero'
             if (Number(body.percentual) <= 0) throw 'Percentual sobre a base deve ser maior que zero'
             if (Number(body.valor) <= 0) throw 'Valor da comissão deve ser maior que zero'
-            if (body.liquidar_em) {
-                const date = moment().format('YYYY-MM-DD')
-                const dtLiquidacao = moment(body.liquidar_em);
-                if (!dtLiquidacao.isValid()) throw 'Data de liquidação inválida. Favor verificar'
-                if (dtLiquidacao.format('YYYY-MM-DD') < date) throw 'Data de liquidação não pode ser menor que a data atual'
-            }
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error)
@@ -172,7 +166,6 @@ module.exports = app => {
                     .where({ id_comissoes: body.id })
                     .orderBy('created_at', 'desc')
                     .first()
-
                 // Se não havia status de comissionamento então insere um novo
                 if (!lastStatusComiss) {
                     await trx(tabelaComissaoStatusDomain).insert({
@@ -180,23 +173,6 @@ module.exports = app => {
                         created_at: new Date(),
                         id_comissoes: body.id,
                         status_comis: STATUS_ABERTO,
-                    });
-                }
-                // Se havia um status e era == 10 e body.liquidar_em foi informado então insere um novo status
-                if (lastStatusComiss && (bodyStatus && bodyStatus.status_comis == STATUS_ENCERRADO) && (lastStatusComiss.status_comis == STATUS_ABERTO || body.liquidar_em)) {
-                    if (lastStatusComiss.status_comis == STATUS_ABERTO)
-                        await trx(tabelaComissaoStatusDomain).insert({
-                            evento: evento || 1,
-                            created_at: new Date(),
-                            id_comissoes: body.id,
-                            status_comis: STATUS_LIQUIDADO
-                        });
-                    // Inserir na tabela de status de pipeline a informação de comissionamento            
-                    await trx(tabelaComissaoStatusDomain).insert({
-                        evento: evento || 1,
-                        created_at: new Date(),
-                        id_comissoes: body.id,
-                        status_comis: STATUS_ENCERRADO
                     });
                 }
             }).catch((error) => {
@@ -258,32 +234,12 @@ module.exports = app => {
                         return res.status(500).send(error)
                     })
 
-                // Inserir na tabela de status de pipeline a informação de comissionamento            
                 await trx(tabelaComissaoStatusDomain).insert({
                     evento: evento || 1,
                     created_at: new Date(),
                     id_comissoes: body.id,
-                    status_comis: STATUS_ABERTO
+                    status_comis: STATUS_ABERTO,
                 });
-                // Inserir na tabela de status de pipeline a informação de programação de pagamento
-                if (body.liquidar_em)
-                    await trx(tabelaComissaoStatusDomain).insert({
-                        evento: evento || 1,
-                        created_at: new Date(),
-                        id_comissoes: body.id,
-                        status_comis: STATUS_LIQUIDADO
-                    });
-
-                // Inserir na tabela de status de pipeline a informação de comissionamento
-                // const hasCommisioningStatus = await app.db(tabelaPipelineStatusDomain).where({ id_pipeline: body.id_pipeline, status: STATUS_ACTIVE, status_params: STATUS_COMISSIONADO }).first()
-                // if (!hasCommisioningStatus)
-                //     await trx(tabelaPipelineStatusDomain).insert({
-                //         evento: evento || 1,
-                //         status: STATUS_ACTIVE,
-                //         created_at: new Date(),
-                //         id_pipeline: body.id_pipeline,
-                //         status_params: STATUS_COMISSIONADO,
-                //     });
 
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
@@ -334,16 +290,18 @@ module.exports = app => {
             .join({ tbl4: tabelaComissAgentesDomain }, 'tbl1.id_comis_agentes', 'tbl4.id')
             .join({ tbl5: tabelaPipelineParams }, 'tbl5.id', 'tbl3.id_pipeline_params')
             .leftJoin({ tbl6: tabelaCadastros }, 'tbl6.id', 'tbl4.id_cadastros')
-            .select('tbl1.id', 'tbl1.parcela', 'tbl1.id_comis_agentes', 'tbl1.id_pipeline', 'tbl1.liquidar_em',
+            .select('tbl1.id', 'tbl1.parcela', 'tbl1.id_comis_agentes', 'tbl1.id_pipeline',
                 { id_pipeline: 'tbl3.id' }, 'tbl6.nome as agente', 'tbl5.descricao as unidade', 'tbl3.documento',
                 app.db.raw('format(tbl1.valor, 2, "pt_BR")valor'), app.db.raw('format(tbl1.valor_base, 2, "pt_BR")valor_base'), app.db.raw('format(tbl1.percentual, 2, "pt_BR")percentual'),
-                'tbl4.agente_representante', app.db.raw(`DATE_FORMAT(SUBSTRING_INDEX(tbl1.liquidar_em,' ',1),'%d/%m/%Y') AS liquidar_aprox`),
-                app.db.raw(`(select status_comis from ${tabelaComissStatussDomain} where id_comissoes = tbl1.id order by created_at desc, status_comis desc limit 1) last_status_comiss`))
+                'tbl4.agente_representante',
+                app.db.raw(`(select status_comis from ${tabelaComissStatussDomain} where id_comissoes = tbl1.id order by created_at desc, status_comis desc limit 1) last_status_comiss`),
+                app.db.raw(`(select DATE_FORMAT(created_at,'%d/%m/%Y') from ${tabelaComissStatussDomain} where id_comissoes = tbl1.id order by created_at desc, status_comis desc limit 1) liquidar_aprox`)
+            )
             .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pipeline': idPipeline })
             .groupBy('tbl1.id')
             .orderBy(app.db.raw('cast(tbl4.agente_representante as unsigned)'))
             .orderBy('tbl1.parcela')
-            .orderBy('tbl1.liquidar_em')
+            .orderBy('liquidar_aprox')
             .orderBy('tbl1.id', 'desc')
 
         ret.then(body => {
@@ -463,8 +421,6 @@ module.exports = app => {
                 delete element.last_status_comiss;
                 try {
                     existsOrError(element.id, 'Registro não informado')
-                    existsOrError(element.liquidar_em, 'Data da liquidação não informada')
-                    if (!moment(element.liquidar_em, 'YYYY-MM-DD', true).isValid()) throw 'Data de liquidação inválida'
                 } catch (error) {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
                     return res.status(400).send(error)

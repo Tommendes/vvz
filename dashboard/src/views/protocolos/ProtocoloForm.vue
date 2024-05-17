@@ -132,8 +132,10 @@ const saveDataProtDocs = async () => {
             }
         })
         .catch((error) => {
-            console.log(error);
-            defaultWarn(error.response.data);
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else defaultWarn('Erro ao carregar dados!');
         });
     if (itemDataProtDocs.value.descricao) itemDataProtDocs.value.descricao = itemDataProtDocs.value.descricao.split(',');
 };

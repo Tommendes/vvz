@@ -130,10 +130,7 @@ const saveData = async () => {
                 if (typeof error.response.data == 'string') defaultWarn(error.response.data);
                 else if (typeof error.response == 'string') defaultWarn(error.response);
                 else if (typeof error == 'string') defaultWarn(error);
-                else {
-                    console.log(error);
-                    defaultWarn('Erro ao carregar dados!');
-                }
+                else defaultWarn('Erro ao carregar dados!');
             });
     }
 };

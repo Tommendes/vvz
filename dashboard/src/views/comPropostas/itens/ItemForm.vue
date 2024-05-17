@@ -147,7 +147,6 @@ const getComposicoes = async () => {
                 if (itensInativos.length > 0) dropdownComposicoes.value.push({ label: 'Inativas ', comp_ativa: 0, items: itensInativos });
             })
             .catch((error) => {
-                console.log(error);
                 defaultWarn(error.response.data);
             });
         loading.value = false;

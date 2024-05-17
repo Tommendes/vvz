@@ -70,8 +70,7 @@ const newItem = () => {
         id_comis_agentes: null,
         valor_base: null,
         percentual: null,
-        valor: null,
-        liquidar_em: null
+        valor: null
     };
     // scrollToTop();
 };
@@ -89,7 +88,6 @@ const scheduleGroupSettlement = () => {
             'Essa operação ainda poderá ser revertida enquanto não houver a liquidação total.',
             'Informe abaixo a data prevista para liquidação.'
         ],
-        isCalendar: true,
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -108,7 +106,6 @@ const executeGroupSettlement = () => {
         group: 'comisGroupLiquidateConfirm',
         header: 'Liquidação total dos programados',
         message: [`Confirma a liquidação deste${pendingCommissionsQuantity() > 1 ? 's' : ''} ${pendingCommissionsQuantity()} registros?`, 'Essa operação <strong>NÃO PODERÁ SER REVERTIDA</strong>.'],
-        isCalendar: false,
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -134,12 +131,7 @@ const listAgentesComissionamento = async () => {
 
 // Validar formulário
 const formIsValid = () => {
-    const liquidarEmIsValid = itemDataGroup.value.liquidar_em ? moment(itemDataGroup.value.liquidar_em, 'DD/MM/YYYY', true).isValid() : true;
-    if (!liquidarEmIsValid) {
-        defaultWarn('Data de liquidação inválida');
-        return false;
-    }
-    return liquidarEmIsValid;
+    return true;
 };
 
 // Liquidar em grupo
@@ -147,10 +139,9 @@ const scheduleGroup = () => {
     if (!formIsValid()) return;
     const url = `${urlBase.value}`;
     let obj = [];
-    const dateToLiquidate = moment(itemDataGroup.value.liquidar_em).format('YYYY-MM-DD');
     gridData.value.forEach((element) => {
         if (element.last_status_comiss < 30) {
-            const newItem = { id: element.id, liquidar_em: dateToLiquidate, last_status_comiss: element.last_status_comiss };
+            const newItem = { id: element.id, last_status_comiss: element.last_status_comiss };
             obj.push(newItem);
         }
     });
@@ -165,19 +156,12 @@ const liquidateGroup = async () => {
     let shouldLoadData = false;
     for (const element of gridData.value) {
         if (element.last_status_comiss < 30) {
-            // if (element.last_status_comiss < 20) {
-            //     infoDialogisVisible.value = true;
-            //     shouldLoadData = false;
-            //     break;
-            // }
-            if (element.liquidar_em) {
-                const bodyStatus = {
-                    id_comissoes: element.id,
-                    status_comis: STATUS_ENCERRADO
-                };
-                await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus);
-                shouldLoadData = true;
-            }
+            const bodyStatus = {
+                id_comissoes: element.id,
+                status_comis: STATUS_ENCERRADO
+            };
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus);
+            shouldLoadData = true;
         }
     }
     if (shouldLoadData) {
@@ -259,7 +243,6 @@ onBeforeMount(async () => {
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
                 <p class="mb-1" v-for="(item, index) in message.message" :key="index" v-html="item" />
-                <Calendar v-if="message.isCalendar" v-model="itemDataGroup.liquidar_em" showButtonBar dateFormat="dd/mm/yy" />
                 <div class="flex align-items-center gap-2 mt-4">
                     <Button label="Confirmar" @click="acceptCallback"></Button>
                     <Button label="Ainda não" outlined @click="rejectCallback"></Button>

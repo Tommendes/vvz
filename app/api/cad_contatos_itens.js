@@ -41,7 +41,6 @@ module.exports = app => {
                 if (uniqueFixo && uniqueFixo.id != body.id) throw 'Telefone fixo já cadastrado'
             }
         } catch (error) {
-            console.log(error);
             return res.status(400).send(error)
         }
 

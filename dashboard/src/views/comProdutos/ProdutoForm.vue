@@ -130,7 +130,6 @@ const saveData = async () => {
             else if (typeof error.response == 'string') defaultWarn(error.response);
             else if (typeof error == 'string') defaultWarn(error);
             else {
-                console.log(error);
                 defaultWarn('Erro ao carregar dados!');
             }
         });
@@ -190,7 +189,6 @@ const removeImage = () => {
                     else if (typeof error.response == 'string') defaultWarn(error.response);
                     else if (typeof error == 'string') defaultWarn(error);
                     else {
-                        console.log(error);
                         defaultWarn('Erro ao carregar dados!');
                     }
                 });
@@ -405,7 +403,6 @@ const saveDataProdTabelas = async () => {
             }
         })
         .catch((error) => {
-            console.log(error);
             defaultWarn(error.response.data);
         });
 };

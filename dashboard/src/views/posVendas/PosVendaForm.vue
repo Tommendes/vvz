@@ -124,7 +124,6 @@ const saveData = async () => {
             else reload();
         })
         .catch((error) => {
-            console.log(error);
             defaultWarn('Erro ao carregar dados!');
         });
 };

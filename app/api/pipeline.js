@@ -1115,7 +1115,6 @@ module.exports = app => {
             }
 
             clientFtp = connectionResult.client;
-            // if (clientFtp) console.log('Conexão FTP bem-sucedida');
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error.message);
@@ -1149,7 +1148,6 @@ module.exports = app => {
     // Lista arquivos da pasta no servidor ftp
     const lstFolder = async (req, res) => {
         let user = req.user
-        // console.log('user', user);
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
@@ -1189,7 +1187,6 @@ module.exports = app => {
             }
 
             clientFtp = connectionResult.client;
-            // if (clientFtp) console.log('Conexão FTP bem-sucedida');
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error.message);
@@ -1222,9 +1219,7 @@ module.exports = app => {
                     password: ftpParam.pass,
                     secure: ftpParam.ssl
                 }
-                // console.log(`Tentando conectar com os dados: ${JSON.stringify(dataConnect)}`);
                 await client.access(dataConnect);
-                // console.log(`Conexão FTP bem-sucedida com os dados: ${JSON.stringify(dataConnect)}`);
                 return { success: true, client }; // Retorna o cliente se a conexão for bem-sucedida
             } catch (error) {
                 allErrors.push(`Conexão FTP falhou para a opção ${i + 1}: ${error.message}`);

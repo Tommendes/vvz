@@ -169,7 +169,6 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                console.log(error);
                 try {
                     defaultError(error.response.data);
                 } catch (error) {

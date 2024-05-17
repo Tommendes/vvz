@@ -272,7 +272,6 @@ module.exports = app => {
         }
         const body = { ...req.body }
 
-        // console.log(JSON.stringify(body));
         try {
             existsOrError(body.periodo, 'Período não informado')
             existsOrError(body.ano, 'Ano não informado')
@@ -350,7 +349,6 @@ module.exports = app => {
             jasperServerK, // Password
             optionParameters // Optional parameters
         )
-        // console.log(jsIntegration);
         const data = jsIntegration.execute()
             .then(async (data) => {
                 // registrar o evento na tabela de eventos
@@ -404,7 +402,6 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        // console.log(JSON.stringify(body));
         const dbSchema = `${dbPrefix}_${uParams.schema_name}`
         const usuario = uParams.name
         const idEmpresa = 1

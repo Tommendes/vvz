@@ -92,7 +92,6 @@ const loadData = async () => {
                 else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
                 else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
                 else {
-                    console.log(error);
                     defaultWarn('Erro ao carregar dados!');
                 }
             });
