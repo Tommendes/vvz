@@ -2,7 +2,7 @@
 import { onBeforeMount, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultError } from '@/toast';
+import { defaultWarn } from '@/toast';
 // import ComissaoForm from './ComissaoForm.vue';
 import { formatCurrency } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
@@ -169,11 +169,10 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                try {
-                    defaultError(error.response.data);
-                } catch (error) {
-                    defaultError('Erro ao carregar dados!');
-                }
+                if (typeof error == 'string') defaultWarn(error);
+                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                else defaultWarn('Erro ao carregar dados!');
             });
     }, Math.random() * 1000);
 };

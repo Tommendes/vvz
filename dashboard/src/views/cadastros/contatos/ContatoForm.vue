@@ -39,8 +39,11 @@ const loadData = async () => {
                     itemData.value = body;
                 }
             })
-            .catch((err) => {
-                defaultWarn(err.response.data);
+            .catch((error) => {
+                if (typeof error == 'string') defaultWarn(error);
+                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                else defaultWarn('Erro ao carregar dados!');
             });
     } else {
         itemData.value.id_cadastros = props.itemDataRoot.id_cadastros;
@@ -100,8 +103,11 @@ const saveData = async () => {
                 defaultWarn('Erro ao salvar registro');
             }
         })
-        .catch((err) => {
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else defaultWarn('Erro ao carregar dados!');
         });
     loading.value = false;
 };
@@ -122,8 +128,11 @@ const deleteItem = () => {
                     defaultSuccess('Registro excluído com sucesso!');
                     emit('reload');
                 })
-                .catch((err) => {
-                    defaultWarn(err.response.data);
+                .catch((error) => {
+                    if (typeof error == 'string') defaultWarn(error);
+                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                    else defaultWarn('Erro ao carregar dados!');
                 });
         },
         reject: () => {

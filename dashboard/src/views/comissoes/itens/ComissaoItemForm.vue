@@ -150,8 +150,11 @@ const saveData = async () => {
                 defaultWarn('Erro ao salvar registro');
             }
         })
-        .catch((err) => {
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else defaultWarn('Erro ao carregar dados!');
         });
 };
 // Exclui o registro
@@ -172,8 +175,11 @@ const deleteItem = () => {
                     emit('cancel');
                     emit('refreshPipeline');
                 })
-                .catch((err) => {
-                    defaultWarn(err.response.data);
+                .catch((error) => {
+                    if (typeof error == 'string') defaultWarn(error);
+                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                    else defaultWarn('Erro ao carregar dados!');
                 });
         },
         reject: () => {

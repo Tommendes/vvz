@@ -104,9 +104,7 @@ const loadData = async () => {
                     if (typeof error == 'string') defaultWarn(error);
                     else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
                     else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                    else {
-                        defaultWarn('Erro ao carregar dados!');
-                    }
+                    else defaultWarn('Erro ao carregar dados!');
                     toGrid();
                 });
         else if (props.idCadastro) {
@@ -178,9 +176,7 @@ const saveData = async () => {
             if (typeof error == 'string') defaultWarn(error);
             else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
             else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else {
-                defaultWarn('Erro ao carregar dados!');
-            }
+            else defaultWarn('Erro ao carregar dados!');
         });
 };
 // Recarregar dados do formulário
@@ -513,7 +509,10 @@ const statusRecord = async (status) => {
                         await toFilho(body.data.id);
                     })
                     .catch((error) => {
-                        defaultWarn(error.response.data);
+                        if (typeof error == 'string') defaultWarn(error);
+                        else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                        else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                        else defaultWarn('Erro ao executar dados!');
                     });
             },
             reject: () => {
@@ -546,9 +545,7 @@ const createPv = async () => {
             if (typeof error == 'string') defaultWarn(error);
             else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
             else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else {
-                defaultWarn('Erro ao criar termo de compromisso!');
-            }
+            else defaultWarn('Erro ao criar termo de compromisso!');
         });
 };
 
@@ -576,9 +573,7 @@ const createOat = async (pv) => {
             if (typeof error == 'string') defaultWarn(error);
             else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
             else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else {
-                defaultWarn('Erro ao criar termo de compromisso!');
-            }
+            else defaultWarn('Erro ao criar termo de compromisso!');
         });
 };
 
@@ -616,9 +611,7 @@ const lstFolder = async () => {
                     if (typeof error == 'string') defaultWarn(error);
                     else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
                     else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                    else {
-                        defaultWarn('Erro ao carregar dados!');
-                    }
+                    else defaultWarn('Erro ao carregar dados!');
                     hostAccessible.value = false;
                 });
         }, Math.random() * 1000 + 250);
@@ -638,9 +631,7 @@ const mkFolder = async () => {
             if (typeof error == 'string') defaultWarn(error);
             else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
             else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else {
-                defaultWarn('Erro ao criar pasta!');
-            }
+            else defaultWarn('Erro ao criar pasta!');
         });
 };
 /**

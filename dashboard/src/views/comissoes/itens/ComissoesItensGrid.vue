@@ -38,7 +38,6 @@ const dropdownStatus = ref([
     { label: 'Encerrado', value: '30', severity: 'success' },
     { label: 'Faturado', value: '40', style: 'color: #45590d' }
 ]);
-import moment from 'moment';
 // Carrega os dados da grid
 const reload = async () => {
     await loadData();
@@ -50,13 +49,21 @@ const loadData = async () => {
     setTimeout(async () => {
         // gridData.value = [];
         setTimeout(() => {}, 100);
-        await axios.get(url).then((axiosRes) => {
-            gridData.value = axiosRes.data.data;
-            gridData.value.map((item) => {
-                const situacao = item.last_status_comiss;
-                item.situacao = getStatusField(situacao, 'label');
+        await axios
+            .get(url)
+            .then((axiosRes) => {
+                gridData.value = axiosRes.data.data;
+                gridData.value.map((item) => {
+                    const situacao = item.last_status_comiss;
+                    item.situacao = getStatusField(situacao, 'label');
+                });
+            })
+            .catch((error) => {
+                if (typeof error == 'string') defaultWarn(error);
+                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                else defaultWarn('Erro ao carregar dados!');
             });
-        });
     }, Math.random() * 1000 + 250);
     cancelNewItem();
 };

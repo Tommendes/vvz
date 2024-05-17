@@ -91,9 +91,7 @@ const loadData = async () => {
                 if (typeof error == 'string') defaultWarn(error);
                 else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
                 else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else {
-                    defaultWarn('Erro ao carregar dados!');
-                }
+                else defaultWarn('Erro ao carregar dados!');
             });
     }, Math.random() * 1000);
     loading.value = false;
