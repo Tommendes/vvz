@@ -124,9 +124,7 @@ onBeforeMount(() => {
             dataKey="id"
             :rowHover="true"
             v-model:filters="filters"
-            filterDisplay="menu"
             :loading="loading"
-            :filters="filters"
             responsiveLayout="scroll"
             :globalFilterFields="['name', 'cpf', 'email', 'telefone', 'status']"
         >
