@@ -965,7 +965,6 @@ module.exports = app => {
                 delete users.password
                 // Antes de enviar os dados, converta todos os valores int para string
                 for (const key in users) {
-                    console.log(key, users[key]);
                     if (typeof users[key] === 'number') users[key] = users[key].toString()
                 }
                 return res.json(users)
