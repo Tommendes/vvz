@@ -30,8 +30,18 @@ const listaNomes = ref([
     { field: 'name', label: 'Nome', minWidth: '15rem' },
     { field: 'cpf', label: 'CPF', minWidth: '15rem' },
     { field: 'email', label: 'Email', minWidth: '25rem' },
-    { field: 'telefone', label: 'Telefone', minWidth: '15rem' }
+    { field: 'telefone', label: 'Telefone', minWidth: '15rem' },
+    { field: 'status', label: 'Situação', minWidth: '15rem' }
 ]);
+
+const STATUS_INACTIVE = '0'; // Perfil inativo
+const STATUS_WAITING = '1'; // Perfil aguardando o token de liberação
+const STATUS_SUSPENDED_BY_TKN = '8'; // Perfil suspenso por envio de token
+const STATUS_SUSPENDED = '9'; // Perfil suspenso
+const STATUS_ACTIVE = '10'; // Usuário ok
+const STATUS_PASS_EXPIRED = '19'; // Senha expirada por tempo de criação
+const STATUS_DELETE = '99'; // Usuário excluído
+
 //Scrool quando um Novo Registro for criado
 const scrollToTop = () => {
     window.scrollTo({
@@ -64,6 +74,32 @@ const loadData = () => {
             gridData.value = axiosRes.data.data;
             gridData.value.forEach((element) => {
                 if (element.cpf && element.cpf.trim().length >= 8) element.cpf = masks.value.cpf_cnpj.masked(element.cpf);
+                switch (element.status) {
+                    case STATUS_ACTIVE:
+                        element.status = 'Ativo';
+                        break;
+                    case STATUS_INACTIVE:
+                        element.status = 'Inativo';
+                        break;
+                    case STATUS_WAITING:
+                        element.status = 'Aguardando';
+                        break;
+                    case STATUS_SUSPENDED_BY_TKN:
+                        element.status = 'Suspenso por Token';
+                        break;
+                    case STATUS_SUSPENDED:
+                        element.status = 'Suspenso';
+                        break;
+                    case STATUS_PASS_EXPIRED:
+                        element.status = 'Senha Expirada';
+                        break;
+                    case STATUS_DELETE:
+                        element.status = 'Excluído';
+                        break;
+                    default:
+                        element.status = 'Desconhecido';
+                        break;
+                }
             });
             loading.value = false;
         });
@@ -96,7 +132,7 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop() " />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />

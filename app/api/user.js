@@ -916,11 +916,11 @@ module.exports = app => {
 
         const ret = app.db({ us: tabela })
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-            .select("us.id", "us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description",
+            .select("us.status", "us.id", "us.name", "us.cpf", "us.email", "us.telefone", "sc.schema_description",
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
-            .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
+            // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
         if (key)
             ret.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
