@@ -98,6 +98,22 @@ const saveData = async () => {
         });
 };
 //DropDowns
+const STATUS_INACTIVE = '0'; // Perfil inativo
+const STATUS_WAITING = '1'; // Perfil aguardando o token de liberação
+const STATUS_SUSPENDED_BY_TKN = '8'; // Perfil suspenso por envio de token
+const STATUS_SUSPENDED = '9'; // Perfil suspenso
+const STATUS_ACTIVE = '10'; // Usuário ok
+const STATUS_PASS_EXPIRED = '19'; // Senha expirada por tempo de criação
+const STATUS_DELETE = '99'; // Usuário excluído
+const dropdownStatus = ref([
+    { value: STATUS_INACTIVE, label: 'Inativo' },
+    { value: STATUS_WAITING, label: 'Aguardando' },
+    { value: STATUS_SUSPENDED_BY_TKN, label: 'Suspenso por token' },
+    { value: STATUS_SUSPENDED, label: 'Suspenso' },
+    { value: STATUS_ACTIVE, label: 'Ativo' },
+    { value: STATUS_PASS_EXPIRED, label: 'Senha expirada' },
+    { value: STATUS_DELETE, label: 'Excluído' }
+]);
 const dropdownSN = ref([
     { value: '0', label: 'Não' },
     { value: '1', label: 'Sim' }
@@ -319,6 +335,11 @@ watchEffect(() => {});
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..." />
                             </div>
+                            <div class="col-12 md:col-2">
+                                <label for="agente_at">Status</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.status" :options="dropdownStatus" placeholder="Selecione..." />
+                            </div>
                             <div class="col-12 md:col-4">
                                 <label for="schema_description">Domínio de dados do usuário</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
@@ -365,17 +386,20 @@ watchEffect(() => {});
 .grid {
     margin-left: 0rem;
 }
+
 #secaodadosbasicos,
 #secaopermissao {
     margin-left: -1rem;
     color: gray;
 }
+
 #btnTS {
     color: #495057;
     background-color: rgba(240, 248, 255, 0);
     height: 3.4rem;
     border: 1px solid grey;
 }
+
 #btnTS:hover {
     border-color: black;
     background-color: #e9eef1;
