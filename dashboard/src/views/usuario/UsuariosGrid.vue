@@ -128,7 +128,7 @@ onBeforeMount(() => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['name', 'cpf', 'email', 'telefone']"
+            :globalFilterFields="['name', 'cpf', 'email', 'telefone', 'status']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
