@@ -953,7 +953,7 @@ module.exports = app => {
         if (req.user.id != req.params.id && !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         app.db({ us: tabela })
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
-            .select("us.name", "us.cpf", "us.email", "us.telefone", "us.id", "us.admin", "us.gestor", "us.multiCliente", "us.cadastros",
+            .select("us.status", "us.name", "us.cpf", "us.email", "us.telefone", "us.id", "us.admin", "us.gestor", "us.multiCliente", "us.cadastros",
                 "us.pipeline", "us.pipeline_params", "us.pv", "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.prospeccoes",
                 "us.at", "us.protocolo", "us.uploads", "us.agente_v", "us.agente_arq", "us.agente_at", "us.time_to_pas_expires", "sc.schema_description")
             .where(app.db.raw(`us.id = ${req.params.id}`))
