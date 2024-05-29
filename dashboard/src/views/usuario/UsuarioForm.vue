@@ -340,7 +340,7 @@ watchEffect(() => {});
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.status" :options="dropdownStatus" placeholder="Selecione..." />
                             </div>
-                            <div class="col-12 md:col-4">
+                            <div class="col-12 md:col-2">
                                 <label for="schema_description">Domínio de dados do usuário</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.schema_description }}</p>
