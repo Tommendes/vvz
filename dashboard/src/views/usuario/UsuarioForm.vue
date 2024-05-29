@@ -99,15 +99,15 @@ const saveData = async () => {
 };
 //DropDowns
 const dropdownSN = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
+    { value: '0', label: 'Não' },
+    { value: '1', label: 'Sim' }
 ]);
 const dropdownAlcadas = ref([
-    { value: 0, label: 'Negado' },
-    { value: 1, label: 'Pesquisa' },
-    { value: 2, label: 'Inclusão' },
-    { value: 3, label: 'Edição' },
-    { value: 4, label: 'Administração/Exclusão' }
+    { value: '0', label: 'Negado' },
+    { value: '1', label: 'Pesquisa' },
+    { value: '2', label: 'Inclusão' },
+    { value: '3', label: 'Edição' },
+    { value: '4', label: 'Administração/Exclusão' }
 ]);
 // Troca de senha
 const changePassword = async () => {
