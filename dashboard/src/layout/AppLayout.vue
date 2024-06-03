@@ -71,47 +71,10 @@ const applyMenuType = () => {
         layoutConfig.menuMode.value = __layoutCfg.menuType;
     }
 };
-const changeToPortuguese = () => {
-    const primevue = usePrimeVue();
-    primevue.config.locale.accept = 'Sim';
-    primevue.config.locale.reject = 'Não';
-    primevue.config.locale.matchAll = 'Comparar todos';
-    primevue.config.locale.matchAny = 'Comparar alguns';
-    primevue.config.locale.startsWith = 'Começa com';
-    primevue.config.locale.contains = 'Contém';
-    primevue.config.locale.notContains = 'Não contém';
-    primevue.config.locale.endsWith = 'Termina com';
-    primevue.config.locale.equals = 'Igual';
-    primevue.config.locale.notEquals = 'Diferente';
-    primevue.config.locale.noFilter = 'Sem filtro';
-    primevue.config.locale.clear = 'Limpar';
-    primevue.config.locale.apply = 'Aplicar';
-    primevue.config.locale.addRule = 'Nova regra';
-    primevue.config.locale.removeRule = 'Limpar regras';
-    primevue.config.locale.dateIs = 'Data é';
-    primevue.config.locale.dateIsNot = 'Data não é';
-    primevue.config.locale.dateBefore = 'Date é anterior';
-    primevue.config.locale.dateAfter = 'Data é posterior';
-    primevue.config.locale.dateBeetween = 'Data é entre';
-    primevue.config.locale.today = 'Hoje';
-    primevue.config.locale.emptyFilterMessage = 'Nenhum resultado encontrado';
-    primevue.config.locale.searchMessage = '{0} resultados disponíveis';
-    primevue.config.locale.selectionMessage = '{0} itens selecionados';
-    primevue.config.locale.emptySelectionMessage = 'Nenhum item selecionado';
-    primevue.config.locale.emptySearchMessage = 'Nenhum resultado encontrado';
-    primevue.config.locale.emptyMessage = 'Nenhuma opção disponível';
-    primevue.config.locale.dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    primevue.config.locale.dayNamesShort = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    primevue.config.locale.dayNamesMin = ['Do', 'Se', 'Te', 'Qa', 'Qi', 'Sx', 'Sa'];
-    primevue.config.locale.monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    primevue.config.locale.monthNamesShort = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    primevue.config.locale.fileSizeTypes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-};
 
 onMounted(() => {
     applyScale();
     applyMenuType();
-    changeToPortuguese();
 });
 </script>
 

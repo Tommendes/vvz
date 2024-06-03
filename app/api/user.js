@@ -894,7 +894,7 @@ module.exports = app => {
         const page = req.query.page || 1
         const key = req.query.key ? req.query.key : undefined
         const sql = app.db({ us: tabela }).select(app.db.raw('count(*) as count'))
-            .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
+            // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
         if (key)
             sql.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
