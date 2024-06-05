@@ -1121,7 +1121,8 @@ module.exports = app => {
         }
 
         try {
-            await clientFtp.ensureDir(pathDoc);
+            const folderDone = await clientFtp.ensureDir(pathDoc);
+            app.api.logger.logInfo({ log: { line: `Folder created: ${pathDoc}. ${folderDone}`, sConsole: true } })
             // Registrar o evento na tabela de eventos
             const { createEvent } = app.api.sisEvents
             evento = await createEvent({
