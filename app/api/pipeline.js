@@ -1091,7 +1091,6 @@ module.exports = app => {
 
         const client = new ftp.Client();
         let body = { ...req.body }
-        console.log(body);
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
@@ -1099,8 +1098,6 @@ module.exports = app => {
 
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
         const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
-        console.log(pipeline);
-        console.log(pipelineParam);
 
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
@@ -1124,8 +1121,8 @@ module.exports = app => {
         }
 
         try {
-            const folderDone = await clientFtp.ensureDir(pathDoc);
-            app.api.logger.logInfo({ log: { line: `Folder created: ${pathDoc}. ${folderDone}`, sConsole: true } })
+            await clientFtp.ensureDir(pathDoc);
+            app.api.logger.logInfo({ log: { line: `Folder created: ${pathDoc}`, sConsole: true } })
             // Registrar o evento na tabela de eventos
             const { createEvent } = app.api.sisEvents
             evento = await createEvent({
