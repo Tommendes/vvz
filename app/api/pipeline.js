@@ -1091,6 +1091,7 @@ module.exports = app => {
 
         const client = new ftp.Client();
         let body = { ...req.body }
+        console.log(body);
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
@@ -1098,6 +1099,8 @@ module.exports = app => {
 
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
         const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
+        console.log(pipeline);
+        console.log(pipelineParam);
 
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
