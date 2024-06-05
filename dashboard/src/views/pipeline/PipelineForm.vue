@@ -510,6 +510,12 @@ const statusRecord = async (status) => {
                     .put(url, preparedBody)
                     .then(async (body) => {
                         defaultSuccess(`Registro convertido com sucesso`);
+
+                        const bodyTo = { id_pipeline: body.data.id, path: `${body.data.documento}` };
+                        setTimeout(async () => {
+                            await mkFolder(bodyTo);
+                        }, Math.random() * 2000 + 250);
+
                         await toFilho(body.data.id);
                     })
                     .catch((error) => {
