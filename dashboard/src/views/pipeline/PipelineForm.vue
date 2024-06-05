@@ -167,9 +167,11 @@ const saveData = async () => {
                     animationDocNr.value = animation;
                 } else reload();
                 mode.value = 'view';
-                // setTimeout(async () => {
-                //     await mkFolder();
-                // }, Math.random() * 2000 + 250);
+
+                const bodyTo = { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
+                setTimeout(async () => {
+                    await mkFolder(bodyTo);
+                }, Math.random() * 2000 + 250);
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -619,12 +621,13 @@ const lstFolder = async () => {
         }, Math.random() * 1000 + 250);
 };
 
-const mkFolder = async () => {
+const mkFolder = async (body) => {
     const url = `${baseApiUrl}/pipeline/f-a/mfd`;
     defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
-    const pathFile = `${itemDataParam.value.descricao}/${itemData.value.documento}`;
+
+    const bodyTo = body || { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
     await axios
-        .post(url, { id_pipeline: itemData.value.id, path: pathFile })
+        .post(url, bodyTo)
         .then(async (res) => {
             // const msgDone = `Pasta criada com sucesso`;
             defaultSuccess(res.data);
