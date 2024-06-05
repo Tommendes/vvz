@@ -167,7 +167,9 @@ const saveData = async () => {
                     animationDocNr.value = animation;
                 } else reload();
                 mode.value = 'view';
-                await mkFolder();
+                setTimeout(async () => {
+                    await mkFolder();
+                }, Math.random() * 2000 + 250);
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
