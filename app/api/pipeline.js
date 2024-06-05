@@ -195,6 +195,13 @@ module.exports = app => {
 
                     return res.json(newRecordWithID);
                 }
+                const method = req.method
+                req.method = 'BOOLEAN'
+                const oldBody = { ...body }
+                req.body = { id_pipeline: body.id }
+                mkFolder(req)
+                req.body = oldBody
+                req.method = method
                 return res.json(updateRecord);
             }).catch((error) => {
                 // Se ocorrer um erro, faça rollback da transação
@@ -1135,8 +1142,10 @@ module.exports = app => {
                     tabela_bd: 'pipeline'
                 }
             })
-
-            return res.send(`Pasta criada com sucesso no caminho: ${body.path}`);
+            const method = req.method
+            req.method = 'BOOLEAN'
+            if (['POST', 'PUT'].includes(method)) return res.send(`Pasta criada com sucesso no caminho: ${body.path}`);
+            else return true;
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             if (error.code == 'EHOSTUNREACH') return res.status(500).send(`Servidor de arquivos temporariamente indisponível. Tente novamente ou tente mais tarde`);
