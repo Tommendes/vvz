@@ -6,7 +6,6 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
 import EditorComponent from '@/components/EditorComponent.vue';
 import { userKey } from '@/global';
-import path from 'path';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
@@ -621,7 +620,7 @@ const lstFolder = async () => {
 const mkFolder = async () => {
     const url = `${baseApiUrl}/pipeline/f-a/mfd`;
     defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
-    const pathFile = path.join(itemDataParam.value.descricao, itemData.value.documento);
+    const pathFile = `${itemDataParam.value.descricao}/${itemData.value.documento}`;
     await axios
         .post(url, { id_pipeline: itemData.value.id, path: pathFile })
         .then(async (res) => {
