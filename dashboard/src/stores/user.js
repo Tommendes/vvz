@@ -94,7 +94,7 @@ export const useUserStore = defineStore('users', {
                     .catch((error) => {
                         console.log(error);
                     });
-            }, Math.random() * 1000 + 250);
+            }, Math.random() * 2000);
         },
         logout() {
             this.user = {};

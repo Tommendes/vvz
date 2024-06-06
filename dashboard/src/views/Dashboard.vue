@@ -377,17 +377,26 @@ const chartExportItems = ref([
 const loadStats = () => {
     getBiPeriod();
     getBiPeriodVG();
-    setTimeout(async () => {
-        await getCadastrosBi();
-        await getPropectosBi();
-        await getPropostasBi();
-        await getPedidosBi();
-        await getPedidosLastBi();
-        await getTopSellersBi();
-        await getTopProposalsBi();
-        await getTopSellingBi();
-        await getSalesOverviewBi();
-    }, Math.random() * 1000 + 250);
+    getCadastrosBi();
+getPropectosBi();
+getPropostasBi();
+getPedidosBi();
+getPedidosLastBi();
+getTopSellersBi();
+getTopProposalsBi();
+getTopSellingBi();
+getSalesOverviewBi();
+    // setTimeout(async () => {
+    //     await getCadastrosBi();
+    //     await getPropectosBi();
+    //     await getPropostasBi();
+    //     await getPedidosBi();
+    //     await getPedidosLastBi();
+    //     await getTopSellersBi();
+    //     await getTopProposalsBi();
+    //     await getTopSellingBi();
+    //     await getSalesOverviewBi();
+    // }, Math.random() * 1000 + 250);
 };
 
 const exportToPNG = () => {
