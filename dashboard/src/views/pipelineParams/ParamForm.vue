@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onBeforeUnmount, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -27,10 +27,6 @@ const mode = ref('view');
 const errorMessages = ref({});
 // Loadings
 const loading = ref(true);
-// Props do template
-const props = defineProps({
-    mode: String
-});
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
@@ -51,6 +47,7 @@ const loadData = async () => {
                     itemData.value = body;
                     itensBreadcrumb.value.push({ label: itemData.value.descricao + (userData.admin >= 1 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                     loading.value = false;
+                    mode.value = 'view';
                 } else {
                     defaultWarn('Registro não localizado');
                     router.push({ path: `/${userData.schema_description}/pipeline-params` });
@@ -85,14 +82,14 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                // if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/pipeline-params/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
         })
-        .catch((err) => {
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || error);
+            if (error.response.status == 401) router.push('/');
         });
 };
 
@@ -228,14 +225,6 @@ const updateTextWithUnderscores = (event) => {
 onBeforeMount(async () => {
     loadData();
     await getUnidadesDescricao();
-    // loadOptions();
-});
-onMounted(() => {
-    if (props.mode && props.mode != mode.value) mode.value = props.mode;
-    else {
-        if (itemData.value.id) mode.value = 'view';
-        else mode.value = 'new';
-    }
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {});
@@ -281,7 +270,7 @@ watch(itemData.value, () => {
 <template>
     <Breadcrumb :items="itensBreadcrumb" />
     <div class="card">
-        <form @submit.prevent="saveData">
+        <form @submit.prevent="saveData()">
             <div class="grid">
                 <div class="col-12">
                     <div class="p-fluid grid">
@@ -396,4 +385,6 @@ watch(itemData.value, () => {
             </div>
         </form>
     </div>
+    <p>mode: {{ mode }}</p>
+    <p>itemData: {{ itemData }}</p>
 </template>

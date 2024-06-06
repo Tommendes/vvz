@@ -588,7 +588,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-4">
                         <label for="email">E-mail<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else :required="!itemData.prospecto" class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
+                        <InputText v-else :required="!itemData.prospecto" class="lowercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
                         <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pj'">

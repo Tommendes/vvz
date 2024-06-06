@@ -7,6 +7,8 @@ const urlBase = ref(`${baseApiUrl}/com-propostas`);
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
 import EditorComponent from '@/components/EditorComponent.vue';
+import { useRouter } from 'vue-router';
+const router = useRouter();
 
 const dialogRef = inject('dialogRef');
 const itemData = ref({});
@@ -82,10 +84,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else if (typeof error.response == 'string') defaultWarn(error.response);
-            else if (typeof error == 'string') defaultWarn(error);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response.status == 401) router.push('/');
         });
 };
 </script>

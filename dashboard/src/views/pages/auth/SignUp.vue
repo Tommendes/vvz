@@ -4,7 +4,7 @@ import { appName } from '@/global';
 import { defaultSuccess, defaultInfo, defaultWarn } from '@/toast';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
-import { baseApiUrl } from '@/env';
+import { baseApiAuthUrl } from '@/env';
 import axios from '@/axios-interceptor';
 
 const store = useUserStore();
@@ -17,10 +17,13 @@ const name = ref('');
 const email = ref('');
 const celular = ref('');
 const password = ref('');
+const clienteName = ref('');
+const cliente = ref('');
+const dominio = ref('');
 const confirmPassword = ref('');
 const isNewUser = ref(false);
 const canEditData = ref(false);
-const url = ref(`${baseApiUrl}/signup`);
+const url = ref(`${baseApiAuthUrl}/signup`);
 const click = ref(false);
 
 const logoUrl = computed(() => {
@@ -30,24 +33,21 @@ const logoUrl = computed(() => {
 const signup = async () => {
     if (cpf.value) {
         click.value = true;
-        const userFound =
-            (await findUserSignUp(cpf.value).catch((error) => {
-                defaultWarn(error.response.data.msg);
-                click.value = false;
-            })) || undefined;
+        const userFound = await findUserSignUp(cpf.value);
         // Se preencheu todos os dados obrigatórios
         if (!!cpf.value && !!name.value && !!celular.value && !!password.value && !!confirmPassword.value) {
+            const body = {
+                isNewUser: isNewUser.value,
+                id: id.value,
+                cpf: cpf.value,
+                email: email.value,
+                name: name.value,
+                celular: celular.value,
+                password: password.value,
+                confirmPassword: confirmPassword.value
+            };
             axios
-                .post(url.value, {
-                    isNewUser: isNewUser.value,
-                    id: id.value,
-                    cpf: cpf.value,
-                    email: email.value,
-                    name: name.value,
-                    celular: celular.value,
-                    password: password.value,
-                    confirmPassword: confirmPassword.value
-                })
+                .post(url.value, body)
                 .then((body) => {
                     const user = body.data;
                     if (user.data.id) {
@@ -56,11 +56,12 @@ const signup = async () => {
                     }
                 })
                 .catch((error) => {
-                    defaultWarn(error.response.data.msg);
+                    console.log(error);
+                    return defaultWarn(error.response.data.msg || 'Erro ao tentar registrar o usuário');
                 });
         }
         // #3 - Se não tem perfil e não é localizado nos schemas dos clientes todos os dados tornam-se obrigatórios exceto o id
-        else if (userFound & userFound.data && userFound.data.isNewUser) {
+        else if (userFound.data.isNewUser) {
             isNewUser.value = true;
             canEditData.value = true;
             defaultInfo(userFound.data.msg);
@@ -83,6 +84,10 @@ const signup = async () => {
                 name.value = userFoundData.nome;
                 email.value = userFoundData.email;
                 celular.value = userFoundData.celular;
+                cliente.value = userFoundData.cliente;
+                dominio.value = userFoundData.dominio;
+                // TODO: clienteName é o userFoundData.cliente com a primeira letra maiúscula
+                clienteName.value = userFoundData.cliente.charAt(0).toUpperCase() + userFoundData.cliente.slice(1);
                 isNewUser.value = true;
                 canEditData.value = false;
                 delete password.value;
@@ -127,7 +132,7 @@ const findUserSignUp = async () => {
                                     <label for="name">Seu nome</label>
                                 </span>
                                 <div v-else>
-                                    <label for="name" class="block text-900 text-xl font-medium mb-2">Seu nome</label>
+                                    <label for="name" class="block text-900 text-xl font-medium mb-2">Seu nome (Município de {{ clienteName }})</label>
                                     <InputText class="shadow-4 p-2 w-full surface-500 text-white font-bold border-round" disabled style="padding: 1rem" :value="name" />
                                 </div>
                             </div>
@@ -163,14 +168,46 @@ const findUserSignUp = async () => {
                             </div>
                             <div class="field col-12 md:col-6" :class="canEditData ? ' mt-3' : ' mt-2'">
                                 <span class="p-float-label">
-                                    <InputText id="password" type="password" autocomplete="off" class="p-2 w-full" style="padding: 1rem" v-model="password" />
+                                    <!-- <InputText id="password" type="password" autocomplete="off" class="p-2 w-full" style="padding: 1rem" v-model="password" /> -->
+                                    <Password id="password" v-model="password" placeholder="Sua senha" toggleMask class="w-full" inputClass="w-full" inputStyle="padding:1rem">
+                                        <template #header>
+                                            <h6>Insira sua senha</h6>
+                                        </template>
+                                        <template #footer>
+                                            <Divider />
+                                            <p class="mt-2">Sugestões</p>
+                                            <ul class="pl-2 ml-2 mt-0" style="line-height: 1.5">
+                                                <li>Pelo menos uma letra minúscula</li>
+                                                <li>Pelo menos uma letra maiúscula</li>
+                                                <li>Pelo menos um número</li>
+                                                <li>Pelo menos um dos caracteres a seguir: @#$</li>
+                                                <li>Mínimo de 8 caracteres</li>
+                                            </ul>
+                                        </template>
+                                    </Password>
                                     <label for="password">Sua senha</label>
                                 </span>
                             </div>
                             <div class="field col-12 md:col-6" :class="canEditData ? ' mt-3' : ' mt-2'">
                                 <span class="p-float-label">
-                                    <InputText id="confirmPassword" type="password" autocomplete="off" class="p-2 w-full" style="padding: 1rem" v-model="confirmPassword" />
-                                    <label for="confirmPassword">Confirme sua senha</label>
+                                    <!-- <InputText id="confirmPassword" type="password" autocomplete="off" class="p-2 w-full" style="padding: 1rem" v-model="confirmPassword" /> -->
+                                    <Password id="confirmPassword" v-model="confirmPassword" placeholder="Sua senha" toggleMask class="w-full" inputClass="w-full" inputStyle="padding:1rem">
+                                        <template #header>
+                                            <h6>Insira sua senha</h6>
+                                        </template>
+                                        <template #footer>
+                                            <Divider />
+                                            <p class="mt-2">Sugestões</p>
+                                            <ul class="pl-2 ml-2 mt-0" style="line-height: 1.5">
+                                                <li>Pelo menos uma letra minúscula</li>
+                                                <li>Pelo menos uma letra maiúscula</li>
+                                                <li>Pelo menos um número</li>
+                                                <li>Pelo menos um dos caracteres a seguir: @#$</li>
+                                                <li>Mínimo de 8 caracteres</li>
+                                            </ul>
+                                        </template>
+                                    </Password>
+                                    <label for="confirmPassword">Confirme a senha</label>
                                 </span>
                             </div>
                         </div>
@@ -181,11 +218,11 @@ const findUserSignUp = async () => {
                         <small v-if="!store.userStore.id && !isNewUser" id="username-help">Informe seu CPF para começar</small>
 
                         <div class="flex align-items-center justify-content-between mb-2">
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
-                            <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')"> Recuperar a senha </Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')">Acessar plataforma&nbsp;<i class="pi pi-sign-in"></i></Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')">Início</Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')">Trocar/Recuperar a senha?</Button>
                         </div>
-                        <Button rounded label="Registrar" icon="fa-solid fa-arrow-right-to-bracket" :loading="click" :disabled="!cpf" type="submit" class="w-full p-3 text-xl"></Button>
+                        <Button rounded label="Registrar" icon="pi pi-sign-in" :loading="click" :disabled="!cpf" type="submit" class="w-full p-3 text-xl"></Button>
                     </form>
                 </div>
             </div>

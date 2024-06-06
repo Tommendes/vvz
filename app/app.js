@@ -11,6 +11,7 @@ const port = process.env.PORT || 55596
 const nodemailer = require('nodemailer');
 const { mailer } = require('./.env')
 const transporter = nodemailer.createTransport(mailer);
+const { appName } = require('./config/params')
 
 
 app.use(express.static(tempDir))

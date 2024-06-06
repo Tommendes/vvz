@@ -9,6 +9,8 @@ import { isValidEmail } from '@/global';
 // Cookies de usuário
 import { onMounted } from 'vue';
 import { userKey } from '@/global';
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 // Campos de formulário
@@ -16,6 +18,7 @@ const itemData = ref({});
 // Emit do template
 const emit = defineEmits(['reload', 'cancel']);
 const mode = ref('view');
+
 // Dropdowns
 // Props do template
 const props = defineProps({
@@ -40,10 +43,8 @@ const loadData = async () => {
                 }
             })
             .catch((error) => {
-                if (typeof error == 'string') defaultWarn(error);
-                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else defaultWarn('Erro ao carregar dados!');
+                defaultWarn(error.response.data || error.response || error);
+                if (error.response.status == 401) router.push('/');
             });
     } else {
         itemData.value.id_cadastros = props.itemDataRoot.id_cadastros;
@@ -104,10 +105,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || error);
+            if (error.response.status == 401) router.push('/');
         });
     loading.value = false;
 };
@@ -129,10 +128,8 @@ const deleteItem = () => {
                     emit('reload');
                 })
                 .catch((error) => {
-                    if (typeof error == 'string') defaultWarn(error);
-                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                    else defaultWarn('Erro ao carregar dados!');
+                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                    if (error.response.status == 401) router.push('/');
                 });
         },
         reject: () => {
@@ -244,10 +241,22 @@ onMounted(async () => {
                             @mousemove="getLinkClass('move')"
                             @mouseleave="getLinkClass('leave')"
                             @click="toEmail"
+                            class="lowercase"
                         >
                             <i class="fa-solid fa-at"></i>
                         </div>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" type="text" id="email" @blur="validateEmail()" @keydown.enter.prevent :placeholder="`Digite o email...`" :invalid="errorMessages.email" />
+                        <InputText
+                            autocomplete="no"
+                            :disabled="mode == 'view'"
+                            class="lowercase"
+                            v-model="itemData.email"
+                            type="text"
+                            id="email"
+                            @blur="validateEmail()"
+                            @keydown.enter.prevent
+                            :placeholder="`Digite o email...`"
+                            :invalid="errorMessages.email"
+                        />
                     </div>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -129,13 +129,8 @@ const saveData = async () => {
                 }
             })
             .catch((error) => {
-                if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else if (typeof error.response == 'string') defaultWarn(error.response);
-                else if (typeof error == 'string') defaultWarn(error);
-                else {
-                    console.log(error);
-                    defaultWarn('Erro ao carregar dados!');
-                }
+                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                if (error.response.status == 401) router.push('/');
             });
     }
 };
@@ -398,21 +393,23 @@ watch(selectedCadastro, (value) => {
     </div>
 </template>
 <style scoped>
-.w-95{ /* Ajuste mobile*/
+.w-95 {
+    /* Ajuste mobile*/
     width: 95vw;
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
 }
-label{
+label {
     display: block;
 }
-input{
+input {
     width: 100%;
 }
 </style>
 <style>
-nav>ol{ /* Ajuste nav */
+nav > ol {
+    /* Ajuste nav */
     display: flex;
     list-style: none;
     align-items: center;
@@ -422,14 +419,16 @@ nav>ol{ /* Ajuste nav */
 .layout-main {
     width: 95vw;
 }
-.p-dropdown{ /* Dropdown dos filtros do grid  */
+.p-dropdown {
+    /* Dropdown dos filtros do grid  */
     display: flex;
     align-items: center;
 }
-.p-dropdown-items-wrapper{ /* Necessário para o Scrool do dropdown funcionar*/
+.p-dropdown-items-wrapper {
+    /* Necessário para o Scrool do dropdown funcionar*/
     overflow: auto;
 }
-.container{
+.container {
     overflow-x: hidden;
 }
 .layout-wrapper {

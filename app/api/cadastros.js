@@ -51,7 +51,6 @@ module.exports = app => {
                 existsOrError(body.id_params_atuacao, 'Área de atuação não informada')
                 existsOrError(body.telefone, 'Telefone não informado')
                 existsOrError(body.email, 'E-mail não informado')
-
                 existsOrError(body.id_params_tipo_end, 'Tipo do endereço não informado')
                 existsOrError(body.cep, 'CEP não informado')
                 if (body.cep.trim().length != 8) throw "CEP é inválido"
@@ -71,6 +70,7 @@ module.exports = app => {
         const { changeUpperCase, removeAccentsObj } = app.api.facilities
         body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
         body = (JSON.parse(JSON.stringify(body), changeUpperCase));
+        body.email = body.email.toLowerCase()
 
         if (body.id) {
             // Variáveis da edição de um registro

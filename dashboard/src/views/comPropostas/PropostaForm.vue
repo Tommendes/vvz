@@ -8,6 +8,9 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import { guide1, guide2 } from '@/guides/propostasFormGuide.js';
 import EditorComponent from '@/components/EditorComponent.vue';
 
+import { useRouter } from 'vue-router';
+const router = useRouter();
+
 // Cookies do usuário
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
@@ -75,10 +78,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response.status == 401) router.push('/');
         });
 };
 // DropDown Desconto Ativo
@@ -162,10 +163,8 @@ const imprimirProposta = async (resumo = false) => {
             pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
         .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response.status == 401) router.push('/');
         });
 };
 

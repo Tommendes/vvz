@@ -126,12 +126,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else if (typeof error.response == 'string') defaultWarn(error.response);
-            else if (typeof error == 'string') defaultWarn(error);
-            else {
-                defaultWarn('Erro ao carregar dados!');
-            }
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response.status == 401) router.push('/');
         });
 };
 // Validar formulário
@@ -185,12 +181,8 @@ const removeImage = () => {
                     }, 2500);
                 })
                 .catch((error) => {
-                    if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-                    else if (typeof error.response == 'string') defaultWarn(error.response);
-                    else if (typeof error == 'string') defaultWarn(error);
-                    else {
-                        defaultWarn('Erro ao carregar dados!');
-                    }
+                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                    if (error.response.status == 401) router.push('/');
                 });
         },
         reject: () => {
@@ -403,12 +395,8 @@ const saveDataProdTabelas = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else {
-                defaultWarn('Erro ao carregar dados!');
-            }
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response.status == 401) router.push('/');
         });
 };
 // Editar item da lista de documentos
@@ -636,7 +624,7 @@ watch(selectedCadastro, (value) => {
                                             <div class="col-6">
                                                 <h4>Últimos ajustes</h4>
                                                 <ol>
-                                                    <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">
+                                                    <li v-for="item in gridDataProdTabelas" :key="item.id">
                                                         Início de validade: {{ item.ini_validade }} - Valor de compra: R$ {{ item.valor_compra }} - Valor de venda: R$ {{ item.valor_venda }}
                                                         <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
                                                         <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir'"></i>

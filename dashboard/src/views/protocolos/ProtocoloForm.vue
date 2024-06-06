@@ -132,10 +132,8 @@ const saveDataProtDocs = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else if (typeof error.response == 'string') defaultWarn(error.response);
-            else if (typeof error == 'string') defaultWarn(error);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response.status == 401) router.push('/');
         });
     if (itemDataProtDocs.value.descricao) itemDataProtDocs.value.descricao = itemDataProtDocs.value.descricao.split(',');
 };
@@ -409,7 +407,7 @@ watch(selectedCadastro, (value) => {
                                     <div class="col-6">
                                         <h4>Itens do protocolo</h4>
                                         <ol>
-                                            <li v-for="(item, index) in gridDatProtoDocs" :key="item.id">
+                                            <li v-for="item in gridDatProtoDocs" :key="item.id">
                                                 {{ item.tp_documento }} - {{ item.descricao.replaceAll(',', ', ') }}
                                                 <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
                                                 <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir toda a lista'"></i>

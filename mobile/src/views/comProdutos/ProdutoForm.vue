@@ -125,13 +125,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else if (typeof error.response == 'string') defaultWarn(error.response);
-            else if (typeof error == 'string') defaultWarn(error);
-            else {
-                console.log(error);
-                defaultWarn('Erro ao carregar dados!');
-            }
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response.status == 401) router.push('/');
         });
 };
 // Validar formulário
@@ -185,13 +180,8 @@ const removeImage = () => {
                     }, 2500);
                 })
                 .catch((error) => {
-                    if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-                    else if (typeof error.response == 'string') defaultWarn(error.response);
-                    else if (typeof error == 'string') defaultWarn(error);
-                    else {
-                        console.log(error);
-                        defaultWarn('Erro ao carregar dados!');
-                    }
+                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                    if (error.response.status == 401) router.push('/');
                 });
         },
         reject: () => {
@@ -630,7 +620,7 @@ watch(selectedCadastro, (value) => {
                                             <div class="col-12">
                                                 <h4>Últimos ajustes</h4>
                                                 <ol>
-                                                    <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">
+                                                    <li v-for="item in gridDataProdTabelas" :key="item.id">
                                                         Início de validade: {{ item.ini_validade }} - Valor de compra: R$ {{ item.valor_compra }} - Valor de venda: R$ {{ item.valor_venda }}
                                                         <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
                                                         <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir'"></i>
@@ -664,33 +654,36 @@ watch(selectedCadastro, (value) => {
     border: dashed;
     border-radius: 5%;
 }
-label{
+label {
     display: block;
 }
-input{
+input {
     width: 100%;
 }
-.p-dropdown{ /* Dropdown do filtro do grid  */
+.p-dropdown {
+    /* Dropdown do filtro do grid  */
     display: flex;
     align-items: center;
 }
 </style>
 
 <style>
-nav>ol{ /* Ajuste  nav */
+nav > ol {
+    /* Ajuste  nav */
     display: flex;
     list-style: none;
     padding-left: 0;
     align-items: center;
 }
-.p-dropdown{ /* Dropdown do filtro do grid  */
+.p-dropdown {
+    /* Dropdown do filtro do grid  */
     display: flex;
     align-items: center;
 }
-.p-dropdown-items-wrapper{
+.p-dropdown-items-wrapper {
     overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
 }
-div.layout-main-container{
+div.layout-main-container {
     padding-left: 0 !important;
     padding-right: 0;
 }

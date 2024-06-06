@@ -2,7 +2,7 @@
 import { onBeforeMount, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultError, defaultWarn } from '@/toast';
+import { defaultWarn } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import { removeHtmlTags, formatCurrency } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
@@ -34,7 +34,6 @@ const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
 const gridDataRaw = ref([]); // Dados sem formatação
-const idPipeline = ref(null); // Id do registro selecionado
 // Itens do dropdown de Tipos
 const dropdownTiposDoc = ref([
     { label: 'Outros', value: '0' },
@@ -232,10 +231,8 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                if (typeof error == 'string') defaultWarn(error);
-                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else defaultWarn('Erro ao carregar dados!');
+                defaultWarn(error.response.data || error.response || error);
+                if (error.response.status == 401) router.push('/');
             });
     }, Math.random() * 1000);
 };
@@ -300,7 +297,7 @@ let dataToExcelExport = [
             { label: 'Proposta', value: (row) => row.doc_pai },
             { label: 'Pedido', value: (row) => row.doc_filho },
             { label: 'Documento', value: (row) => row.documento },
-            { label: 'R$ Bruto', value: (row) => Number(row.valor_bruto.replaceAll(',', '.')), format: '\R$\ #,##0.00' },
+            { label: 'R$ Bruto', value: (row) => Number(row.valor_bruto.replaceAll(',', '.')), format: 'R$ #,##0.00' },
             { label: 'Descrição', value: (row) => row.descricao },
             { label: 'Agente', value: (row) => row.agente },
             { label: 'Data', value: (row) => row.status_created_at },
@@ -438,7 +435,7 @@ const customFilterOptions = ref({ filterclear: false });
                 "
                 v-if="mode == 'new' || idPipeline"
             /> -->
-            <PipelineForm :mode="mode" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+            <PipelineForm :mode="'view'" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         </div>
 
         <div class="col-12">
