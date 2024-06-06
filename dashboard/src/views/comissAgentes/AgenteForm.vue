@@ -50,21 +50,27 @@ const loadData = async () => {
             const id = route.params.id || props.itemDataRoot.id;
             const url = `${urlBase.value}/${id}`;
 
-            await axios.get(url).then(async (res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    body.id = String(body.id);
-                    itemData.value = body;
-                    itemData.value.agente_representante = String(itemData.value.agente_representante);
-                    itemData.value.dsr = body.dsr ? 1 : 0;
-                    itemData.value.ordem = body.ordem.padStart(3, '0').toString();
-                    await getNomeCliente();
-                    loading.value = false;
-                } else {
-                    defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/comiss-agentes` });
-                }
-            });
+            await axios
+                .get(url)
+                .then(async (res) => {
+                    const body = res.data;
+                    if (body && body.id) {
+                        body.id = String(body.id);
+                        itemData.value = body;
+                        itemData.value.agente_representante = String(itemData.value.agente_representante);
+                        itemData.value.dsr = body.dsr ? 1 : 0;
+                        itemData.value.ordem = body.ordem.padStart(3, '0').toString();
+                        await getNomeCliente();
+                        loading.value = false;
+                    } else {
+                        defaultWarn('Registro não localizado');
+                        router.push({ path: `/${userData.schema_description}/comiss-agentes` });
+                    }
+                })
+                .catch((error) => {
+                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                    if (error.response && error.response.status == 401) router.push('/');
+                });
         }, Math.random() * 1000 + 250);
     } else {
         mode.value = 'new';
@@ -100,8 +106,9 @@ const saveData = async () => {
                 defaultWarn('Erro ao salvar registro');
             }
         })
-        .catch((err) => {
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // Excluir o item depois de confirmado
@@ -123,8 +130,9 @@ const deleteItem = () => {
                     emit('changed');
                     router.push({ path: `/${userData.schema_description}/comiss-agentes` });
                 })
-                .catch((err) => {
-                    defaultWarn(err.response.data);
+                .catch((error) => {
+                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                    if (error.response && error.response.status == 401) router.push('/');
                 });
         },
         reject: () => {

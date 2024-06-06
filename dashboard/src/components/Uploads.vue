@@ -1,6 +1,7 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 import { usePrimeVue } from 'primevue/config';
 const primevue = usePrimeVue();
 
@@ -107,9 +108,9 @@ const saveData = async () => {
             defaultSuccess('Upload executado com sucesso');
             closeDialog();
         })
-        .catch((err) => {
-            console.log('err', err);
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // Formatar tamanho do arquivo

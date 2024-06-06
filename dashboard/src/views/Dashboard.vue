@@ -167,10 +167,10 @@ const biData = ref({
     }
 });
 
-const getCadastrosBi = async () => {
+const getCadastrosBi = () => {
     const url = `${baseApiUrl}/cadastros/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}`;
     biData.value.cadastros.loading = true;
-    await axios.get(url).then((axiosRes) => {
+    axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
         biData.value.cadastros.total = data.total;
         biData.value.cadastros.noPeriodo = data.noPeriodo;
@@ -179,10 +179,10 @@ const getCadastrosBi = async () => {
     biData.value.cadastros.loading = false;
 };
 
-const getPropectosBi = async () => {
+const getPropectosBi = () => {
     const url = `${baseApiUrl}/com-prospeccoes/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}`;
     biData.value.prospectos.loading = true;
-    await axios.get(url).then((axiosRes) => {
+    axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
         biData.value.prospectos.total = data.total;
         biData.value.prospectos.noPeriodo = data.noPeriodo;
@@ -191,10 +191,10 @@ const getPropectosBi = async () => {
     biData.value.prospectos.loading = false;
 };
 
-const getPropostasBi = async () => {
+const getPropostasBi = () => {
     const url = `${baseApiUrl}/pipeline/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&periodDv=1&stt=0`;
     biData.value.propostas.loading = true;
-    await axios.get(url).then((axiosRes) => {
+    axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
         biData.value.propostas.total = data.total;
         biData.value.propostas.noPeriodo = data.noPeriodo;
@@ -203,10 +203,10 @@ const getPropostasBi = async () => {
     biData.value.propostas.loading = false;
 };
 
-const getPedidosBi = async () => {
+const getPedidosBi = () => {
     const url = `${baseApiUrl}/pipeline/f-a/gbi?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&periodDv=2&stt=20`;
     biData.value.pedidos.loading = true;
-    await axios.get(url).then((axiosRes) => {
+    axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
         biData.value.pedidos.total = data.total;
         biData.value.pedidos.noPeriodo = data.noPeriodo;
@@ -215,12 +215,12 @@ const getPedidosBi = async () => {
     biData.value.pedidos.loading = false;
 };
 
-const getPedidosLastBi = async () => {
+const getPedidosLastBi = () => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     biData.value.recentSales.rows = biParams.recentSales.rows || biData.value.recentSales.rows;
     const url = `${baseApiUrl}/pipeline/f-a/grs?rows=${biData.value.recentSales.rows}`;
     biData.value.recentSales.loading = true;
-    await axios.get(url).then((axiosRes) => {
+    axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
         biData.value.recentSales.data = data;
     });
@@ -245,13 +245,13 @@ const applyBiRecentSales = (moreOrLess) => {
     getPedidosLastBi();
 };
 
-const applyBiTopSeilling = async (moreOrLess) => {
+const applyBiTopSeilling = (moreOrLess) => {
     if (moreOrLess === 'plus') biData.value.topSellings.rows++;
     else if (moreOrLess === 'less' && biData.value.topSellings.rows > 1) biData.value.topSellings.rows--;
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     localStorage.setItem('__biParams', JSON.stringify({ ...biParams, topSellings: { rows: biData.value.topSellings.rows } }));
-    await getTopSellingBi(moreOrLess);
-    await getSalesOverviewBi();
+    getTopSellingBi(moreOrLess);
+    getSalesOverviewBi();
 };
 
 const applyBiTopSellers = (moreOrLess) => {
@@ -270,12 +270,12 @@ const applyBiTopProposals = (moreOrLess) => {
     getTopProposalsBi(moreOrLess);
 };
 
-const getTopSellingBi = async (moreOrLess) => {
+const getTopSellingBi = (moreOrLess) => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     biData.value.topSellings.rows = biParams.topSellings.rows || biData.value.topSellings.rows;
     const url = `${baseApiUrl}/pipeline/f-a/gts?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${moreOrLess == 'all' ? 99999 : biData.value.topSellings.rows}`;
     biData.value.topSellings.loading = true;
-    await axios.get(url).then((axiosRes) => {
+    axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
         // colorsDashboard é um array de cores. Adicione a cada elemento uma cor utilizando a propriedade element.color
         data.data.forEach((element) => {
@@ -295,12 +295,12 @@ const getTopSellingBi = async (moreOrLess) => {
     biData.value.topSellings.loading = false;
 };
 
-const getTopSellersBi = async (moreOrLess) => {
+const getTopSellersBi = (moreOrLess) => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     biData.value.topSellers.rows = biParams.topSellers.rows || biData.value.topSellers.rows;
     const url = `${baseApiUrl}/pipeline/f-a/gtss?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${moreOrLess == 'all' ? 99999 : biData.value.topSellers.rows}`;
     biData.value.topSellers.loading = true;
-    await axios.get(url).then((axiosRes) => {
+    axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
         // colorsDashboard é um array de cores. Adicione a cada elemento uma cor utilizando a propriedade element.color
         data.data.forEach((element) => {
@@ -316,12 +316,12 @@ const getTopSellersBi = async (moreOrLess) => {
     biData.value.topSellers.loading = false;
 };
 
-const getTopProposalsBi = async (moreOrLess) => {
+const getTopProposalsBi = (moreOrLess) => {
     let biParams = JSON.parse(localStorage.getItem('__biParams'));
     biData.value.topProposals.rows = biParams.topProposals.rows || biData.value.topProposals.rows;
     const url = `${baseApiUrl}/pipeline/f-a/gtp?periodDi=${biPeriod.value.dataEn.di}&periodDf=${biPeriod.value.dataEn.df}&rows=${moreOrLess == 'all' ? 99999 : biData.value.topProposals.rows}`;
     biData.value.topProposals.loading = true;
-    await axios.get(url).then((axiosRes) => {
+    axios.get(url).then((axiosRes) => {
         const data = axiosRes.data;
         // colorsDashboard é um array de cores. Adicione a cada elemento uma cor utilizando a propriedade element.color
         data.data.forEach((element) => {
@@ -337,13 +337,13 @@ const getTopProposalsBi = async (moreOrLess) => {
     biData.value.topProposals.loading = false;
 };
 
-const getSalesOverviewBi = async () => {
+const getSalesOverviewBi = () => {
     if (biPeriodVG.value.dataEn.di && biPeriodVG.value.dataEn.df) {
         let biParams = JSON.parse(localStorage.getItem('__biParams'));
         biData.value.salesOverview.rows = biParams.salesOverview.rows || biData.value.salesOverview.rows;
         const url = `${baseApiUrl}/pipeline/f-a/gso?periodDi=${biPeriodVG.value.dataEn.di}&periodDf=${biPeriodVG.value.dataEn.df}&rows=${biData.value.topSellings.dataRepresentacoes.join(',')}`;
         biData.value.salesOverview.loading = true;
-        await axios.get(url).then((axiosRes) => {
+        axios.get(url).then((axiosRes) => {
             const data = axiosRes.data;
             lineData.labels = data.labels;
             lineData.datasets = data.datasets;

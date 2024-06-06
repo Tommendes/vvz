@@ -91,8 +91,9 @@ const saveData = async () => {
                 defaultWarn('Erro ao salvar registro');
             }
         })
-        .catch((err) => {
-            defaultWarn(err.response.data);
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
         });
 };
 

@@ -2,10 +2,12 @@
 import { onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultWarn, defaultSuccess } from '@/toast';
+import { defaultWarn } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import ComissoesItensGrid from '../comissoes/itens/ComissoesItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
+import { useRouter } from 'vue-router';
+const router = useRouter();
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -89,7 +91,7 @@ const loadData = async () => {
             })
             .catch((error) => {
                 defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+                if (error.response && error.response.status == 401) router.push('/');
             });
     }, Math.random() * 1000 + 250);
     loading.value = false;
