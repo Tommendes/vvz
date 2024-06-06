@@ -4,12 +4,12 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import ComissaoItemForm from './ComissaoItemForm.vue';
 import { defaultWarn, defaultSuccess } from '@/toast';
-import { useRouter } from 'vue-router';
-const router = useRouter();
+
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 const gridData = ref(null);
 const itemData = ref({});
+const itemDataGroup = ref({});
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 const mode = ref('grid');
 
@@ -59,8 +59,10 @@ const loadData = async () => {
                 });
             })
             .catch((error) => {
-                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                if (error.response.status == 401) router.push('/');
+                if (typeof error == 'string') defaultWarn(error);
+                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                else defaultWarn('Erro ao carregar dados!');
             });
     }, Math.random() * 1000 + 250);
     cancelNewItem();
@@ -106,23 +108,23 @@ const scheduleGroupSettlement = () => {
     });
 };
 // Executar liquidação em grupo
-// const executeGroupSettlement = () => {
-//     confirm.require({
-//         group: 'comisGroupLiquidateConfirm',
-//         header: 'Liquidação total dos programados',
-//         message: [`Confirma a liquidação deste${pendingCommissionsQuantity() > 1 ? 's' : ''} ${pendingCommissionsQuantity()} registros?`, 'Essa operação <strong>NÃO PODERÁ SER REVERTIDA</strong>.'],
-//         icon: 'fa-solid fa-question fa-beat',
-//         acceptIcon: 'fa-solid fa-check',
-//         rejectIcon: 'fa-solid fa-xmark',
-//         acceptClass: 'p-button-danger',
-//         accept: () => {
-//             liquidateGroup();
-//         },
-//         reject: () => {
-//             return;
-//         }
-//     });
-// };
+const executeGroupSettlement = () => {
+    confirm.require({
+        group: 'comisGroupLiquidateConfirm',
+        header: 'Liquidação total dos programados',
+        message: [`Confirma a liquidação deste${pendingCommissionsQuantity() > 1 ? 's' : ''} ${pendingCommissionsQuantity()} registros?`, 'Essa operação <strong>NÃO PODERÁ SER REVERTIDA</strong>.'],
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            liquidateGroup();
+        },
+        reject: () => {
+            return;
+        }
+    });
+};
 // Listar agentes de negócio
 const listAgentesComissionamento = async () => {
     let url = `${baseApiUrl}/comis-agentes/f-a/gag?agente_representante`;
@@ -156,26 +158,26 @@ const scheduleGroup = () => {
     });
 };
 // Liquidar em grupo
-// const liquidateGroup = async () => {
-//     if (!formIsValid()) return;
-//     let shouldLoadData = false;
-//     for (const element of gridData.value) {
-//         if (element.last_status_comiss < 30) {
-//             const bodyStatus = {
-//                 id_comissoes: element.id,
-//                 status_comis: STATUS_ENCERRADO
-//             };
-//             await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus);
-//             shouldLoadData = true;
-//         }
-//     }
-//     if (shouldLoadData) {
-//         await loadData();
-//         defaultSuccess('Liquidação realizada com sucesso');
-//     } else {
-//         defaultWarn('Não há registros programados para liquidação');
-//     }
-// };
+const liquidateGroup = async () => {
+    if (!formIsValid()) return;
+    let shouldLoadData = false;
+    for (const element of gridData.value) {
+        if (element.last_status_comiss < 30) {
+            const bodyStatus = {
+                id_comissoes: element.id,
+                status_comis: STATUS_ENCERRADO
+            };
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus);
+            shouldLoadData = true;
+        }
+    }
+    if (shouldLoadData) {
+        await loadData();
+        defaultSuccess('Liquidação realizada com sucesso');
+    } else {
+        defaultWarn('Não há registros programados para liquidação');
+    }
+};
 // Função de emitir eventos
 const emit = defineEmits(['refreshPipeline']);
 const refreshPipeline = async () => {

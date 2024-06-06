@@ -5,7 +5,6 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import ParamForm from './ParamForm.vue';
-import { defaultWarn } from '@/toast';
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -47,24 +46,18 @@ const clearFilter = () => {
 };
 const getItem = (data) => {
     itemData.value = data;
-    router.push({ path: `/${userData.schema_description}/pipeline-param/${data.id}` });
+    router.push({ path: `/${userData.schema_description}/pipeline-param/${data.id}` })
 };
 const loadData = () => {
     setTimeout(() => {
         loading.value = true;
-        axios
-            .get(`${urlBase.value}`)
-            .then((axiosRes) => {
-                gridData.value = axiosRes.data.data;
-                gridData.value.forEach((element) => {
-                    element.descricao = element.descricao.replaceAll('_', ' ');
-                });
-                loading.value = false;
-            })
-            .catch((error) => {
-                defaultWarn(error.response.data || error.response || error);
-                if (error.response.status == 401) router.push('/');
+        axios.get(`${urlBase.value}`).then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            gridData.value.forEach((element) => {
+                element.descricao = element.descricao.replaceAll('_', ' ');
             });
+            loading.value = false;
+        });
     }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
@@ -77,7 +70,7 @@ onBeforeMount(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Parâmetros', to: route.fullPath }]" />
     <div class="card">
-        <ParamForm @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <ParamForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable
             style="font-size: 1rem"
             :value="gridData"
@@ -94,7 +87,7 @@ onBeforeMount(() => {
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop() " />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />

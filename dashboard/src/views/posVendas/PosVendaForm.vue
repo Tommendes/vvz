@@ -124,8 +124,10 @@ const saveData = async () => {
             else reload();
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else defaultWarn('Erro ao carregar dados!');
         });
 };
 /**

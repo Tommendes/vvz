@@ -153,8 +153,13 @@ const clone = async () => {
             }
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
         });
 };
 // Salvar dados do formulário
@@ -185,8 +190,13 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
         });
 };
 
@@ -362,8 +372,13 @@ const imprimirOat = async () => {
             pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
         });
 };
 // Fchar formulário

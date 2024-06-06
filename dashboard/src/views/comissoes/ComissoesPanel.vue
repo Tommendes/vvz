@@ -4,8 +4,6 @@ import axios from '@/axios-interceptor';
 import ComissoesResume from './ComissoesResume.vue';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-const router = useRouter();
 
 const dataCorte = ref({});
 const defineDataCorte = (value) => {
@@ -34,8 +32,10 @@ const printDiario = async (tpAgenteRep) => {
             pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else defaultWarn('Erro ao carregar dados!');
         });
 };
 const printPosicaoMensal = async () => {
@@ -57,8 +57,10 @@ const printPosicaoMensal = async () => {
             pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else defaultWarn('Erro ao carregar dados!');
         });
 };
 const closeAll = () => {

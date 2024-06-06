@@ -2,13 +2,10 @@
 import { onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultWarn } from '@/toast';
+import { defaultWarn, defaultSuccess } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import ComissoesItensGrid from '../comissoes/itens/ComissoesItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
-import { useRouter } from 'vue-router';
-const router = useRouter();
-
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
@@ -91,8 +88,10 @@ const loadData = async () => {
                 if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
             })
             .catch((error) => {
-                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                if (error.response.status == 401) router.push('/');
+                if (typeof error == 'string') defaultWarn(error);
+                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                else defaultWarn('Erro ao carregar dados!');
             });
     }, Math.random() * 1000);
     loading.value = false;

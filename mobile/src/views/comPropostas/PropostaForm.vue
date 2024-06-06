@@ -4,8 +4,6 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { isValidEmail } from '@/global';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { useRouter } from 'vue-router';
-const router = useRouter();
 
 // Cookies do usuário
 import { userKey } from '@/global';
@@ -71,8 +69,13 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
         });
 };
 // DropDown Desconto Ativo
@@ -156,8 +159,13 @@ const imprimirProposta = async (resumo = false) => {
             pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else if (typeof error.response == 'string') defaultWarn(error.response);
+            else if (typeof error == 'string') defaultWarn(error);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
         });
 };
 
@@ -276,27 +284,25 @@ watchEffect(() => {});
     </form>
 </template>
 <style scoped>
-label {
+label{
     display: block;
 }
-input {
+input{
     width: 100%;
 }
-.p-dropdown {
-    /* Dropdown dos filtros do grid  */
+.p-dropdown{ /* Dropdown dos filtros do grid  */
     display: flex;
     align-items: center;
 }
 </style>
 
 <style>
-div.layout-main-container {
-    /* Ajustes da tela */
+div.layout-main-container{ /* Ajustes da tela */
     max-width: 100vw;
     padding-left: 0 !important;
     padding-right: 0;
 }
-.p-dropdown-items-wrapper {
+.p-dropdown-items-wrapper{
     overflow: auto; /* Necessário para o Scrool do dropdown funcionar*/
 }
 .disabled {

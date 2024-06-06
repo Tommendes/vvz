@@ -60,6 +60,7 @@ const urlBase = ref(`${baseApiUrl}/pipeline`);
 // Itens do breadcrumb
 const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]);
 const calcTypeRepres = ref('R$');
+const calcTypeAgente = ref('R$');
 
 // Andamento do registro
 import { andamentoRegistroPipeline } from '@/global';
@@ -178,8 +179,13 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else {
+                console.log(error);
+                defaultWarn('Erro ao carregar dados!');
+            }
         });
 };
 // Recarregar dados do formulário
@@ -670,8 +676,13 @@ const lstFolder = async () => {
                     hostAccessible.value = true;
                 })
                 .catch((error) => {
-                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                    if (error.response.status == 401) router.push('/');
+                    if (typeof error == 'string') defaultWarn(error);
+                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                    else {
+                        console.log(error);
+                        defaultWarn('Erro ao carregar dados!');
+                    }
                     hostAccessible.value = false;
                 });
         }, Math.random() * 1000);
@@ -1266,10 +1277,10 @@ watch(route, (value) => {
         color: var(--gray-900);
     }
 }
-label {
+label{
     display: block;
 }
-input {
+input{
     width: 100%;
 }
 .animation-color {
@@ -1277,25 +1288,23 @@ input {
 }
 </style>
 <style>
-nav > ol {
+nav>ol{
     display: flex;
     list-style: none;
     padding-left: 0px;
     align-items: center;
 }
-.layout-main-container {
+.layout-main-container{
     padding-left: 0 !important;
     padding-right: 0;
 }
-.p-dropdown-items-wrapper {
+.p-dropdown-items-wrapper{
     overflow: auto; /* Necessário para o Scrool do dropdown funcionar */
 }
-.p-timeline-event {
-    /* Ações do andamento do registro */
+.p-timeline-event{ /* Ações do andamento do registro */
     margin-bottom: 15px;
 }
-.p-timeline-event-separator {
-    /* ícones do andamento do registro */
+.p-timeline-event-separator{ /* ícones do andamento do registro */
     margin-left: 10px;
     margin-top: 5px;
     margin-bottom: 5px;

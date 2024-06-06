@@ -6,13 +6,18 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 const route = useRoute();
-const router = useRouter();
 import { userKey, formatCurrency } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+import { Mask } from 'maska';
+const masks = ref({
+    data: new Mask({
+        mask: '##/##/####'
+    })
+});
 // Função de emitir eventos
 const emit = defineEmits(['newItem', 'cancel', 'refreshPipeline']);
 // Andamento do registro
@@ -146,8 +151,10 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else defaultWarn('Erro ao carregar dados!');
         });
 };
 // Exclui o registro
@@ -169,8 +176,10 @@ const deleteItem = () => {
                     emit('refreshPipeline');
                 })
                 .catch((error) => {
-                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                    if (error.response.status == 401) router.push('/');
+                    if (typeof error == 'string') defaultWarn(error);
+                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                    else defaultWarn('Erro ao carregar dados!');
                 });
         },
         reject: () => {
@@ -180,31 +189,31 @@ const deleteItem = () => {
 };
 
 // Liquida o registro
-// const liquidateItem = () => {
-//     const bodyStatus = {
-//         id_comissoes: itemData.value.id,
-//         status_comis: STATUS_ENCERRADO
-//     };
-//     confirm.require({
-//         group: `comisLiquidateConfirm-${itemData.value.id}`,
-//         header: 'Confirmar liquidação',
-//         message: 'Confirma que deseja LIQUIDAR este registro?',
-//         message2: '<strong>Esta operação não poderá ser desfeita e a comissão será liberada para pagamento</strong>',
-//         icon: 'fa-solid fa-question fa-beat',
-//         acceptIcon: 'fa-solid fa-check',
-//         rejectIcon: 'fa-solid fa-xmark',
-//         acceptClass: 'p-button-danger',
-//         accept: async () => {
-//             await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
-//                 await loadData();
-//                 emit('cancel');
-//             });
-//         },
-//         reject: () => {
-//             return false;
-//         }
-//     });
-// };
+const liquidateItem = () => {
+    const bodyStatus = {
+        id_comissoes: itemData.value.id,
+        status_comis: STATUS_ENCERRADO
+    };
+    confirm.require({
+        group: `comisLiquidateConfirm-${itemData.value.id}`,
+        header: 'Confirmar liquidação',
+        message: 'Confirma que deseja LIQUIDAR este registro?',
+        message2: '<strong>Esta operação não poderá ser desfeita e a comissão será liberada para pagamento</strong>',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                await loadData();
+                emit('cancel');
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
 const programateItem = () => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,

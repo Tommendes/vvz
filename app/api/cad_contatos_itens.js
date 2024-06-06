@@ -43,8 +43,6 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-        
-        body.email = body.email.toLowerCase()
 
         delete body.tipo;
         delete body.meioRenderizado;

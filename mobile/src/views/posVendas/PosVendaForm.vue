@@ -123,8 +123,8 @@ const saveData = async () => {
             else reload();
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            console.log(error);
+            defaultWarn('Erro ao carregar dados!');
         });
 };
 /**
@@ -630,51 +630,45 @@ watch(selectedCadastro, (value) => {
     </div>
 </template>
 <style scoped>
-.w-90 {
+.w-90{
     width: 98vw;
     max-width: 100%;
 }
-label {
+label{
     display: block;
 }
-input {
+input{
     width: 100%;
 }
-.p-dropdown {
-    /* Dropdown do filtro do grid  */
+.p-dropdown{ /* Dropdown do filtro do grid  */
     display: flex;
     align-items: center;
 }
+
 </style>
 <style>
-nav > ol {
-    /* Ajuste  nav */
+nav>ol{ /* Ajuste  nav */
     display: flex;
     list-style: none;
     align-items: center;
     padding-left: 0;
 }
-.p-dropdown {
-    /* Dropdown do filtro do grid  */
+.p-dropdown{ /* Dropdown do filtro do grid  */
     display: flex;
     align-items: center;
 }
-.p-dropdown-items-wrapper {
-    /* Necessário para o Scrool do dropdown funcionar*/
+.p-dropdown-items-wrapper{ /* Necessário para o Scrool do dropdown funcionar*/
     overflow: auto;
 }
-.p-timeline-event {
-    /* Ações do andamento do registro */
+.p-timeline-event{ /* Ações do andamento do registro */
     margin-bottom: 15px;
 }
-.p-timeline-event-separator {
-    /* ícones do andamento do registro */
+.p-timeline-event-separator{ /* ícones do andamento do registro */
     margin-left: 10px;
     margin-top: 5px;
     margin-bottom: 5px;
 }
-.container {
-    /* Rolagem lateral */
+.container{ /* Rolagem lateral */
     overflow-x: hidden;
 }
 </style>

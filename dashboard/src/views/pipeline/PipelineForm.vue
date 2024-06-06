@@ -59,6 +59,7 @@ const emit = defineEmits(['changed', 'cancel', 'commissioning']);
 const urlBase = ref(`${baseApiUrl}/pipeline`);
 // Itens do breadcrumb
 const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]);
+const calcTypeRepres = ref('R$');
 
 // Andamento do registro
 import { andamentoRegistroPipeline } from '@/global';
@@ -100,8 +101,10 @@ const loadData = async () => {
                     if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
                 })
                 .catch((error) => {
-                    defaultWarn(error.response.data || error.response || error);
-                    if (error.response.status == 401) router.push('/');
+                    if (typeof error == 'string') defaultWarn(error);
+                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                    else defaultWarn('Erro ao carregar dados!');
                     toGrid();
                 });
         else if (props.idCadastro) {
@@ -174,8 +177,10 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response.status == 401) router.push('/');
+            if (typeof error == 'string') defaultWarn(error);
+            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+            else defaultWarn('Erro ao carregar dados!');
         });
 };
 // Recarregar dados do formulário
@@ -613,8 +618,10 @@ const lstFolder = async () => {
                     hostAccessible.value = true;
                 })
                 .catch((error) => {
-                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                    if (error.response.status == 401) router.push('/');
+                    if (typeof error == 'string') defaultWarn(error);
+                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
+                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
+                    else defaultWarn('Erro ao carregar dados!');
                     hostAccessible.value = false;
                 });
         }, Math.random() * 1000 + 250);
