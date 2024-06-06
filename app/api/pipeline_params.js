@@ -32,7 +32,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-          delete body.url_logo; delete body.url_rodape;
+        delete body.url_logo; delete body.url_rodape;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -110,6 +110,7 @@ module.exports = app => {
             .select(app.db.raw(`tbl1.*`))
             .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
             .groupBy('tbl1.id')
+            .orderBy('tbl1.descricao')
         ret.then(body => {
             const count = body.length
             return res.json({ data: body, count: count })
@@ -124,7 +125,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.pipeline >= 1 ||  uParams.pipeline_params >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.pipeline >= 1 || uParams.pipeline_params >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -147,11 +148,11 @@ module.exports = app => {
             .where({ 'tbl1.id': req.params.id })
             .whereIn('tbl1.status', [STATUS_INACTIVE, STATUS_ACTIVE, STATUS_VIEW])
             .first()
-            
-            ret.then(body => {
-                if (!body) return res.status(404).send('Registro não encontrado')
-                return res.json(body)
-            })
+
+        ret.then(body => {
+            if (!body) return res.status(404).send('Registro não encontrado')
+            return res.json(body)
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)

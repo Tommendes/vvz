@@ -22,7 +22,7 @@ const router = useRouter();
 // Campos de formulário
 const itemData = ref({});
 // Modo do formulário
-const mode = ref('view');
+const mode = ref('new');
 // Mensages de erro
 const errorMessages = ref({});
 // Loadings
@@ -385,6 +385,8 @@ watch(itemData.value, () => {
             </div>
         </form>
     </div>
-    <p>mode: {{ mode }}</p>
-    <p>itemData: {{ itemData }}</p>
+    <div v-if="userData.admin >= 2">
+        <p>mode: {{ mode }}</p>
+        <p>itemData: {{ itemData }}</p>
+    </div>
 </template>
