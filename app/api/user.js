@@ -49,8 +49,14 @@ module.exports = app => {
         /**
          * Se o e-mail for informado vazio exclui do body
         */
-        if (!(!!body.email)) delete body.email
-
+       if (!(!!body.email)) delete body.email
+       else body.email = body.email.trim().toLowerCase()
+       /**
+        * Se o e-mail for informado vazio exclui do body
+       */
+        if (!(!!body.celular)) delete body.celular
+        else body.telefone = body.telefone.replace(/([^\d])+/gim, "")
+        
         /**
          * Tenta localizar o usuário a partir do cpf informado
         */
@@ -97,8 +103,15 @@ module.exports = app => {
         /**
          * #2 - Se não tem perfil e já informou os dados necessários para a criação do perfil:
         */
-        if ((body.isNewUser || (body.client && body.domain)) && body.celular && body.cpf) {
+        if (body.isNewUser && body.celular && body.cpf) {
             delete body.isNewUser
+            try {
+                existsOrError(body.password, 'Senha não informada')
+                existsOrError(body.confirmPassword, 'Confirmação de Senha inválida')
+            } catch (error) {
+                return res.status(400).send({ msg: error })
+            }
+
             /**
              * Se body.id NÃO for informado então não é servidor. Nesse caso body.email torna-se obrigatório
              */
@@ -124,13 +137,12 @@ module.exports = app => {
                     }
 
                 try {
-                    existsOrError(body.schema_id, 'Empresa não informada')
+                    // existsOrError(body.schema_id, 'Empresa não informada')
                     existsOrError(body.name, 'Nome não informado')
                     existsOrError(body.password, 'Senha não informada')
                     existsOrError(body.confirmPassword, 'Confirmação de Senha inválida')
                     equalsOrError(body.password, body.confirmPassword, 'Senhas não conferem')
                 } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                     return res.status(400).send({ msg: error })
                 }
 
@@ -163,8 +175,6 @@ module.exports = app => {
                 delete body.id
                 delete body.nome
                 delete body.celular
-                delete body.client
-                delete body.domain
                 delete body.clientName
                 delete body.confirmPassword
                 delete body.password
@@ -224,7 +234,7 @@ module.exports = app => {
                             data: body,
                             msg: [
                                 `Olá ${body.name.split(' ')[0]}!`,
-                                `Estamos confirmando sua inscrição ✔`,
+                                `Estamos confirmando sua inscrição✔`,
                                 `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token que enviamos em seu email`
                             ]
                         })
@@ -237,76 +247,15 @@ module.exports = app => {
         }
         /**
          * #2 - Se não tem perfil e não informou os dados necessários para a criação do perfil:
-         *      a) vai para a localização dos dados nos schemas dos clientes
         */
-        // else {
-        //     const cad_servidor = {
-        //         data: {}
-        //     }
-        //     const clientServidor = {}
-        //     const dbSchemas = await app.db.raw(`WITH RECURSIVE bd_schemas AS (
-        //                     SELECT p.status, p.dominio, p.value, p.label
-        //                     FROM params p
-        //                     WHERE p.dominio = 'root' AND p.meta = 'clientName' AND p.status = 10 AND p.value != 'root'
-        //                     UNION ALL
-        //                     SELECT f.status, f.dominio, f.value, f.label
-        //                     FROM params f
-        //                     INNER JOIN bd_schemas d ON f.dominio = d.value
-        //                     WHERE f.meta = 'domainName' AND f.status = 10 AND f.value != 'root'
-        //                 )
-        //                 SELECT r.dominio cliente, r.value dominio, r.label clienteName
-        //                 FROM bd_schemas r WHERE r.dominio != 'root'`)
-
-        //     for (let index = 0; index < dbSchemas[0].length; index++) {
-        //         const element = dbSchemas[0][index];
-        //         const client = element.cliente
-        //         const domain = element.dominio
-        //         const clienteName = element.clienteName
-        //         const tabelaCadServidoresDomain = `${dbPrefix}_${client}_${domain}.cad_servidores`
-        //         const tabelaFinSFuncionalDomain = `${dbPrefix}_${client}_${domain}.fin_sfuncional`
-        //         const cad_servidores = await app.db({ cs: tabelaCadServidoresDomain })
-        //             .select('cs.id', 'cs.cpf', 'cs.nome', 'cs.email', 'cs.celular')
-        //             .join({ ff: `${tabelaFinSFuncionalDomain}` }, function () {
-        //                 this.on(`ff.id_cad_servidores`, `=`, `cs.id`)
-        //             })
-        //             .where({ 'cs.cpf': body.cpf.replace(/([^\d])+/gim, "") })
-        //             .andWhere(app.db.raw(`ff.situacaofuncional is not null and ff.situacaofuncional > 0 and ff.mes < 13`))
-        //             .first()
-        //             .orderBy('ff.ano', 'desc')
-        //             .orderBy('ff.mes', 'desc')
-        //             .limit(1)
-        //         clientServidor.client = client
-        //         clientServidor.domain = domain
-        //         clientServidor.clientName = clienteName
-
-        //         if (cad_servidores) {
-        //             cad_servidor.data = { ...cad_servidores, ...clientServidor }
-        //             break
-        //         }
-        //     }
-        //     // Se localizou um resgitro em um dos clientes...
-        //     if (cad_servidor.data.id) {
-        //         if (cad_servidor.data.celular.replace(/([^\d])+/gim, "").length == 11)
-        //             return res.json({
-        //                 isCelularValid: true,
-        //                 ...cad_servidor.data
-        //             })
-        //         else
-        //             // Se o celular está num formato inválido...
-        //             return res.json({
-        //                 isCelularValid: false,
-        //                 msg: `O servidor ${titleCase(cad_servidor.data.nome)} foi localizado nos registro do município de ${clientServidor.clientName}, 
-        //                 mas não tem um telefone celular válido registrado${cad_servidor.data.celular ? ' (' + cad_servidor.data.celular + ')' : ''}. 
-        //                 Antes de prosseguir com o registro será necessário procurar o RH/DP de ${clientServidor.clientName.split("-")[0]} 
-        //                 para regularizar seu registro`
-        //             })
-        //     } else {
-        //         /**
-        //          * #3 - Se não tem perfil e não é localizado nos schemas dos clientes todos os dados tornam-se obrigatórios exceto o id
-        //         */
-        //         return res.json({ isNewUser: true, msg: await showNewUserMessage() || "Não encontramos as informações que você forneceu. Por favor, complete os campos com os dados necessários para criar seu perfil de usuário" })
-        //     }
-        // }
+        else {
+            /**
+             * #3 - Se não tem perfil e não é localizado nos schemas dos clientes todos os dados tornam-se obrigatórios exceto o id
+            */
+            const bodyReturn = { isNewUser: true, msg: await showNewUserMessage() || "Não encontramos as informações que você forneceu. Por favor, complete os campos com os dados necessários para criar seu perfil de usuário" }
+            console.log(bodyReturn);
+            return res.json(bodyReturn)
+        }
     }
 
     /**
@@ -775,14 +724,15 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
-    }
+    }    
 
     function isValidPassword(params) {
-        const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+={[}\]|:;"'<,>.?/\\])(?!.*['"`])(?!.*[\s])(?!.*[_-]{2})[A-Za-z\d!@#$%^&*()_+={[}\]|:;"'<,>.?/\\]{8,}$/
+        // Expressão regular atualizada para incluir apenas @, # e $
+        const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$])(?!.*['"`])(?!.*[\s])(?!.*[_-]{2})[A-Za-z\d@#$]{8,}$/
         const teste = regex.test(params)
         if (!teste) {
             const msgs = "A senha informada não atende aos requisitos mínimos de segurança. Necessita conter ao menos oito caracteres e ter ao menos uma letra maiúscula, "
-                + "uma letra minúscula, um dígito numérico, um dos seguintes caracteres especiais !@#$%^&*()_+=, não pode conter aspas simples ou duplas e "
+                + "uma letra minúscula, um dígito numérico, um dos seguintes caracteres especiais @#$, não pode conter aspas simples ou duplas e "
                 + "não pode conter espaços em branco"
             return msgs
         }
@@ -879,7 +829,6 @@ module.exports = app => {
         existsOrError(rowsUpdated, 'Usuário não foi encontrado')
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -894,7 +843,7 @@ module.exports = app => {
         const page = req.query.page || 1
         const key = req.query.key ? req.query.key : undefined
         const sql = app.db({ us: tabela }).select(app.db.raw('count(*) as count'))
-            // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
+        // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
         if (key)
             sql.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
@@ -907,10 +856,6 @@ module.exports = app => {
             // Se não for gestor vÊ apenas seus registros
             sql.where({ 'us.id': req.user.id })
         }
-        if (uParams.tipoUsuario == 1) {
-            sql.where({ 'us.tipoUsuario': uParams.tipoUsuario })
-                .where({ 'us.consignatario': uParams.consignatario })
-        }
         const result = await app.db.raw(sql.toString())
         count = parseInt(result[0][0].count) || 0
 
@@ -920,7 +865,7 @@ module.exports = app => {
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
-            // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
+        // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
         if (key)
             ret.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
@@ -933,13 +878,10 @@ module.exports = app => {
             // Se não for gestor vÊ apenas seus registros
             ret.where({ 'us.id': req.user.id })
         }
-        if (uParams.tipoUsuario == 1) {
-            ret.where({ 'us.tipoUsuario': uParams.tipoUsuario })
-                .where({ 'us.consignatario': uParams.consignatario })
-        }
-        ret.limit(limit).offset(page * limit - limit).orderBy("us.name")
+        ret.orderBy("us.name")
+
         ret.then(users => {
-            return res.json({ data: users, count, limit })
+            return res.json({ data: users, count })
         })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })

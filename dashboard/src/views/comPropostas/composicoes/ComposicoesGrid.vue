@@ -44,7 +44,7 @@ const goField = (data) => {
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'view';
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 const duplicateField = (data) => {
@@ -53,7 +53,7 @@ const duplicateField = (data) => {
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'clone';
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 import { useConfirm } from 'primevue/useconfirm';
@@ -110,7 +110,7 @@ const loadData = () => {
             });
             loading.value = false;
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
 const getSeverity = (value) => {
@@ -122,7 +122,7 @@ const newCompos = () => {
     setTimeout(() => {
         itemData.value = {};
         mode.value = 'new';
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 onBeforeMount(() => {
     initFilters();

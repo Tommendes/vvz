@@ -68,7 +68,7 @@ const loadData = () => {
             });
             loading.value = false;
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 const mode = ref('grid');
 const searchInPage = () => {

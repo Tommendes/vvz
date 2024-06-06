@@ -88,12 +88,10 @@ const loadData = async () => {
                 if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
             })
             .catch((error) => {
-                if (typeof error == 'string') defaultWarn(error);
-                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else defaultWarn('Erro ao carregar dados!');
+                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
             });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
     loading.value = false;
 };
 const refreshPipeline = async () => {
@@ -109,7 +107,7 @@ onMounted(async () => {
         await listUnidadesDescricao();
         // Carrega os agentes de negócio
         await listAgentesNegocio();
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 });
 </script>
 

@@ -68,7 +68,7 @@ const loadData = async () => {
                 }
             });
             loading.value = false;
-        }, Math.random() * 1000);
+        }, Math.random() * 1000 + 250);
     } else {
         itemData.value = {
             id_com_propostas: route.params.id,
@@ -147,13 +147,11 @@ const getComposicoes = async () => {
                 if (itensInativos.length > 0) dropdownComposicoes.value.push({ label: 'Inativas ', comp_ativa: 0, items: itensInativos });
             })
             .catch((error) => {
-                if (typeof error == 'string') defaultWarn(error);
-                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else defaultWarn('Erro ao carregar dados!');
+                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
             });
         loading.value = false;
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 // Validar formulário
 const formIsValid = () => {
@@ -185,7 +183,7 @@ const getNomeProduto = async () => {
                     nomeProduto.value = response.data.data[0].nome_comum;
                     valorVendaProduto.value = formatValor(response.data.data[0].valor_venda, 'pt');
                 }
-            }, Math.random() * 1000);
+            }, Math.random() * 1000 + 250);
         } catch (error) {
             console.error('Erro ao buscar produto:', error);
         }

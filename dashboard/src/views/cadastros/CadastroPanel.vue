@@ -38,7 +38,7 @@ const loadData = async () => {
                 router.push(urlBase.value);
             }
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 const flashDadosPublicos = () => {
@@ -63,7 +63,7 @@ const loadDataDadosPublicos = async () => {
                 }
             });
         }
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 onBeforeMount(() => {

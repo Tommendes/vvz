@@ -85,7 +85,7 @@ onBeforeMount(() => {
 onMounted(() => {
     setTimeout(() => {
         loadData();
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 
     if (props.toOpenOat) {
         setTimeout(async () => {
@@ -104,7 +104,7 @@ onMounted(() => {
                     showPvOatForm(body);
                 }
             });
-        }, Math.random() * 1000);
+        }, Math.random() * 1000 + 250);
     }
 });
 </script>

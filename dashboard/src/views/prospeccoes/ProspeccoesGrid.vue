@@ -2,7 +2,7 @@
 import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultError } from '@/toast';
+import { defaultWarn } from '@/toast';
 import moment from 'moment';
 import ProspeccaoForm from './ProspeccaoForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
@@ -122,13 +122,10 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                try {
-                    defaultError(error.response.data);
-                } catch (error) {
-                    defaultError('Erro ao carregar dados!');
-                }
+                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                if (error.response && error.response.status == 401) router.push('/');
             });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 const onPage = (event) => {
     lazyParams.value = event;
@@ -218,7 +215,7 @@ watchEffect(() => {
                 <div class="flex justify-content-end gap-3">
                     <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop() " />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">

@@ -169,12 +169,10 @@ const loadLazyData = () => {
                 loading.value = false;
             })
             .catch((error) => {
-                if (typeof error == 'string') defaultWarn(error);
-                else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-                else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                else defaultWarn('Erro ao carregar dados!');
+                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                if (error.response && error.response.status == 401) router.push('/');
             });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 // Carrega os dados do grid
 const onPage = (event) => {
@@ -500,7 +498,7 @@ const newCommissioning = () => {
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible" style="0.6rem">
+                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
                             <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                         </template>

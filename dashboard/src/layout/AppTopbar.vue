@@ -165,7 +165,7 @@ const getUserMessages = async () => {
                 });
             }
         });
-    }, Math.floor(Math.random() * 1000) + 250);
+    }, Math.floor(Math.random() * 1000 + 250) + 250);
 };
 const dialogRef = ref(null);
 const messagesButtoms = ref([

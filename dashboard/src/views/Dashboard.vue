@@ -377,16 +377,16 @@ const chartExportItems = ref([
 const loadStats = () => {
     getBiPeriod();
     getBiPeriodVG();
-    setTimeout(async () => {
-        await getCadastrosBi();
-        await getPropectosBi();
-        await getPropostasBi();
-        await getPedidosBi();
-        await getPedidosLastBi();
-        await getTopSellersBi();
-        await getTopProposalsBi();
-        await getTopSellingBi();
-        await getSalesOverviewBi();
+    setTimeout(() => {
+        getCadastrosBi();
+        getPropectosBi();
+        getPropostasBi();
+        getPedidosBi();
+        getPedidosLastBi();
+        getTopSellersBi();
+        getTopProposalsBi();
+        getTopSellingBi();
+        getSalesOverviewBi();
     }, Math.random() * 1000 + 250);
 };
 
@@ -582,7 +582,7 @@ onMounted(() => {
                         <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
-                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellings.data" :key="item.id">
+                <ul class="list-none p-0 m-0" v-for="item in biData.topSellings.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
                             <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao, null, 20)" v-tooltip.top="'Clique para ir'">
@@ -624,7 +624,7 @@ onMounted(() => {
                         <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
-                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topSellers.data" :key="item.id">
+                <ul class="list-none p-0 m-0" v-for="item in biData.topSellers.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
                             <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, item.agente, 20)" v-tooltip.top="'Clique para ir'">
@@ -702,7 +702,7 @@ onMounted(() => {
                         <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
-                <ul class="list-none p-0 m-0" v-for="(item, index) in biData.topProposals.data" :key="item.id">
+                <ul class="list-none p-0 m-0" v-for="item in biData.topProposals.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
                             <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao, 0)" v-tooltip.top="'Clique para ir'">

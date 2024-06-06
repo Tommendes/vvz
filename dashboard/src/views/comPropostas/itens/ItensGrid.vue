@@ -51,7 +51,7 @@ const goField = (data) => {
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'view';
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 const duplicateField = (data) => {
@@ -59,7 +59,7 @@ const duplicateField = (data) => {
     setTimeout(() => {
         itemData.value = data;
         mode.value = 'clone';
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 const newItem = () => {
@@ -69,7 +69,7 @@ const newItem = () => {
             id_com_prop_compos: props.idComposicao
         };
         mode.value = 'new';
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 import { useConfirm } from 'primevue/useconfirm';
@@ -124,7 +124,7 @@ const loadData = () => {
             });
             loading.value = false;
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 const mode = ref('grid');

@@ -61,7 +61,7 @@ const loadData = async () => {
                 }
             });
             loading.value = false;
-        }, Math.random() * 1000);
+        }, Math.random() * 1000 + 250);
     } else {
         itemData.value = {
             id_com_propostas: route.params.id,

@@ -204,11 +204,11 @@ const dropdownObrigValor = ref([
     { value: 0, label: 'Sim' },
     { value: 1, label: 'Não' }
 ]);
-const dropdownGeraPasta = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Para o documento' },
-    { value: 2, label: 'Para o pedido' }
-]);
+// const dropdownGeraPasta = ref([
+//     { value: 0, label: 'Não' },
+//     { value: 1, label: 'Para o documento' },
+//     { value: 2, label: 'Para o pedido' }
+// ]);
 // Validar formulário
 const formIsValid = () => {
     return true;
@@ -396,6 +396,8 @@ watch(itemData.value, () => {
             </div>
         </form>
     </div>
-    <p>mode: {{ mode }}</p>
-    <p>itemData: {{ itemData }}</p>
+    <div v-if="userData.admin >= 1">
+        <p>mode: {{ mode }}</p>
+        <p>itemData: {{ itemData }}</p>
+    </div>
 </template>

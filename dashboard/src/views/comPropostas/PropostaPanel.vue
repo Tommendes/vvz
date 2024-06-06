@@ -73,7 +73,7 @@ const loadData = async () => {
             }
         });
         loading.value = false;
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 const loadDataPipeline = async () => {
@@ -152,7 +152,7 @@ const getEventos = async () => {
                 ];
             }
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 onBeforeMount(async () => {

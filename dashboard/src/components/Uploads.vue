@@ -135,7 +135,7 @@ onMounted(() => {
             field: props.field || dialogRef.value.data.field || 'id_uploads_logo',
             schema: props.schema || dialogRef.value.data.schema || `${userData.schema_name}`
         };
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 });
 </script>
 

@@ -73,7 +73,7 @@ const getTokenTime = async () => {
                             tokenTimeMessage.value = `Dentro de ${tokenTimeLeft.value + 1} segundos, informe o token enviado por e-mail`;
                         }
                     } else tokenTimeLeftMessage.value = `Seu token venceu.<br>Clique abaixo para solicitar novo token`;
-                }, Math.random() * 1000);
+                }, Math.random() * 1000 + 250);
             })
             .catch((error) => {
                 const data = error.response.data;

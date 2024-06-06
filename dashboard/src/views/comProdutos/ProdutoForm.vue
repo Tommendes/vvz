@@ -84,7 +84,7 @@ const loadData = async () => {
             });
         }
         loading.value = false;
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 const loadDataProdTabelas = async () => {
     setTimeout(() => {
@@ -99,7 +99,7 @@ const loadDataProdTabelas = async () => {
             });
             loading.value = false;
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -126,12 +126,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else if (typeof error.response == 'string') defaultWarn(error.response);
-            else if (typeof error == 'string') defaultWarn(error);
-            else {
-                defaultWarn('Erro ao carregar dados!');
-            }
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // Validar formulário
@@ -185,12 +181,8 @@ const removeImage = () => {
                     }, 2500);
                 })
                 .catch((error) => {
-                    if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-                    else if (typeof error.response == 'string') defaultWarn(error.response);
-                    else if (typeof error == 'string') defaultWarn(error);
-                    else {
-                        defaultWarn('Erro ao carregar dados!');
-                    }
+                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
                 });
         },
         reject: () => {
@@ -264,7 +256,7 @@ const loadOptions = () => {
                 dropdownUnidades.value.push({ value: item.id, label: item.label });
             });
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 /**
  * Autocomplete de cadastros

@@ -70,7 +70,7 @@ const loadData = async () => {
                 }
             });
         } else loading.value = false;
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 const loadDataProtoDocs = async () => {
     setTimeout(() => {
@@ -80,7 +80,7 @@ const loadDataProtoDocs = async () => {
             if (gridDatProtoDocs.value.descricao) itemDataProtDocs.value.items = gridDatProtoDocs.value.descricao.split(',');
             loading.value = false;
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -132,10 +132,8 @@ const saveDataProtDocs = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else if (typeof error.response == 'string') defaultWarn(error.response);
-            else if (typeof error == 'string') defaultWarn(error);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
         });
     if (itemDataProtDocs.value.descricao) itemDataProtDocs.value.descricao = itemDataProtDocs.value.descricao.split(',');
 };

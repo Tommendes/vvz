@@ -77,24 +77,22 @@ export const useUserStore = defineStore('users', {
         async validateToken(userData) {
             const url = `${baseApiAuthUrl}/validateToken`;
             if (userData && userData.ip) userData.ipSignin = userData.ip;
-            setTimeout(async () => {
-                return await interceptor
-                    .post(url, userData)
-                    .then((res) => {
-                        this.isTokenValid = res.data;
-                        if (this.isTokenValid) {
-                            this.user = userData;
-                            interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
-                            this.getLocation();
-                            this.timeToLogOut = 600;
-                        } else {
-                            this.logout();
-                        }
-                    })
-                    .catch((error) => {
-                        console.log(error);
-                    });
-            }, Math.random() * 1000 + 250);
+            return await interceptor
+                .post(url, userData)
+                .then((res) => {
+                    this.isTokenValid = res.data;
+                    if (this.isTokenValid) {
+                        this.user = userData;
+                        interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
+                        this.getLocation();
+                        this.timeToLogOut = 600;
+                    } else {
+                        this.logout();
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
         },
         logout() {
             this.user = {};

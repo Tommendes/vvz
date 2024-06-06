@@ -75,10 +75,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // DropDown Desconto Ativo
@@ -146,7 +144,7 @@ const loadOptions = async () => {
                 dropdownValidade.value.push({ value: item.id, label: item.parametro });
             });
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 const imprimirProposta = async (resumo = false) => {
@@ -162,10 +160,8 @@ const imprimirProposta = async (resumo = false) => {
             pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
         .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
         });
 };
 

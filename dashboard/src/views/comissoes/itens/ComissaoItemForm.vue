@@ -114,7 +114,7 @@ const getEventos = async () => {
                 ];
             }
         });
-    }, Math.random() * 1000);
+    }, Math.random() * 1000 + 250);
 };
 
 // Validar formulário
@@ -151,10 +151,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else defaultWarn('Erro ao carregar dados!');
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // Exclui o registro
@@ -176,10 +174,8 @@ const deleteItem = () => {
                     emit('refreshPipeline');
                 })
                 .catch((error) => {
-                    if (typeof error == 'string') defaultWarn(error);
-                    else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-                    else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                    else defaultWarn('Erro ao carregar dados!');
+                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+if (error.response && error.response.status == 401) router.push('/');
                 });
         },
         reject: () => {
