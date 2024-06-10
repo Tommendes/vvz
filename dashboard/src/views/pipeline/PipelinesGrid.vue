@@ -57,10 +57,10 @@ const optionParams = async (query) => {
     return await axios.get(url);
 };
 // Obter Agentes de negócio
-const getAgentes = async () => {
-    setTimeout(async () => {
+const getAgentes = () => {
+    setTimeout(() => {
         const url = `${baseApiUrl}/users/f-a/gag`;
-        await axios.get(url).then((res) => {
+        axios.get(url).then((res) => {
             res.data.map((item) => {
                 dropdownAgentes.value.push({
                     value: item.name,
@@ -71,14 +71,14 @@ const getAgentes = async () => {
     }, Math.random() * 1000 + 250);
 };
 // Carregar opções do formulário de pesquisa
-const loadOptions = async () => {
+const loadOptions = () => {
     filtrarUnidades();
     filtrarUnidadesDescricao();
 };
-const filtrarUnidades = async () => {
+const filtrarUnidades = () => {
     // Unidades de negócio
-    setTimeout(async () => {
-        await optionParams({
+    setTimeout(() => {
+        optionParams({
             func: 'gun',
             tipoDoc: tipoDoc.value,
             unidade: unidade.value
@@ -94,10 +94,10 @@ const filtrarUnidades = async () => {
     }, Math.random() * 1000 + 250);
     filtrarUnidadesDescricao();
 };
-const filtrarUnidadesDescricao = async () => {
+const filtrarUnidadesDescricao = () => {
     // Unidades de negócio por tipo
-    setTimeout(async () => {
-        await optionParams({
+    setTimeout(() => {
+        optionParams({
             func: 'ubt',
             tipoDoc: tipoDoc.value,
             unidade: unidade.value
@@ -191,7 +191,7 @@ const loadLazyData = () => {
         const url = `${urlBase.value}${urlFilters.value}`;
         axios
             .get(url)
-            .then(async (axiosRes) => {
+            .then((axiosRes) => {
                 gridData.value = axiosRes.data.data;
                 totalRecords.value = axiosRes.data.totalRecords;
                 sumRecords.value = axiosRes.data.sumRecords;
@@ -374,7 +374,7 @@ onBeforeUnmount(() => {
 });
 
 // const queryUrl = ref('');
-onMounted(async () => {
+onMounted(() => {
     window.addEventListener('resize', updateScreenWidth);
     updateScreenWidth(); // Atualize a propriedade inicialmente
 
