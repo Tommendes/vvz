@@ -263,12 +263,13 @@ module.exports = app => {
         })
     }
 
+    // Próximo número de ordem
     const getNextOrdem = async (req, res) => {
         try {
             let user = req.user
             const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
             const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-            const numerosExistentes = await app.db(tabelaDomain).select(app.db.raw('cast(ordem as unsigned)ordem')).orderBy('ordem');
+            const numerosExistentes = await app.db(tabelaDomain).select(app.db.raw('cast(ordem as unsigned)ordem')).groupBy('ordem').orderBy('ordem');
             let proximoNumero = 1;
             for (const numero of numerosExistentes) {
                 if (numero.ordem !== proximoNumero) return res.json({ ordem: proximoNumero.toString().padStart(3, '0')});
