@@ -170,7 +170,7 @@ const printOnly = async (idAgente, tpAgenteRep) => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/diarioComissionado`;
     const bodyRequest = {
-        periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFim}`,
+        periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFim} e pendências até: ${dataCorte.value.parametros.dataFim}`,
         ano: dataCorte.value.parametros.ano,
         mes: dataCorte.value.parametros.mes,
         dataInicio: dataCorte.value.parametros.dataInicio,
