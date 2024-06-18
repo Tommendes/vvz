@@ -476,7 +476,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let data = { ...req.body }
         const dataInicio = req.query.dataInicio || undefined
-        const dataFim = req.query.dataFim || undefined
+        const dataFim = req.query.dataFim || moment().format('DD/MM/YYYY')
         // return res.status(201)
         try {
             // Alçada do usuário
@@ -520,7 +520,7 @@ module.exports = app => {
             .orderBy('ag.ordem')
             .orderBy('status_comiss', 'desc')
             .orderBy('nome_comum')
-            .having(app.db.raw(`status_comiss = ${STATUS_ABERTO} OR (status_comiss = 20 AND ${filterDatas})`))
+            .having(app.db.raw(`(status_comiss = ${STATUS_ABERTO} AND  DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas})`))
 
         if (agId) query.where('ag.id', agId)
         if (agGroup) query.where('ag.agente_representante', agGroup)
