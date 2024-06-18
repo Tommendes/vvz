@@ -498,10 +498,10 @@ module.exports = app => {
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         let filterDatas = `1=1`
-        if (dataInicio && dataFim) filterDatas = `created_at between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
+        if (dataInicio && dataFim) filterDatas = `DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
         let query = app.db({ cms: tabelaDomain })
             .select('ag.id', 'ag.agente_representante',
-                app.db.raw('COALESCE(ag.apelido, ca.nome) as nome_comum'),
+                app.db.raw('COALESCE(CONCAT(ca.nome, " ", ca.cpf_cnpj), ag.apelido) as nome_comum'),
                 'ag.ordem',
                 'cms.valor_base',
                 'ag.dsr',

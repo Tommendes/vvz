@@ -1,6 +1,14 @@
 const gestor = require('./gestor')
+const { envLocalhost } = require('../.env')
 
 module.exports = app => {
+    // TODO: Exibir todas as rotas acessadas e imprimir no console
+    if (envLocalhost)
+        app.use((req, res, next) => {
+            console.log('Acessou a rota: ' + req.method + req.url)
+            next()
+        })
+
     app.post('/signup', app.api.user.signup)
     app.post('/signin', app.api.auth.signin)
     app.post('/validateToken', app.api.auth.validateToken)
