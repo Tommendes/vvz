@@ -294,7 +294,7 @@ const setFiscalUnDone = () => {
     };
     confirm.require({
         group: `setFiscalDoneConfirm-${itemData.value.id}`,
-        header: 'Exlcuir faturamento',
+        header: 'Excluir faturamento',
         message: 'Confirma que este registro foi NÃO FOI FATURADO ou o faturamento foi CANCELADO?',
         message2: '<strong>Você ainda poderá confirmar o faturamento posteriormente</strong>',
         icon: 'fa-solid fa-question fa-beat',
@@ -392,7 +392,7 @@ const itemDataStatusPreload = ref([
         status: STATUS_LIQUIDADO,
         action: 'Liquidação',
         label: 'Liquidado',
-        icon: 'fa-solid fa-shopping-cart',
+        icon: 'fa-solid fa-hand-holding-dollar',
         color: '#4cd07d'
     },
     {
@@ -661,7 +661,7 @@ watchEffect(() => {
                     <Button
                         type="button"
                         :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
-                        v-if="itemDataLastStatus.status_comis != STATUS_LIQUIDADO && ['view'].includes(mode)"
+                        v-if="![STATUS_LIQUIDADO, STATUS_ENCERRADO].includes(itemDataLastStatus.status_comis) && ['view'].includes(mode)"
                         v-tooltip.top="'Liquidar comissão'"
                         icon="fa-regular fa-calendar-check"
                         severity="success"

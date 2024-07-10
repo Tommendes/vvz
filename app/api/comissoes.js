@@ -262,14 +262,15 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        try {
-            existsOrError(req.query.id_pipeline, 'Pipeline não informado')
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            return res.status(400).send(error)
-        }
+        // try {
+        //     existsOrError(req.query.id_pipeline, 'Pipeline não informado')
+        // } catch (error) {
+        //     app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+        //     return res.status(400).send(error)
+        // }
 
-        const idPipeline = req.query.id_pipeline
+        const idPipeline = req.query.id_pipeline || undefined
+        const idAgente = req.query.id_agente || undefined
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
@@ -277,13 +278,17 @@ module.exports = app => {
         const tabelaComissStatussDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         const tabelaPipelineParams = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
         const tabelaCadastros = `${dbPrefix}_${uParams.schema_name}.cadastros`
-        const totalRecords = await app.db({ tbl1: tabelaDomain })
+        let totalRecords = idPipeline ? 1 : await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
             .join({ tbl3: tabelaPipelineDomain }, 'tbl1.id_pipeline', 'tbl3.id')
             .join({ tbl4: tabelaComissAgentesDomain }, 'tbl1.id_comis_agentes', 'tbl4.id')
             .join({ tbl5: tabelaPipelineParams }, 'tbl5.id', 'tbl3.id_pipeline_params')
             .join({ tbl6: tabelaCadastros }, 'tbl6.id', 'tbl4.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
+            .where(function () {
+                if (idPipeline) this.where({ 'tbl1.id_pipeline': idPipeline })
+                if (idAgente) this.where({ 'tbl1.id_comis_agentes': idAgente })
+            })
 
         const ret = app.db({ tbl1: tabelaDomain })
             .join({ tbl3: tabelaPipelineDomain }, 'tbl1.id_pipeline', 'tbl3.id')
@@ -297,7 +302,11 @@ module.exports = app => {
                 app.db.raw(`(select status_comis from ${tabelaComissStatussDomain} where id_comissoes = tbl1.id order by created_at desc, status_comis desc limit 1) last_status_comiss`),
                 app.db.raw(`(select DATE_FORMAT(created_at,'%d/%m/%Y') from ${tabelaComissStatussDomain} where id_comissoes = tbl1.id order by created_at desc, status_comis desc limit 1) liquidar_aprox`)
             )
-            .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_pipeline': idPipeline })
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .where(function () {
+                if (idPipeline) this.where({ 'tbl1.id_pipeline': idPipeline })
+                if (idAgente) this.where({ 'tbl1.id_comis_agentes': idAgente })
+            })
             .groupBy('tbl1.id')
             .orderBy(app.db.raw('cast(tbl4.agente_representante as unsigned)'))
             .orderBy('tbl1.parcela')
@@ -507,10 +516,10 @@ module.exports = app => {
                 'ag.dsr',
                 'cms.valor',
                 app.db.raw(
-                    `@status_comiss := (SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != ${STATUS_FATURADO} ORDER BY created_at DESC LIMIT 1) as status_comiss`
+                    `@status_comiss := (SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY created_at DESC LIMIT 1) as status_comiss`
                 ),
                 app.db.raw(
-                    `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis != ${STATUS_FATURADO} ORDER BY created_at DESC LIMIT 1) as created_at`
+                    `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY created_at DESC LIMIT 1) as created_at`
                 )
             )
             .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')

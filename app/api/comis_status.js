@@ -1,4 +1,5 @@
 const { dbPrefix } = require("../.env")
+const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'comis_status'
@@ -58,6 +59,12 @@ module.exports = app => {
                 break;
             case 'set':
                 setStatus(req, res)
+                break;
+            case 'gsr':
+                getStatusReleased(req, res)
+                break;
+            case 'ssc':
+                setStatusClosed(req, res)
                 break;
             case 'get':
                 getStatus(req, res)
@@ -188,6 +195,170 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         }
+    }
+
+    const setStatusClosed = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.comissoes >= 4), `${noAccessMsg} "Encerrar Liquidações de Comissão"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+        // Recupere a data de corte no banco de dados: SELECT parametro FROM `vivazul_bceaa5`.local_params WHERE grupo = 'comis_corte';
+        const dCorte = await app.db(`${dbPrefix}_${uParams.schema_name}.local_params`).select('parametro').where({ grupo: 'comis_corte' }).first()
+        const cutoffDay = dCorte.parametro || 17; // Dia de corte
+
+        // Determine a última data de corte pois será a data final da operação
+        const today = moment(req.body.dOper || moment()); // Obtém a data de hoje
+        let thisMonth = today.month(); // Mês atual
+        let thisYear = today.year(); // Ano atual
+
+        // Verifica se today é menor a dCorte e se for decrementa o mês
+        thisMonth++; // Incrementa o mês
+        if (today.date() >= cutoffDay) {
+            if (thisMonth < 1) {
+                thisMonth = 1; // Volta para janeiro se exceder dezembro
+                thisYear--; // Incrementa o ano
+            }
+        }
+
+        // Atualiza os valores de dataCorte e monthPicker
+        const startDate = moment(`${cutoffDay}/${thisMonth < 10 ? '0' : ''}${thisMonth}/${thisYear}`, 'DD/MM/YYYY').subtract(2, 'months');
+        const endDate = moment(startDate).add(1, 'months').subtract(1, 'days');
+
+        const released = await app.db({ cs1: `${dbPrefix}_${uParams.schema_name}.comis_status` })
+            .join(
+                app.db(`${dbPrefix}_${uParams.schema_name}.comis_status`)
+                    .select('id_comissoes')
+                    .max('created_at as max_created_at')
+                    .whereIn('status_comis', [STATUS_ABERTO, STATUS_LIQUIDADO, STATUS_ENCERRADO])
+                    .groupBy('id_comissoes')
+                    .as('cs2'),
+                function () {
+                    this.on('cs1.id_comissoes', '=', 'cs2.id_comissoes')
+                        .andOn('cs1.created_at', '=', 'cs2.max_created_at');
+                }
+            )
+            .andWhere('cs1.status_comis', STATUS_LIQUIDADO)
+            .andWhere('cs2.max_created_at', '<=', endDate.format('YYYY-MM-DD'))
+            .select(
+                'cs1.id_comissoes',
+                'cs2.max_created_at'
+            )
+            .orderBy('cs1.created_at', 'desc')
+            .orderBy('cs1.status_comis', 'desc')
+            .catch(error => {
+                return res.status(400).send({ msg: error })
+            });
+        // Para cada item de released, inserir um registro de status_comis = STATUS_ENCERRADO com a data de hoje e apenas ao final com sucesso enviar o resultado
+        for (let index = 0; index < released.length; index++) {
+            const element = released[index];
+
+            const body = {
+                id_comissoes: element.id_comissoes,
+                status_comis: STATUS_ENCERRADO,
+                created_at: new Date()
+            }
+            const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
+            body.evento = nextEventID.count + 1
+            app.db(tabelaDomain)
+                .insert(body)
+                .then(ret => {
+                    body.id = ret[0]
+                    // registrar o evento na tabela de eventos
+                    const { createEventIns } = app.api.sisEvents
+                    createEventIns({
+                        "notTo": ['created_at', 'evento'],
+                        "next": body,
+                        "request": req,
+                        "evento": {
+                            "evento": `Novo status: ${JSON.stringify(body)}`,
+                            "tabela_bd": tabela,
+                        }
+                    })
+                })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
+        }
+        return res.json({ startDate: startDate.format('YYYY-MM-DD'), endDate: endDate.format('YYYY-MM-DD'), quant: released.length, closed: released })
+    }
+
+    const getStatusReleased = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && (uParams.comissoes >= 4), `${noAccessMsg} "Encerrar Liquidações de Comissão"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+        // Recupere a data de corte no banco de dados: SELECT parametro FROM `vivazul_bceaa5`.local_params WHERE grupo = 'comis_corte';
+        const dCorte = await app.db(`${dbPrefix}_${uParams.schema_name}.local_params`).select('parametro').where({ grupo: 'comis_corte' }).first()
+        const cutoffDay = dCorte.parametro || 17; // Dia de corte
+
+        // Determine a última data de corte pois será a data final da operação
+        const today = moment(req.body.dOper || moment()); // Obtém a data de hoje
+        let thisMonth = today.month(); // Mês atual
+        let thisYear = today.year(); // Ano atual
+
+        // Verifica se today é menor a dCorte e se for decrementa o mês
+        thisMonth++; // Incrementa o mês
+        if (today.date() >= cutoffDay) {
+            if (thisMonth < 1) {
+                thisMonth = 1; // Volta para janeiro se exceder dezembro
+                thisYear--; // Incrementa o ano
+            }
+        }
+
+        // Atualiza os valores de dataCorte e monthPicker
+        const startDate = moment(`${cutoffDay}/${thisMonth < 10 ? '0' : ''}${thisMonth}/${thisYear}`, 'DD/MM/YYYY').subtract(2, 'months');
+        const endDate = moment(startDate).add(1, 'months').subtract(1, 'days');
+
+        app.db({ cs1: `${dbPrefix}_${uParams.schema_name}.comis_status` })
+            .join(
+                app.db(`${dbPrefix}_${uParams.schema_name}.comis_status`)
+                    .select('id_comissoes')
+                    .max('created_at as max_created_at')
+                    .whereIn('status_comis', [STATUS_ABERTO, STATUS_LIQUIDADO, STATUS_ENCERRADO])
+                    .groupBy('id_comissoes')
+                    .as('cs2'),
+                function () {
+                    this.on('cs1.id_comissoes', '=', 'cs2.id_comissoes')
+                        .andOn('cs1.created_at', '=', 'cs2.max_created_at');
+                }
+            )
+            // .join({ c: `${dbPrefix}_${uParams.schema_name}.comissoes` }, 'c.id', 'cs1.id_comissoes')
+            // .join({ p: `${dbPrefix}_${uParams.schema_name}.pipeline` }, 'p.id', 'c.id_pipeline')
+            // .join({ pp: `${dbPrefix}_${uParams.schema_name}.pipeline_params` }, 'pp.id', 'p.id_pipeline_params')
+            // .where('p.id', idPipeline)
+            .andWhere('cs1.status_comis', STATUS_LIQUIDADO)
+            // .andWhereBetween('cs2.max_created_at', [startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')])
+            .andWhere('cs2.max_created_at', '<=', endDate.format('YYYY-MM-DD'))
+            // .select(
+            //     // 'p.id as id_pipeline',
+            //     // 'pp.descricao',
+            //     // 'p.documento',
+            //     // 'cs1.id',
+            //     // 'cs1.status_comis',
+            //     'cs1.id_comissoes',
+            //     'cs2.max_created_at'
+            // )
+            // .orderBy('cs1.created_at', 'desc')
+            // .orderBy('cs1.status_comis', 'desc')
+            .count('cs1.id_comissoes as quant')
+            .then(results => {
+                return res.json({ endDate: endDate.format('YYYY-MM-DD'), quant: results[0].quant })
+            })
+            .catch(error => {
+                return res.status(400).send({ msg: error })
+            });
     }
 
     const getStatus = async (req, res) => {
