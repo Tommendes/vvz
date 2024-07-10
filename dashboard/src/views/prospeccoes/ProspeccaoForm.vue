@@ -252,7 +252,7 @@ const reload = () => {
 //  Parâmetros Agente
 const listAgentes = async () => {
     setTimeout(async () => {
-        const url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name`;
+        const url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&oper=4&vl=1&slct=id,name`;
         await axios.get(url).then((res) => {
             dropdownAgentes.value = [];
             res.data.data.map((item) => {

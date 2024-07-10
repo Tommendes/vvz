@@ -49,14 +49,14 @@ module.exports = app => {
         /**
          * Se o e-mail for informado vazio exclui do body
         */
-       if (!(!!body.email)) delete body.email
-       else body.email = body.email.trim().toLowerCase()
-       /**
-        * Se o e-mail for informado vazio exclui do body
-       */
+        if (!(!!body.email)) delete body.email
+        else body.email = body.email.trim().toLowerCase()
+        /**
+         * Se o e-mail for informado vazio exclui do body
+        */
         if (!(!!body.celular)) delete body.celular
         else body.telefone = body.telefone.replace(/([^\d])+/gim, "")
-        
+
         /**
          * Tenta localizar o usuário a partir do cpf informado
         */
@@ -724,7 +724,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
         }
-    }    
+    }
 
     function isValidPassword(params) {
         // Expressão regular atualizada para incluir apenas @, # e $
@@ -1033,6 +1033,7 @@ module.exports = app => {
 
         const fieldName = req.query.fld
         const value = req.query.vl
+        const oper = req.query.oper || undefined
         const select = req.query.slct
         const status = req.query.status || undefined
         const order = req.query.order || undefined
@@ -1046,8 +1047,17 @@ module.exports = app => {
             const selectArr = select.split(',').map(s => s.trim())
             ret.select(selectArr)
         }
-
-        ret.where(app.db.raw(`${fieldName} = '${value}'`))
+        let operComp = '='
+        switch (oper) {
+            case '1': operComp = '='; break;
+            case '2': operComp = '>'; break;
+            case '3': operComp = '<'; break;
+            case '4': operComp = '>='; break;
+            case '5': operComp = '<='; break;
+            case '6': operComp = '<>'; break;
+            default: operComp = '='; break;
+        }
+        ret.where(app.db.raw(`${fieldName} ${operComp} '${value}'`))
         if (status) ret.where({ status: status })
         else ret.whereIn('status', [STATUS_SUSPENDED, STATUS_ACTIVE])
 

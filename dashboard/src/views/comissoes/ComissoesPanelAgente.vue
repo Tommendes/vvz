@@ -1,29 +1,189 @@
 <script setup>
+import { ref, onMounted, watch } from 'vue';
+import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import ComissoesResume from './ComissoesResume.vue';
+import { formatCurrency } from '@/global';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { ref } from 'vue';
 import moment from 'moment';
-import { useConfirm } from 'primevue/useconfirm';
-const confirm = useConfirm();
+import { onBeforeMount } from 'vue';
 
+// Cookies de usuário
+import { userKey } from '@/global';
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
+
+const emit = defineEmits(['dataCorte']);
+const monthPicker = ref(moment().toDate());
 const dataCorte = ref({});
-const defineDataCorte = (value) => {
-    dataCorte.value = value.parametros;
+const loading = ref(true);
+const gridData = ref([]);
+const filters = ref({});
+const initFilters = () => {
+    filters.value = {
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        nome_comum: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+        ordem: { value: null, matchMode: FilterMatchMode.STARTS_WITH }
+    };
 };
 
-const printDiario = async (tpAgenteRep) => {
+const getLocalParams = async () => {
+    await axios.get(`${baseApiUrl}/local-params/f-a/gbf?fld=grupo&vl=comis_corte&slct=id,parametro,label`).then(async (res) => {
+        dataCorte.value = res.data.data[0];
+        await setMonthPeriod();
+    });
+};
+
+const loadData = async () => {
+    console.log(userData);
+    loading.value = true;
+    const dataInicio = (dataCorte.value.parametros && dataCorte.value.parametros.dataInicio) || '';
+    const dataFim = (dataCorte.value.parametros && dataCorte.value.parametros.dataFim) || '';
+    const url = `${baseApiUrl}/comissoes/f-a/gps?dataInicio=${dataInicio}&dataFim=${dataFim}`;
+    await axios.get(url).then((res) => {
+        gridData.value = res.data;
+        gridData.value.forEach((element) => {
+            switch (element.agente_representante) {
+                case 0:
+                    element.agente_representante = { label: 'Representaçoes', tipo: element.agente_representante };
+                    break;
+                case 1:
+                    element.agente_representante = { label: 'Representadas', tipo: element.agente_representante };
+                    break;
+                case 2:
+                    element.agente_representante = { label: 'Agentes', tipo: element.agente_representante };
+                    break;
+                case 3:
+                    element.agente_representante = { label: 'Terceiros', tipo: element.agente_representante };
+                    break;
+                default:
+                    element.agente_representante;
+                    break;
+            }
+        });
+        loading.value = false;
+    });
+};
+
+const setMonthPeriod = async () => {
+    const today = moment(); // Obtém a data de hoje
+    const cutoffDay = 17; // Dia de corte
+
+    let newMonth = today.month() + 1; // Mês atual + 1
+    let newYear = today.year(); // Ano atual
+
+    // Verifica se a data de hoje é maior ou igual ao dia de corte
+    if (today.date() >= cutoffDay) {
+        newMonth++; // Incrementa o mês
+        if (newMonth > 12) {
+            newMonth = 1; // Volta para janeiro se exceder dezembro
+            newYear++; // Incrementa o ano
+        }
+    }
+
+    // Atualiza os valores de dataCorte e monthPicker
+    const startDate = moment(`${cutoffDay}/${newMonth < 10 ? '0' : ''}${newMonth}/${newYear}`, 'DD/MM/YYYY').subtract(1, 'months');
+    const endDate = moment(startDate).add(1, 'months').subtract(1, 'days');
+
+    dataCorte.value.parametros = {
+        dataInicio: startDate.format('DD/MM/YYYY'),
+        dataFim: endDate.format('DD/MM/YYYY'),
+        ano: startDate.year(),
+        mes: endDate.month() + 1
+    };
+
+    // dataCorte.value.parametros = {
+    //     dataInicio: `${cutoffDay}/${newMonth < 10 ? '0' : ''}${newMonth}/${newYear}`,
+    //     dataFim: `${cutoffDay - 1}/${newMonth + 1 < 10 ? '0' : ''}${newMonth + 1}/${newYear}`,
+    //     ano: newYear,
+    //     mes: newMonth
+    // };
+
+    monthPicker.value = moment()
+        .set({ year: newYear, month: newMonth - 1, date: 1 })
+        .toDate();
+    emit('dataCorte', dataCorte.value);
+
+    // Executa a operação loadData()
+    await loadData();
+};
+
+// Função para ajustar dataCorte.value e monthPicker.value quando o usuário alterar monthPicker.value manualmente
+const adjustDates = async () => {
+    const chosenDate = moment(monthPicker.value); // Obtém a data escolhida pelo usuário
+    const cutoffDay = 17; // Dia de corte
+
+    let newMonth = chosenDate.month() + 1; // Mês selecionado + 1
+    let newYear = chosenDate.year(); // Ano selecionado
+
+    // Verifica se a data escolhida é maior ou igual ao dia de corte
+    if (chosenDate.date() >= cutoffDay) {
+        newMonth++; // Incrementa o mês
+        if (newMonth > 12) {
+            newMonth = 1; // Volta para janeiro se exceder dezembro
+            newYear++; // Incrementa o ano
+        }
+    }
+
+    // Atualiza os valores de dataCorte e monthPicker
+    const startDate = moment(`${cutoffDay}/${newMonth < 10 ? '0' : ''}${newMonth}/${newYear}`, 'DD/MM/YYYY').subtract(1, 'months');
+    const endDate = moment(startDate).add(1, 'months').subtract(1, 'days');
+
+    dataCorte.value.parametros = {
+        dataInicio: startDate.format('DD/MM/YYYY'),
+        dataFim: endDate.format('DD/MM/YYYY'),
+        ano: startDate.year(),
+        mes: endDate.month() + 1
+    };
+
+    monthPicker.value = chosenDate.toDate();
+    // Atualiza o valor de dataCorte no componente pai
+    emit('dataCorte', dataCorte.value);
+
+    // Executa a operação loadData()
+    await loadData();
+};
+const calculateCustomerTotal = (name) => {
+    let total = 0;
+
+    if (gridData.value) {
+        for (let customer of gridData.value) {
+            if (customer.agente_representante.label === name) {
+                total++;
+            }
+        }
+    }
+
+    return total;
+};
+const calculateCustomerTotalValue = (name) => {
+    let totalPendente = 0;
+    let totalLiquidado = 0;
+
+    if (gridData.value) {
+        for (let customer of gridData.value) {
+            if (customer.agente_representante.label === name) {
+                totalPendente += customer.total_pendente;
+                totalLiquidado += customer.total_liquidado;
+            }
+        }
+    }
+
+    return { totalPendente, totalLiquidado };
+};
+
+const printOnly = async (idAgente, tpAgenteRep) => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/diarioComissionado`;
     const bodyRequest = {
-        periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFim}`,
-        ano: dataCorte.value.ano,
-        mes: dataCorte.value.mes,
-        dataInicio: dataCorte.value.dataInicio,
-        dataFim: dataCorte.value.dataFim,
+        periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFim} e pendências até: ${dataCorte.value.parametros.dataFim}`,
+        ano: dataCorte.value.parametros.ano,
+        mes: dataCorte.value.parametros.mes,
+        dataInicio: dataCorte.value.parametros.dataInicio,
+        dataFim: dataCorte.value.parametros.dataFim,
         reportTitle: 'Diário Auxiliar de Comissionado',
         tpAgenteRep: tpAgenteRep,
+        idAgente: idAgente,
         exportType: 'pdf',
         encoding: 'base64' // <- Adicionar à requisição para obter a impressão com o método do frontend
     };
@@ -36,136 +196,108 @@ const printDiario = async (tpAgenteRep) => {
         })
         .catch((error) => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response && error.response.status == 401) router.push('/');
+if (error.response && error.response.status == 401) router.push('/');
         });
 };
-const printPosicaoMensal = async () => {
-    defaultSuccess('Por favor aguarde...');
-    let url = `${baseApiUrl}/printing/posicaoMensal`;
-    const bodyRequest = {
-        periodo: `Liquidações entre: ${dataCorte.value.dataInicio} e ${dataCorte.value.dataFim}`,
-        dataInicio: dataCorte.value.dataInicio,
-        dataFim: dataCorte.value.dataFim,
-        reportTitle: 'Posição Mensal de Comissionado',
-        exportType: 'pdf',
-        encoding: 'base64' // <- Adicionar à requisição para obter a impressão com o método do frontend
-    };
-    await axios
-        .post(url, bodyRequest)
-        .then((res) => {
-            const body = res.data;
-            let pdfWindow = window.open('');
-            pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
-        })
-        .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response && error.response.status == 401) router.push('/');
-        });
-};
-const confirmClose = ref(false);
-const confirmBody = ref({});
-const released = ref({
-    "endDate": "",
-    "quant": 0
-});
-const progressBar = ref(0);
-const bodyRelease = {
-    /*  
-       Se for passada a data então que esteja no formato YYYY-MM-DD. Se não for passada, será considerada a data de hoje.
-       Será executado o encerramento até o período anterior ao dOper. O período finaliza um dia antes de comis_corte em local_params.
-    */
-    // "dOper": "2024-06-05" 
-}
-const setStatusClosed = () => {
-    let url = `${baseApiUrl}/comis-status/f-a/ssc`;
-    axios.post(url, bodyRelease)
-    // A cada segundo, verificar a quantidade que ainda não foi fechada e calcular o percentual para a barra de progresso alterando assim o valor em progressBar.value
-    setInterval(() => {
-        let url = `${baseApiUrl}/comis-status/f-a/gsr`;
-        axios.post(url, bodyRelease)
-            .then((res) => {
-                const body = res.data;
-                const quantInicial = released.value.quant;
-                progressBar.value = Math.round(((quantInicial - body.quant) / quantInicial) * 100);
-                confirmBody.value = {
-                    header: 'Encerrar Liquidações',
-                    message1: `ENCERRAMENTO iniciado. Por favor aguarde`,
-                    message2: '<strong>Não feche esta aba e não atualize a página</strong>',
-                    message3: 'Esta mensagem se fechará automaticamente ao finalizar o processo.'
-                } 
-                if (body.quant == 0) {
-                    defaultSuccess('Liquidações encerradas com sucesso!');
-                    confirmClose.value = false;
-                    window.location.reload();
-                }
-            });
-    }, 1000);
 
-};
-const getStatusReleased = async () => {
-    let url = `${baseApiUrl}/comis-status/f-a/gsr`;
-    axios.post(url, bodyRelease)
-        .then((res) => {
-            const body = res.data;
-            released.value = body;
-            confirmClose.value = true;
-            confirmBody.value = {
-                header: 'Encerrar Liquidações',
-                message0: `Não há Liquidações para serem encerradas`,
-                message1: `Confirma o ENCERRAMENTO DEFINITIVO de ${body.quant} liquidações até a data de ${moment(body.endDate).format('DD/MM/YYYY')}?`,
-                message2: '<strong>Esta operação não poderá ser desfeita e as liquidações não poderão mais ser editadas</strong>',
-                accept: async () => setStatusClosed(),
-                reject: () => confirmClose.value = false
-            } 
-        })
-};
+onBeforeMount(() => {
+    initFilters();
+});
+
+onMounted(async () => {
+    setTimeout(async () => {
+        await getLocalParams();
+    }, Math.random() * 1000 + 250);
+});
 </script>
 
 <template>
-    <Dialog v-model:visible="confirmClose" modal :header="confirmBody.header" :style="{ width: '50rem' }">
-        <p v-if="!released.quant" class="font-semibold text-2xl text-center" v-html="confirmBody.message0"/>
-        <p v-if="released.quant" class="font-semibold text-2xl text-center" v-html="confirmBody.message1"/>
-        <p v-if="released.quant" class="font-semibold text-center" v-html="confirmBody.message2"/>
-        <p class="font-semibold text-center" v-if="confirmBody.message3" v-html="confirmBody.message3"/>
-        <div class="card" v-if="progressBar">
-            <ProgressBar :value="progressBar" />
-        </div>
-        <div v-if="!progressBar" class="flex align-items-center justify-content-center gap-2 mt-4">
-            <Button v-if="released.quant" label="Confirmar" @click="confirmBody.accept"></Button>
-            <Button :label="released.quant ? 'Ainda não' : 'Fechar'" outlined @click="confirmBody.reject"></Button>
-        </div>
-    </Dialog>
-    <div class="grid">
-        <div class="col-12">
-            <h3>Painel de Comissões</h3>
-            <div class="grid">
-                <div class="col-10">
-                    <ComissoesResume @dataCorte="defineDataCorte" id="divChart" />
+    <div class="card">        
+        <h3>Minhas Comissões</h3>
+        <DataTable
+            v-model:filters="filters"
+            :value="gridData"
+            dataKey="id"
+            filterDisplay="row"
+            :loading="loading"
+            :globalFilterFields="['ordem', 'nome_comum']"
+            rowGroupMode="subheader"
+            groupRowsBy="agente_representante.tipo"
+            rowGroupHeader:class="p-row-even bg-primary"
+            scrollable
+            scrollHeight="400px"
+            removableSort
+        >
+            <template #header>
+                <!-- <div class="flex align-content-center flex-wrap"> -->
+                <div class="flex justify-content-between">
+                    <div class="flex justify-content-start flex align-content-center flex-wrap">
+                        <div class="flex align-items-center justify-content-center" v-if="dataCorte.parametros">
+                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFim }}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-content-end">
+                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon iconDisplay="input" @update:modelValue="adjustDates" />
+                        <IconField iconPosition="left">
+                            <InputIcon>
+                                <i class="fa-solid fa-magnifying-glass" />
+                            </InputIcon>
+                            <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
+                        </IconField>
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined @click="initFilters()" />
+                    </div>
+                    <!-- </div> -->
                 </div>
-                <div class="col-2">
-                    <Fieldset :toggleable="true" class="mb-3">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-bolt mr-2"></span>
-                                <span class="font-bold text-lg">Ações</span>
-                            </div>
-                        </template>
-                        <Button label="Imprimir Diário - Representações" outlined severity="success" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printDiario(0)" />
-                        <Button label="Imprimir Diário - Representadas" outlined severity="warning" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printDiario(1)" />
-                        <Button label="Imprimir Diário - Agentes" outlined severity="Info" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printDiario(2)" />
-                        <Button label="Imprimir Diário - Terceiros" outlined severity="secondary" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printDiario(3)" />
-                        <Button label="Imprimir Posição Mensal" outlined severity="contrast" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printPosicaoMensal()" />
-                        <Button label="Encerrar Liquidações" outlined severity="danger" class="w-full m-2" type="button"
-                            icon="fa-regular fa-calendar-check" @click="getStatusReleased()" />
-                    </Fieldset>
+            </template>
+            <template #empty> Não há dados a apresentar. </template>
+            <template #loading>
+                <h3>Carregando dados. Por favor aguarde.</h3>
+            </template>
+            <Column field="agente_representante.tipo" header="Tipo" class="text-center"></Column>
+            <Column field="nome_comum" header="Nome">
+                <template #body="{ data }">
+                    {{ data.nome_comum }}
+                </template>
+            </Column>
+            <Column field="ordem" header="Nº Ordem" class="text-center">
+                <template #body="slotProps">
+                    {{ slotProps.data.ordem }}
+                </template>
+            </Column>
+            <Column field="total_pendente" header="Pendente" class="text-right">
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.data.total_pendente) }}
+                </template>
+            </Column>
+            <Column field="total_liquidado" header="Liquidado" class="text-right">
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.data.total_liquidado) }}
+                </template>
+            </Column>
+            <Column field="id" header="Ações" class="text-right">
+                <template #body="slotProps">
+                    <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'" rounded outlined aria-label="Bookmark" @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo)" />
+                </template>
+            </Column>
+            <template #groupheader="slotProps">
+                <div class="flex align-items-center gap-2 custom-groupheader">
+                    <span>{{ slotProps.data.agente_representante.label }}</span>
                 </div>
-            </div>
-        </div>
+            </template>
+            <template #groupfooter="slotProps">
+                <div class="flex justify-content-end font-bold w-full">
+                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{ calculateCustomerTotal(slotProps.data.agente_representante.label) }} {{ slotProps.data.agente_representante.label }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalPendente) }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado) }}</div>
+                </div>
+            </template>
+        </DataTable>
     </div>
-    <p>{{ dataCorte }}</p>
 </template>
+<style>
+.p-rowgroup-header {
+    background-color: var(--blue-300);
+    top: 57px;
+    color: rgb(0, 0, 0);
+}
+</style>

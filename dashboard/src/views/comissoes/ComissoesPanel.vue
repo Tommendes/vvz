@@ -1,7 +1,7 @@
 <script setup>
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import ComissoesResume from './ComissoesResume.vue';
+import ComissoesResume from './ComissoesResumeAgente.vue';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { ref } from 'vue';
 import moment from 'moment';

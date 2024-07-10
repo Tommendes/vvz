@@ -115,6 +115,17 @@ const dropdownStatus = ref([
     { value: STATUS_PASS_EXPIRED, label: 'Senha expirada' },
     { value: STATUS_DELETE, label: 'Excluído' }
 ]);
+
+const dropdownAgentesV = ref([{ value: '0', label: 'Não' }]);
+const getAgentesV = async () => {
+    const url = `${baseApiUrl}/comis-agentes/f-a/gag?agente_representante=2`;
+    await axios.get(url).then((res) => {
+        const body = res.data;
+        body.forEach(element => {
+            dropdownAgentesV.value.push({ value: element.id, label: `${element.nome || element.apelido}(${element.ordem})` });
+        });
+    });
+};
 const dropdownSN = ref([
     { value: '0', label: 'Não' },
     { value: '1', label: 'Sim' }
@@ -185,8 +196,9 @@ const reload = () => {
 };
 // Carregar dados do formulário
 onBeforeMount(() => {});
-onMounted(() => {
-    loadData();
+onMounted(async () => {
+    await getAgentesV();
+    await loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
         if (itemData.value.id) mode.value = 'view';
@@ -244,7 +256,7 @@ watchEffect(() => {});
                         <div v-else class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.email }}</p>
+                            <p v-else class="p-inputtext p-component p-filled p-variant-filled" style="line-height: inherit">{{ itemData.email }}</p>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="telefone">Telefone</label>
@@ -321,10 +333,10 @@ watchEffect(() => {});
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
-                            <div class="col-12 md:col-2">
+                            <div class="col-12 md:col-4">
                                 <label for="agente_v">Usuário vendedor</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownSN" placeholder="Selecione..." />
+                                <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownAgentesV" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="agente_arq">Usuário arquiteto</label>
@@ -341,11 +353,11 @@ watchEffect(() => {});
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.status" :options="dropdownStatus" placeholder="Selecione..." />
                             </div>
-                            <div class="col-12 md:col-2">
+                            <!-- <div class="col-12 md:col-2">
                                 <label for="schema_description">Domínio de dados do usuário</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.schema_description }}</p>
-                            </div>
+                            </div> -->
                         </div>
                         <!-- Botão trocar senha -->
                         <div v-if="itemData.id" id="divTS" class="col-12 md:col-2 m-0 font-normal">

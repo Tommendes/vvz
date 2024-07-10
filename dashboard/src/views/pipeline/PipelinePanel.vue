@@ -59,7 +59,7 @@ const listUnidadesDescricao = async () => {
 };
 // Listar unidades de negócio
 const listAgentesNegocio = async () => {
-    let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&vl=1&slct=id,name&order=name`;
+    let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&oper=4&vl=1&slct=id,name&order=name`;
     await axios.get(url).then((res) => {
         dropdownAgentes.value = [];
         res.data.data.map((item) => {

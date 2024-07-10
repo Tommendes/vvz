@@ -115,6 +115,7 @@ const saveData = async () => {
 };
 // Formatar tamanho do arquivo
 const formatSize = (bytes) => {
+    console.log(bytes);
     const k = 1024;
     const dm = 3;
     const sizes = primevue.config.locale.fileSizeTypes;

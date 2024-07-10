@@ -22,7 +22,7 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (bodyMultiplicate) isMatchOrError(uParams && (uParams.comissoes >= 2 || uParams.financeiro >= 2), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            if (bodyMultiplicate) isMatchOrError(uParams && (uParams.comissoes >= 2 || uParams.financeiro >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
             else if (body.id) isMatchOrError(uParams && (uParams.comissoes >= 3 || uParams.financeiro >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
             else isMatchOrError(uParams && uParams.comissoes >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {

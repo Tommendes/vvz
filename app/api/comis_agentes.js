@@ -245,22 +245,24 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
-        const agenteRepresentante = req.query.agente_representante || undefined
+        const agenteRepresentante = String(req.query.agente_representante) || undefined
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const ret = app.db({ tbl1: tabelaDomain }).select('tbl1.id', 'tbl2.cpf_cnpj', 'tbl2.nome', 'tbl1.apelido', 'tbl1.agente_representante', 'tbl1.ordem')
             .leftJoin({ tbl2: tabelaCadastrosDomain }, 'tbl1.id_cadastros', 'tbl2.id')
             .where({ 'tbl1.status': STATUS_ACTIVE })
-        // if (agenteRepresentante) ret.where({ 'tbl1.agente_representante': agenteRepresentante })
-        ret.orderBy(app.db.raw('COALESCE(tbl1.apelido,tbl2.nome)'))
+            .where(function () {
+                if (agenteRepresentante) this.where({ 'tbl1.agente_representante': agenteRepresentante })
+            })
+            .orderBy(app.db.raw('COALESCE(tbl1.apelido,tbl2.nome)'))
             .orderBy('ordem')
-        ret.then(body => {
-            return res.json(body)
-        }).catch(error => {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-            return res.status(500).send(error)
-        })
+            .then(body => {
+                return res.json(body)
+            }).catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                return res.status(500).send(error)
+            })
     }
 
     // Próximo número de ordem
@@ -272,7 +274,7 @@ module.exports = app => {
             const numerosExistentes = await app.db(tabelaDomain).select(app.db.raw('cast(ordem as unsigned)ordem')).groupBy('ordem').orderBy('ordem');
             let proximoNumero = 1;
             for (const numero of numerosExistentes) {
-                if (numero.ordem !== proximoNumero) return res.json({ ordem: proximoNumero.toString().padStart(3, '0')});
+                if (numero.ordem !== proximoNumero) return res.json({ ordem: proximoNumero.toString().padStart(3, '0') });
                 proximoNumero++;
             }
             return res.json(proximoNumero);

@@ -60,6 +60,7 @@ const setMenuByUser = async () => {
         const itemMenu = { label: 'Comissionamento', items: [] };
         if (itemUserData.value.comissoes >= 1) itemMenu.items.push({ label: 'Comissões', icon: 'fa-solid fa-dollar', to: `/${userData.schema_description}/comissoes` });
         if (itemUserData.value.comissoes >= 1) itemMenu.items.push({ label: 'Agentes', icon: 'fa-solid fa-users', to: `/${userData.schema_description}/comiss-agentes` });
+        if (itemUserData.value.agente_v >= 1) itemMenu.items.push({ label: 'Minhas Comissões', icon: 'fa-solid fa-hand-holding-dollar', to: `/${userData.schema_description}/comissoes-agente` });
         model.value.push(itemMenu);
     }
     if (itemUserData.value.gestor >= 1) {

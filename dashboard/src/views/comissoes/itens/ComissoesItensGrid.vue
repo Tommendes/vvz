@@ -47,7 +47,7 @@ const reload = async () => {
 const loadData = async () => {
     const url = `${urlBase.value}?id_pipeline=${props.itemDataRoot.id}`;
     setTimeout(async () => {
-        // gridData.value = [];
+        gridData.value = [];
         setTimeout(() => {}, 100);
         await axios
             .get(url)
@@ -89,9 +89,8 @@ const scheduleGroupSettlement = () => {
         group: 'comisGroupLiquidateConfirm',
         header: 'Programar liquidação dos pendentes',
         message: [
-            `Confirma a programação de liquidação deste${pendingCommissionsQuantity() > 1 ? 's' : ''} ${pendingCommissionsQuantity()} registros pendentes?`,
-            'Essa operação ainda poderá ser revertida enquanto não houver a liquidação total.',
-            'Informe abaixo a data prevista para liquidação.'
+            `Confirma a programação de liquidação deste${pendingCommissionsQuantity() > 1 ? 's ' + pendingCommissionsQuantity() : ''} registro${pendingCommissionsQuantity() > 1 ? 's' : ''} pendente${pendingCommissionsQuantity() > 1 ? 's' : ''}?`,
+            'Essa operação ainda poderá ser revertida enquanto não houver o encerramento.'
         ],
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
@@ -179,6 +178,7 @@ const liquidateGroup = async () => {
 // Função de emitir eventos
 const emit = defineEmits(['refreshPipeline']);
 const refreshPipeline = async () => {
+    await loadData();
     emit('refreshPipeline');
 };
 const getStatusField = (value, field = 'label') => {
@@ -186,10 +186,10 @@ const getStatusField = (value, field = 'label') => {
     return item ? item[field] : '';
 };
 const pendingCommissionsQuantity = () => {
-    return gridData.value.filter((item) => item.last_status_comiss < 30).length;
+    return gridData.value.filter((item) => item.last_status_comiss < 20).length;
 };
 const hasPendingCommissions = () => {
-    return gridData.value.some((item) => item.last_status_comiss < 30);
+    return gridData.value.some((item) => item.last_status_comiss < 20);
 };
 const infoDialogisVisible = ref(false);
 // Carrega as operações básicas do formulário
