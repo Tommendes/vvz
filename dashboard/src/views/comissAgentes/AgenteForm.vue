@@ -267,6 +267,7 @@ watch(selectedCadastro, (value) => {
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                             </div>
+                            <span v-if="!nomeCliente" class="text-xs" style="color: red">* utilize apenas se o agente já estiver registrado no cadastro do Vivazul</span>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="apelido">Nome curto</label>

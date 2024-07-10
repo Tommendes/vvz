@@ -334,7 +334,7 @@ watchEffect(() => {});
                                 <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-4">
-                                <label for="agente_v">Usuário vendedor</label>
+                                <label for="agente_v">Usuário vendedor (Agente de vendas)</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownAgentesV" placeholder="Selecione..." />
                             </div>
