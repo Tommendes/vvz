@@ -58,8 +58,8 @@ const setMenuByUser = async () => {
     if (itemUserData.value.financeiro >= 1 || itemUserData.value.comissoes >= 1) {
         // if (itemUserData.value.admin >= 2) {
         const itemMenu = { label: 'Comissionamento', items: [] };
-        if (itemUserData.value.comissoes >= 1) itemMenu.items.push({ label: 'Comissões', icon: 'fa-solid fa-dollar', to: `/${userData.schema_description}/comissoes` });
-        if (itemUserData.value.comissoes >= 1) itemMenu.items.push({ label: 'Agentes', icon: 'fa-solid fa-users', to: `/${userData.schema_description}/comiss-agentes` });
+        if ((itemUserData.value.comissoes >= 1 && itemUserData.value.agente_v == 0) || (itemUserData.value.agente_v >= 1 && itemUserData.value.gestor >= 1)) itemMenu.items.push({ label: 'Comissões', icon: 'fa-solid fa-dollar', to: `/${userData.schema_description}/comissoes` });
+        if ((itemUserData.value.comissoes >= 1 && itemUserData.value.agente_v == 0) || (itemUserData.value.agente_v >= 1 && itemUserData.value.gestor >= 1)) itemMenu.items.push({ label: 'Agentes', icon: 'fa-solid fa-users', to: `/${userData.schema_description}/comiss-agentes` });
         if (itemUserData.value.agente_v >= 1) itemMenu.items.push({ label: 'Minhas Comissões', icon: 'fa-solid fa-hand-holding-dollar', to: `/${userData.schema_description}/comissoes-agente` });
         model.value.push(itemMenu);
     }

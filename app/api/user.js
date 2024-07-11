@@ -253,7 +253,6 @@ module.exports = app => {
              * #3 - Se não tem perfil e não é localizado nos schemas dos clientes todos os dados tornam-se obrigatórios exceto o id
             */
             const bodyReturn = { isNewUser: true, msg: await showNewUserMessage() || "Não encontramos as informações que você forneceu. Por favor, complete os campos com os dados necessários para criar seu perfil de usuário" }
-            console.log(bodyReturn);
             return res.json(bodyReturn)
         }
     }

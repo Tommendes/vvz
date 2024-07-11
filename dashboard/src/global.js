@@ -95,10 +95,22 @@ export function validarDataPTBR(data) {
 
 export function formatCurrency(value, locale = { place: 'pt-BR', currency: 'BRL', styleReturn: 'currency' }) {
     value = value || 0;
-    // remova todos os caracteres não numéricos e converta para double
+    // Remova todos os caracteres não numéricos e converta para double
     if (typeof value === 'string') value = parseFloat(value.replace(/\D/g, '')) / 100;
-    // Mostrar opçõe style: 'currency', 'decimal', 'percent'
-    return value.toLocaleString(locale.place, { style: locale.styleReturn, currency: locale.currency });
+
+    // Opções de formatação
+    const options = {
+        style: locale.styleReturn,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    };
+
+    // Adicionar a moeda apenas se o estilo for 'currency'
+    if (locale.styleReturn === 'currency') {
+        options.currency = locale.currency;
+    }
+
+    return value.toLocaleString(locale.place, options);
 }
 
 // Verifique o horario e informe: Bom dia, boa tarde ou boa noite

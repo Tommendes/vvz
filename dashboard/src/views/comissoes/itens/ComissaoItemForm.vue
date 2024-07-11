@@ -25,6 +25,7 @@ const STATUS_ABERTO = 10;
 const STATUS_LIQUIDADO = 20;
 const STATUS_ENCERRADO = 30;
 const STATUS_FATURADO = 40;
+const STATUS_CONFIRMADO = 40;
 
 // Url base do form action
 const loading = ref(false);
@@ -408,6 +409,13 @@ const itemDataStatusPreload = ref([
         label: 'Faturamento informado',
         icon: 'fa-solid fa-cash-register',
         color: '#45590d'
+    },
+    {
+        status: STATUS_CONFIRMADO,
+        action: 'Confirmação',
+        label: 'Comissão confirmada',
+        icon: 'fa-solid fa-double-check',
+        color: '#0c203d'
     }
 ]);
 // Listar status do registro

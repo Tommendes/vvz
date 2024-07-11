@@ -11,6 +11,7 @@ module.exports = app => {
     const STATUS_LIQUIDADO = 20
     const STATUS_ENCERRADO = 30
     const STATUS_FATURADO = 40
+    const STATUS_CONFIRMADO = 50
 
     const get = async (req, res) => {
         let user = req.user
@@ -126,16 +127,17 @@ module.exports = app => {
 
     const setStatus = async (req, res) => {
         let user = req.user
+        const body = { ...req.body }
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const agenteV = uParams.agente_v
+        delete body.agente_v
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.financeiro >= 3 || uParams.comissoes >= 3), `${noAccessMsg} "Alteração de status de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.financeiro >= 3 || uParams.comissoes >= 3 || (agenteV == uParams.agente_v)), `${noAccessMsg} "Alteração de status de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
-        const body = { ...req.body }
 
         try {
             existsOrError(body.id_comissoes, 'Comissão não informada')
@@ -397,6 +399,7 @@ module.exports = app => {
         STATUS_ABERTO,
         STATUS_LIQUIDADO,
         STATUS_ENCERRADO,
-        STATUS_FATURADO
+        STATUS_FATURADO,
+        STATUS_CONFIRMADO
     }
 }

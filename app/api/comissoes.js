@@ -2,12 +2,13 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const { STATUS_ABERTO, STATUS_LIQUIDADO, STATUS_ENCERRADO, STATUS_FATURADO } = require('./comis_status.js')(app)
+    const { STATUS_ABERTO, STATUS_LIQUIDADO, STATUS_ENCERRADO, STATUS_FATURADO, STATUS_CONFIRMADO } = require('./comis_status.js')(app)
     // const { STATUS_COMISSIONADO } = require('./pipeline_status.js')(app)
     const tabela = 'comissoes'
     const tabelaStatusComiss = 'comis_status'
     const tabelaStatusPipeline = 'pipeline_status'
     const tabelaAlias = 'Comissão'
+    const tabelaAliasPl = 'Comissões de Pipeline'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
     const { ceilTwoDecimals, formatCurrency } = app.api.facilities
@@ -486,15 +487,16 @@ module.exports = app => {
         let data = { ...req.body }
         const dataInicio = req.query.dataInicio || undefined
         const dataFim = req.query.dataFim || moment().format('DD/MM/YYYY')
-        // return res.status(201)
+        const agId = req.query.agId || undefined
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.comissoes >= 1), `${noAccessMsg} "Consultas a ${tabelaAlias}"`)
+            if (agId && isNaN(agId)) throw 'Agente inválido'
+            if (!agId && uParams.agente_v) throw `${noAccessMsg} "Consultas a ${tabelaAliasPl}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        const agId = req.query.agId || undefined
         const agGroup = req.query.agGroup || undefined
         try {
             if (agGroup && [0, 1, 2, 3].indexOf(agGroup) == -1) throw 'Grupo de agentes inválido'
@@ -506,8 +508,15 @@ module.exports = app => {
         const tabelaComissaoAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        const tabelaPipelineAgentesDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
+        const tabelaClienteDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         let filterDatas = `1=1`
-        if (dataInicio && dataFim) filterDatas = `DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
+        let filterDatasConfirm = `1=1`
+        if (dataInicio && dataFim) {
+            filterDatas = `DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
+            filterDatasConfirm = `DATE(confirm_date) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
+        }
         let query = app.db({ cms: tabelaDomain })
             .select('ag.id', 'ag.agente_representante',
                 app.db.raw('COALESCE(CONCAT(ca.nome, " ", ca.cpf_cnpj), ag.apelido) as nome_comum'),
@@ -520,6 +529,9 @@ module.exports = app => {
                 ),
                 app.db.raw(
                     `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY created_at DESC LIMIT 1) as created_at`
+                ),
+                app.db.raw(
+                    `@confirm_date := (SELECT confirm_date FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY confirm_date DESC LIMIT 1) as confirm_date`
                 )
             )
             .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
@@ -529,44 +541,54 @@ module.exports = app => {
             .orderBy('ag.ordem')
             .orderBy('status_comiss', 'desc')
             .orderBy('nome_comum')
-            .having(app.db.raw(`(status_comiss = ${STATUS_ABERTO} AND  DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas})`))
+            .having(app.db.raw(`(status_comiss = ${STATUS_ABERTO} AND  DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas}) OR (status_comiss = ${STATUS_CONFIRMADO} AND ${filterDatasConfirm})`))
 
-        if (agId) query.where('ag.id', agId)
+        if (agId) query
+            .join({ p: tabelaPipelineAgentesDomain }, 'p.id', 'cms.id_pipeline')
+            .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
+            .join({ cl: tabelaClienteDomain }, 'cl.id', 'p.id_cadastros')
+            .select('cms.id', 'cl.nome as cliente', 'cl.cpf_cnpj', 'pp.descricao as unidade', 'p.documento as documento', 'cms.valor_base', 'cms.percentual', 'cms.valor', 'cms.parcela')
+            .where('ag.id', agId)
+
         if (agGroup) query.where('ag.agente_representante', agGroup)
 
-        query.then((rows) => {
-            // Percora o array rows e me retorne um novo array agrupando os registros pelo valor em id e status_comiss e somando o valor_base e também o valor de acordo com o status_comiss
-            // Depois, ordene por agente_representante e ordem
-            let data = []
-            rows.forEach(element => {
-                const index = data.findIndex(item => item.id === element.id)
-                if (index === -1) {
-                    data.push({
-                        id: element.id,
-                        agente_representante: element.agente_representante,
-                        nome_comum: element.nome_comum,
-                        ordem: element.ordem,
-                        valor_base: element.valor_base,
-                        total_liquidado: element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
-                        total_pendente: element.status_comiss === STATUS_ABERTO ? element.valor : 0,
-                        dsr: element.dsr,
-                        status_comiss: element.status_comiss,
-                        quant: 1
-                    })
-                } else {
-                    // Ao somar os valores, arredonde para 2 casas decimais
-                    data[index].valor_base += element.valor_base
-                    data[index].total_liquidado += element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
-                        data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0,
-                        data[index].quant++
-                }
-            });
-            return res.json(data)
-        })
-            .catch((error) => {
-                app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
+        // Caso não seja um agente específico, agrupe por agente_representante
+        if (agId)
+            query.then((rows) => res.json(rows))
+        else
+            query.then((rows) => {
+                // Percora o array rows e me retorne um novo array agrupando os registros pelo valor em id e status_comiss e somando o valor_base e também o valor de acordo com o status_comiss
+                // Depois, ordene por agente_representante e ordem
+                let data = []
+                rows.forEach(element => {
+                    const index = data.findIndex(item => item.id === element.id)
+                    if (index === -1) {
+                        data.push({
+                            id: element.id,
+                            agente_representante: element.agente_representante,
+                            nome_comum: element.nome_comum,
+                            ordem: element.ordem,
+                            valor_base: element.valor_base,
+                            total_liquidado: element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
+                            total_pendente: element.status_comiss === STATUS_ABERTO ? element.valor : 0,
+                            dsr: element.dsr,
+                            status_comiss: element.status_comiss,
+                            quant: 1
+                        })
+                    } else {
+                        // Ao somar os valores, arredonde para 2 casas decimais
+                        data[index].valor_base += element.valor_base
+                        data[index].total_liquidado += element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
+                            data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0,
+                            data[index].quant++
+                    }
+                });
+                return res.json(data)
             })
+                .catch((error) => {
+                    app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
 
     }
 

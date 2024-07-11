@@ -5,6 +5,8 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { formatCurrency } from '@/global';
 import { defaultSuccess, defaultWarn } from '@/toast';
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
 import moment from 'moment';
 import { onBeforeMount } from 'vue';
 
@@ -13,6 +15,13 @@ import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
 
+// Andamento do registro        
+const STATUS_ABERTO = 10
+const STATUS_LIQUIDADO = 20
+const STATUS_ENCERRADO = 30
+const STATUS_CONFIRMADO = 50
+
+const itemData = ref({});
 const emit = defineEmits(['dataCorte']);
 const monthPicker = ref(moment().toDate());
 const dataCorte = ref({});
@@ -22,8 +31,10 @@ const filters = ref({});
 const initFilters = () => {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        nome_comum: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-        ordem: { value: null, matchMode: FilterMatchMode.STARTS_WITH }
+        unidade: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+        documento: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+        cliente: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+        cpf_cnpj: { value: null, matchMode: FilterMatchMode.STARTS_WITH }
     };
 };
 
@@ -35,33 +46,34 @@ const getLocalParams = async () => {
 };
 
 const loadData = async () => {
-    console.log(userData);
     loading.value = true;
     const dataInicio = (dataCorte.value.parametros && dataCorte.value.parametros.dataInicio) || '';
     const dataFim = (dataCorte.value.parametros && dataCorte.value.parametros.dataFim) || '';
-    const url = `${baseApiUrl}/comissoes/f-a/gps?dataInicio=${dataInicio}&dataFim=${dataFim}`;
+    const url = `${baseApiUrl}/comissoes/f-a/gps?agId=${userData.agente_v}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
     await axios.get(url).then((res) => {
         gridData.value = res.data;
-        gridData.value.forEach((element) => {
-            switch (element.agente_representante) {
-                case 0:
-                    element.agente_representante = { label: 'Representaçoes', tipo: element.agente_representante };
-                    break;
-                case 1:
-                    element.agente_representante = { label: 'Representadas', tipo: element.agente_representante };
-                    break;
-                case 2:
-                    element.agente_representante = { label: 'Agentes', tipo: element.agente_representante };
-                    break;
-                case 3:
-                    element.agente_representante = { label: 'Terceiros', tipo: element.agente_representante };
-                    break;
-                default:
-                    element.agente_representante;
-                    break;
-            }
-        });
+        setAdjustGridData();
         loading.value = false;
+    });
+};
+
+const setAdjustGridData = () => {
+    gridData.value.forEach((element) => {
+        switch (element.status_comiss) {
+            case STATUS_ABERTO:
+                element.status_comiss = { label: 'Pendentes', tipo: element.status_comiss };
+                break;
+            case STATUS_LIQUIDADO:
+            case STATUS_ENCERRADO:
+                element.status_comiss = { label: 'Liquidadas', tipo: element.status_comiss };
+                break;
+            case STATUS_CONFIRMADO:
+                element.status_comiss = { label: 'Confirmadas', tipo: element.status_comiss };
+                break;
+            default:
+                element.status_comiss;
+                break;
+        }
     });
 };
 
@@ -91,13 +103,6 @@ const setMonthPeriod = async () => {
         ano: startDate.year(),
         mes: endDate.month() + 1
     };
-
-    // dataCorte.value.parametros = {
-    //     dataInicio: `${cutoffDay}/${newMonth < 10 ? '0' : ''}${newMonth}/${newYear}`,
-    //     dataFim: `${cutoffDay - 1}/${newMonth + 1 < 10 ? '0' : ''}${newMonth + 1}/${newYear}`,
-    //     ano: newYear,
-    //     mes: newMonth
-    // };
 
     monthPicker.value = moment()
         .set({ year: newYear, month: newMonth - 1, date: 1 })
@@ -143,12 +148,13 @@ const adjustDates = async () => {
     // Executa a operação loadData()
     await loadData();
 };
+
 const calculateCustomerTotal = (name) => {
     let total = 0;
 
     if (gridData.value) {
         for (let customer of gridData.value) {
-            if (customer.agente_representante.label === name) {
+            if (customer.status_comiss.label === name) {
                 total++;
             }
         }
@@ -157,48 +163,65 @@ const calculateCustomerTotal = (name) => {
     return total;
 };
 const calculateCustomerTotalValue = (name) => {
-    let totalPendente = 0;
-    let totalLiquidado = 0;
+    let total = 0;
 
     if (gridData.value) {
         for (let customer of gridData.value) {
-            if (customer.agente_representante.label === name) {
-                totalPendente += customer.total_pendente;
-                totalLiquidado += customer.total_liquidado;
+            if (customer.status_comiss.label === name) {
+                total += customer.valor;
             }
         }
     }
 
-    return { totalPendente, totalLiquidado };
+    return { total };
 };
 
-const printOnly = async (idAgente, tpAgenteRep) => {
-    defaultSuccess('Por favor aguarde...');
-    let url = `${baseApiUrl}/printing/diarioComissionado`;
-    const bodyRequest = {
-        periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFim} e pendências até: ${dataCorte.value.parametros.dataFim}`,
-        ano: dataCorte.value.parametros.ano,
-        mes: dataCorte.value.parametros.mes,
-        dataInicio: dataCorte.value.parametros.dataInicio,
-        dataFim: dataCorte.value.parametros.dataFim,
-        reportTitle: 'Diário Auxiliar de Comissionado',
-        tpAgenteRep: tpAgenteRep,
-        idAgente: idAgente,
-        exportType: 'pdf',
-        encoding: 'base64' // <- Adicionar à requisição para obter a impressão com o método do frontend
+const setStatusConfirm = (item) => {
+    itemData.value = item;
+    const bodyStatus = {
+        id_comissoes: itemData.value.id,
+        status_comis: STATUS_CONFIRMADO,
+        agente_v: userData.agente_v,
+        confirm_date: itemData.value.created_at
     };
-    await axios
-        .post(url, bodyRequest)
-        .then((res) => {
-            const body = res.data;
-            let pdfWindow = window.open('');
-            pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
-        })
-        .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+    setTimeout(() => {
+
+        confirm.require({
+            group: `comisStatusConfirm-${itemData.value.id}`,
+            header: 'Confirmar COMISSÃO',
+            message: 'Confirma os dados deste registro de sua comissão?',
+            message2: '<strong>Esta operação não poderá ser desfeita, vale como <em>de acordo</em> e está protegida por sua senha pessoal</strong>',
+            message3: 'A soma das comissões confirmadas será enviada para pagamento dentro do exercício de sua liquidação. Confirma?',
+            icon: 'fa-solid fa-question fa-beat',
+            acceptIcon: 'fa-solid fa-check',
+            rejectIcon: 'fa-solid fa-xmark',
+            acceptClass: 'p-button-danger',
+            accept: async () => {
+                await axios.post(`${baseApiUrl}/comis-status/f-a/set`, bodyStatus).then(async () => {
+                    item.status_comiss.tipo = STATUS_CONFIRMADO;
+                    item.status_comiss.label = 'Confirmadas';
+                    defaultSuccess('Comissão confirmada com sucesso!');
+                    setAdjustGridData();
+
+                    // Executa a operação loadData()
+                    // await loadData();
+                });
+            },
+            reject: () => {
+                return false;
+            }
         });
+    }, 250);
 };
+
+const expandedRowGroups = ref();
+const onRowGroupExpand = (event) => {
+    defaultSuccess('Row Group Expanded: ' + 'Value: ' + event.data)
+};
+const onRowGroupCollapse = (event) => {
+    defaultSuccess('Row Group Collapsed: ' + 'Value: ' + event.data)
+};
+
 
 onBeforeMount(() => {
     initFilters();
@@ -212,83 +235,113 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="card">        
+    <ConfirmDialog :group="`comisStatusConfirm-${itemData.id}`">
+        <template #container="{ message, acceptCallback, rejectCallback }">
+            <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
+                <div
+                    class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                    <i class="fa-solid fa-question text-5xl"></i>
+                </div>
+                <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
+                <p class="mb-0" v-html="message.message" />
+                <p class="mb-0" v-html="message.message2" />
+                <p class="mb-0" v-html="message.message3" />
+                <div class="flex align-items-center gap-2 mt-4">
+                    <Button label="Confirmar" @click="acceptCallback"></Button>
+                    <Button label="Ainda não" outlined @click="rejectCallback"></Button>
+                </div>
+            </div>
+        </template>
+    </ConfirmDialog>
+    <div class="card">
         <h3>Minhas Comissões</h3>
-        <DataTable
-            v-model:filters="filters"
-            :value="gridData"
-            dataKey="id"
-            filterDisplay="row"
-            :loading="loading"
-            :globalFilterFields="['ordem', 'nome_comum']"
-            rowGroupMode="subheader"
-            groupRowsBy="agente_representante.tipo"
-            rowGroupHeader:class="p-row-even bg-primary"
-            scrollable
-            scrollHeight="400px"
-            removableSort
-        >
+        <DataTable v-model:filters="filters" v-model:expandedRowGroups="expandedRowGroups" :value="gridData" dataKey="id" filterDisplay="row" :loading="loading"
+            :globalFilterFields="['unidade', 'documento', 'cliente', 'cpf_cnpj']" expandableRowGroups @rowgroup-expand="onRowGroupExpand" @rowgroup-collapse="onRowGroupCollapse"
+            rowGroupMode="subheader" groupRowsBy="status_comiss.tipo" rowGroupHeader:class="p-row-even bg-primary"
+            scrollable scrollHeight="450px" removableSort>
             <template #header>
-                <!-- <div class="flex align-content-center flex-wrap"> -->
                 <div class="flex justify-content-between">
                     <div class="flex justify-content-start flex align-content-center flex-wrap">
                         <div class="flex align-items-center justify-content-center" v-if="dataCorte.parametros">
-                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFim }}</p>
+                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }}
+                                e {{ dataCorte.parametros.dataFim }}</p>
                         </div>
                     </div>
                     <div class="flex justify-content-end">
-                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon iconDisplay="input" @update:modelValue="adjustDates" />
+                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon
+                            iconDisplay="input" @update:modelValue="adjustDates" />
                         <IconField iconPosition="left">
                             <InputIcon>
                                 <i class="fa-solid fa-magnifying-glass" />
                             </InputIcon>
                             <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                         </IconField>
-                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined @click="initFilters()" />
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined
+                            @click="initFilters()" />
                     </div>
-                    <!-- </div> -->
                 </div>
             </template>
             <template #empty> Não há dados a apresentar. </template>
             <template #loading>
                 <h3>Carregando dados. Por favor aguarde.</h3>
             </template>
-            <Column field="agente_representante.tipo" header="Tipo" class="text-center"></Column>
-            <Column field="nome_comum" header="Nome">
+            <template #groupheader="slotProps">
+                <span class="vertical-align-middle ml-2 font-bold line-height-3">{{ slotProps.data.status_comiss.label }}</span>
+            </template>
+            <Column field="status_comiss.tipo" header="Tipo" class="text-center"></Column>
+            <Column field="unidade" header="Documento">
                 <template #body="{ data }">
-                    {{ data.nome_comum }}
+                    {{ `${data.unidade.replace("_", " ")} ${data.documento}` }}
                 </template>
             </Column>
-            <Column field="ordem" header="Nº Ordem" class="text-center">
-                <template #body="slotProps">
-                    {{ slotProps.data.ordem }}
+            <Column field="parcela" header="Parcela">
+                <template #body="{ data }">
+                    {{ `${data.parcela}` }}
                 </template>
             </Column>
-            <Column field="total_pendente" header="Pendente" class="text-right">
+            <Column field="cliente" header="Cliente" class="text-left">
                 <template #body="slotProps">
-                    {{ formatCurrency(slotProps.data.total_pendente) }}
+                    {{ `${slotProps.data.cliente} ${slotProps.data.cpf_cnpj}` }}
                 </template>
             </Column>
-            <Column field="total_liquidado" header="Liquidado" class="text-right">
+            <Column field="valor_base" header="Valor Base" class="text-right">
                 <template #body="slotProps">
-                    {{ formatCurrency(slotProps.data.total_liquidado) }}
+                    {{ formatCurrency(slotProps.data.valor_base) }}
+                </template>
+            </Column>
+            <Column field="percentual" header="Percentual" class="text-right">
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.data.percentual / 100, { place: 'pt-BR', styleReturn: 'percent' }) }}
+                </template>
+            </Column>
+            <Column field="valor" header="Comissão" class="text-right">
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.data.valor) }}
                 </template>
             </Column>
             <Column field="id" header="Ações" class="text-right">
                 <template #body="slotProps">
-                    <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'" rounded outlined aria-label="Bookmark" @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo)" />
+                    <Button v-if="slotProps.data.status_comiss.tipo == STATUS_LIQUIDADO" icon="fa-solid fa-check-double"
+                        severity="info" v-tooltip:top="'Clique para confirmar estes dados'" rounded outlined
+                        aria-label="Bookmark" @click="setStatusConfirm(slotProps.data)" />
+                    <Button v-else-if="slotProps.data.status_comiss.tipo == STATUS_CONFIRMADO"
+                        icon="fa-solid fa-check-double" severity="warning"
+                        v-tooltip:top="'Comissão já encaminhada para pagamento'" rounded outlined
+                        aria-label="Bookmark" />
                 </template>
             </Column>
-            <template #groupheader="slotProps">
+            <!-- <template #groupheader="slotProps">
                 <div class="flex align-items-center gap-2 custom-groupheader">
-                    <span>{{ slotProps.data.agente_representante.label }}</span>
+                    <span>{{ slotProps.data.status_comiss.label }}</span>
                 </div>
-            </template>
+            </template> -->
             <template #groupfooter="slotProps">
                 <div class="flex justify-content-end font-bold w-full">
-                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{ calculateCustomerTotal(slotProps.data.agente_representante.label) }} {{ slotProps.data.agente_representante.label }}</div>
-                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalPendente) }}</div>
-                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado) }}</div>
+                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{
+                        calculateCustomerTotal(slotProps.data.status_comiss.label) }} {{
+                            slotProps.data.status_comiss.label }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
+                        formatCurrency(calculateCustomerTotalValue(slotProps.data.status_comiss.label).total) }}</div>
                 </div>
             </template>
         </DataTable>
