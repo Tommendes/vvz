@@ -245,7 +245,8 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
         }
 
-        const agenteRepresentante = String(req.query.agente_representante) || undefined
+        let agenteRepresentante = undefined
+        if (req.query.agente_representante) agenteRepresentante = String(req.query.agente_representante)
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
