@@ -492,7 +492,7 @@ module.exports = app => {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.comissoes >= 1), `${noAccessMsg} "Consultas a ${tabelaAlias}"`)
             if (agId && isNaN(agId)) throw 'Agente inválido'
-            if (!agId && uParams.agente_v) throw `${noAccessMsg} "Consultas a ${tabelaAliasPl}"`
+            if (!agId && uParams.agente_v && !uParams.gestor) throw `${noAccessMsg} "Consultas a ${tabelaAliasPl}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
