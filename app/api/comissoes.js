@@ -569,7 +569,7 @@ module.exports = app => {
                             nome_comum: element.nome_comum,
                             ordem: element.ordem,
                             valor_base: element.valor_base,
-                            total_liquidado: element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
+                            total_liquidado: [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) ? element.valor : 0,
                             total_pendente: element.status_comiss === STATUS_ABERTO ? element.valor : 0,
                             dsr: element.dsr,
                             status_comiss: element.status_comiss,
@@ -578,7 +578,7 @@ module.exports = app => {
                     } else {
                         // Ao somar os valores, arredonde para 2 casas decimais
                         data[index].valor_base += element.valor_base
-                        data[index].total_liquidado += element.status_comiss === STATUS_LIQUIDADO ? element.valor : 0,
+                        data[index].total_liquidado += [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) ? element.valor : 0,
                             data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0,
                             data[index].quant++
                     }
