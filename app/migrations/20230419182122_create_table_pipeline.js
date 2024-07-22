@@ -23,8 +23,7 @@ exports.up = function(knex, Promise) {
         table.decimal('perc_represent',10,2).defaultTo(0).comment('Percentual de comissão da representação')
         table.decimal('valor_agente',10,2).defaultTo(0).comment('Valor base de comissionamento dos agentes')
         table.foreign('id_pipeline_params').references('id').inTable('pipeline_params').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
-       
+        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')       
     })
 };
 
