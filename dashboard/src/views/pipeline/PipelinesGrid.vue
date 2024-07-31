@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
@@ -17,7 +17,6 @@ const updateScreenWidth = () => {
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
-import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
@@ -61,16 +60,18 @@ const optionParams = async (query) => {
     return await axios.get(url);
 };
 // Obter Agentes de negócio
-const getAgentes = async () => {
-    const url = `${baseApiUrl}/users/f-a/gag`;
-    await axios.get(url).then((res) => {
-        res.data.map((item) => {
-            dropdownAgentes.value.push({
-                value: item.name,
-                label: item.name
+const getAgentes = () => {
+    setTimeout(() => {
+        const url = `${baseApiUrl}/users/f-a/gag`;
+        axios.get(url).then((res) => {
+            res.data.map((item) => {
+                dropdownAgentes.value.push({
+                    value: item.name,
+                    label: item.name
+                });
             });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 // Carregar opções do formulário de pesquisa
 const loadOptions = () => {
@@ -79,37 +80,41 @@ const loadOptions = () => {
 };
 const filtrarUnidades = () => {
     // Unidades de negócio
-    optionParams({
-        func: 'gun',
-        tipoDoc: tipoDoc.value,
-        unidade: unidade.value
-    }).then((res) => {
-        dropdownUnidades.value = [];
-        res.data.data.map((item) => {
-            dropdownUnidades.value.push({
-                value: item.descricao,
-                label: item.descricao
+    setTimeout(() => {
+        optionParams({
+            func: 'gun',
+            tipoDoc: tipoDoc.value,
+            unidade: unidade.value
+        }).then((res) => {
+            dropdownUnidades.value = [];
+            res.data.data.map((item) => {
+                dropdownUnidades.value.push({
+                    value: item.descricao,
+                    label: item.descricao
+                });
             });
         });
-    });
+    }, Math.random() * 1000 + 250);
     filtrarUnidadesDescricao();
 };
 const filtrarUnidadesDescricao = () => {
     // Unidades de negócio por tipo
-    optionParams({
-        func: 'ubt',
-        tipoDoc: tipoDoc.value,
-        unidade: unidade.value
-    }).then((res) => {
-        dropdownUnidadesFilter.value = [];
-        res.data.data.map((item) => {
-            const label = item.descricao.toString().replaceAll(/_/g, ' ');
-            dropdownUnidadesFilter.value.push({
-                value: item.descricao,
-                label: label
+    setTimeout(() => {
+        optionParams({
+            func: 'ubt',
+            tipoDoc: tipoDoc.value,
+            unidade: unidade.value
+        }).then((res) => {
+            dropdownUnidadesFilter.value = [];
+            res.data.data.map((item) => {
+                const label = item.descricao.toString().replaceAll(/_/g, ' ');
+                dropdownUnidadesFilter.value.push({
+                    value: item.descricao,
+                    label: label
+                });
             });
         });
-    });
+    }, Math.random() * 1000 + 250);
 };
 
 // Itens do grid
@@ -156,7 +161,7 @@ const filters = ref({});
 const lazyParams = ref({});
 const urlFilters = ref('');
 // Limpa os filtros do grid
-const clearFilter = () => {
+const clearFilter = async () => {
     loading.value = true;
     rowsPerPage.value = 10;
     tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = agenteNegocio.value = statusNegocio.value = null;
@@ -168,7 +173,7 @@ const clearFilter = () => {
         sortOrder: null,
         filters: filters.value
     };
-    loadLazyData();
+    await loadLazyData();
     // router.push({ path: `/${uProf.value.schema_description}/pipeline` });
 };
 const reload = () => {
@@ -186,7 +191,7 @@ const scrollToTop = () => {
 const loadLazyData = async () => {
     loading.value = true;
     const url = `${urlBase.value}${urlFilters.value}`;
-    axios
+    await axios
         .get(url)
         .then((axiosRes) => {
             gridData.value = axiosRes.data.data;
@@ -233,20 +238,20 @@ const loadLazyData = async () => {
         });
 };
 // Carrega os dados do grid
-const onPage = (event) => {
+const onPage = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await loadLazyData();
 };
 // Ordena os dados do grid
-const onSort = (event) => {
+const onSort = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await loadLazyData();
 };
 // Filtra os dados do grid
-const onFilter = () => {
+const onFilter = async () => {
     lazyParams.value.filters = filters.value;
     mountUrlFilters();
-    loadLazyData();
+    await loadLazyData();
 };
 // Armazena o modo de operação do grid
 const mode = ref('grid');
@@ -354,13 +359,13 @@ const goField = (data) => {
 watchEffect(() => {
     mountUrlFilters();
 });
-onBeforeMount(async () => {
+onBeforeMount(() => {
     // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente e a descrição pois ficará muito largo
     if (props.idCadastro) listaNomes.value = listaNomes.value.filter((item) => !['descricao', 'nome'].includes(item.field));
     // Inicializa os filtros do grid
     initFilters();
     loadOptions();
-    await getAgentes();
+    getAgentes();
     // remover último item se user não for admin
     if (uProf.value.admin < 2) rowsPerPageOptions.value.pop();
 });
@@ -457,16 +462,16 @@ const customFilterOptions = ref({ filterclear: false });
                             <div class="col-6 md:col-3">
                                 <Dropdown placeholder="Todos...?" :showClear="!!tipoDoc" class="flex-none flex"
                                     id="doc_venda" optionLabel="label" optionValue="value" v-model="tipoDoc"
-                                    :options="dropdownTiposDoc" @change="
-                                        loadLazyData();
+                                    :options="dropdownTiposDoc" @change="mountUrlFilters();
+                                    loadLazyData();
                                     filtrarUnidades();
                                     " />
                             </div>
                             <div class="col-6 md:col-3">
                                 <Dropdown filter placeholder="Filtrar por Representada..." :showClear="!!unidade"
                                     class="flex-none flex" id="unidades" optionLabel="label" optionValue="value"
-                                    v-model="unidade" :options="dropdownUnidades" @change="
-                                        loadLazyData();
+                                    v-model="unidade" :options="dropdownUnidades" @change="mountUrlFilters();
+                                    loadLazyData();
                                     filtrarUnidadesDescricao();
                                     " />
                             </div>
@@ -474,7 +479,7 @@ const customFilterOptions = ref({ filterclear: false });
                                 <Dropdown filter placeholder="Filtrar por Tipo..." :showClear="!!unidadeNegocio"
                                     class="flex-grow-1 flex" id="unidade_tipos" optionLabel="label" optionValue="value"
                                     v-model="unidadeNegocio" :options="dropdownUnidadesFilter"
-                                    @change="loadLazyData()" />
+                                    @change="mountUrlFilters(); loadLazyData()" />
                             </div>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
