@@ -7,25 +7,21 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const router = useRouter();
-
 const store = useUserStore();
-
+const json = localStorage.getItem(userKey);
+const userData = JSON.parse(json);
 const isTokenValid = ref(false);
 const validateToken = async () => {
-    const json = localStorage.getItem(userKey);
-    const userData = JSON.parse(json);
     const jsonGLK = localStorage.getItem(glKey);
     const geoLocationData = JSON.parse(jsonGLK);
 
-    await store.validateToken(userData, geoLocationData);    
+    await store.validateToken(userData, geoLocationData);
     isTokenValid.value = store.isTokenValid;
     if (!isTokenValid.value) router.push('/');
     if (isTokenValid.value && !(geoLocationData && geoLocationData.geolocation)) open();
 };
 
 const getIp = async () => {
-    const json = localStorage.getItem(userKey);
-    const userData = JSON.parse(json);
     if (userData) {
         const userIp = await axios.get(`${baseApiAuthUrl}/getIp`);
         userData.ip = userIp.data;

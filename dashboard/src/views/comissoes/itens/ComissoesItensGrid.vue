@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import ComissaoItemForm from './ComissaoItemForm.vue';
@@ -13,10 +13,14 @@ const itemDataGroup = ref({});
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 const mode = ref('grid');
 
-// Cookies de usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { guide } from '@/guides/comissoesGrid.js';
 
@@ -48,7 +52,7 @@ const loadData = async () => {
     const url = `${urlBase.value}?id_pipeline=${props.itemDataRoot.id}`;
     setTimeout(async () => {
         gridData.value = [];
-        setTimeout(() => {}, 100);
+        setTimeout(() => { }, 100);
         await axios
             .get(url)
             .then((axiosRes) => {
@@ -60,7 +64,7 @@ const loadData = async () => {
             })
             .catch((error) => {
                 defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+                if (error.response && error.response.status == 401) router.push('/');
             });
     }, Math.random() * 1000 + 250);
     cancelNewItem();
@@ -193,49 +197,40 @@ const hasPendingCommissions = () => {
 };
 const infoDialogisVisible = ref(false);
 // Carrega as operações básicas do formulário
-onBeforeMount(async () => {
-    setTimeout(async () => {
-        await loadData();
-        await listAgentesComissionamento();
-    }, Math.random() * 1000 + 250);
+onMounted(async () => {
+    await loadData();
+    await listAgentesComissionamento();
 });
 </script>
 
 <template>
-    <Dialog
-        id="InfoDialog"
-        v-model:visible="infoDialogisVisible"
-        modal
-        :pt="{
-            root: 'border-none',
-            mask: {
-                style: 'backdrop-filter: blur(5px)'
-            }
-        }"
-    >
+    <Dialog id="InfoDialog" v-model:visible="infoDialogisVisible" modal :pt="{
+        root: 'border-none',
+        mask: {
+            style: 'backdrop-filter: blur(5px)'
+        }
+    }">
         <template #container="{ closeCallback }">
-            <div class="flex flex-column px-5 py-5 gap-4" style="border-radius: 12px; background-image: radial-gradient(circle at left top, var(--blue-400), var(--blue-700), var(--blue-400)); color: #fff">
+            <div class="flex flex-column px-5 py-5 gap-4"
+                style="border-radius: 12px; background-image: radial-gradient(circle at left top, var(--blue-400), var(--blue-700), var(--blue-400)); color: #fff">
                 <div class="block mx-auto text-8xl">
                     <i class="fa-solid fa-circle-info fa-fade"></i>
                 </div>
                 <div class="block mx-auto text-2xl">
-                    <p class="mb-3 text-center text-white">Ainda resta informar a data de liquidação de um ou mais registros</p>
+                    <p class="mb-3 text-center text-white">Ainda resta informar a data de liquidação de um ou mais
+                        registros</p>
                     <p class="mb-3 text-center text-white">Favor informar primeiro</p>
-                    <p class="mb-3 text-center text-white">Se desejar, pode programar em grupo com o botão abaixo<br />e depois executar a liquidação total novamente</p>
+                    <p class="mb-3 text-center text-white">Se desejar, pode programar em grupo com o botão abaixo<br />e
+                        depois executar a liquidação total novamente</p>
                 </div>
 
                 <div class="flex justify-content-center align-items-center gap-3">
-                    <Button label="Ok" @click="closeCallback" text class="w-10rem p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10"></Button>
-                    <Button
-                        type="button"
-                        icon="fa-solid fa-file-invoice-dollar fa-fade"
-                        label="Liquidar todos"
-                        v-on:click="closeCallback"
-                        @click="scheduleGroupSettlement()"
-                        text
+                    <Button label="Ok" @click="closeCallback" text
+                        class="w-10rem p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10"></Button>
+                    <Button type="button" icon="fa-solid fa-file-invoice-dollar fa-fade" label="Liquidar todos"
+                        v-on:click="closeCallback" @click="scheduleGroupSettlement()" text
                         v-tooltip.top="'Clique para liquidar todas as comissões pendentes'"
-                        class="p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10"
-                    />
+                        class="p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10" />
                 </div>
             </div>
         </template>
@@ -243,7 +238,8 @@ onBeforeMount(async () => {
     <ConfirmDialog group="comisGroupLiquidateConfirm">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
-                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                <div
+                    class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
                     <i class="fa-solid fa-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
@@ -256,17 +252,12 @@ onBeforeMount(async () => {
         </template>
     </ConfirmDialog>
     <div class="flex justify-content-end gap-3 mb-5">
-        <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" :disabled="!(userData.comissoes >= 2)" outlined @click="newItem()" v-tooltip.top="'Clique para registrar uma nova comissão'" />
-        <Button
-            v-if="gridData && gridData.length > 0"
-            type="button"
-            icon="fa-solid fa-file-invoice-dollar"
-            label="Liquidar todos"
-            :outlined="hasPendingCommissions()"
-            :disabled="!hasPendingCommissions()"
+        <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" :disabled="!(uProf.comissoes >= 2)" outlined
+            @click="newItem()" v-tooltip.top="'Clique para registrar uma nova comissão'" />
+        <Button v-if="gridData && gridData.length > 0" type="button" icon="fa-solid fa-file-invoice-dollar"
+            label="Liquidar todos" :outlined="hasPendingCommissions()" :disabled="!hasPendingCommissions()"
             @click="scheduleGroupSettlement()"
-            v-tooltip.top="'Clique para liberar o pagamento de todas as comissões pendentes'"
-        />
+            v-tooltip.top="'Clique para liberar o pagamento de todas as comissões pendentes'" />
         <!-- <Button
             v-if="gridData && gridData.length > 0"
             type="button"
@@ -278,9 +269,11 @@ onBeforeMount(async () => {
             v-tooltip.top="'Clique para liquidar todas as comissões pendentes'"
         /> -->
     </div>
-    <ComissaoItemForm v-if="mode == 'newItem'" @cancel="cancelNewItem()" @newItem="reload()" @refreshPipeline="refreshPipeline()" :itemDataRoot="itemData" />
+    <ComissaoItemForm v-if="mode == 'newItem'" @cancel="cancelNewItem()" @newItem="reload()"
+        @refreshPipeline="refreshPipeline()" :itemDataRoot="itemData" />
     <div v-if="gridData && gridData.length > 0">
-        <ComissaoItemForm v-for="item in gridData" :key="item.id" :itemDataRoot="item" @cancel="reload()" @refreshPipeline="refreshPipeline()" />
+        <ComissaoItemForm v-for="item in gridData" :key="item.id" :itemDataRoot="item" @cancel="reload()"
+            @refreshPipeline="refreshPipeline()" />
     </div>
     <div class="col-12">
         <Fieldset class="bg-green-200" toggleable :collapsed="true">
@@ -294,7 +287,7 @@ onBeforeMount(async () => {
                 <span v-html="guide" />
             </p>
         </Fieldset>
-        <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="true" v-if="userData.admin >= 2">
+        <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="true" v-if="uProf.admin >= 2">
             <template #legend>
                 <div class="flex align-items-center text-primary">
                     <span class="fa-solid fa-circle-info mr-2"></span>

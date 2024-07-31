@@ -1,6 +1,6 @@
 <script setup>
 import moment from 'moment';
-import { onBeforeMount, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { formatCurrency } from '@/global';
 import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
@@ -9,6 +9,7 @@ import html2canvas from 'html2canvas';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {

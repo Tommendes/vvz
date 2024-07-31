@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -8,12 +8,14 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
-import { onBeforeMount } from 'vue';
 
-// Cookies de usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 // Andamento do registro        
 const STATUS_ABERTO = 10
@@ -49,7 +51,7 @@ const loadData = async () => {
     loading.value = true;
     const dataInicio = (dataCorte.value.parametros && dataCorte.value.parametros.dataInicio) || '';
     const dataFim = (dataCorte.value.parametros && dataCorte.value.parametros.dataFim) || '';
-    const url = `${baseApiUrl}/comissoes/f-a/gps?agId=${userData.agente_v}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
+    const url = `${baseApiUrl}/comissoes/f-a/gps?agId=${uProf.value.agente_v}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
     await axios.get(url).then((res) => {
         gridData.value = res.data;
         setAdjustGridData();
@@ -181,7 +183,7 @@ const setStatusConfirm = (item) => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,
         status_comis: STATUS_CONFIRMADO,
-        agente_v: userData.agente_v,
+        agente_v: uProf.value.agente_v,
         confirm_date: itemData.value.created_at
     };
     setTimeout(() => {

@@ -8,9 +8,15 @@ import ComissoesItensGrid from '../comissoes/itens/ComissoesItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { useRouter } from 'vue-router';
 const router = useRouter();
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -24,7 +30,7 @@ const comissoesItensGrid = ref();
 const pipelineForm = ref();
 
 // Itens do breadcrumb
-const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }]);
+const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/pipeline` }]);
 const itemDataParam = ref({});
 // Itens do dropdown de Unidades de Negócio do grid
 const dropdownUnidades = ref([]);
@@ -50,7 +56,7 @@ const listUnidadesDescricao = async () => {
     await axios.get(url).then((res) => {
         dropdownUnidades.value = [];
         res.data.data.map((item) => {
-            const label = item.descricao.toString().replaceAll(/_/g, ' ') + (userData.admin >= 1 ? ` (${item.id})` : '');
+            const label = item.descricao.toString().replaceAll(/_/g, ' ') + (uProf.value.admin >= 1 ? ` (${item.id})` : '');
             const itemList = { value: item.id, label: label };
             if (item.id == itemData.value.id_pipeline_params) unidadeLabel.value = label;
             dropdownUnidades.value.push(itemList);
@@ -70,30 +76,28 @@ const listAgentesNegocio = async () => {
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    setTimeout(async () => {
-        const id = route.params.id;
-        const url = `${urlBase.value}/${id}`;
-        await axios
-            .get(url)
-            .then(async (res) => {
-                const body = res.data;
-                body.id = String(body.id);
+    const id = route.params.id;
+    const url = `${urlBase.value}/${id}`;
+    await axios
+        .get(url)
+        .then(async (res) => {
+            const body = res.data;
+            body.id = String(body.id);
 
-                itemData.value = body;
-                // Retorna os parâmetros do registro
-                await getPipelineParam();
-                // Unidades de negócio
-                await listUnidadesDescricao();
-                // Eventos do registro
-                breadItems.value = [{ label: 'Todo o Pipeline', to: `/${userData.schema_description}/pipeline` }];
-                if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (userData.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
-                if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemData.value.id_cadastros}` });
-            })
-            .catch((error) => {
-                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                if (error.response && error.response.status == 401) router.push('/');
-            });
-    }, Math.random() * 1000 + 250);
+            itemData.value = body;
+            // Retorna os parâmetros do registro
+            await getPipelineParam();
+            // Unidades de negócio
+            await listUnidadesDescricao();
+            // Eventos do registro
+            breadItems.value = [{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/pipeline` }];
+            if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (uProf.value.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
+            if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_cadastros}` });
+        })
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
+        });
     loading.value = false;
 };
 const refreshPipeline = async () => {
@@ -102,14 +106,12 @@ const refreshPipeline = async () => {
 
 // Carregar dados do formulário
 onMounted(async () => {
-    setTimeout(async () => {
-        // Carrega os dados do formulário
-        await loadData();
-        // Carrega as unidades de negócio
-        await listUnidadesDescricao();
-        // Carrega os agentes de negócio
-        await listAgentesNegocio();
-    }, Math.random() * 1000 + 250);
+    // Carrega os dados do formulário
+    await loadData();
+    // Carrega as unidades de negócio
+    await listUnidadesDescricao();
+    // Carrega os agentes de negócio
+    await listAgentesNegocio();
 });
 </script>
 
@@ -119,7 +121,8 @@ onMounted(async () => {
         <div class="col-12">
             <div class="card">
                 <PipelineForm ref="pipelineForm" />
-                <div v-if="itemData.id && itemDataParam.doc_venda >= 2 && (userData.comissoes >= 1 || userData.financeiro >= 3)">
+                <div
+                    v-if="itemData.id && itemDataParam.doc_venda >= 2 && (uProf.comissoes >= 1 || uProf.financeiro >= 3)">
                     <div class="p-fluid grid">
                         <div class="col-12" style="text-align: center">
                             <div class="flex align-items-end flex-wrap card-container purple-container">
@@ -130,7 +133,11 @@ onMounted(async () => {
                             </div>
                         </div>
                     </div>
-                    <ComissoesItensGrid v-if="route.name == 'pipeline-one'" ref="comissoesItensGrid" :itemDataRoot="itemData" @refreshPipeline="refreshPipeline()" />
+                    <ComissoesItensGrid v-if="route.name == 'pipeline-one'" ref="comissoesItensGrid"
+                        :itemDataRoot="itemData" @refreshPipeline="refreshPipeline()" />
+                </div>
+                <div v-if="uProf.admin >= 2">
+                    <p>route.name {{ route.name }}</p>
                 </div>
             </div>
         </div>

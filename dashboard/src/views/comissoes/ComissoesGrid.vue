@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
@@ -18,10 +18,14 @@ const updateScreenWidth = () => {
     screenWidth.value = window.innerWidth;
 };
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
@@ -136,7 +140,7 @@ const clearFilter = () => {
         filters: filters.value
     };
     loadLazyData();
-    // router.push({ path: `/${userData.schema_description}/pipeline` });
+    // router.push({ path: `/${uProf.value.schema_description}/pipeline` });
 };
 const reload = () => {
     router.replace({ query: {} });
@@ -145,34 +149,32 @@ const reload = () => {
 // Carrega os dados do grid
 const loadLazyData = () => {
     loading.value = true;
-    setTimeout(() => {
-        const url = `${urlBase.value}${urlFilters.value}`;
-        axios
-            .get(url)
-            .then(async (axiosRes) => {
-                gridData.value = axiosRes.data.data;
-                totalRecords.value = axiosRes.data.totalRecords;
-                sumRecords.value = axiosRes.data.sumRecords;
-                gridData.value.forEach((element) => {
-                    gridDataRaw.value.push({ ...element });
-                    // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
-                    const documento = element.documento;
-                    if (element.documento) element.documento = `${element.unidade.replaceAll('_', ' ')} ${documento}`;
-                    element.agente_representante = element.agente_representante == '1' ? 'Sim' : 'Não';
-                    // alterar o valor de element.last_status_comiss de acordo com o dropdownStatus
-                    dropdownStatus.value.forEach((item) => {
-                        if (item.value == element.last_status_comiss) element.last_status_comiss = item.label;
-                    });
-                    if (element.agente) element.agente = element.agente.trim();
-                    else element.agente = '';
+    const url = `${urlBase.value}${urlFilters.value}`;
+    axios
+        .get(url)
+        .then(async (axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            totalRecords.value = axiosRes.data.totalRecords;
+            sumRecords.value = axiosRes.data.sumRecords;
+            gridData.value.forEach((element) => {
+                gridDataRaw.value.push({ ...element });
+                // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
+                const documento = element.documento;
+                if (element.documento) element.documento = `${element.unidade.replaceAll('_', ' ')} ${documento}`;
+                element.agente_representante = element.agente_representante == '1' ? 'Sim' : 'Não';
+                // alterar o valor de element.last_status_comiss de acordo com o dropdownStatus
+                dropdownStatus.value.forEach((item) => {
+                    if (item.value == element.last_status_comiss) element.last_status_comiss = item.label;
                 });
-                loading.value = false;
-            })
-            .catch((error) => {
-                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                if (error.response && error.response.status == 401) router.push('/');
+                if (element.agente) element.agente = element.agente.trim();
+                else element.agente = '';
             });
-    }, Math.random() * 1000 + 250);
+            loading.value = false;
+        })
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
+        });
 };
 // Carrega os dados do grid
 const onPage = (event) => {
@@ -290,7 +292,7 @@ const getSeverity = (field, type = 'date') => {
     return 'danger';
 };
 const goField = (data) => {
-    window.open(`#/${userData.schema_description}/pipeline/${data.id_pipeline}?resource=comiss`, '_blank');
+    window.open(`#/${uProf.value.schema_description}/pipeline/${data.id_pipeline}?resource=comiss`, '_blank');
 };
 // Carrega os dados do filtro do grid
 watchEffect(() => {
@@ -384,7 +386,7 @@ const showMessage = (body) => {
             if (options.data.label == messagesButtoms.value[0].label) {
                 /* empty */
             } else if (options.data.label == messagesButtoms.value[1].label) {
-                router.push({ path: `/${userData.schema_description}/pipeline`, query: { tpd: '2' } });
+                router.push({ path: `/${uProf.value.schema_description}/pipeline`, query: { tpd: '2' } });
             }
         }
     });
@@ -407,7 +409,7 @@ const newCommissioning = () => {
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb :items="[{ label: 'Todo o Comissionamento', to: `/${userData.schema_description}/pipeline` }]" />
+            <Breadcrumb :items="[{ label: 'Todo o Comissionamento', to: `/${uProf.schema_description}/pipeline` }]" />
         </div>
         <!-- <div class="col-12">
             <ComissaoForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
@@ -415,54 +417,36 @@ const newCommissioning = () => {
 
         <div class="col-12">
             <div class="card">
-                <DataTable
-                    ref="dt"
-                    :value="gridData"
-                    lazy
-                    paginator
-                    :rows="rowsPerPage"
-                    dataKey="id"
-                    :rowHover="true"
-                    v-model:filters="filters"
-                    filterDisplay="row"
-                    :loading="loading"
-                    :filters="filters"
-                    responsiveLayout="scroll"
-                    :totalRecords="totalRecords"
-                    :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
-                    @page="onPage($event)"
-                    @sort="onSort($event)"
+                <DataTable ref="dt" :value="gridData" lazy paginator :rows="rowsPerPage" dataKey="id" :rowHover="true"
+                    v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
+                    responsiveLayout="scroll" :totalRecords="totalRecords"
+                    :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]" @page="onPage($event)" @sort="onSort($event)"
                     @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
-                    scrollable
-                    :filter-options="customFilterOptions"
-                >
+                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
+                    :filter-options="customFilterOptions">
                     <template #header>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
-                            <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
+                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify"
+                                :key="qualify" :value="qualify.label"> </Tag>
+                            <Tag class="tagRes"
+                                :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
+                            </Tag>
                         </div>
                         <div class="grid">
                             <div class="col-12 md:col-3">
-                                <Dropdown
-                                    filter
-                                    placeholder="Filtrar por Representada..."
-                                    :showClear="!!unidade"
-                                    class="flex-none flex"
-                                    id="unidades"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    v-model="unidade"
-                                    :options="dropdownUnidades"
-                                    @change="loadLazyData()"
-                                />
+                                <Dropdown filter placeholder="Filtrar por Representada..." :showClear="!!unidade"
+                                    class="flex-none flex" id="unidades" optionLabel="label" optionValue="value"
+                                    v-model="unidade" :options="dropdownUnidades" @change="loadLazyData()" />
                             </div>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" @click="exportXls()" />
-                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined @click="reload()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Comissionamento" outlined @click="newCommissioning()" />
+                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"
+                                @click="exportXls()" />
+                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
+                                @click="reload()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Comissionamento" outlined
+                                @click="newCommissioning()" />
                         </div>
                     </template>
                     <template #empty>
@@ -472,35 +456,45 @@ const newCommissioning = () => {
                         <h2>Carregando dados. Por favor aguarde...</h2>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">
-                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
+                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem"
+                            sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]" :severity="getSeverity(data[nome.field], nome.type)" />
-                                <span
-                                    v-else-if="data[nome.field]"
-                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"
-                                ></span>
+                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"
+                                    :severity="getSeverity(data[nome.field], nome.type)" />
+                                <span v-else-if="data[nome.field]"
+                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                                 <span v-else v-html="''"></span>
                             </template>
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" showClear placeholder="Pesquise..." />
+                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value"
+                                    v-model="filterModel.value" :options="nome.list" @change="filterCallback()"
+                                    showClear placeholder="Pesquise..." />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @update:modelValue="filterCallback()" />
+                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
+                                    showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
+                                    @update:modelValue="filterCallback()" />
                             </template>
                             <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                                    class="p-column-filter" placeholder="Pesquise..." />
                             </template>
                             <template #filterclear="{ filterCallback }">
-                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()" class="p-button-secondary"></Button>
+                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()"
+                                    class="p-button-secondary"></Button>
                             </template>
                             <template #filterapply="{ filterCallback }">
-                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()" class="p-button-success"></Button>
+                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()"
+                                    class="p-button-success"></Button>
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+                    <Column headerStyle="width: 5rem; text-align: center"
+                        bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
+                                @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                         </template>
                     </Column>
                 </DataTable>

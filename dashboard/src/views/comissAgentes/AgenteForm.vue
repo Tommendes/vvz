@@ -23,10 +23,13 @@ const router = useRouter();
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 // Campos de formulário
 const itemData = ref({});
@@ -46,32 +49,30 @@ const props = defineProps(['itemDataRoot']);
 const loadData = async () => {
     loading.value = true;
     if (route.params.id || (props.itemDataRoot && props.itemDataRoot.id)) {
-        setTimeout(async () => {
-            const id = route.params.id || props.itemDataRoot.id;
-            const url = `${urlBase.value}/${id}`;
+        const id = route.params.id || props.itemDataRoot.id;
+        const url = `${urlBase.value}/${id}`;
 
-            await axios
-                .get(url)
-                .then(async (res) => {
-                    const body = res.data;
-                    if (body && body.id) {
-                        body.id = String(body.id);
-                        itemData.value = body;
-                        itemData.value.agente_representante = String(itemData.value.agente_representante);
-                        itemData.value.dsr = body.dsr ? 1 : 0;
-                        itemData.value.ordem = body.ordem.padStart(3, '0').toString();
-                        await getNomeCliente();
-                        loading.value = false;
-                    } else {
-                        defaultWarn('Registro não localizado');
-                        router.push({ path: `/${userData.schema_description}/comiss-agentes` });
-                    }
-                })
-                .catch((error) => {
-                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                    if (error.response && error.response.status == 401) router.push('/');
-                });
-        }, Math.random() * 1000 + 250);
+        await axios
+            .get(url)
+            .then(async (res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    itemData.value = body;
+                    itemData.value.agente_representante = String(itemData.value.agente_representante);
+                    itemData.value.dsr = body.dsr ? 1 : 0;
+                    itemData.value.ordem = body.ordem.padStart(3, '0').toString();
+                    await getNomeCliente();
+                    loading.value = false;
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${uProf.value.schema_description}/comiss-agentes` });
+                }
+            })
+            .catch((error) => {
+                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                if (error.response && error.response.status == 401) router.push('/');
+            });
     } else {
         mode.value = 'new';
         await getNextOrdem();
@@ -128,7 +129,7 @@ const deleteItem = () => {
                 .then(() => {
                     defaultSuccess('Registro excluído com sucesso');
                     emit('changed');
-                    router.push({ path: `/${userData.schema_description}/comiss-agentes` });
+                    router.push({ path: `/${uProf.schema_description}/comiss-agentes` });
                 })
                 .catch((error) => {
                     defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
@@ -262,51 +263,67 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-7">
                             <label for="id_cadastros">Registro no cadastro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro"
+                                optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros"
+                                forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
+                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"
+                                    :disabled="mode == 'view'" />
                             </div>
-                            <span v-if="!nomeCliente" class="text-xs" style="color: red">* utilize apenas se o agente já estiver registrado no cadastro do Vivazul</span>
+                            <span v-if="!nomeCliente" class="text-xs" style="color: red">* utilize apenas se o agente já
+                                estiver registrado no cadastro do Vivazul</span>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="apelido">Nome curto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="apelido" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.apelido" id="apelido" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="ordem">Ordem<small id="text-error" class="p-error"> *</small></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="ordem" type="text" v-maska data-maska="###" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.ordem" id="ordem" type="text" v-maska data-maska="###" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="agente_representante">Tipo<small id="text-error" class="p-error"> *</small></label>
+                            <label for="agente_representante">Tipo<small id="text-error" class="p-error">
+                                    *</small></label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_representante" :options="dropdownTiposAR" placeholder="Selecione..." />
+                            <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label"
+                                optionValue="value" v-model="itemData.agente_representante" :options="dropdownTiposAR"
+                                placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="dsr">Destacar o "Descanso semanal remunerado" (DSR)<small id="text-error" class="p-error"> *</small></label>
+                            <label for="dsr">Destacar o "Descanso semanal remunerado" (DSR)<small id="text-error"
+                                    class="p-error"> *</small></label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="dsr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.dsr" :options="dropdownSN" placeholder="Selecione..." />
+                            <Dropdown v-else id="dsr" :disabled="mode == 'view'" optionLabel="label" optionValue="value"
+                                v-model="itemData.dsr" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <div class="col-12">
                             <label for="observacao">Observações</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacoes" id="observacao" type="text" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.observacoes" id="observacao" type="text" />
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode == 'view'" label="Excluir" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
-                        <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar"
+                            icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
+                            severity="success" text raised />
+                        <Button type="button" v-if="mode == 'view'" label="Excluir" icon="fa-solid fa-trash"
+                            severity="danger" text raised @click="deleteItem" />
+                        <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised
+                            @click="reload" />
                     </div>
                 </div>
             </div>
         </form>
-        <div class="col-12" v-if="userData.admin >= 2">
+        <div class="col-12" v-if="uProf.admin >= 2">
             <div class="card bg-green-200 mt-3">
                 <p>Mode: {{ mode }}</p>
                 <p>itemData: {{ itemData }}</p>

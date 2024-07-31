@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref, watchEffect } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -8,9 +8,15 @@ const confirm = useConfirm();
 import moment from 'moment';
 import { useRoute } from 'vue-router';
 const route = useRoute();
-import { userKey, formatCurrency } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -25,7 +31,7 @@ const STATUS_ABERTO = 10;
 const STATUS_LIQUIDADO = 20;
 const STATUS_ENCERRADO = 30;
 const STATUS_FATURADO = 40;
-const STATUS_CONFIRMADO = 40;
+const STATUS_CONFIRMADO = 50;
 
 // Url base do form action
 const loading = ref(false);
@@ -67,16 +73,14 @@ const loadData = async () => {
     if (id) {
         mode.value = 'view';
         const url = `${urlBase.value}/${id}`;
-        setTimeout(async () => {
-            await axios.get(url).then(async (axiosRes) => {
-                itemData.value = axiosRes.data;
-                itemDataUnmuted.value = { ...axiosRes.data };
-            });
-            // Lista o andamento do registro
-            await listStatusRegistro();
-            // Eventos do registro
-            await getEventos();
-        }, Math.random * 1000 + 250);
+        await axios.get(url).then(async (axiosRes) => {
+            itemData.value = axiosRes.data;
+            itemDataUnmuted.value = { ...axiosRes.data };
+        });
+        // Lista o andamento do registro
+        await listStatusRegistro();
+        // Eventos do registro
+        await getEventos();
     } else itemData.value.id_pipeline = route.params.id;
     loading.value = false;
 };
@@ -94,16 +98,16 @@ const getEventos = async () => {
                     else if (element.classevento.toLowerCase() == 'update')
                         element.evento =
                             `Edição do registro` +
-                            (userData.gestor >= 1
-                                ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            (uProf.value.gestor >= 1
+                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
                                 : '');
                     else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
                     else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
                     else if (element.classevento.toLowerCase() == 'commissioning')
                         element.evento =
                             `Lançamento de comissão` +
-                            (userData.comissoes >= 1
-                                ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            (uProf.value.comissoes >= 1
+                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
                                 : '');
                     element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
                 });
@@ -153,7 +157,7 @@ const saveData = async () => {
         })
         .catch((error) => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+            if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // Exclui o registro
@@ -176,7 +180,7 @@ const deleteItem = () => {
                 })
                 .catch((error) => {
                     defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+                    if (error.response && error.response.status == 401) router.push('/');
                 });
         },
         reject: () => {
@@ -420,44 +424,40 @@ const itemDataStatusPreload = ref([
 ]);
 // Listar status do registro
 const listStatusRegistro = async () => {
-    setTimeout(async () => {
-        const url = `${baseApiUrl}/comis-status/${props.itemDataRoot.id || itemData.value.id}`;
-        await axios.get(url).then((res) => {
-            if (res.data && res.data.data.length > 0) {
-                // Status_faturado não entra como status de comissionamento do registro
-                itemDataLastStatus.value = res.data.data[res.data.data.length - 1 - (res.data.data[res.data.data.length - 1].status_comis == STATUS_FATURADO)];
-                itemData.value.status_comis = itemDataLastStatus.value.status_comis;
-                itemDataStatus.value = [];
-                res.data.data.forEach((element) => {
-                    const status = itemDataStatusPreload.value.filter((item) => {
-                        return item.status == element.status_comis;
-                    });
-                    // Se encontrato uma ocorrência de status_faturado, então o registro está faturado
-                    if (!itemDataLastStatus.value.faturado && element.status_comis == STATUS_FATURADO) itemDataLastStatus.value.faturado = true;
-                    itemDataStatus.value.push({
-                        // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
-                        date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
-                        user: element.name,
-                        status: status[0].label,
-                        statusCode: element.status_comis,
-                        icon: status[0].icon,
-                        color: status[0].color
-                    });
+    const url = `${baseApiUrl}/comis-status/${props.itemDataRoot.id || itemData.value.id}`;
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.data.length > 0) {
+            // Status_faturado não entra como status de comissionamento do registro
+            itemDataLastStatus.value = res.data.data[res.data.data.length - 1 - (res.data.data[res.data.data.length - 1].status_comis == STATUS_FATURADO)];
+            itemData.value.status_comis = itemDataLastStatus.value.status_comis;
+            itemDataStatus.value = [];
+            res.data.data.forEach((element) => {
+                const status = itemDataStatusPreload.value.filter((item) => {
+                    return item.status == element.status_comis;
                 });
-            }
-        });
-    }, Math.random() * 1000 + 250);
+                // Se encontrato uma ocorrência de status_faturado, então o registro está faturado
+                if (!itemDataLastStatus.value.faturado && element.status_comis == STATUS_FATURADO) itemDataLastStatus.value.faturado = true;
+                itemDataStatus.value.push({
+                    // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                    date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                    user: element.name,
+                    status: status[0].label,
+                    statusCode: element.status_comis,
+                    icon: status[0].icon,
+                    color: status[0].color
+                });
+            });
+        }
+    });
 };
 /**
  * Fim de status do registro
  */
 
 // Carregar dados do formulário
-onBeforeMount(() => {
-    setTimeout(async () => {
-        await loadData();
-        await listAgentesComissionamento();
-    }, Math.random() * 1000 + 250);
+onMounted(async () => {
+    await loadData();
+    await listAgentesComissionamento();
 });
 // Calcule o valor da comissão ao alterar o valor base ou o percentual. Lembrando que valor_base e percentual estão no formato 0,99 e precisam ser convertidos para o calculo. E depois de feito o calculo, o valor da comissão deve ser formatado para 0,99
 // Como sugestão, pode-se armazenar os valores em duas variáveis separadas, uma para o valor base e outra para o percentual, e depois fazer o calculo e armazenar o valor da comissão em uma terceira variável
@@ -500,22 +500,14 @@ watchEffect(() => {
             <div class="flex flex-column align-items-center w-full gap-3 border-bottom-1 surface-border p-3 mb-3 pb-0">
                 <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>
                 <div class="text-center text-xl" v-html="slotProps.message.message" />
-                <InputText
-                    :class="`mb-${bodyMultiplicate.parcelas > 1 ? '0' : '3'}`"
-                    autocomplete="no"
-                    v-model="bodyMultiplicate.parcelas"
-                    id="parcelas"
-                    type="number"
-                    v-maska
-                    data-maska="##"
-                    placeholder="Parcelas"
-                    min="1"
-                    max="10"
-                    @keydown.enter.prevent
-                />
+                <InputText :class="`mb-${bodyMultiplicate.parcelas > 1 ? '0' : '3'}`" autocomplete="no"
+                    v-model="bodyMultiplicate.parcelas" id="parcelas" type="number" v-maska data-maska="##"
+                    placeholder="Parcelas" min="1" max="10" @keydown.enter.prevent />
                 <div class="text-center mb-3 text-xl" v-if="bodyMultiplicate.parcelas > 1">
-                    O valor da parcela 1 será atualizado para {{ formatCurrency(bodyMultiplicate.valor_base_um) }}<br />e {{ bodyMultiplicate.parcelas > 2 ? `as seguintes` : 'a próxima' }} para
-                    {{ formatCurrency(bodyMultiplicate.valor_base_demais) }}.<br />Se estiver de acordo, clique em confirmar, abaixo
+                    O valor da parcela 1 será atualizado para {{ formatCurrency(bodyMultiplicate.valor_base_um)
+                    }}<br />e {{ bodyMultiplicate.parcelas > 2 ? `as seguintes` : 'a próxima' }} para
+                    {{ formatCurrency(bodyMultiplicate.valor_base_demais) }}.<br />Se estiver de acordo, clique em
+                    confirmar, abaixo
                 </div>
             </div>
         </template>
@@ -523,7 +515,8 @@ watchEffect(() => {
     <ConfirmDialog :group="`comisLiquidateConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
-                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                <div
+                    class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
                     <i class="fa-solid fa-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
@@ -539,7 +532,8 @@ watchEffect(() => {
     <ConfirmDialog :group="`setFiscalDoneConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
-                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                <div
+                    class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
                     <i class="fa-solid fa-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
@@ -555,14 +549,17 @@ watchEffect(() => {
     <Dialog v-model:visible="showTimeLine" modal header="Timeline do registro" :style="{ width: '25rem' }">
         <Timeline :value="itemDataStatus">
             <template #marker="slotProps">
-                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                <span
+                    class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
+                    :style="{ backgroundColor: slotProps.item.color }">
                     <i :class="slotProps.item.icon"></i>
                 </span>
             </template>
             <template #opposite="slotProps">
                 <small class="p-text-secondary">{{ slotProps.item.date }}</small>
             </template>
-            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ userData.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
+            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ uProf.admin
+                >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
         </Timeline>
         <div class="flex justify-content-center gap-2 mt-3">
             <Button type="button" label="Fechar" severity="" @click="showTimeLine = false"></Button>
@@ -572,20 +569,12 @@ watchEffect(() => {
         <div class="flex overflow-x-auto gap-1 mb-2">
             <div class="flex-grow-1 flex align-items-center justify-content-center">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-user"></i></div>
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
+                            class="fa-regular fa-user"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Dropdown
-                        v-else
-                        filter
-                        placeholder="Selecione o agente"
-                        :showClear="!!itemData.id_comis_agentes"
-                        id="unidade_tipos"
-                        optionLabel="label"
-                        optionValue="value"
-                        v-model="itemData.id_comis_agentes"
-                        :options="dropdownAgentes"
-                        :disabled="['view'].includes(mode)"
-                    >
+                    <Dropdown v-else filter placeholder="Selecione o agente" :showClear="!!itemData.id_comis_agentes"
+                        id="unidade_tipos" optionLabel="label" optionValue="value" v-model="itemData.id_comis_agentes"
+                        :options="dropdownAgentes" :disabled="['view'].includes(mode)">
                         <template #option="slotProps">
                             <div class="p-dropdown-item">{{ slotProps.option.label }}</div>
                         </template>
@@ -596,38 +585,20 @@ watchEffect(() => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">R$</div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <InputText
-                        v-else
-                        autocomplete="no"
-                        :disabled="mode == 'view'"
-                        v-model="itemData.valor_base"
-                        id="valor_base"
-                        type="text"
-                        v-maska
-                        data-maska="0,99"
-                        data-maska-tokens="0:\d:multiple|9:\d:optional"
-                        placeholder="Valor base"
-                        @keydown.enter.prevent
-                    />
+                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_base"
+                        id="valor_base" type="text" v-maska data-maska="0,99"
+                        data-maska-tokens="0:\d:multiple|9:\d:optional" placeholder="Valor base"
+                        @keydown.enter.prevent />
                 </div>
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">%</div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <InputText
-                        v-else
-                        autocomplete="no"
-                        :disabled="mode == 'view'"
-                        v-model="itemData.percentual"
-                        id="percentual"
-                        type="text"
-                        v-maska
-                        data-maska="0,99"
-                        data-maska-tokens="0:\d:multiple|9:\d:optional"
-                        placeholder="Percentual"
-                        @keydown.enter.prevent
-                    />
+                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.percentual"
+                        id="percentual" type="text" v-maska data-maska="0,99"
+                        data-maska-tokens="0:\d:multiple|9:\d:optional" placeholder="Percentual"
+                        @keydown.enter.prevent />
                 </div>
             </div>
             <div class="flex-none flex">
@@ -639,106 +610,56 @@ watchEffect(() => {
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-list-ol"></i></div>
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
+                            class="fa-solid fa-list-ol"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Dropdown v-else filter placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
+                    <Dropdown v-else filter placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value"
+                        v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <Button
-                        type="submit"
-                        :disabled="!(userData.comissoes >= 2)"
+                    <Button type="submit" :disabled="!(uProf.comissoes >= 2)"
                         v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)"
-                        v-tooltip.top="'Salvar comissão'"
-                        icon="fa-solid fa-floppy-disk"
-                        severity="success"
-                        text
-                        raised
-                    />
-                    <Button
-                        type="button"
-                        :disabled="!(userData.comissoes >= 3)"
+                        v-tooltip.top="'Salvar comissão'" icon="fa-solid fa-floppy-disk" severity="success" text
+                        raised />
+                    <Button type="button" :disabled="!(uProf.comissoes >= 3)"
                         v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && mode == 'view'"
-                        v-tooltip.top="'Editar comissão'"
-                        icon="fa-regular fa-pen-to-square"
-                        text
-                        raised
-                        @click="mode = 'edit'"
-                    />
-                    <Button
-                        type="button"
-                        :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
+                        v-tooltip.top="'Editar comissão'" icon="fa-regular fa-pen-to-square" text raised
+                        @click="mode = 'edit'" />
+                    <Button type="button" :disabled="!(uProf.financeiro >= 3 || uProf.comissoes >= 3)"
                         v-if="![STATUS_LIQUIDADO, STATUS_ENCERRADO].includes(itemDataLastStatus.status_comis) && ['view'].includes(mode)"
-                        v-tooltip.top="'Liquidar comissão'"
-                        icon="fa-regular fa-calendar-check"
-                        severity="success"
-                        text
-                        raised
-                        @click="programateItem"
-                    />
-                    <Button
-                        :disabled="!(userData.financeiro >= 3 || userData.comissoes >= 3)"
-                        type="button"
+                        v-tooltip.top="'Liquidar comissão'" icon="fa-regular fa-calendar-check" severity="success" text
+                        raised @click="programateItem" />
+                    <Button :disabled="!(uProf.financeiro >= 3 || uProf.comissoes >= 3)" type="button"
                         v-else-if="itemDataLastStatus.status_comis == STATUS_LIQUIDADO && ['view'].includes(mode)"
-                        v-tooltip.top="'Cancelar liquidação'"
-                        icon="fa-regular fa-calendar-xmark"
-                        severity="warning"
-                        text
-                        raised
-                        @click="unprogramateItem"
-                    />
+                        v-tooltip.top="'Cancelar liquidação'" icon="fa-regular fa-calendar-xmark" severity="warning"
+                        text raised @click="unprogramateItem" />
                     <!-- <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Liquidar comissão'" icon="fa-solid fa-bolt" severity="success" text raised @click="liquidateItem" /> -->
-                    <Button
-                        type="button"
-                        :disabled="!(userData.comissoes >= 2)"
+                    <Button type="button" :disabled="!(uProf.comissoes >= 2)"
                         v-if="itemDataLastStatus.status_comis == STATUS_ABERTO && itemDataUnmuted.parcela == 'U' && ['view'].includes(mode)"
                         v-tooltip.top="[0, 1].includes(props.itemDataRoot.agente_representante) ? 'Parcelar recebimento' : 'Parcelar pagamento'"
-                        icon="fa-solid fa-ellipsis-vertical"
-                        severity="success"
-                        text
-                        raised
-                        @click="multiplicateItem"
-                    />
-                    <Button
-                        type="button"
-                        :disabled="!(userData.fiscal >= 3)"
+                        icon="fa-solid fa-ellipsis-vertical" severity="success" text raised @click="multiplicateItem" />
+                    <Button type="button" :disabled="!(uProf.fiscal >= 3)"
                         v-if="!itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
-                        v-tooltip.top="'Confirmar faturamento'"
-                        icon="fa-solid fa-cash-register"
-                        style="color: #45590d"
-                        text
-                        raised
-                        @click="setFiscalDone"
-                    />
-                    <Button
-                        type="button"
-                        :disabled="!(userData.fiscal >= 3)"
+                        v-tooltip.top="'Confirmar faturamento'" icon="fa-solid fa-cash-register" style="color: #45590d"
+                        text raised @click="setFiscalDone" />
+                    <Button type="button" :disabled="!(uProf.fiscal >= 3)"
                         v-if="itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
-                        v-tooltip.top="'Remover faturamento'"
-                        icon="fa-solid fa-cash-register"
-                        severity="warning"
-                        text
-                        raised
-                        @click="setFiscalUnDone"
-                    />
-                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
-                    <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline da comissão'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
-                    <Button
-                        type="button"
-                        :disabled="!(userData.comissoes >= 4)"
+                        v-tooltip.top="'Remover faturamento'" icon="fa-solid fa-cash-register" severity="warning" text
+                        raised @click="setFiscalUnDone" />
+                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'"
+                        icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
+                    <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline da comissão'"
+                        icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
+                    <Button type="button" :disabled="!(uProf.comissoes >= 4)"
                         v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && ['view'].includes(mode)"
-                        v-tooltip.top="'Excluir comissão'"
-                        icon="fa-solid fa-trash"
-                        severity="danger"
-                        text
-                        raised
-                        @click="deleteItem"
-                    />
+                        v-tooltip.top="'Excluir comissão'" icon="fa-solid fa-trash" severity="danger" text raised
+                        @click="deleteItem" />
                 </div>
             </div>
         </div>
-        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="userData.admin >= 2">
+        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="uProf.admin >= 2">
             <template #legend>
                 <div class="flex align-items-center text-primary">
                     <span class="fa-solid fa-circle-info mr-2"></span>

@@ -1,14 +1,19 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import EditorComponent from '@/components/EditorComponent.vue';
+import { formatValor } from '@/global';
 
-// Cookies de usuário
-import { userKey, formatValor } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
@@ -60,46 +65,42 @@ const urlBase = ref(`${baseApiUrl}/com-produtos`);
 const urlBaseProdTabelas = ref(`${baseApiUrl}/com-prod-tabelas`);
 // Carragamento de dados do form
 const loadData = async () => {
-    setTimeout(async () => {
-        if (route.params.id || itemData.value.id) {
-            if (route.params.id) itemData.value.id = route.params.id;
-            const url = `${urlBase.value}/${itemData.value.id}`;
+    if (route.params.id || itemData.value.id) {
+        if (route.params.id) itemData.value.id = route.params.id;
+        const url = `${urlBase.value}/${itemData.value.id}`;
 
-            await axios.get(url).then(async (res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    body.id = String(body.id);
-                    itemData.value = body;
-                    selectedCadastro.value = {
-                        code: itemData.value.id_fornecedor,
-                        name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
-                    };
-                    await getNomeCliente();
-                    await loadDataProdTabelas();
-                    editCadastro.value = false;
-                } else {
-                    defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/produtos` });
-                }
-            });
-        }
-        loading.value = false;
-    }, Math.random() * 1000 + 250);
+        await axios.get(url).then(async (res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                itemData.value = body;
+                selectedCadastro.value = {
+                    code: itemData.value.id_fornecedor,
+                    name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+                };
+                await getNomeCliente();
+                await loadDataProdTabelas();
+                editCadastro.value = false;
+            } else {
+                defaultWarn('Registro não localizado');
+                router.push({ path: `/${uProf.value.schema_description}/produtos` });
+            }
+        });
+    }
+    loading.value = false;
 };
 const loadDataProdTabelas = async () => {
-    setTimeout(() => {
-        loading.value = true;
-        const url = `${urlBaseProdTabelas.value}/${itemData.value.id}`;
-        axios.get(url).then(async (axiosRes) => {
-            gridDataProdTabelas.value = axiosRes.data.data;
-            gridDataProdTabelas.value.forEach((element) => {
-                element.ini_validade = moment(element.ini_validade).format('DD/MM/YYYY');
-                element.valor_compra = formatValor(element.valor_compra);
-                element.valor_venda = formatValor(element.valor_venda);
-            });
-            loading.value = false;
+    loading.value = true;
+    const url = `${urlBaseProdTabelas.value}/${itemData.value.id}`;
+    axios.get(url).then(async (axiosRes) => {
+        gridDataProdTabelas.value = axiosRes.data.data;
+        gridDataProdTabelas.value.forEach((element) => {
+            element.ini_validade = moment(element.ini_validade).format('DD/MM/YYYY');
+            element.valor_compra = formatValor(element.valor_compra);
+            element.valor_venda = formatValor(element.valor_venda);
         });
-    }, Math.random() * 1000 + 250);
+        loading.value = false;
+    });
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -127,7 +128,7 @@ const saveData = async () => {
         })
         .catch((error) => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+            if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // Validar formulário
@@ -182,7 +183,7 @@ const removeImage = () => {
                 })
                 .catch((error) => {
                     defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+                    if (error.response && error.response.status == 401) router.push('/');
                 });
         },
         reject: () => {
@@ -210,7 +211,7 @@ const showUploadForm = () => {
         data: {
             tabela: 'com_produtos',
             registro_id: itemData.value.id,
-            schema: userData.schema_name,
+            schema: uProf.value.schema_name,
             field: 'id_uploads_imagem',
             footerMsg: 'O tamanho máximo do arquivo é de 1MB e 250 x 250px.'
         },
@@ -248,15 +249,13 @@ const optionParams = async (query) => {
     return await axios.get(url);
 };
 // Carregar opções do formulário
-const loadOptions = () => {
-    setTimeout(() => {
-        // Unidades
-        optionParams({ field: 'meta', value: 'com_unidade', select: 'id,label' }).then((res) => {
-            res.data.data.map((item) => {
-                dropdownUnidades.value.push({ value: item.id, label: item.label });
-            });
+const loadOptions = async () => {
+    // Unidades
+    optionParams({ field: 'meta', value: 'com_unidade', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownUnidades.value.push({ value: item.id, label: item.label });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 /**
  * Autocomplete de cadastros
@@ -433,11 +432,9 @@ const deleteItem = (item) => {
  * Fim de com_prod_tabelas
  */
 // Carregar dados do formulário
-onBeforeMount(() => {
-    loadData();
-    loadOptions();
-});
-onMounted(() => {
+onMounted(async () => {
+    await loadData();
+    await loadOptions();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
 // Observar alterações nos dados do formulário
@@ -456,13 +453,10 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb
-        v-if="mode != 'new'"
-        :items="[
-            { label: 'Todos os produtos', to: `/${userData.schema_description}/produtos` },
-            { label: itemData.nome_comum + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
-        ]"
-    />
+    <Breadcrumb v-if="mode != 'new'" :items="[
+        { label: 'Todos os produtos', to: `/${uProf.schema_description}/produtos` },
+        { label: itemData.nome_comum + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+    ]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -470,7 +464,10 @@ watch(selectedCadastro, (value) => {
                     <div class="p-fluid grid">
                         <div class="col-3 mx-auto text-center" :class="itemData.url_logo ? ' image-on' : ''">
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultProduto.png'}`" width="200" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                            <Image v-else
+                                :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultProduto.png'}`"
+                                width="200" alt="Logomarca" :preview="preview" id="url_logo"
+                                @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
                         <div class="col-9">
@@ -478,53 +475,61 @@ watch(selectedCadastro, (value) => {
                                 <div class="col-12 md:col-3">
                                     <label for="nome_comum">Nome curto</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome_comum" id="nome_comum" type="text" maxlength="25" />
+                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                        v-model="itemData.nome_comum" id="nome_comum" type="text" maxlength="25" />
                                 </div>
                                 <div class="col-12 md:col-9">
                                     <label for="id_fornecedor">Fornecedor</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <AutoComplete v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                                    <AutoComplete
+                                        v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')"
+                                        v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros"
+                                        @complete="searchCadastros" forceSelection />
                                     <div class="p-inputgroup flex-1" v-else>
                                         <InputText disabled v-model="nomeCliente" />
-                                        <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
+                                        <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil"
+                                            severity="primary" @click="confirmEditCadastro()"
+                                            :disabled="mode == 'view'" />
                                     </div>
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="produto">Produto/Serviço</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="produto" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.produto" :options="dropdownProduto" />
+                                    <Dropdown v-else id="produto" :disabled="mode == 'view'"
+                                        placeholder="Selecione o período" optionLabel="label" optionValue="value"
+                                        v-model="itemData.produto" :options="dropdownProduto" />
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="id_params_unidade">Unidade</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <Dropdown
-                                        v-else-if="itemData.produto == 1"
-                                        id="id_params_unidade"
-                                        :disabled="mode == 'view'"
-                                        placeholder="Selecione a unidade"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        v-model="itemData.id_params_unidade"
-                                        :options="dropdownUnidades"
-                                    />
-                                    <p v-else v-html="'Mão de Obra'" class="p-inputtext p-component p-filled disabled"></p>
+                                    <Dropdown v-else-if="itemData.produto == 1" id="id_params_unidade"
+                                        :disabled="mode == 'view'" placeholder="Selecione a unidade" optionLabel="label"
+                                        optionValue="value" v-model="itemData.id_params_unidade"
+                                        :options="dropdownUnidades" />
+                                    <p v-else v-html="'Mão de Obra'" class="p-inputtext p-component p-filled disabled">
+                                    </p>
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="ncm">NCM</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ncm" id="ncm" type="text" />
-                                    <p v-else v-html="itemData.ncm || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
+                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no"
+                                        :disabled="mode == 'view'" v-model="itemData.ncm" id="ncm" type="text" />
+                                    <p v-else v-html="itemData.ncm || '&nbsp;'"
+                                        class="p-inputtext p-component p-filled disabled"></p>
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="cean">cEAN</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cean" id="cean" type="text" />
-                                    <p v-else v-html="itemData.cean || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
+                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no"
+                                        :disabled="mode == 'view'" v-model="itemData.cean" id="cean" type="text" />
+                                    <p v-else v-html="itemData.cean || '&nbsp;'"
+                                        class="p-inputtext p-component p-filled disabled"></p>
                                 </div>
                                 <div class="col-12 md:col-12" v-if="itemData.descricao || mode != 'view'">
                                     <label for="descricao">Descrição</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.descricao" id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                                    <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.descricao"
+                                        id="descricao" editorStyle="height: 160px" aria-describedby="editor-error" />
                                     <p v-else v-html="itemData.descricao" class="p-inputtext p-component p-filled"></p>
                                 </div>
                             </div>
@@ -533,9 +538,12 @@ watch(selectedCadastro, (value) => {
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar"
+                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
+                            severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
+                            severity="danger" text raised @click="reload" />
                     </div>
                 </div>
                 <div class="col-12">
@@ -551,76 +559,81 @@ watch(selectedCadastro, (value) => {
                                                     <div class="col-4">
                                                         <label for="valor_compra">Valor de Compra</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                            class="p-inputgroup flex-1" style="font-size: 1rem">
                                                             <span class="p-inputgroup-addon">R$</span>
-                                                            <InputText
-                                                                autocomplete="no"
+                                                            <InputText autocomplete="no"
                                                                 :disabled="['view', 'expandedFormMode'].includes(modeTabelas)"
                                                                 v-model="itemDataProdTabelas.valor_compra"
-                                                                id="valor_compra"
-                                                                type="text"
-                                                                v-maska
-                                                                data-maska="0,99"
-                                                                data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                                            />
+                                                                id="valor_compra" type="text" v-maska data-maska="0,99"
+                                                                data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                                         </div>
                                                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                                             <span class="p-inputgroup-addon">R$</span>
-                                                            <span disabled v-html="itemDataProdTabelas.valor_compra" class="p-inputtext p-component" />
+                                                            <span disabled v-html="itemDataProdTabelas.valor_compra"
+                                                                class="p-inputtext p-component" />
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
                                                         <label for="valor_venda">Valor de Venda</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                            class="p-inputgroup flex-1" style="font-size: 1rem">
                                                             <span class="p-inputgroup-addon">R$</span>
-                                                            <InputText
-                                                                autocomplete="no"
+                                                            <InputText autocomplete="no"
                                                                 :disabled="['view', 'expandedFormMode'].includes(modeTabelas)"
                                                                 v-model="itemDataProdTabelas.valor_venda"
-                                                                id="valor_venda"
-                                                                type="text"
-                                                                v-maska
-                                                                data-maska="0,99"
-                                                                data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                                            />
+                                                                id="valor_venda" type="text" v-maska data-maska="0,99"
+                                                                data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                                         </div>
                                                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                                             <span class="p-inputgroup-addon">R$</span>
-                                                            <span disabled v-html="itemDataProdTabelas.valor_venda" class="p-inputtext p-component" />
+                                                            <span disabled v-html="itemDataProdTabelas.valor_venda"
+                                                                class="p-inputtext p-component" />
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
                                                         <label for="ini_validade">Validade inicial</label>
                                                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                            <InputText autocomplete="no" v-model="itemDataProdTabelas.ini_validade" id="ini_validade" type="text" v-maska data-maska="##/##/####" />
+                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                            class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                            <InputText autocomplete="no"
+                                                                v-model="itemDataProdTabelas.ini_validade"
+                                                                id="ini_validade" type="text" v-maska
+                                                                data-maska="##/##/####" />
                                                         </div>
                                                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                            <span disabled v-html="itemDataProdTabelas.ini_validade || '&nbsp;'" id="ini_validade" class="p-inputtext p-component" />
+                                                            <span disabled
+                                                                v-html="itemDataProdTabelas.ini_validade || '&nbsp;'"
+                                                                id="ini_validade" class="p-inputtext p-component" />
                                                         </div>
-                                                        <small id="text-error" class="p-error" v-if="errorMessages.tabelas && errorMessages.tabelas.ini_validade">{{ errorMessages.tabelas.ini_validade }}</small>
+                                                        <small id="text-error" class="p-error"
+                                                            v-if="errorMessages.tabelas && errorMessages.tabelas.ini_validade">{{
+                                                                errorMessages.tabelas.ini_validade }}</small>
                                                     </div>
-                                                    <div class="col-12" v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
+                                                    <div class="col-12"
+                                                        v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
                                                         <div class="flex justify-content-center flex-wrap gap-3">
-                                                            <Button type="button" v-if="modeTabelas == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="modeTabelas = 'edit'" />
-                                                            <Button
-                                                                type="button"
-                                                                v-if="modeTabelas != 'view'"
-                                                                label="Salvar"
-                                                                icon="fa-solid fa-floppy-disk"
-                                                                severity="success"
-                                                                text
-                                                                raised
+                                                            <Button type="button" v-if="modeTabelas == 'view'"
+                                                                label="Editar"
+                                                                icon="fa-regular fa-pen-to-square fa-shake" text raised
+                                                                @click="modeTabelas = 'edit'" />
+                                                            <Button type="button" v-if="modeTabelas != 'view'"
+                                                                label="Salvar" icon="fa-solid fa-floppy-disk"
+                                                                severity="success" text raised
                                                                 :disabled="!formTabelasIsValid()"
-                                                                @click="saveDataProdTabelas"
-                                                            />
-                                                            <Button type="button" v-if="modeTabelas != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reloadDataProdTabelas" />
+                                                                @click="saveDataProdTabelas" />
+                                                            <Button type="button" v-if="modeTabelas != 'view'"
+                                                                label="Cancelar" icon="fa-solid fa-ban"
+                                                                severity="danger" text raised
+                                                                @click="reloadDataProdTabelas" />
                                                         </div>
                                                     </div>
                                                     <div class="col-12" v-else>
                                                         <div class="flex justify-content-center flex-wrap gap-3">
-                                                            <Button class="w-full" type="button" label="Nova Tabela" severity="success" text raised @click="newDataProdTabelas" />
+                                                            <Button class="w-full" type="button" label="Nova Tabela"
+                                                                severity="success" text raised
+                                                                @click="newDataProdTabelas" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -629,9 +642,17 @@ watch(selectedCadastro, (value) => {
                                                 <h4>Últimos ajustes</h4>
                                                 <ol>
                                                     <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">
-                                                        Início de validade: {{ item.ini_validade }} - Valor de compra: R$ {{ item.valor_compra }} - Valor de venda: R$ {{ item.valor_venda }}
-                                                        <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
-                                                        <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir'"></i>
+                                                        Início de validade: {{ item.ini_validade }} - Valor de compra:
+                                                        R$ {{ item.valor_compra }} - Valor de venda: R$ {{
+                                                            item.valor_venda }}
+                                                        <i class="fa-solid fa-pencil fa-shake"
+                                                            style="font-size: 1rem; color: slateblue"
+                                                            @click="editItem(item)"
+                                                            v-tooltip.top="'Clique para alterar'"></i>
+                                                        <i class="fa-solid fa-trash ml-2"
+                                                            style="color: #fa0000; font-size: 1rem"
+                                                            @click="deleteItem(item)"
+                                                            v-tooltip.top="'Clique para excluir'"></i>
                                                     </li>
                                                 </ol>
                                             </div>
@@ -643,7 +664,7 @@ watch(selectedCadastro, (value) => {
                     </form>
                 </div>
                 <div class="col-12">
-                    <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                    <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
                         <p>route.name {{ route.name }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>

@@ -7,8 +7,14 @@ const jsonGLK = localStorage.getItem(glKey);
 const geoLocationData = JSON.parse(jsonGLK);
 
 axios.interceptors.request.use((config) => {
+    // console.log('config', config);
+    // interceptor.defaults.headers.common['Authorization']
     if (user && user.ip) {
         config.headers['x-ip-address'] = user.ip;
+    }
+    
+    if (user && user.token) {
+        config.headers.Authorization = `bearer ${user.token}`;
     }
 
     if (geoLocationData && geoLocationData.geolocation) {

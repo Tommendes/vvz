@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
@@ -10,6 +10,7 @@ import { renderizarHTML, removeHtmlTags } from '@/global';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
