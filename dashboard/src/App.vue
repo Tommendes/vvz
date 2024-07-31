@@ -34,7 +34,7 @@ const getIp = async () => {
 
 onBeforeMount(async () => {
     await validateToken();
-    getIp();
+    await getIp();
 });
 
 const display = ref(false);
