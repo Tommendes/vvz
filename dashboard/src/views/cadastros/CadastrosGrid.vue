@@ -143,31 +143,30 @@ const clearFilter = () => {
 
 const loadLazyData = () => {
     loading.value = true;
-
-        const url = `${urlBase.value}${urlFilters.value}`;
-        axios
-            .get(url)
-            .then((axiosRes) => {
-                gridData.value = axiosRes.data.data;
-                totalRecords.value = axiosRes.data.totalRecords;
-                gridData.value.forEach((element) => {
-                    // Exibe dado com máscara
-                    if (element.cpf_cnpj && element.cpf_cnpj.length == 11) element.cpf_cnpj = masks.value.cpf.masked(element.cpf_cnpj);
-                    else if (element.cpf_cnpj && element.cpf_cnpj.length == 14) element.cpf_cnpj = masks.value.cnpj.masked(element.cpf_cnpj);
-                    // Tratamento para resultados nulos
-                    if (element.aniversario == null) element.aniversario = '';
-                    if (element.telefone == null) element.telefone = '';
-                    // Converte data en para pt
-                    const now = new Date();
-                    if (element.aniversario) element.aniversario = `${moment(element.aniversario).format('DD/MM/YYYY')} (${moment(now).diff(element.aniversario, 'years')} anos)`;
-                    if (element.email) element.email = renderizarHTML(element.email);
-                });
-                loading.value = false;
-            })
-            .catch((error) => {
-                defaultError(error.response.data);
-                router.push({ path: '/' });
+    const url = `${urlBase.value}${urlFilters.value}`;
+    axios
+        .get(url)
+        .then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            totalRecords.value = axiosRes.data.totalRecords;
+            gridData.value.forEach((element) => {
+                // Exibe dado com máscara
+                if (element.cpf_cnpj && element.cpf_cnpj.length == 11) element.cpf_cnpj = masks.value.cpf.masked(element.cpf_cnpj);
+                else if (element.cpf_cnpj && element.cpf_cnpj.length == 14) element.cpf_cnpj = masks.value.cnpj.masked(element.cpf_cnpj);
+                // Tratamento para resultados nulos
+                if (element.aniversario == null) element.aniversario = '';
+                if (element.telefone == null) element.telefone = '';
+                // Converte data en para pt
+                const now = new Date();
+                if (element.aniversario) element.aniversario = `${moment(element.aniversario).format('DD/MM/YYYY')} (${moment(now).diff(element.aniversario, 'years')} anos)`;
+                if (element.email) element.email = renderizarHTML(element.email);
             });
+            loading.value = false;
+        })
+        .catch((error) => {
+            defaultError(error.response.data);
+            router.push({ path: '/' });
+        });
 };
 const onPage = (event) => {
     lazyParams.value = event;
@@ -226,7 +225,8 @@ watchEffect(() => {
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: `/${uProf.schema_description}/cadastros` }]" />
+            <Breadcrumb v-if="mode != 'new'"
+                :items="[{ label: 'Todos os Cadastros', to: `/${uProf.schema_description}/cadastros` }]" />
         </div>
         <div class="col-12">
             <CadastroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
@@ -234,79 +234,62 @@ watchEffect(() => {
 
         <div class="col-12">
             <div class="card">
-                <DataTable
-                    :value="gridData"
-                    lazy
-                    paginator
-                    :first="0"
-                    v-model:filters="filters"
-                    ref="dt"
-                    dataKey="id"
-                    :totalRecords="totalRecords"
-                    :rows="rowsPerPage"
-                    :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
-                    :loading="loading"
-                    @page="onPage($event)"
-                    @sort="onSort($event)"
-                    @filter="onFilter($event)"
+                <DataTable :value="gridData" lazy paginator :first="0" v-model:filters="filters" ref="dt" dataKey="id"
+                    :totalRecords="totalRecords" :rows="rowsPerPage" :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
+                    :loading="loading" @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     filterDisplay="row"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
-                    scrollable
-                >
+                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable>
                     <!-- scrollHeight="420px" -->
                     <template #header>
                         <div class="flex justify-content-end gap-3">
-                            <Dropdown
-                                filter
-                                placeholder="Filtrar por Tipo de Cadastro..."
-                                :showClear="tipoCadastro"
-                                style="min-width: 200px"
-                                id="tipoCadastro"
-                                optionLabel="label"
-                                optionValue="value"
-                                v-model="tipoCadastro"
-                                :options="dropdownTipoCadastro"
-                                @change="loadLazyData()"
-                            />
-                            <Dropdown
-                                filter
-                                placeholder="Filtrar por Área de Atuação..."
-                                :showClear="areaAtuacao"
-                                style="min-width: 200px"
-                                id="areaAtuacao"
-                                optionLabel="label"
-                                optionValue="value"
-                                v-model="areaAtuacao"
-                                :options="dropdownAtuacao"
-                                @change="loadLazyData()"
-                            />
-                            <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
-                            <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="novoRegistro()" />
+                            <Dropdown filter placeholder="Filtrar por Tipo de Cadastro..." :showClear="tipoCadastro"
+                                style="min-width: 200px" id="tipoCadastro" optionLabel="label" optionValue="value"
+                                v-model="tipoCadastro" :options="dropdownTipoCadastro" @change="loadLazyData()" />
+                            <Dropdown filter placeholder="Filtrar por Área de Atuação..." :showClear="areaAtuacao"
+                                style="min-width: 200px" id="areaAtuacao" optionLabel="label" optionValue="value"
+                                v-model="areaAtuacao" :options="dropdownAtuacao" @change="loadLazyData()" />
+                            <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar"
+                                @click="exportCSV($event)" />
+                            <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
+                                @click="clearFilter()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
+                                @click="novoRegistro()" />
                         </div>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">
-                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
+                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem"
+                            sortable :sortField="nome.field" :class="nome.class">
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" filter optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :class="nome.class" :style="``" />
+                                <Dropdown :id="nome.field" filter optionLabel="label" optionValue="value"
+                                    v-model="filterModel.value" :options="nome.list" @change="filterCallback()"
+                                    :class="nome.class" :style="``" />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" :style="``" />
+                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
+                                    :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
+                                    @input="filterCallback()" :style="``" />
                             </template>
                             <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="``" />
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                                    class="p-column-filter" placeholder="Pesquise..." :style="``" />
                             </template>
                             <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
-                                <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                                <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                                <Tag v-if="nome.tagged == true" :value="data[nome.field]"
+                                    :severity="getSeverity(data[nome.field])" />
+                                <span v-else-if="data[nome.field] && nome.mask"
+                                    v-html="masks[nome.mask].masked(data[nome.field])"></span>
+                                <span v-else
+                                    v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+                    <Column headerStyle="width: 5rem; text-align: center"
+                        bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" title="Clique para mais opções" />
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
+                                @click="goField(data)" title="Clique para mais opções" />
                         </template>
                     </Column>
                 </DataTable>

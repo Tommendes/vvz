@@ -1,5 +1,4 @@
 <script setup>
-// Cookies de usuário
 import moment from 'moment';
 
 // Profile do usuário

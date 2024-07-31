@@ -79,22 +79,22 @@ export const useUserStore = defineStore('users', {
         async validateToken(userData) {
             const url = `${baseApiAuthUrl}/validateToken`;
             if (userData && userData.ip) userData.ipSignin = userData.ip;
-            return await interceptor
-                .post(url, userData)
-                .then((res) => {
-                    this.isTokenValid = res.data;
-                    if (this.isTokenValid) {
-                        this.user = userData;
-                        interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
-                        this.getLocation();
-                        this.timeToLogOut = 600;
-                    } else {
-                        this.logout();
-                    }
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
+            try {
+                const validation = await interceptor.post(url, userData)
+                console.log('validation', validation);
+                this.isTokenValid = validation.data;
+                if (this.isTokenValid) {
+                    this.user = userData;
+                    interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
+                    this.getLocation();
+                    this.timeToLogOut = 600;
+                } else {
+                    this.logout();
+                }
+            } catch (error) {
+                console.log(error);
+                return false;
+            }
         },
         async getProfile(token) {
             const json = localStorage.getItem(userKey);

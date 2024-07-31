@@ -1,8 +1,8 @@
 <script setup>
 import { useUserStore } from '@/stores/user';
-import { userKey, glKey, decodeToken } from '@/global';
-import { baseApiAuthUrl, baseApiUrl } from '@/env';
-import { onMounted, ref } from 'vue';
+import { userKey, glKey } from '@/global';
+import { baseApiAuthUrl } from '@/env';
+import { onBeforeMount, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
@@ -32,8 +32,8 @@ const getIp = async () => {
     }
 };
 
-onMounted(() => {
-    validateToken();
+onBeforeMount(async () => {
+    await validateToken();
     getIp();
 });
 
