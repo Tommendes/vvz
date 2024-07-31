@@ -6,7 +6,7 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
 import { useConfirm } from 'primevue/useconfirm';
 import Breadcrumb from '../../components/Breadcrumb.vue';
-import RegistroForm from './RegistroForm.vue';
+import FinanceiroForm from './FinanceiroForm.vue';
 const confirm = useConfirm();
 
 // Profile do usuário
@@ -106,7 +106,7 @@ onMounted(async () => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Registros', to: route.fullPath }]" />
     <div class="card">
-        <RegistroForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <FinanceiroForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         <DataTable style="font-size: 1rem" :value="gridData" :paginator="true" :rows="10" dataKey="id" :rowHover="true"
             v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
             responsiveLayout="scroll"
