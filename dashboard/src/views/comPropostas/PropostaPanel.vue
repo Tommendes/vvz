@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, provide, ref } from 'vue';
+import { onMounted, provide, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import router from '../../router';
@@ -9,9 +9,14 @@ import ComposicoesGrid from './composicoes/ComposicoesGrid.vue';
 import ItensGrid from './itens/ItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -60,16 +65,16 @@ const loadData = async () => {
                 if (itemData.value.desconto_total) itemData.value.desconto_total = formatCurrency(itemData.value.desconto_total);
                 if (itemData.value.id_pipeline) await loadDataPipeline();
                 if (itemDataPipeline.value.id_pipeline_params) await loadPipelineParamsData();
-                breadItems.value = [{ label: 'Todas as propostas', to: `/${userData.schema_description}/propostas` }];
-                if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (userData.admin >= 1 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
-                if (itemDataPipeline.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${userData.schema_description}/cadastro/${itemDataPipeline.value.id_cadastros}` });
+                breadItems.value = [{ label: 'Todas as propostas', to: `/${uProf.value.schema_description}/propostas` }];
+                if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (uProf.value.admin >= 1 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
+                if (itemDataPipeline.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemDataPipeline.value.id_cadastros}` });
                 mode.value = 'view';
                 // Eventos do registro
                 await getEventos();
                 loading.value = false;
             } else {
                 defaultWarn('Proposta não localizada');
-                router.push({ path: `/${userData.schema_description}/propostas` });
+                router.push({ path: `/${uProf.value.schema_description}/propostas` });
             }
         });
         loading.value = false;
@@ -131,16 +136,16 @@ const getEventos = async () => {
                     else if (element.classevento.toLowerCase() == 'update')
                         element.evento =
                             `Edição do registro` +
-                            (userData.gestor >= 1
-                                ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            (uProf.value.gestor >= 1
+                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
                                 : '');
                     else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
                     else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
                     else if (element.classevento.toLowerCase() == 'commissioning') 
                         element.evento =
                             `Lançamento de comissão` +
-                            (userData.comissoes >= 1
-                                ? `. Para mais detalhes <a href="#/${userData.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            (uProf.value.comissoes >= 1
+                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
                                 : '');
                     element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
                 });
@@ -155,7 +160,7 @@ const getEventos = async () => {
     }, Math.random() * 1000 + 250);
 };
 
-onBeforeMount(async () => {
+onMounted(async () => {
     await loadData();
 });
 </script>
@@ -210,7 +215,7 @@ onBeforeMount(async () => {
                     </div>
                 </Fieldset>
             </div>
-            <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+            <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
                 <p>route.name {{ route.name }}</p>
                 <p>itemData: {{ itemData }}</p>
                 <p>itemDataPipeline: {{ itemDataPipeline }}</p>

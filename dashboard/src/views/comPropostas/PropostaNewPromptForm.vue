@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onBeforeMount, ref } from 'vue';
+import { inject, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 // Url base do form action
@@ -7,6 +7,15 @@ const urlBase = ref(`${baseApiUrl}/com-propostas`);
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
 import EditorComponent from '@/components/EditorComponent.vue';
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 const dialogRef = inject('dialogRef');
 const itemData = ref({});
@@ -54,11 +63,6 @@ const validateEmail = () => {
     }
     return true;
 };
-
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
 
 const saveData = async () => {
     const isFormValid = validateContato() && itemData.value.pessoa_contato.trim().length && validateTelefone() && validateEmail();
@@ -110,23 +114,23 @@ if (error.response && error.response.status == 401) router.push('/');
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="saudacao_inicial">Saudação Inicial</label>
-                        <EditorComponent v-model="itemData.saudacao_inicial" id="saudacao_inicial" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.saudacao_inicial" id="saudacao_inicial" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="observacoes_finais">Observacoes Finais</label>
-                        <EditorComponent v-model="itemData.observacoes_finais" id="observacoes_finais" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.observacoes_finais" id="observacoes_finais" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="garantia">Garantia</label>
-                        <EditorComponent v-model="itemData.garantia" id="garantia" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.garantia" id="garantia" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="conclusao">Conclusão</label>
-                        <EditorComponent v-model="itemData.conclusao" id="conclusao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.conclusao" id="conclusao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="assinatura">Assinatura</label>
-                        <EditorComponent v-model="itemData.assinatura" id="assinatura" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-model="itemData.assinatura" id="assinatura" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                 </div>
             </div>
@@ -136,7 +140,7 @@ if (error.response && error.response.status == 401) router.push('/');
                     <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="close" />
                 </div>
             </div>
-            <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+            <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
                 <h5>FormData</h5>
                 <p>itemData: {{ itemData }}</p>
             </div>

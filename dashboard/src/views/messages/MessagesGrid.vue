@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
+import { onMounted, ref } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -11,9 +11,14 @@ import MenssageForm from './MessageForm.vue';
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
@@ -68,7 +73,7 @@ const itemsButtons = ref([
         label: 'Ver',
         icon: 'fa-regular fa-eye fa-beat-fade',
         command: () => {
-            router.push({ path: `/${userData.schema_description}/message/${itemData.value.id}` });
+            router.push({ path: `/${uProf.value.schema_description}/message/${itemData.value.id}` });
         }
     },
     {
@@ -86,20 +91,19 @@ const getItem = (data) => {
     itemData.value = data;
 };
 const loadData = () => {
-    setTimeout(() => {
-        gridData.value = null;
-        loading.value = true;
-        axios.get(`${urlBase.value}`).then((axiosRes) => {
-            gridData.value = axiosRes.data.data;
-            gridData.value.forEach((element) => {
-                element.user = element.name + ' - ' + element.schema_description;
-            });
-            loading.value = false;
+    gridData.value = null;
+    loading.value = true;
+    axios.get(`${urlBase.value}`).then((axiosRes) => {
+        gridData.value = axiosRes.data.data;
+        gridData.value.forEach((element) => {
+            element.user = element.name + ' - ' + element.schema_description;
         });
-    }, Math.random() * 1000 + 250);
+        loading.value = false;
+    });
 };
 const mode = ref('grid');
-onBeforeMount(() => {
+
+onMounted(() => {
     initFilters();
     loadData();
 });
@@ -109,23 +113,15 @@ onBeforeMount(() => {
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Mensagens', to: route.fullPath }]" />
     <div class="card">
         <MenssageForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
-        <DataTable
-            :value="gridData"
-            :paginator="true"
-            :rows="10"
-            dataKey="id"
-            :rowHover="true"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :loading="loading"
-            :filters="filters"
-            responsiveLayout="scroll"
-            :globalFilterFields="['title', 'msg', 'id_user']"
-        >
+        <DataTable :value="gridData" :paginator="true" :rows="10" dataKey="id" :rowHover="true"
+            v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
+            responsiveLayout="scroll" :globalFilterFields="['title', 'msg', 'id_user']">
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new'" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
+                        @click="mode = 'new'" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
+                        @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
@@ -133,26 +129,35 @@ onBeforeMount(() => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`overflow: hidden`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'"
+                    sortable :dataType="nome.type" :style="`overflow: hidden`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :class="nome.class" :style="`overflow: hidden`" placeholder="Pesquise..." />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value"
+                            :options="nome.list" @change="filterCallback()" :class="nome.class"
+                            :style="`overflow: hidden`" placeholder="Pesquise..." />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" :style="`overflow: hidden`" />
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar
+                            :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()"
+                            :style="`overflow: hidden`" />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`overflow: hidden`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                            class="p-column-filter" placeholder="Pesquise..." :style="`overflow: hidden`" />
                     </template>
                     <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]"
+                            :severity="getSeverity(data[nome.field])" />
                         <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                        <span v-else
+                            v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="fa-solid fa-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="fa-solid fa-bars" rounded v-on:click="getItem(data)" @click="toggle"
+                        aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>

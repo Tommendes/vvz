@@ -941,7 +941,7 @@ watchEffect(() => {
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
                             <EditorComponent v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))"
-                                v-model="itemData.descricao" id="descricao" editorStyle="height: 160px"
+                                v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
                                 aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
                         </div>

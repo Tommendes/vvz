@@ -1,14 +1,19 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
-
 import Breadcrumb from '@/components/Breadcrumb.vue';
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
@@ -51,36 +56,32 @@ const urlBaseProtoDocs = ref(`${baseApiUrl}/proto-docs`);
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    setTimeout(async () => {
-        if (route.params.id || itemData.value.id) {
-            if (route.params.id) itemData.value.id = route.params.id;
-            const url = `${urlBase.value}/${itemData.value.id}`;
-            await axios.get(url).then(async (res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    body.id = String(body.id);
-                    itemData.value = body;
-                    await getNomeCliente();
-                    await loadDataProtoDocs();
-                    dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
-                    loading.value = false;
-                } else {
-                    defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/protocolos` });
-                }
-            });
-        } else loading.value = false;
-    }, Math.random() * 1000 + 250);
+    if (route.params.id || itemData.value.id) {
+        if (route.params.id) itemData.value.id = route.params.id;
+        const url = `${urlBase.value}/${itemData.value.id}`;
+        await axios.get(url).then(async (res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                itemData.value = body;
+                await getNomeCliente();
+                await loadDataProtoDocs();
+                dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
+                loading.value = false;
+            } else {
+                defaultWarn('Registro não localizado');
+                router.push({ path: `/${uProf.value.schema_description}/protocolos` });
+            }
+        });
+    } else loading.value = false;
 };
 const loadDataProtoDocs = async () => {
-    setTimeout(() => {
-        loading.value = true;
-        axios.get(`${urlBaseProtoDocs.value}/${itemData.value.id}`).then(async (axiosRes) => {
-            gridDatProtoDocs.value = axiosRes.data.data;
-            if (gridDatProtoDocs.value.descricao) itemDataProtDocs.value.items = gridDatProtoDocs.value.descricao.split(',');
-            loading.value = false;
-        });
-    }, Math.random() * 1000 + 250);
+    loading.value = true;
+    axios.get(`${urlBaseProtoDocs.value}/${itemData.value.id}`).then(async (axiosRes) => {
+        gridDatProtoDocs.value = axiosRes.data.data;
+        if (gridDatProtoDocs.value.descricao) itemDataProtDocs.value.items = gridDatProtoDocs.value.descricao.split(',');
+        loading.value = false;
+    });
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -97,7 +98,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/protocolo/${itemData.value.id}` });
+                if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/protocolo/${itemData.value.id}` });
                 dataRegistro.value = moment(itemData.value.updated_at || itemData.value.created_at).format('DD/MM/YYYY HH:mm:ss');
                 mode.value = 'view';
             } else {
@@ -119,12 +120,12 @@ const saveDataProtDocs = async () => {
     itemDataProtDocs.value.descricao = itemDataProtDocs.value.items.join(',');
     itemDataProtDocs.value.tp_documento = selectedTitulo.value;
     await axios[method](url, itemDataProtDocs.value)
-        .then((res) => {
+        .then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Documentos registrados com sucesso');
                 itemDataProtDocs.value = body;
-                loadDataProtoDocs();
+                await loadDataProtoDocs();
                 itemDataProtDocs.value = { id_protocolos: itemData.value.id };
                 selectedTitulo.value = undefined;
                 document.getElementById('tp_documento').focus();
@@ -134,7 +135,7 @@ const saveDataProtDocs = async () => {
         })
         .catch((error) => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+            if (error.response && error.response.status == 401) router.push('/');
         });
     if (itemDataProtDocs.value.descricao) itemDataProtDocs.value.descricao = itemDataProtDocs.value.descricao.split(',');
 };
@@ -304,9 +305,9 @@ const deleteItem = (item) => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
-            axios.delete(`${urlBaseProtoDocs.value}/${itemData.value.id}/${item.id}`).then(() => {
+            axios.delete(`${urlBaseProtoDocs.value}/${itemData.value.id}/${item.id}`).then(async () => {
                 defaultSuccess('Lista de itens excluída com sucesso!');
-                loadDataProtoDocs();
+                await loadDataProtoDocs();
             });
         },
         reject: () => {
@@ -315,11 +316,9 @@ const deleteItem = (item) => {
     });
 };
 // Carregar dados do formulário
-onBeforeMount(() => {
-    loadData();
+onMounted(async () => {
+    await loadData();
     // loadOptions();
-});
-onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
 // Observar alterações na propriedade selectedCadastro
@@ -331,13 +330,10 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb
-        v-if="mode != 'new'"
-        :items="[
-            { label: 'Todos os Protocolos', to: `/${userData.schema_description}/protocolos` },
-            { label: itemData.registro + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
-        ]"
-    />
+    <Breadcrumb v-if="mode != 'new'" :items="[
+        { label: 'Todos os Protocolos', to: `/${uProf.schema_description}/protocolos` },
+        { label: itemData.registro + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+    ]" />
     <div class="card" style="max-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -351,35 +347,45 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-6">
                             <label for="id_cadastros">Destinatário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection />
+                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro"
+                                optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros"
+                                forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                                <Button icon="fa-solid fa-pencil" severity="primary"
+                                    @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="titulo">Título do Protocolo</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.titulo" id="titulo" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.titulo"
+                                id="titulo" type="text" />
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="email_destinatario">Email do Destinatário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_destinatario" id="email_destinatario" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_destinatario">{{ errorMessages.email_destinatario }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.email_destinatario" id="email_destinatario" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_destinatario">{{
+                                errorMessages.email_destinatario }}</small>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="e_s">Movimento</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="e_s" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.e_s" :options="dropdownMovimento" />
+                            <Dropdown v-else id="e_s" :disabled="mode == 'view'" optionLabel="label" optionValue="value"
+                                v-model="itemData.e_s" :options="dropdownMovimento" />
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar"
+                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
+                            severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
+                            severity="danger" text raised @click="reload" />
                     </div>
                 </div>
             </div>
@@ -395,14 +401,19 @@ watch(selectedCadastro, (value) => {
                                     <div class="col-6">
                                         <div class="col-12 md:col-12">
                                             <label for="tp_documento">Tipo de Documento</label>
-                                            <AutoComplete v-model="selectedTitulo" id="tp_documento" optionLabel="name" :suggestions="filteredTitulos" @complete="searchTitulos" />
+                                            <AutoComplete v-model="selectedTitulo" id="tp_documento" optionLabel="name"
+                                                :suggestions="filteredTitulos" @complete="searchTitulos" />
                                         </div>
                                         <div class="col-12 md:col-12">
-                                            <label for="descricao">Lista de Documentos (pressione Enter ou vírgula para novos itens)</label>
+                                            <label for="descricao">Lista de Documentos (pressione Enter ou vírgula para
+                                                novos itens)</label>
                                             <Chips v-model="itemDataProtDocs.items" separator="," />
                                         </div>
                                         <div class="col-12 md:col-12">
-                                            <Button type="button" v-if="(itemDataProtDocs.tp_documento || selectedTitulo) && itemDataProtDocs.items" label="Salvar documentos" severity="success" text raised @click="saveDataProtDocs" />
+                                            <Button type="button"
+                                                v-if="(itemDataProtDocs.tp_documento || selectedTitulo) && itemDataProtDocs.items"
+                                                label="Salvar documentos" severity="success" text raised
+                                                @click="saveDataProtDocs" />
                                         </div>
                                     </div>
                                     <div class="col-6">
@@ -410,8 +421,12 @@ watch(selectedCadastro, (value) => {
                                         <ol>
                                             <li v-for="(item, index) in gridDatProtoDocs" :key="item.id">
                                                 {{ item.tp_documento }} - {{ item.descricao.replaceAll(',', ', ') }}
-                                                <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
-                                                <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir toda a lista'"></i>
+                                                <i class="fa-solid fa-pencil fa-shake"
+                                                    style="font-size: 1rem; color: slateblue" @click="editItem(item)"
+                                                    v-tooltip.top="'Clique para alterar'"></i>
+                                                <i class="fa-solid fa-trash ml-2"
+                                                    style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)"
+                                                    v-tooltip.top="'Clique para excluir toda a lista'"></i>
                                             </li>
                                         </ol>
                                     </div>
@@ -422,7 +437,7 @@ watch(selectedCadastro, (value) => {
                 </div>
             </div>
         </form>
-        <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+        <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
             <p>{{ route.name }}</p>
             <p>mode: {{ mode }}</p>
             <p>itemData: {{ itemData }}</p>

@@ -20,10 +20,14 @@ const masks = ref({
     })
 });
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 // Campos de formulário
 const itemData = ref({});
@@ -58,7 +62,7 @@ const loadData = async () => {
                     loading.value = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/messages` });
+                    router.push({ path: `/${uProf.value.schema_description}/messages` });
                 }
             });
         }, Math.random() * 1000 + 250);
@@ -81,7 +85,7 @@ const saveData = async () => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
-                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/message/${itemData.value.id}` });
+                if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/message/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
                 defaultWarn('Erro ao salvar registro');
@@ -226,8 +230,8 @@ watchEffect(() => {
     <Breadcrumb
         v-if="mode != 'new'"
         :items="[
-            { label: 'Mensagens', to: `/${userData.schema_description}/messages` },
-            { label: itemData.title + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+            { label: 'Mensagens', to: `/${uProf.schema_description}/messages` },
+            { label: itemData.title + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
     <div class="card">
@@ -275,7 +279,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-12" v-if="itemData.msg || ['edit', 'new'].includes(mode)">
                             <label for="msg">Mensagem</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg" class="p-inputtext p-component p-filled"></p>
                         </div>
                         <div class="col-12 md:col-5" v-if="itemData.valid_to && !errorMessages.valid_to">
@@ -286,7 +290,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-12" v-if="itemData.valid_to && !errorMessages.valid_to">
                             <label for="msg_future">Mensagem Futura</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future" id="msg_future" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future" id="msg_future" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg_future" class="p-inputtext p-component p-filled"></p>
                         </div>
                         <div class="col-12">
@@ -298,7 +302,7 @@ watchEffect(() => {
                         </div>
                     </div>
                 </div>
-                <div class="col-12" v-if="userData.admin >= 2">
+                <div class="col-12" v-if="uProf.admin >= 2">
                     <div class="card bg-green-200 mt-3">
                         <p>Mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>

@@ -4,10 +4,15 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
@@ -87,7 +92,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.schema_description}/empresa` });
+                router.push({ path: `/${uProf.value.schema_description}/empresa` });
             }
         });
     } else loading.value.form = false;
@@ -299,7 +304,7 @@ const showUploadForm = () => {
         data: {
             tabela: 'empresa',
             registro_id: itemData.value.id,
-            schema: userData.schema_name,
+            schema: uProf.value.schema_name,
             field: 'id_uploads_logo',
             footerMsg: 'O tamanho máximo do arquivo é de 1MB e 250 x 250px.'
         },
@@ -332,8 +337,8 @@ const onImageRightClick = (event) => {
     <Breadcrumb
         v-if="mode != 'new'"
         :items="[
-            { label: 'Todas as Empresas', to: `/${userData.schema_description}/empresa` },
-            { label: itemData.razaosocial + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+            { label: 'Todas as Empresas', to: `/${uProf.schema_description}/empresa` },
+            { label: itemData.razaosocial + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
     <div class="card">
@@ -480,7 +485,7 @@ const onImageRightClick = (event) => {
                         <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
-                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
                     <p>mode: {{ mode }}</p>
                     <p>itemData: {{ itemData }}</p>
                 </div>

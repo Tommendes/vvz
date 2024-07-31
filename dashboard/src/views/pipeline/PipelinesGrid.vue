@@ -485,8 +485,8 @@ const customFilterOptions = ref({ filterclear: false });
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                             <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"
                                 @click="exportXls()" />
-                            <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined
-                                @click="clearFilter()" />
+                            <!-- <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined
+                                @click="clearFilter()" /> -->
                             <Button type="button" icon="fa-solid fa-refresh" label="Todo o pipeline" outlined
                                 @click="reload()" />
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined

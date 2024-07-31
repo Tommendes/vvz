@@ -3,7 +3,7 @@ import moment from 'moment';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
-import { onBeforeMount } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {

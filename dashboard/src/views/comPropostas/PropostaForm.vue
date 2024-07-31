@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onBeforeMount, ref, watchEffect } from 'vue';
+import { inject, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { isValidEmail, formatCurrency } from '@/global';
@@ -8,10 +8,14 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import { guide1, guide2 } from '@/guides/propostasFormGuide.js';
 import EditorComponent from '@/components/EditorComponent.vue';
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -166,7 +170,7 @@ if (error.response && error.response.status == 401) router.push('/');
 };
 
 // Carregar dados do formulário
-onBeforeMount(async () => {
+onMounted(async () => {
     await loadOptions();
     loadData();
 });
@@ -233,31 +237,31 @@ watchEffect(() => {});
                     <div class="col-12 md:col-6">
                         <label for="saudacao_inicial">Saudação Inicial</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.saudacao_inicial" id="saudacao_inicial" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.saudacao_inicial" id="saudacao_inicial" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.saudacao_inicial" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="garantia">Garantia</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.garantia" id="garantia" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.garantia" id="garantia" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.garantia" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="conclusao">Conclusão</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.conclusao" id="conclusao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.conclusao" id="conclusao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.conclusao" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="assinatura">Assinatura</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.assinatura" id="assinatura" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.assinatura" id="assinatura" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.assinatura" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="observacoes_finais">Observacoes Finais</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes_finais" id="observacoes_finais" editorStyle="height: 160px" aria-describedby="editor-error" />
+                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes_finais" id="observacoes_finais" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         <p v-else v-html="itemData.observacoes_finais" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                 </div>
@@ -288,7 +292,7 @@ watchEffect(() => {});
                         <span v-if="props.padroes" v-html="guide2" />
                     </p>
                 </Fieldset>
-                <Fieldset class="bg-green-200" v-if="userData.admin >= 2" toggleable :collapsed="true">
+                <Fieldset class="bg-green-200" v-if="uProf.admin >= 2" toggleable :collapsed="true">
                     <template #legend>
                         <div class="flex align-items-center text-primary">
                             <span class="fa-solid fa-circle-info mr-2"></span>

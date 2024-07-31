@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
@@ -9,6 +9,15 @@ const filters = ref(null);
 const gridData = ref(null);
 const itemData = ref(null);
 const loading = ref(true);
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 // Props do template
 const props = defineProps(['itemDataRoot', 'toOpenOat']); // O próprio pv
 const urlBase = ref(`${baseApiUrl}/pv-oat/${props.itemDataRoot.id}`);
@@ -22,10 +31,7 @@ const initFilters = () => {
         descricao: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
     };
 };
-// Cookies de usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+
 // Inicializa os filtros
 initFilters();
 // Limpa os filtros
@@ -62,7 +68,7 @@ const showPvOatForm = (data) => {
             lastStatus: props.itemDataRoot.last_status
         },
         props: {
-            header: `OAT ${props.itemDataRoot.pv_nr}.${itemData.value.nr_oat ? itemData.value.nr_oat.toString().padStart(3, '0') : ''}${userData.admin >= 2 ? ` (${itemData.value.id})` : ''}`,
+            header: `OAT ${props.itemDataRoot.pv_nr}.${itemData.value.nr_oat ? itemData.value.nr_oat.toString().padStart(3, '0') : ''}${uProf.value.admin >= 2 ? ` (${itemData.value.id})` : ''}`,
             style: {
                 width: Math.floor(window.innerWidth * 0.9) + 'px'
             },
@@ -82,10 +88,8 @@ const showPvOatForm = (data) => {
 onBeforeMount(() => {
     initFilters();
 });
-onMounted(() => {
-    setTimeout(() => {
-        loadData();
-    }, Math.random() * 1000 + 250);
+onMounted(async () => {
+    await loadData();
 
     if (props.toOpenOat) {
         setTimeout(async () => {
@@ -115,33 +119,23 @@ onMounted(() => {
             <div class="card bg-green-200 mt-3">
                 <div class="flex flex-wrap align-items-center justify-content-center">
                     <div class="border-round bg-primary-100 h-12rem p-3 m-3">
-                        <div class="min-h-full border-round bg-primary font-bold p-3 flex align-items-center justify-content-center">Não foram registradas OATs para este Pós Venda</div>
+                        <div
+                            class="min-h-full border-round bg-primary font-bold p-3 flex align-items-center justify-content-center">
+                            Não foram registradas OATs para este Pós Venda</div>
                     </div>
                 </div>
             </div>
         </div>
-        <DataTable
-            v-else
-            style="font-size: 1rem"
-            ref="dt"
-            :value="gridData"
-            :paginator="true"
-            :rowsPerPageOptions="[5, 10, 20, 50]"
-            :rows="5"
-            dataKey="id"
-            :rowHover="true"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :filters="filters"
+        <DataTable v-else style="font-size: 1rem" ref="dt" :value="gridData" :paginator="true"
+            :rowsPerPageOptions="[5, 10, 20, 50]" :rows="5" dataKey="id" :rowHover="true" v-model:filters="filters"
+            filterDisplay="menu" :filters="filters"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
-            scrollable
-            scrollHeight="415px"
-            :globalFilterFields="['nr_oat', 'int_ext', 'descricao']"
-        >
+            currentPageReportTemplate="{first} a {last} de {totalRecords} registros" scrollable scrollHeight="415px"
+            :globalFilterFields="['nr_oat', 'int_ext', 'descricao']">
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
+                        @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
@@ -168,11 +162,13 @@ onMounted(() => {
                 </template>
             </Column>
             <template #filter="{ filterModel }">
-                <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por informações" />
+                <InputText v-model="filterModel.value" type="text" class="p-column-filter"
+                    placeholder="Filtre por informações" />
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="showPvOatForm(data)" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
+                        @click="showPvOatForm(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
@@ -8,10 +8,14 @@ import ProspeccaoForm from './ProspeccaoForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import { renderizarHTML, removeHtmlTags } from '@/global';
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
@@ -79,7 +83,7 @@ const filters = ref({});
 const lazyParams = ref({});
 const urlFilters = ref('');
 // Limpa os filtros do grid
-const clearFilter = () => {
+const clearFilter = async () => {
     loading.value = true;
     rowsPerPage.value = 10;
     initFilters();
@@ -90,55 +94,51 @@ const clearFilter = () => {
         sortOrder: null,
         filters: filters.value
     };
-
-    loadLazyData();
+    await loadLazyData();
 };
 
-const loadLazyData = () => {
+const loadLazyData = async () => {
     loading.value = true;
-
-    setTimeout(() => {
-        const url = `${urlBase.value}${urlFilters.value}`;
-        axios
-            .get(url)
-            .then((axiosRes) => {
-                gridData.value = axiosRes.data.data;
-                totalRecords.value = axiosRes.data.totalRecords;
-                gridData.value.forEach((element) => {
-                    // Exibe dado com máscara e converte data en para pt
-                    if (element.data_visita) element.data_visita = moment(element.data_visita).format('DD/MM/YYYY');
-                    if (!element.pessoa) element.pessoa = '';
-                    if (element.contato) element.contato = renderizarHTML(element.contato);
-                    element.periodo = String(element.periodo);
-                    if (element.periodo) element.periodo = dropdownPeriodo.value.find((x) => x.value == element.periodo).label;
-                    if (element.name) {
-                        let agenteName = element.name.split(' ');
-                        while (agenteName.length > 2) {
-                            agenteName.pop();
-                        }
-                        element.agente = agenteName.join(' ');
+    const url = `${urlBase.value}${urlFilters.value}`;
+    await axios
+        .get(url)
+        .then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            totalRecords.value = axiosRes.data.totalRecords;
+            gridData.value.forEach((element) => {
+                // Exibe dado com máscara e converte data en para pt
+                if (element.data_visita) element.data_visita = moment(element.data_visita).format('DD/MM/YYYY');
+                if (!element.pessoa) element.pessoa = '';
+                if (element.contato) element.contato = renderizarHTML(element.contato);
+                element.periodo = String(element.periodo);
+                if (element.periodo) element.periodo = dropdownPeriodo.value.find((x) => x.value == element.periodo).label;
+                if (element.name) {
+                    let agenteName = element.name.split(' ');
+                    while (agenteName.length > 2) {
+                        agenteName.pop();
                     }
-                });
-                loading.value = false;
-            })
-            .catch((error) => {
-                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                if (error.response && error.response.status == 401) router.push('/');
+                    element.agente = agenteName.join(' ');
+                }
             });
-    }, Math.random() * 1000 + 250);
+            loading.value = false;
+        })
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
+        });
 };
-const onPage = (event) => {
+const onPage = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await loadLazyData();
 };
-const onSort = (event) => {
+const onSort = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await loadLazyData();
 };
-const onFilter = () => {
+const onFilter = async () => {
     lazyParams.value.filters = filters.value;
     mountUrlFilters();
-    loadLazyData();
+    await loadLazyData();
 };
 const mode = ref('grid');
 const mountUrlFilters = () => {
@@ -169,7 +169,7 @@ const exportCSV = () => {
 };
 const goField = (data) => {
     idRegs.value = data.id;
-    router.push({ path: `/${userData.schema_description}/prospeccao/${data.id}` });
+    router.push({ path: `/${uProf.value.schema_description}/prospeccao/${data.id}` });
 };
 watchEffect(() => {
     mountUrlFilters();
@@ -179,86 +179,58 @@ watchEffect(() => {
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções', to: route.fullPath }]" />
     <div class="card">
-        <ProspeccaoForm
-            :mode="'new'"
-            :idCadastro="props.idCadastro"
-            @changed="loadLazyData()"
+        <ProspeccaoForm :mode="'new'" :idCadastro="props.idCadastro" @changed="loadLazyData()"
             @cancel="
                 mode = 'grid';
-                idRegs = undefined;
-            "
-            v-if="mode == 'new'"
-        />
-        <DataTable
-            style="font-size: 1rem"
-            :value="gridData"
-            lazy
-            paginator
-            :first="0"
-            v-model:filters="filters"
-            ref="dt"
-            dataKey="id"
-            :totalRecords="totalRecords"
-            :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
-            :loading="loading"
-            @page="onPage($event)"
-            @sort="onSort($event)"
-            @filter="onFilter($event)"
-            filterDisplay="row"
-            tableStyle="min-width: 75rem"
+            idRegs = undefined;
+            " v-if="mode == 'new'" />
+        <DataTable style="font-size: 1rem" :value="gridData" lazy paginator :first="0" v-model:filters="filters"
+            ref="dt" dataKey="id" :totalRecords="totalRecords" :rows="rowsPerPage"
+            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]" :loading="loading" @page="onPage($event)"
+            @sort="onSort($event)" @filter="onFilter($event)" filterDisplay="row" tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
-            scrollable
-        >
+            :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable>
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
+                    <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar"
+                        @click="exportCSV($event)" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
+                        @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
+                        @click="(mode = 'new'), scrollToTop()" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'"
+                    sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown
-                            :id="nome.field"
-                            optionLabel="label"
-                            optionValue="value"
-                            v-model="filterModel.value"
-                            :options="nome.list"
-                            @change="filterCallback()"
-                            :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
-                            placeholder="Pesquise..."
-                        />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value"
+                            :options="nome.list" @change="filterCallback()" :class="nome.class"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" placeholder="Pesquise..." />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar
-                            v-model="filterModel.value"
-                            dateFormat="dd/mm/yy"
-                            selectionMode="range"
-                            showButtonBar
-                            :numberOfMonths="2"
-                            placeholder="dd/mm/aaaa"
-                            mask="99/99/9999"
-                            @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
-                        />
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar
+                            :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                            class="p-column-filter" placeholder="Pesquise..."
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
                     </template>
                     <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]"
+                            :severity="getSeverity(data[nome.field])" />
                         <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                        <span v-else
+                            v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
+                        @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

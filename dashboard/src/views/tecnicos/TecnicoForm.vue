@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -21,10 +21,14 @@ const route = useRoute();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 // Campos de formulário
 const itemData = ref({});
@@ -59,7 +63,7 @@ const loadData = async () => {
                 loading.value = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.schema_description}/pv-tecnicos` });
+                router.push({ path: `/${uProf.value.schema_description}/pv-tecnicos` });
             }
         });
     } else loading.value = false;
@@ -80,7 +84,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/tecnico-pv/${itemData.value.id}` });
+                if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/tecnico-pv/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
                 defaultWarn('Erro ao salvar registro');
@@ -121,25 +125,22 @@ const reload = () => {
     emit('cancel');
 };
 // Carregar dados do formulário
-onBeforeMount(() => {});
-onMounted(() => {
-    loadData();
+onMounted(async () => {
+    await loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
         if (itemData.value.id) mode.value = 'view';
         else mode.value = 'new';
     }
 });
-// Observar alterações nos dados do formulário
-watchEffect(() => {});
 </script>
 
 <template>
     <Breadcrumb
         v-if="mode != 'new'"
         :items="[
-            { label: 'Técnicos Pós Vendas', to: `/${userData.schema_description}/tecnicos-pv` },
-            { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+            { label: 'Técnicos Pós Vendas', to: `/${uProf.schema_description}/tecnicos-pv` },
+            { label: itemData.tecnico + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
     <div class="card">
@@ -167,11 +168,11 @@ watchEffect(() => {});
                         <div class="col-12 md:col-12" v-if="itemData.observacao || ['edit', 'new'].includes(mode)">
                             <label for="observacao">Observação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacao" id="observacao" editorStyle="height: 160px" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
-                    <div class="col-12" v-if="userData.admin >= 2">
+                    <div class="col-12" v-if="uProf.admin >= 2">
                         <div class="card bg-green-200 mt-3">
                             <p>Mode: {{ mode }}</p>
                             <p>itemData: {{ itemData }}</p>

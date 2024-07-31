@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -12,10 +12,14 @@ const route = useRoute();
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 // Campos de formulário
 const itemData = ref({});
@@ -54,7 +58,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.schema_description}/retencoes` });
+                router.push({ path: `/${uProf.value.schema_description}/retencoes` });
             }
         });
     } else loading.value.form = false;
@@ -74,7 +78,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/retencao/${itemData.value.id}` });
+                if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/retencao/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
                 defaultWarn('Erro ao salvar registro');
@@ -97,11 +101,9 @@ const reload = () => {
     emit('cancel');
 };
 // Carregar dados do formulário
-onBeforeMount(() => {
-    loadData();
+onMounted(async () => {
+    await loadData();
     // loadOptions();
-});
-onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
         if (itemData.value.id) mode.value = 'view';
@@ -133,8 +135,8 @@ const items = ref([
     <Breadcrumb
         v-if="mode != 'new'"
         :items="[
-            { label: 'Retenção', to: `/${userData.schema_description}/registros` },
-            { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+            { label: 'Retenção', to: `/${uProf.schema_description}/registros` },
+            { label: itemData.tecnico + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
     <div class="card">

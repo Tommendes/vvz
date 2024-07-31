@@ -1,13 +1,17 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
@@ -54,7 +58,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${userData.schema_description}/lancamentos` });
+                router.push({ path: `/${uProf.value.schema_description}/lancamentos` });
             }
         });
     } else loading.value.form = false;
@@ -74,7 +78,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/lancamento/${itemData.value.id}` });
+                if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/lancamento/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
                 defaultWarn('Erro ao salvar registro');
@@ -105,11 +109,9 @@ const reload = () => {
     emit('cancel');
 };
 // Carregar dados do formulário
-onBeforeMount(() => {
-    loadData();
+onMounted(async () => {
+    await loadData();
     // loadOptions();
-});
-onMounted(() => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
         if (itemData.value.id) mode.value = 'view';
@@ -141,8 +143,8 @@ const items = ref([
     <Breadcrumb
         v-if="mode != 'new'"
         :items="[
-            { label: 'Registros', to: `/${userData.schema_description}/registros` },
-            { label: itemData.tecnico + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+            { label: 'Registros', to: `/${uProf.schema_description}/registros` },
+            { label: itemData.tecnico + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
     <div class="card">
