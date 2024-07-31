@@ -8,9 +8,14 @@ const confirm = useConfirm();
 import { isValidEmail } from '@/global';
 // Cookies de usuário
 import { onMounted } from 'vue';
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 // Campos de formulário
 const itemData = ref({});
 // Emit do template
@@ -247,14 +252,14 @@ onMounted(async () => {
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <Button type="submit" :disabled="!(userData.cadastros >= 2)" v-if="['edit', 'new'].includes(mode)" v-tooltip.top="'Salvar contato'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" :disabled="!(userData.cadastros >= 3)" v-if="mode == 'view'" v-tooltip.top="'Editar contato'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
+                    <Button type="submit" :disabled="!(uProf.cadastros >= 2)" v-if="['edit', 'new'].includes(mode)" v-tooltip.top="'Salvar contato'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" :disabled="!(uProf.cadastros >= 3)" v-if="mode == 'view'" v-tooltip.top="'Editar contato'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
                     <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
-                    <Button type="button" :disabled="!(userData.cadastros >= 4)" v-if="['view'].includes(mode)" v-tooltip.top="'Excluir contato'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
+                    <Button type="button" :disabled="!(uProf.cadastros >= 4)" v-if="['view'].includes(mode)" v-tooltip.top="'Excluir contato'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
                 </div>
             </div>
         </div>
-        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="userData.admin >= 32">
+        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="uProf.admin >= 32">
             <template #legend>
                 <div class="flex align-items-center text-primary">
                     <span class="fa-solid fa-circle-info mr-2"></span>

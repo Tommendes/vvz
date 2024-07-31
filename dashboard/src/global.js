@@ -1,9 +1,10 @@
+import { Mask } from 'maska';
+import { jwtDecode } from "jwt-decode";
 export const userKey = '__vivazul_user';
 export const glKey = '__gl_user';
 export const appName = 'Vivazul';
 export const softwareHouse = 'Vivazul Smart';
 export const dbPrefix = 'vivazul';
-import { Mask } from 'maska';
 export const noPermissAccess = 'Ops!!! Parece que seu perfil não dá acesso a essa operação';
 
 export function isValidEmail(email) {
@@ -163,6 +164,16 @@ export function formatValor(value, result = 'pt') {
         if (value && result == 'en') return value.toString().replace(',', '.');
         else return '0.00';
     }
+}
+
+// Decodifica o token
+export function decodeToken(token) {
+    try {
+        if (token) return jwtDecode(token);
+    } catch (error) {
+        console.log(error);
+    }
+    return token;
 }
 
 // Um array com todos os estados do Brasil
@@ -374,6 +385,7 @@ export default {
     renderizarHTML,
     removeHtmlTags,
     formatValor,
+    decodeToken,
     STATUS_INACTIVE,
     STATUS_WAITING,
     STATUS_SUSPENDED_BY_TKN,

@@ -135,7 +135,9 @@ module.exports = app => {
 
     const get = async (req, res) => {
         let user = req.user
+        console.log('user', user, new Date());
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        console.log('user', user, new Date());
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.cadastros >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)

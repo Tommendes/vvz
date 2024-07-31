@@ -2,10 +2,16 @@
 import { ref, onBeforeMount } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile();
+});
+
 import ContatoForm from './ContatoForm.vue';
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
 const gridData = ref(null);
 const itemData = ref({});
 const props = defineProps({
@@ -52,7 +58,7 @@ onBeforeMount(() => {
     </div>
     <ContatoForm v-if="mode == 'newItem'" @cancel="cancelNewItem()" @reload="loadData" :itemDataRoot="itemData" />
     <ContatoForm v-for="item in gridData" :key="item.id" :itemDataRoot="item" @reload="loadData" />
-    <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="userData.admin >= 3">
+    <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="uProf && uProf.admin >= 3">
         <template #legend>
             <div class="flex align-items-center text-primary">
                 <span class="fa-solid fa-circle-info mr-2"></span>

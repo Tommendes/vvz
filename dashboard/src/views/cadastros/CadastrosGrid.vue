@@ -6,9 +6,15 @@ import { defaultError } from '@/toast';
 import moment from 'moment';
 import CadastroForm from './CadastroForm.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
-import { renderizarHTML, removeHtmlTags, userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+import { renderizarHTML, removeHtmlTags } from '@/global';
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { useRouter } from 'vue-router';
 const router = useRouter();
@@ -138,7 +144,6 @@ const clearFilter = () => {
 const loadLazyData = () => {
     loading.value = true;
 
-    setTimeout(() => {
         const url = `${urlBase.value}${urlFilters.value}`;
         axios
             .get(url)
@@ -163,7 +168,6 @@ const loadLazyData = () => {
                 defaultError(error.response.data);
                 router.push({ path: '/' });
             });
-    }, Math.random() * 1000 + 250);
 };
 const onPage = (event) => {
     lazyParams.value = event;
@@ -212,7 +216,7 @@ const novoRegistro = () => {
 };
 const goField = (data) => {
     // idPipeline.value = data.id;
-    window.open(`#/${userData.schema_description}/cadastro/${data.id}`, '_blank');
+    window.open(`#/${uProf.value.schema_description}/cadastro/${data.id}`, '_blank');
 };
 watchEffect(() => {
     mountUrlFilters();
@@ -222,7 +226,7 @@ watchEffect(() => {
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: `/${userData.schema_description}/cadastros` }]" />
+            <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: `/${uProf.schema_description}/cadastros` }]" />
         </div>
         <div class="col-12">
             <CadastroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
@@ -277,7 +281,7 @@ watchEffect(() => {
                                 :options="dropdownAtuacao"
                                 @change="loadLazyData()"
                             />
-                            <Button v-if="userData.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
+                            <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
                             <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="novoRegistro()" />
                         </div>

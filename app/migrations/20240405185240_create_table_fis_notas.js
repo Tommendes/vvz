@@ -12,7 +12,7 @@ exports.up = function(knex, Promise) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
-        table.boolean('tipo').comment('Tipo de relação (0: Entrada; 1: Saída)')
+        table.boolean('tipo').notNull().comment('Tipo de relação (0: Entrada; 1: Saída)')
         table.string('numero').notNull().comment('Número da nota')
         table.string('serie').notNull().comment('Série da nota')
         table.string('chave').comment('Chave de acesso')

@@ -7,10 +7,13 @@ import { baseApiUrl } from '@/env';
 import { colorsDashboard } from '@/global';
 import html2canvas from 'html2canvas';
 
-// Cookies do usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 const biPeriod = ref();
 const applyBiParams = () => {
@@ -228,12 +231,12 @@ const getPedidosLastBi = () => {
 };
 
 const irRecentSale = (id) => {
-    window.open(`#/${userData.schema_description}/pipeline/${id}`, '_blank');
+    window.open(`#/${uProf.value .schema_description}/pipeline/${id}`, '_blank');
 };
 
 const irPipelineFilter = (tpd, perDi, perDf, tDoc, ag, stt) => {
     const perParam = perDi && perDf ? `${perDi},${perDf}` : '';
-    window.open(`#/${userData.schema_description}/pipeline?tpd=${tpd}&per=${perParam}${tDoc ? '&tdoc=' + tDoc : ''}${ag ? '&ag=' + ag : ''}${String(stt) ? '&stt=' + stt : ''}`, '_blank');
+    window.open(`#/${uProf.value .schema_description}/pipeline?tpd=${tpd}&per=${perParam}${tDoc ? '&tdoc=' + tDoc : ''}${ag ? '&ag=' + ag : ''}${String(stt) ? '&stt=' + stt : ''}`, '_blank');
 };
 
 const applyBiRecentSales = (moreOrLess) => {
@@ -456,7 +459,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/cadastros`" v-tooltip.top="'Clique para ir'"
+                            <router-link :to="`/${uProf.schema_description}/cadastros`" v-tooltip.top="'Clique para ir'"
                                 >Cadastros <span v-if="biData.cadastros.total" class="text-900 font-medium text-xl"> ({{ biData.cadastros.total }})</span>
                             </router-link>
                         </span>
@@ -483,7 +486,7 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${userData.schema_description}/prospeccoes`" v-tooltip.top="'Clique para ir'"
+                            <router-link :to="`/${uProf.schema_description}/prospeccoes`" v-tooltip.top="'Clique para ir'"
                                 >Visitas a Clientes
                                 <span v-if="biData.prospectos.total" class="text-900 font-medium text-xl"> ({{ biData.prospectos.total }})</span>
                             </router-link>

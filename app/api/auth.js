@@ -182,7 +182,8 @@ module.exports = app => {
                 res.json({
                     msg,
                     isMatch,
-                    ...payload,
+                    id: user.id,
+                    schema_description: user.schema_description,
                     token: jwt.encode(payload, authSecret)
                 })
             }
@@ -198,6 +199,10 @@ module.exports = app => {
                 return res.send(body)
             }
         }
+    }
+
+    const getAuth = async (req, res) => {
+        return res.send(authSecret)
     }
 
     const validateToken = async (req, res) => {
@@ -229,5 +234,5 @@ module.exports = app => {
         res.send(false)
     }
 
-    return { signin, validateToken }
+    return { signin, validateToken, getAuth }
 }

@@ -10,9 +10,14 @@ import PipelinesGrid from '../pipeline/PipelinesGrid.vue';
 import PosVendasGrid from '../posVendas/PosVendasGrid.vue';
 import ProspeccoesGrid from '../prospeccoes/ProspeccoesGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 import { useRoute, useRouter } from 'vue-router';
 import CadasDadosPublicos from './CadasDadosPublicos.vue';
@@ -75,8 +80,8 @@ onBeforeMount(() => {
     <Breadcrumb
         v-if="itemData.id"
         :items="[
-            { label: 'Todos os cadastros', to: `/${userData.schema_description}/cadastros` },
-            { label: itemData.nome + (userData.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+            { label: 'Todos os cadastros', to: `/${uProf.schema_description}/cadastros` },
+            { label: itemData.nome + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
     <div class="grid" :style="route.name == 'cadastro' ? 'min-width: 100rem;' : ''">

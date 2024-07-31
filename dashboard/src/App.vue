@@ -1,11 +1,13 @@
 <script setup>
 import { useUserStore } from '@/stores/user';
-import { userKey, glKey } from '@/global';
+import { userKey, glKey, decodeToken } from '@/global';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const router = useRouter();
+
+const store = useUserStore();
 
 const isTokenValid = ref(false);
 const validateToken = async () => {
@@ -14,8 +16,7 @@ const validateToken = async () => {
     const jsonGLK = localStorage.getItem(glKey);
     const geoLocationData = JSON.parse(jsonGLK);
 
-    const store = useUserStore();
-    await store.validateToken(userData, geoLocationData);
+    await store.validateToken(userData, geoLocationData);    
     isTokenValid.value = store.isTokenValid;
     if (!isTokenValid.value) router.push('/');
     if (isTokenValid.value && !(geoLocationData && geoLocationData.geolocation)) open();
@@ -48,11 +49,13 @@ const close = () => {
     <div class="container">
         <router-view />
         <Toast position="bottom-right" v-if="!isTokenValid" />
-        <Dialog id="mdlGeoLoc" header="Segurança" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '30vw' }" :modal="true">
+        <Dialog id="mdlGeoLoc" header="Segurança" v-model:visible="display" :breakpoints="{ '960px': '75vw' }"
+            :style="{ width: '30vw' }" :modal="true">
             <p class="line-height-3 m-0">
                 <strong>Atenção!</strong>
                 <br />
-                Nós cuidamos de sua segurança. Por isso, desse ponto em diante, algumas funcionalidades dependem de sua localização. Não se preocupe, não compartilharemos seus dados!
+                Nós cuidamos de sua segurança. Por isso, desse ponto em diante, algumas funcionalidades dependem de sua
+                localização. Não se preocupe, não compartilharemos seus dados!
                 <br />
                 Se deseja acesso total, permita o acesso à sua localização.
             </p>

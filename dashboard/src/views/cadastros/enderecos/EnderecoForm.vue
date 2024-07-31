@@ -13,10 +13,15 @@ const masks = ref({
         mask: '##.###-###'
     })
 });
-// Cookies de usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
+
 // Campos de formulário
 const itemData = inject('itemData');
 // Modo do formulário
@@ -34,7 +39,6 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
-    setTimeout(async () => {
         if (itemData && itemData.id) {
             const url = `${urlBase.value}/${itemData.value.id}`;
             await axios.get(url).then((res) => {
@@ -44,28 +48,11 @@ const loadData = async () => {
                     itemData.value = body;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                    router.push({ path: `/${uProf.schema_description}/cadastros` });
                 }
             });
         }
-    }, Math.random() * 1000 + 250);
 };
-
-// const loadData = async () => {
-//     if (itemData && itemData.id) {
-//         const url = `${urlBase.value}/${itemData.value.id}`;
-//         await axios.get(url).then((res) => {
-//             const body = res.data;
-//             if (body && body.id) {
-//                 body.id = String(body.id);
-//                 itemData.value = body;
-//             } else {
-//                 defaultWarn('Registro não localizado');
-//                 router.push({ path: `/${userData.schema_description}/cadastros` });
-//             }
-//         });
-//     }
-// };
 const formIsValid = () => {
     if (!validateCep()) return false;
     return true;
@@ -180,7 +167,7 @@ onBeforeMount(() => {
     <div class="grid">
         <form @submit.prevent="saveData">
             <div class="col-12">
-                <h5>{{ itemData.id && userData.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
+                <h5>{{ itemData.id && uProf.admin >= 1 ? `Registro: (${itemData.id})` : '' }} (apenas suporte)</h5>
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
                         <label for="id_params_tipo">Tipo</label>
@@ -225,7 +212,7 @@ onBeforeMount(() => {
                     <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
                     <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode = 'view'" />
                 </div>
-                <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+                <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
                     <p>mode: {{ mode }}</p>
                     <p>itemData: {{ itemData }}</p>
                     <p v-if="props.itemDataRoot">itemDataRoot: {{ props.itemDataRoot }}</p>

@@ -1,12 +1,16 @@
 <script setup>
-import { ref } from 'vue';
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+import { onBeforeMount, ref } from 'vue';
 
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 const home = ref({
     icon: 'fa-solid fa-house',
-    to: `/${userData.schema_description}`
+    to: `/${uProf.value.schema_description}`
 });
 const pilha = defineProps(['items']);
 </script>

@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, onBeforeUnmount, onBeforeMount } from 'vue';
 import { useLayout } from '@/layout/composables/layout';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
 import { useToast } from 'primevue/usetoast';
 import { appName } from '@/global';
 import Prompts from '@/components/Prompts.vue';
@@ -20,9 +19,13 @@ const router = useRouter();
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultError, defaultWarn } from '@/toast';
 
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 const jsonLayer = localStorage.getItem('__layoutCfg');
 const userLayer = JSON.parse(jsonLayer);
@@ -50,10 +53,10 @@ const items = ref([
         icon: 'fa-solid fa-arrow-up-right-from-square',
         command: async () => {
             await axios
-                .post(urlRequestRequestPassReset.value, { cpf: userData.cpf })
+                .post(urlRequestRequestPassReset.value, { cpf: uProf.value.cpf })
                 .then((body) => {
                     if (body.data.id) {
-                        router.push({ path: `/${userData.schema_description}/password-reset`, query: { q: body.data.id } });
+                        router.push({ path: `/${uProf.value.schema_description}/password-reset`, query: { q: body.data.id } });
                         defaultSuccess(body.data.msg);
                     } else defaultWarn('Ops! Parece que houve um erro ao executar sua solicitação. Por favor tente de novo');
                 })
@@ -132,7 +135,7 @@ const toggleAppConfig = () => {
 const newMessages = ref(0);
 const getUserMessages = async () => {
     setTimeout(async () => {
-        const url = `${baseApiUrl}/sis-messages/f-a/gbf?fld=id_user&vl=${userData.id}&slct=id,title,msg,status`;
+        const url = `${baseApiUrl}/sis-messages/f-a/gbf?fld=id_user&vl=${uProf.value.id}&slct=id,title,msg,status`;
         await axios.get(url).then((res) => {
             const body = res.data.data;
             itemsMessages.value = [];
@@ -140,9 +143,9 @@ const getUserMessages = async () => {
             if (body && body.length) {
                 body.forEach((element) => {
                     if (element.status == 10) ++newMessages.value;
-                    // element.msg = element.msg.replaceAll('[userName]', userData.name.split(' ')[0]);
+                    // element.msg = element.msg.replaceAll('[userName]', uProf.value.name.split(' ')[0]);
                     // Substitua [userName] pelos dois primeiros nomes do usuário com o cuidade de que o usuário pode ter apenas um nome registrado
-                    element.msg = element.msg.replace('[userName]', userData.name.split(' ').slice(0, 2).join(' '));
+                    element.msg = element.msg.replace('[userName]', uProf.value.name.split(' ').slice(0, 2).join(' '));
                     itemsMessages.value.push({
                         icon: element.status == 10 ? 'fa-solid fa-asterisk fa-fade' : 'fa-solid fa-check',
                         status: element.status,

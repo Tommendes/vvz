@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia';
-import { baseApiAuthUrl } from '@/env';
-import { userKey, glKey } from '@/global';
+import { baseApiAuthUrl, baseApiUrl } from '@/env';
+import { userKey, glKey, decodeToken } from '@/global';
 import interceptor from '@/axios-interceptor';
 import axios from 'axios';
 
 export const useUserStore = defineStore('users', {
     state: () => ({
-        user: {},
+        user: {
+            id: null,
+        },
         timeToLogOut: 600,
         isTokenValid: false,
         geolocation: {
@@ -93,6 +95,13 @@ export const useUserStore = defineStore('users', {
                 .catch((error) => {
                     console.log(error);
                 });
+        },
+        async getProfile(token) {
+            const json = localStorage.getItem(userKey);
+            const userData = JSON.parse(json)
+            const th = await axios.post(`${baseApiUrl}/gth`);
+            this.user = decodeToken(token || this.user.token || userData.token, th.data);
+            return this.user;
         },
         logout() {
             this.user = {};

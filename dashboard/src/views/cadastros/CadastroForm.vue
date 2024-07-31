@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watchEffect } from 'vue';
+import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -35,10 +35,13 @@ import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
 const router = useRouter();
 
-// Cookies de usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
 
 // Validar o cpf_cnpj
 import { cpf, cnpj } from 'cpf-cnpj-validator';
@@ -102,7 +105,7 @@ const loadData = async () => {
                     loading.value.form = false;
                 } else {
                     defaultWarn('Registro não localizado');
-                    router.push({ path: `/${userData.schema_description}/cadastros` });
+                    router.push({ path: `/${uProf.value.schema_description}/cadastros` });
                 }
             });
         } else loading.value.form = false;
@@ -145,8 +148,8 @@ const saveData = async () => {
                 if (itemData.value.aniversario) itemData.value.aniversario = moment(itemData.value.aniversario).format('DD/MM/YYYY');
                 emit('changed');
                 // if (mode.value != 'new') reload();
-                // else router.push({ path: `/${userData.schema_description}/cadastro/${itemData.value.id}` });
-                if (mode.value == 'new') router.push({ path: `/${userData.schema_description}/cadastro/${itemData.value.id}` });
+                // else router.push({ path: `/${uProf.value.schema_description}/cadastro/${itemData.value.id}` });
+                if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/cadastro/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
                 defaultWarn('Erro ao salvar registro');
@@ -696,7 +699,7 @@ watchEffect(() => {
                 </div>
             </div>
         </form>
-        <div class="col-12" v-if="userData.admin >= 2">
+        <div class="col-12" v-if="uProf.admin >= 2">
             <div class="card bg-green-200 mt-3">
                 <p>Mode: {{ mode }}</p>
                 <p>itemData: {{ itemData }}</p>

@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { inject, onBeforeMount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 import { usePrimeVue } from 'primevue/config';
@@ -9,10 +9,18 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
 
-// Cookies de usuário
-import { userKey } from '@/global';
-const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json);
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
+
+// // Cookies de usuário
+// import { userKey } from '@/global';
+// const json = localStorage.getItem(userKey);
+// const userData = JSON.parse(json);
 
 const totalSize = ref(0);
 const totalSizePercent = ref(0);
@@ -135,7 +143,7 @@ onMounted(() => {
             registro_id: props.registro_id || dialogRef.value.data.registro_id || 1,
             tabela: props.tabela || dialogRef.value.data.tabela || 'empresa',
             field: props.field || dialogRef.value.data.field || 'id_uploads_logo',
-            schema: props.schema || dialogRef.value.data.schema || `${userData.schema_name}`
+            schema: props.schema || dialogRef.value.data.schema || `${uprof.value.schema_name}`
         };
     }, Math.random() * 1000 + 250);
 });
@@ -143,7 +151,7 @@ onMounted(() => {
 
 <template>
     <div class="card">
-        <FileUpload name="arquivos" :url="`${urlBase}/f/hfl?tkn=${userData.id}_${userData.exp}`" @upload="onTemplatedUpload($event)" :multiple="props.multiple" :accept="props.accept" :maxFileSize="props.maxFileSize" @select="onSelectedFiles">
+        <FileUpload name="arquivos" :url="`${urlBase}/f/hfl?tkn=${uprof.value.id}_${uprof.value.exp}`" @upload="onTemplatedUpload($event)" :multiple="props.multiple" :accept="props.accept" :maxFileSize="props.maxFileSize" @select="onSelectedFiles">
             <template #header="{ chooseCallback, uploadCallback, clearCallback, files }">
                 <div class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2">
                     <div class="flex gap-2">
@@ -205,7 +213,7 @@ onMounted(() => {
         <div class="card bg-green-200 mt-3">
             <p>{{ dialogRef.data.footerMsg }}</p>
         </div>
-        <div class="card bg-green-200 mt-3" v-if="userData.admin >= 2">
+        <div class="card bg-green-200 mt-3" v-if="uprof.value.admin >= 2">
             <p>itemData: {{ itemData }}</p>
             <p>filesData: {{ filesData }}</p>
         </div>
