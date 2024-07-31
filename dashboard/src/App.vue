@@ -1,6 +1,7 @@
 <script setup>
 import { useUserStore } from '@/stores/user';
 import { userKey, glKey, decodeToken } from '@/global';
+import { baseApiAuthUrl, baseApiUrl } from '@/env';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -26,7 +27,7 @@ const getIp = async () => {
     const json = localStorage.getItem(userKey);
     const userData = JSON.parse(json);
     if (userData) {
-        const userIp = await axios.get(`https://api.vivazul.com.br/getIp`);
+        const userIp = await axios.get(`${baseApiAuthUrl}/getIp`);
         userData.ip = userIp.data;
     }
 };

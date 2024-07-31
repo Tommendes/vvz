@@ -35,7 +35,7 @@ export const useUserStore = defineStore('users', {
     actions: {
         async registerUser(email, password) {
             const url = `${baseApiAuthUrl}/signin`;
-            const urlIp = `https://api.vivazul.com.br/getIp`;
+            const urlIp = `${baseApiAuthUrl}/getIp`;
             let ip = await axios.get(urlIp);
             ip = ip.data.ip.split(',')[0];
             interceptor.interceptors.request.use((config) => {
