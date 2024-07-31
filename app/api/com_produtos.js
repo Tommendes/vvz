@@ -391,7 +391,7 @@ module.exports = app => {
             ret.select(selectArr)
         }
 
-        ret.select(app.db.raw(`(SELECT tbl2.valor_venda FROM vivazul_bceaa5.com_prod_tabelas AS tbl2 WHERE tbl2.status = ${STATUS_ACTIVE} and tbl2.ini_validade <= date(now()) and tbl2.id_com_produtos = tbl1.id ORDER BY DATE(ini_validade) DESC LIMIT 1) AS valor_venda`))
+        ret.select(app.db.raw(`(SELECT tbl2.valor_venda FROM ${tabelaTabelasDomain} AS tbl2 WHERE tbl2.status = ${STATUS_ACTIVE} and tbl2.ini_validade <= date(now()) and tbl2.id_com_produtos = tbl1.id ORDER BY DATE(ini_validade) DESC LIMIT 1) AS valor_venda`))
 
         ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
             .where({ 'tbl1.status': STATUS_ACTIVE, 'tbl2.status': STATUS_ACTIVE })

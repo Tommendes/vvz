@@ -1,9 +1,10 @@
+const { defaultApiSchema } = require('../.env')
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-    return knex.schema.createTable('vivazul_api.schemas_control', table => {
+    return knex.schema.createTable(`${defaultApiSchema}.schemas_control`, table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -26,5 +27,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-    return knex.schema.dropTable('vivazul_api.schemas_control')
+    return knex.schema.dropTable(`${defaultApiSchema}.schemas_control`)
 };

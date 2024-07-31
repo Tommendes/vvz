@@ -1,9 +1,11 @@
+const { defaultClientSchema } = require('../.env')
+
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
 exports.up = function(knex) {
-    return knex.schema.alterTable('vivazul_bceaa5.cadastros', table => {
+    return knex.schema.alterTable(defaultClientSchema + '.cadastros', table => {
         table.integer('id_params_tipo_end').unsigned().references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION').comment('Tipo de endereço')
         table.string('cep',8).comment('Cep')
         table.string('logradouro').comment('Logradouro')
@@ -23,7 +25,7 @@ exports.up = function(knex) {
  * @returns { Promise<void> }
  */
 exports.down = function(knex) {
-    return knex.schema.alterTable('vivazul_bceaa5.cadastros', table => {
+    return knex.schema.alterTable(defaultClientSchema + '.cadastros', table => {
         table.dropColumn('id_params_tipo')
         table.dropColumn('cep')
         table.dropColumn('logradouro')

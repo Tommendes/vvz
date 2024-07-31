@@ -1,10 +1,12 @@
+const { defaultClientSchema } = require('../.env')
+
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  * @returns 
  */
 exports.up = function (knex, Promise) {
-    return knex.schema.createTable('vivazul_bceaa5.long_params', table => {
+    return knex.schema.createTable(defaultClientSchema + '.long_params', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -18,7 +20,6 @@ exports.up = function (knex, Promise) {
         table.string('label', 1000).comment('Label')
     })
 };
-
 
 /**
  * 

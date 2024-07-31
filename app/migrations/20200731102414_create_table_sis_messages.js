@@ -1,5 +1,7 @@
+const { defaultApiSchema } = require('../.env')
+
 exports.up = function (knex) {
-    return knex.schema.createTable('sis_messages', table => {
+    return knex.schema.createTable(defaultApiSchema + '.sis_messages', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -22,5 +24,5 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-    return knex.schema.dropTable('sis_messages')
+    return knex.schema.dropTable(defaultApiSchema + '.sis_messages')
 };
