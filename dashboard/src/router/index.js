@@ -98,14 +98,14 @@ const routes = [
             },
             // Seção Financeiro
             {
-                path: '/:client/registros',
-                name: 'registros',
-                component: () => import('@/views/registros/RegistrosGrid.vue')
+                path: '/:client/financeiro',
+                name: 'financeiro',
+                component: () => import('@/views/financeiro/FinanceiroGrid.vue')
             },
             {
-                path: '/:client/registro/:id',
-                name: 'registro',
-                component: () => import('@/views/registros/RegistroForm.vue')
+                path: '/:client/financeiro/:id',
+                name: 'financeiro-one',
+                component: () => import('@/views/financeiro/FinanceiroForm.vue')
             },
             {
                 path: '/:client/comiss-agentes',
@@ -123,14 +123,14 @@ const routes = [
                 component: () => import('@/views/comissoes/ComissoesPanelAgente.vue')
             },
             {
-                path: '/:client/retencoes',
-                name: 'retencoes',
-                component: () => import('@/views/retencoes/RetencoesGrid.vue')
+                path: '/:client/fin-retencoes',
+                name: 'fin-retencoes',
+                component: () => import('@/views/fin_retencoes/RetencoesGrid.vue')
             },
             {
                 path: '/:client/retencao/:id',
-                name: 'retencao',
-                component: () => import('@/views/retencoes/RetencaoForm.vue')
+                name: 'fin-retencao',
+                component: () => import('@/views/fin_retencoes/RetencaoForm.vue')
             },
             // Seção Gestão
             {
