@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -25,6 +25,7 @@ const confirm = useConfirm();
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
@@ -51,7 +52,6 @@ const loadData = async () => {
     if (route.params.id || (props.itemDataRoot && props.itemDataRoot.id)) {
         const id = route.params.id || props.itemDataRoot.id;
         const url = `${urlBase.value}/${id}`;
-
         await axios
             .get(url)
             .then(async (res) => {
@@ -243,8 +243,8 @@ const reload = () => {
     emit('cancel');
 };
 // Carregar dados do formulário
-onBeforeMount(() => {
-    loadData();
+onMounted(async () => {
+    await loadData();
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {

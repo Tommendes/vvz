@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, ref, watchEffect } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -187,13 +187,9 @@ const loadOptions = async () => {
     });
 };
 // Carregar dados do formulário
-onBeforeMount(() => {});
-onBeforeMount(async () => {
+onMounted(async () => {
     await loadOptions();
-    loadData();
-});
-onMounted(() => {
-    loadData();
+    await loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
         if (itemData.value.id) mode.value = 'view';

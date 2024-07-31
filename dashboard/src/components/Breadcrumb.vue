@@ -1,8 +1,8 @@
 <script setup>
-import { onBeforeMount, ref } from 'vue';
-
+import { ref } from 'vue';
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
