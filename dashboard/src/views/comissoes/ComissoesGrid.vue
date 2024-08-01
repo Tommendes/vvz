@@ -262,9 +262,9 @@ const exportXls = () => {
 // Se o registro tiver 120 dias ou menos, retorne 'help'
 // Se o registro tiver 80 dias ou menos, retorne 'warning'
 // Se o registro tiver 40 dias ou menos, retorne 'info'
-// Se o registro tiver 7 dias ou menos, retorne 'success'
+// Se o registro tiver Até 7 dias, retorne 'success'
 const daysToQualify = ref([
-    { days: 7, qualify: 'success', label: '7 dias ou menos' },
+    { days: 7, qualify: 'success', label: 'Até 7 dias' },
     { days: 39, qualify: 'info', label: 'Inferior a 40 dias' },
     { days: 79, qualify: 'warning', label: 'Inferior a 80 dias' },
     { days: 119, qualify: 'help', label: 'Inferior a 120 dias' },

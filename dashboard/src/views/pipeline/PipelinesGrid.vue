@@ -61,17 +61,15 @@ const optionParams = async (query) => {
 };
 // Obter Agentes de negócio
 const getAgentes = () => {
-    setTimeout(() => {
-        const url = `${baseApiUrl}/users/f-a/gag`;
-        axios.get(url).then((res) => {
-            res.data.map((item) => {
-                dropdownAgentes.value.push({
-                    value: item.name,
-                    label: item.name
-                });
+    const url = `${baseApiUrl}/users/f-a/gag`;
+    axios.get(url).then((res) => {
+        res.data.map((item) => {
+            dropdownAgentes.value.push({
+                value: item.name,
+                label: item.name
             });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 // Carregar opções do formulário de pesquisa
 const loadOptions = () => {
@@ -163,6 +161,7 @@ const urlFilters = ref('');
 // Limpa os filtros do grid
 const clearFilter = async () => {
     loading.value = true;
+    router.replace({ query: {} });
     rowsPerPage.value = 10;
     tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = agenteNegocio.value = statusNegocio.value = null;
     initFilters();
@@ -175,10 +174,6 @@ const clearFilter = async () => {
     };
     await loadLazyData();
     // router.push({ path: `/${uProf.value.schema_description}/pipeline` });
-};
-const reload = () => {
-    router.replace({ query: {} });
-    clearFilter();
 };
 //Scrool quando criar um Novo Registro
 const scrollToTop = () => {
@@ -240,25 +235,24 @@ const loadLazyData = async () => {
 // Carrega os dados do grid
 const onPage = async (event) => {
     lazyParams.value = event;
-    await loadLazyData();
+    await mountUrlFilters();
 };
 // Ordena os dados do grid
 const onSort = async (event) => {
     lazyParams.value = event;
-    await loadLazyData();
+    await mountUrlFilters();
 };
 // Filtra os dados do grid
 const onFilter = async () => {
     lazyParams.value.filters = filters.value;
-    mountUrlFilters();
-    await loadLazyData();
+    await mountUrlFilters();
 };
 // Armazena o modo de operação do grid
 const mode = ref('grid');
 /**
  * Monta a url com os filtros
  */
-const mountUrlFilters = () => {
+const mountUrlFilters = async () => {
     let url = '';
     Object.keys(filters.value).forEach((key) => {
         if (filters.value[key].value) {
@@ -286,6 +280,8 @@ const mountUrlFilters = () => {
     if (statusNegocio.value) url += `field:last_status_params=equals:${statusNegocio.value}&`;
     if (props.idCadastro) url += `field:id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = `?${url}`;
+
+    await loadLazyData();
 };
 
 import xlsx from 'json-as-xlsx';
@@ -333,9 +329,9 @@ const exportXls = () => {
 // Se o registro tiver 120 dias ou menos, retorne 'help'
 // Se o registro tiver 80 dias ou menos, retorne 'warning'
 // Se o registro tiver 40 dias ou menos, retorne 'info'
-// Se o registro tiver 7 dias ou menos, retorne 'success'
+// Se o registro tiver Até 7 dias, retorne 'success'
 const daysToQualify = ref([
-    { days: 7, qualify: 'success', label: '7 dias ou menos' },
+    { days: 7, qualify: 'success', label: 'Até 7 dias' },
     { days: 39, qualify: 'info', label: 'Inferior a 40 dias' },
     { days: 79, qualify: 'warning', label: 'Inferior a 80 dias' },
     { days: 119, qualify: 'help', label: 'Inferior a 120 dias' },
@@ -356,9 +352,9 @@ const goField = (data) => {
     window.open(`#/${uProf.value.schema_description}/pipeline/${data.id}`, '_blank');
 };
 // Carrega os dados do filtro do grid
-watchEffect(() => {
-    mountUrlFilters();
-});
+// watchEffect(() => {
+//     mountUrlFilters();
+// });
 onBeforeMount(() => {
     // Se props.idCadastro for declarado, remover o primeiro item da lista de campos, pois é o nome do cliente e a descrição pois ficará muito largo
     if (props.idCadastro) listaNomes.value = listaNomes.value.filter((item) => !['descricao', 'nome'].includes(item.field));
@@ -380,8 +376,6 @@ onMounted(async () => {
     updateScreenWidth(); // Atualize a propriedade inicialmente
 
     // queryUrl.value = route.query;
-    // Limpa os filtros do grid
-    clearFilter();
     let load = false;
     if (route.query.tpd && route.query.tpd.length) {
         tipoDoc.value = route.query.tpd;
@@ -414,7 +408,9 @@ onMounted(async () => {
         load = true;
     }
     router.replace({ query: {} });
-    if (load) await loadLazyData();
+    await mountUrlFilters();
+    // if (load) { await mountUrlFilters(); }
+    // else { await loadLazyData(); }
 });
 const customFilterOptions = ref({ filterclear: false });
 </script>
@@ -426,17 +422,6 @@ const customFilterOptions = ref({ filterclear: false });
                 :items="[{ label: 'Todo o Pipeline', to: `/${uProf.schema_description}/pipeline` }]" />
         </div>
         <div class="col-12">
-            <!-- <PipelineForm
-                :mode="mode"
-                :idCadastro="props.idCadastro"
-                :idPipeline="idPipeline"
-                @changed="loadLazyData()"
-                @cancel="
-                    mode = 'grid';
-                    idPipeline = undefined;
-                "
-                v-if="mode == 'new' || idPipeline"
-            /> -->
             <PipelineForm :mode="mode" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'"
                 v-if="mode == 'new'" />
         </div>
@@ -463,7 +448,6 @@ const customFilterOptions = ref({ filterclear: false });
                                 <Dropdown placeholder="Todos...?" :showClear="!!tipoDoc" class="flex-none flex"
                                     id="doc_venda" optionLabel="label" optionValue="value" v-model="tipoDoc"
                                     :options="dropdownTiposDoc" @change="mountUrlFilters();
-                                    loadLazyData();
                                     filtrarUnidades();
                                     " />
                             </div>
@@ -471,7 +455,6 @@ const customFilterOptions = ref({ filterclear: false });
                                 <Dropdown filter placeholder="Filtrar por Representada..." :showClear="!!unidade"
                                     class="flex-none flex" id="unidades" optionLabel="label" optionValue="value"
                                     v-model="unidade" :options="dropdownUnidades" @change="mountUrlFilters();
-                                    loadLazyData();
                                     filtrarUnidadesDescricao();
                                     " />
                             </div>
@@ -479,16 +462,14 @@ const customFilterOptions = ref({ filterclear: false });
                                 <Dropdown filter placeholder="Filtrar por Tipo..." :showClear="!!unidadeNegocio"
                                     class="flex-grow-1 flex" id="unidade_tipos" optionLabel="label" optionValue="value"
                                     v-model="unidadeNegocio" :options="dropdownUnidadesFilter"
-                                    @change="mountUrlFilters(); loadLazyData()" />
+                                    @change="mountUrlFilters();" />
                             </div>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                             <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"
                                 @click="exportXls()" />
-                            <!-- <Button type="button" icon="fa-solid fa-filter" label="Limpar consulta" outlined
-                                @click="clearFilter()" /> -->
-                            <Button type="button" icon="fa-solid fa-refresh" label="Todo o pipeline" outlined
-                                @click="reload()" />
+                            <Button type="button" icon="fa-solid fa-filter-circle-xmark" label="Limpar consulta"
+                                outlined @click="clearFilter()" />
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
                                 @click="(mode = 'new'), scrollToTop()" />
                         </div>
