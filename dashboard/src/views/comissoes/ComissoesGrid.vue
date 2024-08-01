@@ -38,7 +38,6 @@ const sumRecords = ref(0); // O valor total de registros (deve ser atualizado co
 const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
-const gridDataRaw = ref([]); // Dados sem formatação
 const dropdownUnidades = ref([]); // Itens do dropdown de Unidades de Negócio
 const dropdownAgentes = ref([]); // Itens do dropdown de Agentes de Negócio do grid
 const dropdownSN = ref([
@@ -157,7 +156,6 @@ const loadLazyData = () => {
             totalRecords.value = axiosRes.data.totalRecords;
             sumRecords.value = axiosRes.data.sumRecords;
             gridData.value.forEach((element) => {
-                gridDataRaw.value.push({ ...element });
                 // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                 const documento = element.documento;
                 if (element.documento) element.documento = `${element.unidade.replaceAll('_', ' ')} ${documento}`;

@@ -35,7 +35,6 @@ const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000, 9999999]); // Op�
 const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
-const gridDataRaw = ref([]); // Dados sem formatação
 // Itens do dropdown de Tipos
 const dropdownTiposDoc = ref([
     { label: 'Outros', value: '0' },
@@ -191,8 +190,14 @@ const loadLazyData = async () => {
             gridData.value = axiosRes.data.data;
             totalRecords.value = axiosRes.data.totalRecords;
             sumRecords.value = axiosRes.data.sumRecords;
+            const quant = totalRecords.value;
+            // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
+            rowsPerPageOptions.value.forEach(element => {
+                if (element > quant) rowsPerPageOptions.value.pop()
+            });
+            rowsPerPageOptions.value.push(quant);
+            rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
             gridData.value.forEach((element) => {
-                gridDataRaw.value.push({ ...element });
                 // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                 const documento = element.documento;
                 if (element.documento) element.documento = `${element.tipo_doc.replaceAll('_', ' ')} ${documento}`;
