@@ -33,7 +33,6 @@ const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000, 9999999]); // Opções de registros por página
 const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
-const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
 const gridDataRaw = ref([]); // Dados sem formatação
@@ -162,7 +161,7 @@ const urlFilters = ref('');
 const clearFilter = async () => {
     loading.value = true;
     router.replace({ query: {} });
-    rowsPerPage.value = 10;
+    urlFilters.value = '';
     tipoDoc.value = unidade.value = unidadeNegocio.value = periodo.value = agenteNegocio.value = statusNegocio.value = null;
     initFilters();
     lazyParams.value = {
@@ -267,10 +266,11 @@ const mountUrlFilters = async () => {
             url += `field:${key}=${macthMode}:${value}&`;
         }
     });
-    if (lazyParams.value.originalEvent && (lazyParams.value.originalEvent.page || lazyParams.value.originalEvent.rows))
+    if (lazyParams.value.originalEvent && (lazyParams.value.originalEvent.page || lazyParams.value.originalEvent.rows)) {
         Object.keys(lazyParams.value.originalEvent).forEach((key) => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
         });
+    }
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
     if (tipoDoc.value) url += `field:doc_venda=equals:${tipoDoc.value}&`;
     if (unidade.value) url += `field:unidade=equals:${unidade.value}&`;
@@ -428,7 +428,7 @@ const customFilterOptions = ref({ filterclear: false });
 
         <div class="col-12">
             <div class="card">
-                <DataTable ref="dt" :value="gridData" lazy paginator :rows="rowsPerPage" dataKey="id" :rowHover="true"
+                <DataTable ref="dt" :value="gridData" lazy paginator :rows="gridData.length" dataKey="id" :rowHover="true"
                     v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
                     responsiveLayout="scroll" :totalRecords="totalRecords" :rowsPerPageOptions="rowsPerPageOptions"
                     @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
