@@ -741,10 +741,8 @@ module.exports = app => {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
-            if (biStt) total.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
-                ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biStt}`)
-            else total.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
-                ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
+            if (biStt) total.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biStt}`)
+            else total.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
             total.first()
             total = await total
         } catch (error) {
@@ -761,11 +759,10 @@ module.exports = app => {
                         this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                     })
                     .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
-                    .whereRaw(`date(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                if (biStt) noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
-                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biStt}`)
-                else noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
-                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
+                    .whereRaw(`date(tbl1.created_at) between date("${biPeriodDi}") and date("${biPeriodDf}")`)
+                if (biStt) noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biStt}`)                    
+                // (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)
+                else noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
                 noPeriodo.first()
                 noPeriodo = await noPeriodo
             }
@@ -785,9 +782,9 @@ module.exports = app => {
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
                 .whereRaw(`date(tbl1.created_at) between "${firstFayOfThisMonth}" and "${lastDayOfThisMonth}"`)
             if (biStt) novos.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
-                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biStt}`)
+                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biStt}`)
             else novos.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id 
-                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
+                        ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
             novos.first()
             novos = await novos
         } catch (error) {
@@ -832,7 +829,7 @@ module.exports = app => {
                     this.on('ps.id_pipeline', '=', 'tbl1.id')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 1 })
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PEDIDO}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('ps.id_pipeline')
                 .orderBy(app.db.raw('date(tbl1.created_at)'), 'desc')
                 .limit(rows)
@@ -879,7 +876,7 @@ module.exports = app => {
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PEDIDO}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('pp.id')
                 .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
@@ -947,7 +944,7 @@ module.exports = app => {
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PEDIDO}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('tbl1.id_com_agentes')
                 .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
@@ -1008,7 +1005,7 @@ module.exports = app => {
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 1 })
                 .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)  = ${STATUS_PROPOSTA}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PROPOSTA}`)
                 .groupBy('pp.id')
                 .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
