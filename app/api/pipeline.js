@@ -760,8 +760,7 @@ module.exports = app => {
                     })
                     .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
                     .whereRaw(`date(tbl1.created_at) between date("${biPeriodDi}") and date("${biPeriodDf}")`)
-                if (biStt) noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biStt}`)                    
-                // (SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1)
+                if (biStt) noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biStt}`)    
                 else noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
                 noPeriodo.first()
                 noPeriodo = await noPeriodo
