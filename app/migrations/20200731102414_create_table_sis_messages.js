@@ -1,7 +1,7 @@
-const { defaultApiSchema } = require('../.env')
+const { db } = require('../.env')
 
 exports.up = function (knex) {
-    return knex.schema.createTable(defaultApiSchema + '.sis_messages', table => {
+    return knex.schema.createTable(db.database+ '.sis_messages', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -10,7 +10,7 @@ exports.up = function (knex) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('id_user').unsigned().references('id').inTable('users').onUpdate('Cascade').onDelete('Cascade').comment('Se não for informado o destinatário, então todos receberão')
+        table.integer('id_user').unsigned().references('id').inTable(db.database + '.users').onUpdate('Cascade').onDelete('Cascade').comment('Se não for informado o destinatário, então todos receberão')
         table.integer('status_user').defaultTo(10).comment('Se informado, tem prioridade sobre DBuser.status')
         table.string('valid_from', 10).notNull().comment('Se informado, mostra title_future e .msg_future')
         table.string('valid_to', 10).comment('Tem prioridade sobre status=10. Se não informado, as mensagens aparecerão por tempo indeterminado e enquanto o status for = 10')
@@ -24,5 +24,5 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-    return knex.schema.dropTable(defaultApiSchema + '.sis_messages')
+    return knex.schema.dropTable(db.database+ '.sis_messages')
 };

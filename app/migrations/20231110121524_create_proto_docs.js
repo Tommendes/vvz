@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.proto_docs', table => {
+    return knex.schema.createTable(migrationClientSchema + '.proto_docs', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -13,7 +13,7 @@ exports.up = function(knex, Promise) {
         table.integer('id_protocolos',10).unsigned().notNull().comment('Registro do protocolos')
         table.specificType('tp_documento','text').notNull().comment('Tipo do documento')
         table.string('descricao',255).notNull().comment('Descrição do documento')
-        table.foreign('id_protocolos').references('id').inTable('protocolos').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_protocolos').references('id').inTable(migrationClientSchema + '.protocolos').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
 

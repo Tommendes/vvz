@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.pv_oat', table => {
+    return knex.schema.createTable(migrationClientSchema + '.pv_oat', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -23,9 +23,9 @@ exports.up = function(knex, Promise) {
         table.text('descricao').comment('Descrição dos serviços')
         table.decimal('valor_total',10,2).comment('Valor dos serviços')
         table.string('aceite_do_cliente',255).comment('Data do aceite')
-        table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('Cascade')
-        table.foreign('id_cadastro_endereco').references('id').inTable('cad_enderecos').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_tecnico').references('id').inTable('pv_tecnicos').onUpdate('Cascade').onDelete('NO ACTION')        
+        table.foreign('id_pv').references('id').inTable(migrationClientSchema + '.pv').onUpdate('Cascade').onDelete('Cascade')
+        table.foreign('id_cadastro_endereco').references('id').inTable(migrationClientSchema + '.cad_enderecos').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_tecnico').references('id').inTable(migrationClientSchema + '.pv_tecnicos').onUpdate('Cascade').onDelete('NO ACTION')        
     })
 };
 

@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.cadastros', table => {
+    return knex.schema.createTable(migrationClientSchema + '.cadastros', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -25,10 +25,10 @@ exports.up = function(knex, Promise) {
         table.string('telefone').comment('Telefone')
         table.string('email').comment('E-mail')
         table.string('observacao',2500).comment('Observações do cliente')
-        table.foreign('id_params_tipo').references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_params_atuacao').references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_params_sexo').references('id').inTable('vivazul_api.params').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_params_p_nascto').references('id').inTable('vivazul_api.params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_params_tipo').references('id').inTable(migrationClientSchema + '.local_params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_params_atuacao').references('id').inTable(migrationClientSchema + '.local_params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_params_sexo').references('id').inTable(db.database + '.params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_params_p_nascto').references('id').inTable(db.database + '.params').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
 

@@ -1,7 +1,7 @@
-const { defaultApiSchema } = require('../.env')
+const { db } = require('../.env')
 
 exports.up = function (knex) {
-    return knex.schema.createTable(defaultApiSchema + '.uploads', table => {
+    return knex.schema.createTable(db.database+ '.uploads', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -25,5 +25,5 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-    return knex.schema.dropTable(defaultApiSchema + '.uploads')
+    return knex.schema.dropTable(db.database+ '.uploads')
 };

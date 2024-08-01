@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.cad_dados_publicos', table => {
+    return knex.schema.createTable(migrationClientSchema + '.cad_dados_publicos', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -10,7 +10,7 @@ exports.up = function(knex, Promise) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
-        table.integer('id_cadastros').notNull().unsigned().references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+        table.integer('id_cadastros').notNull().unsigned().references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION')
         table.string('dados',2500).comment('Dados públicos do CNPJ do cliente')
     })
 };

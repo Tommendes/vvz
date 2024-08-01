@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema, db } = require('../.env')
 
 exports.up = function (knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.empresa', table => {
+    return knex.schema.createTable(migrationClientSchema + '.empresa', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -37,8 +37,8 @@ exports.up = function (knex, Promise) {
         table.string('email_rh', 255).comment('Email do RH')
         table.integer('id_cadas_resplegal', 10).unsigned().comment('Responsável legal perante a Receita Federal')
         table.integer('id_uploads_logo', 10).unsigned().comment('Logomarca da empresa')
-        table.foreign('id_cadas_resplegal').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_uploads_logo').references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('Cascade')
+        table.foreign('id_cadas_resplegal').references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_uploads_logo').references('id').inTable(db.database + '.uploads').onUpdate('Cascade').onDelete('Cascade')
     })
 };
 

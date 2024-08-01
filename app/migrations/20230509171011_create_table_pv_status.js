@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.pv_status', table => {
+    return knex.schema.createTable(migrationClientSchema + '.pv_status', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -12,7 +12,7 @@ exports.up = function(knex, Promise) {
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_pv',10).unsigned().comment('Documento pai')
         table.integer('status_pv',10).unsigned().notNull().comment('Status do PV')
-        table.foreign('id_pv').references('id').inTable('pv').onUpdate('Cascade').onDelete('Cascade')
+        table.foreign('id_pv').references('id').inTable(migrationClientSchema + '.pv').onUpdate('Cascade').onDelete('Cascade')
     })
 };
 

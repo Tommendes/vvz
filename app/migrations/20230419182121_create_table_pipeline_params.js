@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema, db } = require('../.env')
 
-exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.pipeline_params', table => {
+exports.up = function (knex, Promise) {
+    return knex.schema.createTable(migrationClientSchema + '.pipeline_params', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -10,7 +10,7 @@ exports.up = function(knex, Promise) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
-        table.string('descricao',50).comment('Descrição abreviada do parâmetro')
+        table.string('descricao', 50).comment('Descrição abreviada do parâmetro')
         table.boolean('bi_index').defaultTo(0).comment('Apresentação em BI')
         table.boolean('doc_venda').defaultTo(0).comment('É documento de venda (0: Não; 1: Proposta; 2: Pedido)')
         table.boolean('autom_nr').defaultTo(0).comment('Numeracao automatica')
@@ -19,13 +19,13 @@ exports.up = function(knex, Promise) {
         table.boolean('obrig_valor').defaultTo(0).comment('Obrigatorio declarar valor')
         table.boolean('reg_agente').defaultTo(0).comment('Obrigatório agente ')
         table.boolean('gera_pasta').defaultTo(0).comment('Gera pasta(0=Não, 1=Documento, 2=documento_baixa)')
-        table.integer('id_ftp').unsigned().references('id').inTable('vivazul_bceaa5.pipeline_ftp').onUpdate('Cascade').onDelete('Cascade').comment('Dados FTP')
+        table.integer('id_ftp').unsigned().references('id').inTable(migrationClientSchema + '.pipeline_ftp').onUpdate('Cascade').onDelete('Cascade').comment('Dados FTP')
         table.boolean('proposta_interna').defaultTo(0).comment('Utiliza o sistema de proposta interna')
-        table.integer('id_uploads_logo').unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('Cascade').comment('URL logomarca representada')
-        table.integer('id_uploads_rodape').unsigned().references('id').inTable('vivazul_api.uploads').onUpdate('Cascade').onDelete('Cascade').comment('Chave estrangeira com a tabela uploads')
+        table.integer('id_uploads_logo').unsigned().references('id').inTable(db.database + '.uploads').onUpdate('Cascade').onDelete('Cascade').comment('URL logomarca representada')
+        table.integer('id_uploads_rodape').unsigned().references('id').inTable(db.database + '.uploads').onUpdate('Cascade').onDelete('Cascade').comment('Chave estrangeira com a tabela uploads')
     })
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function (knex, Promise) {
     return knex.schema.dropTable('vivazul_bceaa5.pipeline_params')
 };

@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.cad_documentos', table => {
+    return knex.schema.createTable(migrationClientSchema + '.cad_documentos', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -16,8 +16,8 @@ exports.up = function(knex, Promise) {
         table.string('emissao').comment('Data de emissão')
         table.string('validade').comment('Data de validade')
         table.string('observacao').comment('Observações do documento')
-        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_params_tipo').references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_cadastros').references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_params_tipo').references('id').inTable(migrationClientSchema + '.local_params').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
 

@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.cad_contatos', table => {
+    return knex.schema.createTable(migrationClientSchema + '.cad_contatos', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -16,8 +16,8 @@ exports.up = function(knex, Promise) {
         table.string('departamento').comment('Departamento')
         table.string('meio').notNull().comment('Meio de contato (P.Ex.: nr do telefone ou email)')
         table.string('observacao').comment('Observações do endereço')
-        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_params_tipo').references('id').inTable('local_params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_cadastros').references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_params_tipo').references('id').inTable(migrationClientSchema + '.local_params').onUpdate('Cascade').onDelete('NO ACTION')
     })
 };
 

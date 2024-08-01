@@ -1,4 +1,4 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 /**
  * @param { import("knex").Knex } knex
@@ -6,7 +6,7 @@ const { defaultClientSchema } = require('../.env')
  * @returns 
  */
 exports.up = function (knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.long_params', table => {
+    return knex.schema.createTable(migrationClientSchema + '.long_params', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')

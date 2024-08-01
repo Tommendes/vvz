@@ -1,11 +1,11 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-    return knex.schema.createTable(defaultClientSchema + '.com_propostas', table => {
+    return knex.schema.createTable(migrationClientSchema + '.com_propostas', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -15,8 +15,8 @@ exports.up = function (knex) {
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
 
-        table.integer('id_pipeline').notNull().unsigned().references('id').inTable('pipeline').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela pipeline')
-        table.integer('id_pv').unsigned().references('id').inTable('pv').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela pv')
+        table.integer('id_pipeline').notNull().unsigned().references('id').inTable(migrationClientSchema + '.pipeline').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela pipeline')
+        table.integer('id_pv').unsigned().references('id').inTable(migrationClientSchema + '.pv').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela pv')
         table.string('pessoa_contato').notNull().comment('Pessoa de contato')
         table.string('telefone_contato').notNull().comment('Telefone de contato')
         table.string('email_contato').notNull().comment('E-mail de contato')

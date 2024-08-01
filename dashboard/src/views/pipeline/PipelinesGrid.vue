@@ -192,11 +192,8 @@ const loadLazyData = async () => {
             sumRecords.value = axiosRes.data.sumRecords;
             const quant = totalRecords.value;
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
-            rowsPerPageOptions.value.forEach(element => {
-                if (element > quant) rowsPerPageOptions.value.pop()
-            });
-            rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
+            rowsPerPageOptions.value.push(quant);
             gridData.value.forEach((element) => {
                 // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                 const documento = element.documento;

@@ -1,4 +1,4 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 /**
  * @param { import("knex").Knex } knex
@@ -6,7 +6,7 @@ const { defaultClientSchema } = require('../.env')
  */
 exports.up = function(knex, Promise) {
     // Registo das contas bancárias
-    return knex.schema.createTable(defaultClientSchema + '.fin_contas', table => {
+    return knex.schema.createTable(migrationClientSchema + '.fin_contas', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -15,8 +15,8 @@ exports.up = function(knex, Promise) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')        
-        table.integer('id_empresa').notNull().unsigned().references('id').inTable('empresa').onUpdate('Cascade').onDelete('NO ACTION').comment('Empresa proprietária da conta')
-        table.integer('id_fin_cad_bancos').notNull().unsigned().references('id').inTable('fin_cad_bancos').onUpdate('Cascade').onDelete('NO ACTION').comment('Banco relacionado')
+        table.integer('id_empresa').notNull().unsigned().references('id').inTable(migrationClientSchema + '.empresa').onUpdate('Cascade').onDelete('NO ACTION').comment('Empresa proprietária da conta')
+        table.integer('id_fin_cad_bancos').notNull().unsigned().references('id').inTable(migrationClientSchema + '.fin_cad_bancos').onUpdate('Cascade').onDelete('NO ACTION').comment('Banco relacionado')
         table.string('agencia').comment('Agência')
         table.string('agencia_dv').comment('Dígito verificador da agência')
         table.string('conta').comment('Conta')

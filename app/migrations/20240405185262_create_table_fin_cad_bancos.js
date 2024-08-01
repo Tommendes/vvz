@@ -1,4 +1,4 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 /**
  * @param { import("knex").Knex } knex
@@ -6,7 +6,7 @@ const { defaultClientSchema } = require('../.env')
  */
 exports.up = function(knex, Promise) {
     // Registo das contas bancárias
-    return knex.schema.createTable(defaultClientSchema + '.fin_cad_bancos', table => {
+    return knex.schema.createTable(migrationClientSchema + '.fin_cad_bancos', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')

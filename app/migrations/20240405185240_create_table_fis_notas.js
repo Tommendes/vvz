@@ -1,11 +1,11 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.fis_notas', table => {
+    return knex.schema.createTable(migrationClientSchema + '.fis_notas', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -20,8 +20,8 @@ exports.up = function(knex, Promise) {
         table.string('chave').comment('Chave de acesso')
         table.string('data_emissao').comment('Data de emissão')
         table.string('data_e_s').comment('Data de entrada/saída')
-        table.integer('id_empresa').notNull().unsigned().references('id').inTable('empresa').onUpdate('Cascade').onDelete('NO ACTION').comment('Empresa proprietária da nota')
-        table.integer('id_cadastros').notNull().unsigned().references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Fornecedor relacionado')
+        table.integer('id_empresa').notNull().unsigned().references('id').inTable(migrationClientSchema + '.empresa').onUpdate('Cascade').onDelete('NO ACTION').comment('Empresa proprietária da nota')
+        table.integer('id_cadastros').notNull().unsigned().references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Fornecedor relacionado')
         table.string('descricao').comment('Descrição da nota')
         table.double('valor_total', 11,2).notNull().defaultTo(0.00).comment('Valor total da nota')
         table.double('valor_desconto', 11,2).defaultTo(0.00).comment('Valor total de desconto')

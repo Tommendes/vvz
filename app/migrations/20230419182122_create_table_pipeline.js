@@ -1,7 +1,7 @@
-const { defaultClientSchema } = require('../.env')
+const { migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable(defaultClientSchema + '.pipeline', table => {
+    return knex.schema.createTable(migrationClientSchema + '.pipeline', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -24,8 +24,8 @@ exports.up = function(knex, Promise) {
         table.decimal('valor_representacao',10,2).defaultTo(0).comment('Valor base de comissionamento da representação ')
         table.decimal('perc_represent',10,2).defaultTo(0).comment('Percentual de comissão da representação')
         table.decimal('valor_agente',10,2).defaultTo(0).comment('Valor base de comissionamento dos agentes')
-        table.foreign('id_pipeline_params').references('id').inTable('pipeline_params').onUpdate('Cascade').onDelete('NO ACTION')
-        table.foreign('id_cadastros').references('id').inTable('cadastros').onUpdate('Cascade').onDelete('NO ACTION')       
+        table.foreign('id_pipeline_params').references('id').inTable(migrationClientSchema + '.pipeline_params').onUpdate('Cascade').onDelete('NO ACTION')
+        table.foreign('id_cadastros').references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION')       
     })
 };
 
