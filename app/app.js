@@ -1,4 +1,5 @@
 const express = require('express')
+const { appName } = require("../config/params")
 const cors = require('cors')
 const app = express()
 const consign = require('consign')

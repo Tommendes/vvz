@@ -1,13 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import {
-    appName,
-    STATUS_WAITING,
-    STATUS_SUSPENDED_BY_TKN
-    // STATUS_INACTIVE, STATUS_SUSPENDED, STATUS_ACTIVE,
-    // STATUS_PASS_EXPIRED, STATUS_DELETE, MINIMUM_KEYS_BEFORE_CHANGE,
-    // TOKEN_VALIDE_MINUTES
-} from '@/global';
+import { appName, STATUS_WAITING, STATUS_SUSPENDED_BY_TKN } from '@/global';
 import { defaultSuccess, defaultError } from '@/toast';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
