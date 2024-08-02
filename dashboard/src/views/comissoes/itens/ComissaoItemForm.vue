@@ -8,6 +8,7 @@ const confirm = useConfirm();
 import moment from 'moment';
 import { useRoute } from 'vue-router';
 const route = useRoute();
+import { formatCurrency } from '@/global';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
