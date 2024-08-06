@@ -39,11 +39,6 @@ const setMenuByUser = async () => {
         if (uProf.value.at >= 1) itemMenu.items.push({ label: 'Técnicos', icon: 'fa-solid fa-cog', to: `/${uProf.value.schema_description}/tecnicos-pv` });
         model.value.push(itemMenu);
     }
-    if (uProf.value.financeiro >= 1) {
-        const itemMenu = { label: 'Financeiro', items: [] };
-        if (uProf.value.financeiro >= 1) itemMenu.items.push({ label: 'Movimentação Financeira', icon: 'fa-solid fa-money-bill', to: `/${uProf.value.schema_description}/registros` });
-        model.value.push(itemMenu);
-    }
     if (uProf.value.financeiro >= 1 || uProf.value.comissoes >= 1) {
         // if (uProf.value.admin >= 2) {
         const itemMenu = { label: 'Comissionamento', items: [] };
@@ -52,9 +47,14 @@ const setMenuByUser = async () => {
         if (uProf.value.agente_v >= 1) itemMenu.items.push({ label: 'Minhas Comissões', icon: 'fa-solid fa-hand-holding-dollar', to: `/${uProf.value.schema_description}/comissoes-agente` });
         model.value.push(itemMenu);
     }
+    if (uProf.value.fiscal >= 1) {
+        const itemMenu = { label: 'Fiscal', items: [] };
+        if (uProf.value.fiscal >= 1) itemMenu.items.push({ label: 'Notas Fiscais', icon: 'fa-solid fa-money-bill', to: `/${uProf.value.schema_description}/notas-fiscais` });
+        model.value.push(itemMenu);
+    }
     if (uProf.value.gestor >= 1) {
         const itemMenu = { label: 'Gestão', items: [] };
-        itemMenu.items.push({ label: 'Empresa', icon: 'fa-solid fa-building', to: `/${uProf.value.schema_description}/empresa` });
+        itemMenu.items.push({ label: 'Empresa', icon: 'fa-solid fa-building', to: `/${uProf.value.schema_description}/empresas` });
         itemMenu.items.push({ label: 'Usuários', icon: 'fa-solid fa-users', to: `/${uProf.value.schema_description}/usuarios` });
         itemMenu.items.push({ label: 'Eventos do sistema', icon: 'fa-solid fa-clock', to: `/${uProf.value.schema_description}/eventos` });
         model.value.push(itemMenu);

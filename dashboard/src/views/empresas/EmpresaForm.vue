@@ -71,7 +71,7 @@ const props = defineProps({
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/empresa`);
+const urlBase = ref(`${baseApiUrl}/empresas`);
 // Carragamento de dados do form
 const loadData = async () => {
     if (route.params.id || itemData.value.id) {
@@ -92,7 +92,7 @@ const loadData = async () => {
                 loading.value.form = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${uProf.value.schema_description}/empresa` });
+                router.push({ path: `/${uProf.value.schema_description}/empresas` });
             }
         });
     } else loading.value.form = false;
@@ -337,7 +337,7 @@ const onImageRightClick = (event) => {
     <Breadcrumb
         v-if="mode != 'new'"
         :items="[
-            { label: 'Todas as Empresas', to: `/${uProf.schema_description}/empresa` },
+            { label: 'Todas as Empresas', to: `/${uProf.schema_description}/empresas` },
             { label: itemData.razaosocial + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />

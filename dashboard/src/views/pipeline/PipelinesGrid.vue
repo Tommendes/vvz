@@ -194,6 +194,13 @@ const loadLazyData = async () => {
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
             rowsPerPageOptions.value.push(quant);
+            
+            // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
+            rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
+            rowsPerPageOptions.value.push(quant);
+            // TODO: Remova todos os valores duplicados de rowsPerPageOptions
+            rowsPerPageOptions.value = [...new Set(rowsPerPageOptions.value)];
+
             gridData.value.forEach((element) => {
                 // if (element.tipo_doc) element.tipo_doc = element.tipo_doc.replaceAll('_', ' ');
                 const documento = element.documento;
@@ -411,8 +418,6 @@ onMounted(async () => {
     }
     router.replace({ query: {} });
     await mountUrlFilters();
-    // if (load) { await mountUrlFilters(); }
-    // else { await loadLazyData(); }
 });
 const customFilterOptions = ref({ filterclear: false });
 </script>
@@ -432,7 +437,7 @@ const customFilterOptions = ref({ filterclear: false });
             <div class="card">
                 <DataTable ref="dt" :value="gridData" lazy paginator :rows="gridData.length" dataKey="id" :rowHover="true"
                     v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
-                    responsiveLayout="scroll" :totalRecords="totalRecords" :rowsPerPageOptions="rowsPerPageOptions"
+                    responsiveLayout="scroll" :totalRecords="totalRecords" :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
                     @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
                     :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable

@@ -535,11 +535,11 @@ module.exports = app => {
     /**
      * Rota de empresa
     */
-    app.route('/empresa')
+    app.route('/empresas')
         .all(app.config.passport.authenticate())
         .post(app.api.empresa.save)
         .get(app.api.empresa.get)
-    app.route('/empresa/:id')
+    app.route('/empresas/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.empresa.save)
         .get(app.api.empresa.getById)

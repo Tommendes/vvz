@@ -80,10 +80,11 @@ export const useUserStore = defineStore('users', {
             const url = `${baseApiAuthUrl}/validateToken`;
             if (userData && userData.ip) userData.ipSignin = userData.ip;
             try {
-                const validation = await interceptor.post(url, userData)
-                console.log('validation', validation);
+                const validation = await interceptor.post(url, userData)                
                 this.isTokenValid = validation.data;
                 if (this.isTokenValid) {
+                    const profile = await this.getProfile(userData.token);
+                    if (profile.admin) console.log('validation (only for dev)*', validation);
                     this.user = userData;
                     interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
                     this.getLocation();

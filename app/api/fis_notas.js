@@ -16,6 +16,7 @@ module.exports = app => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let body = { ...req.body }
+        delete body.id
         body.id = req.params.id || undefined
         try {
             // Alçada do usuário
@@ -26,28 +27,61 @@ module.exports = app => {
             return res.status(401).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+
+        // TODO: alterar entre , e . nos campos a seguir: valor_total, valor_desconto, valor_liquido, valor_icms, valor_ipi, valor_pis, valor_cofins, valor_iss, valor_ir, valor_csll, valor_inss, valor_outros, valor_servicos, valor_produtos, valor_frete, valor_seguro, valor_despesas
+        if (body.valor_total) body.valor_total = body.valor_total.replace(",", ".");
+        if (body.valor_desconto) body.valor_desconto = body.valor_desconto.replace(",", ".");
+        if (body.valor_liquido) body.valor_liquido = body.valor_liquido.replace(",", ".");
+        if (body.valor_icms) body.valor_icms = body.valor_icms.replace(",", ".");
+        if (body.valor_ipi) body.valor_ipi = body.valor_ipi.replace(",", ".");
+        if (body.valor_pis) body.valor_pis = body.valor_pis.replace(",", ".");
+        if (body.valor_cofins) body.valor_cofins = body.valor_cofins.replace(",", ".");
+        if (body.valor_iss) body.valor_iss = body.valor_iss.replace(",", ".");
+        if (body.valor_ir) body.valor_ir = body.valor_ir.replace(",", ".");
+        if (body.valor_csll) body.valor_csll = body.valor_csll.replace(",", ".");
+        if (body.valor_inss) body.valor_inss = body.valor_inss.replace(",", ".");
+        if (body.valor_outros) body.valor_outros = body.valor_outros.replace(",", ".");
+        if (body.valor_servicos) body.valor_servicos = body.valor_servicos.replace(",", ".");
+        if (body.valor_produtos) body.valor_produtos = body.valor_produtos.replace(",", ".");
+        if (body.valor_frete) body.valor_frete = body.valor_frete.replace(",", ".");
+        if (body.valor_seguro) body.valor_seguro = body.valor_seguro.replace(",", ".");
+        if (body.valor_despesas) body.valor_despesas = body.valor_despesas.replace(",", ".");
+
         try {
             existsOrError(body.numero, 'Número da nota não informado')
             existsOrError(body.serie, 'Série da nota não informada')
             existsOrError(body.id_empresa, 'Empresa destinatária da nota não informada')
-            existsOrError(body.id_cadastros, 'Fornecedor não informado')
+            const empresa = await app.db(`${dbPrefix}_${uParams.schema_name}.empresa`).where({ id: body.id_empresa }).first()
+            existsOrError(empresa, 'Empresa não encontrada')
+            existsOrError(body.id_fornecedor, 'Fornecedor não informado')
+            const fornecedor = await app.db(`${dbPrefix}_${uParams.schema_name}.cadastros`).where({ id: body.id_fornecedor }).first()
+            existsOrError(fornecedor, 'Fornecedor não encontrado')
             existsOrError(body.valor_total, 'Valor total da nota não informado')
+            body.valor_total = Number(body.valor_total).toFixed(2)
+            existsOrError(body.data_emissao, 'Data de emissão da nota não informada')
+            // TODO: Validar se a data de emissão é uma data válida em EN
+            if (!moment(body.data_emissao, 'YYYY-MM-DD', true).isValid()) throw 'Data de emissão inválida'
+            // TODO: Validar se a data de emissão é menor ou igual a data atual
+            if (moment(body.data_emissao).isAfter(new Date())) throw 'Data de emissão não pode ser maior que a data atual'
+            existsOrError(body.mov_e_s, 'Movimento de entrada/saída não informado')
+            const uniqueNFFornecedor = await app.db(tabelaDomain).where({ numero: body.numero, serie: body.serie, id_fornecedor: body.id_fornecedor, status: STATUS_ACTIVE }).first()
+            if (uniqueNFFornecedor && uniqueNFFornecedor.id != body.id) throw 'Já existe uma nota fiscal com o mesmo número e série para o fornecedor'
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error)
         }
 
-        delete body.nome_fornecedor;
-        delete cnpj_cpf_fornecedor;
-        delete empresar;
-        delete cpf_cnpj_empresa;
+        delete body.fornecedor;
+        delete body.cpf_cnpj_fornecedor;
+        delete body.empresa;
+        delete body.cpf_cnpj_empresa;
 
         let last = {}
-        if (body.id) last = await app.db(tabelaDomain).where({ id: body.id }).first()
+        if (body.id) last = await app.db(tabelaDomain).where({ id: body.id, status: STATUS_ACTIVE }).first()
 
         if (body.id) {
             try {
-                existsOrError(last, `${tabelaAlias} (${body.id}) não encontrada`)
+                existsOrError(last, `${tabelaAlias} ${body.numero} série ${body.serie} não localizada`)
             } catch (error) {
                 return res.status(400).send(error)
             }
@@ -129,20 +163,120 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaDomainCadastros = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const tabelaDomainEmpresa = `${dbPrefix}_${uParams.schema_name}.empresa`
-        let totalRecords = await app.db({ tbl1: tabelaDomain })
-            .countDistinct('tbl1.id as count').first()
-            .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_cadastros')
-            .join({ tbl3: tabelaDomainEmpresa }, 'tbl3.id', 'tbl1.id_empresa')
-            .where({ 'tbl1.status': STATUS_ACTIVE })
 
+        let queryes = undefined
+        let query = undefined
+        let page = 0
+        let rows = 10
+        let sortField = app.db.raw('tbl1.data_emissao')
+        let sortOrder = 'desc'
         const ret = app.db({ tbl1: tabelaDomain })
-            .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_cadastros')
+        if (req.query) {
+            queryes = req.query
+            query = ''
+            for (const key in queryes) {
+                let operator = queryes[key].split(':')[0]
+                let value = queryes[key].split(':')[1]
+                if (key.split(':')[0] == 'field') {
+                    let queryField = key.split(':')[1]
+                    if (['data_emissao'].includes(queryField)) {
+                        const fields = [queryField]
+                        value = typeof queryes[key] === 'object' ? queryes[key][0].split(':')[1].split(',') : queryes[key].split(':')[1].split(',')
+                        let valueI = moment(value[0]);
+                        let valueF = moment(value[1]);
+
+                        if (valueI.isValid()) valueI = valueI.format('YYYY-MM-DD')
+                        if (valueF.isValid()) valueF = valueF.format('YYYY-MM-DD')
+                        else valueF = valueI
+
+                        switch (operator) {
+                            case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
+                                break;
+                            case 'dateBefore': operator = `< "${valueI}"`
+                                break;
+                            case 'dateAfter': operator = `> "${valueF}"`
+                                break;
+                            default: operator = `between "${valueI}" and "${valueF}"`
+                                break;
+                        }
+                        query += `${queryField} ${operator} AND `
+                    }
+                    else if (['empresa', 'fornecedor'].includes(queryField)) {
+                        const fields = [queryField]
+                        if ([`cpf_cnpj_${queryField}`].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'endsWith': operator = `like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+                        query += '('
+                        fields.forEach(element => {
+                            if (['empresa', 'fornecedor'].includes(element)) element = 'id_' + element
+                            query += `tbl1.${element} ${operator} or `
+                        });
+                        query = query.slice(0, -3).trim()
+                        query += ') AND '
+                    } else {
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'endsWith': operator = `like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+                        query += `${queryField} ${operator} AND `
+                    }
+                } else if (key.split(':')[0] == 'params') {
+                    switch (key.split(':')[1]) {
+                        case 'page': page = Number(queryes[key]);
+                            break;
+                        case 'rows': rows = Number(queryes[key]);
+                            break;
+                    }
+                } else if (key.split(':')[0] == 'sort') {
+                    sortField = key.split(':')[1].split('=')[0]
+                    sortOrder = queryes[key]
+                }
+            }
+            query = query.slice(0, -5).trim()
+        }
+
+        let totalRecords = await app.db({ tbl1: tabelaDomain })
+            .countDistinct('tbl1.id as count')
+            .first()
+            .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_fornecedor')
             .join({ tbl3: tabelaDomainEmpresa }, 'tbl3.id', 'tbl1.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
-            .orderBy('tbl1.id', 'desc')
+            .whereRaw(query ? query : '1=1')
+
+        ret.select(app.db.raw(`tbl1.*`), 'tbl2.nome as fornecedor', 'tbl2.cpf_cnpj as cpf_cnpj_fornecedor', 'tbl3.razaosocial as empresa', 'tbl3.cpf_cnpj_empresa')
+            .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_fornecedor')
+            .join({ tbl3: tabelaDomainEmpresa }, 'tbl3.id', 'tbl1.id_empresa')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
+            .orderBy(app.db.raw(sortField), sortOrder)
+            .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
+            .limit(rows).offset((page + 1) * rows - rows)
 
         ret.then(body => {
-            return res.json({ data: body, totalRecords: totalRecords.count })
+            const length = body.length
+            return res.json({ data: body, totalRecords: totalRecords.count || length })
         })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -165,8 +299,8 @@ module.exports = app => {
         const tabelaDomainCadastros = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const tabelaDomainEmpresa = `${dbPrefix}_${uParams.schema_name}.empresa`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*`), 'tbl2.nome as nome_fornecedor', 'tbl2.cnpj_cpf as cnpj_cpf_fornecedor', 'tbl3.razaosocial as empresa', 'tbl3.cpf_cnpj_empresa')
-            .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_cadastros')
+            .select(app.db.raw(`tbl1.*`), 'tbl2.nome as fornecedor', 'tbl2.cpf_cnpj as cpf_cnpj_fornecedor', 'tbl3.razaosocial as empresa', 'tbl3.cpf_cnpj_empresa')
+            .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_fornecedor')
             .join({ tbl3: tabelaDomainEmpresa }, 'tbl3.id', 'tbl1.id_empresa')
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(async (body) => {
@@ -188,6 +322,9 @@ module.exports = app => {
                 body.valor_frete = parseFloat(body.valor_frete).toFixed(2).replace('.', ',')
                 body.valor_seguro = parseFloat(body.valor_seguro).toFixed(2).replace('.', ',')
                 body.valor_despesas = parseFloat(body.valor_despesas).toFixed(2).replace('.', ',')
+                // body.data_emissao = moment(body.data_emissao).format('DD/MM/YYYY')
+                body.fornecedor = `${body.fornecedor} - ${body.cpf_cnpj_fornecedor}`
+                body.empresa = `${body.empresa} - ${body.cpf_cnpj_empresa}`
                 return res.json(body)
             })
             .catch(error => {
@@ -210,9 +347,10 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaFinLancamentosDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFinLancamentos}`
         // Verificar se existe lançamento financeiro para a nota fiscal
+        let last = {}
         try {
             const lancamento = await app.db(tabelaFinLancamentosDomain).where({ id_notas: req.params.id, status: STATUS_ACTIVE }).first()
-            const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
+            last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
             notExistsOrError(lancamento, `Não é possível excluir. Existe lançamento financeiro para a nota fiscal ${last.numero}`)
         } catch (error) {
             return res.status(400).send(error)
@@ -250,9 +388,41 @@ module.exports = app => {
         }
     }
 
+    // Retorna uma lista contendo os dados [id, nome e cpf_cnpj] de todos os fornecedores na tabela cadastros que possuem correspondência na tabela fis_notas
+    const getFornecedores = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.fiscal >= 1, `${noAccessMsg} "Exibição de ${tabelaAliasPl}"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaDomainCadastros = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        const ret = app.db({ tbl1: tabelaDomain })
+            .select(app.db.raw(`distinct tbl1.id_fornecedor as id, tbl2.nome, tbl2.cpf_cnpj`))
+            .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_fornecedor')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .orderBy('tbl2.nome', 'asc')
+
+        ret.then(body => {
+            return res.json(body)
+        })
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                return res.status(401).send(error)
+            })
+    }
+
     const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
+            case 'gfr':
+                getFornecedores(req, res)
+                break;
             // case 'gbi':
             //     getBIData(req, res)
             //     break;

@@ -21,7 +21,7 @@ const route = useRoute();
 const filters = ref(null);
 const gridData = ref(null);
 const loading = ref(true);
-const urlBase = ref(`${baseApiUrl}/empresa`);
+const urlBase = ref(`${baseApiUrl}/empresas`);
 // Itens do grid
 const listaNomes = ref([
     { field: 'razaosocial', label: 'Razão Social', minWidth: '30rem' },
@@ -115,7 +115,7 @@ onMounted(() => {
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
                     <Button type="button" icon="fa-solid fa-bars" rounded
-                        @click="router.push({ path: `/${uProf.schema_description}/empresa/${data.id}` })"
+                        @click="router.push({ path: `/${uProf.schema_description}/empresas/${data.id}` })"
                         aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                 </template>
             </Column>

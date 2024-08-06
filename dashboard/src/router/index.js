@@ -96,6 +96,12 @@ const routes = [
                 name: 'tecnico-pv',
                 component: () => import('@/views/tecnicos/TecnicoForm.vue')
             },
+            // Seção Fiscal
+            {
+                path: '/:client/notas-fiscais',
+                name: 'notas-fiscais',
+                component: () => import('@/views/fisNotas/FisNotasGrid.vue')
+            },
             // Seção Financeiro
             {
                 path: '/:client/financeiro',
@@ -107,6 +113,12 @@ const routes = [
                 name: 'financeiro-one',
                 component: () => import('@/views/financeiro/FinanceiroForm.vue')
             },
+            {
+                path: '/:client/fin-retencoes',
+                name: 'fin-retencoes',
+                component: () => import('@/views/fin_retencoes/RetencoesGrid.vue')
+            },
+            // Seção Comissionamento
             {
                 path: '/:client/comiss-agentes',
                 name: 'comiss-agentes',
@@ -123,25 +135,20 @@ const routes = [
                 component: () => import('@/views/comissoes/ComissoesPanelAgente.vue')
             },
             {
-                path: '/:client/fin-retencoes',
-                name: 'fin-retencoes',
-                component: () => import('@/views/fin_retencoes/RetencoesGrid.vue')
-            },
-            {
                 path: '/:client/retencao/:id',
                 name: 'fin-retencao',
                 component: () => import('@/views/fin_retencoes/RetencaoForm.vue')
             },
             // Seção Gestão
             {
-                path: '/:client/empresa',
+                path: '/:client/empresas',
                 name: 'empresa',
-                component: () => import('@/views/empresa/EmpresasGrid.vue')
+                component: () => import('@/views/empresas/EmpresasGrid.vue')
             },
             {
-                path: '/:client/empresa/:id',
+                path: '/:client/empresas/:id',
                 name: 'empresa-one',
-                component: () => import('@/views/empresa/EmpresaForm.vue')
+                component: () => import('@/views/empresas/EmpresaForm.vue')
             },
             {
                 path: '/:client/usuarios',
