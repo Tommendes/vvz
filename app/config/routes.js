@@ -1,9 +1,9 @@
 const gestor = require('./gestor')
-const { envLocalhost } = require('../.env')
+const { env } = require('../.env')
 
 module.exports = app => {
     // TODO: Exibir todas as rotas acessadas e imprimir no console
-    if (envLocalhost)
+    if (env && env === 'development')
         app.use((req, res, next) => {
             console.log(`Rota acessada: ${req.method}${req.url}`)
             next()
@@ -12,7 +12,7 @@ module.exports = app => {
     app.post('/signup', app.api.user.signup)
     app.post('/signin', app.api.auth.signin)
     app.post('/validateToken', app.api.auth.validateToken)
-    app.post('/gth', app.api.auth.getAuth)
+    app.route('/gth').all(app.config.passport.authenticate()).post(app.api.auth.getAuth)
     app.get('/getIP', (req, res) => {
         const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         res.json({ ip: ipAddress });
@@ -532,7 +532,6 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .get(app.api.pv_oat_status.getByFunction)
 
-
     /**
      * Rota de empresa
     */
@@ -546,21 +545,6 @@ module.exports = app => {
         .get(app.api.empresa.getById)
         .delete(app.api.empresa.remove)
 
-
-    /**
-    * Rota de fin_cc
-    */
-    app.route('/fin-cc')
-        .all(app.config.passport.authenticate())
-        .post(app.api.fin_cc.save)
-        .get(app.api.fin_cc.get)
-    app.route('/fin-cc/:id')
-        .all(app.config.passport.authenticate())
-        .put(app.api.fin_cc.save)
-        .get(app.api.fin_cc.getById)
-        .delete(app.api.fin_cc.remove)
-
-
     /**
     * Rota de fin_lancamentos
     */
@@ -573,7 +557,6 @@ module.exports = app => {
         .put(app.api.fin_lancamentos.save)
         .get(app.api.fin_lancamentos.getById)
         .delete(app.api.fin_lancamentos.remove)
-
 
     /**
     * Rota de fin_retencoes
@@ -589,10 +572,28 @@ module.exports = app => {
         .delete(app.api.fin_retencoes.remove)
 
     /**
+     * Rota para fiscal
+     */
+    app.route('/fiscal-notas')
+        .all(app.config.passport.authenticate())
+        .post(app.api.fis_notas.save)
+        .get(app.api.fis_notas.get)
+    app.route('/fiscal-notas/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.fis_notas.save)
+        .get(app.api.fis_notas.getById)
+        .delete(app.api.fis_notas.remove)
+    app.route('/fiscal-notas/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.fis_notas.getByFunction)
+        .post(app.api.fis_notas.getByFunction)
+
+    /**
      * Rota para impressão
      */
     app.route('/printing/:func')
         .all(app.config.passport.authenticate())
         .post(app.api.printing.getByFunction)
+
 
 }

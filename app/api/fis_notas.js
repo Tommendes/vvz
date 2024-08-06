@@ -129,7 +129,7 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaDomainCadastros = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const tabelaDomainEmpresa = `${dbPrefix}_${uParams.schema_name}.empresa`
-        let totalRecords = idPipeline ? 1 : await app.db({ tbl1: tabelaDomain })
+        let totalRecords = await app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
             .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_cadastros')
             .join({ tbl3: tabelaDomainEmpresa }, 'tbl3.id', 'tbl1.id_empresa')

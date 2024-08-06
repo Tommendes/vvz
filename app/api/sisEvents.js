@@ -2,9 +2,7 @@ const axios = require('axios')
 
 module.exports = app => {
     const { isMatchOrError, noAccessMsg } = app.api.validation
-    const STATUS_ACTIVE = 10
-    const STATUS_TRASH = 20
-    const { envLocalhost, dbPrefix } = require("../.env")
+    const { dbPrefix } = require("../.env")
     const tabelaSisEvents = `${dbPrefix}_api.sis_events`
     const tabelaAlias = 'Eventos do Sistema'
 
