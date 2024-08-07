@@ -49,7 +49,7 @@ const setMenuByUser = async () => {
     }
     if (uProf.value.fiscal >= 1) {
         const itemMenu = { label: 'Fiscal', items: [] };
-        if (uProf.value.fiscal >= 1) itemMenu.items.push({ label: 'Notas Fiscais', icon: 'fa-solid fa-money-bill', to: `/${uProf.value.schema_description}/notas-fiscais` });
+        if (uProf.value.fiscal >= 1) itemMenu.items.push({ label: 'Notas Fiscais', icon: 'fa-solid fa-file-lines', to: `/${uProf.value.schema_description}/notas-fiscais` });
         model.value.push(itemMenu);
     }
     if (uProf.value.gestor >= 1) {

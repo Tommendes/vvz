@@ -199,9 +199,7 @@ onBeforeMount(() => {
 });
 
 onMounted(async () => {
-    setTimeout(async () => {
-        await getLocalParams();
-    }, Math.random() * 1000 + 250);
+    await getLocalParams();
 });
 </script>
 
@@ -279,10 +277,10 @@ onMounted(async () => {
                             slotProps.data.agente_representante.label }}</div>
                     <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
                         formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalPendente)
-                    }}</div>
+                        }}</div>
                     <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
                         formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado)
-                    }}</div>
+                        }}</div>
                 </div>
             </template>
         </DataTable>
