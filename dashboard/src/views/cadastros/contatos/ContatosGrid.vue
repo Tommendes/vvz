@@ -37,10 +37,8 @@ const newItem = () => {
     };
 };
 // Carrega as operações básicas do formulário
-onBeforeMount(() => {
-    setTimeout(async () => {
-        await loadData();
-    }, Math.random() * 1000 + 250);
+onBeforeMount(async () => {
+    await loadData();
 });
 </script>
 
@@ -53,7 +51,8 @@ onBeforeMount(() => {
             </span>
         </div>
         <div class="flex-grow-0 flex align-items-center justify-content-center">
-            <Button type="button" class="h-full" icon="fa-solid fa-plus" label="Novo contato" outlined @click="newItem()" v-tooltip.top="'Clique para registrar uma nova comissão'" />
+            <Button type="button" class="h-full" icon="fa-solid fa-plus" label="Novo contato" outlined
+                @click="newItem()" v-tooltip.top="'Clique para registrar uma nova comissão'" />
         </div>
     </div>
     <ContatoForm v-if="mode == 'newItem'" @cancel="cancelNewItem()" @reload="loadData" :itemDataRoot="itemData" />

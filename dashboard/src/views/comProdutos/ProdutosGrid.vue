@@ -39,9 +39,11 @@ const scrollToTop = () => {
 };
 const urlBase = ref(`${baseApiUrl}/com-produtos`);
 
-onMounted(() => {
-    initFilters();
-    clearFilter();
+onBeforeMount(async () => {
+    await initFilters();
+});
+onMounted(async () => {
+    await clearFilter();
 });
 
 const dt = ref();
@@ -57,7 +59,7 @@ const listaNomes = ref([
     { field: 'descricao', label: 'Descrição', minWidth: '15rem' }
 ]);
 // Inicializa os filtros do grid
-const initFilters = () => {
+const initFilters = async () => {
     filters.value = {};
     listaNomes.value.forEach((element) => {
         filters.value = { ...filters.value, [element.field]: { value: '', matchMode: 'contains' } };
@@ -68,7 +70,7 @@ const filters = ref({});
 const lazyParams = ref({});
 const urlFilters = ref('');
 // Limpa os filtros do grid
-const clearFilter = () => {
+const clearFilter = async () => {
     loading.value = true;
     rowsPerPage.value = 10;
     initFilters();
@@ -80,50 +82,47 @@ const clearFilter = () => {
         filters: filters.value
     };
 
-    loadLazyData();
+    await loadLazyData();
 };
 
-const loadLazyData = () => {
+const loadLazyData = async () => {
     loading.value = true;
-
-    setTimeout(() => {
-        const url = `${urlBase.value}${urlFilters.value}`;
-        axios
-            .get(url)
-            .then((axiosRes) => {
-                gridData.value = axiosRes.data.data;
-                totalRecords.value = axiosRes.data.totalRecords;
-                gridData.value.forEach((element) => {
-                    // Exibe dado com máscara
-                    // Converte data en para pt
-                });
-                loading.value = false;
-            })
-            .catch((error) => {
-                const logTo = error;
-                try {
-                    defaultError(error.response.data);
-                } catch (error) {
-                    defaultError('Erro ao carregar dados!');
-                }
+    const url = `${urlBase.value}${urlFilters.value}`;
+    await axios
+        .get(url)
+        .then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            totalRecords.value = axiosRes.data.totalRecords;
+            gridData.value.forEach((element) => {
+                // Exibe dado com máscara
+                // Converte data en para pt
             });
-    }, Math.random() * 1000 + 250);
+            loading.value = false;
+        })
+        .catch((error) => {
+            const logTo = error;
+            try {
+                defaultError(error.response.data);
+            } catch (error) {
+                defaultError('Erro ao carregar dados!');
+            }
+        });
 };
-const onPage = (event) => {
+const onPage = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await loadLazyData();
 };
-const onSort = (event) => {
+const onSort = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await loadLazyData();
 };
-const onFilter = () => {
+const onFilter = async () => {
     lazyParams.value.filters = filters.value;
-    mountUrlFilters();
-    loadLazyData();
+    await mountUrlFilters();
+    await loadLazyData();
 };
 const mode = ref('grid');
-const mountUrlFilters = () => {
+const mountUrlFilters = async () => {
     let url = '?';
     Object.keys(filters.value).forEach((key) => {
         if (filters.value[key].value) {
@@ -149,37 +148,21 @@ const exportCSV = () => {
     });
     toExport.exportCSV();
 };
-watchEffect(() => {
-    mountUrlFilters();
-});
+// watchEffect(() => {
+//     mountUrlFilters();
+// });
 </script>
 
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Produtos', to: route.fullPath }]" />
     <div class="card">
         <ProdutoForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
-        <DataTable
-            style="font-size: 1rem"
-            :value="gridData"
-            lazy
-            paginator
-            :first="0"
-            v-model:filters="filters"
-            ref="dt"
-            dataKey="id"
-            :totalRecords="totalRecords"
-            :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
-            :loading="loading"
-            @page="onPage($event)"
-            @sort="onSort($event)"
-            @filter="onFilter($event)"
-            filterDisplay="row"
-            tableStyle="min-width: 75rem"
+        <DataTable style="font-size: 1rem" :value="gridData" lazy paginator :first="0" v-model:filters="filters"
+            ref="dt" dataKey="id" :totalRecords="totalRecords" :rows="rowsPerPage"
+            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]" :loading="loading" @page="onPage($event)"
+            @sort="onSort($event)" @filter="onFilter($event)" filterDisplay="row" tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
-            scrollable
-        >
+            :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable>
             <!-- scrollHeight="420px" -->
             <template #header>
                 <div class="flex justify-content-end gap-3">
@@ -195,61 +178,47 @@ watchEffect(() => {
                         :options="dropdownAtuacao"
                         @change="loadLazyData()"
                     /> -->
-                    <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="mode = 'new', scrollToTop() " />
+                    <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar"
+                        @click="exportCSV($event)" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
+                        @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
+                        @click="mode = 'new', scrollToTop()" />
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'"
+                    sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown
-                            :id="nome.field"
-                            optionLabel="label"
-                            optionValue="value"
-                            v-model="filterModel.value"
-                            :options="nome.list"
-                            @change="filterCallback()"
-                            :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
-                            placeholder="Pesquise..."
-                        />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value"
+                            :options="nome.list" @change="filterCallback()" :class="nome.class"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" placeholder="Pesquise..." />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar
-                            v-model="filterModel.value"
-                            dateFormat="dd/mm/yy"
-                            selectionMode="range"
-                            showButtonBar
-                            :numberOfMonths="2"
-                            placeholder="dd/mm/aaaa"
-                            mask="99/99/9999"
-                            @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
-                        />
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar
+                            :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                            class="p-column-filter" placeholder="Pesquise..."
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
                     </template>
                     <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]"
+                            :severity="getSeverity(data[nome.field])" />
                         <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                        <span v-else
+                            v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button
-                        type="button"
-                        icon="fa-solid fa-bars"
-                        rounded
+                    <Button type="button" icon="fa-solid fa-bars" rounded
                         @click="router.push({ path: `/${uProf.schema_description}/produto/${data.id}` })"
-                        aria-haspopup="true"
-                        v-tooltip.left="'Clique para mais opções'"
-                        aria-controls="overlay_menu"
-                        class="p-button-outlined"
-                    />
+                        aria-haspopup="true" v-tooltip.left="'Clique para mais opções'" aria-controls="overlay_menu"
+                        class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :popup="true" />
                 </template>
             </Column>

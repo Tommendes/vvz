@@ -247,17 +247,15 @@ const formIsValid = () => {
     // return validateDocumento();
 };
 // Recarregar dados do formulário
-const reload = () => {
+const reload = async () => {
     mode.value = 'view';
     errorMessages.value = {};
-    loadData();
+    await loadData();
     emit('cancel');
 };
 // Carregar dados do formulário
-onMounted(() => {
-    setTimeout(() => {
-        loadData();
-    }, Math.random() * 1000 + 250);
+onMounted(async () => {
+    await loadData();
 });
 // Observar alterações nos dados do formulário
 watchEffect(() => {
@@ -334,19 +332,18 @@ const onImageRightClick = (event) => {
 </script>
 
 <template>
-    <Breadcrumb
-        v-if="mode != 'new'"
-        :items="[
-            { label: 'Todas as Empresas', to: `/${uProf.schema_description}/empresas` },
-            { label: itemData.razaosocial + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
-        ]"
-    />
+    <Breadcrumb v-if="mode != 'new'" :items="[
+        { label: 'Todas as Empresas', to: `/${uProf.schema_description}/empresas` },
+        { label: itemData.razaosocial + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+    ]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
                 <div class="col-3">
                     <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                    <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultLogomarca.png'}`" width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                    <Image v-else
+                        :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultLogomarca.png'}`"
+                        width="250" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
                     <ContextMenu ref="menu" :model="items" />
                 </div>
                 <div class="col-9">
@@ -354,31 +351,41 @@ const onImageRightClick = (event) => {
                         <div class="col-12">
                             <label for="razaosocial">{{ labels.razaosocial }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.razaosocial" id="razaosocial" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.razaosocial">{{ errorMessages.razaosocial }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.razaosocial" id="razaosocial" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.razaosocial">{{
+                                errorMessages.razaosocial }}</small>
                         </div>
                         <div class="col-12 md:col-5">
                             <label for="fantasia">{{ labels.fantasia }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.fantasia" id="fantasia" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.fantasia"
+                                id="fantasia" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="cpf_cnpj_empresa">{{ labels.cpf_cnpj_empresa }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['###.###.###-##', '##.###.###/####-##']" v-model="itemData.cpf_cnpj_empresa" id="cpf_cnpj_empresa" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj_empresa">{{ errorMessages.cpf_cnpj_empresa }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
+                                data-maska="['###.###.###-##', '##.###.###/####-##']"
+                                v-model="itemData.cpf_cnpj_empresa" id="cpf_cnpj_empresa" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj_empresa">{{
+                                errorMessages.cpf_cnpj_empresa }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="cep">CEP</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cep" id="cep" type="text" @blur="buscarCEP" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cep"
+                                id="cep" type="text" @blur="buscarCEP" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep
+                                }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="nr">Número</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.nr">{{ errorMessages.nr }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nr" id="nr"
+                                type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.nr">{{ errorMessages.nr
+                                }}</small>
                         </div>
                     </div>
                 </div>
@@ -387,32 +394,38 @@ const onImageRightClick = (event) => {
                         <div class="col-12 md:col-2">
                             <label for="complnr">Complemento</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr"
+                                id="complnr" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="logradouro">Logradouro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.logradouro"
+                                id="logradouro" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="bairro">Bairro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.bairro"
+                                id="bairro" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="cidade">Cidade</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cidade"
+                                id="cidade" type="text" />
                         </div>
                         <div class="col-12 md:col-1">
                             <label for="uf">UF</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.uf" id="uf" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.uf" id="uf"
+                                type="text" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="ie">{{ labels.ie }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie" id="ie" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ie" id="ie"
+                                type="text" />
                         </div>
                         <!-- <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="ie_st">I.E. do Substituto Tributário</label>
@@ -422,7 +435,8 @@ const onImageRightClick = (event) => {
                         <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="im">Inscrição Municipal</label>
                             <Skeleton v-if="loading.form" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.im" id="im" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.im" id="im"
+                                type="text" />
                         </div>
                         <!-- <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
                             <label for="cnae">CNAE</label>
@@ -432,57 +446,77 @@ const onImageRightClick = (event) => {
                         <div class="col-12 md:col-2" v-if="registroTipo == 'pj'">
                             <label for="contato">Contato da Empresa</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato"
+                                id="contato" type="text" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="tel1">Telefone 1</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel1" id="tel1" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.tel1">{{ errorMessages.tel1 }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
+                                data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel1" id="tel1"
+                                type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.tel1">{{ errorMessages.tel1
+                                }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="tel2">Telefone 2</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel2" id="tel2" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.tel2">{{ errorMessages.tel2 }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
+                                data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.tel2" id="tel2"
+                                type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.tel2">{{ errorMessages.tel2
+                                }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="email">Email</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email"
+                                id="email" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email
+                                }}</small>
                         </div>
                         <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="email_at">Email da Assistência Técnica</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_at" id="email_at" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_at">{{ errorMessages.email_at }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_at"
+                                id="email_at" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_at">{{
+                                errorMessages.email_at }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="email_comercial">Email Comercial</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_comercial" id="email_comercial" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_comercial">{{ errorMessages.email_comercial }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.email_comercial" id="email_comercial" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_comercial">{{
+                                errorMessages.email_comercial }}</small>
                         </div>
                         <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="email_financeiro">Email Financeiro</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_financeiro" id="email_financeiro" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_financeiro">{{ errorMessages.email_financeiro }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.email_financeiro" id="email_financeiro" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_financeiro">{{
+                                errorMessages.email_financeiro }}</small>
                         </div>
                         <div class="col-12 md:col-3" v-if="registroTipo == 'pj'">
                             <label for="email_rh">Email do RH</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_rh" id="email_rh" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_rh">{{ errorMessages.email_rh }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_rh"
+                                id="email_rh" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_rh">{{
+                                errorMessages.email_rh }}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar"
+                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
+                            severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
+                            severity="danger" text raised @click="reload" />
                     </div>
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">

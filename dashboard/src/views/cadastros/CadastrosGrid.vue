@@ -107,23 +107,19 @@ const loadOptions = async () => {
 };
 const filtrarTiposCadastro = async () => {
     // Tipo de adastro
-    setTimeout(async () => {
-        await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
-            res.data.data.map((item) => {
-                dropdownTipoCadastro.value.push({ value: item.id, label: item.label });
-            });
+    await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownTipoCadastro.value.push({ value: item.id, label: item.label });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 const filtrarAtuacao = async () => {
     // Áreas de atuação
-    setTimeout(async () => {
-        await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
-            res.data.data.map((item) => {
-                dropdownAtuacao.value.push({ value: item.id, label: item.label });
-            });
+    await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownAtuacao.value.push({ value: item.id, label: item.label });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 // Limpa os filtros do grid
 const clearFilter = () => {

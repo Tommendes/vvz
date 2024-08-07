@@ -51,21 +51,19 @@ const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-        setTimeout(async () => {
-            await axios.get(url).then((res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    body.id = String(body.id);
-                    itemData.value = body;
-                    if (itemData.value.valid_from) itemData.value.valid_from = masks.value.date.masked(moment(itemData.value.valid_from).format('DD/MM/YYYY'));
-                    if (itemData.value.valid_to) itemData.value.valid_to = masks.value.date.masked(moment(itemData.value.valid_to).format('DD/MM/YYYY'));
-                    loading.value = false;
-                } else {
-                    defaultWarn('Registro não localizado');
-                    router.push({ path: `/${uProf.value.schema_description}/messages` });
-                }
-            });
-        }, Math.random() * 1000 + 250);
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                itemData.value = body;
+                if (itemData.value.valid_from) itemData.value.valid_from = masks.value.date.masked(moment(itemData.value.valid_from).format('DD/MM/YYYY'));
+                if (itemData.value.valid_to) itemData.value.valid_to = masks.value.date.masked(moment(itemData.value.valid_to).format('DD/MM/YYYY'));
+                loading.value = false;
+            } else {
+                defaultWarn('Registro não localizado');
+                router.push({ path: `/${uProf.value.schema_description}/messages` });
+            }
+        });
     } else loading.value = false;
 };
 // Salvar dados do formulário
@@ -223,13 +221,10 @@ watchEffect(() => {
 </script>
 
 <template>
-    <Breadcrumb
-        v-if="mode != 'new'"
-        :items="[
-            { label: 'Mensagens', to: `/${uProf.schema_description}/messages` },
-            { label: itemData.title + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
-        ]"
-    />
+    <Breadcrumb v-if="mode != 'new'" :items="[
+        { label: 'Mensagens', to: `/${uProf.schema_description}/messages` },
+        { label: itemData.title + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+    ]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -238,62 +233,84 @@ watchEffect(() => {
                         <div class="col-12 md:col-5">
                             <label for="id_user">Usuário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_user" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_user" :options="dropdownUsers" placeholder="Selecione..."> </Dropdown>
+                            <Dropdown v-else id="id_user" optionLabel="label" optionValue="value"
+                                :disabled="mode == 'view'" v-model="itemData.id_user" :options="dropdownUsers"
+                                placeholder="Selecione..."> </Dropdown>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="status_user">Status do Usuário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="status_user" :disabled="mode == 'view'" placeholder="Selecione o status" optionLabel="label" optionValue="value" v-model="itemData.status_user" :options="dropdownStatusUser" />
+                            <Dropdown v-else id="status_user" :disabled="mode == 'view'"
+                                placeholder="Selecione o status" optionLabel="label" optionValue="value"
+                                v-model="itemData.status_user" :options="dropdownStatusUser" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="valid_from">Válido de</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_from" id="valid_from" type="text" @input="validateDateFrom()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.valid_from">{{ errorMessages.valid_from }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
+                                data-maska="##/##/####" v-model="itemData.valid_from" id="valid_from" type="text"
+                                @input="validateDateFrom()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.valid_from">{{
+                                errorMessages.valid_from }}</small>
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="valid_to">Válido até</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.valid_to" id="valid_to" type="text" @input="validateDateTo()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.valid_to">{{ errorMessages.valid_to }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
+                                data-maska="##/##/####" v-model="itemData.valid_to" id="valid_to" type="text"
+                                @input="validateDateTo()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.valid_to">{{
+                                errorMessages.valid_to }}</small>
                         </div>
                         <div class="col-12 md:col-5">
                             <label for="title">Título da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title" :style="{ color: title_color }" id="title" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title"
+                                :style="{ color: title_color }" id="title" type="text" />
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="body_variant">Cor da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="body_variant" :disabled="mode == 'view'" placeholder="Selecione uma opção" optionLabel="label" optionValue="value" v-model="itemData.body_variant" :options="dropdownCorDaMensagem" />
+                            <Dropdown v-else id="body_variant" :disabled="mode == 'view'"
+                                placeholder="Selecione uma opção" optionLabel="label" optionValue="value"
+                                v-model="itemData.body_variant" :options="dropdownCorDaMensagem" />
                         </div>
                         <div class="col-12 md:col-4">
                             <label for="severity">Severidade da Mensagem</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="severity" :disabled="mode == 'view'" placeholder="Selecione uma opção" optionLabel="label" optionValue="value" v-model="itemData.severity" :options="dropdownSeveridade" />
+                            <Dropdown v-else id="severity" :disabled="mode == 'view'" placeholder="Selecione uma opção"
+                                optionLabel="label" optionValue="value" v-model="itemData.severity"
+                                :options="dropdownSeveridade" />
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.msg || ['edit', 'new'].includes(mode)">
                             <label for="msg">Mensagem</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg" id="msg"
+                                :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg" class="p-inputtext p-component p-filled"></p>
                         </div>
                         <div class="col-12 md:col-5" v-if="itemData.valid_to && !errorMessages.valid_to">
                             <label for="title_future">Título Futuro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.title_future" id="title_future" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.title_future" id="title_future" type="text" />
                         </div>
                         <div class="col-12 md:col-12" v-if="itemData.valid_to && !errorMessages.valid_to">
                             <label for="msg_future">Mensagem Futura</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future" id="msg_future" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.msg_future"
+                                id="msg_future" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                             <p v-else v-html="itemData.msg_future" class="p-inputtext p-component p-filled"></p>
                         </div>
                         <div class="col-12">
                             <div class="card flex justify-content-center flex-wrap gap-3">
-                                <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                                <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
-                                <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                                <Button type="button" v-if="mode == 'view'" label="Editar"
+                                    icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                                <Button type="submit" v-if="mode != 'view'" label="Salvar"
+                                    icon="fa-solid fa-floppy-disk" severity="success" text raised
+                                    :disabled="!isItemDataChanged() || !formIsValid()" />
+                                <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
+                                    severity="danger" text raised @click="reload" />
                             </div>
                         </div>
                     </div>

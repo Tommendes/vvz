@@ -43,7 +43,7 @@ onMounted(() => {
 
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
-const rowsPerPage = ref(10); // Quantidade de registros por página
+const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000, 9999999]); // Opções de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
 
@@ -70,7 +70,6 @@ const urlFilters = ref('');
 // Limpa os filtros do grid
 const clearFilter = async () => {
     loading.value = true;
-    rowsPerPage.value = 10;
     initFilters();
     lazyParams.value = {
         first: dt.value.first,
@@ -104,6 +103,16 @@ const loadLazyData = async () => {
         .then((axiosRes) => {
             gridData.value = axiosRes.data.data;
             totalRecords.value = axiosRes.data.totalRecords;
+            const quant = totalRecords.value;
+            // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
+            rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
+            rowsPerPageOptions.value.push(quant);
+            
+            // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
+            rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
+            rowsPerPageOptions.value.push(quant);
+            // TODO: Remova todos os valores duplicados de rowsPerPageOptions
+            rowsPerPageOptions.value = [...new Set(rowsPerPageOptions.value)];
             gridData.value.forEach((element) => {
                 element.evento_full = element.evento;
                 if (element.created_at) element.created_at = moment(element.created_at).format('DD/MM/YYYY H:mm:ss');
@@ -194,8 +203,8 @@ const showEvent = (evento) => {
     <Breadcrumb :items="[{ label: 'Todos os Eventos', to: `/${uProf.schema_description}/eventos` }]" />
     <div class="card">
         <DataTable style="font-size: 1rem" :value="gridData" lazy paginator :first="0" v-model:filters="filters"
-            ref="dt" dataKey="id" :totalRecords="totalRecords" :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]" :loading="loading" @page="onPage($event)"
+            ref="dt" dataKey="id" :totalRecords="totalRecords" :rows="gridData.length"
+            :rowsPerPageOptions="rowsPerPageOptions" :loading="loading" @page="onPage($event)"
             @sort="onSort($event)" @filter="onFilter($event)" filterDisplay="row" tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable>

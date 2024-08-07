@@ -76,41 +76,37 @@ const loadOptions = () => {
 };
 const filtrarUnidades = () => {
     // Unidades de negócio
-    setTimeout(() => {
-        optionParams({
-            func: 'gun',
-            tipoDoc: tipoDoc.value,
-            unidade: unidade.value
-        }).then((res) => {
-            dropdownUnidades.value = [];
-            res.data.data.map((item) => {
-                dropdownUnidades.value.push({
-                    value: item.descricao,
-                    label: item.descricao
-                });
+    optionParams({
+        func: 'gun',
+        tipoDoc: tipoDoc.value,
+        unidade: unidade.value
+    }).then((res) => {
+        dropdownUnidades.value = [];
+        res.data.data.map((item) => {
+            dropdownUnidades.value.push({
+                value: item.descricao,
+                label: item.descricao
             });
         });
-    }, Math.random() * 1000 + 250);
+    });
     filtrarUnidadesDescricao();
 };
 const filtrarUnidadesDescricao = () => {
     // Unidades de negócio por tipo
-    setTimeout(() => {
-        optionParams({
-            func: 'ubt',
-            tipoDoc: tipoDoc.value,
-            unidade: unidade.value
-        }).then((res) => {
-            dropdownUnidadesFilter.value = [];
-            res.data.data.map((item) => {
-                const label = item.descricao.toString().replaceAll(/_/g, ' ');
-                dropdownUnidadesFilter.value.push({
-                    value: item.descricao,
-                    label: label
-                });
+    optionParams({
+        func: 'ubt',
+        tipoDoc: tipoDoc.value,
+        unidade: unidade.value
+    }).then((res) => {
+        dropdownUnidadesFilter.value = [];
+        res.data.data.map((item) => {
+            const label = item.descricao.toString().replaceAll(/_/g, ' ');
+            dropdownUnidadesFilter.value.push({
+                value: item.descricao,
+                label: label
             });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 
 // Itens do grid
@@ -194,7 +190,7 @@ const loadLazyData = async () => {
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
             rowsPerPageOptions.value.push(quant);
-            
+
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
             rowsPerPageOptions.value.push(quant);
@@ -435,9 +431,10 @@ const customFilterOptions = ref({ filterclear: false });
 
         <div class="col-12">
             <div class="card">
-                <DataTable ref="dt" :value="gridData" lazy paginator :rows="gridData.length" dataKey="id" :rowHover="true"
-                    v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
-                    responsiveLayout="scroll" :totalRecords="totalRecords" :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
+                <DataTable ref="dt" :value="gridData" lazy paginator :rows="gridData.length" dataKey="id"
+                    :rowHover="true" v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
+                    responsiveLayout="scroll" :totalRecords="totalRecords"
+                    :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
                     @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
                     :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable

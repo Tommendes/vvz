@@ -55,28 +55,23 @@ const clearFilter = () => {
 
 const goField = (data) => {
     mode.value = 'grid';
-    setTimeout(() => {
-        itemData.value = data;
-        mode.value = 'view';
-    }, Math.random() * 1000 + 250);
+    itemData.value = data;
+    mode.value = 'view';
 };
 
 const duplicateField = (data) => {
     mode.value = 'grid';
-    setTimeout(() => {
-        itemData.value = data;
-        mode.value = 'clone';
-    }, Math.random() * 1000 + 250);
+    itemData.value = data;
+    mode.value = 'clone';
 };
 
 const newItem = () => {
     mode.value = 'grid';
-    setTimeout(() => {
-        itemData.value = {
-            id_com_prop_compos: props.idComposicao
-        };
-        mode.value = 'new';
-    }, Math.random() * 1000 + 250);
+    setTimeout(() => { }, 150);
+    itemData.value = {
+        id_com_prop_compos: props.idComposicao
+    };
+    mode.value = 'new';
 };
 
 import { useConfirm } from 'primevue/useconfirm';

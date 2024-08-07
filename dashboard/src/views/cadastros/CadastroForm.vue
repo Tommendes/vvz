@@ -400,46 +400,36 @@ const optionLocalParams = async (query) => {
 };
 // Carregar opções do formulário
 const loadOptions = async () => {
-    setTimeout(async () => {
-        // Sexo
-        await optionParams({ field: 'meta', value: 'sexo', select: 'id,label' }).then((res) => {
-            res.data.data.map((item) => {
-                dropdownSexo.value.push({ value: item.id, label: item.label });
-            });
+    // Sexo
+    await optionParams({ field: 'meta', value: 'sexo', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownSexo.value.push({ value: item.id, label: item.label });
         });
-    }, Math.random() * 1000 + 250);
-    setTimeout(async () => {
-        // Pais nascimento
-        await optionParams({ field: 'meta', value: 'pais', select: 'id,label' }).then((res) => {
-            res.data.data.map((item) => {
-                dropdownPaisNascim.value.push({ value: item.id, label: item.label });
-            });
+    });
+    // Pais nascimento
+    await optionParams({ field: 'meta', value: 'pais', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownPaisNascim.value.push({ value: item.id, label: item.label });
         });
-    }, Math.random() * 1000 + 250);
-    setTimeout(async () => {
-        // Tipo Cadastro
-        await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
-            res.data.data.map((item) => {
-                dropdownTipo.value.push({ value: item.id, label: item.label });
-            });
+    });
+    // Tipo Cadastro
+    await optionLocalParams({ field: 'grupo', value: 'tipo_cadastro', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownTipo.value.push({ value: item.id, label: item.label });
         });
-    }, Math.random() * 1000 + 250);
-    setTimeout(async () => {
-        // Área Atuação
-        await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
-            res.data.data.map((item) => {
-                dropdownAtuacao.value.push({ value: item.id, label: item.label });
-            });
+    });
+    // Área Atuação
+    await optionLocalParams({ field: 'grupo', value: 'id_atuacao', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownAtuacao.value.push({ value: item.id, label: item.label });
         });
-    }, Math.random() * 1000 + 250);
-    setTimeout(async () => {
-        // Tipo Endereço
-        await optionLocalParams({ field: 'grupo', value: 'tipo_endereco', select: 'id,label' }).then((res) => {
-            res.data.data.map((item) => {
-                dropdownTipoEndereco.value.push({ value: item.id, label: item.label });
-            });
+    });
+    // Tipo Endereço
+    await optionLocalParams({ field: 'grupo', value: 'tipo_endereco', select: 'id,label' }).then((res) => {
+        res.data.data.map((item) => {
+            dropdownTipoEndereco.value.push({ value: item.id, label: item.label });
         });
-    }, Math.random() * 1000 + 250);
+    });
     loading.value.form = false;
 };
 // Carregar dados do formulário

@@ -11,6 +11,7 @@ const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
     uProf.value = await store.getProfile()
+    itensBreadcrumb.value.push({ label: 'Parâmetros do Pipeline', to: `/${uProf.value.schema_description}/pipeline-params` });
 });
 
 import { useDialog } from 'primevue/usedialog';
@@ -41,11 +42,9 @@ const props = defineProps({
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/pipeline-params`);
-// Carragamento de dados do form
-
 const itensBreadcrumb = ref([]);
+// Carragamento de dados do form
 const loadData = async () => {
-    itensBreadcrumb.value = [{ label: 'Todos os Parâmetros', to: `/${uProf.value.schema_description}/pipeline-params` }];
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
@@ -189,21 +188,19 @@ const optionParams = async (query) => {
 };
 const getUnidadesDescricao = async () => {
     // Unidades de negócio por tipo
-    setTimeout(async () => {
-        await optionParams({
-            func: 'ubt',
-            tipoDoc: '2'
-        }).then((res) => {
-            dropdownTipoSec.value = [];
-            res.data.data.map((item) => {
-                const label = item.descricao.toString().replaceAll(/_/g, ' ');
-                dropdownTipoSec.value.push({
-                    value: item.descricao,
-                    label: label
-                });
+    await optionParams({
+        func: 'ubt',
+        tipoDoc: '2'
+    }).then((res) => {
+        dropdownTipoSec.value = [];
+        res.data.data.map((item) => {
+            const label = item.descricao.toString().replaceAll(/_/g, ' ');
+            dropdownTipoSec.value.push({
+                value: item.id,
+                label: label
             });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 const dropdownObrigValor = ref([
     { value: 0, label: 'Sim' },
@@ -397,5 +394,6 @@ watch(itemData.value, () => {
     <div v-if="uProf.admin >= 1">
         <p>mode: {{ mode }}</p>
         <p>itemData: {{ itemData }}</p>
+        <p>uProf: {{ uProf }}</p>
     </div>
 </template>

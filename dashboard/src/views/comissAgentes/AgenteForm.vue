@@ -169,12 +169,10 @@ const getNomeCliente = async () => {
     if (itemData.value.id_cadastros) {
         try {
             const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&literal=1&slct=nome,cpf_cnpj`;
-            setTimeout(async () => {
-                const response = await axios.get(url);
-                if (response.data.data.length > 0) {
-                    nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
-                }
-            }, Math.random() * 1000 + 250);
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+            }
         } catch (error) {
             console.error('Erro ao buscar cadastros:', error);
         }

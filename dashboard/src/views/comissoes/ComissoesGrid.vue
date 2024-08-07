@@ -58,17 +58,15 @@ const optionParams = async (query) => {
 };
 // Obter Agentes de negócio
 const getAgentes = async () => {
-    setTimeout(async () => {
-        const url = `${baseApiUrl}/users/f-a/gag`;
-        await axios.get(url).then((res) => {
-            res.data.map((item) => {
-                dropdownAgentes.value.push({
-                    value: item.name,
-                    label: item.name
-                });
+    const url = `${baseApiUrl}/users/f-a/gag`;
+    await axios.get(url).then((res) => {
+        res.data.map((item) => {
+            dropdownAgentes.value.push({
+                value: item.name,
+                label: item.name
             });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 // Carregar opções do formulário de pesquisa
 const loadOptions = async () => {
@@ -76,21 +74,19 @@ const loadOptions = async () => {
 };
 const filtrarUnidades = async () => {
     // Unidades de negócio
-    setTimeout(async () => {
-        await optionParams({
-            func: 'gun',
-            tipoDoc: tipoDoc.value,
-            unidade: unidade.value
-        }).then((res) => {
-            dropdownUnidades.value = [];
-            res.data.data.map((item) => {
-                dropdownUnidades.value.push({
-                    value: item.descricao,
-                    label: item.descricao
-                });
+    await optionParams({
+        func: 'gun',
+        tipoDoc: tipoDoc.value,
+        unidade: unidade.value
+    }).then((res) => {
+        dropdownUnidades.value = [];
+        res.data.data.map((item) => {
+            dropdownUnidades.value.push({
+                value: item.descricao,
+                label: item.descricao
             });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 // Lista de tipos
 const dropdownStatus = ref([

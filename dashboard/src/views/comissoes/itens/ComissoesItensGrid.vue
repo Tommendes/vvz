@@ -50,23 +50,21 @@ const reload = async () => {
 // Carrega os dados da grid
 const loadData = async () => {
     const url = `${urlBase.value}?id_pipeline=${props.itemDataRoot.id}`;
-    setTimeout(async () => {
-        gridData.value = [];
-        setTimeout(() => { }, 100);
-        await axios
-            .get(url)
-            .then((axiosRes) => {
-                gridData.value = axiosRes.data.data;
-                gridData.value.map((item) => {
-                    const situacao = item.last_status_comiss;
-                    item.situacao = getStatusField(situacao, 'label');
-                });
-            })
-            .catch((error) => {
-                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                if (error.response && error.response.status == 401) router.push('/');
+    gridData.value = [];
+    setTimeout(() => { }, 100);
+    await axios
+        .get(url)
+        .then((axiosRes) => {
+            gridData.value = axiosRes.data.data;
+            gridData.value.map((item) => {
+                const situacao = item.last_status_comiss;
+                item.situacao = getStatusField(situacao, 'label');
             });
-    }, Math.random() * 1000 + 250);
+        })
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
+        });
     cancelNewItem();
 };
 defineExpose({ loadData }); // Expondo a função para o componente pai

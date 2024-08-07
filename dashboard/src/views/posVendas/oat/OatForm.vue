@@ -124,17 +124,15 @@ const loadTecnicos = async () => {
 };
 const loadEnderecoBasico = async () => {
     const url = `${baseApiUrl}/cadastros/${dialogRef.value.data.idCadastro}`;
-    setTimeout(async () => {
-        await axios.get(url).then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                itemDataCadastro.value = body;
-                const endereco = itemDataCadastro.value.logradouro + (itemDataCadastro.value.nr ? ', ' + itemDataCadastro.value.nr : '') + ' - (Cadastro Principal)';
-                dropdownEnderecos.value.push({ value: String(0), label: endereco });
-            }
-        });
-    }, Math.random() * 1000 + 250);
+    await axios.get(url).then((res) => {
+        const body = res.data;
+        if (body && body.id) {
+            body.id = String(body.id);
+            itemDataCadastro.value = body;
+            const endereco = itemDataCadastro.value.logradouro + (itemDataCadastro.value.nr ? ', ' + itemDataCadastro.value.nr : '') + ' - (Cadastro Principal)';
+            dropdownEnderecos.value.push({ value: String(0), label: endereco });
+        }
+    });
 };
 const clone = async () => {
     const url = `${urlBase.value}`;

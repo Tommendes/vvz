@@ -88,39 +88,37 @@ const loadData = async () => {
 
 // Lista os eventos do registro
 const getEventos = async () => {
-    setTimeout(async () => {
-        const id = props.itemDataRoot.id || itemData.value.id;
-        const url = `${baseApiUrl}/sis-events/${id}/comissoes/get-events`;
-        await axios.get(url).then((res) => {
-            if (res.data && res.data.length > 0) {
-                itemDataEventos.value = res.data;
-                itemDataEventos.value.forEach((element) => {
-                    if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
-                    else if (element.classevento.toLowerCase() == 'update')
-                        element.evento =
-                            `Edição do registro` +
-                            (uProf.value.gestor >= 1
-                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                                : '');
-                    else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
-                    else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
-                    else if (element.classevento.toLowerCase() == 'commissioning')
-                        element.evento =
-                            `Lançamento de comissão` +
-                            (uProf.value.comissoes >= 1
-                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                                : '');
-                    element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
-                });
-            } else {
-                itemDataEventos.value = [
-                    {
-                        evento: 'Não há registro de log eventos para este registro'
-                    }
-                ];
-            }
-        });
-    }, Math.random() * 1000 + 250);
+    const id = props.itemDataRoot.id || itemData.value.id;
+    const url = `${baseApiUrl}/sis-events/${id}/comissoes/get-events`;
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.length > 0) {
+            itemDataEventos.value = res.data;
+            itemDataEventos.value.forEach((element) => {
+                if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
+                else if (element.classevento.toLowerCase() == 'update')
+                    element.evento =
+                        `Edição do registro` +
+                        (uProf.value.gestor >= 1
+                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            : '');
+                else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
+                else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
+                else if (element.classevento.toLowerCase() == 'commissioning')
+                    element.evento =
+                        `Lançamento de comissão` +
+                        (uProf.value.comissoes >= 1
+                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            : '');
+                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
+            });
+        } else {
+            itemDataEventos.value = [
+                {
+                    evento: 'Não há registro de log eventos para este registro'
+                }
+            ];
+        }
+    });
 };
 
 // Validar formulário

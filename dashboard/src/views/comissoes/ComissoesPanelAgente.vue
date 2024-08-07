@@ -230,9 +230,7 @@ onBeforeMount(() => {
 });
 
 onMounted(async () => {
-    setTimeout(async () => {
-        await getLocalParams();
-    }, Math.random() * 1000 + 250);
+    await getLocalParams();
 });
 </script>
 
@@ -257,10 +255,12 @@ onMounted(async () => {
     </ConfirmDialog>
     <div class="card">
         <h3>Minhas Comissões</h3>
-        <DataTable v-model:filters="filters" v-model:expandedRowGroups="expandedRowGroups" :value="gridData" dataKey="id" filterDisplay="row" :loading="loading"
-            :globalFilterFields="['unidade', 'documento', 'cliente', 'cpf_cnpj']" expandableRowGroups @rowgroup-expand="onRowGroupExpand" @rowgroup-collapse="onRowGroupCollapse"
-            rowGroupMode="subheader" groupRowsBy="status_comiss.tipo" rowGroupHeader:class="p-row-even bg-primary"
-            scrollable scrollHeight="450px" removableSort>
+        <DataTable v-model:filters="filters" v-model:expandedRowGroups="expandedRowGroups" :value="gridData"
+            dataKey="id" filterDisplay="row" :loading="loading"
+            :globalFilterFields="['unidade', 'documento', 'cliente', 'cpf_cnpj']" expandableRowGroups
+            @rowgroup-expand="onRowGroupExpand" @rowgroup-collapse="onRowGroupCollapse" rowGroupMode="subheader"
+            groupRowsBy="status_comiss.tipo" rowGroupHeader:class="p-row-even bg-primary" scrollable
+            scrollHeight="450px" removableSort>
             <template #header>
                 <div class="flex justify-content-between">
                     <div class="flex justify-content-start flex align-content-center flex-wrap">
@@ -288,7 +288,8 @@ onMounted(async () => {
                 <h3>Carregando dados. Por favor aguarde.</h3>
             </template>
             <template #groupheader="slotProps">
-                <span class="vertical-align-middle ml-2 font-bold line-height-3">{{ slotProps.data.status_comiss.label }}</span>
+                <span class="vertical-align-middle ml-2 font-bold line-height-3">{{ slotProps.data.status_comiss.label
+                    }}</span>
             </template>
             <Column field="status_comiss.tipo" header="Tipo" class="text-center"></Column>
             <Column field="unidade" header="Documento">

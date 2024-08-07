@@ -102,6 +102,11 @@ const routes = [
                 name: 'notas-fiscais',
                 component: () => import('@/views/fisNotas/FisNotasGrid.vue')
             },
+            {
+                path: '/:client/notas-fiscais/:id',
+                name: 'nota-fiscal',
+                component: () => import('@/views/fisNotas/FisNotasForm.vue')
+            },
             // Seção Financeiro
             {
                 path: '/:client/financeiro',

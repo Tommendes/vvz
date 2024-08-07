@@ -177,15 +177,13 @@ const valorVendaProduto = ref(0);
 const getNomeProduto = async () => {
     if (itemData.value.id_com_produtos) {
         try {
-            setTimeout(async () => {
-                const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.id&vl=${itemData.value.id_com_produtos}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
-                const response = await axios.get(url);
-                if (response.data.data.length > 0) {
-                    // remover tags html de descricao
-                    nomeProduto.value = response.data.data[0].nome_comum;
-                    valorVendaProduto.value = formatValor(response.data.data[0].valor_venda, 'pt');
-                }
-            }, Math.random() * 1000 + 250);
+            const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.id&vl=${itemData.value.id_com_produtos}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                // remover tags html de descricao
+                nomeProduto.value = response.data.data[0].nome_comum;
+                valorVendaProduto.value = formatValor(response.data.data[0].valor_venda, 'pt');
+            }
         } catch (error) {
             console.error('Erro ao buscar produto:', error);
         }

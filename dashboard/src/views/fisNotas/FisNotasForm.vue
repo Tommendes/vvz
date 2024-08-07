@@ -3,7 +3,6 @@ import { onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
 import EditorComponent from '@/components/EditorComponent.vue';
 
 // Profile do usuário
@@ -15,7 +14,7 @@ onBeforeMount(async () => {
     uProf.value = await store.getProfile()
 });
 
-import { guide } from '@/guides/pipelineFormGuide.js';
+import { guide } from '@/guides/notasFiscaisFormGuide.js';
 
 import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
@@ -62,9 +61,9 @@ const props = defineProps(['mode', 'idPipeline', 'idCadastro']);
 // Emit do template
 const emit = defineEmits(['changed', 'cancel', 'commissioning']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/pipeline`);
+const urlBase = ref(`${baseApiUrl}/notas-fiscais`);
 // Itens do breadcrumb
-const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/pipeline` }]);
+const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/notas-fiscais` }]);
 
 // Andamento do registro
 import { andamentoRegistroPipeline } from '@/global';
@@ -100,7 +99,7 @@ const loadData = async () => {
                 await listUnidadesDescricao();
                 // Eventos do registro
                 await getEventos();
-                breadItems.value = [{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/pipeline` }];
+                breadItems.value = [{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/notas-fiscais` }];
                 if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (uProf.value.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                 if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_cadastros}` });
             })
@@ -155,12 +154,12 @@ const saveData = async () => {
                 emit('changed');
                 if (route.name != 'cadastro' && mode.value == 'new') {
                     router.push({
-                        path: `/${uProf.value.schema_description}/pipeline/${itemData.value.id}`
+                        path: `/${uProf.value.schema_description}/notas-fiscais/${itemData.value.id}`
                     });
                     loadData();
                 } else if (route.name != 'cadastro' && id != itemData.value.id) {
                     router.push({
-                        path: `/${uProf.value.schema_description}/pipeline/${itemData.value.id}`
+                        path: `/${uProf.value.schema_description}/notas-fiscais/${itemData.value.id}`
                     });
                     const animation = animationDocNr.value;
                     animationDocNr.value = '';
@@ -192,7 +191,7 @@ const reload = async () => {
 // Listar unidades de negócio
 const listUnidadesDescricao = async () => {
     const query = { func: 'ubt', tipoDoc: undefined, unidade: undefined };
-    let url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
+    let url = `${baseApiUrl}/notas-fiscais-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
     if (mode.value == 'new') url += '&status=10';
     setTimeout(async () => {
         await axios.get(url).then((res) => {
@@ -372,7 +371,7 @@ const itemDataStatusPreload = ref([
 ]);
 // Listar status do registro
 const listStatusRegistro = async () => {
-    const url = `${baseApiUrl}/pipeline-status/${route.params.id}`;
+    const url = `${baseApiUrl}/notas-fiscais-status/${route.params.id}`;
     setTimeout(async () => {
         await axios.get(url).then((res) => {
             if (res.data && res.data.data.length > 0) {
@@ -402,7 +401,7 @@ const listStatusRegistro = async () => {
  */
 const getPipelineParam = async () => {
     if (itemData.value.id_pipeline_params) {
-        const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
+        const url = `${baseApiUrl}/notas-fiscais-params/${itemData.value.id_pipeline_params}`;
         setTimeout(async () => {
             await axios.get(url).then((res) => {
                 if (res.data && res.data.id) itemDataParam.value = res.data;
@@ -423,10 +422,10 @@ const registroIdentico = async () => {
     await listAgentesNegocio();
 };
 const toPai = async () => {
-    window.location.href = `#/${uProf.value.schema_description}/pipeline/${itemData.value.id_pai}`;
+    window.location.href = `#/${uProf.value.schema_description}/notas-fiscais/${itemData.value.id_pai}`;
 };
 const toFilho = async (idFilho) => {
-    window.location.href = `#/${uProf.value.schema_description}/pipeline/${idFilho || itemData.value.id_filho}`;
+    window.location.href = `#/${uProf.value.schema_description}/notas-fiscais/${idFilho || itemData.value.id_filho}`;
 };
 const toProposal = async () => {
     const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
@@ -598,7 +597,7 @@ const lstFolder = async () => {
     if (itemDataParam.value.gera_pasta == 1)
         setTimeout(async () => {
             const id = props.idPipeline || route.params.id;
-            const url = `${baseApiUrl}/pipeline/f-a/lfd`;
+            const url = `${baseApiUrl}/notas-fiscais/f-a/lfd`;
             await axios
                 .post(url, { id_pipeline: id })
                 .then((res) => {
@@ -625,7 +624,7 @@ const lstFolder = async () => {
 };
 
 const mkFolder = async (body) => {
-    const url = `${baseApiUrl}/pipeline/f-a/mfd`;
+    const url = `${baseApiUrl}/notas-fiscais/f-a/mfd`;
     defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
 
     const bodyTo = body || { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
@@ -647,47 +646,13 @@ const mkFolder = async (body) => {
 const toGrid = () => {
     mode.value = 'grid';
     emit('cancel');
-    router.push({ path: `/${uProf.value.schema_description}/pipeline` });
-};
-
-const promptMessage = ref('');
-const showPrompt = (body) => {
-    if (body) promptMessage.value = body;
-    else promptMessage.value = 'Você tem certeza?';
-    dialog.open(PropostaNewPromptForm, {
-        data: {
-            message: promptMessage
-        },
-        props: {
-            header: `Por favor, informe alguns detalhes da nova proposta. Estes dados poderão ser ajustados posteriormente`,
-            style: {
-                width: Math.floor(window.innerWidth * 0.5) + 'px'
-            },
-            breakpoints: {
-                '1199px': '95vw',
-                '575px': '90vw'
-            },
-            modal: true
-        },
-        onClose: (options) => {
-            if (options.data && options.data.id) onPromptConfirm(options.data.id);
-            else onPromptCancel();
-        }
-    });
-};
-
-const onPromptConfirm = (idProposta) => {
-    window.location.href = `#/${uProf.value.schema_description}/proposta/${idProposta}`;
-};
-
-const onPromptCancel = () => {
-    defaultWarn('Você não pode prosseguir sem informar os dados solicitados');
+    router.push({ path: `/${uProf.value.schema_description}/notas-fiscais` });
 };
 
 const getEventos = async () => {
     setTimeout(async () => {
         const id = props.idPipeline || route.params.id;
-        const url = `${baseApiUrl}/sis-events/${id}/pipeline/get-events`;
+        const url = `${baseApiUrl}/sis-events/${id}/notas-fiscais/get-events`;
         await axios.get(url).then((res) => {
             if (res.data && res.data.length > 0) {
                 itemDataEventos.value = res.data;

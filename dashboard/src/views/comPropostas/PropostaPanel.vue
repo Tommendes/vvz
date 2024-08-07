@@ -55,30 +55,28 @@ provide('mode', mode);
 const breadItems = ref([]);
 // Carragamento de dados do form
 const loadData = async () => {
-    setTimeout(async () => {
-        const url = `${urlBase.value}/${route.params.id}`;
-        await axios.get(url).then(async (res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                itemData.value = body;
-                if (itemData.value.desconto_total) itemData.value.desconto_total = formatCurrency(itemData.value.desconto_total);
-                if (itemData.value.id_pipeline) await loadDataPipeline();
-                if (itemDataPipeline.value.id_pipeline_params) await loadPipelineParamsData();
-                breadItems.value = [{ label: 'Todas as propostas', to: `/${uProf.value.schema_description}/propostas` }];
-                if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (uProf.value.admin >= 1 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
-                if (itemDataPipeline.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemDataPipeline.value.id_cadastros}` });
-                mode.value = 'view';
-                // Eventos do registro
-                await getEventos();
-                loading.value = false;
-            } else {
-                defaultWarn('Proposta não localizada');
-                router.push({ path: `/${uProf.value.schema_description}/propostas` });
-            }
-        });
-        loading.value = false;
-    }, Math.random() * 1000 + 250);
+    const url = `${urlBase.value}/${route.params.id}`;
+    await axios.get(url).then(async (res) => {
+        const body = res.data;
+        if (body && body.id) {
+            body.id = String(body.id);
+            itemData.value = body;
+            if (itemData.value.desconto_total) itemData.value.desconto_total = formatCurrency(itemData.value.desconto_total);
+            if (itemData.value.id_pipeline) await loadDataPipeline();
+            if (itemDataPipeline.value.id_pipeline_params) await loadPipelineParamsData();
+            breadItems.value = [{ label: 'Todas as propostas', to: `/${uProf.value.schema_description}/propostas` }];
+            if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (uProf.value.admin >= 1 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
+            if (itemDataPipeline.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemDataPipeline.value.id_cadastros}` });
+            mode.value = 'view';
+            // Eventos do registro
+            await getEventos();
+            loading.value = false;
+        } else {
+            defaultWarn('Proposta não localizada');
+            router.push({ path: `/${uProf.value.schema_description}/propostas` });
+        }
+    });
+    loading.value = false;
 };
 
 const loadDataPipeline = async () => {
@@ -125,39 +123,37 @@ const getNomeCliente = async () => {
 };
 
 const getEventos = async () => {
-    setTimeout(async () => {
-        const id = route.params.id;
-        const url = `${baseApiUrl}/sis-events/${id}/com_propostas/get-events`;
-        await axios.get(url).then((res) => {
-            if (res.data && res.data.length > 0) {
-                itemDataEventos.value = res.data;
-                itemDataEventos.value.forEach((element) => {
-                    if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
-                    else if (element.classevento.toLowerCase() == 'update')
-                        element.evento =
-                            `Edição do registro` +
-                            (uProf.value.gestor >= 1
-                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                                : '');
-                    else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
-                    else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
-                    else if (element.classevento.toLowerCase() == 'commissioning') 
-                        element.evento =
-                            `Lançamento de comissão` +
-                            (uProf.value.comissoes >= 1
-                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                                : '');
-                    element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
-                });
-            } else {
-                itemDataEventos.value = [
-                    {
-                        evento: 'Não há registro de log eventos para este registro'
-                    }
-                ];
-            }
-        });
-    }, Math.random() * 1000 + 250);
+    const id = route.params.id;
+    const url = `${baseApiUrl}/sis-events/${id}/com_propostas/get-events`;
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.length > 0) {
+            itemDataEventos.value = res.data;
+            itemDataEventos.value.forEach((element) => {
+                if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
+                else if (element.classevento.toLowerCase() == 'update')
+                    element.evento =
+                        `Edição do registro` +
+                        (uProf.value.gestor >= 1
+                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            : '');
+                else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
+                else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
+                else if (element.classevento.toLowerCase() == 'commissioning')
+                    element.evento =
+                        `Lançamento de comissão` +
+                        (uProf.value.comissoes >= 1
+                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            : '');
+                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
+            });
+        } else {
+            itemDataEventos.value = [
+                {
+                    evento: 'Não há registro de log eventos para este registro'
+                }
+            ];
+        }
+    });
 };
 
 onMounted(async () => {
@@ -170,7 +166,9 @@ onMounted(async () => {
     <div class="grid">
         <div class="col-12">
             <div class="card">
-                <h3 v-if="itemDataPipelineParams && itemDataPipelineParams.descricao && itemDataPipeline && itemDataPipeline.documento">{{ itemDataPipelineParams.descricao.replaceAll('_', ' ') }} {{ itemDataPipeline.documento }}</h3>
+                <h3
+                    v-if="itemDataPipelineParams && itemDataPipelineParams.descricao && itemDataPipeline && itemDataPipeline.documento">
+                    {{ itemDataPipelineParams.descricao.replaceAll('_', ' ') }} {{ itemDataPipeline.documento }}</h3>
                 <TabView lazy>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>

@@ -92,23 +92,21 @@ onMounted(async () => {
     await loadData();
 
     if (props.toOpenOat) {
-        setTimeout(async () => {
-            const url = `${urlBase.value}/${props.toOpenOat}`;
-            await axios.get(url).then(async (res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    body.id = String(body.id);
-                    body.int_ext = String(body.int_ext);
-                    body.garantia = String(body.garantia);
-                    body.id_cadastro_endereco = String(body.id_cadastro_endereco);
-                    if (body.id_tecnico) body.id_tecnico = String(body.id_tecnico);
-                    if (body.aceite_do_cliente) body.aceite_do_cliente = moment(body.aceite_do_cliente).format('DD/MM/YYYY');
-                    // Se body.valor_total então formate o valor com duas casas decimais em português
-                    if (body.valor_total) body.valor_total = formatValor(body.valor_total);
-                    showPvOatForm(body);
-                }
-            });
-        }, Math.random() * 1000 + 250);
+        const url = `${urlBase.value}/${props.toOpenOat}`;
+        await axios.get(url).then(async (res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                body.int_ext = String(body.int_ext);
+                body.garantia = String(body.garantia);
+                body.id_cadastro_endereco = String(body.id_cadastro_endereco);
+                if (body.id_tecnico) body.id_tecnico = String(body.id_tecnico);
+                if (body.aceite_do_cliente) body.aceite_do_cliente = moment(body.aceite_do_cliente).format('DD/MM/YYYY');
+                // Se body.valor_total então formate o valor com duas casas decimais em português
+                if (body.valor_total) body.valor_total = formatValor(body.valor_total);
+                showPvOatForm(body);
+            }
+        });
     }
 });
 </script>

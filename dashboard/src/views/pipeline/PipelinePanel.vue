@@ -41,12 +41,10 @@ const unidadeLabel = ref(undefined);
 const getPipelineParam = async () => {
     if (itemData.value.id_pipeline_params) {
         const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
-        setTimeout(async () => {
-            await axios.get(url).then((res) => {
-                if (res.data && res.data.id) itemDataParam.value = res.data;
-                // if (itemDataParam.value.autom_nr != 1) itemNovo.pop();
-            });
-        }, Math.random() * 1000 + 250);
+        await axios.get(url).then((res) => {
+            if (res.data && res.data.id) itemDataParam.value = res.data;
+            // if (itemDataParam.value.autom_nr != 1) itemNovo.pop();
+        });
     }
 };
 // Listar unidades de negócio

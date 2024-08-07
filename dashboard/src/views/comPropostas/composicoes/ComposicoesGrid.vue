@@ -47,19 +47,15 @@ const clearFilter = () => {
 const goField = (data) => {
     mode.value = 'grid';
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => {
-        itemData.value = data;
-        mode.value = 'view';
-    }, Math.random() * 1000 + 250);
+    itemData.value = data;
+    mode.value = 'view';
 };
 
 const duplicateField = (data) => {
     mode.value = 'grid';
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => {
-        itemData.value = data;
-        mode.value = 'clone';
-    }, Math.random() * 1000 + 250);
+    itemData.value = data;
+    mode.value = 'clone';
 };
 
 import { useConfirm } from 'primevue/useconfirm';
@@ -123,10 +119,9 @@ const getSeverity = (value) => {
 const newCompos = () => {
     mode.value = 'grid';
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => {
-        itemData.value = {};
-        mode.value = 'new';
-    }, Math.random() * 1000 + 250);
+    setTimeout(() => { }, 150);
+    itemData.value = {};
+    mode.value = 'new';
 };
 onMounted(async () => {
     initFilters();

@@ -157,14 +157,14 @@ const saveData = async () => {
                     router.push({
                         path: `/${uProf.value.schema_description}/pipeline/${itemData.value.id}`
                     });
-                    loadData();
+                    await loadData();
                 } else if (route.name != 'cadastro' && id != itemData.value.id) {
                     router.push({
                         path: `/${uProf.value.schema_description}/pipeline/${itemData.value.id}`
                     });
                     const animation = animationDocNr.value;
                     animationDocNr.value = '';
-                    loadData();
+                    await loadData();
                     animationDocNr.value = animation;
                 } else reload();
                 mode.value = 'view';
@@ -194,30 +194,26 @@ const listUnidadesDescricao = async () => {
     const query = { func: 'ubt', tipoDoc: undefined, unidade: undefined };
     let url = `${baseApiUrl}/pipeline-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
     if (mode.value == 'new') url += '&status=10';
-    setTimeout(async () => {
-        await axios.get(url).then((res) => {
-            dropdownUnidades.value = [];
-            res.data.data.map((item) => {
-                const label = item.descricao.toString().replaceAll(/_/g, ' ') + (uProf.value.admin >= 1 ? ` (${item.id})` : '');
-                const itemList = { value: item.id, label: label };
-                if (item.id == itemData.value.id_pipeline_params) unidadeLabel.value = label;
-                dropdownUnidades.value.push(itemList);
-            });
+    await axios.get(url).then((res) => {
+        dropdownUnidades.value = [];
+        res.data.data.map((item) => {
+            const label = item.descricao.toString().replaceAll(/_/g, ' ') + (uProf.value.admin >= 1 ? ` (${item.id})` : '');
+            const itemList = { value: item.id, label: label };
+            if (item.id == itemData.value.id_pipeline_params) unidadeLabel.value = label;
+            dropdownUnidades.value.push(itemList);
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 // Listar unidades de negócio
 const listAgentesNegocio = async () => {
     let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&oper=4&vl=1&slct=id,name&order=name`;
     if (mode.value == 'new') url += '&status=10';
-    setTimeout(async () => {
-        await axios.get(url).then((res) => {
-            dropdownAgentes.value = [];
-            res.data.data.map((item) => {
-                dropdownAgentes.value.push({ value: item.id, label: item.name });
-            });
+    await axios.get(url).then((res) => {
+        dropdownAgentes.value = [];
+        res.data.data.map((item) => {
+            dropdownAgentes.value.push({ value: item.id, label: item.name });
         });
-    }, Math.random() * 1000 + 250);
+    });
 };
 /**
  * Autocomplete de cadastros
@@ -230,12 +226,10 @@ const getNomeCliente = async () => {
     if (itemData.value.id_cadastros) {
         try {
             const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&literal=1&slct=nome,cpf_cnpj`;
-            setTimeout(async () => {
-                const response = await axios.get(url);
-                if (response.data.data.length > 0) {
-                    nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
-                }
-            }, Math.random() * 1000 + 250);
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+            }
         } catch (error) {
             console.error('Erro ao buscar cadastros:', error);
         }
@@ -264,15 +258,13 @@ const getCadastroBySearchedId = async (idCadastro) => {
     const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
     try {
         const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
-        setTimeout(async () => {
-            const response = await axios.get(url);
-            cadastros.value = response.data.data.map((element) => {
-                return {
-                    code: element.id,
-                    name: element.nome + ' - ' + element.cpf_cnpj
-                };
-            });
-        }, Math.random() * 1000 + 250);
+        const response = await axios.get(url);
+        cadastros.value = response.data.data.map((element) => {
+            return {
+                code: element.id,
+                name: element.nome + ' - ' + element.cpf_cnpj
+            };
+        });
     } catch (error) {
         console.error('Erro ao buscar cadastros:', error);
     }
@@ -373,29 +365,27 @@ const itemDataStatusPreload = ref([
 // Listar status do registro
 const listStatusRegistro = async () => {
     const url = `${baseApiUrl}/pipeline-status/${route.params.id}`;
-    setTimeout(async () => {
-        await axios.get(url).then((res) => {
-            if (res.data && res.data.data.length > 0) {
-                itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
-                itemData.value.status_params = itemDataLastStatus.value.status_params;
-                itemDataStatus.value = [];
-                res.data.data.forEach((element) => {
-                    const status = itemDataStatusPreload.value.filter((item) => {
-                        return item.status == element.status_params;
-                    });
-                    itemDataStatus.value.push({
-                        // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
-                        date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
-                        user: element.name,
-                        status: status[0].label,
-                        statusCode: element.status_params,
-                        icon: status[0].icon,
-                        color: status[0].color
-                    });
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.data.length > 0) {
+            itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
+            itemData.value.status_params = itemDataLastStatus.value.status_params;
+            itemDataStatus.value = [];
+            res.data.data.forEach((element) => {
+                const status = itemDataStatusPreload.value.filter((item) => {
+                    return item.status == element.status_params;
                 });
-            }
-        });
-    }, Math.random() * 1000 + 250);
+                itemDataStatus.value.push({
+                    // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                    date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
+                    user: element.name,
+                    status: status[0].label,
+                    statusCode: element.status_params,
+                    icon: status[0].icon,
+                    color: status[0].color
+                });
+            });
+        }
+    });
 };
 /**
  * Fim de status do registro
@@ -403,12 +393,10 @@ const listStatusRegistro = async () => {
 const getPipelineParam = async () => {
     if (itemData.value.id_pipeline_params) {
         const url = `${baseApiUrl}/pipeline-params/${itemData.value.id_pipeline_params}`;
-        setTimeout(async () => {
-            await axios.get(url).then((res) => {
-                if (res.data && res.data.id) itemDataParam.value = res.data;
-                // if (itemDataParam.value.autom_nr != 1) itemNovo.pop();
-            });
-        }, Math.random() * 1000 + 250);
+        await axios.get(url).then((res) => {
+            if (res.data && res.data.id) itemDataParam.value = res.data;
+            // if (itemDataParam.value.autom_nr != 1) itemNovo.pop();
+        });
     }
 };
 const registroIdentico = async () => {
@@ -595,33 +583,32 @@ const goPv = () => {
 };
 
 const lstFolder = async () => {
-    if (itemDataParam.value.gera_pasta == 1)
-        setTimeout(async () => {
-            const id = props.idPipeline || route.params.id;
-            const url = `${baseApiUrl}/pipeline/f-a/lfd`;
-            await axios
-                .post(url, { id_pipeline: id })
-                .then((res) => {
-                    if (res.data && res.data.length) {
-                        const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
-                        listFolder.value = res.data;
-                        // remover de listFolder os itensToNotList
-                        if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
-                            listFolder.value = listFolder.value.filter((item) => {
-                                return !itensToNotList.includes(item.name);
-                            });
-                            hasFolder.value = true;
-                        }
+    if (itemDataParam.value.gera_pasta == 1) {
+        const id = props.idPipeline || route.params.id;
+        const url = `${baseApiUrl}/pipeline/f-a/lfd`;
+        await axios
+            .post(url, { id_pipeline: id })
+            .then((res) => {
+                if (res.data && res.data.length) {
+                    const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
+                    listFolder.value = res.data;
+                    // remover de listFolder os itensToNotList
+                    if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
+                        listFolder.value = listFolder.value.filter((item) => {
+                            return !itensToNotList.includes(item.name);
+                        });
+                        hasFolder.value = true;
                     }
-                    if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
-                    hostAccessible.value = true;
-                })
-                .catch((error) => {
-                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                    if (error.response && error.response.status == 401) router.push('/');
-                    hostAccessible.value = false;
-                });
-        }, Math.random() * 1000 + 250);
+                }
+                if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
+                hostAccessible.value = true;
+            })
+            .catch((error) => {
+                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                if (error.response && error.response.status == 401) router.push('/');
+                hostAccessible.value = false;
+            });
+    }
 };
 
 const mkFolder = async (body) => {
@@ -685,53 +672,49 @@ const onPromptCancel = () => {
 };
 
 const getEventos = async () => {
-    setTimeout(async () => {
-        const id = props.idPipeline || route.params.id;
-        const url = `${baseApiUrl}/sis-events/${id}/pipeline/get-events`;
-        await axios.get(url).then((res) => {
-            if (res.data && res.data.length > 0) {
-                itemDataEventos.value = res.data;
-                itemDataEventos.value.forEach((element) => {
-                    if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
-                    else if (element.classevento.toLowerCase() == 'update')
-                        element.evento =
-                            `Edição do registro` +
-                            (uProf.value.gestor >= 1
-                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                                : '');
-                    else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
-                    else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
-                    else if (element.classevento.toLowerCase() == 'commissioning')
-                        element.evento =
-                            `Lançamento de comissão` +
-                            (uProf.value.comissoes >= 1
-                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                                : '');
-                    element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
-                });
-            } else {
-                itemDataEventos.value = [
-                    {
-                        evento: 'Não há registro de log eventos para este registro'
-                    }
-                ];
-            }
-        });
-    }, Math.random() * 1000 + 250);
+    const id = props.idPipeline || route.params.id;
+    const url = `${baseApiUrl}/sis-events/${id}/pipeline/get-events`;
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.length > 0) {
+            itemDataEventos.value = res.data;
+            itemDataEventos.value.forEach((element) => {
+                if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
+                else if (element.classevento.toLowerCase() == 'update')
+                    element.evento =
+                        `Edição do registro` +
+                        (uProf.value.gestor >= 1
+                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            : '');
+                else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
+                else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
+                else if (element.classevento.toLowerCase() == 'commissioning')
+                    element.evento =
+                        `Lançamento de comissão` +
+                        (uProf.value.comissoes >= 1
+                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            : '');
+                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
+            });
+        } else {
+            itemDataEventos.value = [
+                {
+                    evento: 'Não há registro de log eventos para este registro'
+                }
+            ];
+        }
+    });
 };
 
 // Carregar dados do formulário
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     if (props.idCadastro) itemData.value.id_cadastros = props.idCadastro;
-    setTimeout(async () => {
-        // Carrega os dados do formulário
-        await loadData();
-        // Unidades de negócio
-        await listUnidadesDescricao();
-        // Agentes de negócio
-        await listAgentesNegocio();
-    }, Math.random() * 1000 + 250);
+    // Carrega os dados do formulário
+    await loadData();
+    // Unidades de negócio
+    await listUnidadesDescricao();
+    // Agentes de negócio
+    await listAgentesNegocio();
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
