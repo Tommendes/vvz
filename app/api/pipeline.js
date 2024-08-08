@@ -1200,7 +1200,9 @@ module.exports = app => {
 
         try {
             const list = await clientFtp.list('/' + pathDoc);
-            if (list.length == 0) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
+            console.log('list', list);
+            
+            if (!list) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.send(list);
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${pathDoc}. Error: ${error}`, sConsole: true } })
@@ -1236,7 +1238,6 @@ module.exports = app => {
         app.api.logger.logError({ log: { line: allErrors.join('; '), sConsole: false } })
         return { success: false }; // Retorna falso se todas as conexões falharem
     }
-
 
 
     const formatDataForChart = async (result) => {

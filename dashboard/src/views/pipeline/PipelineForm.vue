@@ -92,14 +92,16 @@ const loadData = async () => {
                 };
                 // Retorna os parâmetros do registro
                 await getPipelineParam();
-                // await lstFolder();
-                await getNomeCliente();
+                // Lista os arquivos da pasta do registro
+                lstFolder();
+                // Nome do cliente
+                getNomeCliente();
                 // Lista o andamento do registro
-                await listStatusRegistro();
+                listStatusRegistro();
                 // Unidades de negócio
-                await listUnidadesDescricao();
+                listUnidadesDescricao();
                 // Eventos do registro
-                await getEventos();
+                getEventos();
                 breadItems.value = [{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/pipeline` }];
                 if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (uProf.value.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                 if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_cadastros}` });
@@ -583,32 +585,30 @@ const goPv = () => {
 };
 
 const lstFolder = async () => {
-    if (itemDataParam.value.gera_pasta == 1) {
-        const id = props.idPipeline || route.params.id;
-        const url = `${baseApiUrl}/pipeline/f-a/lfd`;
-        await axios
-            .post(url, { id_pipeline: id })
-            .then((res) => {
-                if (res.data && res.data.length) {
-                    const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
-                    listFolder.value = res.data;
-                    // remover de listFolder os itensToNotList
-                    if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
-                        listFolder.value = listFolder.value.filter((item) => {
-                            return !itensToNotList.includes(item.name);
-                        });
-                        hasFolder.value = true;
-                    }
+    const id = props.idPipeline || route.params.id;
+    const url = `${baseApiUrl}/pipeline/f-a/lfd`;
+    await axios
+        .post(url, { id_pipeline: id })
+        .then((res) => {
+            if (res.data && res.data.length) {
+                const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
+                listFolder.value = res.data;
+                // remover de listFolder os itensToNotList
+                if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
+                    listFolder.value = listFolder.value.filter((item) => {
+                        return !itensToNotList.includes(item.name);
+                    });
+                    hasFolder.value = true;
                 }
-                if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
-                hostAccessible.value = true;
-            })
-            .catch((error) => {
-                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                if (error.response && error.response.status == 401) router.push('/');
-                hostAccessible.value = false;
-            });
-    }
+            }
+            if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
+            hostAccessible.value = true;
+        })
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
+            hostAccessible.value = false;
+        });
 };
 
 const mkFolder = async (body) => {
@@ -725,13 +725,6 @@ watch(selectedCadastro, (value) => {
 watch(route, (value) => {
     if (value !== itemData.value.id) {
         reload();
-    }
-});
-watchEffect(() => {
-    if (itemDataParam.value) {
-        if (itemDataParam.value.gera_pasta >= 1) {
-            lstFolder();
-        }
     }
 });
 </script>
@@ -1105,7 +1098,7 @@ watchEffect(() => {
                             <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
                         </ul>
                         <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>
-                        <p v-else>Não há conteúdo na pasta ou ela não existe</p>
+                        <p v-else>Não há conteúdo na pasta</p>
                     </Fieldset>
                 </div>
             </div>

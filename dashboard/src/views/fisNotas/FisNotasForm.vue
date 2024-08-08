@@ -4,6 +4,7 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import EditorComponent from '@/components/EditorComponent.vue';
+import Breadcrumb from '../../components/Breadcrumb.vue';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -50,23 +51,62 @@ const mode = ref('view');
 // Loadings
 const loading = ref(true);
 // Editar cadastro no autocomplete
-const editCadastro = ref(false);
-// Itens do dropdown de Unidades de Negócio do grid
-const dropdownUnidades = ref([]);
-// Itens do dropdown de Agentes de Negócio do grid
-const dropdownAgentes = ref([]);
-const unidadeLabel = ref(undefined);
+const editFornecedor = ref(false);
+const dropdownES = ref([
+    { value: 'E', label: 'Entrada' },
+    { value: 'S', label: 'Saída' }
+]); // Itens do dropdown de Empresas
+import tiposNotas from './tiposNotas.js';
+const dropdownModelosNF = ref(); // Itens do dropdown de Empresas
+// Receber e ordenar os dados do array tiposNotas por label e value e adicionar ao label o valor. Por fim, adcione a variável dropdownModelosNF
+const setModelosNfList = async () => {
+    const newTiposNotas = tiposNotas.sort((a, b) => {
+        if (a.label < b.label) {
+            return -1;
+        }
+        if (a.label > b.label) {
+            return 1;
+        }
+        return 0;
+    });
+    dropdownModelosNF.value = newTiposNotas.map((item) => {
+        const newItem = {
+            value: item.value,
+            label: `(${item.value}) ${item.label}`
+        }
+        return newItem;
+    });
+};
+setModelosNfList();
+const dropdownEmpresas = ref([]); // Itens do dropdown de Empresas
 // Props do template
-const props = defineProps(['mode', 'idPipeline', 'idCadastro']);
+const props = defineProps(['mode', 'idFisNotas', 'idFornecedor']);
 // Emit do template
-const emit = defineEmits(['changed', 'cancel', 'commissioning']);
+const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/notas-fiscais`);
+const urlBase = ref(`${baseApiUrl}/fiscal-notas`);
 // Itens do breadcrumb
-const breadItems = ref([{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/notas-fiscais` }]);
-
-// Andamento do registro
-import { andamentoRegistroPipeline } from '@/global';
+const breadItems = ref([{ label: 'Todas as Notas', to: `/${uProf.value.schema_description}/notas-fiscais` }]);
+// Liste de inputs de registros financeiros
+const itemsInputsList = ref([
+    { field: "valor_total", label: "Bruto", type: "double", minValue: 0.0, defaultValue: 0.0, required: true },
+    { field: "valor_liquido", label: "Líquido", type: "double", minValue: 0.0, defaultValue: 0.0, required: true },
+    { field: "valor_desconto", label: "Desconto", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_icms", label: "ICMS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_ipi", label: "IPI", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_pis", label: "PIS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_cofins", label: "COFINS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_iss", label: "ISS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_ir", label: "IR", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_csll", label: "CSLL", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_inss", label: "INSS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_outros", label: "Outros", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_servicos", label: "Serviços", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_produtos", label: "Produtos", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_frete", label: "Frete", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_seguro", label: "Seguro(s)", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: "valor_despesas", label: "Despesas", type: "double", minValue: 0.0, defaultValue: 0.0, required: false }
+]);
 
 // Importação de componentes
 import { useDialog } from 'primevue/usedialog';
@@ -75,7 +115,7 @@ const dialog = useDialog();
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    const id = props.idPipeline || route.params.id;
+    const id = props.idFisNotas || route.params.id;
     const url = `${urlBase.value}/${id}`;
     if (mode.value != 'new')
         await axios
@@ -85,49 +125,34 @@ const loadData = async () => {
                 body.id = String(body.id);
 
                 itemData.value = body;
-                selectedCadastro.value = {
-                    code: itemData.value.id_cadastros,
-                    name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+                selectedFornecedor.value = {
+                    code: itemData.value.id_fornecedor,
+                    name: itemData.value.fornecedor + ' - ' + itemData.value.cpf_cnpj_fornecedor
                 };
-                // Retorna os parâmetros do registro
-                await getPipelineParam();
-                // await lstFolder();
-                await getNomeCliente();
-                // Lista o andamento do registro
-                await listStatusRegistro();
-                // Unidades de negócio
-                await listUnidadesDescricao();
+
+                nomeFornecedor.value = itemData.value.fornecedor + ' - ' + masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj_fornecedor);
+                // Atualiza a lista de empresas
+                await getEmpresas();
+                // Atualiza a lista de fornecedores
+                await getFornecedores();
                 // Eventos do registro
                 await getEventos();
-                breadItems.value = [{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/notas-fiscais` }];
-                if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (uProf.value.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
-                if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_cadastros}` });
+                breadItems.value = [{ label: 'Todas as Notas', to: `/${uProf.value.schema_description}/notas-fiscais` }];
+                if (itemData.value.id_fornecedor) breadItems.value.push({ label: 'Ir ao Fornecedor', to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_fornecedor}` });
             })
             .catch((error) => {
                 defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
                 if (error.response && error.response.status == 401) router.push('/');
                 toGrid();
             });
-    else if (props.idCadastro) {
-        itemData.value.id_cadastros = props.idCadastro;
-        itemData.value.valor_bruto = 0;
-        itemData.value.valor_liq = 0;
-        itemData.value.valor_representacao = 0;
-        itemData.value.valor_agente = 0;
-        itemData.value.perc_represent = 0;
-        selectedCadastro.value = {
-            code: itemData.value.id_cadastros,
-            name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+    else if (props.idFornecedor) {
+        itemData.value.id_fornecedor = props.idFornecedor;
+        selectedFornecedor.value = {
+            code: itemData.value.id_fornecedor,
+            name: itemData.value.fornecedor + ' - ' + itemData.value.cpf_cnpj_fornecedor
         };
-        await getNomeCliente();
+        await getNomeFornecedor();
     }
-    await listAgentesNegocio();
-
-    if (!itemData.value.valor_bruto) itemData.value.valor_bruto = 0;
-    if (!itemData.value.valor_liq) itemData.value.valor_liq = 0;
-    if (!itemData.value.valor_representacao) itemData.value.valor_representacao = 0;
-    if (!itemData.value.valor_agente) itemData.value.valor_agente = 0;
-    if (!itemData.value.perc_represent) itemData.value.perc_represent = 0;
     loading.value = false;
 };
 
@@ -138,12 +163,10 @@ const saveData = async () => {
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
 
-    itemData.value.documento = String(itemData.value.documento);
+    itemData.value.numero = String(itemData.value.numero);
     let preparedBody = {
-        ...itemData.value,
-        pipeline_params_force: itemDataParam.value
+        ...itemData.value
     };
-    if (method == 'post') preparedBody = { ...preparedBody, status_params_force: andamentoRegistroPipeline.STATUS_PENDENTE };
 
     axios[method](url, preparedBody)
         .then(async (res) => {
@@ -167,8 +190,8 @@ const saveData = async () => {
                     animationDocNr.value = animation;
                 } else reload();
                 mode.value = 'view';
-
-                const bodyTo = { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
+                const folterRoot = itemData.value.fornecedor.replaceAll(' ', '_');
+                const bodyTo = { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
                 setTimeout(async () => {
                     await mkFolder(bodyTo);
                 }, Math.random() * 2000 + 250);
@@ -184,55 +207,25 @@ const saveData = async () => {
 // Recarregar dados do formulário
 const reload = async () => {
     mode.value = 'view';
-    editCadastro.value = false;
+    editFornecedor.value = false;
     loadData();
     emit('cancel');
 };
-// Listar unidades de negócio
-const listUnidadesDescricao = async () => {
-    const query = { func: 'ubt', tipoDoc: undefined, unidade: undefined };
-    let url = `${baseApiUrl}/notas-fiscais-params/f-a/${query.func}?doc_venda=${query.tipoDoc ? query.tipoDoc : ''}&gera_baixa=&descricao=${query.unidade ? query.unidade : ''}`;
-    if (mode.value == 'new') url += '&status=10';
-    setTimeout(async () => {
-        await axios.get(url).then((res) => {
-            dropdownUnidades.value = [];
-            res.data.data.map((item) => {
-                const label = item.descricao.toString().replaceAll(/_/g, ' ') + (uProf.value.admin >= 1 ? ` (${item.id})` : '');
-                const itemList = { value: item.id, label: label };
-                if (item.id == itemData.value.id_pipeline_params) unidadeLabel.value = label;
-                dropdownUnidades.value.push(itemList);
-            });
-        });
-    }, Math.random() * 1000 + 250);
-};
-// Listar unidades de negócio
-const listAgentesNegocio = async () => {
-    let url = `${baseApiUrl}/users/f-a/gbf?fld=agente_v&oper=4&vl=1&slct=id,name&order=name`;
-    if (mode.value == 'new') url += '&status=10';
-    setTimeout(async () => {
-        await axios.get(url).then((res) => {
-            dropdownAgentes.value = [];
-            res.data.data.map((item) => {
-                dropdownAgentes.value.push({ value: item.id, label: item.name });
-            });
-        });
-    }, Math.random() * 1000 + 250);
-};
 /**
- * Autocomplete de cadastros
+ * Autocomplete de fornecedores
  */
-const cadastros = ref([]);
-const filteredCadastros = ref([]);
-const selectedCadastro = ref();
-const nomeCliente = ref();
-const getNomeCliente = async () => {
-    if (itemData.value.id_cadastros) {
+const fornecedores = ref([]);
+const filteredFornecedores = ref();
+const selectedFornecedor = ref();
+const nomeFornecedor = ref();
+const getNomeFornecedor = async () => {
+    if (itemData.value.id_fornecedor) {
         try {
-            const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&literal=1&slct=nome,cpf_cnpj`;
+            const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_fornecedor}&literal=1&slct=nome,cpf_cnpj`;
             setTimeout(async () => {
                 const response = await axios.get(url);
                 if (response.data.data.length > 0) {
-                    nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+                    nomeFornecedor.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
                 }
             }, Math.random() * 1000 + 250);
         } catch (error) {
@@ -240,43 +233,44 @@ const getNomeCliente = async () => {
         }
     }
 };
-const searchCadastros = (event) => {
-    setTimeout(async () => {
-        // Verifique se o campo de pesquisa não está vazio
-        if (!event.query.trim().length) {
-            // Se estiver vazio, exiba todas as sugestões
-            filteredCadastros.value = [...cadastros.value];
-        } else {
-            // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
-            if (cadastros.value.length === 0) {
-                // Carregue os cadastros da API (ou de onde quer que você os obtenha)
-                getCadastroBySearchedId();
-            }
-            // Filtrar os cadastros com base na consulta do usuário
-            filteredCadastros.value = cadastros.value.filter((cadastro) => {
-                return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
-            });
-        }
-    }, 150);
+const searchFornecedores = (event) => {
+    filteredFornecedores.value = []; // Limpa a lista antes de cada busca
+    if (!event.query.trim().length) {
+        // Se estiver vazio, exiba todas as sugestões
+        filteredFornecedores.value = [...fornecedores.value];
+    } else {
+        // Se não estiver vazio, filtre dentre as opções em fornecedores.value
+        // Filtrar os cadastros com base na consulta do usuário
+        filteredFornecedores.value = fornecedores.value.filter((cadastro) => {
+            return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
+        });
+        // Se não houver resultados, carregue os cadastros da API
+        // if (filteredFornecedores.value.length === 0) {
+        //     getFornecedorBySearchedId(event.query.toLowerCase());
+        // }
+    }
 };
-const getCadastroBySearchedId = async (idCadastro) => {
-    const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
+const getFornecedorBySearchedId = async (idFornecedor) => {
+    const qry = idFornecedor ? `fld=nome&vl=${idFornecedor}` : 'fld=1&vl=1';
     try {
         const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
-        setTimeout(async () => {
-            const response = await axios.get(url);
-            cadastros.value = response.data.data.map((element) => {
-                return {
-                    code: element.id,
-                    name: element.nome + ' - ' + element.cpf_cnpj
-                };
-            });
-        }, Math.random() * 1000 + 250);
+
+        const response = await axios.get(url);
+        // Limpe a lista de fornecedores para evitar duplicatas
+        fornecedores.value = [];
+        fornecedores.value = response.data.data.map((element) => {
+            return {
+                code: element.id,
+                name: element.nome + ' - ' + element.cpf_cnpj
+            };
+        });
+        // Atualize a lista filtrada
+        filteredFornecedores.value = [...fornecedores.value];
     } catch (error) {
         console.error('Erro ao buscar cadastros:', error);
     }
 };
-const confirmEditCadastro = () => {
+const confirmEditFornecedor = () => {
     confirm.require({
         group: 'templating',
         header: 'Corfirma que deseja editar o cadastro?',
@@ -286,8 +280,8 @@ const confirmEditCadastro = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
-            selectedCadastro.value = undefined;
-            editCadastro.value = true;
+            selectedFornecedor.value = undefined;
+            editFornecedor.value = true;
         },
         reject: () => {
             return false;
@@ -297,337 +291,47 @@ const confirmEditCadastro = () => {
 /**
  * Fim de autocomplete de cadastros
  */
-/**
- * Status do registro
- */
-// Preload de status do registro
-const itemDataParam = ref({});
-const itemDataStatus = ref([]);
-const itemDataLastStatus = ref({});
-const itemDataStatusPreload = ref([
-    {
-        status: '0',
-        action: 'Criação',
-        label: 'Criado',
-        icon: 'fa-solid fa-plus',
-        color: '#3b82f6'
-    },
-    {
-        status: '1',
-        action: 'Reativação',
-        label: 'Reativado',
-        icon: 'fa-solid fa-retweet',
-        color: '#195825'
-    },
-    {
-        status: '10',
-        action: 'Conversão',
-        label: 'Convertido para pedido',
-        icon: 'fa-solid fa-shopping-cart',
-        color: '#4cd07d'
-    },
-    {
-        status: '20',
-        action: 'Criação',
-        label: 'Pedido criado',
-        icon: 'fa-solid fa-shopping-cart',
-        color: '#4cd07d'
-    },
-    {
-        status: '21',
-        action: 'Criação',
-        label: 'Pedido AT criado',
-        icon: 'fa-solid fa-screwdriver-wrench',
-        color: '#4cd07d'
-    },
-    // {
-    //     status: '70',
-    //     action: 'Comissionar',
-    //     label: 'Pedido Comissionado',
-    //     icon: 'fa-solid fa-money-bill-transfer',
-    //     color: '#689F38'
-    // },
-    {
-        status: '80',
-        action: 'Liquidação',
-        label: 'Liquidado',
-        icon: 'fa-solid fa-check',
-        color: '#607D8B'
-    },
-    {
-        status: '89',
-        action: 'Cancelamento',
-        label: 'Cancelado',
-        icon: 'fa-solid fa-xmark',
-        color: '#8c221c'
-    },
-    {
-        status: '99',
-        action: 'Exclusão',
-        label: 'Excluído',
-        icon: 'fa-solid fa-xmark',
-        color: '#8c221c'
-    }
-]);
-// Listar status do registro
-const listStatusRegistro = async () => {
-    const url = `${baseApiUrl}/notas-fiscais-status/${route.params.id}`;
-    setTimeout(async () => {
-        await axios.get(url).then((res) => {
-            if (res.data && res.data.data.length > 0) {
-                itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
-                itemData.value.status_params = itemDataLastStatus.value.status_params;
-                itemDataStatus.value = [];
-                res.data.data.forEach((element) => {
-                    const status = itemDataStatusPreload.value.filter((item) => {
-                        return item.status == element.status_params;
-                    });
-                    itemDataStatus.value.push({
-                        // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
-                        date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
-                        user: element.name,
-                        status: status[0].label,
-                        statusCode: element.status_params,
-                        icon: status[0].icon,
-                        color: status[0].color
-                    });
-                });
-            }
-        });
-    }, Math.random() * 1000 + 250);
-};
-/**
- * Fim de status do registro
- */
-const getPipelineParam = async () => {
-    if (itemData.value.id_pipeline_params) {
-        const url = `${baseApiUrl}/notas-fiscais-params/${itemData.value.id_pipeline_params}`;
-        setTimeout(async () => {
-            await axios.get(url).then((res) => {
-                if (res.data && res.data.id) itemDataParam.value = res.data;
-                // if (itemDataParam.value.autom_nr != 1) itemNovo.pop();
-            });
-        }, Math.random() * 1000 + 250);
-    }
-};
+
 const registroIdentico = async () => {
     itemData.value = {
-        id_cadastros: itemData.value.id_cadastros
+        id_fornecedor: itemData.value.id_fornecedor
     };
-    itemDataParam.value = {};
-    itemDataLastStatus.value = {};
     mode.value = 'clone';
-    // Unidades de negócio
-    await listUnidadesDescricao();
-    await listAgentesNegocio();
-};
-const toPai = async () => {
-    window.location.href = `#/${uProf.value.schema_description}/notas-fiscais/${itemData.value.id_pai}`;
-};
-const toFilho = async (idFilho) => {
-    window.location.href = `#/${uProf.value.schema_description}/notas-fiscais/${idFilho || itemData.value.id_filho}`;
-};
-const toProposal = async () => {
-    const propostaInterna = await axios.get(`${baseApiUrl}/com-propostas/f-a/gbf?fld=id_pipeline&vl=${itemData.value.id}&slct=id`);
-    if (propostaInterna && propostaInterna.data && propostaInterna.data.data[0]) window.location.href = `#/${uProf.value.schema_description}/proposta/${propostaInterna.data.data[0].id}`;
-    else {
-        // Criar um objeto para representar o registro de uma nova proposta interna com os seguintes fields preenchidos: id_pipeline
-        const newPropostaInterna = {
-            id_pipeline: itemData.value.id
-        };
-        // buscar em BD.long_params os termos grupo.[com_pr01,com_pr02,com_pr03,com_pr04 e com_pr09]
-        const com_pr01 = await optionLongParams({ field: 'grupo', value: 'com_pr01', select: 'id,parametro,label' });
-        const com_pr02 = await optionLongParams({ field: 'grupo', value: 'com_pr02', select: 'id,parametro,label' });
-        const com_pr03 = await optionLongParams({ field: 'grupo', value: 'com_pr03', select: 'id,parametro,label' });
-        const com_pr04 = await optionLongParams({ field: 'grupo', value: 'com_pr04', select: 'id,parametro,label' });
-        const com_pr09 = await optionLongParams({ field: 'grupo', value: 'com_pr09', select: 'id,parametro,label' });
-        newPropostaInterna.saudacao_inicial = com_pr01.data.data[0].parametro;
-        newPropostaInterna.conclusao = com_pr02.data.data[0].parametro;
-        newPropostaInterna.garantia = com_pr03.data.data[0].parametro;
-        newPropostaInterna.observacoes_finais = com_pr04.data.data[0].parametro;
-        newPropostaInterna.assinatura = com_pr09.data.data[0].parametro;
-        showPrompt(newPropostaInterna);
-    }
-};
-// Obter parâmetros do BD
-const optionLongParams = async (query) => {
-    const selects = query.select ? `&slct=${query.select}` : undefined;
-    const url = `${baseApiUrl}/long-params/f-a/gbf?fld=${query.field}&vl=${query.value}${selects}`;
-    const response = await axios.get(url);
-    return response;
-};
-
-/**
- * Ferramentas do registro
- */
-const statusRecord = async (status) => {
-    if (route.params.id) itemData.value.id = route.params.id;
-    const url = `${urlBase.value}/${itemData.value.id}?st=${status}`;
-    const optionsConfirmation = {
-        group: 'templating',
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'fa-solid fa-check',
-        rejectIcon: 'fa-solid fa-xmark',
-        acceptClass: 'p-button-danger'
-    };
-    if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_EXCLUIDO, andamentoRegistroPipeline.STATUS_ENCERRADO].includes(status)) {
-        let startMessage = '';
-        if (andamentoRegistroPipeline.STATUS_EXCLUIDO == status) startMessage = 'Essa operação não poderá ser revertida. ';
-        confirm.require({
-            ...optionsConfirmation,
-            header: 'Confirmar',
-            message: `${startMessage}Confirma a ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].action.toLowerCase()}?`,
-            accept: async () => {
-                await axios.delete(url, itemData.value).then(() => {
-                    const msgDone = `Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`;
-                    if (status == andamentoRegistroPipeline.STATUS_EXCLUIDO) {
-                        toGrid();
-                    } // Se for excluído, redireciona para o grid
-                    else if ([andamentoRegistroPipeline.STATUS_CANCELADO, andamentoRegistroPipeline.STATUS_ENCERRADO].includes(status)) {
-                        reload();
-                    } // Se for cancelado ou liquidado, recarrega o registro
-                    defaultSuccess(msgDone);
-                });
-            },
-            reject: () => {
-                return false;
-            }
-        });
-    } else if ([andamentoRegistroPipeline.STATUS_CONVERTIDO].includes(status))
-        confirm.require({
-            ...optionsConfirmation,
-            header: 'Confirmar',
-            message: `Confirma a ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].action.toLowerCase()}?`,
-            accept: async () => {
-                const preparedBody = {
-                    ...itemData.value,
-                    status_params_force: andamentoRegistroPipeline.STATUS_CONVERTIDO,
-                    pipeline_params_force: itemDataParam.value
-                };
-                await axios
-                    .put(url, preparedBody)
-                    .then(async (body) => {
-                        defaultSuccess(`Registro convertido com sucesso`);
-
-                        const bodyTo = { id_pipeline: body.data.id, path: `${body.data.documento}` };
-                        setTimeout(async () => {
-                            await mkFolder(bodyTo);
-                        }, Math.random() * 2000 + 250);
-
-                        await toFilho(body.data.id);
-                    })
-                    .catch((error) => {
-                        if (typeof error == 'string') defaultWarn(error);
-                        else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-                        else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-                        else defaultWarn('Erro ao executar dados!');
-                    });
-            },
-            reject: () => {
-                return false;
-            }
-        });
-    else
-        await axios.delete(url, itemData.value).then(() => {
-            // Definir a mensagem baseado nos status e de acordo com itemDataStatusPreload
-            defaultSuccess(`Registro ${itemDataStatusPreload.value.filter((item) => item.status == status)[0].label.toLowerCase()} com sucesso`);
-            reload();
-        });
-};
-
-const createPv = async () => {
-    const url = `${baseApiUrl}/pv`;
-    const obj = {
-        id_cadastros: itemData.value.id_cadastros,
-        id_pipeline: itemData.value.id,
-        tipo: 1,
-        observacao: 'Pós-venda criado dinamicamente pelo registro de pipeline'
-    };
-    await axios
-        .post(url, obj)
-        .then((res) => {
-            createOat(res.data);
-            defaultSuccess('Pós-venda criado com sucesso');
-        })
-        .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else defaultWarn('Erro ao criar termo de compromisso!');
-        });
-};
-
-const createOat = async (pv) => {
-    const url = `${baseApiUrl}/pv-oat/${pv.id}`;
-    const obj = {
-        auto_pv_from_pipeline: true,
-        id_cadastros: pv.id_cadastros,
-        id_cadastro_endereco: '0',
-        int_ext: '1',
-        garantia: '0',
-        telefone_contato: pv.telefone,
-        email_contato: pv.email,
-        descricao: `<p>Montagem vinculada ao pedido&nbsp;<span style="color: rgb(255, 0, 0); background-color: rgb(255, 255, 0);">${itemDataParam.value.descricao}-${itemData.value.documento}</span></p>`,
-        valor_total: '0'
-    };
-    await axios
-        .post(url, obj)
-        .then((res) => {
-            const oat = res.data;
-            defaultSuccess(`OAT de montagem ${pv.pv_nr.toString().padStart(6, '0')}.${oat.nr_oat.toString().padStart(3, '0')} criada com sucesso.`);
-            reload();
-        })
-        .catch((error) => {
-            if (typeof error == 'string') defaultWarn(error);
-            else if (typeof error.response && typeof error.response == 'string') defaultWarn(error.response);
-            else if (error.response && error.response.data && typeof error.response.data == 'string') defaultWarn(error.response.data);
-            else defaultWarn('Erro ao criar termo de compromisso!');
-        });
-};
-
-const goPv = () => {
-    if (itemData.value.id_pv) {
-        let route = itemData.value.id_oat ? { id_oat: itemData.value.id_oat } : '';
-        const urlTo = `/${uProf.value.schema_description}/pos-venda/${itemData.value.id_pv}`;
-        router.push({ path: urlTo, query: route });
-    }
 };
 
 const lstFolder = async () => {
-    if (itemDataParam.value.gera_pasta == 1)
-        setTimeout(async () => {
-            const id = props.idPipeline || route.params.id;
-            const url = `${baseApiUrl}/notas-fiscais/f-a/lfd`;
-            await axios
-                .post(url, { id_pipeline: id })
-                .then((res) => {
-                    if (res.data && res.data.length) {
-                        const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
-                        listFolder.value = res.data;
-                        // remover de listFolder os itensToNotList
-                        if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
-                            listFolder.value = listFolder.value.filter((item) => {
-                                return !itensToNotList.includes(item.name);
-                            });
-                            hasFolder.value = true;
-                        }
-                    }
-                    if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
-                    hostAccessible.value = true;
-                })
-                .catch((error) => {
-                    defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-                    if (error.response && error.response.status == 401) router.push('/');
-                    hostAccessible.value = false;
-                });
-        }, Math.random() * 1000 + 250);
+    const id = props.idFisNotas || route.params.id;
+    const url = `${baseApiUrl}/fiscal-notas/f-a/lfd`;
+    await axios
+        .post(url, { id_fis_notas: id })
+        .then((res) => {
+            if (res.data && res.data.length) {
+                const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
+                listFolder.value = res.data;
+                // remover de listFolder os itensToNotList
+                if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
+                    listFolder.value = listFolder.value.filter((item) => {
+                        return !itensToNotList.includes(item.name);
+                    });
+                    hasFolder.value = true;
+                }
+            }
+            if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
+            hostAccessible.value = true;
+        })
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
+            hostAccessible.value = false;
+        });
 };
 
 const mkFolder = async (body) => {
-    const url = `${baseApiUrl}/notas-fiscais/f-a/mfd`;
+    const url = `${baseApiUrl}/fiscal-notas/f-a/mfd`;
     defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
 
-    const bodyTo = body || { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
+    const folterRoot = body.data.fornecedor.replaceAll(' ', '_');
+    const bodyTo = body || { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
     await axios
         .post(url, bodyTo)
         .then(async (res) => {
@@ -646,62 +350,92 @@ const mkFolder = async (body) => {
 const toGrid = () => {
     mode.value = 'grid';
     emit('cancel');
-    router.push({ path: `/${uProf.value.schema_description}/notas-fiscais` });
+    router.push({ path: `/${uProf.value.schema_description}/fiscal-notas` });
 };
 
 const getEventos = async () => {
-    setTimeout(async () => {
-        const id = props.idPipeline || route.params.id;
-        const url = `${baseApiUrl}/sis-events/${id}/notas-fiscais/get-events`;
-        await axios.get(url).then((res) => {
-            if (res.data && res.data.length > 0) {
-                itemDataEventos.value = res.data;
-                itemDataEventos.value.forEach((element) => {
-                    if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
-                    else if (element.classevento.toLowerCase() == 'update')
-                        element.evento =
-                            `Edição do registro` +
-                            (uProf.value.gestor >= 1
-                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                                : '');
-                    else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
-                    else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
-                    else if (element.classevento.toLowerCase() == 'commissioning')
-                        element.evento =
-                            `Lançamento de comissão` +
-                            (uProf.value.comissoes >= 1
-                                ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                                : '');
-                    element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
-                });
-            } else {
-                itemDataEventos.value = [
-                    {
-                        evento: 'Não há registro de log eventos para este registro'
-                    }
-                ];
-            }
-        });
-    }, Math.random() * 1000 + 250);
+    const id = props.idFisNotas || route.params.id;
+    const url = `${baseApiUrl}/sis-events/${id}/fis_notas/get-events`;
+    await axios.get(url).then((res) => {
+        if (res.data && res.data.length > 0) {
+            itemDataEventos.value = res.data;
+            itemDataEventos.value.forEach((element) => {
+                if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
+                else if (element.classevento.toLowerCase() == 'update')
+                    element.evento =
+                        `Edição do registro` +
+                        (uProf.value.gestor >= 1
+                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=fis_notas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = fis_notas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            : '');
+                else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
+                else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
+                else if (element.classevento.toLowerCase() == 'commissioning')
+                    element.evento =
+                        `Lançamento de comissão` +
+                        (uProf.value.comissoes >= 1
+                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=fis_notas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = fis_notas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
+                            : '');
+                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
+            });
+        } else {
+            itemDataEventos.value = [
+                {
+                    evento: 'Não há registro de log eventos para este registro'
+                }
+            ];
+        }
+    });
 };
+
+// Obter Empresas
+const getEmpresas = async () => {
+    const url = `${baseApiUrl}/empresas`;
+    dropdownEmpresas.value = [];
+    await axios.get(url).then((res) => {
+        res.data.data.map((item) => {
+            dropdownEmpresas.value.push({
+                value: item.id,
+                label: item.razaosocial
+            });
+        });
+    });
+};
+// Obter Fornecedores
+const getFornecedores = async () => {
+    const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id_params_tipo&vl=5&literal=1&slct=id,nome,cpf_cnpj`;
+    fornecedores.value = []; // Limpa a lista antes de popular
+    await axios.get(url).then((res) => {
+        res.data.data.map((item) => {
+            fornecedores.value.push({
+                code: item.id,
+                name: item.nome + ' - ' + item.cpf_cnpj
+            });
+        });
+    });
+};
+import { computed } from 'vue';
+
+const uniqueFilteredFornecedores = computed(() => {
+    return [...new Set(filteredFornecedores.value)];
+}); 
 
 // Carregar dados do formulário
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
-    if (props.idCadastro) itemData.value.id_cadastros = props.idCadastro;
-    setTimeout(async () => {
-        // Carrega os dados do formulário
-        await loadData();
-        // Unidades de negócio
-        await listUnidadesDescricao();
-        // Agentes de negócio
-        await listAgentesNegocio();
-    }, Math.random() * 1000 + 250);
+    if (props.idFornecedor) itemData.value.id_fornecedor = props.idFornecedor;
+    // Carrega os dados do formulário
+    await loadData();
+    // Carrega o conteúdo da pasta
+    await lstFolder();
+    // Unidades de negócio
+    await getEmpresas();
+    // Agentes de negócio
+    await getFornecedores();
 });
-// Observar alterações na propriedade selectedCadastro
-watch(selectedCadastro, (value) => {
+// Observar alterações na propriedade selectedFornecedor
+watch(selectedFornecedor, (value) => {
     if (value) {
-        itemData.value.id_cadastros = value.code;
+        itemData.value.id_fornecedor = value.code;
     }
 });
 watch(route, (value) => {
@@ -709,203 +443,77 @@ watch(route, (value) => {
         reload();
     }
 });
-watchEffect(() => {
-    if (itemDataParam.value) {
-        if (itemDataParam.value.gera_pasta >= 1) {
-            lstFolder();
-        }
-    }
-});
 </script>
 
 <template>
-    <!-- <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'expandedFormMode')" /> -->
+    <Breadcrumb :items="breadItems" v-if="!(props.idFornecedor || mode == 'expandedFormMode')" />
     <div>
         <form @submit.prevent="saveData">
             <div class="grid">
-                <div :class="`${['new', 'expandedFormMode'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">
+                <div :class="`${['new'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">
                     <div class="p-fluid grid">
-                        <div class="col-12">
-                            <label for="id_cadastros">Cliente</label>
+                        <div :class="`col-12`">
+                            <label for="id_empresa">Empresa</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete
-                                v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
-                                v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros"
-                                @complete="searchCadastros" forceSelection />
+                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.id_empresa"
+                                id="id_empresa" optionLabel="label" optionValue="value" v-model="itemData.id_empresa"
+                                :options="dropdownEmpresas" :disabled="['view'].includes(mode)" />
+                        </div>
+                        <div :class="`col-12`">
+                            <label for="id_fornecedor">Fornecedor</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <AutoComplete v-else-if="route.name != 'cadastro' && (editFornecedor || mode == 'new')"
+                                v-model="selectedFornecedor" optionLabel="name" :suggestions="filteredFornecedores"
+                                @complete="searchFornecedores" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
-                                <InputText disabled v-model="nomeCliente" />
+                                <InputText disabled v-model="nomeFornecedor" />
                                 <Button
-                                    v-if="(route.name != 'cadastro' && itemDataLastStatus.status_params < 80 && uProf.pipeline >= 4) || mode == 'clone'"
-                                    icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"
+                                    v-if="(route.name != 'cadastro' && (!itemData.status || itemData.status < 80) && uProf.fiscal >= 4) || mode == 'clone'"
+                                    icon="fa-solid fa-pencil" severity="primary" @click="confirmEditFornecedor()"
                                     :disabled="mode == 'view'" />
                             </div>
                         </div>
-                        <div
-                            :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
-                            <label for="id_pipeline_params">Tipo ou Unidade de negócio</label>
+                        <div class="col-12 lg:col-2">
+                            <label for="mov_e_s">Movimento <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else-if="['view', 'expandedFormMode'].includes(mode) && unidadeLabel"
-                                :class="`${animationDocNr}disabled p-inputtext p-component p-filled`"
-                                v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
-                                {{ unidadeLabel }}
-                            </p>
-                            <Dropdown v-else filter placeholder="Selecione..."
-                                :showClear="!!itemData.id_pipeline_params" id="unidade_tipos" optionLabel="label"
-                                optionValue="value" v-model="itemData.id_pipeline_params" :options="dropdownUnidades"
-                                :disabled="!['new', 'clone'].includes(mode)" @change="getPipelineParam()" />
+                            <Dropdown v-else placeholder="Selecione..." id="mov_e_s" optionLabel="label"
+                                optionValue="value" v-model="itemData.mov_e_s" :options="dropdownES"
+                                :disabled="['view'].includes(mode)" />
                         </div>
-                        <div
-                            :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
-                            <label for="id_com_agentes">Agente de vendas</label>
+                        <div class="col-12 lg:col-6">
+                            <label for="modelo_nf">Tipo Nota <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.id_com_agentes"
-                                id="unidade_tipos" optionLabel="label" optionValue="value"
-                                v-model="itemData.id_com_agentes" :options="dropdownAgentes"
-                                :disabled="['view', 'expandedFormMode'].includes(mode)" />
+                            <Dropdown v-else placeholder="Selecione..." id="modelo_nf" optionLabel="label"
+                                optionValue="value" v-model="itemData.modelo_nf" filter :options="dropdownModelosNF"
+                                :disabled="['view'].includes(mode)" />
                         </div>
-                        <div class="col-12 lg:col-2"
-                            v-if="itemData.documento || (['new', 'clone', 'edit'].includes(mode) && itemDataParam.autom_nr == 0)">
-                            <label for="documento">Nº do Documento</label>
+                        <div class="col-12 lg:col-2">
+                            <label for="numero">Documento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else-if="itemDataParam.autom_nr || mode == 'expandedFormMode'"
-                                :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
-                                {{ itemData.documento }}
-                            </p>
-                            <InputText v-else autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                v-model="itemData.documento" id="documento" type="text" maxlength="10" />
+                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
+                                v-model="itemData.numero" id="numero" type="text" maxlength="20" />
                         </div>
-                        <div class="col-12 lg:col-1" v-if="itemData.versao">
-                            <label for="versao">Versão</label>
-                            <p class="p-inputtext p-component p-filled">
-                                {{ itemData.versao }}
-                            </p>
+                        <div class="col-12 lg:col-2">
+                            <label for="serie">Série</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
+                                v-model="itemData.serie" id="serie" type="text" maxlength="10" />
                         </div>
-                        <div class="col-12" v-if="itemDataParam.doc_venda >= 1">
-                            <div class="grid">
-                                <div class="col-12" style="text-align: center">
-                                    <div class="flex align-items-end flex-wrap card-container purple-container">
-                                        <span class="p-inputtext p-component p-filled surface-100">
-                                            <i class="fa-solid fa-angles-down fa-shake"></i> Valores referência para
-                                            comissão
-                                            <i class="fa-solid fa-angles-down fa-shake" />
-                                        </span>
-                                    </div>
-                                </div>
-                                <div :class="`col-12 lg:col-6`">
-                                    <label for="valor_bruto">Valor Bruto</label>
-                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)"
-                                        class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">R$</span>
-                                        <InputText autocomplete="no"
-                                            :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                            v-model="itemData.valor_bruto" id="valor_bruto" type="text" v-maska
-                                            data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                                    </div>
-                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">R$</span>
-                                        <span disabled v-html="itemData.valor_bruto" id="valor_bruto"
-                                            class="p-inputtext p-component" />
-                                    </div>
-                                </div>
-                                <div :class="`col-12 lg:col-6`">
-                                    <label for="valor_liq">Valor Líquido</label>
-                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)"
-                                        class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">R$</span>
-                                        <InputText autocomplete="no"
-                                            :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                            v-model="itemData.valor_liq" id="valor_liq" type="text" v-maska
-                                            data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                                        <Button :disabled="mode == 'view'"
-                                            v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500"
-                                            label="VB" @click="itemData.valor_liq = itemData.valor_bruto" />
-                                    </div>
-                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">R$</span>
-                                        <span disabled v-html="itemData.valor_liq" id="valor_liq"
-                                            class="p-inputtext p-component" />
-                                    </div>
-                                </div>
-                                <!-- <div :class="`col-12 lg:col-4`">
-                                    <label for="valor_representacao">Comissão do representante</label>
-                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">R$</span>
-                                        <InputText
-                                            autocomplete="no"
-                                            :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                            v-model="itemData.valor_representacao"
-                                            id="valor_representacao"
-                                            type="text"
-                                            v-maska
-                                            data-maska="0,99"
-                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                        />
-                                        <Button
-                                            :disabled="mode == 'view'"
-                                            v-if="calcTypeRepres == 'R$'"
-                                            v-tooltip.top="'Clique para repetir o valor líquido aqui'"
-                                            class="bg-blue-500"
-                                            label="VL"
-                                            @click="itemData.valor_representacao = itemData.valor_liq"
-                                        />
-                                        <Button
-                                            :disabled="mode == 'view'"
-                                            v-if="calcTypeRepres == 'R$'"
-                                            v-tooltip.top="'Clique para repetir o valor bruto aqui'"
-                                            class="bg-blue-500"
-                                            label="VB"
-                                            @click="itemData.valor_representacao = itemData.valor_bruto"
-                                        />
-                                    </div>
-                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">R$</span>
-                                        <span disabled v-html="itemData.valor_representacao" id="valor_representacao" class="p-inputtext p-component" />
-                                    </div>
-                                </div>
-                                <div :class="`col-12 lg:col-4`">
-                                    <label for="perc_represent">Percentual de Comissão do representante</label>
-                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">%</span>
-                                        <InputText
-                                            autocomplete="no"
-                                            :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                            v-model="itemData.perc_represent"
-                                            id="perc_represent"
-                                            type="text"
-                                            v-maska
-                                            data-maska="0,99"
-                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                        />
-                                    </div>
-                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">%</span>
-                                        <span disabled v-html="itemData.perc_represent" id="perc_represent" class="p-inputtext p-component" />
-                                    </div>
-                                </div>
-                                <div :class="`col-12 lg:col-4`">
-                                    <label for="valor_agente">Comissão dos agentes</label>
-                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">R$</span>
-                                        <InputText autocomplete="no" v-model="itemData.valor_agente" id="valor_agente" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                                        <Button v-tooltip.top="'Clique para repetir o valor líquido aqui'" class="bg-blue-500" label="VL" @click="itemData.valor_agente = itemData.valor_liq" />
-                                        <Button v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500" label="VB" @click="itemData.valor_agente = itemData.valor_bruto" />
-                                    </div>
-                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                        <span class="p-inputgroup-addon">R$</span>
-                                        <span disabled v-html="itemData.valor_agente" id="valor_agente" class="p-inputtext p-component" />
-                                    </div>
-                                </div> -->
+                        <div class="col-12 lg:col-12">
+                            <label for="chave">Chave NF-e</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <div class="p-inputgroup flex-1" v-else>
+                                <InputText autocomplete="no" :disabled="['view'].includes(mode)"
+                                    v-model="itemData.chave" id="chave" type="text" maxlength="44" />
+                                <Button icon="fa-solid fa-file-arrow-down" severity="primary"
+                                    @click="defaultSuccess('Em breve será possível baixar os dados direto do SPED')"
+                                    :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))"
+                            <EditorComponent v-else-if="!(loading.form || ['view'].includes(mode))"
                                 v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
                                 aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
@@ -919,6 +527,99 @@ watchEffect(() => {
                             severity="danger" text raised
                             @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
+                </div>
+                <div class="col-12 md:col-3" v-if="!['new'].includes(mode)">
+                    <Fieldset :toggleable="true" class="mb-3">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-bolt mr-2"></span>
+                                <span class="font-bold text-lg">Ações do Registro</span>
+                            </div>
+                        </template>
+
+                        <div
+                            v-if="(['new', 'clone'].includes(mode) || (!itemData.status || itemData.status < 80)) && !itemData.id_filho">
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'"
+                                icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'"
+                                icon="fa-solid fa-floppy-disk" severity="success" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'"
+                                icon="fa-solid fa-ban" severity="danger"
+                                @click="mode == 'edit' ? reload() : toGrid()" />
+                        </div>
+                        <div v-if="mode != 'edit'">
+                            <hr class="w-full mb-3" v-if="!itemData.id_filho" />
+                            <Button v-if="route.name == 'pipeline-one'" label="Ir ao Fornecedor" type="button"
+                                class="w-full mb-3" :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328"
+                                text raised
+                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_fornecedor}`)" />
+                            <Button label="Novo Registro para o Fornecedor" v-if="itemData.id && !itemData.id_pai"
+                                type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary"
+                                text raised @click="registroIdentico" />
+                            <Button label="Cancelar Registro" v-tooltip.top="`Cancelar não exclui o registro`"
+                                v-if="(!itemData.status || itemData.status < 80)" type="button"
+                                :disabled="!(uProf.fiscal >= 3 && (itemData.status == 0 || itemData.status == 10))"
+                                class="w-full mb-3" :icon="`fa-solid fa-ban`" severity="warning" text raised
+                                @click="defaultWarn('Cancelar registro')" />
+                            <Button label="Reativar Registro" v-tooltip.top="`Reative o registro cancelado`"
+                                v-else-if="uProf.fiscal >= 4 && itemData.status >= 89" type="button" class="w-full mb-3"
+                                :icon="`fa-solid fa-file-invoice ${itemData.status == 0 ? 'fa-shake' : ''}`"
+                                severity="warning" text raised @click="defaultWarn('Reativar registro')" />
+                            <Button v-if="uProf.fiscal >= 4 && itemData.status == 10" label="Excluir Registro"
+                                v-tooltip.top="`Não pode ser desfeito! Se excluir, excluirá o documento relacionado e os registros financeiros ficarão órfãos, caso haja algum!`"
+                                type="button" :disabled="!(uProf.fiscal >= 4 && itemData.status == 10)"
+                                class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
+                                @click="defaultWarn('Excluir registro')" />
+                            <Button :disabled="!hostAccessible || hasFolder" label="Criar Pasta" type="button"
+                                class="w-full mt-3 mb-3"
+                                :icon="`fa-solid fa-folder ${hostAccessible && !hasFolder ? 'fa-shake' : ''}`"
+                                severity="success" text raised @click="mkFolder()" />
+                        </div>
+                    </Fieldset>
+                    <Fieldset :toggleable="true" :collapsed="true" v-if="itemData.id">
+                        <template #legend>
+                            <div class="flex align-items-center text-primary">
+                                <span class="fa-solid fa-clock mr-2"></span>
+                                <span class="font-bold text-lg">Conteúdo da Pasta</span>
+                            </div>
+                        </template>
+                        <ul class="list-decimal"
+                            v-if="listFolder && typeof listFolder == 'object' && listFolder.length">
+                            <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
+                        </ul>
+                        <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>
+                        <p v-else>Não há conteúdo na pasta</p>
+                    </Fieldset>
+                </div>
+                <div class="col-12">
+                    <div class="grid">
+                        <div class="col-12" style="text-align: center">
+                            <div
+                                class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
+                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Valores financeiros do
+                                documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
+                            </div>
+                        </div>
+                        <div :class="`col-12 lg:col-2`" v-for="item in itemsInputsList" :key="item">
+                            <label :for="item.field">{{ item.label }}<span v-if="item.required" class="text-base"
+                                    style="color: red">
+                                    *</span></label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <div v-else-if="!['view'].includes(mode)" class="p-inputgroup flex-1"
+                                style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="['view'].includes(mode)"
+                                    v-model="itemData[item.field]" :id="item.field" type="text" v-maska
+                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                            </div>
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <span disabled v-html="itemData[item.field]" :id="item.field"
+                                    class="p-inputtext p-component" />
+                            </div>
+                        </div>
+                    </div>
+
                     <Fieldset class="bg-orange-200 mb-3" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -948,146 +649,23 @@ watchEffect(() => {
                             <span v-html="guide" />
                         </p>
                     </Fieldset>
-                    <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="true" v-if="uProf.admin >= 2">
+                    <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="uProf.admin >= 2">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="fa-solid fa-circle-info mr-2"></span>
                                 <span class="font-bold text-lg">FormData</span>
                             </div>
                         </template>
-                        <p>{{ route.name }}</p>
+                        <p>route: {{ route.name }}</p>
+                        <p>breadItems: {{ breadItems }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
                         <p>itemDataEventos: {{ itemDataEventos }}</p>
-                        <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
-                        <p v-if="props.idPipeline">idPipeline: {{ props.idPipeline }}</p>
-                        <p>itemDataParam: {{ itemDataParam }}</p>
-                        <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
-                        <p>{{ unidadeLabel }}</p>
+                        <p v-if="props.idFornecedor">idFornecedor: {{ props.idFornecedor }}</p>
+                        <p v-if="props.idFisNotas">idPipeline: {{ props.idFisNotas }}</p>
                         <p>hasFolder {{ hasFolder }}</p>
-                        <p>editCadastro {{ editCadastro }}</p>
+                        <p>editFornecedor {{ editFornecedor }}</p>
                         <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
-                    </Fieldset>
-                </div>
-                <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
-                    <Fieldset :toggleable="true" class="mb-3">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-bolt mr-2"></span>
-                                <span class="font-bold text-lg">Ações do Registro</span>
-                            </div>
-                        </template>
-
-                        <div
-                            v-if="(['new', 'clone'].includes(mode) || itemDataLastStatus.status_params < 80) && !itemData.id_filho">
-                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'"
-                                icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'"
-                                icon="fa-solid fa-floppy-disk" severity="success" />
-                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'"
-                                icon="fa-solid fa-ban" severity="danger"
-                                @click="mode == 'edit' ? reload() : toGrid()" />
-                        </div>
-                        <div v-if="mode != 'edit'">
-                            <hr class="w-full mb-3" v-if="!itemData.id_filho" />
-                            <Button v-if="route.name == 'pipeline-one'" label="Ir ao Cadastro" type="button"
-                                class="w-full mb-3" :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328"
-                                text raised
-                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)" />
-                            <Button label="Novo Registro para o Cliente" v-if="itemData.id && !itemData.id_pai"
-                                type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary"
-                                text raised @click="registroIdentico" />
-                            <Button :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
-                                v-if="itemData.id_filho || itemData.id_pai" type="button" class="w-full mb-3"
-                                :icon="`fa-solid fa-turn-${itemData.id_filho ? 'down' : 'up'} fa-shake`"
-                                severity="success" text raised @click="itemData.id_filho ? toFilho() : toPai()" />
-                            <Button label="Converter para Pedido" v-if="itemDataParam.doc_venda == 1"
-                                :disabled="![andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
-                                type="button" class="w-full mb-3" :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''
-                                    }`" severity="danger" text raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_CONVERTIDO)" />
-                            <Button label="Exibir/Editar Proposta" v-if="itemDataParam.proposta_interna == 1"
-                                :disabled="![andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
-                                type="button" class="w-full mb-3"
-                                :icon="`fa-solid fa-file-pen ${itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''}`"
-                                severity="success" text raised @click="toProposal()" />
-                            <Button label="Criar OAT de Montagem"
-                                v-if="itemDataParam.doc_venda >= 2 && (itemDataLastStatus.status_params == 20 || itemData.status == 10) && !itemData.id_pv"
-                                :disabled="itemDataLastStatus.status_params >= 89" type="button" class="w-full mb-3"
-                                :icon="`fa-solid fa-screwdriver-wrench ${itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params <= 20 ? 'fa-shake' : ''}`"
-                                style="color: #a97328" text raised @click="createPv()" />
-                            <Button label="Ver OAT de Montagem" v-if="itemDataParam.doc_venda >= 2 && itemData.id_pv"
-                                :disabled="itemDataLastStatus.status_params >= 89" type="button" class="w-full mb-3"
-                                :icon="`fa-solid fa-screwdriver-wrench ${itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params <= 20 ? 'fa-shake' : ''}`"
-                                style="color: #a97328" text raised @click="goPv()" />
-                            <Button label="Liquidar Registro"
-                                v-if="itemDataLastStatus.status_params < 80 && itemDataParam.doc_venda == 0"
-                                type="button"
-                                :disabled="!(uProf.pipeline >= 3 && (itemDataLastStatus.status_params == 0 || itemData.status == 10))"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-check ${itemDataLastStatus.status_params == 0 || itemData.status == 10 ? 'fa-shake' : ''}`"
-                                severity="success" text raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_ENCERRADO)" />
-                            <Button label="Cancelar Registro"
-                                v-tooltip.top="itemData.id_filho ? `Se cancelar, cancelará o documento relacionado e suas comissões, caso haja!` : 'Inutiliza o registro, mas não exclui!'"
-                                v-if="itemDataLastStatus.status_params < 80" type="button"
-                                :disabled="!(uProf.pipeline >= 3 && (itemDataLastStatus.status_params == 0 || itemData.status == 10))"
-                                class="w-full mb-3" :icon="`fa-solid fa-ban`" severity="warning" text raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_CANCELADO)" />
-                            <Button label="Reativar Registro"
-                                v-tooltip.top="itemData.id_filho ? `Se reativar, reativará o documento relacionado e suas comissões, caso haja!` : ''"
-                                v-else-if="uProf.pipeline >= 4 && itemDataLastStatus.status_params >= 89" type="button"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-file-invoice ${itemDataLastStatus.status_params == 0 ? 'fa-shake' : ''}`"
-                                severity="warning" text raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_REATIVADO)" />
-                            <Button v-if="uProf.pipeline >= 4 && itemData.status == 10" label="Excluir Registro"
-                                v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
-                                type="button" :disabled="!(uProf.pipeline >= 4 && itemData.status == 10)"
-                                class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_EXCLUIDO)" />
-                            <Button v-if="itemDataParam.gera_pasta == 1" :disabled="!hostAccessible || hasFolder"
-                                label="Criar Pasta" type="button" class="w-full mt-3 mb-3"
-                                :icon="`fa-solid fa-folder ${hostAccessible && !hasFolder ? 'fa-shake' : ''}`"
-                                severity="success" text raised @click="mkFolder()" />
-                        </div>
-                    </Fieldset>
-                    <Fieldset :toggleable="true" class="mb-3" v-if="itemData.id">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-clock mr-2"></span>
-                                <span class="font-bold text-lg">Andamento do Registro</span>
-                            </div>
-                        </template>
-                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Timeline v-else :value="itemDataStatus">
-                            <template #marker="slotProps">
-                                <span
-                                    class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
-                                    :style="{ backgroundColor: slotProps.item.color }">
-                                    <i :class="slotProps.item.icon"></i>
-                                </span>
-                            </template>
-                            <template #opposite="slotProps">
-                                <small class="p-text-secondary">{{ slotProps.item.date }}</small>
-                            </template>
-                            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{
-                                uProf.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
-                        </Timeline>
-                    </Fieldset>
-                    <Fieldset :toggleable="true" :collapsed="true" v-if="itemData.id">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-clock mr-2"></span>
-                                <span class="font-bold text-lg">Conteúdo da Pasta</span>
-                            </div>
-                        </template>
-                        <ul class="list-decimal"
-                            v-if="listFolder && typeof listFolder == 'object' && listFolder.length">
-                            <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
-                        </ul>
-                        <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>
-                        <p v-else>Não há conteúdo na pasta ou ela não existe</p>
                     </Fieldset>
                 </div>
             </div>

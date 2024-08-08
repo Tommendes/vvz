@@ -49,6 +49,7 @@ const periodo = ref(null); // Período selecionado
 // Obter Empresas
 const getEmpresas = async () => {
     const url = `${baseApiUrl}/empresas`;
+    dropdownEmpresas.value = [];
     await axios.get(url).then((res) => {
         res.data.data.map((item) => {
             dropdownEmpresas.value.push({
@@ -61,11 +62,12 @@ const getEmpresas = async () => {
 // Obter Fornecedores
 const getFornecedores = async () => {
     const url = `${baseApiUrl}/fiscal-notas/f-a/gfr`;
+    dropdownFornecedores.value = [];
     await axios.get(url).then((res) => {
         res.data.map((item) => {
             dropdownFornecedores.value.push({
                 value: item.id,
-                label: item.nome
+                label: `${item.nome} - ${item.cpf_cnpj}`
             });
         });
     });

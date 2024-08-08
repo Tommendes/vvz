@@ -1,12 +1,17 @@
 // TODO: Criar a API de notas fiscais contendo os métodos de CRUD. Fazer validações de campos obrigatórios e tipos de dados. Em save, verificar se body.id existe e fazer update, caso contrário, fazer insert. Antes de excluir, verificar em fin_lancamentos se existe lançamento para a nota fiscal e não permitir caso exista.
+const ftp = require('basic-ftp');
+const path = require('path');
+const { Client } = require("basic-ftp")
 const { dbPrefix } = require("../.env")
 const moment = require('moment')
+const FOLDER_ROOT = 'Documentos_Fiscais'
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const { STATUS_ABERTO, STATUS_LIQUIDADO, STATUS_ENCERRADO, STATUS_FATURADO, STATUS_CONFIRMADO } = require('./comis_status.js')(app)
     // const { STATUS_COMISSIONADO } = require('./pipeline_status.js')(app)
     const tabela = 'fis_notas'
     const tabelaFinLancamentos = 'fin_lancamentos'
+    const tabelaFtp = 'pipeline_ftp'
     const tabelaAlias = 'Nota Fiscal'
     const tabelaAliasPl = 'Notas Fiscais'
     const STATUS_ACTIVE = 10
@@ -63,7 +68,7 @@ module.exports = app => {
             if (!moment(body.data_emissao, 'YYYY-MM-DD', true).isValid()) throw 'Data de emissão inválida'
             // TODO: Validar se a data de emissão é menor ou igual a data atual
             if (moment(body.data_emissao).isAfter(new Date())) throw 'Data de emissão não pode ser maior que a data atual'
-            existsOrError(body.mov_e_s, 'Movimento de entrada/saída não informado')
+            existsOrError(String(body.mov_e_s), 'Movimento de entrada/saída não informado')
             const uniqueNFFornecedor = await app.db(tabelaDomain).where({ numero: body.numero, serie: body.serie, id_fornecedor: body.id_fornecedor, status: STATUS_ACTIVE }).first()
             if (uniqueNFFornecedor && uniqueNFFornecedor.id != body.id) throw 'Já existe uma nota fiscal com o mesmo número e série para o fornecedor'
         } catch (error) {
@@ -417,11 +422,197 @@ module.exports = app => {
             })
     }
 
+    // Cria pasta no servidor ftp
+    const mkFolder = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de pastas de documentos"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const body = { ...req.body }
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaFornecedorDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        const tabelaEmpresaDomain = `${dbPrefix}_${uParams.schema_name}.empresa`
+        let registro = undefined
+        try {
+            if (!body.id_fis_notas) throw 'Documento não informado. Por favor recarregue a página...'
+            registro = await app.db({ pp: tabelaDomain })
+            .join({ c: tabelaFornecedorDomain }, 'c.id', 'pp.id_fornecedor')
+            .join({ e: tabelaEmpresaDomain }, 'e.id', 'pp.id_empresa')
+                .select('pp.id', 'pp.numero', 'pp.serie', 'c.nome as fornecedor', 'c.cpf_cnpj as cpf_cnpj_fornecedor', 'e.razaosocial as empresa', 'e.fantasia', 'e.cpf_cnpj_empresa')
+                .where({ 'pp.id': body.id_fis_notas }).first()
+            if (!registro.id) throw 'Registro não encontrado'
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(200).send(error)
+        }
+
+        if (!body.path) body.path = `${registro.fantasia.replace(/ /g, '_') || registro.cpf_cnpj_empresa.replace(/\D+/g, '')}/${registro.fornecedor.replace(/ /g, '_')}/${registro.numero}${registro.serie ? `-${registro.serie}` : ''}`;
+        const pathDoc = path.join(FOLDER_ROOT, body.path);
+
+        const client = new ftp.Client();
+
+        const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
+        const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
+        ftpParamsArray.forEach(ftpParam => {
+            ftpParam.path = pathDoc;
+        });
+        let clientFtp = undefined;
+        try {
+            existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
+            let connectionResult = await connectToFTP(ftpParamsArray, uParams);
+            if (!connectionResult.success) {
+                throw new Error('Não foi possível conectar ao servidor de arquivos neste momento');
+            }
+            clientFtp = connectionResult.client;
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(400).send(error.message);
+        }
+        try {
+            await clientFtp.ensureDir(pathDoc);
+            app.api.logger.logInfo({ log: { line: `Folder created: ${pathDoc}`, sConsole: true } })
+            // Registrar o evento na tabela de eventos
+            const { createEvent } = app.api.sisEvents
+            evento = await createEvent({
+                "request": req,
+                "evento": {
+                    id_user: user.id,
+                    evento: `Criação de pasta no servidor ftp`,
+                    classevento: `mkFolder`,
+                    id_registro: body.id,
+                    tabela_bd: 'fis_notas',
+                }
+            })
+            if (['POST', 'PUT'].includes(req.method)) return res.send(`Pasta criada com sucesso no caminho: ${body.path}`);
+            else return true;
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            if (error.code == 'EHOSTUNREACH') return res.status(500).send(`Servidor de arquivos temporariamente indisponível. Tente novamente ou tente mais tarde`);
+            else return res.status(500).send(error)
+        } finally {
+            client.close();
+        }
+    }
+
+    // Lista arquivos da pasta no servidor ftp
+    const lstFolder = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Listagem de pastas de documentos"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        let body = { ...req.body }
+
+        try {
+            if (!body.id_fis_notas) throw 'Documento a ser listado não informado. Por favor recarregue a página...'
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(200).send(error)
+        }
+        
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaFornecedorDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        const tabelaEmpresaDomain = `${dbPrefix}_${uParams.schema_name}.empresa`
+        const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
+
+        let registro = undefined
+        try {
+            if (!body.id_fis_notas) throw 'Documento não informado. Por favor recarregue a página...'
+            registro = await app.db({ pp: tabelaDomain })
+            .join({ c: tabelaFornecedorDomain }, 'c.id', 'pp.id_fornecedor')
+            .join({ e: tabelaEmpresaDomain }, 'e.id', 'pp.id_empresa')
+                .select('pp.id', 'pp.numero', 'pp.serie', 'c.nome as fornecedor', 'c.cpf_cnpj as cpf_cnpj_fornecedor', 'e.razaosocial as empresa', 'e.fantasia', 'e.cpf_cnpj_empresa')
+                .where({ 'pp.id': body.id_fis_notas }).first()
+            if (!registro.id) throw 'Registro não encontrado'
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(200).send(error)
+        }
+
+        const pathDoc = path.join(FOLDER_ROOT, registro.fantasia.replace(/ /g, '_') || registro.cpf_cnpj_empresa.replace(/\D+/g, ''), registro.fornecedor.replace(/ /g, '_'), `${registro.numero}${registro.serie ? `-${registro.serie}` : ''}`);
+        const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
+
+        ftpParamsArray.forEach(ftpParam => {
+            ftpParam.path = pathDoc;
+        });
+        let clientFtp = undefined;
+        try {
+            existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
+
+            let connectionResult = await connectToFTP(ftpParamsArray, uParams);
+
+            if (!connectionResult.success) {
+                throw new Error('Não foi possível conectar ao servidor de arquivos neste momento');
+            }
+
+            clientFtp = connectionResult.client;
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+            return res.status(400).send(error.message);
+        }
+
+        try {
+            const list = await clientFtp.list('/' + pathDoc);
+            
+            if (!list) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
+            else return res.send(list);
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${pathDoc}. Error: ${error}`, sConsole: true } })
+            if (error.code == 'EHOSTUNREACH') return res.status(200).send(`Servidor de arquivos temporariamente indisponível`);
+            else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
+            else return res.status(200).send(error)
+        } finally {
+            clientFtp.close();
+        }
+    }
+
+    const connectToFTP = async (ftpParamsArray, uParams) => {
+        let allErrors = [];
+        for (let i = 0; i < ftpParamsArray.length; i++) {
+            const ftpParam = ftpParamsArray[i];
+            const client = new Client();
+            try {
+                const dataConnect = {
+                    host: ftpParam.host,
+                    port: ftpParam.port,
+                    user: ftpParam.user,
+                    password: ftpParam.pass,
+                    secure: ftpParam.ssl
+                }
+                await client.access(dataConnect);
+                return { success: true, client }; // Retorna o cliente se a conexão for bem-sucedida
+            } catch (error) {
+                allErrors.push(`Conexão FTP falhou para a opção ${i + 1}: ${error.message}`);
+                client.close(); // Fecha a conexão falhada
+            }
+        }
+        // Se todas as conexões falharem, registre os erros do array allErrors e retorne falso
+        app.api.logger.logError({ log: { line: allErrors.join('; '), sConsole: false } })
+        return { success: false }; // Retorna falso se todas as conexões falharem
+    }
+
     const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
             case 'gfr':
                 getFornecedores(req, res)
+                break;
+            case 'mfd':
+                mkFolder(req, res)
+                break;
+            case 'lfd':
+                lstFolder(req, res)
                 break;
             // case 'gbi':
             //     getBIData(req, res)

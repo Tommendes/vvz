@@ -167,6 +167,8 @@ module.exports = app => {
 
     const getByFunction = async (req, res) => {
         const func = req.params.func
+        console.log('func', func);
+        
         switch (func) {
             case 'gCnpj':
                 getCnpj(req, res)
