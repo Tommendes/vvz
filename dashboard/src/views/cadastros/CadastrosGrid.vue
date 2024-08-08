@@ -53,7 +53,7 @@ const tipoCadastro = ref(null); // Tipo de cadastro
 const areaAtuacao = ref(null); // Área de atuação
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
-const rowsPerPage = ref(10); // Quantidade de registros por página
+const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000, 9999999]); // Opções de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
 // Lista de meses
@@ -122,10 +122,9 @@ const filtrarAtuacao = async () => {
     });
 };
 // Limpa os filtros do grid
-const clearFilter = () => {
+const clearFilter = async () => {
     loading.value = true;
     areaAtuacao.value = tipoCadastro.value = null;
-    rowsPerPage.value = 10;
     initFilters();
     lazyParams.value = {
         first: dt.value.first,
@@ -135,17 +134,27 @@ const clearFilter = () => {
         filters: filters.value
     };
 
-    loadLazyData();
+    await loadLazyData();
 };
 
-const loadLazyData = () => {
+const loadLazyData = async () => {
     loading.value = true;
     const url = `${urlBase.value}${urlFilters.value}`;
-    axios
+    await axios
         .get(url)
         .then((axiosRes) => {
             gridData.value = axiosRes.data.data;
             totalRecords.value = axiosRes.data.totalRecords;
+            const quant = totalRecords.value;
+            // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
+            rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
+            rowsPerPageOptions.value.push(quant);
+
+            // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
+            rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
+            rowsPerPageOptions.value.push(quant);
+            // TODO: Remova todos os valores duplicados de rowsPerPageOptions
+            rowsPerPageOptions.value = [...new Set(rowsPerPageOptions.value)];
             gridData.value.forEach((element) => {
                 // Exibe dado com máscara
                 if (element.cpf_cnpj && element.cpf_cnpj.length == 11) element.cpf_cnpj = masks.value.cpf.masked(element.cpf_cnpj);
@@ -165,21 +174,20 @@ const loadLazyData = () => {
             router.push({ path: '/' });
         });
 };
-const onPage = (event) => {
+const onPage = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await loadLazyData()
 };
-const onSort = (event) => {
+const onSort = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await loadLazyData()
 };
-const onFilter = () => {
+const onFilter = async () => {
     lazyParams.value.filters = filters.value;
-    mountUrlFilters();
-    loadLazyData();
+    await mountUrlFilters();
 };
 const mode = ref('grid');
-const mountUrlFilters = () => {
+const mountUrlFilters = async () => {
     let url = '?';
     Object.keys(filters.value).forEach((key) => {
         if (filters.value[key].value) {
@@ -195,6 +203,8 @@ const mountUrlFilters = () => {
     if (tipoCadastro.value) url += `field:id_params_tipo=equals:${tipoCadastro.value}&`;
     if (areaAtuacao.value) url += `field:id_params_atuacao=equals:${areaAtuacao.value}&`;
     urlFilters.value = url;
+
+    await loadLazyData();
 };
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
@@ -214,9 +224,9 @@ const goField = (data) => {
     // idPipeline.value = data.id;
     window.open(`#/${uProf.value.schema_description}/cadastro/${data.id}`, '_blank');
 };
-watchEffect(() => {
-    mountUrlFilters();
-});
+// watchEffect(() => {
+//     mountUrlFilters();
+// });
 </script>
 
 <template>
@@ -232,7 +242,7 @@ watchEffect(() => {
         <div class="col-12">
             <div class="card">
                 <DataTable :value="gridData" lazy paginator :first="0" v-model:filters="filters" ref="dt" dataKey="id"
-                    :totalRecords="totalRecords" :rows="rowsPerPage" :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
+                    :totalRecords="totalRecords" :rows="gridData.length" :rowsPerPageOptions="rowsPerPageOptions"
                     :loading="loading" @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     filterDisplay="row"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
@@ -242,10 +252,10 @@ watchEffect(() => {
                         <div class="flex justify-content-end gap-3">
                             <Dropdown filter placeholder="Filtrar por Tipo de Cadastro..." :showClear="tipoCadastro"
                                 style="min-width: 200px" id="tipoCadastro" optionLabel="label" optionValue="value"
-                                v-model="tipoCadastro" :options="dropdownTipoCadastro" @change="loadLazyData()" />
+                                v-model="tipoCadastro" :options="dropdownTipoCadastro" @change="mountUrlFilters()" />
                             <Dropdown filter placeholder="Filtrar por Área de Atuação..." :showClear="areaAtuacao"
                                 style="min-width: 200px" id="areaAtuacao" optionLabel="label" optionValue="value"
-                                v-model="areaAtuacao" :options="dropdownAtuacao" @change="loadLazyData()" />
+                                v-model="areaAtuacao" :options="dropdownAtuacao" @change="mountUrlFilters()" />
                             <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar"
                                 @click="exportCSV($event)" />
                             <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
