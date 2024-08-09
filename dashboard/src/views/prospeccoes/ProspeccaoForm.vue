@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -137,81 +137,25 @@ const saveData = async () => {
 /**
  * Autocomplete de cadastros e pipeline
  */
+// Editar cadastro no autocomplete
+const editCadastro = ref(false);
 const cadastros = ref([]);
 const filteredCadastros = ref([]);
 const selectedCadastro = ref();
 const nomeCliente = ref();
-// Editar cadastro no autocomplete
-const editCadastro = ref(false);
 const getNomeCliente = async () => {
-    try {
-        const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&literal=1&slct=nome,cpf_cnpj`;
-        const response = await axios.get(url);
-        if (response.data.data.length > 0) {
-            nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj) + (itemData.value.pv_nr ? ' - PV: ' + itemData.value.pv_nr : '');
+    if (itemData.value.id_cadastros) {
+        try {
+            const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&literal=1&slct=nome,cpf_cnpj`;
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar cadastros:', error);
         }
-    } catch (error) {
-        console.error('Erro ao buscar cadastros:', error);
     }
 };
-const searchCadastros = (event) => {
-    setTimeout(async () => {
-        itemData.value.id_cad_end = undefined;
-        // Verifique se o campo de pesquisa não está vazio
-        if (!event.query.trim().length) {
-            // Se estiver vazio, exiba todas as sugestões
-            filteredCadastros.value = [...cadastros.value];
-        } else {
-            // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
-            if (cadastros.value.length === 0) {
-                // Carregue os cadastros da API (ou de onde quer que você os obtenha)
-                getCadastroBySearchedId();
-            }
-            // Filtrar os cadastros com base na consulta do usuário
-            filteredCadastros.value = cadastros.value.filter((registro) => {
-                return registro.name.toLowerCase().includes(event.query.toLowerCase());
-            });
-        }
-    }, 150);
-};
-const getCadastroBySearchedId = async (idCadastro) => {
-    const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
-    try {
-        const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
-        const response = await axios.get(url);
-        cadastros.value = response.data.data.map((element) => {
-            return {
-                code: element.id,
-                name: element.nome + ' - ' + element.cpf_cnpj
-            };
-        });
-    } catch (error) {
-        console.error('Erro ao buscar cadastros:', error);
-    }
-};
-const confirmEditAutoSuggest = (tipo) => {
-    confirm.require({
-        group: 'templating',
-        header: `Corfirmar edição`,
-        message: `Corfirma que deseja editar o ${tipo}?`,
-        icon: 'fa-solid fa-question fa-beat',
-        acceptIcon: 'fa-solid fa-check',
-        rejectIcon: 'fa-solid fa-xmark',
-        acceptClass: 'p-button-danger',
-        accept: () => {
-            if (tipo == 'cadastro') {
-                selectedCadastro.value = undefined;
-                editCadastro.value = true;
-            }
-        },
-        reject: () => {
-            return false;
-        }
-    });
-};
-/**
- * Fim de autocomplete de cadastros
- */
 const dropdownPeriodo = ref([
     { value: 0, label: 'Manhã' },
     { value: 1, label: 'Tarde' }
@@ -265,6 +209,8 @@ const loadEnderecos = async () => {
     dropdownEnderecos.value = [];
     if (itemData.value.id_cadastros) {
         const url = `${baseApiUrl}/cad-enderecos/${itemData.value.id_cadastros}`;
+        console.log('url', url);
+        
         await axios.get(url).then((res) => {
             res.data.data.map((item) => {
                 const label = `${item.logradouro}${item.nr ? ', ' + item.nr : ''}${item.complnr ? ' ' + item.complnr : ''}${item.bairro ? ' - ' + item.bairro : ''}${uProf.value.admin >= 2 ? ` (${item.id})` : ''}`;
@@ -273,17 +219,16 @@ const loadEnderecos = async () => {
         });
     }
 };
+import { computed } from 'vue';
+// Refaz a lista removendo inclusive as duplicatas
+computed(() => {
+    return [...new Set(dropdownEnderecos.value)];
+});
 // Carregar dados do formulário
 onMounted(async () => {
     await loadData();
+    loadEnderecos();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
-});
-// Observar alterações na propriedade selectedCadastro
-watch(selectedCadastro, async (value) => {
-    if (value) {
-        itemData.value.id_cadastros = value.code;
-        await loadEnderecos();
-    }
 });
 </script>
 
@@ -331,14 +276,8 @@ watch(selectedCadastro, async (value) => {
                         <div class="col-12 md:col-6">
                             <label for="id_cadastros">Cadastro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete
-                                v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
-                                v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros"
-                                @complete="searchCadastros" forceSelection />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button v-if="!route.name == 'cadastro'" icon="fa-solid fa-pencil" severity="primary"
-                                    @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-6">

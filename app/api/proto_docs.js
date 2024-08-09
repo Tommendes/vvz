@@ -25,18 +25,21 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaProtocoloDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProtocolo}`
 
-        if (typeof body.descricao === 'array') {
-            body.descricao = body.descricao.join()
-        }
-        else if (typeof body.descricao === 'object') {
-            body.descricao = JSON.stringify(body.descricao)
-        }
-        body.tp_documento = body.tp_documento.code
-
         try {
             existsOrError(body.tp_documento, 'Tipo do documento não informado')
+            if (typeof body.tp_documento === 'object') {
+                body.tp_documento = body.tp_documento.code
+            }
             existsOrError(body.descricao, 'Descrição do documento não informado')
-            const duplicated = await app.db(tabelaDomain).where({ id_protocolos: body.id_protocolos, tp_documento: body.tp_documento, descricao: body.descricao }).first()
+            if (typeof body.descricao === 'array') {
+                body.descricao = body.descricao.join()
+            }
+            else if (typeof body.descricao === 'object') {
+                body.descricao = JSON.stringify(body.descricao)
+            }
+            const duplicated = await app.db(tabelaDomain).where({ id_protocolos: body.id_protocolos, tp_documento: body.tp_documento, descricao: body.descricao })
+                .andWhereNot({ id: body.id })
+                .first()
             if (duplicated) throw 'Documento já cadastrado'
             const idProtocolosExists = await app.db(tabelaProtocoloDomain).where({ id: body.id_protocolos }).first()
             if (!idProtocolosExists) throw 'Protocolo não encontrado'
@@ -45,7 +48,11 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-          delete body.items;
+        delete body.items;
+
+        const { changeUpperCase, removeAccentsObj } = app.api.facilities
+        body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
+        body = (JSON.parse(JSON.stringify(body), changeUpperCase));
 
         if (body.id) {
             // Variáveis da edição de um registro
@@ -118,7 +125,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const id_protocolos = req.params.id_protocolos
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaProtocoloDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProtocolo}`

@@ -455,8 +455,8 @@ const listStatusRegistro = async () => {
 
 // Carregar dados do formulário
 onMounted(async () => {
+    listAgentesComissionamento();
     await loadData();
-    await listAgentesComissionamento();
 });
 // Calcule o valor da comissão ao alterar o valor base ou o percentual. Lembrando que valor_base e percentual estão no formato 0,99 e precisam ser convertidos para o calculo. E depois de feito o calculo, o valor da comissão deve ser formatado para 0,99
 // Como sugestão, pode-se armazenar os valores em duas variáveis separadas, uma para o valor base e outra para o percentual, e depois fazer o calculo e armazenar o valor da comissão em uma terceira variável

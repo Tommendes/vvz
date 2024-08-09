@@ -125,10 +125,12 @@ const saveDataProtDocs = async () => {
             if (body && body.id) {
                 defaultSuccess('Documentos registrados com sucesso');
                 itemDataProtDocs.value = body;
-                await loadDataProtoDocs();
+                loadDataProtoDocs();
+                getTitulos();
                 itemDataProtDocs.value = { id_protocolos: itemData.value.id };
                 selectedTitulo.value = undefined;
                 document.getElementById('tp_documento').focus();
+
             } else {
                 defaultWarn('Erro ao salvar documentos');
             }
@@ -148,32 +150,35 @@ const filteredCadastros = ref([]);
 const selectedCadastro = ref();
 const nomeCliente = ref();
 const getNomeCliente = async () => {
-    try {
-        const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&literal=1&slct=nome,cpf_cnpj`;
-        const response = await axios.get(url);
-        if (response.data.data.length > 0) {
-            nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj) + (itemData.value.pv_nr ? ' - PV: ' + itemData.value.pv_nr : '');
+    if (itemData.value.id_cadastros) {
+        try {
+            const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&literal=1&slct=nome,cpf_cnpj`;
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar cadastros:', error);
         }
-    } catch (error) {
-        console.error('Erro ao buscar cadastros:', error);
     }
 };
 const searchCadastros = (event) => {
     setTimeout(async () => {
+        filteredCadastros.value = [];
         // Verifique se o campo de pesquisa não está vazio
         if (!event.query.trim().length) {
             // Se estiver vazio, exiba todas as sugestões
             filteredCadastros.value = [...cadastros.value];
         } else {
             // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
+            // Filtrar os cadastros com base na consulta do usuário
+            filteredCadastros.value = cadastros.value.filter((cadastro) => {
+                return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
+            });
+            // Se não houver resultados, carregue os cadastros da API
             if (cadastros.value.length === 0) {
-                // Carregue os cadastros da API (ou de onde quer que você os obtenha)
                 getCadastroBySearchedId();
             }
-            // Filtrar os cadastros com base na consulta do usuário
-            filteredCadastros.value = cadastros.value.filter((registro) => {
-                return registro.name.toLowerCase().includes(event.query.toLowerCase());
-            });
         }
     }, 150);
 };
@@ -192,29 +197,42 @@ const getCadastroBySearchedId = async (idCadastro) => {
         console.error('Erro ao buscar cadastros:', error);
     }
 };
-const confirmEditAutoSuggest = (tipo) => {
-    if (tipo == 'cadastro') {
-        confirm.require({
-            group: 'templating',
-            header: `Corfirmar edição`,
-            message: `Corfirma que deseja editar o ${tipo}?`,
-            icon: 'fa-solid fa-question fa-beat',
-            acceptIcon: 'fa-solid fa-check',
-            rejectIcon: 'fa-solid fa-xmark',
-            acceptClass: 'p-button-danger',
-            accept: () => {
-                selectedCadastro.value = undefined;
-                editCadastro.value = true;
-            },
-            reject: () => {
-                return false;
-            }
-        });
-    } else if (tipo == 'titulo') {
-        selectedTitulo.value = undefined;
-        editTitulo.value = true;
-    }
+const confirmEditCadastro = () => {
+    confirm.require({
+        group: 'templating',
+        header: 'Corfirma que deseja editar o cadastro?',
+        message: 'Você tem certeza que deseja editar este registro?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            selectedCadastro.value = undefined;
+            editCadastro.value = true;
+        },
+        reject: () => {
+            return false;
+        }
+    });
 };
+// Obter Principais Cadastros
+const getCadastros = async () => {
+    const url = `${baseApiUrl}/cadastros/f-a/glf?fld=status&vl=10&literal=1&slct=id,nome,cpf_cnpj`;
+    cadastros.value = []; // Limpa a lista antes de popular
+    await axios.get(url).then((res) => {
+        res.data.data.map((item) => {
+            cadastros.value.push({
+                code: item.id,
+                name: item.nome + ' - ' + item.cpf_cnpj
+            });
+        });
+    });
+};
+import { computed } from 'vue';
+// Refaz a lista removendo inclusive as duplicatas
+computed(() => {
+    return [...new Set(filteredCadastros.value)];
+});
 /**
  * Fim de autocomplete de cadastros
  */
@@ -225,7 +243,6 @@ const confirmEditAutoSuggest = (tipo) => {
 const titulos = ref([]);
 const filteredTitulos = ref([]);
 const selectedTitulo = ref();
-const editTitulo = ref(false);
 const searchTitulos = (event) => {
     setTimeout(async () => {
         // Verifique se o campo de pesquisa não está vazio
@@ -234,14 +251,14 @@ const searchTitulos = (event) => {
             filteredTitulos.value = [...titulos.value];
         } else {
             // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
-            if (titulos.value.length === 0) {
-                // Carregue os titulos da API (ou de onde quer que você os obtenha)
-                getTitulos();
-            }
             // Filtrar os titulos com base na consulta do usuário
             filteredTitulos.value = titulos.value.filter((registro) => {
                 return registro.name.toLowerCase().includes(event.query.toString().toLowerCase());
             });
+            if (filteredTitulos.value.length === 0) {
+                // Carregue os titulos da API (ou de onde quer que você os obtenha)
+                getTitulos();
+            }
         }
     }, 150);
 };
@@ -317,7 +334,9 @@ const deleteItem = (item) => {
 };
 // Carregar dados do formulário
 onMounted(async () => {
-    await loadData();
+    loadData();
+    getCadastros();
+    getTitulos();
     // loadOptions();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
@@ -348,12 +367,12 @@ watch(selectedCadastro, (value) => {
                             <label for="id_cadastros">Destinatário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro"
-                                optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros"
-                                forceSelection />
+                                optionLabel="name" :dropdown="false" :suggestions="filteredCadastros"
+                                @complete="searchCadastros" forceSelection @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="fa-solid fa-pencil" severity="primary"
-                                    @click="confirmEditAutoSuggest('cadastro')" :disabled="mode == 'view'" />
+                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"
+                                    :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-6">
@@ -402,7 +421,8 @@ watch(selectedCadastro, (value) => {
                                         <div class="col-12 md:col-12">
                                             <label for="tp_documento">Tipo de Documento</label>
                                             <AutoComplete v-model="selectedTitulo" id="tp_documento" optionLabel="name"
-                                                :suggestions="filteredTitulos" @complete="searchTitulos" />
+                                                :suggestions="filteredTitulos" dropdown @complete="searchTitulos"
+                                                @keydown.enter.prevent />
                                         </div>
                                         <div class="col-12 md:col-12">
                                             <label for="descricao">Lista de Documentos (pressione Enter ou vírgula para

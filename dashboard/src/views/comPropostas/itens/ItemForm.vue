@@ -197,17 +197,19 @@ const searchProdutos = (event) => {
             filteredProdutos.value = [...produto.value];
         } else {
             // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
-            if (produto.value.length === 0) {
-                // Carregue os produto da API (ou de onde quer que você os obtenha)
-                getProdutoBySearchedId();
-            }
             // Filtrar os produto com base na consulta do usuário
             filteredProdutos.value = produto.value.filter((cadastro) => {
                 return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
             });
+            // Se não houver resultados, carregue os cadastros da API
+            if (filteredProdutos.value.length === 0) {
+                // Carregue os produto da API (ou de onde quer que você os obtenha)
+                getProdutoBySearchedId();
+            }
         }
     }, 150);
 };
+// Se não houver resultados, carregue os cadastros da API
 const getProdutoBySearchedId = async (idProduto) => {
     const qry = idProduto ? `fld=tbl1.id&vl=${idProduto}` : 'fld=1&vl=1';
     try {
@@ -234,6 +236,11 @@ const confirmEditProduto = () => {
     selectedProduto.value = nomeProduto.value;
     editProduto.value = true;
 };
+import { computed } from 'vue';
+// Refaz a lista removendo inclusive as duplicatas
+computed(() => {
+    return [...new Set(filteredFornecedores.value)];
+});
 /**
  * Fim de autocomplete de produto
  */
@@ -253,8 +260,8 @@ watch(selectedProduto, (value) => {
 });
 // Carregar dados do formulário
 onMounted(async () => {
-    await loadData();
-    await getComposicoes();
+    loadData();
+    getComposicoes();
     form.value.scrollIntoView({ behavior: 'smooth' });
 });
 </script>
@@ -300,8 +307,8 @@ onMounted(async () => {
                             <label for="id_com_produtos">Produto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editProduto || (mode == 'new' && props.modeParent != 'clone')"
-                                v-model="selectedProduto" optionLabel="name" :suggestions="filteredProdutos"
-                                @complete="searchProdutos" forceSelection panelClass="p-autocomplete-panel-red" />
+                                v-model="selectedProduto" :dropdown="false" optionLabel="name" :suggestions="filteredProdutos"
+                                @complete="searchProdutos" forceSelection @keydown.enter.prevent panelClass="p-autocomplete-panel-red" />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeProduto" />
                                 <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditProduto()"

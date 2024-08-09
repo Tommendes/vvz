@@ -170,6 +170,7 @@ const saveData = async () => {
 
     axios[method](url, preparedBody)
         .then(async (res) => {
+            editFornecedor.value = false;
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
@@ -218,43 +219,45 @@ const fornecedores = ref([]);
 const filteredFornecedores = ref();
 const selectedFornecedor = ref();
 const nomeFornecedor = ref();
+// Busca e exibe o nome do fornecedor caso exista
 const getNomeFornecedor = async () => {
     if (itemData.value.id_fornecedor) {
         try {
             const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_fornecedor}&literal=1&slct=nome,cpf_cnpj`;
-            setTimeout(async () => {
-                const response = await axios.get(url);
-                if (response.data.data.length > 0) {
-                    nomeFornecedor.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
-                }
-            }, Math.random() * 1000 + 250);
+            const response = await axios.get(url);
+            if (response.data.data.length > 0) {
+                nomeFornecedor.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+            }
         } catch (error) {
-            console.error('Erro ao buscar cadastros:', error);
+            console.error('Erro ao buscar fornecedores:', error);
         }
     }
 };
+// Busca de fornecedores enquanto digitado
 const searchFornecedores = (event) => {
-    filteredFornecedores.value = []; // Limpa a lista antes de cada busca
-    if (!event.query.trim().length) {
-        // Se estiver vazio, exiba todas as sugestões
-        filteredFornecedores.value = [...fornecedores.value];
-    } else {
-        // Se não estiver vazio, filtre dentre as opções em fornecedores.value
-        // Filtrar os cadastros com base na consulta do usuário
-        filteredFornecedores.value = fornecedores.value.filter((cadastro) => {
-            return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
-        });
-        // Se não houver resultados, carregue os cadastros da API
-        // if (filteredFornecedores.value.length === 0) {
-        //     getFornecedorBySearchedId(event.query.toLowerCase());
-        // }
-    }
+    setTimeout(() => {
+        filteredFornecedores.value = []; // Limpa a lista antes de cada busca
+        if (!event.query.trim().length) {
+            // Se estiver vazio, exiba todas as sugestões
+            filteredFornecedores.value = [...fornecedores.value];
+        } else {
+            // Se não estiver vazio, filtre dentre as opções em fornecedores.value
+            // Filtrar os cadastros com base na consulta do usuário
+            filteredFornecedores.value = fornecedores.value.filter((cadastro) => {
+                return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
+            });
+            // // Se não houver resultados, carregue os cadastros da API
+            // if (filteredFornecedores.value.length === 0) {
+            //     getFornecedorBySearchedId(event.query.toLowerCase());
+            // }
+        }
+    }, 150);
 };
+// Se não houver resultados, carregue os cadastros da API
 const getFornecedorBySearchedId = async (idFornecedor) => {
     const qry = idFornecedor ? `fld=nome&vl=${idFornecedor}` : 'fld=1&vl=1';
     try {
         const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
-
         const response = await axios.get(url);
         // Limpe a lista de fornecedores para evitar duplicatas
         fornecedores.value = [];
@@ -267,9 +270,10 @@ const getFornecedorBySearchedId = async (idFornecedor) => {
         // Atualize a lista filtrada
         filteredFornecedores.value = [...fornecedores.value];
     } catch (error) {
-        console.error('Erro ao buscar cadastros:', error);
+        console.error('Erro ao buscar fornecedores:', error);
     }
 };
+// Questiona se deseja mesmo editar o fornecedor
 const confirmEditFornecedor = () => {
     confirm.require({
         group: 'templating',
@@ -288,6 +292,24 @@ const confirmEditFornecedor = () => {
         }
     });
 };
+// Obter Fornecedores
+const getFornecedores = async () => {
+    const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id_params_tipo&vl=5&literal=1&slct=id,nome,cpf_cnpj`;
+    fornecedores.value = []; // Limpa a lista antes de popular
+    await axios.get(url).then((res) => {
+        res.data.data.map((item) => {
+            fornecedores.value.push({
+                code: item.id,
+                name: item.nome + ' - ' + item.cpf_cnpj
+            });
+        });
+    });
+};
+import { computed } from 'vue';
+// Refaz a lista removendo inclusive as duplicatas
+computed(() => {
+    return [...new Set(filteredFornecedores.value)];
+});
 /**
  * Fim de autocomplete de cadastros
  */
@@ -400,24 +422,6 @@ const getEmpresas = async () => {
         });
     });
 };
-// Obter Fornecedores
-const getFornecedores = async () => {
-    const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id_params_tipo&vl=5&literal=1&slct=id,nome,cpf_cnpj`;
-    fornecedores.value = []; // Limpa a lista antes de popular
-    await axios.get(url).then((res) => {
-        res.data.data.map((item) => {
-            fornecedores.value.push({
-                code: item.id,
-                name: item.nome + ' - ' + item.cpf_cnpj
-            });
-        });
-    });
-};
-import { computed } from 'vue';
-
-const uniqueFilteredFornecedores = computed(() => {
-    return [...new Set(filteredFornecedores.value)];
-}); 
 
 // Carregar dados do formulário
 onMounted(async () => {
@@ -428,9 +432,9 @@ onMounted(async () => {
     // Carrega o conteúdo da pasta
     await lstFolder();
     // Unidades de negócio
-    await getEmpresas();
+    getEmpresas();
     // Agentes de negócio
-    await getFornecedores();
+    getFornecedores();
 });
 // Observar alterações na propriedade selectedFornecedor
 watch(selectedFornecedor, (value) => {
@@ -463,8 +467,9 @@ watch(route, (value) => {
                             <label for="id_fornecedor">Fornecedor</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="route.name != 'cadastro' && (editFornecedor || mode == 'new')"
-                                v-model="selectedFornecedor" optionLabel="name" :suggestions="filteredFornecedores"
-                                @complete="searchFornecedores" forceSelection />
+                                v-model="selectedFornecedor" dropdown optionLabel="name"
+                                :suggestions="filteredFornecedores" @complete="searchFornecedores" forceSelection
+                                @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeFornecedor" />
                                 <Button

@@ -180,20 +180,21 @@ const getNomeCliente = async () => {
 };
 const searchCadastros = (event) => {
     setTimeout(async () => {
+        filteredCadastros.value = [];
         // Verifique se o campo de pesquisa não está vazio
         if (!event.query.trim().length) {
             // Se estiver vazio, exiba todas as sugestões
             filteredCadastros.value = [...cadastros.value];
         } else {
             // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
-            if (cadastros.value.length === 0) {
-                // Carregue os cadastros da API (ou de onde quer que você os obtenha)
-                getCadastroBySearchedId();
-            }
             // Filtrar os cadastros com base na consulta do usuário
             filteredCadastros.value = cadastros.value.filter((cadastro) => {
                 return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
             });
+            // Se não houver resultados, carregue os cadastros da API
+            if (cadastros.value.length === 0) {
+                getCadastroBySearchedId();
+            }
         }
     }, 150);
 };
@@ -230,6 +231,24 @@ const confirmEditCadastro = () => {
         }
     });
 };
+// Obter Principais Cadastros
+const getCadastros = async () => {
+    const url = `${baseApiUrl}/cadastros/f-a/glf?fld=status&vl=10&literal=1&slct=id,nome,cpf_cnpj`;
+    cadastros.value = []; // Limpa a lista antes de popular
+    await axios.get(url).then((res) => {
+        res.data.data.map((item) => {
+            cadastros.value.push({
+                code: item.id,
+                name: item.nome + ' - ' + item.cpf_cnpj
+            });
+        });
+    });
+};
+import { computed } from 'vue';
+// Refaz a lista removendo inclusive as duplicatas
+computed(() => {
+    return [...new Set(filteredFornecedores.value)];
+});
 /**
  * Fim de autocomplete de cadastros
  */
@@ -242,7 +261,8 @@ const reload = () => {
 };
 // Carregar dados do formulário
 onMounted(async () => {
-    await loadData();
+    loadData();
+    getCadastros();
 });
 // Observar alterações na propriedade selectedCadastro
 watch(selectedCadastro, (value) => {
@@ -262,8 +282,8 @@ watch(selectedCadastro, (value) => {
                             <label for="id_cadastros">Registro no cadastro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro"
-                                optionLabel="name" :suggestions="filteredCadastros" @complete="searchCadastros"
-                                forceSelection />
+                                optionLabel="name" :dropdown="false" :suggestions="filteredCadastros" @complete="searchCadastros"
+                                forceSelection @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"

@@ -74,13 +74,13 @@ const loadData = async () => {
             if (body && body.id) {
                 body.id = String(body.id);
                 itemData.value = body;
-                selectedCadastro.value = {
+                selectedFornecedor.value = {
                     code: itemData.value.id_fornecedor,
                     name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
                 };
-                await getNomeCliente();
+                await getNomeFornecedor();
                 await loadDataProdTabelas();
-                editCadastro.value = false;
+                editFornecedor.value = false;
             } else {
                 defaultWarn('Registro não localizado');
                 router.push({ path: `/${uProf.value.schema_description}/produtos` });
@@ -258,62 +258,68 @@ const loadOptions = async () => {
     });
 };
 /**
- * Autocomplete de cadastros
+ * Autocomplete de fornecedores
  */
-const cadastros = ref([]);
-const filteredCadastros = ref([]);
-const selectedCadastro = ref();
-const nomeCliente = ref();
+const fornecedores = ref([]);
+const filteredFornecedores = ref();
+const selectedFornecedor = ref();
+const nomeFornecedor = ref();
 // Editar cadastro no autocomplete
-const editCadastro = ref(false);
-const getNomeCliente = async () => {
+const editFornecedor = ref(false);
+const getNomeFornecedor = async () => {
     if (itemData.value.id_fornecedor) {
         try {
             const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_fornecedor}&slct=nome,cpf_cnpj`;
             const response = await axios.get(url);
             if (response.data.data.length > 0) {
-                nomeCliente.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+                nomeFornecedor.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
             }
         } catch (error) {
-            console.error('Erro ao buscar cadastros:', error);
+            console.error('Erro ao buscar fornecedores:', error);
         }
     }
 };
-const searchCadastros = (event) => {
-    setTimeout(async () => {
-        // Verifique se o campo de pesquisa não está vazio
+// Busca de fornecedores enquanto digitado
+const searchFornecedores = (event) => {
+    setTimeout(() => {
+        filteredFornecedores.value = []; // Limpa a lista antes de cada busca
         if (!event.query.trim().length) {
             // Se estiver vazio, exiba todas as sugestões
-            filteredCadastros.value = [...cadastros.value];
+            filteredFornecedores.value = [...fornecedores.value];
         } else {
-            // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
-            if (cadastros.value.length === 0) {
-                // Carregue os cadastros da API (ou de onde quer que você os obtenha)
-                getCadastroBySearchedId();
-            }
+            // Se não estiver vazio, filtre dentre as opções em fornecedores.value
             // Filtrar os cadastros com base na consulta do usuário
-            filteredCadastros.value = cadastros.value.filter((cadastro) => {
+            filteredFornecedores.value = fornecedores.value.filter((cadastro) => {
                 return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
             });
+            // // Se não houver resultados, carregue os cadastros da API
+            // if (filteredFornecedores.value.length === 0) {
+            //     getFornecedorBySearchedId(event.query.toLowerCase());
+            // }
         }
     }, 150);
 };
-const getCadastroBySearchedId = async (idCadastro) => {
-    const qry = idCadastro ? `fld=id&vl=${idCadastro}` : 'fld=1&vl=1';
+// Se não houver resultados, carregue os cadastros da API
+const getFornecedorBySearchedId = async (idFornecedor) => {
+    const qry = idFornecedor ? `fld=nome&vl=${idFornecedor}` : 'fld=1&vl=1';
     try {
         const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
         const response = await axios.get(url);
-        cadastros.value = response.data.data.map((element) => {
+        // Limpe a lista de fornecedores para evitar duplicatas
+        fornecedores.value = [];
+        fornecedores.value = response.data.data.map((element) => {
             return {
                 code: element.id,
                 name: element.nome + ' - ' + element.cpf_cnpj
             };
         });
+        // Atualize a lista filtrada
+        filteredFornecedores.value = [...fornecedores.value];
     } catch (error) {
-        console.error('Erro ao buscar cadastros:', error);
+        console.error('Erro ao buscar fornecedores:', error);
     }
 };
-const confirmEditCadastro = () => {
+const confirmEditFornecedor = () => {
     confirm.require({
         group: 'templating',
         header: 'Corfirma que deseja editar o cadastro?',
@@ -323,14 +329,32 @@ const confirmEditCadastro = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
-            selectedCadastro.value = undefined;
-            editCadastro.value = true;
+            selectedFornecedor.value = undefined;
+            editFornecedor.value = true;
         },
         reject: () => {
             return false;
         }
     });
 };
+// Obter Fornecedores
+const getFornecedores = async () => {
+    const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id_params_tipo&vl=5&literal=1&slct=id,nome,cpf_cnpj`;
+    fornecedores.value = []; // Limpa a lista antes de popular
+    await axios.get(url).then((res) => {
+        res.data.data.map((item) => {
+            fornecedores.value.push({
+                code: item.id,
+                name: item.nome + ' - ' + item.cpf_cnpj
+            });
+        });
+    });
+};
+import { computed } from 'vue';
+// Refaz a lista removendo inclusive as duplicatas
+computed(() => {
+    return [...new Set(filteredFornecedores.value)];
+});
 /**
  * Fim de autocomplete de cadastros
  */
@@ -433,8 +457,9 @@ const deleteItem = (item) => {
  */
 // Carregar dados do formulário
 onMounted(async () => {
-    await loadData();
-    await loadOptions();
+    loadData();
+    loadOptions();
+    getFornecedores();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
 });
 // Observar alterações nos dados do formulário
@@ -444,8 +469,8 @@ watchEffect(() => {
         itemData.value.id_params_unidade = dropdownUnidades.value.find((item) => item.label == 'Mão de Obra').value;
     }
 });
-// Observar alterações na propriedade selectedCadastro
-watch(selectedCadastro, (value) => {
+// Observar alterações na propriedade selectedFornecedor
+watch(selectedFornecedor, (value) => {
     if (value) {
         itemData.value.id_fornecedor = value.code;
     }
@@ -482,13 +507,13 @@ watch(selectedCadastro, (value) => {
                                     <label for="id_fornecedor">Fornecedor</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <AutoComplete
-                                        v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')"
-                                        v-model="selectedCadastro" optionLabel="name" :suggestions="filteredCadastros"
-                                        @complete="searchCadastros" forceSelection />
+                                        v-else-if="route.name != 'cadastro' && (editFornecedor || mode == 'new')"
+                                        v-model="selectedFornecedor" :dropdown="false" optionLabel="name" :suggestions="filteredFornecedores"
+                                        @complete="searchFornecedores" forceSelection @keydown.enter.prevent />
                                     <div class="p-inputgroup flex-1" v-else>
-                                        <InputText disabled v-model="nomeCliente" />
+                                        <InputText disabled v-model="nomeFornecedor" />
                                         <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil"
-                                            severity="primary" @click="confirmEditCadastro()"
+                                            severity="primary" @click="confirmEditFornecedor()"
                                             :disabled="mode == 'view'" />
                                     </div>
                                 </div>
