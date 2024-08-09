@@ -28,7 +28,7 @@ module.exports = app => {
 
         let user = await app.db({ 'u': tabela })
             .select('u.id', 'u.name', 'u.cpf', 'u.telefone', 'u.email', 'u.id', 'u.time_to_pas_expires', 'u.status', 'sc.schema_name', 'sc.schema_description', 'u.admin', 'u.gestor',
-                'u.cadastros', 'u.pipeline', 'u.pv', 'u.comercial', 'u.fiscal', 'u.financeiro', 'u.comissoes', 'u.uploads', 'u.at', 'u.agente_v', 'u.agente_arq', 'u.agente_at')
+                'u.cadastros', 'u.pipeline', 'u.protocolo', 'u.pv', 'u.comercial', 'u.fiscal', 'u.financeiro', 'u.comissoes', 'u.uploads', 'u.at', 'u.agente_v', 'u.agente_arq', 'u.agente_at')
             .join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id')
             .orWhere({ 'u.email': email })
             .orWhere({ 'u.name': email })
@@ -149,6 +149,7 @@ module.exports = app => {
                     admin: user.admin,
                     cadastros: user.cadastros,
                     pipeline: user.pipeline,
+                    protocolo: user.protocolo,
                     pv: user.pv,
                     comercial: user.comercial,
                     fiscal: user.fiscal,
