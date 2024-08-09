@@ -37,8 +37,8 @@ module.exports = app => {
             else if (typeof body.descricao === 'object') {
                 body.descricao = JSON.stringify(body.descricao)
             }
+
             const duplicated = await app.db(tabelaDomain).where({ id_protocolos: body.id_protocolos, tp_documento: body.tp_documento, descricao: body.descricao })
-                .andWhereNot({ id: body.id })
                 .first()
             if (duplicated) throw 'Documento já cadastrado'
             const idProtocolosExists = await app.db(tabelaProtocoloDomain).where({ id: body.id_protocolos }).first()
