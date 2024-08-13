@@ -16,12 +16,12 @@ exports.up = function(knex, Promise) {
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')        
         table.integer('id_empresa').notNull().unsigned().references('id').inTable(migrationClientSchema + '.empresa').onUpdate('Cascade').onDelete('NO ACTION').comment('Empresa proprietária da conta')
-        table.integer('id_fin_cad_bancos').notNull().unsigned().references('id').inTable(migrationClientSchema + '.fin_cad_bancos').onUpdate('Cascade').onDelete('NO ACTION').comment('Banco relacionado')
+        table.integer('conta_tipo').comment('Tipo de conta').comment('Tipo de conta (1:Corrente; 2:Poupança; 3:Caixinha; 4:Cartão; 5:Investimento; 6:Outros)')
+        table.integer('id_fin_cad_bancos').unsigned().references('id').inTable(migrationClientSchema + '.fin_cad_bancos').onUpdate('Cascade').onDelete('NO ACTION').comment('Banco relacionado')
         table.string('agencia').comment('Agência')
         table.string('agencia_dv').comment('Dígito verificador da agência')
         table.string('conta').comment('Conta')
         table.string('conta_dv').comment('Dígito verificador da conta')
-        table.string('conta_tipo').comment('Tipo de conta')
     })
 };
 

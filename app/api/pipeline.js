@@ -1200,7 +1200,6 @@ module.exports = app => {
 
         try {
             const list = await clientFtp.list('/' + pathDoc);
-            console.log('list', list);
             
             if (!list) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.send(list);

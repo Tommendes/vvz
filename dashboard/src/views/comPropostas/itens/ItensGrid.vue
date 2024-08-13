@@ -56,22 +56,27 @@ const clearFilter = () => {
 const goField = (data) => {
     mode.value = 'grid';
     itemData.value = data;
-    mode.value = 'view';
+    setTimeout(() => {
+        mode.value = 'view';
+    }, 150);
 };
 
 const duplicateField = (data) => {
     mode.value = 'grid';
     itemData.value = data;
-    mode.value = 'clone';
+    setTimeout(() => {
+        mode.value = 'clone';
+    }, 150);
 };
 
 const newItem = () => {
     mode.value = 'grid';
-    setTimeout(() => { }, 150);
     itemData.value = {
         id_com_prop_compos: props.idComposicao
     };
-    mode.value = 'new';
+    setTimeout(() => {
+        mode.value = 'new';
+    }, 150);
 };
 
 import { useConfirm } from 'primevue/useconfirm';

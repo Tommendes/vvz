@@ -119,7 +119,7 @@ const getSeverity = (value) => {
 const newCompos = () => {
     mode.value = 'grid';
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => { }, 150);
+    setTimeout(() => { }, 250);
     itemData.value = {};
     mode.value = 'new';
 };

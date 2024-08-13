@@ -251,7 +251,7 @@ const searchCadastros = (event) => {
                 return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
             });
             // Se não houver resultados, carregue os cadastros da API
-            if (cadastros.value.length === 0) {
+            if (filteredCadastros.value.length === 0) {
                 getCadastroBySearchedId();
             }
         }

@@ -69,8 +69,10 @@ module.exports = app => {
             // TODO: Validar se a data de emissão é menor ou igual a data atual
             if (moment(body.data_emissao).isAfter(new Date())) throw 'Data de emissão não pode ser maior que a data atual'
             existsOrError(String(body.mov_e_s), 'Movimento de entrada/saída não informado')
-            const uniqueNFFornecedor = await app.db(tabelaDomain).where({ numero: body.numero, serie: body.serie, id_fornecedor: body.id_fornecedor, status: STATUS_ACTIVE }).first()
+            const uniqueNFFornecedor = await app.db(tabelaDomain).where({ mov_e_s: body.mov_e_s, numero: body.numero, serie: body.serie, id_fornecedor: body.id_fornecedor, status: STATUS_ACTIVE }).first()
             if (uniqueNFFornecedor && uniqueNFFornecedor.id != body.id) throw 'Já existe uma nota fiscal com o mesmo número e série para o fornecedor'
+            const uniqueNFChave = await app.db(tabelaDomain).where({ chave: body.chave, status: STATUS_ACTIVE }).first()
+            if (uniqueNFChave && uniqueNFChave.id != body.id) throw 'Já existe uma nota fiscal com a mesma chave informada'
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error)

@@ -102,23 +102,29 @@ const saveData = async () => {
     obj.desconto_total = obj.desconto_total.replace(',', '.');
     obj.quantidade = obj.quantidade.replace(',', '.');
     // Importante para o backend
-    convertFloatFields('en');
+    // convertFloatFields('en');
     axios[method](url, obj)
         .then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
-                itemData.value.id = body.id;
-                await getNomeProduto();
-                convertFloatFields();
-                mode.value = 'view';
-                editProduto.value = false;
-                emit('changed');
+                // Caso a operação seja resultado de uma duplicação de item em uma composição diferente da original
+                if (props.modeParent == 'clone' && props.idComposicao != itemData.value.id_com_prop_compos) emit('cancel')
+                else {
+                    itemData.value.id = body.id;
+
+                    await getNomeProduto();
+                    // convertFloatFields();
+                    mode.value = 'view';
+                    editProduto.value = false;
+                    emit('changed');
+                }
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
         })
         .catch((error) => {
+            console.log('error:', error);
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             if (error.response && error.response.status == 401) router.push('/');
         });
@@ -165,11 +171,11 @@ const reload = () => {
 };
 
 /**
- * Autocomplete de produto
+ * Autocomplete de produtos
  */
 // Editar cadastro no autocomplete
 const editProduto = ref(false);
-const produto = ref([]);
+const produtos = ref([]);
 const filteredProdutos = ref([]);
 const selectedProduto = ref();
 const nomeProduto = ref('');
@@ -185,7 +191,7 @@ const getNomeProduto = async () => {
                 valorVendaProduto.value = formatValor(response.data.data[0].valor_venda, 'pt');
             }
         } catch (error) {
-            console.error('Erro ao buscar produto:', error);
+            console.error('Erro ao buscar produtos:', error);
         }
     }
 };
@@ -194,16 +200,16 @@ const searchProdutos = (event) => {
         // Verifique se o campo de pesquisa não está vazio
         if (!event.query.trim().length) {
             // Se estiver vazio, exiba todas as sugestões
-            filteredProdutos.value = [...produto.value];
+            filteredProdutos.value = [...produtos.value];
         } else {
             // Se não estiver vazio, faça uma solicitação à API (ou use dados em cache)
-            // Filtrar os produto com base na consulta do usuário
-            filteredProdutos.value = produto.value.filter((cadastro) => {
-                return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
+            // Filtrar os produtos com base na consulta do usuário
+            filteredProdutos.value = produtos.value.filter((produto) => {
+                return produto.name.toLowerCase().includes(event.query.toLowerCase());
             });
             // Se não houver resultados, carregue os cadastros da API
             if (filteredProdutos.value.length === 0) {
-                // Carregue os produto da API (ou de onde quer que você os obtenha)
+                // Carregue os produtos da API (ou de onde quer que você os obtenha)
                 getProdutoBySearchedId();
             }
         }
@@ -215,7 +221,7 @@ const getProdutoBySearchedId = async (idProduto) => {
     try {
         const url = `${baseApiUrl}/com-produtos/f-a/glf?${qry}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
         const response = await axios.get(url);
-        produto.value = response.data.data.map((element) => {
+        produtos.value = response.data.data.map((element) => {
             return {
                 code: element.id,
                 name:
@@ -229,12 +235,28 @@ const getProdutoBySearchedId = async (idProduto) => {
             };
         });
     } catch (error) {
-        console.error('Erro ao buscar produto:', error);
+        console.error('Erro ao buscar produtos:', error);
     }
 };
-const confirmEditProduto = () => {
-    selectedProduto.value = nomeProduto.value;
-    editProduto.value = true;
+// Obter Principais Produtos
+const getProdutos = async () => {
+    const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.status&vl=10&literal=1&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
+    produtos.value = []; // Limpa a lista antes de popular
+    await axios.get(url).then((res) => {
+        res.data.data.map((item) => {
+            produtos.value.push({
+                code: item.id,
+                name:
+                    item.nome_comum +
+                    ' - ' +
+                    item.descricao
+                        .replace(/(<([^>]+)>)/gi, '')
+                        .replace('&nbsp;', ' ')
+                        .trim(),
+                valor_venda: formatValor(item.valor_venda, 'pt')
+            });
+        });
+    });
 };
 import { computed } from 'vue';
 // Refaz a lista removendo inclusive as duplicatas
@@ -242,8 +264,12 @@ computed(() => {
     return [...new Set(filteredFornecedores.value)];
 });
 /**
- * Fim de autocomplete de produto
+ * Fim de autocomplete de produtos
  */
+const confirmEditProduto = () => {
+    selectedProduto.value = nomeProduto.value;
+    editProduto.value = true;
+};
 const convertFloatFields = (result = 'pt') => {
     itemData.value.valor_unitario = formatValor(itemData.value.valor_unitario, result);
     itemData.value.desconto_total = formatValor(itemData.value.desconto_total, result);
@@ -260,6 +286,7 @@ watch(selectedProduto, (value) => {
 });
 // Carregar dados do formulário
 onMounted(async () => {
+    getProdutos();
     loadData();
     getComposicoes();
     form.value.scrollIntoView({ behavior: 'smooth' });
@@ -287,7 +314,7 @@ onMounted(async () => {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12" v-if="!props.idComposicao">
+                        <div class="col-12">
                             <label for="id_com_prop_compos">Composição</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown v-else v-model="itemData.id_com_prop_compos" :options="dropdownComposicoes"
@@ -307,8 +334,9 @@ onMounted(async () => {
                             <label for="id_com_produtos">Produto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editProduto || (mode == 'new' && props.modeParent != 'clone')"
-                                v-model="selectedProduto" :dropdown="false" optionLabel="name" :suggestions="filteredProdutos"
-                                @complete="searchProdutos" forceSelection @keydown.enter.prevent panelClass="p-autocomplete-panel-red" />
+                                v-model="selectedProduto" :dropdown="false" optionLabel="name"
+                                :suggestions="filteredProdutos" @complete="searchProdutos" forceSelection
+                                @keydown.enter.prevent panelClass="p-autocomplete-panel-red" />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeProduto" />
                                 <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditProduto()"
@@ -395,6 +423,7 @@ onMounted(async () => {
                     <p>mode: {{ mode }}</p>
                     <p>modeParent: {{ props.modeParent }}</p>
                     <p>itemData: {{ itemData }}</p>
+                    <p>props.idComposicao: {{ props.idComposicao }}</p>
                 </div>
             </div>
         </form>

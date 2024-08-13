@@ -209,7 +209,6 @@ const loadEnderecos = async () => {
     dropdownEnderecos.value = [];
     if (itemData.value.id_cadastros) {
         const url = `${baseApiUrl}/cad-enderecos/${itemData.value.id_cadastros}`;
-        console.log('url', url);
         
         await axios.get(url).then((res) => {
             res.data.data.map((item) => {

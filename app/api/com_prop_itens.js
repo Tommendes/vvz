@@ -48,7 +48,7 @@ module.exports = app => {
         }
 
         if (body.item_ativo == 0) delete body.item
-         
+
         if (body.id) {
             try {
                 if (body.item_ativo == 1) existsOrError(String(body.item), 'Item não informado')
@@ -85,11 +85,11 @@ module.exports = app => {
                 if (ret > 0) {
                     // Reordena as composições ativas
                     // if (body.item_ativo == 0 || body.item_ativo != last.item_ativo || last.id_com_prop_compos != body.id_com_prop_compos || last.item != body.item) {
-                        const method = req.method
-                        req.method = 'BOOLEAN'
-                        await setReorderItemNr(req, res)
-                        req.method = method
-                        body = await app.db(tabelaDomain).where({ id: body.id }).first()
+                    const method = req.method
+                    req.method = 'BOOLEAN'
+                    await setReorderItemNr(req, res)
+                    req.method = method
+                    body = await app.db(tabelaDomain).where({ id: body.id }).first()
                     // }
                     return res.status(200).send(body)
                 }
@@ -169,17 +169,17 @@ module.exports = app => {
         const tabelaProdutosDomain = `${dbPrefix}_${uParams.schema_name}.com_produtos`
         const tabelaComposicoesDomain = `${dbPrefix}_${uParams.schema_name}.com_prop_compos`
 
-        
+
         const ret = app.db({ tbl1: tabelaDomain })
-        .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl3.localizacao, tbl3.tombamento, tbl2.nome_comum, tbl2.descricao descricao_produto`))
-        .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
-        .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
-        .where({ 'tbl1.id_com_propostas': id_com_propostas })
-        
+            .select(app.db.raw(`tbl1.*, tbl3.compos_nr, tbl3.localizacao, tbl3.tombamento, tbl2.nome_comum, tbl2.descricao descricao_produto`))
+            .join({ tbl2: tabelaProdutosDomain }, 'tbl2.id', 'tbl1.id_com_produtos')
+            .leftJoin({ tbl3: tabelaComposicoesDomain }, 'tbl3.id', 'tbl1.id_com_prop_compos')
+            .where({ 'tbl1.id_com_propostas': id_com_propostas })
+
         // Se idComposicao for 'noComposition' retorna somente os itens sem composição
         if (idComposicao && idComposicao == 'noComposition') ret.whereRaw('tbl1.id_com_prop_compos is null')
         // Se não for 'noComposition' então verifica se é um número
-        else idComposicao = Number(idComposicao)    
+        else idComposicao = Number(idComposicao)
         // Se idComposicao for um número, retorna somente os itens da composição
         if (idComposicao && typeof idComposicao == 'number') ret.where({ 'tbl1.id_com_prop_compos': idComposicao })
 
@@ -233,16 +233,23 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        app.db(tabelaDomain)
-            .where({ id: req.params.id })
-            .del()
-            .then(ret => {
-                return res.status(204).send()
-            })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                return res.status(400).send(error)
-            })
+        req.body = { id_com_propostas: req.params.id_com_propostas }
+        try {
+            await app.db(tabelaDomain)
+                .where({ id: req.params.id })
+                .del()
+
+            const method = req.method
+            req.method = 'BOOLEAN'
+            await setReorderItemNr(req)
+            req.method = method
+
+            return res.status(204).send()
+
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(400).send(error)
+        }
     }
 
     const getByFunction = async (req, res) => {

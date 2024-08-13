@@ -60,7 +60,6 @@ const loadData = async () => {
         loading.value = false;
     })
         .catch((error) => {
-            console.log('error', error.response.status);
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             if (error.response && error.response.status == 401) router.push('/');
         });;
