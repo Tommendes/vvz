@@ -92,7 +92,8 @@ const loadData = async () => {
 const loadDataProdTabelas = async () => {
     loading.value = true;
     const url = `${urlBaseProdTabelas.value}/${itemData.value.id}`;
-    axios.get(url).then(async (axiosRes) => {
+    gridDataProdTabelas.value = [];
+    await axios.get(url).then(async (axiosRes) => {
         gridDataProdTabelas.value = axiosRes.data.data;
         gridDataProdTabelas.value.forEach((element) => {
             element.ini_validade = moment(element.ini_validade).format('DD/MM/YYYY');
@@ -142,11 +143,13 @@ const reload = () => {
     loadData();
     emit('cancel');
 };
-const reloadDataProdTabelas = () => {
+const reloadDataProdTabelas = async () => {
     modeTabelas.value = 'view';
     errorMessages.value.tabelas = {};
     itemDataProdTabelas.value = {};
-    loadDataProdTabelas();
+    gridDataProdTabelas.value = [];
+    setTimeout(() => { }, 150);
+    await loadDataProdTabelas();
 };
 const menu = ref();
 const preview = ref(false);
@@ -371,7 +374,6 @@ const newDataProdTabelas = () => {
         ini_validade: moment().format('DD/MM/YYYY')
     };
     modeTabelas.value = 'new';
-    document.getElementById('valor_compra').focus();
 };
 const validateDataTabela = () => {
     errorMessages.value.tabelas = {
@@ -408,11 +410,11 @@ const saveDataProdTabelas = async () => {
     obj.valor_venda = formatValor(itemDataProdTabelas.value.valor_venda, 'en');
     // Remover os colchetes do array obj.descricao
     await axios[method](url, obj)
-        .then((res) => {
+        .then(async (res) => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Valores registrados com sucesso');
-                reloadDataProdTabelas();
+                await reloadDataProdTabelas();
             } else {
                 defaultWarn('Erro ao registrar tabela');
             }
@@ -442,9 +444,9 @@ const deleteItem = (item) => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
-            axios.delete(`${urlBaseProdTabelas.value}/${itemData.value.id}/${item.id}`).then(() => {
+            axios.delete(`${urlBaseProdTabelas.value}/${itemData.value.id}/${item.id}`).then(async () => {
                 defaultSuccess('Tabela excluída com sucesso!');
-                loadDataProdTabelas();
+                await reloadDataProdTabelas();
             });
         },
         reject: () => {
@@ -508,8 +510,9 @@ watch(selectedFornecedor, (value) => {
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <AutoComplete
                                         v-else-if="route.name != 'cadastro' && (editFornecedor || mode == 'new')"
-                                        v-model="selectedFornecedor" :dropdown="false" optionLabel="name" :suggestions="filteredFornecedores"
-                                        @complete="searchFornecedores" forceSelection @keydown.enter.prevent />
+                                        v-model="selectedFornecedor" :dropdown="false" optionLabel="name"
+                                        :suggestions="filteredFornecedores" @complete="searchFornecedores"
+                                        forceSelection @keydown.enter.prevent />
                                     <div class="p-inputgroup flex-1" v-else>
                                         <InputText disabled v-model="nomeFornecedor" />
                                         <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil"
@@ -576,115 +579,105 @@ watch(selectedFornecedor, (value) => {
                     <form @submit.prevent="saveDataProdTabelas" v-if="itemData.id">
                         <div class="grid">
                             <div class="col-12">
-                                <Card class="bg-blue-200">
-                                    <template #content>
-                                        <div class="grid">
-                                            <div class="col-6">
-                                                <h3>Preços do produto</h3>
-                                                <div class="grid">
-                                                    <div class="col-4">
-                                                        <label for="valor_compra">Valor de Compra</label>
-                                                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
-                                                            class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                            <span class="p-inputgroup-addon">R$</span>
-                                                            <InputText autocomplete="no"
-                                                                :disabled="['view', 'expandedFormMode'].includes(modeTabelas)"
-                                                                v-model="itemDataProdTabelas.valor_compra"
-                                                                id="valor_compra" type="text" v-maska data-maska="0,99"
-                                                                data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                                                        </div>
-                                                        <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                            <span class="p-inputgroup-addon">R$</span>
-                                                            <span disabled v-html="itemDataProdTabelas.valor_compra"
-                                                                class="p-inputtext p-component" />
-                                                        </div>
+                                <div class="card bg-blue-200">
+                                    <div class="grid">
+                                        <div class="col-6">
+                                            <h3>Preços do produto</h3>
+                                            <div class="grid">
+                                                <div class="col-4">
+                                                    <label for="valor_compra">Valor de Compra</label>
+                                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                        class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <span class="p-inputgroup-addon">R$</span>
+                                                        <InputText autocomplete="no"
+                                                            :disabled="['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                            v-model="itemDataProdTabelas.valor_compra" id="valor_compra"
+                                                            type="text" v-maska data-maska="0,99"
+                                                            data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                                     </div>
-                                                    <div class="col-4">
-                                                        <label for="valor_venda">Valor de Venda</label>
-                                                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
-                                                            class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                            <span class="p-inputgroup-addon">R$</span>
-                                                            <InputText autocomplete="no"
-                                                                :disabled="['view', 'expandedFormMode'].includes(modeTabelas)"
-                                                                v-model="itemDataProdTabelas.valor_venda"
-                                                                id="valor_venda" type="text" v-maska data-maska="0,99"
-                                                                data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                                                        </div>
-                                                        <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                            <span class="p-inputgroup-addon">R$</span>
-                                                            <span disabled v-html="itemDataProdTabelas.valor_venda"
-                                                                class="p-inputtext p-component" />
-                                                        </div>
+                                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <span class="p-inputgroup-addon">R$</span>
+                                                        <span disabled v-html="itemDataProdTabelas.valor_compra"
+                                                            class="p-inputtext p-component" />
                                                     </div>
-                                                    <div class="col-4">
-                                                        <label for="ini_validade">Validade inicial</label>
-                                                        <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                        <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
-                                                            class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                            <InputText autocomplete="no"
-                                                                v-model="itemDataProdTabelas.ini_validade"
-                                                                id="ini_validade" type="text" v-maska
-                                                                data-maska="##/##/####" />
-                                                        </div>
-                                                        <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                            <span disabled
-                                                                v-html="itemDataProdTabelas.ini_validade || '&nbsp;'"
-                                                                id="ini_validade" class="p-inputtext p-component" />
-                                                        </div>
-                                                        <small id="text-error" class="p-error"
-                                                            v-if="errorMessages.tabelas && errorMessages.tabelas.ini_validade">{{
-                                                                errorMessages.tabelas.ini_validade }}</small>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label for="valor_venda">Valor de Venda</label>
+                                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                        class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <span class="p-inputgroup-addon">R$</span>
+                                                        <InputText autocomplete="no"
+                                                            :disabled="['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                            v-model="itemDataProdTabelas.valor_venda" id="valor_venda"
+                                                            type="text" v-maska data-maska="0,99"
+                                                            data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                                     </div>
-                                                    <div class="col-12"
-                                                        v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
-                                                        <div class="flex justify-content-center flex-wrap gap-3">
-                                                            <Button type="button" v-if="modeTabelas == 'view'"
-                                                                label="Editar"
-                                                                icon="fa-regular fa-pen-to-square fa-shake" text raised
-                                                                @click="modeTabelas = 'edit'" />
-                                                            <Button type="button" v-if="modeTabelas != 'view'"
-                                                                label="Salvar" icon="fa-solid fa-floppy-disk"
-                                                                severity="success" text raised
-                                                                :disabled="!formTabelasIsValid()"
-                                                                @click="saveDataProdTabelas" />
-                                                            <Button type="button" v-if="modeTabelas != 'view'"
-                                                                label="Cancelar" icon="fa-solid fa-ban"
-                                                                severity="danger" text raised
-                                                                @click="reloadDataProdTabelas" />
-                                                        </div>
+                                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <span class="p-inputgroup-addon">R$</span>
+                                                        <span disabled v-html="itemDataProdTabelas.valor_venda"
+                                                            class="p-inputtext p-component" />
                                                     </div>
-                                                    <div class="col-12" v-else>
-                                                        <div class="flex justify-content-center flex-wrap gap-3">
-                                                            <Button class="w-full" type="button" label="Nova Tabela"
-                                                                severity="success" text raised
-                                                                @click="newDataProdTabelas" />
-                                                        </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label for="ini_validade">Validade inicial</label>
+                                                    <Skeleton v-if="loading" height="3rem"></Skeleton>
+                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                        class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <InputText autocomplete="no"
+                                                            v-model="itemDataProdTabelas.ini_validade" id="ini_validade"
+                                                            type="text" v-maska data-maska="##/##/####" />
+                                                    </div>
+                                                    <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <span disabled
+                                                            v-html="itemDataProdTabelas.ini_validade || '&nbsp;'"
+                                                            id="ini_validade" class="p-inputtext p-component" />
+                                                    </div>
+                                                    <small id="text-error" class="p-error"
+                                                        v-if="errorMessages.tabelas && errorMessages.tabelas.ini_validade">{{
+                                                            errorMessages.tabelas.ini_validade }}</small>
+                                                </div>
+                                                <div class="col-12"
+                                                    v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
+                                                    <div class="flex justify-content-center flex-wrap gap-3">
+                                                        <Button type="button" label="Salvar"
+                                                            icon="fa-solid fa-floppy-disk" severity="success" text
+                                                            raised @click="saveDataProdTabelas" />
+                                                        <Button type="button" label="Cancelar" icon="fa-solid fa-ban"
+                                                            severity="danger" text raised
+                                                            @click="reloadDataProdTabelas" />
+                                                    </div>
+                                                </div>
+                                                <div class="col-12" v-else>
+                                                    <div class="flex justify-content-center flex-wrap gap-3">
+                                                        <Button class="w-full" type="button" label="Nova Tabela"
+                                                            severity="success" text raised
+                                                            @click="newDataProdTabelas" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-6">
-                                                <h4>Últimos ajustes</h4>
-                                                <ol>
-                                                    <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">
-                                                        Início de validade: {{ item.ini_validade }} - Valor de compra:
-                                                        R$ {{ item.valor_compra }} - Valor de venda: R$ {{
-                                                            item.valor_venda }}
-                                                        <i class="fa-solid fa-pencil fa-shake"
-                                                            style="font-size: 1rem; color: slateblue"
-                                                            @click="editItem(item)"
-                                                            v-tooltip.top="'Clique para alterar'"></i>
-                                                        <i class="fa-solid fa-trash ml-2"
-                                                            style="color: #fa0000; font-size: 1rem"
-                                                            @click="deleteItem(item)"
-                                                            v-tooltip.top="'Clique para excluir'"></i>
-                                                    </li>
-                                                </ol>
-                                            </div>
                                         </div>
-                                    </template>
-                                </Card>
+                                        <div class="col-6">
+                                            <h4>Últimos ajustes</h4>
+                                            <ol>
+                                                <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">
+                                                    Início de validade: {{ item.ini_validade }} - Valor de compra:
+                                                    R$ {{ item.valor_compra }} - Valor de venda: R$ {{
+                                                        item.valor_venda }}
+                                                    <i class="fa-solid fa-pencil fa-shake"
+                                                        style="font-size: 1rem; color: slateblue"
+                                                        @click="editItem(item)"
+                                                        v-tooltip.top="'Clique para alterar'"></i>
+                                                    <i class="fa-solid fa-trash ml-2"
+                                                        style="color: #fa0000; font-size: 1rem"
+                                                        @click="deleteItem(item)"
+                                                        v-tooltip.top="'Clique para excluir'"></i>
+                                                </li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>

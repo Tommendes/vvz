@@ -184,6 +184,7 @@ module.exports = app => {
                     msg,
                     isMatch,
                     id: user.id,
+                    exp: expirationTime,
                     schema_description: user.schema_description,
                     token: jwt.encode(payload, authSecret)
                 })

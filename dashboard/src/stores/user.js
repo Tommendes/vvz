@@ -7,17 +7,18 @@ import axios from 'axios';
 export const useUserStore = defineStore('users', {
     state: () => ({
         user: {
-            id: null,
-            timeLogged: null
+            id: null
         },
-        timeToLogOut: 600,
+        profile: {},
+        timeLogged: null,
+        timeToLogOut: 900,
+        inactivityTimer: null,
         isTokenValid: false,
         geolocation: {
             latitude: null,
             longitude: null
         },
-        errorMessage: null,
-        inactivityTimer: null
+        errorMessage: null
     }),
     getters: {
         userStore(state) {
@@ -26,9 +27,6 @@ export const useUserStore = defineStore('users', {
         userGeoLoc(state) {
             return state.geolocation;
         },
-        userTimeToLogOut(state) {
-            return state.user.timeLogged + state.timeToLogOut;
-        }
     },
     actions: {
         async registerUser(email, password) {
@@ -42,14 +40,18 @@ export const useUserStore = defineStore('users', {
             });
             await interceptor
                 .post(url, { email, password })
-                .then((res) => {
+                .then(async(res) => {
                     this.user = res.data;
                     if (this.user.id && this.user.isMatch) {
-                        this.user.timeLogged = Math.floor(Date.now() / 1000);
                         this.user.ip = ip;
                         interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
                         localStorage.setItem(userKey, JSON.stringify({ ...res.data, ip: ip }));
-                        location.reload();
+                        this.profile = await this.getProfile(this.user);
+                        if (this.profile.admin >= 2) {
+                            console.log('validation (only for dev)*', validation);
+                            console.log('profile (only for dev)*', this.profile);
+                        }
+                        this.startInactivityTimer();
                     } else {
                         delete interceptor.defaults.headers.common['Authorization'];
                         delete interceptor.defaults.headers.common['x-ip-address'];
@@ -65,8 +67,11 @@ export const useUserStore = defineStore('users', {
         },
         startInactivityTimer() {
             this.clearInactivityTimer(); // Limpa o timer anterior, se houver
+            this.timeLogged = Math.floor(Date.now() / 1000);
             this.inactivityTimer = setTimeout(() => {
-                this.logout(); // Executa o logout após 10 minutos de inatividade
+                console.log('Inatividade detectada. Realizando logout...');                
+                this.logout(); // Executa o logout após (timeToLogOut / 60) minutos de inatividade
+                location.reload();
             }, this.timeToLogOut * 1000);
         },
         clearInactivityTimer() {
@@ -95,12 +100,10 @@ export const useUserStore = defineStore('users', {
                 const validation = await interceptor.post(url, userData)
                 this.isTokenValid = validation.data;
                 if (this.isTokenValid) {
-                    const profile = await this.getProfile(userData.token);
-                    if (profile.admin) console.log('validation (only for dev)*', validation);
                     this.user = userData;
                     interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
                     this.getLocation();
-                    this.timeToLogOut = 600;
+                    this.resetInactivityTimer();
                 } else {
                     this.logout();
                 }
@@ -117,6 +120,7 @@ export const useUserStore = defineStore('users', {
             return this.user;
         },
         logout() {
+            this.clearInactivityTimer();
             this.user = {};
             delete interceptor.defaults.headers.common['Authorization'];
             delete interceptor.defaults.headers.common['x-ip-address'];

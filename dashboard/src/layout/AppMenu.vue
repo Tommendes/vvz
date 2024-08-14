@@ -7,9 +7,7 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile();
-    console.log(uProf.value);
-    
+    uProf.value = await store.getProfile();    
     await setMenuByUser();
 });
 

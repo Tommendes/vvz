@@ -25,6 +25,14 @@ const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
     uProf.value = await store.getProfile()
+    // Primeiro e último nomes do usuário
+    const uName = uProf.value.name.split(' ');
+    uProf.value.firstName = uName[0];
+    uProf.value.lastName = uName[uName.length - 1];
+    items.value = [{
+            label: `${uProf.value.firstName} ${uProf.value.lastName}`,
+            disabled: true,
+        }, ...items.value];
 });
 
 const jsonLayer = localStorage.getItem('__layoutCfg');
@@ -248,22 +256,19 @@ onBeforeMount(() => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <Button
-                v-if="newMessages > 0"
-                type="button"
+            <Button v-if="newMessages > 0" type="button"
                 :icon="`fa-regular fa-bell fa-2xl ${newMessages ? 'fa-shake' : ''}`"
-                :severity="`${newMessages > 0 ? 'info' : ''}`"
-                rounded
-                size="large"
-                :badge="String(newMessages) || '0'"
-                aria-haspopup="true"
-                @click="toggleMenuMessages"
-            />
-            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages" class="p-link layout-topbar-button p-button-transparent">
+                :severity="`${newMessages > 0 ? 'info' : ''}`" rounded size="large" :badge="String(newMessages) || '0'"
+                aria-haspopup="true" @click="toggleMenuMessages" />
+            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle"
+                @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages"
+                class="p-link layout-topbar-button p-button-transparent">
                 <i class="fa-regular fa-bell"></i>
             </Button>
-            <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
-            <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button p-button-transparent">
+            <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true"
+                v-if="itemsMessages.length" />
+            <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu"
+                class="p-link layout-topbar-button p-button-transparent">
                 <i class="fa-regular fa-user"></i>
                 <span>Perfil</span>
             </Button>
@@ -282,6 +287,7 @@ onBeforeMount(() => {
 .fa-regular .fa-bell .fa-shake {
     font-size: 1.5rem;
 }
+
 .p-button-transparent {
     background-color: transparent;
 }

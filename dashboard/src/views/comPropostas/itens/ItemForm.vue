@@ -183,7 +183,7 @@ const valorVendaProduto = ref(0);
 const getNomeProduto = async () => {
     if (itemData.value.id_com_produtos) {
         try {
-            const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.id&vl=${itemData.value.id_com_produtos}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
+            const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.id&vl=${itemData.value.id_com_produtos}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao`;
             const response = await axios.get(url);
             if (response.data.data.length > 0) {
                 // remover tags html de descricao
@@ -219,7 +219,7 @@ const searchProdutos = (event) => {
 const getProdutoBySearchedId = async (idProduto) => {
     const qry = idProduto ? `fld=tbl1.id&vl=${idProduto}` : 'fld=1&vl=1';
     try {
-        const url = `${baseApiUrl}/com-produtos/f-a/glf?${qry}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
+        const url = `${baseApiUrl}/com-produtos/f-a/glf?${qry}&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao`;
         const response = await axios.get(url);
         produtos.value = response.data.data.map((element) => {
             return {
@@ -240,7 +240,7 @@ const getProdutoBySearchedId = async (idProduto) => {
 };
 // Obter Principais Produtos
 const getProdutos = async () => {
-    const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.status&vl=10&literal=1&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao,tbl2.valor_venda`;
+    const url = `${baseApiUrl}/com-produtos/f-a/glf?fld=tbl1.status&vl=10&literal=1&slct=tbl1.id,tbl1.nome_comum,tbl1.descricao`;
     produtos.value = []; // Limpa a lista antes de popular
     await axios.get(url).then((res) => {
         res.data.data.map((item) => {
