@@ -483,20 +483,23 @@ module.exports = app => {
 
     const getPositioning = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: 'users' }).select('u.*', 'sc.schema_name').join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let data = { ...req.body }
         const dataInicio = req.query.dataInicio || undefined
         const dataFim = req.query.dataFim || moment().format('DD/MM/YYYY')
-        const agId = req.query.agId || undefined
+        // const agId = req.query.agId || undefined
+        let agId = undefined
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.comissoes >= 1), `${noAccessMsg} "Consultas a ${tabelaAlias}"`)
+            agId = uParams.agente_v || undefined
             if (agId && isNaN(agId)) throw 'Agente inválido'
             if (!agId && uParams.agente_v && !uParams.gestor) throw `${noAccessMsg} "Consultas a ${tabelaAliasPl}"`
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
+        
         const agGroup = req.query.agGroup || undefined
         try {
             if (agGroup && [0, 1, 2, 3].indexOf(agGroup) == -1) throw 'Grupo de agentes inválido'

@@ -124,7 +124,7 @@ const getAgentesV = async () => {
     await axios.get(url).then((res) => {
         const body = res.data;
         body.forEach(element => {
-            dropdownAgentesV.value.push({ value: element.id, label: `${element.nome || element.apelido}(${element.ordem})` });
+            dropdownAgentesV.value.push({ value: String(element.id), label: `${element.nome || element.apelido}(${element.ordem})` });
         });
     });
 };
@@ -199,8 +199,8 @@ const reload = () => {
 // Carregar dados do formulário
 onBeforeMount(() => { });
 onMounted(async () => {
-    await getAgentesV();
-    await loadData();
+    getAgentesV();
+    loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
         if (itemData.value.id) mode.value = 'view';
