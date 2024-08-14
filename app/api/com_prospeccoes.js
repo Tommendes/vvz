@@ -17,8 +17,8 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && (uParams.agente_v >= 3 || uParams.prospeccoes >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && (uParams.agente_v >= 2 || uParams.prospeccoes >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            if (body.id) isMatchOrError(uParams && (uParams.agente_v >= 1 || uParams.prospeccoes >= 3), `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && (uParams.agente_v >= 1 || uParams.prospeccoes >= 2), `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -216,7 +216,7 @@ module.exports = app => {
             .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
-        if (uParams.agente_v == 1 && !(uParams.gestor + uParams.admin + uParams.prospeccoes >= 1)) totalRecords.where({ 'tbl1.id_agente': uParams.id })
+        if (uParams.agente_v >= 1 && !(uParams.gestor + uParams.admin + uParams.prospeccoes >= 1)) totalRecords.where({ 'tbl1.id_agente': uParams.id })
         totalRecords = await totalRecords
 
         const ret = app.db({ tbl1: tabelaDomain })
@@ -228,7 +228,7 @@ module.exports = app => {
             .whereRaw(query ? query : '1=1')
             .orderBy(app.db.raw(sortField), sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-        if (uParams.agente_v == 1 && !(uParams.gestor + uParams.admin + uParams.prospeccoes >= 1)) ret.where({ 'tbl1.id_agente': uParams.id })
+        if (uParams.agente_v >= 1 && !(uParams.gestor + uParams.admin + uParams.prospeccoes >= 1)) ret.where({ 'tbl1.id_agente': uParams.id })
         ret.then(body => {
             return res.json({ data: body, totalRecords: totalRecords.count })
         }).catch(error => {
@@ -272,7 +272,7 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.agente_v >= 4 || uParams.prospeccoes >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.agente_v >= 1 || uParams.prospeccoes >= 4), `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)

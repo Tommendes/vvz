@@ -891,6 +891,8 @@ module.exports = app => {
     const getById = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        console.log(req.user.id, req.params.id, req.user.id != req.params.id);
+        
         if (req.user.id != req.params.id && !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         app.db({ us: tabela })
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
@@ -1134,7 +1136,7 @@ module.exports = app => {
         const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
         const ret = app.db({ u: tabelaDomain }).select('u.id', 'u.name')
             .join({ p: tabelaPipelineDomain }, 'p.id_com_agentes', 'u.id')
-            .where({ 'u.agente_v': 1 })
+            .where('u.agente_v', '>=', '1')
             .groupBy('u.id', 'u.name')
             .orderBy('u.name')
             .then(body => {

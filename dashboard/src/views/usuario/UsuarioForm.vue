@@ -70,6 +70,11 @@ const loadData = async () => {
             router.push({ path: `/${uProf.value.schema_description}/usuarios` });
         }
         loading.value = false;
+    })
+    .catch((error) => {
+        defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+        if (error.response && error.response.status == 401) router.push('/');
+        loading.value = false;
     });
 };
 // Salvar dados do formulário
@@ -207,8 +212,6 @@ onMounted(async () => {
         else mode.value = 'new';
     }
 });
-// Observar alterações nos dados do formulário
-watchEffect(() => { });
 </script>
 
 <template>
@@ -236,8 +239,8 @@ watchEffect(() => { });
                             <InputText v-else-if="uProf.admin || uProf.gestor" autocomplete="no"
                                 :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text"
                                 @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
-                            <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{
-                                itemData.email }}</p>
+                            <p v-else class="p-inputtext p-component p-filled p-variant-filled" style="line-height: inherit">{{
+                                itemData.cpf }}</p>
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf
                                 }}</small>
                         </div>

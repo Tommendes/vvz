@@ -1,4 +1,4 @@
-const { db } = require('../.env')
+const { db, migrationClientSchema } = require('../.env')
 
 exports.up = function(knex, Promise) {
     return knex.schema.createTable(db.database+ '.users', table => {
@@ -31,7 +31,7 @@ exports.up = function(knex, Promise) {
         table.boolean('at').notNull().defaultTo(0).comment("Gestão de assistência")
         table.boolean('protocolo').notNull().defaultTo(0).comment("Gestão de protocolo")
         table.boolean('uploads').notNull().defaultTo(0).comment("Gestão de prospecções")
-        table.boolean('agente_v').notNull().defaultTo(0).comment("Agente vendedor")
+        table.integer('agente_v').unsigned().comment("Usuário vendedor (Agente de vendas)")
         table.boolean('agente_arq').notNull().defaultTo(0).comment("Agente arquiteto")
         table.boolean('agente_at').notNull().defaultTo(0).comment("Agente at")
         table.integer('time_to_pas_expires').notNull().defaultTo(99999).comment("Tempo para expirar a senha")

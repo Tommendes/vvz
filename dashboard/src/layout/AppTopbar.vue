@@ -38,7 +38,7 @@ const items = ref([
         label: 'Ver perfil',
         icon: 'fa-solid fa-rotate-right',
         command: () => {
-            toast.add({ severity: 'info', summary: 'Success', detail: 'Ver perfil', life: 3000 });
+            router.push({ path: `/${uProf.value.schema_description}/usuario/${uProf.value.id}` });
         }
     },
     {
