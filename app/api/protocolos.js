@@ -184,7 +184,7 @@ module.exports = app => {
                 "request": req,
                 "evento": {
                     "classevento": "Remove",
-                    "evento": `Exclusão de Endereço de ${tabela}`,
+                    "evento": `Exclusão de ${tabela}`,
                     "tabela_bd": tabela,
                 }
             })

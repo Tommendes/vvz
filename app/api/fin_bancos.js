@@ -1,11 +1,12 @@
 const { dbPrefix } = require("../.env")
+const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'proto_docs'
-    const tabelaAlias = 'Itens do Protocolo'
-    const tabelaProtocolo = 'protocolos'
+    const tabela = 'fin_bancos'
+    const tabelaAlias = 'Banco'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+
 
     const save = async (req, res) => {
         let user = req.user
@@ -15,44 +16,30 @@ module.exports = app => {
         if (req.params.id) body.id = req.params.id
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && uParams.protocolo >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && uParams.protocolo >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            if (body.id) isMatchOrError(uParams && uParams.financeiro >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && uParams.financeiro >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        body.id_protocolos = req.params.id_protocolos
+
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaProtocoloDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProtocolo}`
 
         try {
-            existsOrError(body.tp_documento, 'Tipo do documento não informado')
-            if (typeof body.tp_documento === 'object') {
-                body.tp_documento = body.tp_documento.code
+            existsOrError(body.nome_banco, 'Nome do banco não informado')
+            if (body.cnpj) {
+                cnpjOrError(body.cnpj, 'CNPJ inválido')
+                const unique = await app.db(tabelaDomain).where(function () {
+                    this.where({ cnpj: body.cnpj })
+                        .orWhere({ nome_banco: body.nome_banco })
+                }).first()
+                if (unique && unique.id != body.id) throw 'Nome de banco ou cnpj já cadastrado'
             }
-            existsOrError(body.descricao, 'Descrição do documento não informado')
-            if (typeof body.descricao === 'array') {
-                body.descricao = body.descricao.join()
-            }
-            else if (typeof body.descricao === 'object') {
-                body.descricao = JSON.stringify(body.descricao)
-            }
-
-            const duplicated = await app.db(tabelaDomain).where({ id_protocolos: body.id_protocolos, tp_documento: body.tp_documento, descricao: body.descricao })
-                .first()
-            if (duplicated) throw 'Documento já cadastrado'
-            const idProtocolosExists = await app.db(tabelaProtocoloDomain).where({ id: body.id_protocolos }).first()
-            if (!idProtocolosExists) throw 'Protocolo não encontrado'
+            const unique = await app.db(tabelaDomain).where({ nome_banco: body.nome_banco }).first()
+            if (unique && unique.id != body.id) throw 'Banco já cadastrado'
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(400).send(error)
         }
-
-        delete body.items;
-
-        const { changeUpperCase, removeAccentsObj } = app.api.facilities
-        body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
-        body = (JSON.parse(JSON.stringify(body), changeUpperCase));
 
         if (body.id) {
             // Variáveis da edição de um registro
@@ -79,7 +66,7 @@ module.exports = app => {
                 else res.status(200).send(`${tabelaAlias} não encontrado`)
             })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         } else {
@@ -109,7 +96,7 @@ module.exports = app => {
                     return res.json(body)
                 })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(500).send(error)
                 })
         }
@@ -120,27 +107,21 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.protocolo >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.financeiro >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
-        const id_protocolos = req.params.id_protocolos
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaProtocoloDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProtocolo}`
+        const ret = app.db({ tbl1: tabelaDomain }).where({ status: STATUS_ACTIVE }).orderBy('nome_banco')
 
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.id, tbl1.tp_documento, tbl1.descricao`))
-
-        ret.where({ 'tbl1.status': STATUS_ACTIVE, id_protocolos: id_protocolos })
-            .join({ tbl2: tabelaProtocoloDomain }, 'tbl2.id', 'tbl1.id_protocolos')
             .then(body => {
-                const count = body.length
-                return res.json({ data: body, count: count })
+                const quantidade = body.length
+                return res.json({ data: body, count: quantidade })
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })
     }
 
@@ -149,23 +130,22 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.protocolo >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.financeiro >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
-        const id_protocolos = req.params.id_protocolos
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*`))
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE, 'tbl1.id_protocolos': id_protocolos }).first()
+            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
                 return res.json(body)
             })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)
             })
     }
@@ -175,13 +155,14 @@ module.exports = app => {
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.protocolo >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.financeiro >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+
         const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
@@ -198,13 +179,7 @@ module.exports = app => {
                     "tabela_bd": tabela,
                 }
             })
-            const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
-                .where({ id: req.params.id })
+            const rowsUpdated = await app.db(tabelaDomain).del().where({ id: req.params.id })
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
             res.status(204).send()
@@ -213,6 +188,7 @@ module.exports = app => {
         }
     }
 
-
-    return { save, get, getById, remove }
+    return {
+        save, get, getById, remove
+    }
 }

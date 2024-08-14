@@ -559,13 +559,42 @@ module.exports = app => {
         .delete(app.api.fin_lancamentos.remove)
 
     /**
+    * Rota de fin_etiquetas
+    */
+    app.route('/fin-etiquetas')
+        .all(app.config.passport.authenticate())
+        .post(app.api.fin_etiquetas.save)
+        .get(app.api.fin_etiquetas.get)
+    app.route('/fin-etiquetas/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.fin_etiquetas.save)
+        .get(app.api.fin_etiquetas.getById)
+        .delete(app.api.fin_etiquetas.remove)
+    app.route('/fin-etiquetas/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.fin_etiquetas.getByFunction)
+
+    /**
+    * Rota de fin_bancos
+    */
+    app.route('/fin-bancos')
+        .all(app.config.passport.authenticate())
+        .post(app.api.fin_bancos.save)
+        .get(app.api.fin_bancos.get)
+    app.route('/fin-bancos/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.fin_bancos.save)
+        .get(app.api.fin_bancos.getById)
+        .delete(app.api.fin_bancos.remove)
+
+    /**
     * Rota de fin_retencoes
     */
-    app.route('/fin-retencoes')
+    app.route('/fin-retencoes/:id_fin_lancamentos')
         .all(app.config.passport.authenticate())
         .post(app.api.fin_retencoes.save)
         .get(app.api.fin_retencoes.get)
-    app.route('/fin-retencoes/:id')
+    app.route('/fin-retencoes/:id_fin_lancamentos/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.fin_retencoes.save)
         .get(app.api.fin_retencoes.getById)

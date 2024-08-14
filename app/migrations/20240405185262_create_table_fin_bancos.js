@@ -6,7 +6,7 @@ const { migrationClientSchema } = require('../.env')
  */
 exports.up = function(knex, Promise) {
     // Registo das contas bancárias
-    return knex.schema.createTable(migrationClientSchema + '.fin_cad_bancos', table => {
+    return knex.schema.createTable(migrationClientSchema + '.fin_bancos', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -26,5 +26,5 @@ exports.up = function(knex, Promise) {
  * @returns { Promise<void> }
  */
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('vivazul_bceaa5.fin_cad_bancos')
+    return knex.schema.dropTable('vivazul_bceaa5.fin_bancos')
 };
