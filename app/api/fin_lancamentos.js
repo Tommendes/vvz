@@ -1,10 +1,12 @@
 const { dbPrefix } = require("../.env")
+const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'fin_lancamentos'
-    const tabelaAlias = 'Financeiro'
+    const tabelaAlias = 'Registro Financeiro'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
+
 
     const save = async (req, res) => {
         let user = req.user
@@ -24,18 +26,26 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         try {
-            existsOrError(body.id_empresa, 'Id_empresa não encontrado')
-            if (body.id_empresa.length > 10) throw 'Id_empresa inválido'
-            existsOrError(body.id_cadastros, 'Cadastro não encontrado')
-            if (body.id_cadastros.length > 10) throw 'Id_cadastros inválido'
-            existsOrError(body.id_centro_custo, 'Id_centro_custo não encontrado')
-            if (body.id_centro_custo.length > 10) throw 'Id_centro_custo inválido'
-
+            existsOrError(body.id_empresa, 'Empresa destinatária da nota não informada')
+            existsOrError(String(body.centro), 'Centro de custo não informado')
+            let credorDevedor = 'Devedor'
+            if (body.centro === 1) credorDevedor = 'Credor'
+            existsOrError(body.id_cadastros, `${credorDevedor} não informado`)
+            existsOrError(body.data_emissao, 'Data de emissão não informada')
+            // Verificar se a data de emissão é válida
+            if (!moment(body.data_emissao, 'YYYY-MM-DD', true).isValid()) throw 'Data de emissão inválida'
+            existsOrError(body.valor_bruto, 'Valor bruto não informado')
+            existsOrError(body.valor_liquido, 'Valor líquido não informado')
+            if (body.valor_bruto) body.valor_bruto = Number(String(body.valor_bruto).replace(",", "."));
+            if (body.valor_liquido) body.valor_liquido = Number(String(body.valor_liquido).replace(",", "."));
+            body.valor_bruto = body.valor_bruto.toFixed(2)
+            body.valor_liquido = body.valor_liquido.toFixed(2)
+            const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, valor_liquido: body.valor_liquido, status: STATUS_ACTIVE }).first()
+            if (unique && unique.id != body.id) throw `Já existe um registro ${credorDevedor.toLowerCase()} para esta empresa com esses dados`
         } catch (error) {
             return res.status(400).send(error)
         }
 
-         
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -46,7 +56,7 @@ module.exports = app => {
                 "next": body,
                 "request": req,
                 "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
+                    "evento": `Alteração de ${tabela}`,
                     "tabela_bd": tabela,
                 }
             })
@@ -97,33 +107,23 @@ module.exports = app => {
         }
     }
 
-    const limit = 20 // usado para paginação
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.financeiro >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.financeiro >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const page = req.query.page || 1
-        let count = app.db({ tbl1: tabelaDomain }).count('* as count')
-            .where({ status: STATUS_ACTIVE })
-        count = await app.db.raw(count.toString())
-        count = count[0][0].count
+        const ret = app.db({ tbl1: tabelaDomain }).where({ status: STATUS_ACTIVE }).orderBy('created_at', 'desc')
 
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*`))
-
-        ret.where({ status: STATUS_ACTIVE })
-            .groupBy('tbl1.id')
-            .limit(limit).offset(page * limit - limit)
             .then(body => {
-                return res.json({ data: body, count: count, limit })
+                const quantidade = body.length
+                return res.json({ data: body, count: quantidade })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -167,6 +167,7 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+
         const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
@@ -183,13 +184,7 @@ module.exports = app => {
                     "tabela_bd": tabela,
                 }
             })
-            const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
-                .where({ id: req.params.id })
+            const rowsUpdated = await app.db(tabelaDomain).update(registro).where({ id: req.params.id })
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
             res.status(204).send()
@@ -198,5 +193,7 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, remove }
+    return {
+        save, get, getById, remove
+    }
 }

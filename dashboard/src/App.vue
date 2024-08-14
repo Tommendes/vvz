@@ -2,7 +2,7 @@
 import { useUserStore } from '@/stores/user';
 import { userKey, glKey } from '@/global';
 import { baseApiAuthUrl } from '@/env';
-import { onBeforeMount, ref } from 'vue';
+import { onBeforeMount, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
@@ -31,6 +31,21 @@ const getIp = async () => {
 onBeforeMount(async () => {
     await validateToken();
     await getIp();
+});
+
+// Função para resetar o timer de inatividade
+const resetTimer = () => {
+  store.startInactivityTimer();
+};
+
+// Adicionar listeners para eventos globais
+onMounted(() => {
+  window.addEventListener('click', resetTimer);
+});
+
+// Remover listeners quando o componente for destruído
+onBeforeUnmount(() => {
+  window.removeEventListener('click', resetTimer);
 });
 
 const display = ref(false);

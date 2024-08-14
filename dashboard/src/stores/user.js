@@ -80,13 +80,9 @@ export const useUserStore = defineStore('users', {
                 this.inactivityTimer = null;
             }
         },
-        resetInactivityTimer() {
-            this.clearInactivityTimer();
-            this.startInactivityTimer();
-        },
         async findUser(cpf) {
             const url = `${baseApiAuthUrl}/signin`;
-            try {
+            try { 
                 const res = await interceptor.post(url, { cpf });
                 this.user = res.data;
             } catch (error) {
@@ -103,7 +99,7 @@ export const useUserStore = defineStore('users', {
                     this.user = userData;
                     interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;
                     this.getLocation();
-                    this.resetInactivityTimer();
+                    this.startInactivityTimer();
                 } else {
                     this.logout();
                 }
