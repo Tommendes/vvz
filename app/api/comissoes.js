@@ -487,12 +487,12 @@ module.exports = app => {
         let data = { ...req.body }
         const dataInicio = req.query.dataInicio || undefined
         const dataFim = req.query.dataFim || moment().format('DD/MM/YYYY')
-        // const agId = req.query.agId || undefined
-        let agId = undefined
+        const agId = req.query.agId || undefined
+        // let agId = undefined
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.comissoes >= 1), `${noAccessMsg} "Consultas a ${tabelaAlias}"`)
-            agId = uParams.agente_v || undefined
+            // agId = uParams.agente_v || undefined
             if (agId && isNaN(agId)) throw 'Agente inválido'
             if (!agId && uParams.agente_v && !uParams.gestor) throw `${noAccessMsg} "Consultas a ${tabelaAliasPl}"`
         } catch (error) {
