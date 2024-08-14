@@ -8,6 +8,8 @@ const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
     uProf.value = await store.getProfile();
+    console.log(uProf.value);
+    
     await setMenuByUser();
 });
 
