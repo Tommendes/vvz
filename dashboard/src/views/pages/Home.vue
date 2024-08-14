@@ -33,8 +33,6 @@ const logout = () => {
                     <Button @click="router.push('/signin')" v-if="!store.userStore.id" class="p-button-text p-button-rounded border-none font-light line-height-2 text-blue-500"> Acessar </Button>
                     <Button label="Sign Out" @click="logout" v-else class="p-button-rounded border-none ml-5 font-light text-white line-height-2 bg-blue-500"> Sair </Button>
                     <Button @click="router.push('/signup')" v-if="!store.userStore.id" class="p-button-rounded border-none ml-5 font-light text-white line-height-2 bg-blue-500"> Inscrever-se </Button>
-                    <!-- <p>Time on: {{ store.userStore.timeLogged }}</p>
-                    <p>Time out: {{ store.userStore.timeToLogOut }}</p> -->
                 </section>
             </div>
             <div class="col-12 md:col-6 flex-grow-1 flex overflow-hidden justify-content-center">

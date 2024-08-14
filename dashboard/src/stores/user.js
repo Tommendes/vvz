@@ -8,6 +8,7 @@ export const useUserStore = defineStore('users', {
     state: () => ({
         user: {
             id: null,
+            timeLogged: null
         },
         timeToLogOut: 600,
         isTokenValid: false,
@@ -15,7 +16,8 @@ export const useUserStore = defineStore('users', {
             latitude: null,
             longitude: null
         },
-        errorMessage: null
+        errorMessage: null,
+        inactivityTimer: null
     }),
     getters: {
         userStore(state) {
@@ -25,11 +27,7 @@ export const useUserStore = defineStore('users', {
             return state.geolocation;
         },
         userTimeToLogOut(state) {
-            setInterval(() => {
-                state.timeToLogOut--;
-                let timeTo = state.user.timeLogged + state.timeToLogOut;
-                return timeTo;
-            }, 1000);
+            return state.user.timeLogged + state.timeToLogOut;
         }
     },
     actions: {
@@ -65,22 +63,36 @@ export const useUserStore = defineStore('users', {
                     return { data: error };
                 });
         },
+        startInactivityTimer() {
+            this.clearInactivityTimer(); // Limpa o timer anterior, se houver
+            this.inactivityTimer = setTimeout(() => {
+                this.logout(); // Executa o logout após 10 minutos de inatividade
+            }, this.timeToLogOut * 1000);
+        },
+        clearInactivityTimer() {
+            if (this.inactivityTimer) {
+                clearTimeout(this.inactivityTimer);
+                this.inactivityTimer = null;
+            }
+        },
+        resetInactivityTimer() {
+            this.clearInactivityTimer();
+            this.startInactivityTimer();
+        },
         async findUser(cpf) {
             const url = `${baseApiAuthUrl}/signin`;
-            await interceptor
-                .post(url, { cpf })
-                .then((res) => {
-                    this.user = res.data;
-                })
-                .catch((error) => {
-                    return error;
-                });
+            try {
+                const res = await interceptor.post(url, { cpf });
+                this.user = res.data;
+            } catch (error) {
+                return error;
+            }
         },
         async validateToken(userData) {
             const url = `${baseApiAuthUrl}/validateToken`;
             if (userData && userData.ip) userData.ipSignin = userData.ip;
             try {
-                const validation = await interceptor.post(url, userData)                
+                const validation = await interceptor.post(url, userData)
                 this.isTokenValid = validation.data;
                 if (this.isTokenValid) {
                     const profile = await this.getProfile(userData.token);
