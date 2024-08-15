@@ -66,13 +66,24 @@ export const useUserStore = defineStore('users', {
                 });
         },
         startInactivityTimer() {
-            this.clearInactivityTimer(); // Limpa o timer anterior, se houver
-            this.timeLogged = Math.floor(Date.now() / 1000);
-            this.inactivityTimer = setTimeout(() => {
-                console.log('Inatividade detectada. Realizando logout...');                
-                this.logout(); // Executa o logout após (timeToLogOut / 60) minutos de inatividade
-                location.reload();
-            }, this.timeToLogOut * 1000);
+            this.clearInactivityTimer();
+        
+            // Atualiza o localStorage com o tempo da última atividade
+            localStorage.setItem('lastActivity', Math.floor(Date.now() / 1000));
+        
+            // Cria um intervalo para verificar o tempo de inatividade
+            this.inactivityTimer = setInterval(() => {
+                const lastActivity = localStorage.getItem('lastActivity');
+                const currentTime = Math.floor(Date.now() / 1000);
+                const timeDifference = (currentTime - lastActivity); // em segundos
+        
+                if (timeDifference >= this.timeToLogOut) {
+                    console.log('Inatividade detectada. Realizando logout...');
+                    this.logout();
+                    clearInterval(this.inactivityTimer); // Limpa o intervalo após o logout
+                    location.reload();
+                }
+            }, 1000); // Checa a cada segundo
         },
         clearInactivityTimer() {
             if (this.inactivityTimer) {
@@ -80,6 +91,10 @@ export const useUserStore = defineStore('users', {
                 this.inactivityTimer = null;
             }
         },
+        resetInactivityTimer() {
+            // Atualiza a última atividade no localStorage
+            localStorage.setItem('lastActivity', Math.floor(Date.now() / 1000));
+        },        
         async findUser(cpf) {
             const url = `${baseApiAuthUrl}/signin`;
             try { 
