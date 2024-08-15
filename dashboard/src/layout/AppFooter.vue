@@ -21,8 +21,6 @@ const updateTimeRemaining = () => {
     const lastActivity = parseInt(localStorage.getItem('lastActivity'), 10) || Math.floor(Date.now() / 1000);
     const currentTime = Math.floor(Date.now() / 1000);
     const timePassed = currentTime - lastActivity;
-    console.log('timePassed', timePassed, currentTime, lastActivity);
-    
 
     // Calcula o tempo restante com base no timeToLogOut
     const timeRemaining = Math.max(store.timeToLogOut - timePassed, 0); // Garante que o tempo não seja negativo
