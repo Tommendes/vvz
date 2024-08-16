@@ -15,7 +15,7 @@ exports.up = function(knex, Promise) {
         table.string('updated_at')
         table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')        
         table.integer('id_empresa').notNull().unsigned().references('id').inTable(migrationClientSchema + '.empresa').onUpdate('Cascade').onDelete('NO ACTION').comment('Empresa proprietária da conta')
-        table.boolean('centro').notNull().comment('Tipo de relação (0: Receita; 1: Despesa)')
+        table.boolean('centro').notNull().comment('Tipo de relação (1: Receita; 2: Despesa)')
         table.string('tags').comment('Tags para facilitar a busca. Receber valores separados por virgula')
         table.integer('id_cadastros').notNull().unsigned().references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Credor ou devedor')
         table.string('data_emissao').notNull().comment('Data de emissão do registro')
@@ -23,7 +23,6 @@ exports.up = function(knex, Promise) {
         table.double('valor_liquido', 11,2).notNull().defaultTo(0.00).comment('Valor líquido')
         table.string('pedido').comment('Pedido de compra')
         table.string('descricao').comment('Descrição curta do lançamento')
-        table.specificType('obs', 'text').comment('Observações')
     })
 };
 

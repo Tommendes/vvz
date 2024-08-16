@@ -25,6 +25,10 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
+        delete body.old_id;
+        if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".")
+        if (body.valor_liquido) body.valor_liquido = body.valor_liquido.replace(".", "").replace(",", ".")
+
         try {
             existsOrError(body.id_empresa, 'Empresa destinatária da nota não informada')
             existsOrError(String(body.centro), 'Centro de custo não informado')
@@ -41,7 +45,7 @@ module.exports = app => {
             body.valor_bruto = body.valor_bruto.toFixed(2)
             body.valor_liquido = body.valor_liquido.toFixed(2)
             const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, valor_liquido: body.valor_liquido, status: STATUS_ACTIVE }).first()
-            if (unique && unique.id != body.id) throw `Já existe um registro ${credorDevedor.toLowerCase()} para esta empresa com esses dados`
+            if (unique && unique.id != body.id) throw `Já existe um registro ${credorDevedor.toLowerCase()} para esta empresa com esses dados: ${JSON.stringify(unique)}`
         } catch (error) {
             return res.status(400).send(error)
         }
@@ -106,28 +110,139 @@ module.exports = app => {
                 })
         }
     }
-
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.financeiro >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.financeiro >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const ret = app.db({ tbl1: tabelaDomain }).where({ status: STATUS_ACTIVE }).orderBy('created_at', 'desc')
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        const tabelaEmpresaDomain = `${dbPrefix}_${uParams.schema_name}.empresa`
 
-            .then(body => {
-                const quantidade = body.length
-                return res.json({ data: body, count: quantidade })
-            })
+        let queryes = undefined
+        let query = undefined
+        let page = 0
+        let rows = 10
+        let sortField = app.db.raw('tbl1.data_emissao')
+        let sortOrder = 'desc'
+        if (req.query) {
+            queryes = req.query
+            query = ''
+            for (const key in queryes) {
+                let operator = queryes[key].split(':')[0]
+                let value = queryes[key].split(':')[1]
+                if (key.split(':')[0] == 'field') {
+                    if (['cadastro'].includes(key.split(':')[1])) {
+                        const fields = ['nome', 'cpf_cnpj', 'telefone', 'email']
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'endsWith': operator = `like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+                        query += '('
+                        fields.forEach(element => {
+                            query += `tbl1.${element} ${operator} or `
+                        });
+                        query = query.slice(0, -3).trim()
+                        query += ') AND '
+                    } else {
+                        if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
+
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                                break;
+                            case 'endsWith': operator = `like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+                        let queryField = key.split(':')[1]
+                        // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador de igualdade
+                        if (queryField == 'atuacao') {
+                            queryField = 'id_params_atuacao'
+                            operator = `= '${value}'`
+                        }
+                        // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador vindo do frontend
+                        if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
+                        query += `${queryField} ${operator} AND `
+                    }
+                } else if (key.split(':')[0] == 'params') {
+                    switch (key.split(':')[1]) {
+                        case 'page': page = Number(queryes[key]);
+                            break;
+                        case 'rows': rows = Number(queryes[key]);
+                            break;
+                    }
+                } else if (key.split(':')[0] == 'sort') {
+                    sortField = key.split(':')[1].split('=')[0]
+                    sortOrder = queryes[key]
+                }
+            }
+            query = query.slice(0, -5).trim()
+        }
+
+        const totalRecords = await app.db({ tbl1: tabelaDomain })
+            .countDistinct('tbl1.id as count').first()
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'tbl1.id_empresa')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
+
+        const ret = app.db({ tbl1: tabelaDomain })
+            .select(app.db.raw(`e.razaosocial as emitente, c.nome as destinatario, c.cpf_cnpj cpf_cnpj_destinatario,  tbl1.*`))
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'tbl1.id_empresa')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .whereRaw(query ? query : '1=1')
+            .groupBy('tbl1.id')
+            .orderBy(sortField, sortOrder)
+        ret.limit(rows).offset((page + 1) * rows - rows)
+        ret.then(body => {
+            body.forEach(element => {
+                element.descricao = convertToHTML(element.descricao)
+                element.valor_bruto = parseFloat(element.valor_bruto).toFixed(2).replace('.', ',')
+                element.valor_liquido = parseFloat(element.valor_liquido).toFixed(2).replace('.', ',')
+            });
+            return res.json({ data: body, totalRecords: totalRecords.count })
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })
+    }
+
+    function convertToHTML(inputString) {
+        if (inputString) {
+            // Remove espaços em branco no início e no final, incluindo \n extras
+            inputString = inputString.trim();
+
+            // Separa a string por linhas duplas, que indicam um novo parágrafo
+            const paragraphs = inputString.split(/\n+/);
+
+            // Mapeia as partes, envolvendo-as em <p> tags
+            const htmlString = paragraphs.map(para => `<p>${para.trim()}</p>`).join('');
+
+            return htmlString;
+        } else return ''
     }
 
     const getById = async (req, res) => {

@@ -40,11 +40,11 @@ module.exports = app => {
 
         const pipeline_params_force = body.pipeline_params_force
 
-        if (body.valor_agente) body.valor_agente = body.valor_agente.replace(",", ".");
-        if (body.valor_representacao) body.valor_representacao = body.valor_representacao.replace(",", ".");
-        if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(",", ".");
-        if (body.perc_represent) body.perc_represent = body.perc_represent.replace(",", ".");
-        if (body.valor_liq) body.valor_liq = body.valor_liq.replace(",", ".");
+        if (body.valor_agente) body.valor_agente = body.valor_agente.replace(".", "").replace(",", ".");
+        if (body.valor_representacao) body.valor_representacao = body.valor_representacao.replace(".", "").replace(",", ".");
+        if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".");
+        if (body.perc_represent) body.perc_represent = body.perc_represent.replace(".", "").replace(",", ".");
+        if (body.valor_liq) body.valor_liq = body.valor_liq.replace(".", "").replace(",", ".");
 
         try {
             existsOrError(body.id_cadastros, 'Cadastro não informado')
