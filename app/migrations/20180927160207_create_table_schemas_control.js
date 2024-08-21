@@ -12,7 +12,7 @@ exports.up = function (knex) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
 
         table.string('schema_name').unique().comment('Nome do esquema')
         table.string('schema_version').notNull().comment('Versão do esquema').defaultTo('1.0.0')

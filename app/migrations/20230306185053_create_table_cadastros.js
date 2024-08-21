@@ -9,7 +9,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('prospect',1).defaultTo(1).notNull().comment('Prospecto (Não: 0; Sim: 1)')
         table.integer('id_params_tipo').unsigned().notNull().comment('Tipo de cliente (Arquiteto, Cliente, Fornecedor)')
         table.integer('id_params_atuacao',10).unsigned().notNull().comment('Área de atuação (Chave estrangeira com a tabela CLI_DOM.local_params)')

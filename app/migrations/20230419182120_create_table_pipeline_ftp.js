@@ -9,7 +9,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.string('descricao').comment('Descrição abreviada do host FTP')
         table.string('host').comment('DNS ou IP do host FTP')
         table.string('port').defaultTo('21').comment('Porta do host FTP')

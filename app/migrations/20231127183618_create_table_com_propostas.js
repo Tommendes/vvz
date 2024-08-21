@@ -13,7 +13,7 @@ exports.up = function (knex) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
 
         table.integer('id_pipeline').notNull().unsigned().references('id').inTable(migrationClientSchema + '.pipeline').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela pipeline')
         table.integer('id_pv').unsigned().references('id').inTable(migrationClientSchema + '.pv').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela pv')

@@ -13,7 +13,7 @@ exports.up = function (knex) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
 
         table.integer('schema_id').unsigned().references('id').inTable(db.database + '.schemas_control').onUpdate('Cascade').onDelete('NO ACTION').comment('Schema do cliente')
         table.string('descricao').comment('Descrição abreviada do host FTP')

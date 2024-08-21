@@ -16,7 +16,32 @@ de.email,de.emailAt,de.emailComercial,de.emailFinanceiro,NULL,NULL,NULL,cod
  FROM mygsoft.sis_demp de WHERE cod > 1 GROUP BY cnpj_empresa ORDER BY cnpj_empresa);
 UPDATE vivazul_bceaa5.empresa SET old_id = id WHERE id = 1;
 
-/*Importar o financeiro*/
+/*Importar Contas (fin_lancamentos x fin_contas)*/
+UPDATE mygsoft.fin_lancamentos SET forma_pagto = 'BOLETO BANCARIO' WHERE forma_pagto IN('BOL BANCARIO','BOL BANC');
+UPDATE mygsoft.fin_lancamentos SET forma_pagto = 'CAIXA PEQUENO' WHERE forma_pagto = 'CX. PEQ.';
+UPDATE mygsoft.fin_lancamentos SET forma_pagto = 'CAIXA F FIXO' WHERE forma_pagto = 'C F FIXO';
+UPDATE mygsoft.fin_lancamentos SET forma_pagto = 'DEB AUTOMATICO' WHERE forma_pagto = 'DEB AUT';
+UPDATE mygsoft.fin_lancamentos SET forma_pagto = 'OUTROS' WHERE forma_pagto = '';
+UPDATE mygsoft.fin_lancamentos SET forma_pagto = 'C C/C ITAU' WHERE forma_pagto IN('BANCO PERSONNAL','BANKLINE');
+SELECT COUNT(forma_pagto), forma_pagto FROM mygsoft.fin_lancamentos GROUP BY forma_pagto ORDER BY forma_pagto;
+
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE vivazul_bceaa5.fin_contas;
+INSERT INTO vivazul_bceaa5.fin_contas (id,evento,created_at,updated_at,STATUS,id_empresa,conta_tipo,nome,id_fin_cad_bancos,
+  agencia,agencia_dv,conta,conta_dv) 
+(SELECT 0,1,NOW(),NULL,10,1,6,forma_pagto,NULL,NULL,NULL,NULL,NULL FROM mygsoft.fin_lancamentos WHERE forma_pagto IS NOT NULL AND LENGTH(TRIM(forma_pagto)) > 0 GROUP BY forma_pagto ORDER BY forma_pagto);
+INSERT INTO vivazul_bceaa5.fin_contas (id,evento,created_at,updated_at,STATUS,id_empresa,conta_tipo,nome,id_fin_cad_bancos,
+  agencia,agencia_dv,conta,conta_dv) 
+(SELECT 0,1,NOW(),NULL,10,2,6,forma_pagto,NULL,NULL,NULL,NULL,NULL FROM mygsoft.fin_lancamentos WHERE forma_pagto IS NOT NULL AND LENGTH(TRIM(forma_pagto)) > 0 GROUP BY forma_pagto ORDER BY forma_pagto);
+INSERT INTO vivazul_bceaa5.fin_contas (id,evento,created_at,updated_at,STATUS,id_empresa,conta_tipo,nome,id_fin_cad_bancos,
+  agencia,agencia_dv,conta,conta_dv) 
+(SELECT 0,1,NOW(),NULL,10,3,6,forma_pagto,NULL,NULL,NULL,NULL,NULL FROM mygsoft.fin_lancamentos WHERE forma_pagto IS NOT NULL AND LENGTH(TRIM(forma_pagto)) > 0 GROUP BY forma_pagto ORDER BY forma_pagto);
+INSERT INTO vivazul_bceaa5.fin_contas (id,evento,created_at,updated_at,STATUS,id_empresa,conta_tipo,nome,id_fin_cad_bancos,
+  agencia,agencia_dv,conta,conta_dv) 
+(SELECT 0,1,NOW(),NULL,10,4,6,forma_pagto,NULL,NULL,NULL,NULL,NULL FROM mygsoft.fin_lancamentos WHERE forma_pagto IS NOT NULL AND LENGTH(TRIM(forma_pagto)) > 0 GROUP BY forma_pagto ORDER BY forma_pagto);
+SET FOREIGN_KEY_CHECKS = 1;
+
+/*Importar Lancamentos (fin_lancamentos)*/
 -- Eliminar lixo
 DELETE FROM mygsoft.fin_lancamentos WHERE !(situacao >= 1 AND (valor_bruto < 0 OR valor_bruto > 0));
 
@@ -27,7 +52,7 @@ SELECT 'despesa',COUNT(cod) FROM mygsoft.fin_lancamentos WHERE situacao >= 1 AND
 UNION ALL
 SELECT 'total',COUNT(cod) FROM mygsoft.fin_lancamentos;
 
--- Importar
+-- Importar lançamentos
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE vivazul_bceaa5.fin_lancamentos;
 INSERT INTO vivazul_bceaa5.fin_lancamentos (id,evento,created_at,updated_at,STATUS,id_empresa,centro,tags,id_cadastros,data_emissao,valor_bruto,valor_liquido,pedido,descricao,old_id) 
@@ -57,9 +82,27 @@ WHERE flv.id_cadastros = 0
 ORDER BY fl.data_vencimento DESC
 LIMIT 99999;
 
-SELECT nota_fiscal_conta, duplicata, valor_bruto, c.estab, data_lanc, data_vencimento, data_pagto, data_lancamento AS data_registro FROM mygsoft.fin_lancamentos fl
-JOIN cadas c ON c.cod = fl.`cod_cadas`
-WHERE data_lanc > NOW() ORDER BY data_lancamento;
+
+/*Importar Parcelas (fin_lancamentos)*/
+-- Na importação, para cada registro em fin_lancamentos receberá um em fin_parcelas
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE vivazul_bceaa5.fin_parcelas;
+INSERT INTO vivazul_bceaa5.fin_parcelas (id,evento,created_at,updated_at,STATUS,situacao,id_fin_lancamentos,data_vencimento,
+  data_pagto,valor_vencimento,duplicata,parcela,recorrencia,descricao,documento,id_fin_contas,motivo_cancelamento
+)
+(
+	SELECT NULL,1,fl.data_lancamento,NULL updated_at,10 STATUS,
+	IF(fl.situacao = 3, 2, IF(fl.situacao = 4, 3, IF(fl.situacao = 2, 99, fl.situacao))),
+	flv.id,fl.data_vencimento,fl.data_pagto, fl.valor_vencimentos, fl.duplicata, fl.vencimento, 'U', fl.descricao_conta,fl.doc_pagto,
+	fc.id, fl.motiv_cancel
+	FROM mygsoft.fin_lancamentos fl
+	JOIN vivazul_bceaa5.fin_lancamentos flv ON flv.old_id = fl.cod
+	JOIN vivazul_bceaa5.fin_contas fc ON fc.nome = fl.forma_pagto AND fc.id_empresa = flv.id_empresa
+);
+
+-- Corrigir valores menores que zero
+UPDATE vivazul_bceaa5.fin_parcelas SET valor_vencimento = valor_vencimento * (-1) WHERE valor_vencimento < 0;	
+SET FOREIGN_KEY_CHECKS = 1;
 
 /*
 Inserir os parâmetros do financeiro
@@ -67,4 +110,4 @@ Inserir os parâmetros do financeiro
 INSERT INTO vivazul_bceaa5.local_params (id,evento,created_at,updated_at,STATUS,grupo,parametro,label) 
 (SELECT 0,1,NOW(),NULL,10,'forma_pagto' grupo,forma_pagto,forma_pagto FROM mygsoft.fin_lancamentos WHERE forma_pagto IS NOT NULL AND LENGTH(TRIM(forma_pagto)) <> 0 GROUP BY forma_pagto ORDER BY forma_pagto);
 
-SELECT COUNT(situacao), situacao FROM fin_lancamentos GROUP BY situacao ORDER BY situacao
+SELECT COUNT(forma_pagto), forma_pagto FROM mygsoft.fin_lancamentos GROUP BY forma_pagto ORDER BY forma_pagto

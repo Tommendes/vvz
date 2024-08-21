@@ -14,7 +14,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')  
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')  
         table.string('febraban',3).comment('Código FEBRABAN')
         table.string('cnpj',14).comment('CNPJ do banco')
         table.string('nome_banco').comment('Nome do banco')

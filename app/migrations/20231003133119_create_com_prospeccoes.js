@@ -13,7 +13,7 @@ exports.up = function (knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_agente', 10).unsigned().notNull().references('id').inTable(db.database + '.users').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela users')
         table.integer('id_cadastros', 10).unsigned().notNull().references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela cadastros')
         table.integer('id_cad_end', 10).unsigned().notNull().references('id').inTable(migrationClientSchema + '.cad_enderecos').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela cad_enderecos')

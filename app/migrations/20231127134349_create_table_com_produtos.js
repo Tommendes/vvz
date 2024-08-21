@@ -13,7 +13,7 @@ exports.up = function (knex) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_uploads_imagem').unsigned().references('id').inTable(db.database + '.uploads').onUpdate('Cascade').onDelete('NO ACTION').comment('Chave estrangeira com a tabela uploads')
         table.string('nome_comum').notNull().comment('Nome curto')
         table.string('descricao', 1000).notNull().comment('Descrição longa')

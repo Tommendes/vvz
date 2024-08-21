@@ -13,7 +13,7 @@ exports.up = function (knex) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_pv_oat', 10).unsigned().comment('Documento pai')
         table.integer('status_pv_oat', 10).unsigned().notNull().comment('Status do PV')
         table.foreign('id_pv_oat').references('id').inTable(migrationClientSchema + '.pv_oat').onUpdate('Cascade').onDelete('NO ACTION')

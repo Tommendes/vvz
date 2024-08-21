@@ -9,7 +9,7 @@ exports.up = function (knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_pipeline', 10).unsigned().notNull().comment('Pipeline relacionado ').references('id').inTable(migrationClientSchema + '.pipeline').onUpdate('Cascade').onDelete('NO ACTION');
         table.integer('id_comis_agentes', 10).unsigned().notNull().comment('Agente').references('id').inTable(migrationClientSchema + '.comis_agentes').onUpdate('Cascade').onDelete('NO ACTION')
         table.decimal('valor_base', 10, 2).comment('Valor base de cálculo da comissão')

@@ -9,7 +9,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_pv',10).unsigned().notNull().comment('ID do pv')
         table.integer('id_cadastro_endereco',10).unsigned().comment('Endereço do atendimento')
         table.integer('id_tecnico',10).unsigned().comment('Técnico responsável')

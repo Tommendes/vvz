@@ -13,7 +13,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_cad_contatos').notNull().unsigned().references('id').inTable(migrationClientSchema + '.cad_contatos').onUpdate('Cascade').onDelete('Cascade')
         table.integer('id_params_tipo').notNull().unsigned().references('id').inTable(migrationClientSchema + '.local_params').onUpdate('Cascade').onDelete('NO ACTION')
         table.string('meio').notNull().comment('Meio de contato (P.Ex.: nr do telefone ou email)')

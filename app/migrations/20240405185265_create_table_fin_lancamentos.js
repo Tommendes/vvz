@@ -13,7 +13,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')        
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')        
         table.integer('id_empresa').notNull().unsigned().references('id').inTable(migrationClientSchema + '.empresa').onUpdate('Cascade').onDelete('NO ACTION').comment('Empresa proprietária da conta')
         table.boolean('centro').notNull().comment('Tipo de relação (1: Receita; 2: Despesa)')
         table.string('tags').comment('Tags para facilitar a busca. Receber valores separados por virgula')

@@ -13,7 +13,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_asc').unsigned().references('id').inTable(migrationClientSchema + '.fin_etiquetas').onUpdate('Cascade').onDelete('NO ACTION')
         table.string('descricao').comment('Descrição da etiqueta')
     })

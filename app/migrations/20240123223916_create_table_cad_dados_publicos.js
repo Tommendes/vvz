@@ -9,7 +9,7 @@ exports.up = function(knex, Promise) {
         table.integer('evento').notNull()
         table.string('created_at').notNull()
         table.string('updated_at')
-        table.integer('status').defaultTo(0).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_cadastros').notNull().unsigned().references('id').inTable(migrationClientSchema + '.cadastros').onUpdate('Cascade').onDelete('NO ACTION')
         table.string('dados',2500).comment('Dados públicos do CNPJ do cliente')
     })
