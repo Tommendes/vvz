@@ -127,7 +127,7 @@ module.exports = app => {
         let queryes = undefined
         let query = undefined
         let page = 0
-        let rows = 10
+        let rows = 50
         let sortField = app.db.raw('tbl1.data_emissao')
         let sortOrder = 'desc'
         if (req.query) {
@@ -201,22 +201,32 @@ module.exports = app => {
             query = query.slice(0, -5).trim()
         }
 
-        const totalRecords = await app.db({ tbl1: tabelaDomain })
+        let totalRecords = app.db({ tbl1: tabelaDomain })
             .countDistinct('tbl1.id as count').first()
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'tbl1.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
+        // Verificar a permissão de multiCliente do usuário
+        if (!uParams.multiCliente || uParams.multiCliente < 1) totalRecords.where({ 'tbl1.id_empresa': uParams.id_empresa })
+        totalRecords = await totalRecords
 
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`e.razaosocial as emitente, c.nome as destinatario, c.cpf_cnpj cpf_cnpj_destinatario,  tbl1.*`))
+            .select(app.db.raw(`e.id as id_empresa, e.razaosocial as emitente, c.nome as destinatario, c.cpf_cnpj cpf_cnpj_destinatario,  tbl1.*`))
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'tbl1.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
-            .groupBy('tbl1.id')
+
+        // Verificar a permissão de multiCliente do usuário
+        if (!uParams.multiCliente || uParams.multiCliente < 1) ret.where({ 'tbl1.id_empresa': uParams.id_empresa })
+
+        ret.groupBy('tbl1.id')
+            // .orderBy(app.db.raw(`IF(e.ordem_financeiro AND e.ordem_financeiro > 0, e.ordem_financeiro, ${sortField})`))
             .orderBy(sortField, sortOrder)
         ret.limit(rows).offset((page + 1) * rows - rows)
+        console.log(ret.toString());
+
         ret.then(body => {
             body.forEach(element => {
                 element.descricao = convertToHTML(element.descricao)

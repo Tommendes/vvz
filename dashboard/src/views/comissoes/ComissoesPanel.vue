@@ -5,6 +5,16 @@ import ComissoesResume from './ComissoesResume.vue';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { ref } from 'vue';
 import moment from 'moment';
+
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+import { onBeforeMount } from 'vue';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile()
+});
+
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 
@@ -167,5 +177,5 @@ const getStatusReleased = async () => {
             </div>
         </div>
     </div>
-    <p>{{ dataCorte }}</p>
+    <p v-if="uProf.admin >= 2">dataCorte: {{ dataCorte }}</p>
 </template>

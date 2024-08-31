@@ -107,7 +107,7 @@ const loadLazyData = async () => {
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
             rowsPerPageOptions.value.push(quant);
-            
+
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
             rowsPerPageOptions.value.push(quant);
@@ -128,20 +128,22 @@ const loadLazyData = async () => {
             }
         });
 };
+// Carrega os dados do grid
 const onPage = async (event) => {
     lazyParams.value = event;
-    await loadLazyData();
+    await mountUrlFilters();
 };
+// Ordena os dados do grid
 const onSort = async (event) => {
     lazyParams.value = event;
-    await loadLazyData();
+    await mountUrlFilters();
 };
+// Filtra os dados do grid
 const onFilter = async () => {
     lazyParams.value.filters = filters.value;
     await mountUrlFilters();
-    await loadLazyData();
 };
-const mountUrlFilters = () => {
+const mountUrlFilters = async () => {
     let url = '?';
     Object.keys(filters.value).forEach((key) => {
         if (filters.value[key].value) {
@@ -155,10 +157,9 @@ const mountUrlFilters = () => {
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
     urlFilters.value = url;
+
+    await loadLazyData();
 };
-watchEffect(() => {
-    mountUrlFilters();
-});
 const dialogRef = ref(null);
 const messagesButtoms = ref([
     {
@@ -204,8 +205,8 @@ const showEvent = (evento) => {
     <div class="card">
         <DataTable style="font-size: 1rem" :value="gridData" lazy paginator :first="0" v-model:filters="filters"
             ref="dt" dataKey="id" :totalRecords="totalRecords" :rows="gridData.length"
-            :rowsPerPageOptions="rowsPerPageOptions" :loading="loading" @page="onPage($event)"
-            @sort="onSort($event)" @filter="onFilter($event)" filterDisplay="row" tableStyle="min-width: 75rem"
+            :rowsPerPageOptions="rowsPerPageOptions" :loading="loading" @page="onPage($event)" @sort="onSort($event)"
+            @filter="onFilter($event)" filterDisplay="row" tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable>
             <!-- scrollHeight="420px" -->
@@ -213,6 +214,10 @@ const showEvent = (evento) => {
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
                         @click="clearFilter()" />
+                </div>
+                <div class="flex justify-content-end gap-3 mt-3 p-tag-esp">
+                    <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }}
+                        resultados</span>
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">

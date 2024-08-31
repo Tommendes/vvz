@@ -108,18 +108,20 @@ const loadLazyData = async () => {
             }
         });
 };
+// Carrega os dados do grid
 const onPage = async (event) => {
     lazyParams.value = event;
-    await loadLazyData();
+    await mountUrlFilters();
 };
+// Ordena os dados do grid
 const onSort = async (event) => {
     lazyParams.value = event;
-    await loadLazyData();
+    await mountUrlFilters();
 };
+// Filtra os dados do grid
 const onFilter = async () => {
     lazyParams.value.filters = filters.value;
     await mountUrlFilters();
-    await loadLazyData();
 };
 const mode = ref('grid');
 const mountUrlFilters = async () => {
@@ -136,6 +138,8 @@ const mountUrlFilters = async () => {
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
     urlFilters.value = url;
+
+    await loadLazyData();
 };
 const menu = ref();
 // Exporta os dados do grid para CSV
@@ -148,9 +152,6 @@ const exportCSV = () => {
     });
     toExport.exportCSV();
 };
-// watchEffect(() => {
-//     mountUrlFilters();
-// });
 </script>
 
 <template>
@@ -184,6 +185,10 @@ const exportCSV = () => {
                         @click="clearFilter()" />
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
                         @click="mode = 'new', scrollToTop()" />
+                </div>
+                <div class="flex justify-content-end gap-3 mt-3 p-tag-esp">
+                    <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }}
+                        resultados</span>
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">

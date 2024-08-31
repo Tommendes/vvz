@@ -206,7 +206,59 @@ module.exports = app => {
         } catch (error) {
             res.status(400).send(error)
         }
+    }    
+
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'glf':
+                getListByField(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
     }
 
-    return { save, get, getById, remove }
+    const getListByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const select = req.query.slct
+
+        const first = req.query.first && req.query.first == true
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+            .where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
+
+    return { save, get, getById, remove, getByFunction }
 }

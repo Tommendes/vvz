@@ -10,6 +10,7 @@ exports.up = function (knex, Promise) {
         table.string('created_at').notNull()
         table.string('updated_at')
         table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
+        table.integer('ordem_financeiro', 2).defaultTo(999).comment('Ordem em que aparece no grid de lançamentos financeiros')
         table.string('razaosocial', 255).comment('Razão social do cadastro')
         table.string('fantasia', 255).comment('Nome fantasia da empresa')
         table.string('cpf_cnpj_empresa', 255).comment('CNPJ do cadastro')

@@ -544,6 +544,9 @@ module.exports = app => {
         .put(app.api.empresa.save)
         .get(app.api.empresa.getById)
         .delete(app.api.empresa.remove)
+    app.route('/empresas/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.empresa.getByFunction)
 
     /**
     * Rota de fin_lancamentos

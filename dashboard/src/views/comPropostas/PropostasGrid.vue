@@ -81,10 +81,10 @@ const clearFilter = () => {
     loadLazyData();
 };
 
-const loadLazyData = () => {
+const loadLazyData = async () => {
     loading.value = true;
     const url = `${urlBase.value}${urlFilters.value}`;
-    axios
+    await axios
         .get(url)
         .then((axiosRes) => {
             gridData.value = axiosRes.data.data;
@@ -102,25 +102,27 @@ const loadLazyData = () => {
             }
         });
 };
-const onPage = (event) => {
+// Carrega os dados do grid
+const onPage = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await mountUrlFilters();
 };
-const onSort = (event) => {
+// Ordena os dados do grid
+const onSort = async (event) => {
     lazyParams.value = event;
-    loadLazyData();
+    await mountUrlFilters();
 };
-const onFilter = () => {
+// Filtra os dados do grid
+const onFilter = async () => {
     lazyParams.value.filters = filters.value;
-    mountUrlFilters();
-    loadLazyData();
+    await mountUrlFilters();
 };
 const mode = ref('grid');
 // Carrega os dados do formulário
 provide('itemData', itemData);
 provide('mode', 'new');
 
-const mountUrlFilters = () => {
+const mountUrlFilters = async () => {
     let url = '?';
     Object.keys(filters.value).forEach((key) => {
         if (filters.value[key].value) {
@@ -134,6 +136,8 @@ const mountUrlFilters = () => {
         });
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
     urlFilters.value = url;
+
+    await loadLazyData();
 };
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
@@ -145,9 +149,6 @@ const exportCSV = () => {
     });
     toExport.exportCSV();
 };
-watchEffect(() => {
-    mountUrlFilters();
-});
 
 const dialogRef = ref(null);
 const messagesButtoms = ref([
@@ -224,6 +225,11 @@ const newProposal = () => {
                                 @click="clearFilter()" />
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
                                 @click="newProposal()" />
+                        </div>
+                        <div class="flex justify-content-end gap-3 mt-3 p-tag-esp">
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                                gridData.length }}
+                                resultados</span>
                         </div>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">

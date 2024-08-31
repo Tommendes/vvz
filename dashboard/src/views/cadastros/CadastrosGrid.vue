@@ -174,14 +174,17 @@ const loadLazyData = async () => {
             router.push({ path: '/' });
         });
 };
+// Carrega os dados do grid
 const onPage = async (event) => {
     lazyParams.value = event;
-    await loadLazyData()
+    await mountUrlFilters();
 };
+// Ordena os dados do grid
 const onSort = async (event) => {
     lazyParams.value = event;
-    await loadLazyData()
+    await mountUrlFilters();
 };
+// Filtra os dados do grid
 const onFilter = async () => {
     lazyParams.value.filters = filters.value;
     await mountUrlFilters();
@@ -262,6 +265,9 @@ const goField = (data) => {
                                 @click="clearFilter()" />
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
                                 @click="novoRegistro()" />
+                        </div>
+                        <div class="flex justify-content-end gap-3 mt-3 p-tag-esp">
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} resultados</span>
                         </div>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">

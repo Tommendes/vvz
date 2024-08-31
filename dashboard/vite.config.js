@@ -1,5 +1,3 @@
-import { fileURLToPath, URL } from 'node:url';
-
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
@@ -9,11 +7,14 @@ export default defineConfig(() => {
         plugins: [vue()],
         resolve: {
             alias: {
-                '@': fileURLToPath(new URL('./src', import.meta.url))
+                '@': new URL('./src', import.meta.url).pathname
             }
         },
         optimizeDeps: {
             include: ['@fawmi/vue-google-maps', 'fast-deep-equal']
-        }
+        },
+        // server: {
+        //     port: 5173
+        // }
     };
 });

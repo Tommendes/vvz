@@ -417,7 +417,7 @@ const getEmpresas = async () => {
         res.data.data.map((item) => {
             dropdownEmpresas.value.push({
                 value: item.id,
-                label: item.razaosocial
+                label: `${item.razaosocial} - ${masks.value.cpf_cnpj.masked(item.cpf_cnpj_empresa)}`
             });
         });
     });

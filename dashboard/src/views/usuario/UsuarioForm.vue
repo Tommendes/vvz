@@ -35,6 +35,7 @@ const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
     uProf.value = await store.getProfile()
+    if (uProf.value.admin >= 1) dropdownMulticliente.value.push({ value: '2', label: 'Multi Cliente e Multi Schema' });
 });
 
 // Campos de formulário
@@ -56,26 +57,37 @@ const urlBase = ref(`${baseApiUrl}/users`);
 
 // Carragamento de dados do form
 const loadData = async () => {
-    loading.value = true;
-    const url = `${urlBase.value}/${route.params.id}`;
-    await axios.get(url).then((res) => {
-        const body = res.data;
-        if (body && body.id) {
-            body.id = String(body.id);
+    if (route.params.id) {
+        loading.value = true;
+        const url = `${urlBase.value}/${route.params.id}`;
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
 
-            itemData.value = body;
-            if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
-        } else {
-            defaultWarn('Registro não localizado');
-            router.push({ path: `/${uProf.value.schema_description}/usuarios` });
-        }
-        loading.value = false;
-    })
-    .catch((error) => {
-        defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-        if (error.response && error.response.status == 401) router.push('/');
-        loading.value = false;
-    });
+                itemData.value = body;
+                if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
+            } else {
+                defaultWarn('Registro não localizado');
+                router.push({ path: `/${uProf.value.schema_description}/usuarios` });
+            }
+            loading.value = false;
+        })
+            .catch((error) => {
+                defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+                if (error.response && error.response.status == 401) router.push('/');
+                loading.value = false;
+            });
+    } else {
+        itemData.value = {
+            "name": undefined,
+            "cpf": undefined, "email": undefined, "telefone": undefined, "id_empresa": uProf.value.id_empresa,
+            "gestor": "0", "multiCliente": "1", "cadastros": "1", "pipeline": "1",
+            "pipeline_params": "0", "pv": "1", "at": "1", "comercial": "1",
+            "prospeccoes": "1", "fiscal": "1", "financeiro": "1", "protocolo": "1",
+            "comissoes": "0", "agente_arq": "0", "agente_at": "0", "status": "10", "agente_v": "0"
+        };
+    }
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -93,7 +105,7 @@ const saveData = async () => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
-                itemData.value = body;
+                itemData.value = { ...itemData.value, ...body };
                 if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/usuario/${itemData.value.id}` });
                 mode.value = 'view';
             } else {
@@ -105,6 +117,18 @@ const saveData = async () => {
             if (error.response && error.response.status == 401) router.push('/');
         });
 };
+// Consultar a lista de empresas do usuário
+const getEmpresas = async () => {
+    const url = `${baseApiUrl}/empresas/f-a/glf?fld=1&vl=1&literal=1&slct=id,razaosocial,cpf_cnpj_empresa`;
+    await axios.get(url).then((res) => {
+        const body = res.data.data;
+        console.log(body);
+
+        body.forEach(element => {
+            dropdownEmpresas.value.push({ value: String(element.id), label: `${element.razaosocial} - ${masks.value.cpf_cnpj.masked(element.cpf_cnpj_empresa)}` });
+        });
+    });
+};
 //DropDowns
 const STATUS_INACTIVE = '0'; // Perfil inativo
 const STATUS_WAITING = '1'; // Perfil aguardando o token de liberação
@@ -113,6 +137,7 @@ const STATUS_SUSPENDED = '9'; // Perfil suspenso
 const STATUS_ACTIVE = '10'; // Usuário ok
 const STATUS_PASS_EXPIRED = '19'; // Senha expirada por tempo de criação
 const STATUS_DELETE = '99'; // Usuário excluído
+const dropdownEmpresas = ref([]);
 const dropdownStatus = ref([
     { value: STATUS_INACTIVE, label: 'Inativo' },
     { value: STATUS_WAITING, label: 'Aguardando' },
@@ -136,6 +161,10 @@ const getAgentesV = async () => {
 const dropdownSN = ref([
     { value: '0', label: 'Não' },
     { value: '1', label: 'Sim' }
+]);
+const dropdownMulticliente = ref([
+    { value: '0', label: 'Não' },
+    { value: '1', label: 'Sim' },
 ]);
 const dropdownAlcadas = ref([
     { value: '0', label: 'Negado' },
@@ -172,9 +201,22 @@ const validateCPF = () => {
         return false;
     }
 };
+// validar nome obrigatório
+const validateNome = () => {
+    errorMessages.value.name = null;
+    if (!itemData.value.name || itemData.value.name.trim().length == 0) {
+        errorMessages.value.name = 'Nome é obrigatório';
+        return false;
+    }
+    return true;
+};
 // Validar telefone
 const validateTelefone = () => {
     errorMessages.value.telefone = null;
+    if (!itemData.value.telefone || itemData.value.telefone.trim().length == 0) {
+        errorMessages.value.telefone = 'Telefone não informado';
+        return false;
+    }
     if (itemData.value.telefone && itemData.value.telefone.trim().length > 0 && ![10, 11].includes(masks.value.telefone.unmasked(itemData.value.telefone).length)) {
         errorMessages.value.telefone = 'Formato de telefone inválido';
         return false;
@@ -184,6 +226,10 @@ const validateTelefone = () => {
 // Validar email
 const validateEmail = () => {
     errorMessages.value.email = null;
+    if (!itemData.value.email || itemData.value.email.trim().length == 0) {
+        errorMessages.value.email = 'E-mail não informado';
+        return false;
+    }
     if (itemData.value.email && itemData.value.email.trim().length > 0 && !isValidEmail(itemData.value.email)) {
         errorMessages.value.email = 'Formato de email inválido';
         return false;
@@ -192,7 +238,7 @@ const validateEmail = () => {
 };
 // Validar formulário
 const formIsValid = () => {
-    return validateCPF() && validateTelefone() && validateEmail();
+    return validateNome() && validateCPF() && validateEmail() && validateTelefone();
 };
 // Recarregar dados do formulário
 const reload = () => {
@@ -205,6 +251,7 @@ const reload = () => {
 onBeforeMount(() => { });
 onMounted(async () => {
     getAgentesV();
+    getEmpresas();
     loadData();
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
     else {
@@ -232,6 +279,8 @@ onMounted(async () => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.name"
                                 id="name" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.name">{{ errorMessages.name
+                                }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="cpf">CPF/CNPJ</label>
@@ -239,8 +288,9 @@ onMounted(async () => {
                             <InputText v-else-if="uProf.admin || uProf.gestor" autocomplete="no"
                                 :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text"
                                 @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
-                            <p v-else class="p-inputtext p-component p-filled p-variant-filled" style="line-height: inherit">{{
-                                itemData.cpf }}</p>
+                            <p v-else class="p-inputtext p-component p-filled p-variant-filled"
+                                style="line-height: inherit">{{
+                                    itemData.cpf }}</p>
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf
                                 }}</small>
                         </div>
@@ -276,13 +326,6 @@ onMounted(async () => {
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <Dropdown v-else id="gestor" :disabled="mode == 'view'" optionLabel="label"
                                     optionValue="value" v-model="itemData.gestor" :options="dropdownSN"
-                                    placeholder="Selecione..." />
-                            </div>
-                            <div class="col-12 md:col-2">
-                                <label for="multiCliente">MultiCliente</label>
-                                <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.multiCliente" :options="dropdownSN"
                                     placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
@@ -362,7 +405,7 @@ onMounted(async () => {
                                     optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas"
                                     placeholder="Selecione..." />
                             </div>
-                            <div class="col-12 md:col-4">
+                            <div class="col-12 md:col-6">
                                 <label for="agente_v">Usuário vendedor (Agente de vendas)</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label"
@@ -384,9 +427,9 @@ onMounted(async () => {
                                     placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
-                                <label for="agente_at">Status</label>
+                                <label for="status">Status</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label"
+                                <Dropdown v-else id="status" :disabled="mode == 'view'" optionLabel="label"
                                     optionValue="value" v-model="itemData.status" :options="dropdownStatus"
                                     placeholder="Selecione..." />
                             </div>
@@ -395,6 +438,24 @@ onMounted(async () => {
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.schema_description }}</p>
                             </div> -->
+                            <div class="col-12 md:col-12" v-if="dropdownEmpresas.length > 1">
+                                <label id="secaopermissaofinanceiro">Relacionado às consultas ao Financeiro e Fiscal</label>
+                            </div>
+                            <div class="col-12 md:col-4" v-if="dropdownEmpresas.length > 1">
+                                <label for="multiCliente">Multi Cliente</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label"
+                                    optionValue="value" v-model="itemData.multiCliente" :options="dropdownMulticliente"
+                                    placeholder="Selecione..." />
+                            </div>
+                            <div class="col-12 md:col-8"
+                                v-if="dropdownEmpresas.length > 1 && Number(itemData.multiCliente)">
+                                <label for="id_empresa">Empresa Atual do usuário</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <Dropdown v-else id="id_empresa" :disabled="mode == 'view'" optionLabel="label"
+                                    optionValue="value" v-model="itemData.id_empresa" :options="dropdownEmpresas"
+                                    placeholder="Selecione..." />
+                            </div>
                         </div>
                         <!-- Botão trocar senha -->
                         <div v-if="itemData.id" id="divTS" class="col-12 md:col-2 m-0 font-normal">
@@ -433,6 +494,7 @@ onMounted(async () => {
             <div class="card bg-green-200 mt-3">
                 <p>Mode: {{ mode }}</p>
                 <p>itemData: {{ itemData }}</p>
+                <p>empresas: {{ dropdownEmpresas }}</p>
             </div>
         </div>
     </div>

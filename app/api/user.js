@@ -748,27 +748,32 @@ module.exports = app => {
         if (!req.originalUrl.startsWith('/users')) user.gestor = false
 
         const sql = app.db(tabela)
-        if (user.cpf)
 
-            try {
-                existsOrError(user.name, 'Nome não informado')
-                existsOrError(user.cpf, 'CPF não informado')
-                // existsOrError(user.email, 'E-mail não informado')
-                existsOrError(user.telefone, 'Telefone não informado')
-                if ((user.password || user.confirmPassword) && user.password != user.confirmPassword) {
-                    existsOrError(user.password, 'Senha não informada')
-                    existsOrError(user.confirmPassword, 'Confirmação de Senha inválida')
-                    equalsOrError(user.password, user.confirmPassword, 'Senhas não conferem')
-                } else if (!user.password) {
-                    delete user.password
-                }
-                if (!user.id) {
-                    notExistsOrError(userFromDB, 'E-mail ou CPF já registrado')
-                }
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                return res.status(400).send(error)
+        try {
+            existsOrError(user.schema_id, 'Faltou infomar o cliente do usuário')
+            existsOrError(user.id_empresa, 'Informe a empresa padrão do usuário')
+            existsOrError(user.name, 'Nome não informado')
+            existsOrError(user.email, 'E-mail não informado')
+            const emailUnique = await app.db(tabela).where({ email: user.email }).first()
+            if (emailUnique && emailUnique.id != user.id) throw 'E-mail já cadastrado'
+            existsOrError(user.cpf, 'CPF não informado')
+            const cpfUnique = await app.db(tabela).where({ cpf: user.cpf }).first()
+            if (cpfUnique && cpfUnique.id != user.id) throw 'CPF já cadastrado'
+            // existsOrError(user.email, 'E-mail não informado')
+            existsOrError(user.telefone, 'Telefone não informado')
+            const telefoneUnique = await app.db(tabela).where({ telefone: user.telefone }).first()
+            if (telefoneUnique && telefoneUnique.id != user.id) throw 'Telefone já cadastrado'
+            if ((user.password || user.confirmPassword) && user.password != user.confirmPassword) {
+                existsOrError(user.password, 'Senha não informada')
+                existsOrError(user.confirmPassword, 'Confirmação de Senha inválida')
+                equalsOrError(user.password, user.confirmPassword, 'Senhas não conferem')
+            } else if (!user.password) {
+                delete user.password
             }
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            return res.status(400).send(error)
+        }
 
         // Apenas gestores e admins podem selecionar alçadas de usuários
         if (!(user.id && (user.gestor >= 1 || user.admin >= 1))) {
@@ -793,39 +798,64 @@ module.exports = app => {
             delete user.gestor
             delete user.multiCliente
         }
-
-        const f_folha = new Date()
-
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        // Variáveis da edição de um registro
-        // registrar o evento na tabela de eventos
-        const { createEventUpd } = app.api.sisEvents
-        const evento = await createEventUpd({
-            "notTo": ['created_at', 'password_reset_token', 'evento'],
-            "last": await app.db(tabela).where({ id: user.id }).first(),
-            "next": user,
-            "request": req,
-            "evento": {
-                "evento": `Alteração de perfil de usuário`,
-                "tabela_bd": "user",
-            }
-        })
-
-        app.api.logger.logInfo({ log: { line: `Alteração de perfil de usuário! Usuário: ${user.name}`, sConsole: true } })
-
-        user.evento = evento
-        user.updated_at = new Date()
-        const rowsUpdated = await app.db(tabela)
-            .update(user)
-            .where({ id: user.id })
-            .then(_ => {
-                return res.json(user)
+        if (user.id) {
+            // Variáveis da edição de um registro
+            // registrar o evento na tabela de eventos
+            const { createEventUpd } = app.api.sisEvents
+            const evento = await createEventUpd({
+                "notTo": ['created_at', 'password_reset_token', 'evento'],
+                "last": await app.db(tabela).where({ id: user.id }).first(),
+                "next": user,
+                "request": req,
+                "evento": {
+                    "evento": `Alteração de perfil de usuário`,
+                    "tabela_bd": "user",
+                }
             })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                return res.status(500).send({ msg: error })
+
+            app.api.logger.logInfo({ log: { line: `Alteração de perfil de usuário! Usuário: ${user.name}`, sConsole: true } })
+
+            user.evento = evento
+            user.updated_at = new Date()
+            const rowsUpdated = await app.db(tabela)
+                .update(user)
+                .where({ id: user.id })
+                .then(_ => {
+                    return res.json(user)
+                })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                    return res.status(500).send({ msg: error })
+                })
+            existsOrError(rowsUpdated, 'Usuário não foi encontrado')
+        } else {
+            // Variáveis da criação de um novo registro
+            // registrar o evento na tabela de eventos
+            const { createEvent } = app.api.sisEvents
+            const evento = await createEvent({
+                "request": req,
+                "evento": {
+                    "evento": `Criação de novo usuário`,
+                    "tabela_bd": "user",
+                }
             })
-        existsOrError(rowsUpdated, 'Usuário não foi encontrado')
+
+            user.evento = evento
+            user.created_at = new Date()
+            app.api.logger.logInfo({ log: { line: `Criação de novo usuário! Usuário: ${user.name}`, sConsole: true } })
+            const rowsInserted = await app.db(tabela)
+                .insert(user)
+                .then((user) => {
+                    const data = {id: user[0] }
+                    console.log(data);                    
+                    return res.json(data)
+                })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                    return res.status(500).send({ msg: error })
+                })
+            existsOrError(rowsInserted, 'Usuário não foi inserido')
+        }
     }
 
     const get = async (req, res) => {
@@ -891,14 +921,13 @@ module.exports = app => {
     const getById = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        console.log(req.user.id, req.params.id, req.user.id != req.params.id);
-        
+
         if (req.user.id != req.params.id && !(uParams && (uParams.admin + uParams.gestor) >= 1)) return res.status(401).send(`${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         app.db({ us: tabela })
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
             .select("us.status", "us.name", "us.cpf", "us.email", "us.telefone", "us.id", "us.admin", "us.gestor", "us.multiCliente", "us.cadastros",
                 "us.pipeline", "us.pipeline_params", "us.pv", "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.prospeccoes",
-                "us.at", "us.protocolo", "us.uploads", "us.agente_v", "us.agente_arq", "us.agente_at", "us.time_to_pas_expires", "sc.schema_description")
+                "us.at", "us.protocolo", "us.uploads", "us.agente_v", "us.agente_arq", "us.agente_at", "us.time_to_pas_expires", "sc.schema_description", "us.schema_id", "us.id_empresa")
             .where(app.db.raw(`us.id = ${req.params.id}`))
             .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
             .first()

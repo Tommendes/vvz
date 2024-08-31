@@ -470,6 +470,11 @@ const customFilterOptions = ref({ filterclear: false });
                             </div>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                                gridData.length }}
+                                resultados</span>
+                        </div>
+                        <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                             <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"
                                 @click="exportXls()" />
                             <Button type="button" icon="fa-solid fa-filter-circle-xmark" label="Limpar consulta"

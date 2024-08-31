@@ -121,7 +121,7 @@ const routes = [
             {
                 path: '/:client/fin-retencoes',
                 name: 'fin-retencoes',
-                component: () => import('@/views/fin_retencoes/RetencoesGrid.vue')
+                component: () => import('@/views/finRetencoes/RetencoesGrid.vue')
             },
             // Seção Comissionamento
             {
@@ -142,7 +142,7 @@ const routes = [
             {
                 path: '/:client/retencao/:id',
                 name: 'fin-retencao',
-                component: () => import('@/views/fin_retencoes/RetencaoForm.vue')
+                component: () => import('@/views/finRetencoes/RetencaoForm.vue')
             },
             // Seção Gestão
             {

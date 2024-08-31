@@ -13,7 +13,7 @@ onBeforeMount(async () => {
     uProf.value = await store.getProfile();
 });
 
-// Computed property para o tempo restante de sessão
+// Computed property para o Tempo restante da sessão
 const timeRemainingFormatted = ref("00:00");
 
 // Função para calcular o tempo restante com base na última atividade
@@ -53,7 +53,7 @@ const logoUrl = computed(() => {
         <img :src="logoUrl" alt="Logo" height="20" class="mr-2" />
         by
         <span class="font-medium ml-2">{{ softwareHouse }}</span>
-        <span>&nbsp;- Tempo restante de sessão: {{ timeRemainingFormatted }} <i class="fa-solid fa-hourglass-half"></i></span>
+        <span>&nbsp;- Tempo restante da sessão: {{ timeRemainingFormatted }} <i class="fa-solid fa-hourglass-half"></i></span>
     </div>
 </template>
 

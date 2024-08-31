@@ -304,10 +304,6 @@ const getSeverity = (field, type = 'date') => {
 const goField = (data) => {
     window.open(`#/${uProf.value.schema_description}/notas-fiscais/${data.id}`, '_blank');
 };
-// Carrega os dados do filtro do grid
-watchEffect(() => {
-    mountUrlFilters();
-});
 onBeforeMount(() => {
     // Inicializa os filtros do grid
     initFilters();
@@ -386,7 +382,8 @@ const newDocument = () => {
             <div class="card">
                 <DataTable ref="dt" :value="gridData" lazy paginator :rows="rowsPerPage" dataKey="id" :rowHover="true"
                     v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
-                    responsiveLayout="scroll" :totalRecords="totalRecords" :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
+                    responsiveLayout="scroll" :totalRecords="totalRecords"
+                    :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
                     @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
                     :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
@@ -398,6 +395,11 @@ const newDocument = () => {
                             <Tag class="tagRes"
                                 :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
                             </Tag>
+                        </div>
+                        <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                                gridData.length }}
+                                resultados</span>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                             <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"

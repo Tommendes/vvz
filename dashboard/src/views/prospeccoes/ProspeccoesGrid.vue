@@ -127,21 +127,23 @@ const loadLazyData = async () => {
             if (error.response && error.response.status == 401) router.push('/');
         });
 };
+// Carrega os dados do grid
 const onPage = async (event) => {
     lazyParams.value = event;
-    await loadLazyData();
+    await mountUrlFilters();
 };
+// Ordena os dados do grid
 const onSort = async (event) => {
     lazyParams.value = event;
-    await loadLazyData();
+    await mountUrlFilters();
 };
+// Filtra os dados do grid
 const onFilter = async () => {
     lazyParams.value.filters = filters.value;
-    mountUrlFilters();
-    await loadLazyData();
+    await mountUrlFilters();
 };
 const mode = ref('grid');
-const mountUrlFilters = () => {
+const mountUrlFilters = async () => {
     let url = '?';
     Object.keys(filters.value).forEach((key) => {
         if (filters.value[key].value) {
@@ -156,6 +158,8 @@ const mountUrlFilters = () => {
     if (lazyParams.value.sortField) url += `sort:${lazyParams.value.sortField}=${Number(lazyParams.value.sortOrder) == 1 ? 'asc' : 'desc'}&`;
     if (props.idCadastro) url += `field:tbl1.id_cadastros=equals:${props.idCadastro}&`;
     urlFilters.value = url;
+
+    await loadLazyData();
 };
 // Exporta os dados do grid para CSV
 const exportCSV = () => {
@@ -171,19 +175,15 @@ const goField = (data) => {
     idRegs.value = data.id;
     router.push({ path: `/${uProf.value.schema_description}/prospeccao/${data.id}` });
 };
-watchEffect(() => {
-    mountUrlFilters();
-});
 </script>
 
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções', to: route.fullPath }]" />
     <div class="card">
-        <ProspeccaoForm :mode="'new'" :idCadastro="props.idCadastro" @changed="loadLazyData()"
-            @cancel="
-                mode = 'grid';
-            idRegs = undefined;
-            " v-if="mode == 'new'" />
+        <ProspeccaoForm :mode="'new'" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="
+            mode = 'grid';
+        idRegs = undefined;
+        " v-if="mode == 'new'" />
         <DataTable style="font-size: 1rem" :value="gridData" lazy paginator :first="0" v-model:filters="filters"
             ref="dt" dataKey="id" :totalRecords="totalRecords" :rows="rowsPerPage"
             :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]" :loading="loading" @page="onPage($event)"
@@ -198,6 +198,11 @@ watchEffect(() => {
                         @click="clearFilter()" />
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
                         @click="(mode = 'new'), scrollToTop()" />
+                </div>
+                <div class="flex justify-content-end gap-3 mt-3 p-tag-esp">
+                    <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                        gridData.length }}
+                        resultados</span>
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
