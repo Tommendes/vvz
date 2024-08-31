@@ -220,7 +220,7 @@ module.exports = app => {
                                     "request": req,
                                     "evento": {
                                         "evento": `Registro de senha de usuário`,
-                                        "tabela_bd": "user_keys",
+                                        "tabela_bd": "users_keys",
                                     }
                                 })
                             })
