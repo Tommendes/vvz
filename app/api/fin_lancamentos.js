@@ -232,6 +232,7 @@ module.exports = app => {
                         // }
                         // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador vindo do frontend
                         if (queryField == 'valor_bruto_conta') queryField = 'fl.valor_bruto'
+                        if (queryField == 'emp_fantasia') queryField = 'e.fantasia'
                         else if (queryField == 'valor_liquido_conta') queryField = 'fl.valor_liquido'
                         else if (queryField == 'valor_vencimento_parcela') queryField = 'tbl1.valor_vencimento'
 
@@ -292,7 +293,7 @@ module.exports = app => {
         ret.groupBy('tbl1.id').orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
 
-        console.log(ret.toString());
+        // console.log(ret.toString());
 
         ret.then(async (body) => {
             const length = body.length
