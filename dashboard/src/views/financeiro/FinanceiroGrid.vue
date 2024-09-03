@@ -398,7 +398,7 @@ const rowStyle = (data) => {
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb :items="[{ label: 'Notas Fiscais', to: `/${uProf.schema_description}/notas-fiscais` }]" />
+            <Breadcrumb :items="[{ label: 'Registros Financeiros', to: `/${uProf.schema_description}/notas-fiscais` }]" />
         </div>
         <div class="col-12">
             <!-- <FinanceiroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" /> -->
