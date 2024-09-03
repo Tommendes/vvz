@@ -37,7 +37,7 @@ module.exports = app => {
 
     const getReportOat = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de OAT"`)
@@ -109,7 +109,7 @@ module.exports = app => {
 
     const getReportProposal = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de Propostas"`)
@@ -185,7 +185,7 @@ module.exports = app => {
 
     const getReportProposalResume = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de Resumo de Propostas"`)
@@ -262,7 +262,7 @@ module.exports = app => {
 
     const getReportDiarioComissionado = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de Resumo de Propostas"`)
@@ -378,7 +378,7 @@ module.exports = app => {
     
     const getReportPosicaoComissionado = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pv >= 1, `${noAccessMsg} "Impressão de Resumo de Propostas"`)

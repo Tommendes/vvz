@@ -19,7 +19,7 @@ module.exports = app => {
         // Enviar apenas o último registro de cada comis
         const last = req.query.last || false
 
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.comercial >= 1 || uParams.comissoes >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
@@ -79,7 +79,7 @@ module.exports = app => {
     // Lista de registros por campo
     const getListByField = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
@@ -128,7 +128,7 @@ module.exports = app => {
     const setStatus = async (req, res) => {
         let user = req.user
         const body = { ...req.body }
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         const agenteV = uParams.agente_v
         delete body.agente_v
         try {
@@ -201,7 +201,7 @@ module.exports = app => {
 
     const setStatusClosed = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.comissoes >= 4), `${noAccessMsg} "Encerrar Liquidações de Comissão"`)
@@ -209,7 +209,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        // Recupere a data de corte no banco de dados: SELECT parametro FROM `vivazul_bceaa5`.local_params WHERE grupo = 'comis_corte';
+        // Recupere a data de corte no banco de dados: SELECT parametro FROM `vivazul_[cliente_schema]`.local_params WHERE grupo = 'comis_corte';
         const dCorte = await app.db(`${dbPrefix}_${uParams.schema_name}.local_params`).select('parametro').where({ grupo: 'comis_corte' }).first()
         const cutoffDay = dCorte.parametro || 17; // Dia de corte
 
@@ -293,7 +293,7 @@ module.exports = app => {
 
     const getStatusReleased = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.comissoes >= 4), `${noAccessMsg} "Encerrar Liquidações de Comissão"`)
@@ -365,7 +365,7 @@ module.exports = app => {
 
     const getStatus = async (req, res) => {
         let user = req.user
-        const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
             isMatchOrError(uParams && (uParams.comercial >= 1 || uParams.comissoes >= 1), `${noAccessMsg} "Consultar status de ${tabelaAlias}"`)
