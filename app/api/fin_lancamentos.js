@@ -186,7 +186,7 @@ module.exports = app => {
                         });
                         query = query.slice(0, -3).trim()
                         query += ') AND '
-                    } else if (['data_vencimento','data_pagto'].includes(queryField)) {
+                    } else if (['data_vencimento', 'data_pagto'].includes(queryField)) {
                         sortField = queryField
                         operator = queryes[key].split(':')[0]
                         let values = queryes[key].split(':')[1].split(',')
@@ -289,10 +289,10 @@ module.exports = app => {
         // Verificar a permissão de multiCliente do usuário
         if (!uParams.multiCliente || uParams.multiCliente < 1) ret.where({ 'fl.id_empresa': uParams.id_empresa })
 
-        ret.groupBy('tbl1.id')
-            // .orderBy(app.db.raw(`IF(e.ordem_financeiro AND e.ordem_financeiro > 0, e.ordem_financeiro, ${sortField})`))
-            .orderBy(sortField, sortOrder)
-        ret.limit(rows).offset((page + 1) * rows - rows)
+        ret.groupBy('tbl1.id').orderBy(sortField, sortOrder)
+            .limit(rows).offset((page + 1) * rows - rows)
+
+        console.log(ret.toString());
 
         ret.then(async (body) => {
             const length = body.length
