@@ -9,7 +9,7 @@ module.exports = app => {
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
     const clienteFTP = new ftp();
-
+    const { removeAccents } = app.api.facilities
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: 'users' }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -49,9 +49,8 @@ module.exports = app => {
                 return res.status(400).send(error)
             }
         }
-         
 
-        body.filename = body.filename.replace(/ /g, '_');
+        body.filename = removeAccents(body.filename.replaceAll(/ /g, '_'));
 
         if (body.id) {
             // Variáveis da edição de um registro
@@ -392,7 +391,7 @@ module.exports = app => {
                     cb(null, destinationPath);
                 },
                 filename: function (req, file, cb) {
-                    cb(null, file.originalname.replace(/ /g, '_'));
+                    cb(null, removeAccents(file.originalname.replaceAll(/ /g, '_')));
                 }
             });
 
@@ -424,7 +423,7 @@ module.exports = app => {
                     file.url_destination = `${baseFilesUrl}`;
                     file.url_path = schemaParam.schema_description;
                     file.extension = file.originalname.split('.').pop();
-                    const inputPath = path.join(file.destination, file.originalname);
+                    const inputPath = path.join(file.destination, removeAccents(file.originalname.replaceAll(/ /g, '_')));
 
                     clienteFTP.on("ready", () => {
                         // Agora que o cliente está pronto, podemos realizar operações FTP

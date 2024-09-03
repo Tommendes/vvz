@@ -115,7 +115,8 @@ const saveData = async () => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
-                reload();
+                if (itemData.value.id) emit('changed', itemData.value.id);
+                else reload();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -241,6 +242,75 @@ const validator = () => {
     });
     return isValid;
 };
+
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
+const dadosPublicos = ref({});
+const buscarCNPJ = async () => {
+    if (!validateCPFCNPJ()) return;
+    const cnpj = itemData.value.cpf_cnpj_empresa.replace(/[^0-9]/g, '');
+    if (cnpj.length != 14) return;
+
+    confirm.require({
+        group: 'templating',
+        header: 'Dados públicos',
+        message: 'Gostaria de baixar os dados públicos do CNPJ?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            try {
+                // Consultar API externa
+                const url = `${baseApiUrl}/cad-dados-publicos/f-a/gCnpj`;
+                const response = await axios.post(url, { cnpj: cnpj });
+                if (response.data.cnpj) {
+                    delete response.data.qsa;
+                    delete response.data.extra;
+                    delete response.data.billing;
+                    dadosPublicos.value = response.data;
+                    // dadosPublicos.value = { "abertura": "15/11/2012", "situacao": "ATIVA", "tipo": "MATRIZ", "nome": "17.170.694 TOM MENDES PEREIRA", "porte": "MICRO EMPRESA", "natureza_juridica": "213-5 - Empresário (Individual)", "atividade_principal": 
+                    // [ { "code": "82.19-9-99", "text": "Preparação de documentos e serviços especializados de apoio administrativo não especificados anteriormente" } ], 
+                    // "atividades_secundarias": [ { "code": "95.11-8-00", "text": "Reparação e manutenção de computadores e de equipamentos periféricos" }, { "code": "61.90-6-99", "text": "Outras atividades de telecomunicações não especificadas anteriormente" }, 
+                    // { "code": "43.21-5-00", "text": "Instalações elétricas" }, { "code": "85.99-6-03", "text": "Treinamento em informática" }, { "code": "95.12-6-00", "text": "Reparação e manutenção de equipamentos de comunicação" } ], 
+                    // "logradouro": "RUA DESEMBARGADOR JOSE ANTONIO DE SOUZA", "numero": "55", "municipio": "GRAVATA", "bairro": "COHAB-LL", "uf": "PE", "cep": "55.643-704", "email": "contato@tommendes.com.br", "telefone": "(82) 8149-9024", "data_situacao": "15/11/2012", 
+                    // "cnpj": "17.170.694/0001-08", "ultima_atualizacao": "2024-08-10T23:59:59.000Z", "status": "OK", "fantasia": "", "complemento": "", "efr": "", "motivo_situacao": "", "situacao_especial": "", "data_situacao_especial": "", "capital_social": "1.00", 
+                    // "simples": { "optante": true, "data_opcao": "15/11/2012", "data_exclusao": null, "ultima_atualizacao": "2024-08-10T23:59:59.000Z" }, "simei": { "optante": true, "data_opcao": "15/11/2012", "data_exclusao": null, "ultima_atualizacao": "2024-08-10T23:59:59.000Z" } }
+
+                    try {
+                        itemData.value.razaosocial = response.data.nome;
+                        itemData.value.cep = response.data.cep;
+                        itemData.value.logradouro = response.data.logradouro;
+                        itemData.value.bairro = response.data.bairro;
+                        itemData.value.cidade = response.data.municipio;
+                        itemData.value.uf = response.data.uf;
+                        itemData.value.nr = response.data.numero;
+                        itemData.value.tel1 = response.data.telefone;
+                        itemData.value.email = response.data.email;
+
+                        // await axios.post(`${baseApiUrl}/cad-dados-publicos/${itemData.value.id}`, { dados: formatarDadosParaHTML(response.data) });
+                        // emit('dadosPublicos', dadosPublicos.value);
+                        // searched.value = true;
+                        // atualizarDados();
+                    } catch (error) {
+                        console.error('Erro ao salvar dados públicos', error);
+                        defaultWarn('Erro ao salvar dados públicos');
+                    }
+                } else {
+                    // CNPJ pesquisado não foi encontrado.
+                    defaultWarn(response.data);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar informações do CNPJ', error);
+                defaultWarn('Erro ao buscar informações do CNPJ');
+            }
+        },
+        reject: () => {
+            return;
+        }
+    });
+};
+
 // Validar formulário
 const formIsValid = () => {
     return validateRazaoSocial() && validateCPFCNPJ() && validateCep() && validator();
@@ -255,6 +325,7 @@ const reload = async () => {
 };
 // Carregar dados do formulário
 onMounted(async () => {
+    if (props.mode && props.mode != mode.value) mode.value = props.mode;
     await loadData();
 });
 // Observar alterações nos dados do formulário
@@ -365,9 +436,15 @@ const onImageRightClick = (event) => {
                         <div class="col-12 md:col-3">
                             <label for="cpf_cnpj_empresa">{{ labels.cpf_cnpj_empresa }}</label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                                data-maska="['###.###.###-##', '##.###.###/####-##']"
-                                v-model="itemData.cpf_cnpj_empresa" id="cpf_cnpj_empresa" type="text" />
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-maska
+                                    data-maska="['###.###.###-##', '##.###.###/####-##']"
+                                    v-model="itemData.cpf_cnpj_empresa" id="cpf_cnpj_empresa" type="text" />
+                                <Button v-if="registroTipo == 'pj'" :disabled="mode == 'view'"
+                                    :icon="`fa-solid fa-arrows-rotate${!(mode == 'view') ? ' fa-spin' : ''}`"
+                                    v-tooltip.top="'Clique para buscar os dados públicos'" class="bg-blue-500"
+                                    @click="buscarCNPJ()" />
+                            </div>
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj_empresa">{{
                                 errorMessages.cpf_cnpj_empresa }}</small>
                         </div>
@@ -522,6 +599,7 @@ const onImageRightClick = (event) => {
                 <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
                     <p>mode: {{ mode }}</p>
                     <p>itemData: {{ itemData }}</p>
+                    <p>dadosPublicos: {{ dadosPublicos }}</p>
                 </div>
             </div>
         </form>

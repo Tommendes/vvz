@@ -3,9 +3,9 @@ import { onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultWarn } from '@/toast';
+import { defaultWarn, defaultSuccess } from '@/toast';
 // import FinanceiroForm from './FinanceiroForm.vue';
-import { formatCurrency } from '@/global';
+import { formatCurrency, removeHtmlTags } from '@/global';
 import Breadcrumb from '../../components/Breadcrumb.vue';
 import moment from 'moment';
 import Prompts from '@/components/Prompts.vue';
@@ -25,7 +25,9 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
+    initFilters();
     uProf.value = await store.getProfile()
+    getEmpresas();
 });
 
 import { useRouter, useRoute } from 'vue-router';
@@ -37,49 +39,86 @@ const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000, 9999999]); // Opções de registros por página
 const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
-const rowsPerPage = ref(10); // Quantidade de registros por página
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
 const dropdownEmpresas = ref([]); // Itens do dropdown de Empresas
-const dropdownFornecedores = ref([]); // Itens do dropdown de Fornecedores
-const empresa = ref(null); // Tipo de documento selecionado
-const fornecedor = ref(null); // Unidade de negócio selecionada
+const dropdownCentros = ref([
+    { value: 0, label: 'Todos os Centros...' },
+    { value: 1, label: 'Receitas' },
+    { value: 2, label: 'Despesas' }
+]); // Itens do dropdown de Centros
+const dropdownSituacao = ref([
+    { label: 'Todas as Situações...', value: 0 },
+    { label: 'Aberto', value: STATUS_REGISTRO_ABERTO },
+    { label: 'Pago', value: STATUS_REGISTRO_PAGO },
+    { label: 'Conciliado', value: STATUS_REGISTRO_CONCILIADO },
+    { label: 'Cancelado', value: STATUS_REGISTRO_CANCELADO }
+]); // Itens do dropdown de Situação
+const empresa = ref(null); // Empresa selecionada
+const empresaLabel = ref(null); // Empresa selecionada
+const centro = ref(0); // Centro selecionado
+const situacao = ref(0); // Situação selecionada
 const periodo = ref(null); // Período selecionado
+
+const STATUS_REGISTRO_ABERTO = 1
+const STATUS_REGISTRO_PAGO = 2
+const STATUS_REGISTRO_CONCILIADO = 3
+const STATUS_REGISTRO_CANCELADO = 99
+
+import { Mask } from 'maska';
+const masks = ref({
+    cpf_cnpj: new Mask({
+        mask: ['###.###.###-##', '##.###.###/####-##']
+    }),
+    valor: new Mask({
+        mask: '0,99'
+    })
+});
 
 // Obter Empresas
 const getEmpresas = async () => {
     const url = `${baseApiUrl}/empresas`;
-    dropdownEmpresas.value = [];
     await axios.get(url).then((res) => {
         res.data.data.map((item) => {
             dropdownEmpresas.value.push({
                 value: item.id,
-                label: item.razaosocial
+                label: `${item.razaosocial} - ${masks.value.cpf_cnpj.masked(item.cpf_cnpj_empresa)}`
             });
         });
+        if (uProf.value.id_empresa && uProf.value.multiCliente < 1) empresa.value = uProf.value.id_empresa;
+        else {
+            dropdownEmpresas.value = [
+                { value: "0", label: 'Selecione aqui uma empresa para exibir os registros (Ou esta opção para todas...)' },
+                ...dropdownEmpresas.value
+            ];
+            empresa.value = "0";
+        }
+        if (dropdownEmpresas.value.length <= 2) empresa.value = dropdownEmpresas.value[1].value;
+        empresaLabel.value = dropdownEmpresas.value.find((item) => item.value == uProf.value.id_empresa).label;
+        // TODO: Se houver apenas uma empresa ou uProf.multiCliente < 1, remova listaNomes[0]
+        if (dropdownEmpresas.value.length <= 2 || uProf.value.multiCliente < 1) listaNomes.value.shift();
     });
 };
-// Obter Fornecedores
-const getFornecedores = async () => {
-    const url = `${urlBase}/f-a/gfr`;
-    dropdownFornecedores.value = [];
-    await axios.get(url).then((res) => {
-        res.data.map((item) => {
-            dropdownFornecedores.value.push({
-                value: item.id,
-                label: `${item.nome} - ${item.cpf_cnpj}`
-            });
-        });
-    });
-};
+// Itens do grid
+const limitDescription = 150;
+const limitNome = 80;
+
 // Lista de tipos
 const listaNomes = ref([
-    { field: 'numero', label: 'Nota fiscal', matchMode: FilterMatchMode.CONTAINS, minWidth: '25rem' },
-    { field: 'serie', label: 'Série', matchMode: FilterMatchMode.CONTAINS, minWidth: '25rem' },
-    { field: 'data_emissao', label: 'Emissão', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN, minWidth: '25rem' },
-    { field: 'fornecedor', label: 'Fornecedor', matchMode: FilterMatchMode.EQUALS, list: dropdownFornecedores.value, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
-    { field: 'empresa', label: 'Empresa', matchMode: FilterMatchMode.EQUALS, list: dropdownEmpresas.value, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' }
+    { field: 'emp_fantasia', label: 'Empresa', matchMode: FilterMatchMode.EQUALS },
+    { field: 'destinatario_agrupado', label: 'Credor | Devedor', matchMode: FilterMatchMode.CONTAINS, minWidth: '15rem' },
+    // { field: 'data_emissao', label: 'Emissão', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
+    { field: 'data_vencimento', label: 'Vencimento', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
+    { field: 'data_pagto', label: 'Pagamento', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
+    { field: 'valor_bruto_conta', label: 'R$ Bruto', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
+    { field: 'valor_liquido_conta', label: 'R$ Liquido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
+    { field: 'valor_vencimento_parcela', label: 'R$ Vencimento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
+    { field: 'descricao_agrupada', label: 'Descrição', matchMode: FilterMatchMode.CONTAINS, minWidth: '20rem', class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
+    // { field: 'duplicata', label: 'Duplicata', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
+    // { field: 'documento', label: 'Documento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
+    // { field: 'pedido', label: 'Pedido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
 ]);
+
 // Inicializa os filtros do grid
 const initFilters = () => {
     filters.value = {};
@@ -100,7 +139,9 @@ const urlFilters = ref('');
 // Limpa os filtros do grid
 const clearFilter = async () => {
     loading.value = true;
-    rowsPerPage.value = 50;
+    empresa.value = "0";
+    centro.value = "0";
+    situacao.value = "0";
     initFilters();
     lazyParams.value = {
         first: dt.value.first,
@@ -109,7 +150,7 @@ const clearFilter = async () => {
         sortOrder: null,
         filters: filters.value
     };
-    await loadLazyData();
+    await mountUrlFilters();
 };
 const reload = () => {
     router.replace({ query: {} });
@@ -124,6 +165,7 @@ const loadLazyData = async () => {
         .then(async (axiosRes) => {
             gridData.value = axiosRes.data.data;
             totalRecords.value = axiosRes.data.totalRecords;
+            sumRecords.value = axiosRes.data.sumRecords;
             const quant = totalRecords.value;
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
@@ -132,7 +174,30 @@ const loadLazyData = async () => {
             // TODO: Remova todos os valores duplicados de rowsPerPageOptions
             rowsPerPageOptions.value = [...new Set(rowsPerPageOptions.value)];
             gridData.value.forEach((element) => {
-                element.data_emissao = moment(element.data_emissao).format('DD/MM/YYYY');
+                element.data_emissao = element.data_emissao ? moment(element.data_emissao).format('DD/MM/YYYY') : '';
+                element.data_vencimento = element.data_vencimento ? moment(element.data_vencimento).format('DD/MM/YYYY') : '';
+                element.data_pagto = element.data_pagto ? moment(element.data_pagto).format('DD/MM/YYYY') : '';
+                element.centroLabel = String(element.centro) == "1" ? "Receita" : "Despesa"
+
+                let destinatario_agrupado = element.destinatario || undefined;
+                if (destinatario_agrupado) {
+                    destinatario_agrupado = destinatario_agrupado.trim().substr(0, limitNome);
+                }
+                if (element.destinatario.length > limitNome) destinatario_agrupado += ' ...';
+                if (element.cpf_cnpj_destinatario) destinatario_agrupado += ' ' + masks.value.cpf_cnpj.masked(element.cpf_cnpj_destinatario);
+                if (uProf.value.admin >= 1) destinatario_agrupado += `(${element.id})`;
+                element.destinatario_agrupado = destinatario_agrupado;
+
+                let descricao_agrupada = element.descricao_parcela || undefined;
+                if (descricao_agrupada) {
+                    descricao_agrupada = descricao_agrupada.trim().substr(0, limitDescription);
+                }
+                if (element.descricao_parcela.length > limitDescription) descricao_agrupada += ' ...';
+                if (element.duplicata) descricao_agrupada += `<p>Duplicata: ${element.duplicata}</p>`;
+                if (element.documento) descricao_agrupada += `<p>Documento: ${element.documento}</p>`;
+                if (element.pedido) descricao_agrupada += `<p>Pedido: ${element.pedido}</p>`;
+                element.descricao_agrupada = descricao_agrupada;
+
                 const numero = element.numero || undefined;
                 if (numero) element.numero = numero + (uProf.value.admin >= 1 ? ` (${element.id})` : '');
             });
@@ -179,6 +244,9 @@ const mountUrlFilters = async () => {
             url += `field:${key}=${macthMode}:${value}&`;
         }
     });
+    if (empresa.value > 0) url += `field:id_empresa=${FilterMatchMode.EQUALS}:${empresa.value}&`;
+    if (centro.value > 0) url += `field:centro=${FilterMatchMode.EQUALS}:${centro.value}&`;
+    if (situacao.value > 0) url += `field:situacao=${FilterMatchMode.EQUALS}:${situacao.value}&`;
     if (lazyParams.value.originalEvent && (lazyParams.value.originalEvent.page || lazyParams.value.originalEvent.rows))
         Object.keys(lazyParams.value.originalEvent).forEach((key) => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
@@ -196,55 +264,61 @@ onMounted(async () => {
     // queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
-    router.replace({ query: {} });
-    await mountUrlFilters();
+    // router.replace({ query: {} });
+    // await mountUrlFilters();
 });
 
 import xlsx from 'json-as-xlsx';
 let dataToExcelExport = [
     {
-        sheet: 'Fotas Fiscais',
+        sheet: 'Lançamentos Financeiros',
         columns: [
             {
-                label: "Movimento E/S", value: (row) => {
-                    let answer = row.data_e_s;
-                    switch (row.data_e_s) {
-                        case '0': answer = 'Entrada';
+                label: "Centro", value: (row) => {
+                    let answer = String(row.centro);
+                    switch (answer) {
+                        case '1': answer = 'Receita';
                             break;
-                        case '1': answer = 'Saída';
+                        case '2': answer = 'Despesa';
                             break;
-                        default: answer = 'Entrada';
+                        default: answer = 'N/D';
                             break;
                     }
                     return answer;
                 }
             },
-            { label: "Número", value: (row) => row.numero },
-            { label: "Série", value: (row) => row.serie },
-            { label: "Chave", value: (row) => row.chave },
-            { label: "Emissão em", value: (row) => moment(row.data_emissao).format('DD/MM/YYYY') },
-            { label: "Fornecedor", value: (row) => row.fornecedor },
-            { label: "Doc Fornecedor", value: (row) => row.cpf_cnpj_fornecedor },
+            {
+                label: "Situacao", value: (row) => {
+                    let answer = row.situacao;
+                    switch (answer) {
+                        case STATUS_REGISTRO_ABERTO: answer = 'Aberto';
+                            break;
+                        case STATUS_REGISTRO_PAGO: answer = 'Pago';
+                            break;
+                        case STATUS_REGISTRO_CONCILIADO: answer = 'Conciliado';
+                            break;
+                        case STATUS_REGISTRO_CANCELADO: answer = 'Cancelado';
+                            break;
+                        default: answer = 'N/D';
+                            break;
+                    }
+                    return answer;
+                }
+            },
             { label: "Empresa", value: (row) => row.empresa },
-            { label: "Doc Empresa", value: (row) => row.cpf_cnpj_empresa },
-            { label: "Descricao", value: (row) => row.descricao },
-            { label: "Valor Total", value: (row) => Number(row.valor_total), format: 'R$ #,##0.00' },
-            { label: "Valor Desconto", value: (row) => Number(row.valor_desconto), format: 'R$ #,##0.00' },
-            { label: "Valor Liquido", value: (row) => Number(row.valor_liquido), format: 'R$ #,##0.00' },
-            { label: "Valor Icms", value: (row) => Number(row.valor_icms), format: 'R$ #,##0.00' },
-            { label: "Valor Ipi", value: (row) => Number(row.valor_ipi), format: 'R$ #,##0.00' },
-            { label: "Valor Pis", value: (row) => Number(row.valor_pis), format: 'R$ #,##0.00' },
-            { label: "Valor Cofins", value: (row) => Number(row.valor_cofins), format: 'R$ #,##0.00' },
-            { label: "Valor Iss", value: (row) => Number(row.valor_iss), format: 'R$ #,##0.00' },
-            { label: "Valor IR", value: (row) => Number(row.valor_ir), format: 'R$ #,##0.00' },
-            { label: "Valor Csll", value: (row) => Number(row.valor_csll), format: 'R$ #,##0.00' },
-            { label: "Valor Inss", value: (row) => Number(row.valor_inss), format: 'R$ #,##0.00' },
-            { label: "Valor Outros", value: (row) => Number(row.valor_outros), format: 'R$ #,##0.00' },
-            { label: "Valor Servicos", value: (row) => Number(row.valor_servicos), format: 'R$ #,##0.00' },
-            { label: "Valor Produtos", value: (row) => Number(row.valor_produtos), format: 'R$ #,##0.00' },
-            { label: "Valor Frete", value: (row) => Number(row.valor_frete), format: 'R$ #,##0.00' },
-            { label: "Valor Seguro", value: (row) => Number(row.valor_seguro), format: 'R$ #,##0.00' },
-            { label: "Valor Despesas", value: (row) => Number(row.valor_despesas), format: 'R$ #,##0.00' }
+            { label: "CNPJ Empresa", value: (row) => masks.value.cpf_cnpj.masked(row.cpf_cnpj_empresa) },
+            { label: "Credor | Devedor", value: (row) => row.destinatario },
+            { label: "CNPJ | CPF", value: (row) => masks.value.cpf_cnpj.masked(row.cpf_cnpj_destinatario) },
+            { label: "Emissão em", value: (row) => moment(row.data_emissao, 'DD/MM/YYYY', true).isValid() ? row.data_emissao : 'Não informado' },
+            { label: "Vencimento em", value: (row) => moment(row.data_vencimento, 'DD/MM/YYYY', true).isValid() ? row.data_vencimento : 'Não informado' },
+            { label: "Pagamento em", value: (row) => moment(row.data_pagto, 'DD/MM/YYYY', true).isValid() ? row.data_pagto : 'Não informado' },
+            { label: "Duplicata", value: (row) => row.duplicata },
+            { label: "Documento Pagto", value: (row) => row.documento },
+            { label: "Pedido", value: (row) => row.pedido },
+            { label: "Descricao", value: (row) => removeHtmlTags(row.descricao_parcela) },
+            { label: "Valor Bruto", value: (row) => Number(row.valor_bruto || 0.0), format: 'R$ #,##0.00' },
+            { label: "Valor Liquido", value: (row) => Number(row.valor_liquido || 0.0), format: 'R$ #,##0.00' },
+            { label: "Valor Parcela", value: (row) => Number(row.valor_vencimento || 0.0), format: 'R$ #,##0.00' },
         ],
         content: []
     }
@@ -304,72 +378,20 @@ const getSeverity = (field, type = 'date') => {
 const goField = (data) => {
     window.open(`#/${uProf.value.schema_description}/notas-fiscais/${data.id}`, '_blank');
 };
-// Carrega os dados do filtro do grid
-watchEffect(() => {
-    mountUrlFilters();
-});
-onBeforeMount(() => {
-    // Inicializa os filtros do grid
-    initFilters();
-    getEmpresas();
-    getFornecedores();
-});
+// // Carrega os dados do filtro do grid
+// watchEffect(() => {
+//     mountUrlFilters();
+// });
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
     window.removeEventListener('resize', updateScreenWidth);
 });
 const customFilterOptions = ref({ filterclear: false });
+const newDocument = () => { defaultSuccess('Em breve...') };
 
-const dialogRef = ref(null);
-const messagesButtoms = ref([
-    {
-        label: 'Ok',
-        icon: 'fa-solid fa-check',
-        severity: 'success'
-    },
-    {
-        label: 'Selecionar/Criar registro no Pipeline',
-        icon: 'fa-regular fa-trash-can',
-        severity: 'default'
-    }
-]);
-const showMessage = (body) => {
-    dialogRef.value = dialog.open(Prompts, {
-        data: {
-            body: body
-        },
-        props: {
-            header: body.label,
-            style: {
-                width: '50vw'
-            },
-            breakpoints: {
-                '960px': '75vw',
-                '640px': '90vw'
-            },
-            modal: true
-        },
-        onClose: async (options) => {
-            if (options.data.label == messagesButtoms.value[0].label) {
-                /* empty */
-            } else if (options.data.label == messagesButtoms.value[1].label) {
-                router.push({ path: `/${uProf.value.schema_description}/pipeline`, query: { tpd: '2' } });
-            }
-        }
-    });
-};
-const newDocument = () => {
-    // messagesButtoms.value.forEach((elementButton) => {
-    //     // Adicionar ao elementButton o id da mensagem
-    //     elementButton.id = element.id;
-    //     elementButton.message = element.msg;
-    //     elementButton.title = element.title;
-    // });
-    showMessage({
-        label: 'Nova Nota Fiscal',
-        message: `<p>Para registrar uma nota fiscal, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`,
-        buttons: messagesButtoms.value
-    });
+const rowStyle = (data) => {
+    if (data.centro == "2") return { 'color': '#d32f2f' };
+    else return { 'color': '#00796b' };
 };
 </script>
 
@@ -384,9 +406,10 @@ const newDocument = () => {
 
         <div class="col-12">
             <div class="card">
-                <DataTable ref="dt" :value="gridData" lazy paginator :rows="rowsPerPage" dataKey="id" :rowHover="true"
-                    v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
-                    responsiveLayout="scroll" :totalRecords="totalRecords" :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
+                <DataTable ref="dt" :value="gridData" lazy :rowStyle="rowStyle" paginator :rows="gridData.length"
+                    dataKey="id" :rowHover="true" v-model:filters="filters" filterDisplay="row" :loading="loading"
+                    :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
+                    :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
                     @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
                     :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
@@ -399,8 +422,25 @@ const newDocument = () => {
                                 :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
                             </Tag>
                         </div>
-                        <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} resultados</span>
+                        <div v-if="dropdownEmpresas.length > 2 && uProf.multiCliente >= 1"
+                            class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                            <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value"
+                                v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters();" />
+                            <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value"
+                                v-model="centro" :options="dropdownCentros" @change="mountUrlFilters();" />
+                            <Dropdown placeholder="Emitentes...?" id="id_empresa" optionLabel="label"
+                                optionValue="value" v-model="empresa" :options="dropdownEmpresas"
+                                @change="mountUrlFilters();" />
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                                gridData.length }} de {{ totalRecords }} registros</span>
+                        </div>
+                        <div v-else class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                            <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value"
+                                v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters();" />
+                            <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value"
+                                v-model="centro" :options="dropdownCentros" @change="mountUrlFilters();" />
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                                gridData.length }} de {{ totalRecords }} registros para {{ empresaLabel }}</span>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                             <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"
@@ -419,8 +459,9 @@ const newDocument = () => {
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">
                         <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
-                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem"
-                            sortable :sortField="nome.field" :class="nome.class">
+                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '12rem'}`" sortable
+                            :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
                                 <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"
                                     :severity="getSeverity(data[nome.field], nome.type)" />
@@ -460,6 +501,11 @@ const newDocument = () => {
                         </template>
                     </Column>
                 </DataTable>
+                <div v-if="uProf.admin >= 1">
+                    <p>mode: {{ mode }}</p>
+                    <p>uProf: {{ uProf }}</p>
+                    <p>empresa: {{ empresa }}</p>
+                </div>
             </div>
         </div>
     </div>

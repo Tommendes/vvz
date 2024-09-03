@@ -55,7 +55,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE vivazul_bceaa5.fin_lancamentos;
 INSERT INTO vivazul_bceaa5.fin_lancamentos (id,evento,created_at,updated_at,STATUS,id_empresa,centro,tags,id_cadastros,data_emissao,valor_bruto,valor_liquido,pedido,descricao,old_id) 
 (
-	SELECT NULL,1,fl.data_lancamento,NULL updated_at,10 STATUS,fl.cod_sis_demp,IF(fl.valor_bruto > 0, 1, 2)centro,NULL tags,c.id,fl.data_lanc,0 valor_bruto,0 valor_liquido,NULL pedido,NULL descricao_conta,fl.cod
+	SELECT NULL,1,fl.data_lancamento,NULL updated_at,10 STATUS,fl.cod_sis_demp,IF(fl.valor_bruto > 0, 1, 2)centro,NULL tags,c.id,fl.data_lanc,fl.valor_bruto,fl.valor_liquido,NULL pedido,NULL descricao_conta,fl.cod
 	FROM mygsoft.fin_lancamentos fl 
 	LEFT JOIN vivazul_bceaa5.cadastros c ON c.old_id = fl.cod_cadas
 	WHERE fl.situacao >= 1 AND (fl.valor_bruto < 0 OR fl.valor_bruto > 0)
@@ -69,6 +69,8 @@ JOIN mygsoft.cadas c ON fl.cod_cadas = c.cod
 JOIN vivazul_bceaa5.cadastros cv ON cv.cpf_cnpj = REPLACE(REPLACE(REPLACE(c.cpf_cnpj, '-', ''), '.', ''), '/', '')
 SET flv.id_cadastros = cv.id
 WHERE flv.id_cadastros = 0;
+UPDATE vivazul_bceaa5.fin_lancamentos SET valor_bruto = valor_bruto * (-1) WHERE valor_bruto < 0;
+UPDATE vivazul_bceaa5.fin_lancamentos SET valor_liquido = valor_liquido * (-1) WHERE valor_liquido < 0;	
 
 -- CONSULTA: Registros sem referência de cadastro
 SELECT /*cv.id,*/ c.estab, REPLACE(REPLACE(REPLACE(c.cpf_cnpj, '-', ''), '.', ''), '/', '') cpf_cnpj, fl.nota_fiscal_conta, fl.duplicata, fl.valor_bruto, fl.data_lanc, fl.data_vencimento, fl.data_pagto, fl.data_lancamento AS data_registro
@@ -89,7 +91,7 @@ INSERT INTO vivazul_bceaa5.fin_parcelas (id,evento,created_at,updated_at,STATUS,
 (
 	SELECT NULL,1,fl.data_lancamento,NULL updated_at,10 STATUS,
 	IF(fl.situacao = 3, 2, IF(fl.situacao = 4, 3, IF(fl.situacao = 2, 99, fl.situacao))),
-	flv.id,fl.data_vencimento,fl.data_pagto, fl.valor_vencimentos, fl.duplicata, fl.vencimento, 'U', fl.descricao_conta,fl.doc_pagto,
+	flv.id,fl.data_vencimento,fl.data_pagto, fl.valor_bruto, fl.duplicata, fl.vencimento, 'U', fl.obs_da_conta, fl.doc_pagto,
 	fc.id, fl.motiv_cancel
 	FROM mygsoft.fin_lancamentos fl
 	JOIN vivazul_bceaa5.fin_lancamentos flv ON flv.old_id = fl.cod

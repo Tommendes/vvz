@@ -40,7 +40,7 @@ export const useUserStore = defineStore('users', {
             });
             await interceptor
                 .post(url, { email, password })
-                .then(async(res) => {
+                .then(async (res) => {
                     this.user = res.data;
                     if (this.user.id && this.user.isMatch) {
                         this.user.ip = ip;
@@ -67,16 +67,16 @@ export const useUserStore = defineStore('users', {
         },
         startInactivityTimer() {
             this.clearInactivityTimer();
-        
+
             // Atualiza o localStorage com o tempo da última atividade
             localStorage.setItem('lastActivity', Math.floor(Date.now() / 1000));
-        
+
             // Cria um intervalo para verificar o tempo de inatividade
             this.inactivityTimer = setInterval(() => {
                 const lastActivity = localStorage.getItem('lastActivity');
                 const currentTime = Math.floor(Date.now() / 1000);
                 const timeDifference = (currentTime - lastActivity); // em segundos
-        
+
                 if (timeDifference >= this.timeToLogOut) {
                     console.log('Inatividade detectada. Realizando logout...');
                     this.logout();
@@ -94,10 +94,10 @@ export const useUserStore = defineStore('users', {
         resetInactivityTimer() {
             // Atualiza a última atividade no localStorage
             localStorage.setItem('lastActivity', Math.floor(Date.now() / 1000));
-        },        
+        },
         async findUser(cpf) {
             const url = `${baseApiAuthUrl}/signin`;
-            try { 
+            try {
                 const res = await interceptor.post(url, { cpf });
                 this.user = res.data;
             } catch (error) {
@@ -123,11 +123,20 @@ export const useUserStore = defineStore('users', {
                 return false;
             }
         },
+        // async getProfile(token) {
+        //     const json = localStorage.getItem(userKey);
+        //     const userData = JSON.parse(json)
+        //     const th = await axios.post(`${baseApiUrl}/gth`);
+        //     this.user = decodeToken(token || this.user.token || userData.token, th.data);
+        //     return this.user;
+        // },
         async getProfile(token) {
             const json = localStorage.getItem(userKey);
             const userData = JSON.parse(json)
-            const th = await axios.post(`${baseApiUrl}/gth`);
-            this.user = decodeToken(token || this.user.token || userData.token, th.data);
+            // const th = await axios.post(`${baseApiUrl}/gth`);
+            // const untokenized = await decodeToken(token || this.user.token || userData.token, th.data);
+            const profile = await axios.post(`${baseApiUrl}/gprof`, { id: this.user.id || userData.id });
+            this.user = profile.data;
             return this.user;
         },
         logout() {

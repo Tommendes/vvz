@@ -6,7 +6,10 @@ module.exports = app => {
     const tabelaAlias = 'Registro Financeiro'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
-
+    const STATUS_REGISTRO_ABERTO = 1
+    const STATUS_REGISTRO_PAGO = 2
+    const STATUS_REGISTRO_CONCILIADO = 3
+    const STATUS_REGISTRO_CANCELADO = 99
 
     const save = async (req, res) => {
         let user = req.user
@@ -123,28 +126,52 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const tabelaEmpresaDomain = `${dbPrefix}_${uParams.schema_name}.empresa`
+        const tabelaParcelasDomain = `${dbPrefix}_${uParams.schema_name}.fin_parcelas`
+        const tabelaContasDomain = `${dbPrefix}_${uParams.schema_name}.fin_contas`
 
         let queryes = undefined
         let query = undefined
         let page = 0
         let rows = 50
-        let sortField = app.db.raw('tbl1.data_emissao')
+        let sortField = app.db.raw('tbl1.data_vencimento')
         let sortOrder = 'desc'
+        const ret = app.db({ tbl1: tabelaParcelasDomain })
         if (req.query) {
             queryes = req.query
             query = ''
             for (const key in queryes) {
                 let operator = queryes[key].split(':')[0]
                 let value = queryes[key].split(':')[1]
+
                 if (key.split(':')[0] == 'field') {
-                    if (['cadastro'].includes(key.split(':')[1])) {
-                        const fields = ['nome', 'cpf_cnpj', 'telefone', 'email']
+                    let queryField = key.split(':')[1]
+                    if (['destinatario_agrupado'].includes(key.split(':')[1])) {
+                        const cpfCnpj = value.replace(/([^\d])+/gim, "")
+                        const nome = value
+                        query += '('
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
+                                break;
+                            case 'endsWith': operator = `like '%${value}'`
+                                break;
+                            case 'notEquals': operator = `!= '${value}'`
+                                break;
+                            default: operator = `= '${value}'`
+                                break;
+                        }
+                        query += `c.nome ${operator} or c.cpf_cnpj like '%${cpfCnpj}%') AND `
+                    } else if (['descricao_agrupada'].includes(key.split(':')[1])) {
+                        const fields = ['tbl1.duplicata', 'tbl1.documento', 'fl.pedido', 'tbl1.descricao']//, 'telefone', 'email'
+                        switch (operator) {
+                            case 'startsWith': operator = `like '${value}%'`
+                                break;
+                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
+                                break;
+                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -155,19 +182,41 @@ module.exports = app => {
                         }
                         query += '('
                         fields.forEach(element => {
-                            query += `tbl1.${element} ${operator} or `
+                            query += `${element} ${operator} or `
                         });
                         query = query.slice(0, -3).trim()
                         query += ') AND '
+                    } else if (['data_vencimento','data_pagto'].includes(queryField)) {
+                        sortField = queryField
+                        operator = queryes[key].split(':')[0]
+                        let values = queryes[key].split(':')[1].split(',')
+                        let valueI = moment(values[0]).format('YYYY-MM-DD');
+                        let valueF = moment(values[1]).format('YYYY-MM-DD');
+                        if (!moment(valueF, 'YYYY-MM-DD', true).isValid()) {
+                            valueF = moment(valueI).add(1, 'day').format('YYYY-MM-DD');
+                        }
+                        switch (operator) {
+                            case 'dateIsNot': operator = `not between "${valueI}" and "${valueF}"`
+                                break;
+                            case 'dateBefore': operator = `< "${valueI}"`
+                                break;
+                            case 'dateAfter': operator = `> "${valueF}"`
+                                break;
+                            default: operator = `between "${valueI}" and "${valueF}"`
+                                break;
+                        }
+                        query += `date(tbl1.${sortField}) ${operator} AND `
                     } else {
-                        if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
+                        if (['cpf_cnpj_destinatario'].includes(queryField)) value = value.replace(/([^\d])+/gim, "")
+                        else if (['valor_bruto_conta', 'valor_liquido_conta', 'valor_vencimento_parcela'].includes(queryField)) value = value.replace(".", "").replace(",", ".")
 
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                            // Substituir todos espaços por .+
+                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -176,14 +225,26 @@ module.exports = app => {
                             default: operator = `= '${value}'`
                                 break;
                         }
-                        let queryField = key.split(':')[1]
-                        // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador de igualdade
-                        if (queryField == 'atuacao') {
-                            queryField = 'id_params_atuacao'
-                            operator = `= '${value}'`
-                        }
+                        // // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador de igualdade
+                        // if (queryField == 'atuacao') {
+                        //     queryField = 'id_params_atuacao'
+                        //     operator = `= '${value}'`
+                        // }
                         // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador vindo do frontend
-                        if (queryField == 'tipo_cadas') queryField = 'lpTp.label'
+                        if (queryField == 'valor_bruto_conta') queryField = 'fl.valor_bruto'
+                        else if (queryField == 'valor_liquido_conta') queryField = 'fl.valor_liquido'
+                        else if (queryField == 'valor_vencimento_parcela') queryField = 'tbl1.valor_vencimento'
+
+                        // switch (queryField) {
+                        //     case 'descricao_parcela':
+                        //         queryField = 'tbl1.descricao'
+                        //         break;
+                        //     case 'descricao_conta':
+                        //         queryField = 'fl.descricao'
+                        //         break;
+                        //     default: queryField = queryField;
+                        //         break;
+                        // }
                         query += `${queryField} ${operator} AND `
                     }
                 } else if (key.split(':')[0] == 'params') {
@@ -201,39 +262,59 @@ module.exports = app => {
             query = query.slice(0, -5).trim()
         }
 
-        let totalRecords = app.db({ tbl1: tabelaDomain })
-            .countDistinct('tbl1.id as count').first()
-            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
-            .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'tbl1.id_empresa')
+        let totalRecords = ret.clone()
+            .countDistinct('tbl1.id as count')
+            .sumDistinct('tbl1.valor_vencimento as sum')
+            .first()
+            .join({ fl: tabelaDomain }, 'fl.id', '=', 'tbl1.id_fin_lancamentos')
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'fl.id_cadastros')
+            .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'fl.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
         // Verificar a permissão de multiCliente do usuário
-        if (!uParams.multiCliente || uParams.multiCliente < 1) totalRecords.where({ 'tbl1.id_empresa': uParams.id_empresa })
+        if (!uParams.multiCliente || uParams.multiCliente < 1) totalRecords.where({ 'fl.id_empresa': uParams.id_empresa })
+
         totalRecords = await totalRecords
 
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`e.id as id_empresa, e.razaosocial as emitente, c.nome as destinatario, c.cpf_cnpj cpf_cnpj_destinatario,  tbl1.*`))
-            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
-            .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'tbl1.id_empresa')
+        ret.select(app.db.raw(`tbl1.id, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta`))
+            .select(app.db.raw(`fl.valor_liquido AS valor_liquido_conta, tbl1.valor_vencimento AS valor_vencimento_parcela, tbl1.duplicata, tbl1.documento`))
+            .select(app.db.raw(`fl.pedido, tbl1.descricao AS descricao_parcela, fl.descricao AS descricao_conta, e.id AS id_empresa, e.razaosocial AS empresa, e.fantasia AS emp_fantasia`))
+            .select(app.db.raw(`e.cpf_cnpj_empresa, c.nome AS destinatario, c.cpf_cnpj cpf_cnpj_destinatario`))
+            .join({ fl: tabelaDomain }, 'fl.id', '=', 'tbl1.id_fin_lancamentos')
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'fl.id_cadastros')
+            .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'fl.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
 
         // Verificar a permissão de multiCliente do usuário
-        if (!uParams.multiCliente || uParams.multiCliente < 1) ret.where({ 'tbl1.id_empresa': uParams.id_empresa })
+        if (!uParams.multiCliente || uParams.multiCliente < 1) ret.where({ 'fl.id_empresa': uParams.id_empresa })
 
         ret.groupBy('tbl1.id')
             // .orderBy(app.db.raw(`IF(e.ordem_financeiro AND e.ordem_financeiro > 0, e.ordem_financeiro, ${sortField})`))
             .orderBy(sortField, sortOrder)
         ret.limit(rows).offset((page + 1) * rows - rows)
-        console.log(ret.toString());
 
-        ret.then(body => {
-            body.forEach(element => {
-                element.descricao = convertToHTML(element.descricao)
-                element.valor_bruto = parseFloat(element.valor_bruto).toFixed(2).replace('.', ',')
-                element.valor_liquido = parseFloat(element.valor_liquido).toFixed(2).replace('.', ',')
-            });
-            return res.json({ data: body, totalRecords: totalRecords.count })
+        ret.then(async (body) => {
+            const length = body.length
+            for (const element of body) {
+                element.descricao_parcela = convertToHTML(element.descricao_parcela)
+                element.descricao_conta = convertToHTML(element.descricao_conta)
+                element.valor_bruto = element.valor_bruto_conta
+                element.valor_liquido = element.valor_liquido_conta
+                element.valor_vencimento = element.valor_vencimento_parcela
+                element.valor_bruto_conta = parseFloat(element.valor_bruto_conta).toFixed(2).replace('.', ',')
+                element.valor_liquido_conta = parseFloat(element.valor_liquido_conta).toFixed(2).replace('.', ',')
+                element.valor_vencimento_parcela = parseFloat(element.valor_vencimento_parcela).toFixed(2).replace('.', ',')
+                // const installments = app.db({ p: tabelaParcelasDomain })
+                //     .select('p.data_vencimento', 'p.valor_vencimento', 'p.parcela', 'p.recorrencia', 'p.descricao', 'c.nome as conta', 'p.documento')
+                //     .join({ c: tabelaContasDomain }, 'c.id', 'p.id_fin_contas')
+                //     .where({ 'p.id_fin_lancamentos': element.id, 'p.status': STATUS_ACTIVE })
+                //     .orderBy('p.data_vencimento', 'asc')
+                // element.installments = await installments
+            }
+
+            // return res.json({ data: body, totalRecords: totalRecords.count, sumRecords: totalRecords.sum || 0 })
+            return res.json({ data: body, totalRecords: totalRecords.count || length, sumRecords: totalRecords.sum || 0 })
         })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })

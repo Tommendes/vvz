@@ -23,7 +23,6 @@ const totalSizePercent = ref(0);
 const files = ref([]);
 
 const onRemoveTemplatingFile = (file, removeFileCallback, index) => {
-    console.log(file, removeFileCallback, index);
     removeFileCallback(index);
     totalSize.value -= parseInt(formatSize(file.size));
     totalSizePercent.value = totalSize.value / 10;
@@ -31,7 +30,6 @@ const onRemoveTemplatingFile = (file, removeFileCallback, index) => {
 
 const onClearTemplatingUpload = (file, index) => {
     defaultWarn('Enviar unlink para o servidor apagar o arquivo após confirmação do usuário');
-    console.log(file, index);
     totalSize.value -= parseInt(formatSize(file.size));
     totalSizePercent.value = totalSize.value / 10;
 };
@@ -119,7 +117,6 @@ const saveData = async () => {
 };
 // Formatar tamanho do arquivo
 const formatSize = (bytes) => {
-    console.log(bytes);
     const k = 1024;
     const dm = 3;
     const sizes = primevue.config.locale.fileSizeTypes;

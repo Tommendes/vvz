@@ -847,7 +847,6 @@ module.exports = app => {
                 .insert(user)
                 .then((user) => {
                     const data = {id: user[0] }
-                    console.log(data);                    
                     return res.json(data)
                 })
                 .catch(error => {

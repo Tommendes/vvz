@@ -43,7 +43,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-          delete body.url_path;
+          delete body.url_logo;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -245,7 +245,7 @@ module.exports = app => {
             ret.select(selectArr)
         }
 
-        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replaceAll(' ', '.+')}")`))
             .where({ status: STATUS_ACTIVE })
 
         if (first) {

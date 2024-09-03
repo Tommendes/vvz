@@ -91,7 +91,6 @@ const expandAll = () => {
     expandedRows.value = gridData.value.filter((p) => p.id);
 };
 const collapseAll = () => {
-    defaultSuccess('collapseAll');
     expanded.value = false;
     expandedRows.value = null;
 };

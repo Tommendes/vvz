@@ -23,9 +23,8 @@ exports.up = function (knex, Promise) {
         table.string('parcela', 2).comment('Vencimento da duplicata (U: Unica; 1: 1ª parcela; 2: 2ª parcela...)')
         table.string('recorrencia', 2).comment('Recorrência do vencimento (U: Unico; M: Mensal; S: Semestral; A: Anual)')
         table.string('descricao', 500).comment('Descrição curta do lançamento')
-        table.string('meio').comment('Meio de pagamento/recebimento')
-        table.string('documento').comment('Número do documento de pagamento/recebimento')
         table.integer('id_fin_contas').notNull().unsigned().references('id').inTable(migrationClientSchema + '.fin_contas').onUpdate('Cascade').onDelete('NO ACTION').comment('Conta/Meio de pagamento/recebimento')
+        table.string('documento').comment('Número do documento de pagamento/recebimento')
         table.string('motivo_cancelamento').comment('Motivo do cancelamento')
     })
 };

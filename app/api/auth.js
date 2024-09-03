@@ -14,7 +14,7 @@ module.exports = app => {
      * @param {*} req 
      * @param {*} res 
      * @returns 
-     */ 
+     */
     const signin = async (req, res) => {
         const email = req.body.email || req.body.cpf || undefined
         let password = req.body.password || undefined
@@ -27,8 +27,8 @@ module.exports = app => {
         }
 
         let user = await app.db({ 'u': tabela })
-            .select('u.id', 'u.name', 'u.cpf', 'u.telefone', 'u.email', 'u.id', 'u.time_to_pas_expires', 'u.status', 'sc.schema_name', 'sc.schema_description', 'u.admin', 'u.gestor',
-                'u.cadastros', 'u.pipeline', 'u.protocolo', 'u.pv', 'u.comercial', 'u.fiscal', 'u.financeiro', 'u.comissoes', 'u.uploads', 'u.at', 'u.agente_v', 'u.agente_arq', 'u.agente_at')
+            .select('u.id', 'u.schema_id', 'u.id_empresa', 'u.tkn_api', 'u.name', 'u.cpf', 'u.email', 'u.telefone', 'u.admin', 'u.gestor', 'u.multiCliente', 'u.cadastros', 'u.pipeline', 'u.pipeline_params',
+                'u.pv', 'u.comercial', 'u.fiscal', 'u.financeiro', 'u.comissoes', 'u.prospeccoes', 'u.at', 'u.protocolo', 'u.uploads', 'u.agente_v', 'u.agente_arq', 'u.agente_at', 'u.time_to_pas_expires', 'u.status', 'sc.schema_name', 'sc.schema_description')
             .join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id')
             .orWhere({ 'u.email': email })
             .orWhere({ 'u.name': email })
@@ -160,6 +160,9 @@ module.exports = app => {
                     agente_v: user.agente_v,
                     agente_arq: user.agente_arq,
                     agente_at: user.agente_at,
+                    id_empresa: user.id_empresa,
+                    schema_id: user.schema_id,
+                    multiCliente: user.multiCliente,
                     ip: ip,
                     ipSignin: ip,
                     iat: now,
@@ -207,6 +210,26 @@ module.exports = app => {
         return res.send(authSecret)
     }
 
+    const getProfile = async (req, res) => {
+        try {
+            existsOrError(req.body.id, 'ID do usuário não informado')
+        } catch (error) {            
+            return res.status(400).send(error)
+        }
+        let user = await app.db({ 'u': tabela })
+            .select('u.id', 'u.schema_id', 'u.id_empresa', 'u.tkn_api', 'u.name', 'u.cpf', 'u.email', 'u.telefone', 'u.admin', 'u.gestor', 'u.multiCliente', 'u.cadastros', 'u.pipeline', 'u.pipeline_params',
+                'u.pv', 'u.comercial', 'u.fiscal', 'u.financeiro', 'u.comissoes', 'u.prospeccoes', 'u.at', 'u.protocolo', 'u.uploads', 'u.agente_v', 'u.agente_arq', 'u.agente_at', 'u.time_to_pas_expires', 'u.status', 'sc.schema_name', 'sc.schema_description')
+            .join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id')
+            .orWhere({ 'u.id': req.body.id })
+            .first()
+        const msg = await showWelcomeUserMessage(user.name) || `Seja bem-vindo(a), ${user.name}! Estamos felizes em recebê-lo(a) em nossa plataforma`
+        return res.send({
+            ...user,
+            isMatch: true,
+            msg
+        })
+    }
+
     const validateToken = async (req, res) => {
         const userData = req.body || null
         try {
@@ -236,5 +259,5 @@ module.exports = app => {
         res.send(false)
     }
 
-    return { signin, validateToken, getAuth }
+    return { signin, validateToken, getAuth, getProfile }
 }

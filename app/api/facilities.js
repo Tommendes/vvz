@@ -25,19 +25,22 @@ module.exports = app => {
         return ret
     }
 
+    // TODO: Normalize a string removendo acentos e caracteres especiais e deixando apenas letras, números e espaços em branco e sem alterar a caixa das letras
     function removeAccents(value) {
-        let ret = value || ""
-        ret = ret.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
-        ret = ret.replace('/[áàãâä]/ui', 'a');
-        ret = ret.replace('/[éèêë]/ui', 'e');
-        ret = ret.replace('/[íìîï]/ui', 'i');
-        ret = ret.replace('/[óòõôö]/ui', 'o');
-        ret = ret.replace('/[úùûü]/ui', 'u');
-        ret = ret.replace('/[ç]/ui', 'c');
-        ret = ret.replace('/[^a-z0-9]/i', '_');
-        ret = ret.replace('/_+/', '_');
-        // ret = ret.replaceAll('º', 'o')
-        return ret
+        return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        // return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')        
+    //     let ret = value || ""
+    //     ret = ret.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+    //     ret = ret.replace('/[áàãâä]/ui', 'a');
+    //     ret = ret.replace('/[éèêë]/ui', 'e');
+    //     ret = ret.replace('/[íìîï]/ui', 'i');
+    //     ret = ret.replace('/[óòõôö]/ui', 'o');
+    //     ret = ret.replace('/[úùûü]/ui', 'u');
+    //     ret = ret.replace('/[ç]/ui', 'c');
+    //     ret = ret.replace('/[^a-z0-9]/i', '_');
+    //     ret = ret.replace('/_+/', '_');
+    //     // ret = ret.replaceAll('º', 'o')
+    //     return ret
     }
 
     function removeAccentsObj(key, value) {

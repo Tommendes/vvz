@@ -122,8 +122,6 @@ const getEmpresas = async () => {
     const url = `${baseApiUrl}/empresas/f-a/glf?fld=1&vl=1&literal=1&slct=id,razaosocial,cpf_cnpj_empresa`;
     await axios.get(url).then((res) => {
         const body = res.data.data;
-        console.log(body);
-
         body.forEach(element => {
             dropdownEmpresas.value.push({ value: String(element.id), label: `${element.razaosocial} - ${masks.value.cpf_cnpj.masked(element.cpf_cnpj_empresa)}` });
         });
@@ -448,8 +446,7 @@ onMounted(async () => {
                                     optionValue="value" v-model="itemData.multiCliente" :options="dropdownMulticliente"
                                     placeholder="Selecione..." />
                             </div>
-                            <div class="col-12 md:col-8"
-                                v-if="dropdownEmpresas.length > 1 && Number(itemData.multiCliente)">
+                            <div class="col-12 md:col-8" v-if="dropdownEmpresas.length > 1">
                                 <label for="id_empresa">Empresa Atual do usuário</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <Dropdown v-else id="id_empresa" :disabled="mode == 'view'" optionLabel="label"

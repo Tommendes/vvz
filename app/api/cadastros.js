@@ -167,9 +167,9 @@ module.exports = app => {
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -190,9 +190,9 @@ module.exports = app => {
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `regexp("${value.toString().replace(' ', '.+')}")`
+                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replace(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -415,7 +415,7 @@ module.exports = app => {
         }
 
         if (literal) ret.where(app.db.raw(`${fieldName} = "${value.toString()}"`))
-        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replace(' ', '.+')}")`))
+        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replaceAll(' ', '.+')}")`))
 
         ret.where({ status: STATUS_ACTIVE })
 

@@ -118,11 +118,6 @@ const routes = [
                 name: 'financeiro-one',
                 component: () => import('@/views/financeiro/FinanceiroForm.vue')
             },
-            {
-                path: '/:client/fin-retencoes',
-                name: 'fin-retencoes',
-                component: () => import('@/views/finRetencoes/RetencoesGrid.vue')
-            },
             // Seção Comissionamento
             {
                 path: '/:client/comiss-agentes',
@@ -138,11 +133,6 @@ const routes = [
                 path: '/:client/comissoes-agente',
                 name: 'comissoes-agente',
                 component: () => import('@/views/comissoes/ComissoesPanelAgente.vue')
-            },
-            {
-                path: '/:client/retencao/:id',
-                name: 'fin-retencao',
-                component: () => import('@/views/finRetencoes/RetencaoForm.vue')
             },
             // Seção Gestão
             {

@@ -145,14 +145,20 @@ export function renderizarHTML(conteudo, options) {
 
 // Remove as tags HTML
 export function removeHtmlTags(str) {
-    if (str === null || str === '') return str;
-    else
-        return str
-            .toString()
-            .replace(/(<([^>]+)>)/gi, '')
-            .replaceAll('  ', ' ')
-            .replace(/&nbsp;/g, ' ')
-            .replace(/\r?\n|\r/g, '');
+    if (!str) return str;
+    
+    return str
+        .toString()
+        .replace(/<br\s*\/?>/gi, '\r\n') // Substitui <br> por \r\n
+        .replace(/<\/?p>/gi, '\r\n') // Substitui <p> e </p> por \r\n
+        .replace(/(<([^>]+)>)/gi, '') // Remove todas as tags HTML restantes
+        .replace(/\s{2,}/g, ' ') // Substitui múltiplos espaços por um único espaço
+        .replace(/&amp;/g, '&') // Substitui &amp; por &
+        .replace(/&lt;/g, '<') // Substitui &lt; por <
+        .replace(/&gt;/g, '>') // Substitui &gt; por >
+        .replace(/&quot;/g, '"') // Substitui &quot; por "
+        .replace(/&#39;/g, "'") // Substitui &#39; por '
+        .replace(/&nbsp;/g, ' '); // Substitui &nbsp; por um espaço
 }
 
 // Formatar valor 0.00 para 0,00

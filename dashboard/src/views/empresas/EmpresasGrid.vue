@@ -76,7 +76,7 @@ onMounted(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os registros de empresas', to: route.fullPath }]" />
     <div class="card">
-        <EmpresaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
+        <EmpresaForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'; loadData()" v-if="mode == 'new'" />
         <DataTable style="font-size: 1rem" :value="gridData" :paginator="true" :rows="10" dataKey="id" :rowHover="true"
             v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
             responsiveLayout="scroll" :globalFilterFields="['razaosocial', 'fantasia', 'cpf_cnpj_empresa']">

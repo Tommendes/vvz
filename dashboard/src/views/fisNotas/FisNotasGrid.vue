@@ -203,7 +203,7 @@ onMounted(async () => {
 import xlsx from 'json-as-xlsx';
 let dataToExcelExport = [
     {
-        sheet: 'Fotas Fiscais',
+        sheet: 'Notas Fiscais',
         columns: [
             {
                 label: "Movimento E/S", value: (row) => {
