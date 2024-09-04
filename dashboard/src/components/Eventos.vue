@@ -75,6 +75,8 @@ const getEventos = async () => {
                         break;
                     case 'conversion': element.evento = 'Registro convertido para pedido';
                         break;
+                    case 'mkfolder': element.evento = 'Pasta criada para o registro';
+                        break;
                     case 'commissioning': element.evento =
                         `Lançamento de comissão` +
                         (uProf.value.comissoes >= 1
