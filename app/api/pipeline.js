@@ -6,7 +6,7 @@ const { Client } = require('basic-ftp');
 const path = require('path')
 
 module.exports = app => {
-    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PEDIDO_INTERNO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_COMISSIONADO, STATUS_ENCERRADO, STATUS_CANCELADO } = require('./pipeline_status.js')(app)
+    const { STATUS_PENDENTE, STATUS_CONVERTIDO, STATUS_PEDIDO, STATUS_PEDIDO_INTERNO, STATUS_PROPOSTA, STATUS_REATIVADO, STATUS_COMISSIONADO, STATUS_ENCERRADO, STATUS_CANCELADO, STATUS_EXCLUIDO } = require('./pipeline_status.js')(app)
     const { TIPO_PV_SUPORTE, TIPO_PV_MONTAGEM, TIPO_PV_VENDAS } = require('./pv.js')(app)
     const { existsOrError, booleanOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const { formatCurrency } = require('./facilities.js')(app)
@@ -520,6 +520,14 @@ module.exports = app => {
                 .first()
             ret.then(async (body) => {
                 if (!body) return res.status(404).send('Registro não encontrado')
+                if (body.id_filho) {
+                    const pai = await app.db(tabelaDomain).select({ 'id_pai': 'id' }).where({ id: body.id_filho, status: STATUS_ACTIVE }).first()
+                    if (!pai) body.id_filho = null
+                }
+                if (body.id_pai) {
+                    const filho = await app.db(tabelaDomain).select({ 'id_filho': 'id' }).where({ id: body.id_pai, status: STATUS_ACTIVE }).first()
+                    if (!filho) body.id_pai = null
+                }
                 body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                 let pv = await app.db(tabelaPvDomain).select({ 'id_pv': 'id' }).where({ id_pipeline: body.id, tipo: TIPO_PV_MONTAGEM, status: STATUS_ACTIVE }).first()
                 if (pv) {
@@ -604,6 +612,14 @@ module.exports = app => {
                         created_at: new Date(),
                         id_pipeline: last.id_filho,
                     });
+                }
+                // Se o registro tiver um pai, e a mudança for para cancelado, também muda o status do pai excluindo o status de conversão
+                console.log(last.id_pai, STATUS_EXCLUIDO,  [STATUS_EXCLUIDO].includes(Number(registro.status)), Number(registro.status));
+                
+                if (last.id_pai && [STATUS_EXCLUIDO].includes(Number(registro.status))) {
+                    await trx(tabelaPipelineStatusDomain)
+                        .where({ id_pipeline: last.id_pai, status_params: STATUS_CONVERTIDO })
+                        .del();
                 }
                 if (registro.status == STATUS_DELETE) {
                     await trx(tabelaDomain).update(updateRecord).where({ id: req.params.id });
@@ -760,7 +776,7 @@ module.exports = app => {
                     })
                     .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
                     .whereRaw(`date(tbl1.created_at) between date("${biPeriodDi}") and date("${biPeriodDf}")`)
-                if (biStt) noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biStt}`)    
+                if (biStt) noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biStt}`)
                 else noPeriodo.whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id and ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${biPeriodDv == 1 ? STATUS_PROPOSTA : STATUS_PEDIDO}`)
                 noPeriodo.first()
                 noPeriodo = await noPeriodo
@@ -1200,7 +1216,7 @@ module.exports = app => {
 
         try {
             const list = await clientFtp.list('/' + pathDoc);
-            
+
             if (!list) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
             else return res.send(list);
         } catch (error) {

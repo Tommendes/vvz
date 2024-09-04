@@ -275,6 +275,7 @@ module.exports = app => {
         STATUS_PEDIDO_INTERNO,
         // STATUS_COMISSIONADO,
         STATUS_ENCERRADO,
-        STATUS_CANCELADO
+        STATUS_CANCELADO,
+        STATUS_EXCLUIDO
     }
 }
