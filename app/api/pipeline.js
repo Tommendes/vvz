@@ -614,9 +614,12 @@ module.exports = app => {
                     });
                 }
                 // Se o registro tiver um pai, e a mudança for para cancelado, também muda o status do pai excluindo o status de conversão
-                console.log(last.id_pai, STATUS_EXCLUIDO,  [STATUS_EXCLUIDO].includes(Number(registro.status)), Number(registro.status));
-                
                 if (last.id_pai && [STATUS_EXCLUIDO].includes(Number(registro.status))) {
+                    await trx(tabelaDomain)
+                        .update({
+                            id_filho: null,
+                        })
+                        .where({ id: last.id_pai, status: STATUS_ACTIVE })
                     await trx(tabelaPipelineStatusDomain)
                         .where({ id_pipeline: last.id_pai, status_params: STATUS_CONVERTIDO })
                         .del();
