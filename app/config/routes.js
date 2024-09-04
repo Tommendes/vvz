@@ -1,13 +1,14 @@
 const gestor = require('./gestor')
-const { env } = require('../.env')
+const { env, logs } = require('../.env')
 
 module.exports = app => {
     // TODO: Exibir todas as rotas acessadas e imprimir no console
-    if (env && env === 'development')
+    if ((env && env === 'development') || (logs && logs === true)) {
         app.use((req, res, next) => {
             console.log(`Rota acessada: ${req.method}${req.url}`)
             next()
         })
+    }
 
     app.post('/signup', app.api.user.signup)
     app.post('/signin', app.api.auth.signin)
