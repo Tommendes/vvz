@@ -14,8 +14,8 @@ module.exports = app => {
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        console.log(uParams);
-        
+        // console.log(uParams);
+
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
@@ -31,8 +31,10 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
         delete body.old_id;
-        if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".")
-        if (body.valor_liquido) body.valor_liquido = body.valor_liquido.replace(".", "").replace(",", ".")
+        delete body.nome;
+        delete body.cpf_cnpj;
+        if (body.valor_bruto && typeof body.valor_bruto === 'string') body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".")
+        if (body.valor_liquido && typeof body.valor_liquido === 'string') body.valor_liquido = body.valor_liquido.replace(".", "").replace(",", ".")
 
         try {
             existsOrError(body.id_empresa, 'Empresa destinatária da nota não informada')
@@ -42,9 +44,13 @@ module.exports = app => {
             existsOrError(body.id_cadastros, `${credorDevedor} não informado`)
             existsOrError(body.data_emissao, 'Data de emissão não informada')
             // Verificar se a data de emissão é válida
-            if (!moment(body.data_emissao, 'YYYY-MM-DD', true).isValid()) throw 'Data de emissão inválida'
+            
+            if (!moment(body.data_emissao, 'DD/MM/YYYY', true).isValid()) throw 'Data de emissão inválida'
+            body.data_emissao = moment(body.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD')
+            console.log(body.data_emissao);
+
             existsOrError(body.valor_bruto, 'Valor bruto não informado')
-            existsOrError(body.valor_liquido, 'Valor líquido não informado')
+            // existsOrError(body.valor_liquido, 'Valor líquido não informado')
             if (body.valor_bruto) body.valor_bruto = Number(String(body.valor_bruto).replace(",", "."));
             if (body.valor_liquido) body.valor_liquido = Number(String(body.valor_liquido).replace(",", "."));
             body.valor_bruto = body.valor_bruto.toFixed(2)
@@ -279,9 +285,9 @@ module.exports = app => {
 
         totalRecords = await totalRecords
 
-        ret.select(app.db.raw(`tbl1.id, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta`))
+        ret.select(app.db.raw(`fl.id, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta`))
             .select(app.db.raw(`fl.valor_liquido AS valor_liquido_conta, tbl1.valor_vencimento AS valor_vencimento_parcela, tbl1.duplicata, tbl1.documento`))
-            .select(app.db.raw(`fl.pedido, tbl1.descricao AS descricao_parcela, fl.descricao AS descricao_conta, e.id AS id_empresa, e.razaosocial AS empresa, e.fantasia AS emp_fantasia`))
+            .select(app.db.raw(`fl.pedido, tbl1.descricao AS descricao_parcela, fl.descricao AS descricao_conta, fl.id_empresa, e.razaosocial AS empresa, e.fantasia AS emp_fantasia`))
             .select(app.db.raw(`e.cpf_cnpj_empresa, c.nome AS destinatario, c.cpf_cnpj cpf_cnpj_destinatario`))
             .join({ fl: tabelaDomain }, 'fl.id', '=', 'tbl1.id_fin_lancamentos')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'fl.id_cadastros')
@@ -351,13 +357,16 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*`))
+            .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
+            .select(app.db.raw(`tbl1.*, c.nome, c.cpf_cnpj`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
-            .then(body => {
-                if (!body) return res.status(404).send('Registro não encontrado')
-                return res.json(body)
-            })
+        // console.log(ret.toString());
+        ret.then(body => {
+            if (!body) return res.status(404).send('Registro não encontrado')
+            return res.json(body)
+        })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)

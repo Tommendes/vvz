@@ -27,6 +27,9 @@ const masks = ref({
     cpf_cnpj: new Mask({
         mask: ['###.###.###-##', '##.###.###/####-##']
     }),
+    data_emissao: new Mask({
+        mask: '##/##/####'
+    }),
     valor: new Mask({
         mask: '0,99'
     })
@@ -36,9 +39,11 @@ import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
 
-const animationDocNr = ref('animation-color animation-fill-forwards ');
+const animationDocNr = ref('');
 // Campos de formulário
 const itemData = ref({});
+// Tipo de centro
+const credorDevedor = ref('Destinatário');
 // Listagem de arquivos na pasta do registro
 const listFolder = ref(null);
 // O registro tem pasta?
@@ -48,109 +53,66 @@ const hostAccessible = ref(false);
 // Modo do formulário
 const mode = ref('view');
 // Loadings
-const loading = ref(true);
+const loading = ref(false);
 // Editar cadastro no autocomplete
-const editFornecedor = ref(false);
-const dropdownES = ref([
-    { value: 'E', label: 'Entrada' },
-    { value: 'S', label: 'Saída' }
-]); // Itens do dropdown de Empresas
-import tiposNotas from './tiposNotas.js';
-const dropdownModelosNF = ref(); // Itens do dropdown de Empresas
-// Receber e ordenar os dados do array tiposNotas por label e value e adicionar ao label o valor. Por fim, adcione a variável dropdownModelosNF
-const setModelosNfList = async () => {
-    const newTiposNotas = tiposNotas.sort((a, b) => {
-        if (a.label < b.label) {
-            return -1;
-        }
-        if (a.label > b.label) {
-            return 1;
-        }
-        return 0;
-    });
-    dropdownModelosNF.value = newTiposNotas.map((item) => {
-        const newItem = {
-            value: item.value,
-            label: `(${item.value}) ${item.label}`
-        }
-        return newItem;
-    });
-};
-setModelosNfList();
+const editCadastro = ref(false);
+const dropdownCentro = ref([
+    { value: 1, label: 'Receita' },
+    { value: 2, label: 'Despesa' }
+]);
 const dropdownEmpresas = ref([]); // Itens do dropdown de Empresas
 // Props do template
-const props = defineProps(['mode', 'idFisNotas', 'idFornecedor']);
+const props = defineProps({
+    mode: { type: String, default: 'view' },
+    idRegistro: { type: Number, default: 0 },
+});
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/fin-lancamentos`);
 // Itens do breadcrumb
-const breadItems = ref([{ label: 'Todas as Notas', to: `/${uProf.value.schema_description}/financeiro` }]);
-// Liste de inputs de registros financeiros
-const itemsInputsList = ref([
-    { field: "valor_total", label: "Bruto", type: "double", minValue: 0.0, defaultValue: 0.0, required: true },
-    { field: "valor_liquido", label: "Líquido", type: "double", minValue: 0.0, defaultValue: 0.0, required: true },
-    { field: "valor_desconto", label: "Desconto", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_icms", label: "ICMS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_ipi", label: "IPI", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_pis", label: "PIS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_cofins", label: "COFINS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_iss", label: "ISS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_ir", label: "IR", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_csll", label: "CSLL", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_inss", label: "INSS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_outros", label: "Outros", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_servicos", label: "Serviços", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_produtos", label: "Produtos", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_frete", label: "Frete", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_seguro", label: "Seguro(s)", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_despesas", label: "Despesas", type: "double", minValue: 0.0, defaultValue: 0.0, required: false }
-]);
-
-// Importação de componentes
-import { useDialog } from 'primevue/usedialog';
-const dialog = useDialog();
+const breadItems = ref([]);
 
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    const id = props.idFisNotas || route.params.id;
+    const id = props.idRegistro || route.params.id;
     const url = `${urlBase.value}/${id}`;
-    console.log('url', url);
-
     if (mode.value != 'new')
         await axios
             .get(url)
             .then(async (res) => {
                 const body = res.data;
-                console.log('body', body);
-
                 body.id = String(body.id);
-
                 itemData.value = body;
-                selectedFornecedor.value = {
-                    code: itemData.value.id_fornecedor,
-                    name: itemData.value.fornecedor + ' - ' + itemData.value.cpf_cnpj_fornecedor
+                selectedCadastro.value = {
+                    code: itemData.value.id_cadastros,
+                    name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
                 };
-                // Eventos do registro
-                breadItems.value = [{ label: 'Todas os Registros', to: `/${uProf.value.schema_description}/financeiro` }];
-                if (itemData.value.id_fornecedor) breadItems.value.push({ label: 'Ir ao Fornecedor', to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_fornecedor}` });
+                if (itemData.value.data_emissao) itemData.value.data_emissao = masks.value.data_emissao.masked(moment(itemData.value.data_emissao).format('DD/MM/YYYY'));
+                await getNomeCadastro();
+                credorDevedor.value = itemData.value.centro == 1 ? 'Devedor' : 'Credor';
+                breadItems.value = [{ label: 'Todos os Registros', to: `/${uProf.value.schema_description}/financeiro` }];
+                if (itemData.value.id_cadastros) breadItems.value.push({ label: `Ir ao ${credorDevedor.value}`, to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_cadastros}` });
             })
             .catch((error) => {
-                console.log(error);
-
                 defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
                 if (error.response && error.response.status == 401) router.push('/');
                 toGrid();
             });
-    else if (props.idFornecedor) {
-        itemData.value.id_fornecedor = props.idFornecedor;
-        selectedFornecedor.value = {
-            code: itemData.value.id_fornecedor,
-            name: itemData.value.fornecedor + ' - ' + itemData.value.cpf_cnpj_fornecedor
+    else if (props.idCadastro) {
+        itemData.value.id_cadastros = props.idCadastro;
+        itemData.value.valor_bruto = 0;
+        itemData.value.valor_liquido = 0;
+        selectedCadastro.value = {
+            code: itemData.value.id_cadastros,
+            name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
         };
-        await getNomeFornecedor();
+        await getNomeCadastro();
     }
+
+    if (!itemData.value.valor_bruto) itemData.value.valor_bruto = 0;
+    if (!itemData.value.valor_liquido) itemData.value.valor_liquido = 0;
     loading.value = false;
 };
 
@@ -161,35 +123,34 @@ const saveData = async () => {
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
 
-    itemData.value.numero = String(itemData.value.numero);
     let preparedBody = {
         ...itemData.value
     };
 
     axios[method](url, preparedBody)
         .then(async (res) => {
-            editFornecedor.value = false;
+            editCadastro.value = false;
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
-                itemData.value = body;
+                itemData.value.id = body.id;
                 emit('changed');
-                if (route.name != 'cadastro' && mode.value == 'new') {
-                    router.push({
-                        path: `/${uProf.value.schema_description}/fin-lancamentos/${itemData.value.id}`
-                    });
-                    loadData();
-                } else if (route.name != 'cadastro' && id != itemData.value.id) {
-                    router.push({
-                        path: `/${uProf.value.schema_description}/fin-lancamentos/${itemData.value.id}`
-                    });
-                    const animation = animationDocNr.value;
-                    animationDocNr.value = '';
-                    loadData();
-                    animationDocNr.value = animation;
-                } else reload();
+                // if (route.name != 'cadastro' && mode.value == 'new') {
+                //     router.push({
+                //         path: `/${uProf.value.schema_description}/fin-lancamentos/${itemData.value.id}`
+                //     });
+                //     loadData();
+                // } else if (route.name != 'cadastro' && id != itemData.value.id) {
+                //     router.push({
+                //         path: `/${uProf.value.schema_description}/fin-lancamentos/${itemData.value.id}`
+                //     });
+                //     const animation = animationDocNr.value;
+                //     animationDocNr.value = '';
+                //     loadData();
+                //     animationDocNr.value = animation;
+                // } else reload();
                 mode.value = 'view';
-                const folterRoot = itemData.value.fornecedor.replaceAll(' ', '_');
+                const folterRoot = itemData.value.cadastros.replaceAll(' ', '_');
                 const bodyTo = { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
                 setTimeout(async () => {
                     await mkFolder(bodyTo);
@@ -199,80 +160,82 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
+            console.log(error);
+
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response && error.response.status == 401) router.push('/');
+            // if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // Recarregar dados do formulário
 const reload = async () => {
     mode.value = 'view';
-    editFornecedor.value = false;
+    editCadastro.value = false;
     loadData();
     emit('cancel');
 };
 /**
- * Autocomplete de fornecedores
+ * Autocomplete de cadastros
  */
-const fornecedores = ref([]);
-const filteredFornecedores = ref();
-const selectedFornecedor = ref();
-const nomeFornecedor = ref();
-// Busca e exibe o nome do fornecedor caso exista
-const getNomeFornecedor = async () => {
-    if (itemData.value.id_fornecedor) {
+const cadastros = ref([]);
+const filteredCadastro = ref();
+const selectedCadastro = ref();
+const nomeCadastro = ref();
+// Busca e exibe o nome do cadastros caso exista
+const getNomeCadastro = async () => {
+    if (itemData.value.id_cadastros) {
         try {
-            const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_fornecedor}&literal=1&slct=nome,cpf_cnpj`;
+            const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id&vl=${itemData.value.id_cadastros}&literal=1&slct=nome,cpf_cnpj`;
             const response = await axios.get(url);
             if (response.data.data.length > 0) {
-                nomeFornecedor.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
+                nomeCadastro.value = response.data.data[0].nome + ' - ' + masks.value.cpf_cnpj.masked(response.data.data[0].cpf_cnpj);
             }
         } catch (error) {
-            console.error('Erro ao buscar fornecedores:', error);
+            console.error('Erro ao buscar cadastros:', error);
         }
     }
 };
-// Busca de fornecedores enquanto digitado
-const searchFornecedores = (event) => {
+// Busca de cadastros enquanto digitado
+const searchCadastro = (event) => {
     setTimeout(() => {
-        filteredFornecedores.value = []; // Limpa a lista antes de cada busca
+        filteredCadastro.value = []; // Limpa a lista antes de cada busca
         if (!event.query.trim().length) {
             // Se estiver vazio, exiba todas as sugestões
-            filteredFornecedores.value = [...fornecedores.value];
+            filteredCadastro.value = [...cadastros.value];
         } else {
-            // Se não estiver vazio, filtre dentre as opções em fornecedores.value
+            // Se não estiver vazio, filtre dentre as opções em cadastros.value
             // Filtrar os cadastros com base na consulta do usuário
-            filteredFornecedores.value = fornecedores.value.filter((cadastro) => {
+            filteredCadastro.value = cadastros.value.filter((cadastro) => {
                 return cadastro.name.toLowerCase().includes(event.query.toLowerCase());
             });
-            // // Se não houver resultados, carregue os cadastros da API
-            // if (filteredFornecedores.value.length === 0) {
-            //     getFornecedorBySearchedId(event.query.toLowerCase());
-            // }
+            // Se não houver resultados, carregue os cadastros da API
+            if (filteredCadastro.value.length === 0) {
+                getCadastroBySearchedId(event.query.toLowerCase());
+            }
         }
     }, 150);
 };
 // Se não houver resultados, carregue os cadastros da API
-const getFornecedorBySearchedId = async (idFornecedor) => {
-    const qry = idFornecedor ? `fld=nome&vl=${idFornecedor}` : 'fld=1&vl=1';
+const getCadastroBySearchedId = async (idCadastro) => {
+    const qry = idCadastro ? `fld=nome&vl=${idCadastro}` : 'fld=1&vl=1';
     try {
         const url = `${baseApiUrl}/cadastros/f-a/glf?${qry}&slct=id,nome,cpf_cnpj`;
         const response = await axios.get(url);
-        // Limpe a lista de fornecedores para evitar duplicatas
-        fornecedores.value = [];
-        fornecedores.value = response.data.data.map((element) => {
+        // Limpe a lista de cadastros para evitar duplicatas
+        cadastros.value = [];
+        cadastros.value = response.data.data.map((element) => {
             return {
                 code: element.id,
                 name: element.nome + ' - ' + element.cpf_cnpj
             };
         });
         // Atualize a lista filtrada
-        filteredFornecedores.value = [...fornecedores.value];
+        filteredCadastro.value = [...cadastros.value];
     } catch (error) {
-        console.error('Erro ao buscar fornecedores:', error);
+        console.error('Erro ao buscar cadastros:', error);
     }
 };
-// Questiona se deseja mesmo editar o fornecedor
-const confirmEditFornecedor = () => {
+// Questiona se deseja mesmo editar o cadastros
+const confirmEditCadastro = () => {
     confirm.require({
         group: 'templating',
         header: 'Corfirma que deseja editar o cadastro?',
@@ -282,21 +245,21 @@ const confirmEditFornecedor = () => {
         rejectIcon: 'fa-solid fa-xmark',
         acceptClass: 'p-button-danger',
         accept: () => {
-            selectedFornecedor.value = undefined;
-            editFornecedor.value = true;
+            selectedCadastro.value = undefined;
+            editCadastro.value = true;
         },
         reject: () => {
             return false;
         }
     });
 };
-// Obter Fornecedores
-const getFornecedores = async () => {
+// Obter Cadastro
+const getCadastro = async () => {
     const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id_params_tipo&vl=5&literal=1&slct=id,nome,cpf_cnpj`;
-    fornecedores.value = []; // Limpa a lista antes de popular
+    cadastros.value = []; // Limpa a lista antes de popular
     await axios.get(url).then((res) => {
         res.data.data.map((item) => {
-            fornecedores.value.push({
+            cadastros.value.push({
                 code: item.id,
                 name: item.nome + ' - ' + item.cpf_cnpj
             });
@@ -306,7 +269,7 @@ const getFornecedores = async () => {
 import { computed } from 'vue';
 // Refaz a lista removendo inclusive as duplicatas
 computed(() => {
-    return [...new Set(filteredFornecedores.value)];
+    return [...new Set(filteredCadastro.value)];
 });
 /**
  * Fim de autocomplete de cadastros
@@ -314,7 +277,7 @@ computed(() => {
 
 const registroIdentico = async () => {
     itemData.value = {
-        id_fornecedor: itemData.value.id_fornecedor
+        id_cadastros: itemData.value.id_cadastros
     };
     mode.value = 'clone';
 };
@@ -350,7 +313,7 @@ const mkFolder = async (body) => {
     const url = `${baseApiUrl}/fiscal-notas/f-a/mfd`;
     defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
 
-    const folterRoot = body.data.fornecedor.replaceAll(' ', '_');
+    const folterRoot = body.data.cadastros.replaceAll(' ', '_');
     const bodyTo = body || { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
     await axios
         .post(url, bodyTo)
@@ -387,23 +350,32 @@ const getEmpresas = async () => {
     });
 };
 
+const getCredorDevedor = () => {
+    credorDevedor.value = itemData.value.centro == 1 ? 'Devedor' : 'Credor';
+    // TODO: animation deve ser uma classe CSS e ao fim o valor deve ser resetado
+    const animation = 'animation-color animation-fill-forwards '
+    setTimeout(() => {
+        animationDocNr.value = animation;
+    }, 150);
+};
+
+onBeforeMount(() => {
+    // Empresas do usuário
+    getEmpresas();
+    // Agentes de negócio
+    getCadastro();
+});
+
 // Carregar dados do formulário
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
-    if (props.idFornecedor) itemData.value.id_fornecedor = props.idFornecedor;
     // Carrega os dados do formulário
     await loadData();
-    // Carrega o conteúdo da pasta
-    // await lstFolder();
-    // Unidades de negócio
-    // getEmpresas();
-    // Agentes de negócio
-    // getFornecedores();
 });
-// Observar alterações na propriedade selectedFornecedor
-watch(selectedFornecedor, (value) => {
+// Observar alterações na propriedade selectedCadastro
+watch(selectedCadastro, (value) => {
     if (value) {
-        itemData.value.id_fornecedor = value.code;
+        itemData.value.id_cadastros = value.code;
     }
 });
 watch(route, (value) => {
@@ -414,7 +386,7 @@ watch(route, (value) => {
 </script>
 
 <template>
-    <Breadcrumb :items="breadItems" v-if="!(props.idFornecedor || mode == 'expandedFormMode')" />
+    <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
     <div>
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -423,61 +395,74 @@ watch(route, (value) => {
                         <div :class="`col-12`">
                             <label for="id_empresa">Empresa</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.id_empresa"
+                            <Dropdown v-else placeholder="Selecione..." :showClear="!!itemData.id_empresa"
                                 id="id_empresa" optionLabel="label" optionValue="value" v-model="itemData.id_empresa"
                                 :options="dropdownEmpresas" :disabled="['view'].includes(mode)" />
                         </div>
-                        <div :class="`col-12`">
-                            <label for="id_fornecedor">Fornecedor</label>
+                        <div class="col-12 lg:col-2">
+                            <label for="centro">Centro <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="route.name != 'cadastro' && (editFornecedor || mode == 'new')"
-                                v-model="selectedFornecedor" dropdown optionLabel="name"
-                                :suggestions="filteredFornecedores" @complete="searchFornecedores" forceSelection
-                                @keydown.enter.prevent />
+                            <Dropdown v-else placeholder="Selecione..." id="centro" optionLabel="label"
+                                optionValue="value" v-model="itemData.centro" :options="dropdownCentro"
+                                :disabled="['view'].includes(mode)" @change="getCredorDevedor()" />
+                        </div>
+                        <div :class="`col-10`">
+                            <label for="id_cadastros" :class="`${animationDocNr}`">{{ credorDevedor }}</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <AutoComplete v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')"
+                                v-model="selectedCadastro" dropdown optionLabel="name" :suggestions="filteredCadastro"
+                                @complete="searchCadastro" forceSelection @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>
-                                <InputText disabled v-model="nomeFornecedor" />
+                                <InputText disabled v-model="nomeCadastro" />
                                 <Button
                                     v-if="(route.name != 'cadastro' && (!itemData.status || itemData.status < 80) && uProf.fiscal >= 4) || mode == 'clone'"
-                                    icon="fa-solid fa-pencil" severity="primary" @click="confirmEditFornecedor()"
+                                    icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"
                                     :disabled="mode == 'view'" />
                             </div>
                         </div>
-                        <div class="col-12 lg:col-2">
-                            <label for="mov_e_s">Movimento <span class="text-base" style="color: red">*</span></label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else placeholder="Selecione..." id="mov_e_s" optionLabel="label"
-                                optionValue="value" v-model="itemData.mov_e_s" :options="dropdownES"
-                                :disabled="['view'].includes(mode)" />
+                        <div class="col-12 md:col-3">
+                            <label for="data_emissao">Data Emissão<small id="text-error" class="p-error">*</small></label>
+                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" required :disabled="mode == 'view'" v-maska
+                                data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />
                         </div>
-                        <div class="col-12 lg:col-6">
-                            <label for="modelo_nf">Tipo Nota <span class="text-base" style="color: red">*</span></label>
+                        <div :class="`col-12 lg:col-3`">
+                            <label for="valor_bruto">Valor Bruto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else placeholder="Selecione..." id="modelo_nf" optionLabel="label"
-                                optionValue="value" v-model="itemData.modelo_nf" filter :options="dropdownModelosNF"
-                                :disabled="['view'].includes(mode)" />
-                        </div>
-                        <div class="col-12 lg:col-2">
-                            <label for="numero">Documento</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
-                                v-model="itemData.numero" id="numero" type="text" maxlength="20" />
-                        </div>
-                        <div class="col-12 lg:col-2">
-                            <label for="serie">Série</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
-                                v-model="itemData.serie" id="serie" type="text" maxlength="10" />
-                        </div>
-                        <div class="col-12 lg:col-12">
-                            <label for="chave">Chave NF-e</label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <div class="p-inputgroup flex-1" v-else>
-                                <InputText autocomplete="no" :disabled="['view'].includes(mode)"
-                                    v-model="itemData.chave" id="chave" type="text" maxlength="44" />
-                                <Button icon="fa-solid fa-file-arrow-down" severity="primary"
-                                    @click="defaultSuccess('Em breve será possível baixar os dados direto do SPED')"
-                                    :disabled="mode == 'view'" />
+                            <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1"
+                                style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)"
+                                    v-model="itemData.valor_bruto" id="valor_bruto" type="text" v-maska
+                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                             </div>
+                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <span disabled v-html="itemData.valor_bruto" id="valor_bruto"
+                                    class="p-inputtext p-component" />
+                            </div>
+                        </div>
+                        <div :class="`col-12 lg:col-3`">
+                            <label for="valor_liquido">Valor Liquido</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <!-- <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1"
+                                style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <InputText autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)"
+                                    v-model="itemData.valor_liquido" id="valor_liquido" type="text" v-maska
+                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                            </div> -->
+                            <div class="p-inputgroup flex-1" style="font-size: 1rem">
+                                <span class="p-inputgroup-addon">R$</span>
+                                <span disabled v-html="itemData.valor_liquido" id="valor_liquido"
+                                    class="p-inputtext p-component" />
+                            </div>
+                        </div>
+                        <div class="col-12 lg:col-3">
+                            <label for="pedido">Pedido</label>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
+                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
+                                v-model="itemData.pedido" id="pedido" type="text" maxlength="20" />
                         </div>
                         <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
                             <label for="descricao">Descrição do registro</label>
@@ -486,6 +471,18 @@ watch(route, (value) => {
                                 v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
                                 aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
+                        </div>
+                        <div class="col-12" style="text-align: center">
+                            <div
+                                class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
+                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Retenções e descontos do documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
+                            </div>
+                        </div>
+                        <div class="col-12" style="text-align: center">
+                            <div
+                                class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
+                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Notas fiscais do documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
+                            </div>
                         </div>
                     </div>
                     <div class="card flex justify-content-center flex-wrap gap-3"
@@ -521,10 +518,10 @@ watch(route, (value) => {
                             <Button v-if="route.name == 'pipeline-one'" label="Ir ao Fornecedor" type="button"
                                 class="w-full mb-3" :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328"
                                 text raised
-                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_fornecedor}`)" />
-                            <Button label="Novo Registro para o Fornecedor" v-if="itemData.id && !itemData.id_pai"
-                                type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary"
-                                text raised @click="registroIdentico" />
+                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)" />
+                            <Button label="Novo Registro para o Cadastro" v-if="itemData.id" type="button"
+                                class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised
+                                @click="registroIdentico" />
                             <Button label="Cancelar Registro" v-tooltip.top="`Cancelar não exclui o registro`"
                                 v-if="(!itemData.status || itemData.status < 80)" type="button"
                                 :disabled="!(uProf.fiscal >= 3 && (itemData.status == 0 || itemData.status == 10))"
@@ -565,11 +562,10 @@ watch(route, (value) => {
                         <div class="col-12" style="text-align: center">
                             <div
                                 class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
-                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Valores financeiros do
-                                documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
+                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Programação financeira&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
                             </div>
                         </div>
-                        <div :class="`col-12 lg:col-2`" v-for="item in itemsInputsList" :key="item">
+                        <!-- <div :class="`col-12 lg:col-2`" v-for="item in itemsInputsList" :key="item">
                             <label :for="item.field">{{ item.label }}<span v-if="item.required" class="text-base"
                                     style="color: red">
                                     *</span></label>
@@ -586,7 +582,7 @@ watch(route, (value) => {
                                 <span disabled v-html="itemData[item.field]" :id="item.field"
                                     class="p-inputtext p-component" />
                             </div>
-                        </div>
+                        </div> -->
                     </div>
 
                     <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
@@ -618,10 +614,10 @@ watch(route, (value) => {
                         <p>breadItems: {{ breadItems }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
-                        <p v-if="props.idFornecedor">idFornecedor: {{ props.idFornecedor }}</p>
+                        <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
                         <p v-if="props.idFisNotas">idPipeline: {{ props.idFisNotas }}</p>
                         <p>hasFolder {{ hasFolder }}</p>
-                        <p>editFornecedor {{ editFornecedor }}</p>
+                        <p>editCadastro {{ editCadastro }}</p>
                         <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
                     </Fieldset>
                 </div>

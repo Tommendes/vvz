@@ -31,7 +31,7 @@ const urlBase = ref(`${baseApiUrl}/pipeline`);
 const props = defineProps(['idCadastro']);
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
-const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000, 9999999]); // Opções de registros por página
+const rowsPerPageOptions = ref([5, 10, 20, 50, 200]); // Opções de registros por página
 const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
@@ -434,7 +434,7 @@ const customFilterOptions = ref({ filterclear: false });
                 <DataTable ref="dt" :value="gridData" lazy paginator :rows="gridData.length" dataKey="id"
                     :rowHover="true" v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
                     responsiveLayout="scroll" :totalRecords="totalRecords"
-                    :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
+                    :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200]"
                     @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
                     :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
