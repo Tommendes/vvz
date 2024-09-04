@@ -197,7 +197,7 @@ const newProposal = () => {
     // });
     showMessage({
         label: 'Nova Proposta',
-        message: `Para criar uma nova proposta, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para a tela de cadastro de propostas no Pipeline. Lá você poderá criar uma nova proposta ou selecionar uma proposta existente.`,
+        message: ["Pressione ESC para fechar", `Para criar uma nova proposta, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para a tela de cadastro de propostas no Pipeline. Lá você poderá criar uma nova proposta ou selecionar uma proposta existente.`],
         buttons: messagesButtoms.value
     });
 };

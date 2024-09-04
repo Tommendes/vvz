@@ -6,7 +6,7 @@ import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
 import FisNotasForm from './FisNotasForm.vue';
 import { formatCurrency } from '@/global';
-import Breadcrumb from '../../components/Breadcrumb.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
 import moment from 'moment';
 import Prompts from '@/components/Prompts.vue';
 import { useDialog } from 'primevue/usedialog';
@@ -363,7 +363,7 @@ const newDocument = () => {
     // });
     showMessage({
         label: 'Nova Nota Fiscal',
-        message: `<p>Para registrar uma nota fiscal, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`,
+        message: ["Pressione ESC para fechar", `<p>Para registrar uma nota fiscal, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`],
         buttons: messagesButtoms.value
     });
 };

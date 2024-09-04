@@ -5,7 +5,7 @@ import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
 // import ComissaoForm from './ComissaoForm.vue';
 import { formatCurrency } from '@/global';
-import Breadcrumb from '../../components/Breadcrumb.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
 import moment from 'moment';
 import Prompts from '@/components/Prompts.vue';
 import { useDialog } from 'primevue/usedialog';
@@ -394,7 +394,7 @@ const newCommissioning = () => {
     // });
     showMessage({
         label: 'Novo Comisionamento',
-        message: `<p>Para registrar uma comissão, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`,
+        message: ["Pressione ESC para fechar", `<p>Para registrar uma comissão, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`],
         buttons: messagesButtoms.value
     });
 };

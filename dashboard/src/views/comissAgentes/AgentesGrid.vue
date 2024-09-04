@@ -3,7 +3,7 @@ import { ref, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import Breadcrumb from '../../components/Breadcrumb.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
 import AgenteForm from './AgenteForm.vue';
 import { renderizarHTML } from '@/global';
 

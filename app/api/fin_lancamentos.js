@@ -14,6 +14,8 @@ module.exports = app => {
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        console.log(uParams);
+        
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id

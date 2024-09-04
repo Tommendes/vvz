@@ -124,7 +124,6 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
-            console.log('error:', error);
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             if (error.response && error.response.status == 401) router.push('/');
         });

@@ -9,6 +9,8 @@ import moment from 'moment';
 import { useRoute } from 'vue-router';
 const route = useRoute();
 import { formatCurrency } from '@/global';
+import Eventos from '@/components/Eventos.vue';
+const fSEventos = ref({});
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -40,8 +42,6 @@ const loading = ref(false);
 const itemData = ref({});
 const itemDataUnmuted = ref({});
 const showTimeLine = ref(false);
-// Eventos do registro
-const itemDataEventos = ref({});
 const canAddCommission = ref(false);
 const props = defineProps({
     itemDataRoot: Object // O próprio registro
@@ -80,45 +80,8 @@ const loadData = async () => {
         });
         // Lista o andamento do registro
         await listStatusRegistro();
-        // Eventos do registro
-        await getEventos();
     } else itemData.value.id_pipeline = route.params.id;
     loading.value = false;
-};
-
-// Lista os eventos do registro
-const getEventos = async () => {
-    const id = props.itemDataRoot.id || itemData.value.id;
-    const url = `${baseApiUrl}/sis-events/${id}/comissoes/get-events`;
-    await axios.get(url).then((res) => {
-        if (res.data && res.data.length > 0) {
-            itemDataEventos.value = res.data;
-            itemDataEventos.value.forEach((element) => {
-                if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
-                else if (element.classevento.toLowerCase() == 'update')
-                    element.evento =
-                        `Edição do registro` +
-                        (uProf.value.gestor >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                            : '');
-                else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
-                else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
-                else if (element.classevento.toLowerCase() == 'commissioning')
-                    element.evento =
-                        `Lançamento de comissão` +
-                        (uProf.value.comissoes >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                            : '');
-                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
-            });
-        } else {
-            itemDataEventos.value = [
-                {
-                    evento: 'Não há registro de log eventos para este registro'
-                }
-            ];
-        }
-    });
 };
 
 // Validar formulário
@@ -150,6 +113,7 @@ const saveData = async () => {
                 defaultSuccess('Registro salvo com sucesso');
                 mode.value = 'view';
                 await listStatusRegistro();
+                fSEventos.value.getEventos();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -658,6 +622,7 @@ watchEffect(() => {
                 </div>
             </div>
         </div>
+        <Eventos ref="fSEventos" :tabelaBd="'comissoes'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
         <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="uProf.admin >= 2">
             <template #legend>
                 <div class="flex align-items-center text-primary">
@@ -667,7 +632,6 @@ watchEffect(() => {
             </template>
             <p>mode: {{ mode }}</p>
             <p>itemData: {{ itemData }}</p>
-            <p>itemDataEventos: {{ itemDataEventos }}</p>
             <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
             <p>canAddCommission: {{ canAddCommission }}</p>
             <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>

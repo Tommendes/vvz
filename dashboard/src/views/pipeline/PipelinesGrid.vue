@@ -5,7 +5,7 @@ import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
 import PipelineForm from './PipelineForm.vue';
 import { removeHtmlTags, formatCurrency } from '@/global';
-import Breadcrumb from '../../components/Breadcrumb.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
 import moment from 'moment';
 
 const screenWidth = ref(window.innerWidth);

@@ -8,6 +8,8 @@ import moment from 'moment';
 import { guide } from '@/guides/cadastroFormGuide.js';
 import EditorComponent from '@/components/EditorComponent.vue';
 import ContatosGrid from './contatos/ContatosGrid.vue';
+import Eventos from '@/components/Eventos.vue';
+const fSEventos = ref({});
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -146,6 +148,7 @@ const saveData = async () => {
 
                 if (itemData.value.aniversario) itemData.value.aniversario = moment(itemData.value.aniversario).format('DD/MM/YYYY');
                 emit('changed');
+                fSEventos.value.getEventos();
                 // if (mode.value != 'new') reload();
                 // else router.push({ path: `/${uProf.value.schema_description}/cadastro/${itemData.value.id}` });
                 if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/cadastro/${itemData.value.id}` });
@@ -154,7 +157,7 @@ const saveData = async () => {
                 defaultWarn('Erro ao salvar registro');
             }
         })
-        .catch((error) => {
+        .catch((error) => {            
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             if (error.response && error.response.status == 401) router.push('/');
         });
@@ -661,6 +664,7 @@ watchEffect(() => {
                         severity="danger" text raised @click="reload" />
                 </div>
 
+                <Eventos ref="fSEventos" :tabelaBd="'cadastros'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
                 <div class="col-12">
                     <Fieldset class="bg-green-200" toggleable :collapsed="true">
                         <template #legend>

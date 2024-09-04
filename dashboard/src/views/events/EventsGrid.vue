@@ -36,9 +36,10 @@ onBeforeMount(() => {
 });
 
 const queryUrl = ref('');
-onMounted(() => {
+onMounted(async () => {
     queryUrl.value = route.query;
-    clearFilter();
+    
+    await mountUrlFilters();
 });
 
 const dt = ref();
@@ -78,8 +79,7 @@ const clearFilter = async () => {
         sortOrder: null,
         filters: filters.value
     };
-
-    await loadLazyData();
+    await mountUrlFilters();
 };
 
 // Carregar dados
@@ -97,6 +97,8 @@ const loadLazyData = async () => {
         });
     }
     const url = `${urlBase.value}${urlFilters.value}${urlQueryes}`;
+    console.log(url);
+    
     const maxStringLength = 100;
     axios
         .get(url)
@@ -176,7 +178,7 @@ const showEvent = (evento) => {
     if (evento.classevento) header += `)`;
     const body = {
         label: header,
-        message: evento.evento_full,
+        message: ["Pressione ESC para fechar", evento.evento_full],
         buttons: messagesButtoms.value
     };
 

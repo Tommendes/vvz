@@ -5,6 +5,8 @@ import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import PropostaNewPromptForm from '../comPropostas/PropostaNewPromptForm.vue';
 import EditorComponent from '@/components/EditorComponent.vue';
+import Eventos from '@/components/Eventos.vue';
+const fSEventos = ref({});
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -38,8 +40,6 @@ import moment from 'moment';
 const animationDocNr = ref('animation-color animation-fill-forwards ');
 // Campos de formulário
 const itemData = ref({});
-// Eventos do registro
-const itemDataEventos = ref({});
 // Listagem de arquivos na pasta do registro
 const listFolder = ref(null);
 // O registro tem pasta?
@@ -100,8 +100,6 @@ const loadData = async () => {
                 listStatusRegistro();
                 // Unidades de negócio
                 listUnidadesDescricao();
-                // Eventos do registro
-                getEventos();
                 breadItems.value = [{ label: 'Todo o Pipeline', to: `/${uProf.value.schema_description}/pipeline` }];
                 if (unidadeLabel.value) breadItems.value.push({ label: unidadeLabel.value + ' ' + itemData.value.documento + (uProf.value.admin >= 2 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
                 if (itemData.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_cadastros}` });
@@ -154,6 +152,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
+                fSEventos.value.getEventos();
                 emit('changed');
                 if (route.name != 'cadastro' && mode.value == 'new') {
                     router.push({
@@ -690,40 +689,6 @@ const onPromptCancel = () => {
     defaultWarn('Você não pode prosseguir sem informar os dados solicitados');
 };
 
-const getEventos = async () => {
-    const id = props.idPipeline || route.params.id;
-    const url = `${baseApiUrl}/sis-events/${id}/pipeline/get-events`;
-    await axios.get(url).then((res) => {
-        if (res.data && res.data.length > 0) {
-            itemDataEventos.value = res.data;
-            itemDataEventos.value.forEach((element) => {
-                if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
-                else if (element.classevento.toLowerCase() == 'update')
-                    element.evento =
-                        `Edição do registro` +
-                        (uProf.value.gestor >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                            : '');
-                else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
-                else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
-                else if (element.classevento.toLowerCase() == 'commissioning')
-                    element.evento =
-                        `Lançamento de comissão` +
-                        (uProf.value.comissoes >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=pipeline&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = pipeline; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                            : '');
-                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
-            });
-        } else {
-            itemDataEventos.value = [
-                {
-                    evento: 'Não há registro de log eventos para este registro'
-                }
-            ];
-        }
-    });
-};
-
 // Carregar dados do formulário
 onMounted(async () => {
     if (props.mode && props.mode != mode.value) mode.value = props.mode;
@@ -762,8 +727,9 @@ watch(route, (value) => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete
                                 v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
-                                v-model="selectedCadastro" :dropdown="false" optionLabel="name" :suggestions="filteredCadastros"
-                                @complete="searchCadastros" forceSelection @keydown.enter.prevent />
+                                v-model="selectedCadastro" :dropdown="false" optionLabel="name"
+                                :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection
+                                @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button
@@ -951,18 +917,7 @@ watch(route, (value) => {
                             severity="danger" text raised
                             @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
-                    <Fieldset class="bg-orange-200 mb-3" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-circle-info mr-2"></span>
-                                <span class="font-bold text-lg">Eventos do registro</span>
-                            </div>
-                        </template>
-                        <div class="m-0" v-for="item in itemDataEventos" :key="item.id">
-                            <h4 v-if="item.data">Em {{ item.data }}: {{ item.user }}</h4>
-                            <p v-html="item.evento" class="mb-3" />
-                        </div>
-                    </Fieldset>
+                    <Eventos ref="fSEventos" :tabelaBd="'pipeline'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -990,7 +945,6 @@ watch(route, (value) => {
                         <p>{{ route.name }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
-                        <p>itemDataEventos: {{ itemDataEventos }}</p>
                         <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
                         <p v-if="props.idPipeline">idPipeline: {{ props.idPipeline }}</p>
                         <p>itemDataParam: {{ itemDataParam }}</p>

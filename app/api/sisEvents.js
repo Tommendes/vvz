@@ -127,6 +127,9 @@ module.exports = app => {
     }
 
     const getByField = async (req, res) => {
+        let user = req.user
+        let uParams = { name: 'Visitante' };
+        if (user) uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         const field = req.params.field
         const ret = app.db({ se: tabelaSisEvents })
             .select(app.db.raw(`${field} as field`))

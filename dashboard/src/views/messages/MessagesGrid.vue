@@ -4,7 +4,7 @@ import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
-import Breadcrumb from '../../components/Breadcrumb.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
 import { renderizarHTML } from '@/global';
 import MenssageForm from './MessageForm.vue';
 

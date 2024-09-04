@@ -6,7 +6,7 @@ import axios from '@/axios-interceptor';
 import { defaultWarn, defaultSuccess } from '@/toast';
 // import FinanceiroForm from './FinanceiroForm.vue';
 import { formatCurrency, removeHtmlTags } from '@/global';
-import Breadcrumb from '../../components/Breadcrumb.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
 import moment from 'moment';
 import Prompts from '@/components/Prompts.vue';
 import { useDialog } from 'primevue/usedialog';
@@ -376,7 +376,7 @@ const getSeverity = (field, type = 'date') => {
     return 'danger';
 };
 const goField = (data) => {
-    window.open(`#/${uProf.value.schema_description}/notas-fiscais/${data.id}`, '_blank');
+    window.open(`#/${uProf.value.schema_description}/financeiro/${data.id}`, '_blank');
 };
 // // Carrega os dados do filtro do grid
 // watchEffect(() => {
@@ -409,7 +409,7 @@ const rowStyle = (data) => {
                 <DataTable ref="dt" :value="gridData" lazy :rowStyle="rowStyle" paginator :rows="gridData.length"
                     dataKey="id" :rowHover="true" v-model:filters="filters" filterDisplay="row" :loading="loading"
                     :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
-                    :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : false"
+                    :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200, 500]"
                     @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
                     :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable

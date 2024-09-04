@@ -8,6 +8,8 @@ import PropostaForm from './PropostaForm.vue';
 import ComposicoesGrid from './composicoes/ComposicoesGrid.vue';
 import ItensGrid from './itens/ItensGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
+import Eventos from '@/components/Eventos.vue';
+const fSEventos = ref({});
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -34,8 +36,6 @@ const masks = ref({
 });
 
 const itemData = ref({});
-// Eventos do registro
-const itemDataEventos = ref({});
 const itemDataPipeline = ref({});
 const itemDataPipelineParams = ref({});
 const loading = ref(true);
@@ -68,9 +68,8 @@ const loadData = async () => {
             if (nomeCliente.value) breadItems.value.push({ label: nomeCliente.value + (uProf.value.admin >= 1 ? `: (${itemData.value.id})` : ''), to: route.fullPath });
             if (itemDataPipeline.value.id_cadastros) breadItems.value.push({ label: 'Ir ao Cadastro', to: `/${uProf.value.schema_description}/cadastro/${itemDataPipeline.value.id_cadastros}` });
             mode.value = 'view';
-            // Eventos do registro
-            await getEventos();
             loading.value = false;
+            await fSEventos.value.getEventos();
         } else {
             defaultWarn('Proposta não localizada');
             router.push({ path: `/${uProf.value.schema_description}/propostas` });
@@ -122,40 +121,6 @@ const getNomeCliente = async () => {
     }
 };
 
-const getEventos = async () => {
-    const id = route.params.id;
-    const url = `${baseApiUrl}/sis-events/${id}/com_propostas/get-events`;
-    await axios.get(url).then((res) => {
-        if (res.data && res.data.length > 0) {
-            itemDataEventos.value = res.data;
-            itemDataEventos.value.forEach((element) => {
-                if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
-                else if (element.classevento.toLowerCase() == 'update')
-                    element.evento =
-                        `Edição do registro` +
-                        (uProf.value.gestor >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                            : '');
-                else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
-                else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
-                else if (element.classevento.toLowerCase() == 'commissioning')
-                    element.evento =
-                        `Lançamento de comissão` +
-                        (uProf.value.comissoes >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=com_propostas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = com_propostas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                            : '');
-                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
-            });
-        } else {
-            itemDataEventos.value = [
-                {
-                    evento: 'Não há registro de log eventos para este registro'
-                }
-            ];
-        }
-    });
-};
-
 onMounted(async () => {
     await loadData();
 });
@@ -200,18 +165,7 @@ onMounted(async () => {
                         <PropostaForm :padroes="true" @changed="loadData()" />
                     </TabPanel>
                 </TabView>
-                <Fieldset class="bg-orange-200 mb-3" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
-                    <template #legend>
-                        <div class="flex align-items-center text-primary">
-                            <span class="fa-solid fa-circle-info mr-2"></span>
-                            <span class="font-bold text-lg">Eventos do registro</span>
-                        </div>
-                    </template>
-                    <div class="m-0" v-for="item in itemDataEventos" :key="item.id">
-                        <h4 v-if="item.data">Em {{ item.data }}: {{ item.user }}</h4>
-                        <p v-html="item.evento" class="mb-3" />
-                    </div>
-                </Fieldset>
+                <Eventos ref="fSEventos" :tabelaBd="'com_propostas'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
             </div>
             <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
                 <p>route.name {{ route.name }}</p>

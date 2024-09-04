@@ -4,7 +4,9 @@ import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import EditorComponent from '@/components/EditorComponent.vue';
-import Breadcrumb from '../../components/Breadcrumb.vue';
+import Breadcrumb from '@/components/Breadcrumb.vue';
+import Eventos from '@/components/Eventos.vue';
+const fSEventos = ref({});
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -38,8 +40,6 @@ import moment from 'moment';
 const animationDocNr = ref('animation-color animation-fill-forwards ');
 // Campos de formulário
 const itemData = ref({});
-// Eventos do registro
-const itemDataEventos = ref({});
 // Listagem de arquivos na pasta do registro
 const listFolder = ref(null);
 // O registro tem pasta?
@@ -190,6 +190,7 @@ const saveData = async () => {
                     loadData();
                     animationDocNr.value = animation;
                 } else reload();
+                fSEventos.value.getEventos();
                 mode.value = 'view';
                 const folterRoot = itemData.value.fornecedor.replaceAll(' ', '_');
                 const bodyTo = { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
@@ -373,40 +374,6 @@ const toGrid = () => {
     mode.value = 'grid';
     emit('cancel');
     router.push({ path: `/${uProf.value.schema_description}/fiscal-notas` });
-};
-
-const getEventos = async () => {
-    const id = props.idFisNotas || route.params.id;
-    const url = `${baseApiUrl}/sis-events/${id}/fis_notas/get-events`;
-    await axios.get(url).then((res) => {
-        if (res.data && res.data.length > 0) {
-            itemDataEventos.value = res.data;
-            itemDataEventos.value.forEach((element) => {
-                if (element.classevento.toLowerCase() == 'insert') element.evento = 'Criação do registro';
-                else if (element.classevento.toLowerCase() == 'update')
-                    element.evento =
-                        `Edição do registro` +
-                        (uProf.value.gestor >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=fis_notas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = fis_notas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                            : '');
-                else if (element.classevento.toLowerCase() == 'remove') element.evento = 'Exclusão ou cancelamento do registro';
-                else if (element.classevento.toLowerCase() == 'conversion') element.evento = 'Registro convertido para pedido';
-                else if (element.classevento.toLowerCase() == 'commissioning')
-                    element.evento =
-                        `Lançamento de comissão` +
-                        (uProf.value.comissoes >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=fis_notas&id_registro=${element.id_registro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = fis_notas; Registro = ${element.id_registro}. Número deste evento: ${element.id}`
-                            : '');
-                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
-            });
-        } else {
-            itemDataEventos.value = [
-                {
-                    evento: 'Não há registro de log eventos para este registro'
-                }
-            ];
-        }
-    });
 };
 
 // Obter Empresas
@@ -624,19 +591,7 @@ watch(route, (value) => {
                             </div>
                         </div>
                     </div>
-
-                    <Fieldset class="bg-orange-200 mb-3" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-circle-info mr-2"></span>
-                                <span class="font-bold text-lg">Eventos do registro</span>
-                            </div>
-                        </template>
-                        <div class="m-0" v-for="item in itemDataEventos" :key="item.id">
-                            <h4 v-if="item.data">Em {{ item.data }}: {{ item.user }}</h4>
-                            <p v-html="item.evento" class="mb-3" />
-                        </div>
-                    </Fieldset>
+                    <Eventos ref="fSEventos" :tabelaBd="'fis_notas'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -665,7 +620,6 @@ watch(route, (value) => {
                         <p>breadItems: {{ breadItems }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
-                        <p>itemDataEventos: {{ itemDataEventos }}</p>
                         <p v-if="props.idFornecedor">idFornecedor: {{ props.idFornecedor }}</p>
                         <p v-if="props.idFisNotas">idPipeline: {{ props.idFisNotas }}</p>
                         <p>hasFolder {{ hasFolder }}</p>
