@@ -11,13 +11,13 @@
                 <h4 v-if="item.data">Em {{ item.data }}: {{ item.user }}</h4>
                 <p v-html="item.evento" class="mb-3" />
             </div>
-        </Fieldset>        
-        <p v-if="uProf.admin >= 2">itemDataEventos: {{ itemDataEventos }}</p>
+        </Fieldset>
+        <!-- <p v-if="uProf.admin >= 2">itemDataEventos: {{ itemDataEventos }}</p> -->
     </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { baseApiUrl } from '@/env';
 import { useRoute } from 'vue-router';
 import axios from '@/axios-interceptor';
@@ -29,7 +29,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
     await getEventos();
 });
 
@@ -51,42 +51,19 @@ const props = defineProps({
         default: ''
     },
 });
+
 // Eventos do registro
-const itemDataEventos = ref({});
-// field:tabela_bd=contains:pipeline&field:id_registro=contains:68585&
+const itemDataEventos = ref([]);
+
+// Função para obter eventos do registro
 const getEventos = async () => {
     const url = `${baseApiUrl}/sis-events/${props.idRegistro}/${props.tabelaBd}/get-events`;
-    
+
     await axios.get(url).then((res) => {
         if (res.data && res.data.length > 0) {
             itemDataEventos.value = res.data;
-            itemDataEventos.value.forEach((element) => {      
-                const classevento = element.classevento.toLowerCase();          
-                switch (classevento) {
-                    case 'insert': element.evento = 'Criação do registro';
-                        break;
-                    case 'update': element.evento =
-                        `Edição do registro` +
-                        (uProf.value.gestor >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
-                            : '');
-                        break;
-                    case 'remove': element.evento = 'Exclusão ou cancelamento do registro';
-                        break;
-                    case 'conversion': element.evento = 'Registro convertido para pedido';
-                        break;
-                    case 'mkfolder': element.evento = 'Pasta criada para o registro';
-                        break;
-                    case 'commissioning': element.evento =
-                        `Lançamento de comissão` +
-                        (uProf.value.comissoes >= 1
-                            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
-                            : '');
-                            break;
-                    default: element.evento = `Registro de evento: ${classevento}`;
-                        break;
-                }
-                element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
+            itemDataEventos.value.forEach((element) => {
+                processEvent(element);
             });
         } else {
             itemDataEventos.value = [
@@ -98,10 +75,64 @@ const getEventos = async () => {
     });
 };
 
+// Função para processar cada evento
+const processEvent = (element) => {
+    const classevento = element.classevento.toLowerCase();
+    const statusComissioning = {
+        '10': { label: 'Aberto' },
+        '20': { label: 'Liquidado' },
+        '30': { label: 'Encerrado' },
+        '40': { label: 'Faturado' },
+        '50': { label: 'Confirmado' }
+    };
+
+    switch (true) {
+        case classevento === 'insert':
+            element.evento = 'Criação do registro';
+            break;
+        case classevento === 'update':
+            element.evento =
+                `Edição do registro` +
+                (uProf.value.gestor >= 1
+                    ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
+                    : '');
+            break;
+        case classevento === 'remove':
+            element.evento = 'Exclusão ou cancelamento do registro';
+            break;
+        case classevento === 'removecomisliquidat':
+            element.evento = 'Cancelamento de liquidação da comissão';
+            break;
+        case classevento.startsWith('setstatuscomis'):
+            const status = classevento.replace('setstatuscomis', '');
+            const statusInfo = statusComissioning[status];
+            if (statusInfo && statusInfo.label) {
+                element.evento = `Novo status de comissão: ${statusInfo.label}`;
+            } else {
+                element.evento = `Novo status de comissão desconhecido: ${status}`;
+            }
+            break;
+        case classevento === 'conversion':
+            element.evento = 'Registro convertido para pedido';
+            break;
+        case classevento === 'mkfolder':
+            element.evento = 'Pasta criada para o registro';
+            break;
+        case classevento === 'commissioning':
+            element.evento =
+                `Lançamento de comissão` +
+                (uProf.value.comissoes >= 1
+                    ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
+                    : '');
+            break;
+        default:
+            element.evento = `Registro de evento: ${classevento}`;
+            break;
+    }
+    element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
+};
 
 defineExpose({ getEventos }); // Expondo a função para o componente pai
-onMounted(async () => {
-});
 </script>
 
 <style lang="scss" scoped></style>

@@ -151,16 +151,28 @@ module.exports = app => {
         const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
         body.evento = nextEventID.count + 1
         body.created_at = new Date()
+        const { createEventIns, createEventRemove, createEvent } = app.api.sisEvents
         if (body.remove_status) {
             const bodyRemove = { id_comissoes: body.id_comissoes, status_comis: body.status_comis }
             app.db(tabelaDomain)
                 .where(bodyRemove)
                 .del()
                 .then(async (ret) => {
-                    const { createEventRemove } = app.api.sisEvents
-                    const evento = await createEventRemove({
-                        "last": await app.db(tabelaDomain)
-                            .where({ id_comissoes: body.id_comissoes }).first(),
+                    const last = await app.db(tabelaDomain)
+                        .where({ id_comissoes: body.id_comissoes }).first();
+                    // Registrar um evento de exclusão para a tabela comissões
+                    createEvent({
+                        "request": req,
+                        "evento": {
+                            id_user: user.id,
+                            evento: `Exclusão de status de comissão ${last.id_comissoes}`,
+                            classevento: `RemoveComisLiquidat`,
+                            id_registro: last.id_comissoes,
+                            tabela_bd: 'comissoes',
+                        }
+                    })
+                    createEventRemove({
+                        "last": last,
                         "request": req,
                         "evento": {
                             "classevento": "Remove",
@@ -179,8 +191,36 @@ module.exports = app => {
                 .insert(body)
                 .then(ret => {
                     body.id = ret[0]
-                    // registrar o evento na tabela de eventos
-                    const { createEventIns } = app.api.sisEvents
+                    // Registrar um evento de exclusão para a tabela comissões
+                    // STATUS_ABERTO = 10
+                    // STATUS_LIQUIDADO = 20
+                    // STATUS_ENCERRADO = 30
+                    // STATUS_FATURADO = 40
+                    // STATUS_CONFIRMADO = 50
+                    let statusLabel = ''
+                    let classevento = 'SetStatusComis' + body.status_comis;
+                    switch (body.status_comis) {
+                        case STATUS_LIQUIDADO: statusLabel = 'Liquidação';
+                        break;
+                        case STATUS_ENCERRADO: statusLabel = 'Encerramento';
+                            break;
+                        case STATUS_FATURADO: statusLabel = 'Faturamento';
+                            break;
+                        case STATUS_CONFIRMADO: statusLabel = 'Confirmação';
+                            break;
+                        default: statusLabel = 'Aberto'
+                            break;
+                    }
+                    createEvent({
+                        "request": req,
+                        "evento": {
+                            id_user: user.id,
+                            evento: `Novo status: ${statusLabel}`,
+                            classevento: classevento,
+                            id_registro: body.id_comissoes,
+                            tabela_bd: 'comissoes',
+                        }
+                    })
                     createEventIns({
                         "notTo": ['created_at', 'evento'],
                         "next": body,
