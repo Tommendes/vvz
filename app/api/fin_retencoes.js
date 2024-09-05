@@ -15,20 +15,23 @@ module.exports = app => {
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
-        body.id_fin_lancamentos = req.params.id_fin_lancamentos
+        body.id_fin_lancamentos = req.params.id_fin_lancamentos || undefined
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && uParams.financeiro >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && uParams.financeiro >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+                else isMatchOrError(uParams && uParams.financeiro >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-
+        console.log(body);
+        
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-
+        if (body.valor_retencao) body.valor_retencao = body.valor_retencao.replace(".", "").replace(",", ".");
+        console.log(body.valor_retencao);
+        
         try {
-            existsOrError(body.id_empresa, 'Empresa destinatária da nota não informada')
+            existsOrError(body.id_fin_lancamentos, 'Conta não informada')
             existsOrError(body.valor_retencao, 'Valor da retenção não informado')
             existsOrError(body.descricao, 'Descrição da retenção não informada')
             const unique = await app.db(tabelaDomain).where({ descricao: body.descricao, id_fin_lancamentos: body.id_fin_lancamentos }).first()
@@ -36,7 +39,8 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
-
+        
+        delete body.old_id;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -73,7 +77,6 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {
@@ -117,8 +120,9 @@ module.exports = app => {
                 let total = 0
                 body.forEach((item) => {
                     total += item.valor_retencao
+                    item.valor_retencao = parseFloat(item.valor_retencao).toFixed(2).replace('.', ',')
                 })
-                return res.json({ data: body, count: quantidade, total: total})
+                return res.json({ data: body, count: quantidade, total: total })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -142,6 +146,7 @@ module.exports = app => {
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
+                body.valor_retencao = parseFloat(body.valor_retencao || 0).toFixed(2).replace('.', ',')
                 return res.json(body)
             })
             .catch(error => {

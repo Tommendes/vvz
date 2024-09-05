@@ -14,8 +14,6 @@ module.exports = app => {
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        // console.log(uParams);
-
         let body = { ...req.body }
         delete body.id;
         if (req.params.id) body.id = req.params.id
@@ -33,8 +31,8 @@ module.exports = app => {
         delete body.old_id;
         delete body.nome;
         delete body.cpf_cnpj;
-        if (body.valor_bruto && typeof body.valor_bruto === 'string') body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".")
-        if (body.valor_liquido && typeof body.valor_liquido === 'string') body.valor_liquido = body.valor_liquido.replace(".", "").replace(",", ".")
+        delete body.valor_liquido;
+        if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".");
 
         try {
             existsOrError(body.id_empresa, 'Empresa destinatária da nota não informada')
@@ -44,18 +42,11 @@ module.exports = app => {
             existsOrError(body.id_cadastros, `${credorDevedor} não informado`)
             existsOrError(body.data_emissao, 'Data de emissão não informada')
             // Verificar se a data de emissão é válida
-            
+
             if (!moment(body.data_emissao, 'DD/MM/YYYY', true).isValid()) throw 'Data de emissão inválida'
             body.data_emissao = moment(body.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD')
-            console.log(body.data_emissao);
-
             existsOrError(body.valor_bruto, 'Valor bruto não informado')
-            // existsOrError(body.valor_liquido, 'Valor líquido não informado')
-            if (body.valor_bruto) body.valor_bruto = Number(String(body.valor_bruto).replace(",", "."));
-            if (body.valor_liquido) body.valor_liquido = Number(String(body.valor_liquido).replace(",", "."));
-            body.valor_bruto = body.valor_bruto.toFixed(2)
-            body.valor_liquido = body.valor_liquido.toFixed(2)
-            const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, valor_liquido: body.valor_liquido, status: STATUS_ACTIVE }).first()
+            const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, status: STATUS_ACTIVE }).first()
             if (unique && unique.id != body.id) throw `Já existe um registro ${credorDevedor.toLowerCase()} para esta empresa com esses dados: ${JSON.stringify(unique)}`
         } catch (error) {
             return res.status(400).send(error)
@@ -97,7 +88,6 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
-            delete body.old_id;
             app.db(tabelaDomain)
                 .insert(body)
                 .then(ret => {
@@ -171,9 +161,12 @@ module.exports = app => {
                             default: operator = `= '${value}'`
                                 break;
                         }
-                        query += `c.nome ${operator} or c.cpf_cnpj like '%${cpfCnpj}%') AND `
+                        if (cpfCnpj)
+                            query += `c.nome ${operator} or c.cpf_cnpj like '%${cpfCnpj}%') AND `
+                        else
+                            query += `c.nome ${operator}) AND `
                     } else if (['descricao_agrupada'].includes(key.split(':')[1])) {
-                        const fields = ['tbl1.duplicata', 'tbl1.documento', 'fl.pedido', 'tbl1.descricao']//, 'telefone', 'email'
+                        const fields = ['tbl1.duplicata', 'tbl1.documento', 'fl.pedido', 'tbl1.descricao', 'fl.descricao']//, 'telefone', 'email'
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
@@ -233,27 +226,11 @@ module.exports = app => {
                             default: operator = `= '${value}'`
                                 break;
                         }
-                        // // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador de igualdade
-                        // if (queryField == 'atuacao') {
-                        //     queryField = 'id_params_atuacao'
-                        //     operator = `= '${value}'`
-                        // }
                         // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador vindo do frontend
                         if (queryField == 'valor_bruto_conta') queryField = 'fl.valor_bruto'
                         if (queryField == 'emp_fantasia') queryField = 'e.fantasia'
                         else if (queryField == 'valor_liquido_conta') queryField = 'fl.valor_liquido'
                         else if (queryField == 'valor_vencimento_parcela') queryField = 'tbl1.valor_vencimento'
-
-                        // switch (queryField) {
-                        //     case 'descricao_parcela':
-                        //         queryField = 'tbl1.descricao'
-                        //         break;
-                        //     case 'descricao_conta':
-                        //         queryField = 'fl.descricao'
-                        //         break;
-                        //     default: queryField = queryField;
-                        //         break;
-                        // }
                         query += `${queryField} ${operator} AND `
                     }
                 } else if (key.split(':')[0] == 'params') {
@@ -301,7 +278,7 @@ module.exports = app => {
         ret.groupBy('tbl1.id').orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
 
-        // console.log(ret.toString());
+        console.log(ret.toString());
 
         ret.then(async (body) => {
             const length = body.length
@@ -362,9 +339,10 @@ module.exports = app => {
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .select(app.db.raw(`tbl1.*, c.nome, c.cpf_cnpj`))
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
-        // console.log(ret.toString());
         ret.then(body => {
             if (!body) return res.status(404).send('Registro não encontrado')
+            body.valor_bruto = parseFloat(body.valor_bruto).toFixed(2).replace('.', ',')
+            body.valor_liquido = parseFloat(body.valor_liquido).toFixed(2).replace('.', ',')
             return res.json(body)
         })
             .catch(error => {

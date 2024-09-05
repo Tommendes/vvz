@@ -1,11 +1,12 @@
 <script setup>
-import { onMounted, ref, watch, watchEffect } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import EditorComponent from '@/components/EditorComponent.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import Eventos from '@/components/Eventos.vue';
+import RetencoesGrid from './retencoes/RetencoesGrid.vue';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -72,12 +73,20 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/fin-lancamentos`);
 // Itens do breadcrumb
 const breadItems = ref([]);
-
-// Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
     const id = props.idRegistro || route.params.id;
     const url = `${urlBase.value}/${id}`;
+    // itemData.value = { "id": "12038", "evento": 1, "created_at": "2015-03-19 14:51:43", "updated_at": null, "status": 10, "id_empresa": 1, "centro": 1, "tags": null, "id_cadastros": 16813, "data_emissao": "06/04/2011", "valor_bruto": 2706.36, "valor_liquido": 0, "pedido": null, "descricao": null, "old_id": 9210, "nome": "PAQUETA CALCCADOS LTDA - LJ 829 - CARUARU", "cpf_cnpj": "01098983003986" };
+    // selectedCadastro.value = {
+    //     code: itemData.value.id_cadastros,
+    //     name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
+    // };
+    // if (itemData.value.data_emissao) itemData.value.data_emissao = masks.value.data_emissao.masked(moment(itemData.value.data_emissao).format('DD/MM/YYYY'));
+    // await getNomeCadastro();
+    // credorDevedor.value = itemData.value.centro == 1 ? 'Devedor' : 'Credor';
+    // breadItems.value = [{ label: 'Todos os Registros', to: `/${uProf.value.schema_description}/financeiro` }];
+    // if (itemData.value.id_cadastros) breadItems.value.push({ label: `Ir ao ${credorDevedor.value}`, to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_cadastros}` });
     if (mode.value != 'new')
         await axios
             .get(url)
@@ -110,7 +119,6 @@ const loadData = async () => {
         };
         await getNomeCadastro();
     }
-
     if (!itemData.value.valor_bruto) itemData.value.valor_bruto = 0;
     if (!itemData.value.valor_liquido) itemData.value.valor_liquido = 0;
     loading.value = false;
@@ -173,6 +181,21 @@ const reload = async () => {
     loadData();
     emit('cancel');
 };
+// Dados das retenções
+const itemDataRetencoes = ref([]);
+// Carragamento de dados do form
+const loadRetencoes = async () => {
+    const id = props.idRegistro || route.params.id;
+    const url = `${baseApiUrl}/fin-retencoes/${route.params.id}`;
+    await axios.get(url)
+        .then(res => {
+            itemDataRetencoes.value = res.data;
+            // console.log('itemDataRetencoes.value', itemDataRetencoes.value);
+            const valorBruto = parseFloat(itemData.value.valor_bruto.replace(',', '.'));
+            itemData.value.valor_liquido = parseFloat(valorBruto - (itemDataRetencoes.value.total || 0)).toFixed(2).replace('.', ',');
+            defaultSuccess('Valor líquido recalculado');
+        });
+}
 /**
  * Autocomplete de cadastros
  */
@@ -266,7 +289,6 @@ const getCadastro = async () => {
         });
     });
 };
-import { computed } from 'vue';
 // Refaz a lista removendo inclusive as duplicatas
 computed(() => {
     return [...new Set(filteredCadastro.value)];
@@ -378,11 +400,6 @@ watch(selectedCadastro, (value) => {
         itemData.value.id_cadastros = value.code;
     }
 });
-watch(route, (value) => {
-    if (value !== itemData.value.id) {
-        reload();
-    }
-});
 </script>
 
 <template>
@@ -390,7 +407,7 @@ watch(route, (value) => {
     <div>
         <form @submit.prevent="saveData">
             <div class="grid">
-                <div :class="`${['new'].includes(mode) ? 'col-12' : 'col-12 lg:col-9'}`">
+                <div :class="`${['new', 'clone'].includes(mode) ? 'col-12' : 'col-12 lg:col-8'}`">
                     <div class="p-fluid grid">
                         <div :class="`col-12`">
                             <label for="id_empresa">Empresa</label>
@@ -421,7 +438,8 @@ watch(route, (value) => {
                             </div>
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="data_emissao">Data Emissão<small id="text-error" class="p-error">*</small></label>
+                            <label for="data_emissao">Data Emissão<small id="text-error"
+                                    class="p-error">*</small></label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputText v-else autocomplete="no" required :disabled="mode == 'view'" v-maska
                                 data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />
@@ -439,23 +457,16 @@ watch(route, (value) => {
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
                                 <span disabled v-html="itemData.valor_bruto" id="valor_bruto"
-                                    class="p-inputtext p-component" />
+                                    class="p-inputtext p-component p-filled p-variant-filled" />
                             </div>
                         </div>
                         <div :class="`col-12 lg:col-3`">
                             <label for="valor_liquido">Valor Liquido</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <!-- <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1"
-                                style="font-size: 1rem">
-                                <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                    v-model="itemData.valor_liquido" id="valor_liquido" type="text" v-maska
-                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                            </div> -->
                             <div class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
                                 <span disabled v-html="itemData.valor_liquido" id="valor_liquido"
-                                    class="p-inputtext p-component" />
+                                    class="p-inputtext p-component p-filled p-variant-filled" />
                             </div>
                         </div>
                         <div class="col-12 lg:col-3">
@@ -472,16 +483,11 @@ watch(route, (value) => {
                                 aria-describedby="editor-error" />
                             <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
                         </div>
-                        <div class="col-12" style="text-align: center">
+                        <div class="col-12" style="text-align: center" v-if="itemData.id">
                             <div
                                 class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
-                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Retenções e descontos do documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
-                            </div>
-                        </div>
-                        <div class="col-12" style="text-align: center">
-                            <div
-                                class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
-                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Notas fiscais do documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
+                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Notas fiscais do
+                                documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
                             </div>
                         </div>
                     </div>
@@ -494,7 +500,7 @@ watch(route, (value) => {
                             @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
                 </div>
-                <div class="col-12 md:col-3" v-if="!['new'].includes(mode)">
+                <div class="col-12 md:col-4" v-if="itemData.id">
                     <Fieldset :toggleable="true" class="mb-3">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -542,6 +548,7 @@ watch(route, (value) => {
                                 severity="success" text raised @click="mkFolder()" />
                         </div>
                     </Fieldset>
+                    <RetencoesGrid v-if="itemData.id" :idRegistro="itemData.id" @calculateLiquid="loadRetencoes" />
                     <Fieldset :toggleable="true" :collapsed="true" v-if="itemData.id">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -557,12 +564,13 @@ watch(route, (value) => {
                         <p v-else>Não há conteúdo na pasta</p>
                     </Fieldset>
                 </div>
-                <div class="col-12">
+                <div class="col-12" v-if="itemData.id">
                     <div class="grid">
                         <div class="col-12" style="text-align: center">
                             <div
                                 class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
-                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Programação financeira&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
+                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Programação
+                                financeira&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
                             </div>
                         </div>
                         <!-- <div :class="`col-12 lg:col-2`" v-for="item in itemsInputsList" :key="item">
@@ -614,8 +622,6 @@ watch(route, (value) => {
                         <p>breadItems: {{ breadItems }}</p>
                         <p>mode: {{ mode }}</p>
                         <p>itemData: {{ itemData }}</p>
-                        <p v-if="props.idCadastro">idCadastro: {{ props.idCadastro }}</p>
-                        <p v-if="props.idFisNotas">idPipeline: {{ props.idFisNotas }}</p>
                         <p>hasFolder {{ hasFolder }}</p>
                         <p>editCadastro {{ editCadastro }}</p>
                         <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>

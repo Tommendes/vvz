@@ -55,7 +55,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE vivazul_bceaa5.fin_lancamentos;
 INSERT INTO vivazul_bceaa5.fin_lancamentos (id,evento,created_at,updated_at,STATUS,id_empresa,centro,tags,id_cadastros,data_emissao,valor_bruto,valor_liquido,pedido,descricao,old_id) 
 (
-	SELECT NULL,1,fl.data_lancamento,NULL updated_at,10 STATUS,fl.cod_sis_demp,IF(fl.valor_bruto > 0, 1, 2)centro,NULL tags,c.id,fl.data_lanc,fl.valor_bruto,fl.valor_liquido,NULL pedido,NULL descricao_conta,fl.cod
+	SELECT NULL,1,fl.data_lancamento,NULL updated_at,10 STATUS,fl.cod_sis_demp,IF(fl.valor_bruto > 0, 1, 2)centro,NULL tags,c.id,fl.data_lanc,fl.valor_bruto,fl.valor_liquido,NULL pedido,
+	IF(fl.nota_fiscal_conta, CONCAT('Nota Fiscal: ', fl.nota_fiscal_conta), NULL) descricao_conta,fl.cod
 	FROM mygsoft.fin_lancamentos fl 
 	LEFT JOIN vivazul_bceaa5.cadastros c ON c.old_id = fl.cod_cadas
 	WHERE fl.situacao >= 1 AND (fl.valor_bruto < 0 OR fl.valor_bruto > 0)
@@ -106,7 +107,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE vivazul_bceaa5.fin_retencoes;
 -- Trocar valores negativos para positivos
 UPDATE mygsoft.fin_retencoes SET valor_retencao = valor_retencao * (-1) WHERE valor_retencao < 0;	
-ALTER TABLE vivazul_bceaa5.fin_retencoes ADD COLUMN old_id INT(11) NULL;
+-- ALTER TABLE vivazul_bceaa5.fin_retencoes ADD COLUMN old_id INT(11) NULL;
 INSERT INTO vivazul_bceaa5.fin_retencoes (id,evento,created_at,updated_at,STATUS,id_fin_lancamentos,valor_retencao,descricao,old_id) 
 (SELECT 0, 1, NOW(), NULL, 10, fl.id, valor_retencao, 
 IF (fr.tributo = fr.tributo_descricao, fr.tributo, CONCAT(fr.tributo, '. Descr adicional: ', fr.tributo_descricao)) descricao, fr.cod 
@@ -128,4 +129,16 @@ INSERT INTO vivazul_bceaa5.local_params (id,evento,created_at,updated_at,STATUS,
 SELECT COUNT(forma_pagto), forma_pagto FROM mygsoft.fin_lancamentos GROUP BY forma_pagto ORDER BY forma_pagto
 */
 
-SELECT COUNT(cod) FROM `fin_retencoes` WHERE tributo = tributo_descricao
+SELECT COUNT(cod) FROM `fin_retencoes` WHERE tributo = tributo_descricao;
+
+SELECT nota_fiscal_conta FROM mygsoft.fin_lancamentos WHERE nota_fiscal_conta IS NOT NULL AND DATE(data_lancamento) >= '2024-09-01' AND DATE(`data_vencimento`) >= '2024-09-01';
+SELECT fl.id, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta, fl.valor_liquido AS valor_liquido_conta, tbl1.valor_vencimento AS valor_vencimento_parcela, 
+tbl1.duplicata, tbl1.documento, fl.pedido, tbl1.descricao AS descricao_parcela, fl.descricao AS descricao_conta, fl.id_empresa, e.razaosocial AS empresa, e.fantasia AS emp_fantasia, e.cpf_cnpj_empresa, c.nome AS destinatario, c.cpf_cnpj cpf_cnpj_destinatario 
+FROM `vivazul_bceaa5`.`fin_parcelas` AS `tbl1` 
+INNER JOIN `vivazul_bceaa5`.`fin_lancamentos` AS `fl` ON `fl`.`id` = `tbl1`.`id_fin_lancamentos` 
+INNER JOIN `vivazul_bceaa5`.`cadastros` AS `c` ON `c`.`id` = `fl`.`id_cadastros` 
+INNER JOIN `vivazul_bceaa5`.`empresa` AS `e` ON `e`.`id` = `fl`.`id_empresa` 
+
+WHERE `tbl1`.`status` = 10 AND (tbl1.duplicata REGEXP("2012493") OR tbl1.documento REGEXP("2012493") OR fl.pedido REGEXP("2012493") OR tbl1.descricao REGEXP("2012493") OR fl.descricao REGEXP("2012493")) 
+-- AND date(tbl1.data_vencimento) between "2024-09-01" and "2024-09-17" group by `tbl1`.`id` order by `data_vencimento` desc limit 50;
+-- AND date(tbl1.data_vencimento) between "2024-09-01" and "2024-09-05" group by `tbl1`.`id` order by `data_vencimento` desc limit 50;

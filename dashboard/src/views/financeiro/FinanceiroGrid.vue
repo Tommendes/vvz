@@ -189,6 +189,7 @@ const loadLazyData = async () => {
                 element.destinatario_agrupado = destinatario_agrupado;
 
                 let descricao_agrupada = element.descricao_parcela || undefined;
+                descricao_agrupada += element.descricao_conta
                 if (descricao_agrupada) {
                     descricao_agrupada = descricao_agrupada.trim().substr(0, limitDescription);
                 }
@@ -235,7 +236,7 @@ const mountUrlFilters = async () => {
         if (filters.value[key].value) {
             const macthMode = filters.value[key].matchMode || 'contains';
             let value = filters.value[key].value;
-            if (key && key == 'data_emissao') {
+            if (key && ['data_emissao', 'data_vencimento', 'data_pagto'].includes(key)) {
                 const dI = value[0] || undefined;
                 const dF = value[1] || undefined;
                 value = `${moment(dI).format('YYYY-MM-DD')},${moment(dF).format('YYYY-MM-DD')}`;
