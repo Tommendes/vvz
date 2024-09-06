@@ -575,14 +575,13 @@ watchEffect(() => {
                         <Skeleton v-if="loading.form" borderRadius="16px" height="2rem"></Skeleton>
                         <InputSwitch v-else id="prospecto" :disabled="mode == 'view'" v-model="itemData.prospecto" />
                     </div>
-                    <div class="field col-12 md:col-12"
-                        v-if="(itemData.observacao && itemData.observacao.length) || mode != 'view'">
+                    <div class="field col-12 md:col-12">
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading.form && mode != 'view'" v-model="itemData.observacao"
+                        <EditorComponent :readonly ="['view'].includes(mode)" v-else v-model="itemData.observacao"
                             id="observacao" :editorStyle="{ height: '80px' }" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.observacao"
-                            class="p-inputtext p-component p-filled p-disabled uppercase"></p>
+                        <!-- <p v-else v-html="itemData.observacao"
+                            class="p-inputtext p-component p-filled p-disabled uppercase"></p> -->
                     </div>
 
                     <hr />

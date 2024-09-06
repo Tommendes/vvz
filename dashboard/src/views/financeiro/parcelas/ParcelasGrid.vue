@@ -3,7 +3,7 @@ import { onBeforeMount, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import RetencaoItem from './RetencaoItem.vue';
+import ParcelaItem from './ParcelaItem.vue';
 import { useRoute } from 'vue-router';
 import { formatCurrency } from '../../../global';
 
@@ -23,13 +23,13 @@ const setNewItem = () => {
 }
 
 // Dados das retenções
-const itemDataRetencoes = ref([]);
+const itemDataParcelas = ref([]);
 // Carragamento de dados do form
-const loadRetencoes = async () => {
+const loadParcelas = async () => {
     const id = props.idRegistro || route.params.id;
     const url = `${urlBase.value}/${id}`;
-    itemDataRetencoes.value = [];
-    itemDataRetencoes.value = await axios.get(url)
+    itemDataParcelas.value = [];
+    itemDataParcelas.value = await axios.get(url)
         .then(res => {
             mode.value = 'grid';
             emit('reloadItems', res.data || {});
@@ -38,7 +38,7 @@ const loadRetencoes = async () => {
 }
 const cancel = () => { }
 onBeforeMount(async () => {
-    await loadRetencoes();
+    await loadParcelas();
 });
 watch(props, (value) => {
     if (value.mode && value.mode != mode.value) mode.value = value.mode;
@@ -51,20 +51,20 @@ watch(props, (value) => {
             <template #legend>
                 <div class="flex align-items-center text-primary">
                     <span class="fa-solid fa-bolt mr-2"></span>
-                    <span class="font-bold text-lg">Retenções e Descontos do Registro</span>
+                    <span class="font-bold text-lg">Programação Financeira do Registro</span>
                 </div>
             </template>
             <div class="flex justify-content-end mb-3">
                 <Button outlined type="button" v-if="props.idRegistro" severity="warning" rounded size="small"
                     icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
             </div>
-            <RetencaoItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
-                @reloadItems="loadRetencoes" />
-            <RetencaoItem v-for="item in itemDataRetencoes.data" :key="item.id" :itemData="item" @cancel="cancel"
-                @reloadItems="loadRetencoes" />
-            <div v-if="itemDataRetencoes.data && itemDataRetencoes.data.length">
+            <ParcelaItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
+                @reloadItems="loadParcelas" />
+            <ParcelaItem v-for="item in itemDataParcelas.data" :key="item.id" :itemData="item" @cancel="cancel"
+                @reloadItems="loadParcelas" />
+            <div v-if="itemDataParcelas.data && itemDataParcelas.data.length">
                 <h4 class="flex justify-content-end">Retenção total sobre o valor bruto: {{
-                    formatCurrency(itemDataRetencoes.total)
+                    formatCurrency(itemDataParcelas.total)
                     }}</h4>
             </div>
         </Fieldset>

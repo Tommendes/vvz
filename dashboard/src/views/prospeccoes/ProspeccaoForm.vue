@@ -287,12 +287,11 @@ onMounted(async () => {
                                 placeholder="Selecione um endereço" optionValue="value" v-model="itemData.id_cad_end"
                                 :options="dropdownEnderecos" />
                         </div>
-                        <div class="col-12 md:col-12" v-if="itemData.observacoes || mode != 'view'">
+                        <div class="col-12 md:col-12">
                             <label for="observacoes">Observações</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes"
+                            <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.observacoes"
                                 id="observacoes" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.observacoes" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
                     <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">

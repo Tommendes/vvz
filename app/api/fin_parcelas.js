@@ -2,9 +2,9 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'fin_retencoes'
-    const tabelaAlias = 'Retenção'
-    const tabelaAliasPL = 'Retenções'
+    const tabela = 'fin_parcelas'
+    const tabelaAlias = 'Parcela'
+    const tabelaAliasPL = 'Parcelas'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
@@ -19,25 +19,30 @@ module.exports = app => {
         try {
             // Alçada do usuário
             if (body.id) isMatchOrError(uParams && uParams.financeiro >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-                else isMatchOrError(uParams && uParams.financeiro >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && uParams.financeiro >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        if (body.valor_retencao) body.valor_retencao = body.valor_retencao.replace(".", "").replace(",", ".");
-        
+        if (body.valor_vencimento) body.valor_vencimento = body.valor_vencimento.replace(".", "").replace(",", ".");
+
         try {
+            if (body.id) {
+                const exists = await app.db(tabelaDomain).where({ id: body.id, status: STATUS_ACTIVE }).first()
+                existsOrError(exists, 'Registro não encontrado')
+            }
             existsOrError(body.id_fin_lancamentos, 'Conta não informada')
-            existsOrError(body.valor_retencao, 'Valor da retenção não informado')
-            existsOrError(body.descricao, 'Descrição da retenção não informada')
-            const unique = await app.db(tabelaDomain).where({ descricao: body.descricao, id_fin_lancamentos: body.id_fin_lancamentos }).first()
-            if (unique && unique.id != body.id) throw 'Retenção já registrada para esta conta'
+            existsOrError(body.valor_vencimento, 'Valor do vencimento não informado')
+            existsOrError(body.data_vencimento, 'Data do vencimento não informada')
+            existsOrError(body.id_fin_contas, 'Conta de recebimento ou pagamento não informada')
+            const unique = await app.db(tabelaDomain).where({ id_fin_lancamentos: body.id_fin_lancamentos, data_vencimento: body.data_vencimento, id_fin_contas: body.id_fin_contas, duplicata: body.duplicata, status: STATUS_ACTIVE }).first()
+            if (unique && unique.id != body.id) throw 'Parcela já registrada para esta conta'
         } catch (error) {
             return res.status(400).send(error)
         }
-        
+
         delete body.old_id;
         if (body.id) {
             // Variáveis da edição de um registro
@@ -117,8 +122,8 @@ module.exports = app => {
                 const quantidade = body.length
                 let total = 0
                 body.forEach((item) => {
-                    total += item.valor_retencao
-                    item.valor_retencao = parseFloat(item.valor_retencao).toFixed(2).replace('.', ',')
+                    total += item.valor_vencimento
+                    item.valor_vencimento = parseFloat(item.valor_vencimento).toFixed(2).replace('.', ',')
                 })
                 return res.json({ data: body, count: quantidade, total: total })
             })
@@ -144,7 +149,7 @@ module.exports = app => {
             .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
             .then(body => {
                 if (!body) return res.status(404).send('Registro não encontrado')
-                body.valor_retencao = parseFloat(body.valor_retencao || 0).toFixed(2).replace('.', ',')
+                body.valor_vencimento = parseFloat(body.valor_vencimento || 0).toFixed(2).replace('.', ',')
                 return res.json(body)
             })
             .catch(error => {
@@ -182,7 +187,7 @@ module.exports = app => {
                     "tabela_bd": tabela,
                 }
             })
-            const rowsUpdated = await app.db(tabelaDomain).del().where({ id: req.params.id })
+            const rowsUpdated = await app.db(tabelaDomain).update(registro).where({ id: req.params.id })
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
             res.status(204).send()

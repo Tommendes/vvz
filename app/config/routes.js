@@ -606,6 +606,19 @@ module.exports = app => {
         .delete(app.api.fin_retencoes.remove)
 
     /**
+    * Rota de fin_parcelas
+    */
+    app.route('/fin-parcelas/:id_fin_lancamentos')
+        .all(app.config.passport.authenticate())
+        .post(app.api.fin_parcelas.save)
+        .get(app.api.fin_parcelas.get)
+    app.route('/fin-parcelas/:id_fin_lancamentos/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.fin_parcelas.save)
+        .get(app.api.fin_parcelas.getById)
+        .delete(app.api.fin_parcelas.remove)
+
+    /**
      * Rota para fiscal
      */
     app.route('/fiscal-notas')

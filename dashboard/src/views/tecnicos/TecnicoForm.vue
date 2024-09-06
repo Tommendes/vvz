@@ -165,11 +165,10 @@ onMounted(async () => {
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato }}</small>
                         </div>
-                        <div class="col-12 md:col-12" v-if="itemData.observacao || ['edit', 'new'].includes(mode)">
+                        <div class="col-12 md:col-12">
                             <label for="observacao">Observação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.observacao" class="p-inputtext p-component p-filled"></p>
+                            <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                     </div>
                     <div class="col-12" v-if="uProf.admin >= 2">

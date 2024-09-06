@@ -477,14 +477,12 @@ watch(selectedCadastro, (value) => {
                                     :disabled="mode == 'view'" />
                             </div>
                         </div>
-                        <div class="col-12 md:col-12" v-if="itemData.observacao || mode != 'view'">
+                        <div class="col-12 md:col-12">
                             <label for="observacao">Observação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!(loading.form || ['view', 'expandedFormMode'].includes(mode))"
+                            <EditorComponent v-else :readonly="!(loading.form || ['view', 'expandedFormMode'].includes(mode))"
                                 v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }"
                                 aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.observacao || ''"
-                                class="p-inputtext p-component p-filled p-disabled" />
                         </div>
                     </div>
                     <OatsGrid ref="oatsGrid" :toOpenOat="toOpenOat"

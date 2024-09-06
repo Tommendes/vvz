@@ -251,40 +251,33 @@ watchEffect(() => { });
                     <div class="col-12 md:col-6">
                         <label for="saudacao_inicial">Saudação Inicial</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.saudacao_inicial"
+                        <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.saudacao_inicial"
                             id="saudacao_inicial" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.saudacao_inicial" class="p-inputtext p-component p-filled disabled">
-                        </p>
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="garantia">Garantia</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.garantia"
+                        <EditorComponent v-else:readonly="!loading && mode != 'view'" v-model="itemData.garantia"
                             id="garantia" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.garantia" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="conclusao">Conclusão</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.conclusao"
+                        <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.conclusao"
                             id="conclusao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.conclusao" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="assinatura">Assinatura</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.assinatura"
+                        <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.assinatura"
                             id="assinatura" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.assinatura" class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="observacoes_finais">Observacoes Finais</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else-if="!loading && mode != 'view'" v-model="itemData.observacoes_finais"
+                        <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.observacoes_finais"
                             id="observacoes_finais" :editorStyle="{ height: '160px' }"
                             aria-describedby="editor-error" />
-                        <p v-else v-html="itemData.observacoes_finais"
-                            class="p-inputtext p-component p-filled disabled"></p>
                     </div>
                 </div>
             </div>

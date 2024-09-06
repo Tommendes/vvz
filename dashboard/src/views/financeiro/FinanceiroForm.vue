@@ -7,6 +7,8 @@ import EditorComponent from '@/components/EditorComponent.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import Eventos from '@/components/Eventos.vue';
 import RetencoesGrid from './retencoes/RetencoesGrid.vue';
+import NotasGrid from './notas/NotasFiscaisGrid.vue';
+import ParcelasGrid from './parcelas/ParcelasGrid.vue';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -40,17 +42,13 @@ import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
 
-const animationDocNr = ref('');
+const ANIMATION_CLASS = 'animation-color animation-fill-none'
+const animationLblCadas = ref('');
+const animationVlrLiq = ref('');
 // Campos de formulário
 const itemData = ref({});
 // Tipo de centro
 const credorDevedor = ref('Destinatário');
-// Listagem de arquivos na pasta do registro
-const listFolder = ref(null);
-// O registro tem pasta?
-const hasFolder = ref(false);
-// O servidor está acessível?
-const hostAccessible = ref(false);
 // Modo do formulário
 const mode = ref('view');
 // Loadings
@@ -77,16 +75,6 @@ const loadData = async () => {
     loading.value = true;
     const id = props.idRegistro || route.params.id;
     const url = `${urlBase.value}/${id}`;
-    // itemData.value = { "id": "12038", "evento": 1, "created_at": "2015-03-19 14:51:43", "updated_at": null, "status": 10, "id_empresa": 1, "centro": 1, "tags": null, "id_cadastros": 16813, "data_emissao": "06/04/2011", "valor_bruto": 2706.36, "valor_liquido": 0, "pedido": null, "descricao": null, "old_id": 9210, "nome": "PAQUETA CALCCADOS LTDA - LJ 829 - CARUARU", "cpf_cnpj": "01098983003986" };
-    // selectedCadastro.value = {
-    //     code: itemData.value.id_cadastros,
-    //     name: itemData.value.nome + ' - ' + itemData.value.cpf_cnpj
-    // };
-    // if (itemData.value.data_emissao) itemData.value.data_emissao = masks.value.data_emissao.masked(moment(itemData.value.data_emissao).format('DD/MM/YYYY'));
-    // await getNomeCadastro();
-    // credorDevedor.value = itemData.value.centro == 1 ? 'Devedor' : 'Credor';
-    // breadItems.value = [{ label: 'Todos os Registros', to: `/${uProf.value.schema_description}/financeiro` }];
-    // if (itemData.value.id_cadastros) breadItems.value.push({ label: `Ir ao ${credorDevedor.value}`, to: `/${uProf.value.schema_description}/cadastro/${itemData.value.id_cadastros}` });
     if (mode.value != 'new')
         await axios
             .get(url)
@@ -125,6 +113,13 @@ const loadData = async () => {
 };
 
 defineExpose({ loadData }); // Expondo a função para o componente pai
+
+// Recarregar dados do formulário
+const reload = async () => {
+    mode.value = 'view';
+    editCadastro.value = false;
+    loadData();
+};
 // Salvar dados do formulário
 const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
@@ -143,26 +138,20 @@ const saveData = async () => {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value.id = body.id;
                 emit('changed');
-                // if (route.name != 'cadastro' && mode.value == 'new') {
-                //     router.push({
-                //         path: `/${uProf.value.schema_description}/fin-lancamentos/${itemData.value.id}`
-                //     });
-                //     loadData();
-                // } else if (route.name != 'cadastro' && id != itemData.value.id) {
-                //     router.push({
-                //         path: `/${uProf.value.schema_description}/fin-lancamentos/${itemData.value.id}`
-                //     });
-                //     const animation = animationDocNr.value;
-                //     animationDocNr.value = '';
-                //     loadData();
-                //     animationDocNr.value = animation;
-                // } else reload();
-                mode.value = 'view';
-                const folterRoot = itemData.value.cadastros.replaceAll(' ', '_');
-                const bodyTo = { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
-                setTimeout(async () => {
-                    await mkFolder(bodyTo);
-                }, Math.random() * 2000 + 250);
+                if (route.name != 'cadastro' && ['new', 'clone'].includes(mode.value)) {
+                    router.push({
+                        path: `/${uProf.value.schema_description}/financeiro/${itemData.value.id}`
+                    });
+                    await loadData();
+                } else if (route.name != 'cadastro' && id != itemData.value.id) {
+                    router.push({
+                        path: `/${uProf.value.schema_description}/financeiro/${itemData.value.id}`
+                    });
+                    const animation = animationDocNr.value;
+                    animationDocNr.value = '';
+                    await loadData();
+                    animationDocNr.value = animation;
+                } else reload();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -174,27 +163,35 @@ const saveData = async () => {
             // if (error.response && error.response.status == 401) router.push('/');
         });
 };
-// Recarregar dados do formulário
-const reload = async () => {
-    mode.value = 'view';
-    editCadastro.value = false;
-    loadData();
-    emit('cancel');
-};
 // Dados das retenções
 const itemDataRetencoes = ref([]);
 // Carragamento de dados do form
-const loadRetencoes = async () => {
-    const id = props.idRegistro || route.params.id;
-    const url = `${baseApiUrl}/fin-retencoes/${route.params.id}`;
-    await axios.get(url)
-        .then(res => {
-            itemDataRetencoes.value = res.data;
-            // console.log('itemDataRetencoes.value', itemDataRetencoes.value);
+const loadRetencoes = async (parcelas) => {
+    itemDataRetencoes.value = parcelas
+    // const id = props.idRegistro || route.params.id;
+    // const url = `${baseApiUrl}/fin-retencoes/${route.params.id}`;
+    // await axios.get(url)
+    //     .then(res => {
+    //         itemDataRetencoes.value = res.data;
+    //         // console.log('itemDataRetencoes.value', itemDataRetencoes.value);
             const valorBruto = parseFloat(itemData.value.valor_bruto.replace(',', '.'));
             itemData.value.valor_liquido = parseFloat(valorBruto - (itemDataRetencoes.value.total || 0)).toFixed(2).replace('.', ',');
-            defaultSuccess('Valor líquido recalculado');
-        });
+            animationVlrLiq.value = '';
+            setTimeout(() => {
+                animationVlrLiq.value = ANIMATION_CLASS;
+            }, 150);
+    //     });
+}
+
+// Dados dados das parcelas
+const itemDataParcelas = ref([]);
+const loadParcelas = async (parcelas) => {
+    itemDataParcelas.value = parcelas
+}
+// Dados das notas fiscais
+const itemDataNotas = ref([]);
+const loadNotas = async (notas) => {
+    itemDataNotas.value = notas
 }
 /**
  * Autocomplete de cadastros
@@ -299,55 +296,11 @@ computed(() => {
 
 const registroIdentico = async () => {
     itemData.value = {
-        id_cadastros: itemData.value.id_cadastros
+        id_cadastros: itemData.value.id_cadastros,
+        valor_bruto: "0",
+        valor_liquido: 0
     };
     mode.value = 'clone';
-};
-
-const lstFolder = async () => {
-    const id = props.idFisNotas || route.params.id;
-    const url = `${baseApiUrl}/fiscal-notas/f-a/lfd`;
-    await axios
-        .post(url, { id_fis_notas: id })
-        .then((res) => {
-            if (res.data && res.data.length) {
-                const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
-                listFolder.value = res.data;
-                // remover de listFolder os itensToNotList
-                if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
-                    listFolder.value = listFolder.value.filter((item) => {
-                        return !itensToNotList.includes(item.name);
-                    });
-                    hasFolder.value = true;
-                }
-            }
-            if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
-            hostAccessible.value = true;
-        })
-        .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response && error.response.status == 401) router.push('/');
-            hostAccessible.value = false;
-        });
-};
-
-const mkFolder = async (body) => {
-    const url = `${baseApiUrl}/fiscal-notas/f-a/mfd`;
-    defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
-
-    const folterRoot = body.data.cadastros.replaceAll(' ', '_');
-    const bodyTo = body || { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
-    await axios
-        .post(url, bodyTo)
-        .then(async (res) => {
-            // const msgDone = `Pasta criada com sucesso`;
-            defaultSuccess(res.data);
-            await lstFolder();
-        })
-        .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response && error.response.status == 401) router.push('/');
-        });
 };
 /**
  * Fim de ferramentas do registro
@@ -355,7 +308,7 @@ const mkFolder = async (body) => {
 const toGrid = () => {
     mode.value = 'grid';
     emit('cancel');
-    router.push({ path: `/${uProf.value.schema_description}/fiscal-notas` });
+    router.push({ path: `/${uProf.value.schema_description}/financeiro` });
 };
 
 // Obter Empresas
@@ -374,10 +327,9 @@ const getEmpresas = async () => {
 
 const getCredorDevedor = () => {
     credorDevedor.value = itemData.value.centro == 1 ? 'Devedor' : 'Credor';
-    // TODO: animation deve ser uma classe CSS e ao fim o valor deve ser resetado
-    const animation = 'animation-color animation-fill-forwards '
+    animationLblCadas.value = '';
     setTimeout(() => {
-        animationDocNr.value = animation;
+        animationLblCadas.value = ANIMATION_CLASS;
     }, 150);
 };
 
@@ -400,10 +352,15 @@ watch(selectedCadastro, (value) => {
         itemData.value.id_cadastros = value.code;
     }
 });
+watch(route, (value) => {
+    if (value !== itemData.value.id) {
+        reload();
+    }
+});
 </script>
 
 <template>
-    <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'expandedFormMode')" />
+    <Breadcrumb :items="breadItems" v-if="!(props.idCadastro || mode == 'new')" />
     <div>
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -424,7 +381,7 @@ watch(selectedCadastro, (value) => {
                                 :disabled="['view'].includes(mode)" @change="getCredorDevedor()" />
                         </div>
                         <div :class="`col-10`">
-                            <label for="id_cadastros" :class="`${animationDocNr}`">{{ credorDevedor }}</label>
+                            <label for="id_cadastros" :class="`${animationLblCadas}`">{{ credorDevedor }}</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')"
                                 v-model="selectedCadastro" dropdown optionLabel="name" :suggestions="filteredCadastro"
@@ -441,8 +398,12 @@ watch(selectedCadastro, (value) => {
                             <label for="data_emissao">Data Emissão<small id="text-error"
                                     class="p-error">*</small></label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" required :disabled="mode == 'view'" v-maska
-                                data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />
+                            <InputGroup v-else>
+                                <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska
+                                    data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />
+                                <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
+                                    @click="itemData.data_emissao = moment().format('DD/MM/YYYY')" text raised />
+                            </InputGroup>
                         </div>
                         <div :class="`col-12 lg:col-3`">
                             <label for="valor_bruto">Valor Bruto</label>
@@ -461,7 +422,7 @@ watch(selectedCadastro, (value) => {
                             </div>
                         </div>
                         <div :class="`col-12 lg:col-3`">
-                            <label for="valor_liquido">Valor Liquido</label>
+                            <label for="valor_liquido" :class="`${animationVlrLiq}`">Valor Liquido</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <div class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
@@ -475,20 +436,13 @@ watch(selectedCadastro, (value) => {
                             <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
                                 v-model="itemData.pedido" id="pedido" type="text" maxlength="20" />
                         </div>
-                        <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
+                        <div class="col-12 lg:col12">
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!(loading.form || ['view'].includes(mode))"
-                                v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
-                                aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
-                        </div>
-                        <div class="col-12" style="text-align: center" v-if="itemData.id">
-                            <div
-                                class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
-                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Notas fiscais do
-                                documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
-                            </div>
+                            <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.descricao"
+                                id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <!-- <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p> -->
+                            <!-- <Textarea disabled v-else v-model="itemData.descricao" rows="5" class="p-inputtext p-component p-filled"></Textarea> -->
                         </div>
                     </div>
                     <div class="card flex justify-content-center flex-wrap gap-3"
@@ -542,57 +496,13 @@ watch(selectedCadastro, (value) => {
                                 type="button" :disabled="!(uProf.fiscal >= 4 && itemData.status == 10)"
                                 class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
                                 @click="defaultWarn('Excluir registro')" />
-                            <Button :disabled="!hostAccessible || hasFolder" label="Criar Pasta" type="button"
-                                class="w-full mt-3 mb-3"
-                                :icon="`fa-solid fa-folder ${hostAccessible && !hasFolder ? 'fa-shake' : ''}`"
-                                severity="success" text raised @click="mkFolder()" />
                         </div>
                     </Fieldset>
-                    <RetencoesGrid v-if="itemData.id" :idRegistro="itemData.id" @calculateLiquid="loadRetencoes" />
-                    <Fieldset :toggleable="true" :collapsed="true" v-if="itemData.id">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-clock mr-2"></span>
-                                <span class="font-bold text-lg">Conteúdo da Pasta</span>
-                            </div>
-                        </template>
-                        <ul class="list-decimal"
-                            v-if="listFolder && typeof listFolder == 'object' && listFolder.length">
-                            <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
-                        </ul>
-                        <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>
-                        <p v-else>Não há conteúdo na pasta</p>
-                    </Fieldset>
+                    <RetencoesGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadRetencoes" :uProf="uProf" :mode="mode" />
+                    <NotasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadNotas" :uProf="uProf" :mode="mode" />
                 </div>
                 <div class="col-12" v-if="itemData.id">
-                    <div class="grid">
-                        <div class="col-12" style="text-align: center">
-                            <div
-                                class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
-                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Programação
-                                financeira&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
-                            </div>
-                        </div>
-                        <!-- <div :class="`col-12 lg:col-2`" v-for="item in itemsInputsList" :key="item">
-                            <label :for="item.field">{{ item.label }}<span v-if="item.required" class="text-base"
-                                    style="color: red">
-                                    *</span></label>
-                            <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <div v-else-if="!['view'].includes(mode)" class="p-inputgroup flex-1"
-                                style="font-size: 1rem">
-                                <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="['view'].includes(mode)"
-                                    v-model="itemData[item.field]" :id="item.field" type="text" v-maska
-                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                            </div>
-                            <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                <span class="p-inputgroup-addon">R$</span>
-                                <span disabled v-html="itemData[item.field]" :id="item.field"
-                                    class="p-inputtext p-component" />
-                            </div>
-                        </div> -->
-                    </div>
-
+                    <ParcelasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadParcelas" :uProf="uProf" :mode="mode" />
                     <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
@@ -611,25 +521,27 @@ watch(selectedCadastro, (value) => {
                             <span v-html="guide" />
                         </p>
                     </Fieldset>
-                    <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="uProf.admin >= 2">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-circle-info mr-2"></span>
-                                <span class="font-bold text-lg">FormData</span>
-                            </div>
-                        </template>
-                        <p>route: {{ route.name }}</p>
-                        <p>breadItems: {{ breadItems }}</p>
-                        <p>mode: {{ mode }}</p>
-                        <p>itemData: {{ itemData }}</p>
-                        <p>hasFolder {{ hasFolder }}</p>
-                        <p>editCadastro {{ editCadastro }}</p>
-                        <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
-                    </Fieldset>
                 </div>
             </div>
         </form>
     </div>
+    <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="uProf.admin >= 2">
+        <template #legend>
+            <div class="flex align-items-center text-primary">
+                <span class="fa-solid fa-circle-info mr-2"></span>
+                <span class="font-bold text-lg">FormData</span>
+            </div>
+        </template>
+        <p>route: {{ route.name }}</p>
+        <p>breadItems: {{ breadItems }}</p>
+        <p>mode: {{ mode }}</p>
+        <p>itemData: {{ itemData }}</p>
+        <p>editCadastro {{ editCadastro }}</p>
+        <p>selectedCadastro {{ selectedCadastro }}</p>
+        <p>itemDataRetencoes {{ itemDataRetencoes }}</p>
+        <p>itemDataParcelas {{ itemDataParcelas }}</p>
+        <p>itemDataNotas {{ itemDataNotas }}</p>
+    </Fieldset>
 </template>
 
 <style scoped>

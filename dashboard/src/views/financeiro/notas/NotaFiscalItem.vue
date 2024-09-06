@@ -18,7 +18,7 @@ onBeforeMount(async () => {
 // Props do template
 const props = defineProps(['itemData', 'mode']);
 // Emits do template
-const emit = defineEmits(['reloadItems', 'cancel']);
+const emit = defineEmits(['calculateLiquid', 'cancel']);
 const mode = ref('view');
 const itemData = ref([]);
 // Url base do form action
@@ -39,7 +39,7 @@ const saveData = async () => {
     try {
         const res = await axios[method](url, data)
             .then(res => {
-                emit('reloadItems');
+                emit('calculateLiquid');
                 mode.value = 'view';
                 defaultSuccess('Retenção salva com sucesso!');
             });
@@ -57,7 +57,7 @@ const deleteItem = async () => {
     try {
         await axios.delete(url)
             .then(res => {
-                emit('reloadItems');
+                emit('calculateLiquid');
                 defaultSuccess('Retenção excluída com sucesso!');
             });
     } catch (error) {

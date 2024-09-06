@@ -4,12 +4,14 @@ module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'fin_lancamentos'
     const tabelaAlias = 'Registro Financeiro'
+    const tabelaFtp = 'pipeline_ftp'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
     const STATUS_REGISTRO_ABERTO = 1
     const STATUS_REGISTRO_PAGO = 2
     const STATUS_REGISTRO_CONCILIADO = 3
     const STATUS_REGISTRO_CANCELADO = 99
+    const digitsOfAFolder = 6
 
     const save = async (req, res) => {
         let user = req.user
@@ -33,10 +35,11 @@ module.exports = app => {
         delete body.cpf_cnpj;
         delete body.valor_liquido;
         if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".");
+        else body.valor_bruto = 0;
 
         try {
             existsOrError(body.id_empresa, 'Empresa destinatária da nota não informada')
-            existsOrError(String(body.centro), 'Centro de custo não informado')
+            existsOrError(body.centro, 'Centro de custo não informado')
             let credorDevedor = 'Devedor'
             if (body.centro === 1) credorDevedor = 'Credor'
             existsOrError(body.id_cadastros, `${credorDevedor} não informado`)
@@ -46,9 +49,11 @@ module.exports = app => {
             if (!moment(body.data_emissao, 'DD/MM/YYYY', true).isValid()) throw 'Data de emissão inválida'
             body.data_emissao = moment(body.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD')
             existsOrError(body.valor_bruto, 'Valor bruto não informado')
-            const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, status: STATUS_ACTIVE }).first()
+            
+            const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, pedido: body.pedido || '', status: STATUS_ACTIVE }).first()            
             if (unique && unique.id != body.id) throw `Já existe um registro ${credorDevedor.toLowerCase()} para esta empresa com esses dados: ${JSON.stringify(unique)}`
         } catch (error) {
+            console.log(error);            
             return res.status(400).send(error)
         }
 
@@ -111,6 +116,7 @@ module.exports = app => {
                 })
         }
     }
+
     const get = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
@@ -125,7 +131,7 @@ module.exports = app => {
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const tabelaEmpresaDomain = `${dbPrefix}_${uParams.schema_name}.empresa`
         const tabelaParcelasDomain = `${dbPrefix}_${uParams.schema_name}.fin_parcelas`
-        const tabelaContasDomain = `${dbPrefix}_${uParams.schema_name}.fin_contas`
+        const tabelaRetencoesDomain = `${dbPrefix}_${uParams.schema_name}.fin_retencoes`
 
         let queryes = undefined
         let query = undefined
@@ -211,6 +217,7 @@ module.exports = app => {
                         if (['cpf_cnpj_destinatario'].includes(queryField)) value = value.replace(/([^\d])+/gim, "")
                         else if (['valor_bruto_conta', 'valor_liquido_conta', 'valor_vencimento_parcela'].includes(queryField)) value = value.replace(".", "").replace(",", ".")
 
+
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
@@ -229,8 +236,8 @@ module.exports = app => {
                         // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador vindo do frontend
                         if (queryField == 'valor_bruto_conta') queryField = 'fl.valor_bruto'
                         if (queryField == 'emp_fantasia') queryField = 'e.fantasia'
-                        else if (queryField == 'valor_liquido_conta') queryField = 'fl.valor_liquido'
                         else if (queryField == 'valor_vencimento_parcela') queryField = 'tbl1.valor_vencimento'
+                        else if (queryField == 'valor_liquido_conta') queryField = `(SELECT fl.valor_bruto - COALESCE(SUM(r.valor_retencao), 0) FROM ${tabelaRetencoesDomain} r WHERE r.id_fin_lancamentos = fl.id)`
                         query += `${queryField} ${operator} AND `
                     }
                 } else if (key.split(':')[0] == 'params') {
@@ -251,6 +258,7 @@ module.exports = app => {
         let totalRecords = ret.clone()
             .countDistinct('tbl1.id as count')
             .sumDistinct('tbl1.valor_vencimento as sum')
+            .select(app.db.raw(`(select fl.valor_bruto - coalesce(sum(r.valor_retencao), 0) from ${tabelaRetencoesDomain} r where r.id_fin_lancamentos = fl.id) AS valor_liquido_conta`))
             .first()
             .join({ fl: tabelaDomain }, 'fl.id', '=', 'tbl1.id_fin_lancamentos')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'fl.id_cadastros')
@@ -263,7 +271,8 @@ module.exports = app => {
         totalRecords = await totalRecords
 
         ret.select(app.db.raw(`fl.id, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta`))
-            .select(app.db.raw(`fl.valor_liquido AS valor_liquido_conta, tbl1.valor_vencimento AS valor_vencimento_parcela, tbl1.duplicata, tbl1.documento`))
+            .select(app.db.raw(`(select fl.valor_bruto - coalesce(sum(r.valor_retencao), 0) from ${tabelaRetencoesDomain} r where r.id_fin_lancamentos = fl.id) AS valor_liquido_conta`))
+            .select(app.db.raw(`tbl1.valor_vencimento AS valor_vencimento_parcela, tbl1.duplicata, tbl1.documento`))
             .select(app.db.raw(`fl.pedido, tbl1.descricao AS descricao_parcela, fl.descricao AS descricao_conta, fl.id_empresa, e.razaosocial AS empresa, e.fantasia AS emp_fantasia`))
             .select(app.db.raw(`e.cpf_cnpj_empresa, c.nome AS destinatario, c.cpf_cnpj cpf_cnpj_destinatario`))
             .join({ fl: tabelaDomain }, 'fl.id', '=', 'tbl1.id_fin_lancamentos')
@@ -278,7 +287,7 @@ module.exports = app => {
         ret.groupBy('tbl1.id').orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
 
-        console.log(ret.toString());
+        // console.log(ret.toString());
 
         ret.then(async (body) => {
             const length = body.length
@@ -389,7 +398,14 @@ module.exports = app => {
         }
     }
 
-    return {
-        save, get, getById, remove
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
     }
+
+    return { save, get, getById, remove, getByFunction }
 }

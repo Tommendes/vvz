@@ -482,13 +482,12 @@ watch(route, (value) => {
                                     :disabled="mode == 'view'" />
                             </div>
                         </div>
-                        <div class="col-12 lg:col12" v-if="['new', 'edit'].includes(mode) || itemData.descricao">
+                        <div class="col-12 lg:col12">
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else-if="!(loading.form || ['view'].includes(mode))"
+                            <EditorComponent v-else :readonly="!(loading.form || ['view'].includes(mode))"
                                 v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
                                 aria-describedby="editor-error" />
-                            <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p>
                         </div>
                     </div>
                     <div class="card flex justify-content-center flex-wrap gap-3"

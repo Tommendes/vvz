@@ -22,7 +22,7 @@ exports.up = function(knex, Promise) {
         table.double('valor_bruto', 11,2).notNull().defaultTo(0.00).comment('Valor bruto')
         table.double('valor_liquido', 11,2).notNull().defaultTo(0.00).comment('Valor líquido')
         table.string('pedido').comment('Pedido de compra')
-        table.string('descricao').comment('Descrição curta do lançamento')
+        table.specificType('descricao', 'text').comment('Descrição curta do lançamento')
     })
 };
 

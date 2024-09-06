@@ -4,7 +4,7 @@ import { FilterMatchMode } from 'primevue/api';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultWarn, defaultSuccess } from '@/toast';
-// import FinanceiroForm from './FinanceiroForm.vue';
+import FinanceiroForm from './FinanceiroForm.vue';
 import { formatCurrency, removeHtmlTags } from '@/global';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import moment from 'moment';
@@ -388,7 +388,9 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', updateScreenWidth);
 });
 const customFilterOptions = ref({ filterclear: false });
-const newDocument = () => { defaultSuccess('Em breve...') };
+const newDocument = () => { 
+    mode.value = 'new';
+}
 
 const rowStyle = (data) => {
     if (data.centro == "2") return { 'color': '#d32f2f' };
@@ -402,7 +404,7 @@ const rowStyle = (data) => {
             <Breadcrumb :items="[{ label: 'Registros Financeiros', to: `/${uProf.schema_description}/notas-fiscais` }]" />
         </div>
         <div class="col-12">
-            <!-- <FinanceiroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" /> -->
+            <FinanceiroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         </div>
 
         <div class="col-12">
