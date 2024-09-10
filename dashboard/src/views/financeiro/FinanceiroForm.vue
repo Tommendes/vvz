@@ -158,7 +158,6 @@ const saveData = async () => {
         })
         .catch((error) => {
             console.log(error);
-
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             // if (error.response && error.response.status == 401) router.push('/');
         });
@@ -168,18 +167,12 @@ const itemDataRetencoes = ref([]);
 // Carragamento de dados do form
 const loadRetencoes = async (parcelas) => {
     itemDataRetencoes.value = parcelas
-    // const id = props.idRegistro || route.params.id;
-    // const url = `${baseApiUrl}/fin-retencoes/${route.params.id}`;
-    // await axios.get(url)
-    //     .then(res => {
-    //         itemDataRetencoes.value = res.data;
-    //         // console.log('itemDataRetencoes.value', itemDataRetencoes.value);
-            const valorBruto = parseFloat(itemData.value.valor_bruto.replace(',', '.'));
-            itemData.value.valor_liquido = parseFloat(valorBruto - (itemDataRetencoes.value.total || 0)).toFixed(2).replace('.', ',');
-            animationVlrLiq.value = '';
-            setTimeout(() => {
-                animationVlrLiq.value = ANIMATION_CLASS;
-            }, 150);
+    const valorBruto = parseFloat(itemData.value.valor_bruto.replace(',', '.'));
+    itemData.value.valor_liquido = parseFloat(valorBruto - (itemDataRetencoes.value.total || 0)).toFixed(2).replace('.', ',');
+    animationVlrLiq.value = '';
+    setTimeout(() => {
+        animationVlrLiq.value = ANIMATION_CLASS;
+    }, 150);
     //     });
 }
 
@@ -367,7 +360,7 @@ watch(route, (value) => {
                 <div :class="`${['new', 'clone'].includes(mode) ? 'col-12' : 'col-12 lg:col-8'}`">
                     <div class="p-fluid grid">
                         <div :class="`col-12`">
-                            <label for="id_empresa">Empresa</label>
+                            <label for="id_empresa">Empresa <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <Dropdown v-else placeholder="Selecione..." :showClear="!!itemData.id_empresa"
                                 id="id_empresa" optionLabel="label" optionValue="value" v-model="itemData.id_empresa"
@@ -381,7 +374,8 @@ watch(route, (value) => {
                                 :disabled="['view'].includes(mode)" @change="getCredorDevedor()" />
                         </div>
                         <div :class="`col-10`">
-                            <label for="id_cadastros" :class="`${animationLblCadas}`">{{ credorDevedor }}</label>
+                            <label for="id_cadastros" :class="`${animationLblCadas}`">{{ credorDevedor }} <span
+                                    class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')"
                                 v-model="selectedCadastro" dropdown optionLabel="name" :suggestions="filteredCadastro"
@@ -395,18 +389,20 @@ watch(route, (value) => {
                             </div>
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="data_emissao">Data Emissão<small id="text-error"
+                            <label for="data_emissao">Data Emissão <small id="text-error"
                                     class="p-error">*</small></label>
                             <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                             <InputGroup v-else>
                                 <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska
                                     data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />
                                 <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
-                                    @click="itemData.data_emissao = moment().format('DD/MM/YYYY')" text raised />
+                                    @click="itemData.data_emissao = moment().format('DD/MM/YYYY')" text raised
+                                    :disabled="mode == 'view'" />
                             </InputGroup>
                         </div>
                         <div :class="`col-12 lg:col-3`">
-                            <label for="valor_bruto">Valor Bruto</label>
+                            <label for="valor_bruto">Valor Bruto <span class="text-base"
+                                    style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1"
                                 style="font-size: 1rem">
@@ -498,11 +494,14 @@ watch(route, (value) => {
                                 @click="defaultWarn('Excluir registro')" />
                         </div>
                     </Fieldset>
-                    <RetencoesGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadRetencoes" :uProf="uProf" :mode="mode" />
-                    <NotasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadNotas" :uProf="uProf" :mode="mode" />
+                    <RetencoesGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadRetencoes"
+                        :uProf="uProf" :mode="mode" />
+                    <NotasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadNotas" :uProf="uProf"
+                        :mode="mode" />
                 </div>
                 <div class="col-12" v-if="itemData.id">
-                    <ParcelasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadParcelas" :uProf="uProf" :mode="mode" />
+                    <ParcelasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadParcelas"
+                        :totalLiquido="itemData.valor_liquido" :uProf="uProf" :mode="mode" :idEmpresa="itemData.id_empresa" />
                     <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>

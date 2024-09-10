@@ -580,6 +580,22 @@ module.exports = app => {
         .get(app.api.fin_etiquetas.getByFunction)
 
     /**
+    * Rota de fin_contas
+    */
+    // app.route('/fin-contas')
+    //     .all(app.config.passport.authenticate())
+    //     .post(app.api.fin_contas.save)
+    //     .get(app.api.fin_contas.get)
+    // app.route('/fin-contas/:id')
+    //     .all(app.config.passport.authenticate())
+    //     .put(app.api.fin_contas.save)
+    //     .get(app.api.fin_contas.getById)
+    //     .delete(app.api.fin_contas.remove)
+    app.route('/fin-contas/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.fin_contas.getByFunction)
+
+    /**
     * Rota de fin_bancos
     */
     app.route('/fin-bancos')

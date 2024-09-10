@@ -1,40 +1,71 @@
 <script setup>
-import { onBeforeMount, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import ParcelaItem from './ParcelaItem.vue';
 import { useRoute } from 'vue-router';
 import { formatCurrency } from '../../../global';
+import moment from 'moment';
 
 const route = useRoute();
 // Props do template
-const props = defineProps(['idRegistro', 'mode', 'uProf'])
+const props = defineProps(['idRegistro', 'mode', 'uProf', 'totalLiquido', 'idEmpresa'])
 // Emit do template
 const emit = defineEmits(['reloadItems', 'cancel']);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/fin-retencoes`);
+const urlBase = ref(`${baseApiUrl}/fin-parcelas`);
 // Mode do form (view, edit, new)
 const mode = ref('grid');
 const itemData = ref();
+const missingValue = ref(0)
 const setNewItem = () => {
     mode.value = 'new';
     itemData.value = { "id_fin_lancamentos": props.idRegistro };
 }
 
-// Dados das retenções
+// Dados das parcelas
 const itemDataParcelas = ref([]);
 // Carragamento de dados do form
 const loadParcelas = async () => {
     const id = props.idRegistro || route.params.id;
     const url = `${urlBase.value}/${id}`;
+    let itemPosition = 0;
     itemDataParcelas.value = [];
     itemDataParcelas.value = await axios.get(url)
         .then(res => {
             mode.value = 'grid';
+            res.data.data.forEach(element => {
+                element.itemPosition = String(itemPosition++);
+            });
             emit('reloadItems', res.data || {});
+            if (props.totalLiquido && res.data.total) {
+                const totalLiquido = Number(props.totalLiquido.replace(',', '.'));
+                const totalParcelas = Number(res.data.total.replace(',', '.'))
+                missingValue.value = totalParcelas - totalLiquido;
+            } else {
+                missingValue.value = 0;
+            }
             return res.data;
         });
+}
+const setAdicionalVencimentoClass = (item) => {
+    let labelTo = 'Parcela ' + (item.parcela === 'U' ? 'Única' : item.parcela)
+    let classTo = 'text-red-500';
+    if (item.situacaoVencimento == '0') {
+        labelTo += ' vencida em ';
+    } else if (item.situacaoVencimento == '1') {
+        labelTo += ' a vencer em ';
+        classTo = 'text-yellow-500';
+    } else if (item.situacaoVencimento == '2') {
+        labelTo += ' vencendo em ';
+        classTo = 'text-green-500';
+    } else {
+        labelTo += ' com vencimento em ';
+        classTo = '';
+    }
+    labelTo += moment(item.data_vencimento).format('DD/MM/YYYY')
+    return { class: classTo, label: labelTo };
 }
 const cancel = () => { }
 onBeforeMount(async () => {
@@ -47,30 +78,56 @@ watch(props, (value) => {
 
 <template>
     <div>
-        <Fieldset :toggleable="true" :collapsed="true" class="mb-3">
+        <Fieldset :toggleable="true" :collapsed="false" class="mb-1">
             <template #legend>
                 <div class="flex align-items-center text-primary">
                     <span class="fa-solid fa-bolt mr-2"></span>
                     <span class="font-bold text-lg">Programação Financeira do Registro</span>
                 </div>
             </template>
-            <div class="flex justify-content-end mb-3">
+            <div class="flex justify-content-end mb-1">
                 <Button outlined type="button" v-if="props.idRegistro" severity="warning" rounded size="small"
                     icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
             </div>
             <ParcelaItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
-                @reloadItems="loadParcelas" />
-            <ParcelaItem v-for="item in itemDataParcelas.data" :key="item.id" :itemData="item" @cancel="cancel"
-                @reloadItems="loadParcelas" />
+                @reloadItems="loadParcelas" :uProf="props.uProf" :idEmpresa="props.idEmpresa" />
+                <!-- colapssed = true = fechado -->
+            <Fieldset :toggleable="true"
+                :collapsed="!(item.itemPosition == '0' || (String(item.situacao) == '1' && ['0', '1'].includes(String(item.situacaoVencimento))))"
+                :class="`mb-1${item.situacaoVencimento == '0' ? ' bg-red-100 hover:bg-red-200' : ''}`"
+                v-for="item in itemDataParcelas.data" :key="item.id">
+                <template #legend>
+                    <div class="flex align-items-center text-primary">
+                        <span class="fa-solid fa-bolt mr-2"></span>
+                        <span :class="`font-bold text-lg ${setAdicionalVencimentoClass(item).class}`">{{
+                            setAdicionalVencimentoClass(item).label }}. {{
+                                item.situacaoLabel }}</span>
+                    </div>
+                </template>
+                <ParcelaItem :itemData="item" @cancel="cancel" @reloadItems="loadParcelas" :uProf="props.uProf"
+                    :idEmpresa="props.idEmpresa" />
+                    <!-- <p>{{ item.itemPosition == '0' }}{{ String(item.situacao) == '1' }}{{ ['0', '1'].includes(String(item.situacaoVencimento)) }}</p> -->
+            </Fieldset>
             <div v-if="itemDataParcelas.data && itemDataParcelas.data.length">
-                <h4 class="flex justify-content-end">Retenção total sobre o valor bruto: {{
+                <h4 class="flex justify-content-end">Valor total do parcelamento: {{
                     formatCurrency(itemDataParcelas.total)
                     }}</h4>
+                <h4 v-if="missingValue" class="flex justify-content-end border-bottom-1 mt-0">Valor liquido total deste
+                    registro: {{
+                        formatCurrency(props.totalLiquido)
+                    }}</h4>
+                <h4 v-if="missingValue" class="flex justify-content-end mt-0 text-red-600">{{ missingValue < 0
+                    ? 'Falta registrar o valor de' : 'Valor registrado a maior' }}: {{ formatCurrency(missingValue <
+                            0 ? missingValue * -1 : missingValue) }}</h4>
+            </div>
+            <div v-if="uProf.admin >= 2">
+                <p>props.mode: {{ props.mode }}</p>
+                <p>itemDataParcelas.total: {{ itemDataParcelas.total }}</p>
+                <p>props.totalLiquido: {{ props.totalLiquido }}</p>
+                <p>missingValue: {{ missingValue }}</p>
+                <p>props.idEmpresa: {{ props.idEmpresa }}</p>
             </div>
         </Fieldset>
-        <div v-if="uProf.admin >= 2">
-            <p>props.mode: {{ props.mode }}</p>
-        </div>
     </div>
 </template>
 

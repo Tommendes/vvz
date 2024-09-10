@@ -2,9 +2,9 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const tabela = 'fin_parcelas'
-    const tabelaAlias = 'Parcela'
-    const tabelaAliasPL = 'Parcelas'
+    const tabela = 'fin_contas'
+    const tabelaAlias = 'Conta'
+    const tabelaAliasPL = 'Contas'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
     const SITUACAO_ABERTO = 1
@@ -41,7 +41,7 @@ module.exports = app => {
             existsOrError(body.id_fin_lancamentos, 'Conta não informada')
             existsOrError(body.data_vencimento, 'Data do vencimento não informada')
             existsOrError(body.valor_vencimento, 'Valor do vencimento não informado')
-            existsOrError(body.parcela, 'Parcela não informada')
+            existsOrError(body.parcela, 'Conta não informada')
             existsOrError(body.situacao, 'Situação da parcela não informada')
             // Verificar se a data de vencimanto é válida e converte para en
             if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimanto inválida'
@@ -54,7 +54,7 @@ module.exports = app => {
                 existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado')
             }
             const unique = await app.db(tabelaDomain).where({ id_fin_lancamentos: body.id_fin_lancamentos, data_vencimento: body.data_vencimento, id_fin_contas: body.id_fin_contas, duplicata: body.duplicata, status: STATUS_ACTIVE }).first()
-            if (unique && unique.id != body.id) throw 'Parcela já registrada para esta conta'
+            if (unique && unique.id != body.id) throw 'Conta já registrada para esta conta'
         } catch (error) {
             console.log(error);
             return res.status(400).send(error)
@@ -63,7 +63,6 @@ module.exports = app => {
         delete body.old_id;
         delete body.situacaoVencimento;
         delete body.situacaoLabel;
-        delete body.itemPosition;
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -168,7 +167,7 @@ module.exports = app => {
                         case SITUACAO_CONCILIADO: item.situacaoLabel = 'Registro Conciliado'; break;
                         case SITUACAO_CANCELADO: item.situacaoLabel = 'Registro Cancelado'; break;
                         default: item.situacaoLabel = 'Situação do registro não identificada';
-                        break;
+                            break;
                     }
                     item.situacao = String(item.situacao);
                 });
@@ -246,7 +245,67 @@ module.exports = app => {
         }
     }
 
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            case 'glf':
+                getListByField(req, res)
+                break;
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }
+
+    // Lista de registros por campo
+    const getListByField = async (req, res) => {
+        let user = req.user
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            if (!uParams) throw `${noAccessMsg} "Exibição de ${tabelaAlias}"`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const fieldName = req.query.fld
+        const value = req.query.vl
+        const literal = req.query.literal || false
+        const select = req.query.slct
+
+        const first = req.query.first && req.query.first == true
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const ret = app.db(tabelaDomain)
+
+        if (select) {
+            // separar os campos e retirar os espaços
+            const selectArr = select.split(',').map(s => s.trim())
+            ret.select(selectArr)
+        }
+
+        if (literal) ret.where(app.db.raw(`${fieldName} = "${value.toString()}"`))
+        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replaceAll(' ', '.+')}")`))
+
+        ret.where({ status: STATUS_ACTIVE })
+
+        if (first) {
+            ret.first()
+        }
+        ret.orderBy('nome', 'asc')
+        console.log(ret.toString());
+        
+        ret.then(body => {
+            const count = body.length
+            return res.json({ data: body, count })
+        }).catch(error => {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        })
+    }
+
+
     return {
-        save, get, getById, remove, SITUACAO_ABERTO, SITUACAO_PAGO, SITUACAO_CONCILIADO, SITUACAO_CANCELADO
+        save, get, getById, remove, getByFunction
     }
 }

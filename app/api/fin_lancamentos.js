@@ -2,6 +2,7 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const { SITUACAO_ABERTO, SITUACAO_PAGO, SITUACAO_CONCILIADO, SITUACAO_CANCELADO } = require('./fin_parcelas.js')(app)
     const tabela = 'fin_lancamentos'
     const tabelaAlias = 'Registro Financeiro'
     const tabelaFtp = 'pipeline_ftp'
@@ -44,16 +45,15 @@ module.exports = app => {
             if (body.centro === 1) credorDevedor = 'Credor'
             existsOrError(body.id_cadastros, `${credorDevedor} não informado`)
             existsOrError(body.data_emissao, 'Data de emissão não informada')
-            // Verificar se a data de emissão é válida
-
+            // Verificar se a data de emissão é válida e converte para en
             if (!moment(body.data_emissao, 'DD/MM/YYYY', true).isValid()) throw 'Data de emissão inválida'
             body.data_emissao = moment(body.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD')
             existsOrError(body.valor_bruto, 'Valor bruto não informado')
-            
-            const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, pedido: body.pedido || '', status: STATUS_ACTIVE }).first()            
+
+            const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, pedido: body.pedido || '', status: STATUS_ACTIVE }).first()
             if (unique && unique.id != body.id) throw `Já existe um registro ${credorDevedor.toLowerCase()} para esta empresa com esses dados: ${JSON.stringify(unique)}`
         } catch (error) {
-            console.log(error);            
+            console.log(error);
             return res.status(400).send(error)
         }
 
@@ -300,6 +300,14 @@ module.exports = app => {
                 element.valor_bruto_conta = parseFloat(element.valor_bruto_conta).toFixed(2).replace('.', ',')
                 element.valor_liquido_conta = parseFloat(element.valor_liquido_conta).toFixed(2).replace('.', ',')
                 element.valor_vencimento_parcela = parseFloat(element.valor_vencimento_parcela).toFixed(2).replace('.', ',')
+                switch (element.situacao) {
+                    case SITUACAO_ABERTO: element.situacaoLabel = '<h4>Registro em Aberto</h4>'; break;
+                    case SITUACAO_PAGO: element.situacaoLabel = '<h4>Registro Pago</h4>'; break;
+                    case SITUACAO_CONCILIADO: element.situacaoLabel = '<h4>Registro Conciliado</h4>'; break;
+                    case SITUACAO_CANCELADO: element.situacaoLabel = '<h4>Registro Cancelado</h4>'; break;
+                    default: element.situacaoLabel = '<h4>Situação não identificada</h4>';
+                        break;
+                }
                 // const installments = app.db({ p: tabelaParcelasDomain })
                 //     .select('p.data_vencimento', 'p.valor_vencimento', 'p.parcela', 'p.recorrencia', 'p.descricao', 'c.nome as conta', 'p.documento')
                 //     .join({ c: tabelaContasDomain }, 'c.id', 'p.id_fin_contas')

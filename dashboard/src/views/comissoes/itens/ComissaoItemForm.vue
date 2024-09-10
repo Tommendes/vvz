@@ -49,7 +49,7 @@ const props = defineProps({
 const urlBase = ref(`${baseApiUrl}/comissoes`);
 // Dropdowns
 const dropdownAgentes = ref([]);
-// Até 10 parcelas
+// Até 12 parcelas
 const dropdownParcelas = ref([
     { value: 'U', label: `Unica` },
     { value: '1', label: `1` },
@@ -576,7 +576,7 @@ watchEffect(() => {
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
                             class="fa-solid fa-list-ol"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Dropdown v-else filter placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value"
+                    <Dropdown v-else placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value"
                         v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>

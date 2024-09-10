@@ -106,14 +106,14 @@ const limitNome = 80;
 // Lista de tipos
 const listaNomes = ref([
     { field: 'emp_fantasia', label: 'Empresa', matchMode: FilterMatchMode.EQUALS },
-    { field: 'destinatario_agrupado', label: 'Credor | Devedor', matchMode: FilterMatchMode.CONTAINS, minWidth: '15rem' },
+    { field: 'destinatario_agrupado', label: 'Credor | Devedor', matchMode: FilterMatchMode.CONTAINS, minWidth: '10rem' },
     // { field: 'data_emissao', label: 'Emissão', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
     { field: 'data_vencimento', label: 'Vencimento', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
     { field: 'data_pagto', label: 'Pagamento', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
     { field: 'valor_bruto_conta', label: 'R$ Bruto', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
     { field: 'valor_liquido_conta', label: 'R$ Liquido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
     { field: 'valor_vencimento_parcela', label: 'R$ Vencimento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
-    { field: 'descricao_agrupada', label: 'Descrição', matchMode: FilterMatchMode.CONTAINS, minWidth: '20rem', class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
+    { field: 'descricao_agrupada', label: 'Descrição', matchMode: FilterMatchMode.CONTAINS, minWidth: '11rem', class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : 'white-space-nowrap' },
     // { field: 'duplicata', label: 'Duplicata', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
     // { field: 'documento', label: 'Documento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
     // { field: 'pedido', label: 'Pedido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
@@ -188,15 +188,16 @@ const loadLazyData = async () => {
                 if (uProf.value.admin >= 1) destinatario_agrupado += `(${element.id})`;
                 element.destinatario_agrupado = destinatario_agrupado;
 
-                let descricao_agrupada = element.descricao_parcela || undefined;
-                descricao_agrupada += element.descricao_conta
+                let descricao_agrupada = element.situacaoLabel;
+                descricao_agrupada += element.descricao_parcela || '';
+                descricao_agrupada += element.descricao_conta || '';
                 if (descricao_agrupada) {
                     descricao_agrupada = descricao_agrupada.trim().substr(0, limitDescription);
                 }
                 if (element.descricao_parcela.length > limitDescription) descricao_agrupada += ' ...';
-                if (element.duplicata) descricao_agrupada += `<p>Duplicata: ${element.duplicata}</p>`;
-                if (element.documento) descricao_agrupada += `<p>Documento: ${element.documento}</p>`;
-                if (element.pedido) descricao_agrupada += `<p>Pedido: ${element.pedido}</p>`;
+                if (element.duplicata && element.duplicata.length) descricao_agrupada += `<p>Duplicata: ${element.duplicata}</p>`;
+                if (element.documento && element.documento.length) descricao_agrupada += `<p>Documento: ${element.documento}</p>`;
+                if (element.pedido && element.pedido.length) descricao_agrupada += `<p>Pedido: ${element.pedido}</p>`;
                 element.descricao_agrupada = descricao_agrupada;
 
                 const numero = element.numero || undefined;
@@ -463,7 +464,7 @@ const rowStyle = (data) => {
                     <template v-for="nome in listaNomes" :key="nome">
                         <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
                             :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '12rem'}`" sortable
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '12rem'}; max-width: ${nome.minWidth ? nome.minWidth : '12rem'}`" sortable
                             :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
                                 <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"

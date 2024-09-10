@@ -59,9 +59,9 @@ watch(props, (value) => {
                     icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
             </div>
             <RetencaoItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
-                @reloadItems="loadRetencoes" />
+                @reloadItems="loadRetencoes" :uProf="uProf" />
             <RetencaoItem v-for="item in itemDataRetencoes.data" :key="item.id" :itemData="item" @cancel="cancel"
-                @reloadItems="loadRetencoes" />
+                @reloadItems="loadRetencoes" :uProf="uProf" />
             <div v-if="itemDataRetencoes.data && itemDataRetencoes.data.length">
                 <h4 class="flex justify-content-end">Retenção total sobre o valor bruto: {{
                     formatCurrency(itemDataRetencoes.total)

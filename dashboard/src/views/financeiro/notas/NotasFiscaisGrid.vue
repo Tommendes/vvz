@@ -59,9 +59,9 @@ watch(props, (value) => {
                     icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
             </div>
             <NotaFiscalItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
-                @reloadItems="loadNotas" />
+                @reloadItems="loadNotas" :uProf="uProf" />
             <NotaFiscalItem v-for="item in itemDataNotas.data" :key="item.id" :itemData="item" @cancel="cancel"
-                @reloadItems="loadNotas" />
+                @reloadItems="loadNotas" :uProf="uProf" />
             <div v-if="itemDataNotas.data && itemDataNotas.data.length">
                 <h4 class="flex justify-content-end">Retenção total sobre o valor bruto: {{
                     formatCurrency(itemDataNotas.total)

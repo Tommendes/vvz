@@ -6,17 +6,8 @@ import { defaultSuccess, defaultWarn } from '@/toast';
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
-// Profile do usuário
-import { useUserStore } from '@/stores/user';
-import { onBeforeMount } from 'vue';
-const store = useUserStore();
-const uProf = ref({});
-onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
-});
-
 // Props do template
-const props = defineProps(['itemData', 'mode']);
+const props = defineProps(['itemData', 'mode', 'uProf']);
 // Emits do template
 const emit = defineEmits(['calculateLiquid', 'cancel']);
 const mode = ref('view');
@@ -85,19 +76,19 @@ onMounted(() => {
             <InputText autocomplete="no" :disabled="mode == 'view'" id="valor_retencao"
                 v-model="itemData.valor_retencao" type="text" placeholder="Valor" v-maska data-maska="0,99"
                 data-maska-tokens="0:\d:multiple|9:\d:optional" @keydown.enter.prevent class="uppercase" />
-            <Button type="submit" :disabled="!(uProf.comissoes >= 2)"
-                v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)"
+            <Button type="submit" :disabled="!(props.uProf.financeiro >= 2)"
+                v-if="['edit', 'new'].includes(mode) || mode == 'new'"
                 v-tooltip.top="'Salvar retenção'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-            <Button type="button" :disabled="!(uProf.comissoes >= 3)" v-if="mode == 'view'"
+            <Button type="button" :disabled="!(props.uProf.financeiro >= 3)" v-if="mode == 'view'"
                 v-tooltip.top="'Editar retenção'" icon="fa-regular fa-pen-to-square" text raised
                 @click="mode = 'edit'" />
             <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'"
                 icon="fa-solid fa-ban" severity="danger" text raised @click="cancel()" />
-            <Button type="button" :disabled="!(uProf.comissoes >= 4)" v-if="['view'].includes(mode)"
+            <Button type="button" :disabled="!(props.uProf.financeiro >= 4)" v-if="['view'].includes(mode)"
                 v-tooltip.top="'Excluir retenção'" icon="fa-solid fa-trash" severity="danger" text raised
                 @click="deleteItem" />
         </InputGroup>
-        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="uProf.admin >= 2">
+        <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="props.uProf.admin >= 2">
             <template #legend>
                 <div class="flex align-items-center text-primary">
                     <span class="fa-solid fa-circle-info mr-2"></span>
