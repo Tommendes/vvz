@@ -72,7 +72,7 @@ const saveData = async () => {
     const url = `${urlBase.value}${id}`;
 
     const method = id ? 'put' : 'post';
-    const data = { ...itemData.value };
+    const data = { ...itemData.value, centro: props.itemDataRoot.centro };
     try {
         const res = await axios[method](url, data)
             .then(res => {
@@ -265,7 +265,7 @@ watchEffect(() => {
                     class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
             </div>
             <div class="field col-12 md:col-2">
-                <label for="documento">Documento <span v-if="!(itemData.situacao == '1')" class="text-base"
+                <label for="documento">Documento <span v-if="!(itemData.situacao == '1') && props.itemDataRoot.centro == '2'" class="text-base"
                         style="color: red">*</span></label>
                 <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.documento"
                     id="documento" type="text" placeholder="Documento"

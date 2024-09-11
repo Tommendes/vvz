@@ -30,11 +30,12 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaParcelasDomain = `${dbPrefix}_${uParams.schema_name}.fin_parcelas`
 
         delete body.old_id;
         delete body.nome;
         delete body.cpf_cnpj;
-        delete body.valor_liquido;
+
         if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".");
         else body.valor_bruto = 0;
 
@@ -93,13 +94,15 @@ module.exports = app => {
             // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
+            const dataVencimento = body.data_emissao
+            const valorVencimento = body.valor_bruto.replace(",", ".")
             app.db(tabelaDomain)
                 .insert(body)
-                .then(ret => {
+                .then(async (ret) => {
                     body.id = ret[0]
                     // registrar o evento na tabela de eventos
                     const { createEventIns } = app.api.sisEvents
-                    createEventIns({
+                    const nextEventID = await createEventIns({
                         "notTo": ['created_at', 'evento'],
                         "next": body,
                         "request": req,
@@ -108,6 +111,20 @@ module.exports = app => {
                             "tabela_bd": tabela,
                         }
                     })
+                    // Criação de um registro de parcela
+                    const parcelaUnica = {
+                        created_at: new Date(),
+                        status: STATUS_ACTIVE,
+                        evento: nextEventID,
+                        id_fin_lancamentos: body.id,
+                        situacao: SITUACAO_ABERTO,
+                        valor_vencimento: valorVencimento,
+                        data_vencimento: dataVencimento,
+                        parcela: 'U'
+                    }
+
+                    const newPaymentPlan = await app.db(tabelaParcelasDomain).insert(parcelaUnica)
+
                     return res.json(body)
                 })
                 .catch(error => {
@@ -308,12 +325,6 @@ module.exports = app => {
                     default: element.situacaoLabel = '<h4>Situação não identificada</h4>';
                         break;
                 }
-                // const installments = app.db({ p: tabelaParcelasDomain })
-                //     .select('p.data_vencimento', 'p.valor_vencimento', 'p.parcela', 'p.recorrencia', 'p.descricao', 'c.nome as conta', 'p.documento')
-                //     .join({ c: tabelaContasDomain }, 'c.id', 'p.id_fin_contas')
-                //     .where({ 'p.id_fin_lancamentos': element.id, 'p.status': STATUS_ACTIVE })
-                //     .orderBy('p.data_vencimento', 'asc')
-                // element.installments = await installments
             }
 
             // return res.json({ data: body, totalRecords: totalRecords.count, sumRecords: totalRecords.sum || 0 })

@@ -36,6 +36,8 @@ module.exports = app => {
         if (body.valor_vencimento) body.valor_vencimento = body.valor_vencimento.replace(".", "").replace(",", ".");
         body.duplicata = body.duplicata || ''
         body.documento = body.documento || ''
+        const centroCusto = body.centro || undefined
+        delete body.centro
 
         try {
             if (body.id) {
@@ -52,8 +54,8 @@ module.exports = app => {
             body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
             if (['2', '3'].includes(String(body.situacao))) {
                 existsOrError(body.data_pagto, 'Data de pagamento não informada')
-                existsOrError(body.id_fin_contas, 'Conta de recebimento ou pagamento não informada')
-                existsOrError(body.documento, 'Documento não informado')
+                existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`)
+                if (centroCusto == '2') existsOrError(body.documento, 'Documento de pagamento ou conciliação não informado')
             } else if (['99'].includes(String(body.situacao))) {
                 existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado')
             }
@@ -98,13 +100,18 @@ module.exports = app => {
                     const parcelas = parseInt(bodyMultiplicate.parcelas);
 
                     // Calcular valor da primeira parcela
+                    let valorVencimentoDemais = Math.floor((valorVencimento / parcelas) * 100) / 100; // Arredonda para baixo
                     let valorVencimentoUm = Math.floor((valorVencimento / parcelas) * 100) / 100; // Arredonda para baixo
+                    console.log(valorVencimentoUm, valorVencimentoUm * parcelas, valorVencimento);
+
                     if (valorVencimentoUm * parcelas < valorVencimento) {
-                        valorVencimentoUm = Math.ceil((valorVencimento / parcelas) * 100) / 100; // Arredonda para cima
+                        valorVencimentoUm += valorVencimento - (valorVencimentoUm * parcelas)
+                    } else if (valorVencimentoUm * parcelas > valorVencimento) {
+                        valorVencimentoUm -= valorVencimento - (valorVencimentoUm * parcelas)
                     }
 
                     // Calcular valor das demais parcelas
-                    const valorVencimentoDemais = ((valorVencimento - valorVencimentoUm) / (parcelas - 1)).toFixed(2);
+                    // const valorVencimentoDemais = ((valorVencimento - valorVencimentoUm) / (parcelas - 1)).toFixed(2);
 
                     body.valor_vencimento = valorVencimentoUm
                     body.parcela = '1'
@@ -112,13 +119,9 @@ module.exports = app => {
                         status: STATUS_ACTIVE,
                         id_fin_lancamentos: body.id_fin_lancamentos,
                         situacao: SITUACAO_ABERTO,
-                        valor_vencimento: valorVencimentoDemais
+                        valor_vencimento: valorVencimentoDemais,
+                        created_at: new Date()
                     }
-                    delete novasParcelas.id;
-                    delete novasParcelas.evento;
-                    delete novasParcelas.updated_at;
-                    delete novasParcelas.updated_at;
-                    novasParcelas.created_at = new Date();
                     for (let i = 2; i <= parcelas; i++) {
                         // novoVencimento é igual a data de vencimento da primeira parcela acrescentando um mês usando moment.js
                         const novoVencimento = moment(body.data_vencimento, 'YYYY-MM-DD').add(i - 1, 'months').format('YYYY-MM-DD');
@@ -217,6 +220,10 @@ module.exports = app => {
             .then(body => {
                 const quantidade = body.length;
                 let total = 0;
+                let pago = 0;
+                let emAtraso = 0;
+                const estaSemana = [];
+                let aVencer = 0;
                 const today = new Date();
 
                 // Ordenar os registros pela situação(asc) e depois por data de vencimento
@@ -229,7 +236,20 @@ module.exports = app => {
                 });
 
                 body.forEach((item) => {
-                    total += item.valor_vencimento;
+
+                    const valorVencimento = Math.round(Number(item.valor_vencimento) * 100);
+                    total += valorVencimento;
+                    if (item.situacao == SITUACAO_PAGO) pago += valorVencimento;
+                    if (item.situacao == SITUACAO_ABERTO) aVencer += valorVencimento;
+                    // Somar para estaSemana += valorVencimento caso a data de vencimento esteja entre o último domingo e o próximo sábado
+                    if (item.situacao == SITUACAO_ABERTO && moment(item.data_vencimento, 'YYYY-MM-DD').isBetween(moment().startOf('week').add(1, 'days'), moment().endOf('week').add(1, 'days')))
+                        estaSemana.push({
+                            valor: (valorVencimento / 100).toFixed(2).replace('.', ','),
+                            data: moment(item.data_vencimento, 'YYYY-MM-DD').format('DD/MM/YYYY'),
+                            labelData: moment(item.data_vencimento, 'YYYY-MM-DD').isBefore(today, 'day') ? 'Vencida' : 'Vencendo'
+                        });
+                    if (item.situacao == SITUACAO_ABERTO && moment(item.data_vencimento, 'YYYY-MM-DD').isBefore(today, 'day')) emAtraso += valorVencimento;
+                    // Somar para emAtraso += valorVencimento caso a data de vencimento seja anterior a hoje
                     item.valor_vencimento = parseFloat(item.valor_vencimento).toFixed(2).replace('.', ',');
                     // Adicionar a propriedade situacaoVencimento contendo uma das seguintes situações: -1 = emAtraso, 0 = paraHoje ou 2 = aVencer utilizando moment
                     if (item.situacao == SITUACAO_ABERTO)
@@ -245,8 +265,11 @@ module.exports = app => {
                     item.situacao = String(item.situacao);
                 });
 
-                total = parseFloat(total).toFixed(2);
-                return res.json({ data: body, count: quantidade, total: total });
+                total = (total / 100).toFixed(2).replace('.', ',');
+                pago = (pago / 100).toFixed(2).replace('.', ',');
+                aVencer = (aVencer / 100).toFixed(2).replace('.', ',');
+                emAtraso = (emAtraso / 100).toFixed(2).replace('.', ',');
+                return res.json({ data: body, count: quantidade, total: total, pago: pago, emAtraso: emAtraso, estaSemana, aVencer: aVencer });
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });

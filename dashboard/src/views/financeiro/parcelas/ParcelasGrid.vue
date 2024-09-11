@@ -39,6 +39,8 @@ const loadParcelas = async () => {
                 element.itemPosition = String(itemPosition++);
             });
             emit('reloadItems', res.data || {});
+            console.log(props.totalLiquido, res.data.total);
+
             if (props.totalLiquido && res.data.total) {
                 const totalLiquido = Number(props.totalLiquido.replace(',', '.'));
                 const totalParcelas = Number(res.data.total.replace(',', '.'))
@@ -49,6 +51,7 @@ const loadParcelas = async () => {
             return res.data;
         });
 }
+defineExpose({ loadParcelas }); // Expondo a função para o componente pai
 const setAdicionalVencimentoClass = (item) => {
     let labelTo = 'Parcela ' + (item.parcela === 'U' ? 'Única' : item.parcela)
     let classTo = 'text-red-500';
@@ -82,16 +85,32 @@ watch(props, (value) => {
             <template #legend>
                 <div class="flex align-items-center text-primary">
                     <span class="fa-solid fa-bolt mr-2"></span>
-                    <span class="font-bold text-lg">Programação Financeira do Registro</span>
+                    <span class="font-bold text-lg">Planejamento Financeiro do Registro</span>
                 </div>
             </template>
             <div class="flex justify-content-end mb-1">
                 <Button outlined type="button" v-if="props.itemDataRoot.id" severity="warning" rounded size="small"
                     icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
             </div>
+            <div v-if="missingValue || (itemDataParcelas.data && itemDataParcelas.data.length)">
+                <h4 v-if="itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1">Soma total das parcelas: {{ formatCurrency(itemDataParcelas.total) }}</h4>
+                <h4 v-if="itemDataParcelas.emAtraso && itemDataParcelas.emAtraso != '0,00' && itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-red-500">Em atraso: {{ formatCurrency(itemDataParcelas.emAtraso) }}</h4>
+                <h4 v-if="itemDataParcelas.estaSemana.length && itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-orange-500" v-for="item in itemDataParcelas.estaSemana" :key="item">{{ item.labelData }} esta semana: {{ item.data }} {{ formatCurrency(item.valor) }}</h4>
+                <h4 v-if="itemDataParcelas.aVencer && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-green-500">Total das parcelas a vencer: {{ formatCurrency(itemDataParcelas.aVencer) }}</h4>
+                <h4 v-if="itemDataParcelas.pago && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-primary-500">Total das parcelas pagas: {{ formatCurrency(itemDataParcelas.pago) }}</h4>
+
+                <h4 v-if="missingValue && itemDataParcelas.data && itemDataParcelas.data.length"
+                    class="flex justify-content-end border-bottom-1 mt-0">Valor liquido deste
+                    registro: {{
+                        formatCurrency(props.totalLiquido)
+                    }}</h4>
+                <h4 v-if="missingValue" class="flex justify-content-end mt-0 text-red-600">{{ missingValue < 0
+                    ? 'Falta registrar o valor de' : 'Valor registrado a maior' }}: {{ formatCurrency(missingValue <
+                            0 ? missingValue * -1 : missingValue) }}</h4>
+            </div>
             <ParcelaItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
                 @reloadItems="loadParcelas" :uProf="props.uProf" :itemDataRoot="props.itemDataRoot" />
-                <!-- colapssed = true = fechado -->
+            <!-- colapssed = true = fechado -->
             <Fieldset :toggleable="true"
                 :collapsed="!(item.itemPosition == '0' || (String(item.situacao) == '1' && ['0', '1'].includes(String(item.situacaoVencimento))))"
                 :class="`mb-1${item.situacaoVencimento == '0' ? ' bg-red-100 hover:bg-red-200' : ''}`"
@@ -106,20 +125,8 @@ watch(props, (value) => {
                 </template>
                 <ParcelaItem :itemData="item" @cancel="cancel" @reloadItems="loadParcelas" :uProf="props.uProf"
                     :itemDataRoot="props.itemDataRoot" />
-                    <!-- <p>{{ item.itemPosition == '0' }}{{ String(item.situacao) == '1' }}{{ ['0', '1'].includes(String(item.situacaoVencimento)) }}</p> -->
+                <!-- <p>{{ item.itemPosition == '0' }}{{ String(item.situacao) == '1' }}{{ ['0', '1'].includes(String(item.situacaoVencimento)) }}</p> -->
             </Fieldset>
-            <div v-if="missingValue || (itemDataParcelas.data && itemDataParcelas.data.length)">
-                <h4 v-if="itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end">Soma total das parcelas: {{
-                    formatCurrency(itemDataParcelas.total)
-                    }}</h4>
-                <h4 v-if="itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end border-bottom-1 mt-0">Valor liquido deste
-                    registro: {{
-                        formatCurrency(props.totalLiquido)
-                    }}</h4>
-                <h4 v-if="missingValue" class="flex justify-content-end mt-0 text-red-600">{{ missingValue < 0
-                    ? 'Falta registrar o valor de' : 'Valor registrado a maior' }}: {{ formatCurrency(missingValue <
-                            0 ? missingValue * -1 : missingValue) }}</h4>
-            </div>
             <div v-if="uProf.admin >= 2">
                 <p>props.mode: {{ props.mode }}</p>
                 <p>itemDataParcelas.total: {{ itemDataParcelas.total }}</p>

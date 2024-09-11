@@ -42,7 +42,13 @@ import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
 
+// Objetos do formulário
 const eventosFieldSet = ref();
+const retencoesGrid = ref();
+const notasGrid = ref();
+const parcelasGrid = ref();
+
+// Classes especiais
 const ANIMATION_CLASS = 'animation-color animation-fill-none'
 const animationLblCadas = ref('');
 const animationVlrLiq = ref('');
@@ -148,14 +154,15 @@ const saveData = async () => {
                     router.push({
                         path: `/${uProf.value.schema_description}/financeiro/${itemData.value.id}`
                     });
-                    const animation = animationDocNr.value;
-                    animationDocNr.value = '';
+                    const animation = animationLblCadas.value;
+                    animationLblCadas.value = '';
                     await loadData();
-                    animationDocNr.value = animation;
+                    animationLblCadas.value = animation;
                 } else reload();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
+            mode.value = 'view';
         })
         .catch((error) => {
             console.log(error);
@@ -174,7 +181,8 @@ const loadRetencoes = async (parcelas) => {
     setTimeout(() => {
         animationVlrLiq.value = ANIMATION_CLASS;
     }, 150);
-    eventosFieldSet.value.getEventos();
+    if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
+    if (parcelasGrid.value) parcelasGrid.value.loadParcelas();
     //     });
 }
 
@@ -182,13 +190,13 @@ const loadRetencoes = async (parcelas) => {
 const itemDataParcelas = ref([]);
 const loadParcelas = async (parcelas) => {
     itemDataParcelas.value = parcelas
-    eventosFieldSet.value.getEventos();
+    if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
 }
 // Dados das notas fiscais
 const itemDataNotas = ref([]);
 const loadNotas = async (notas) => {
     itemDataNotas.value = notas
-    eventosFieldSet.value.getEventos();
+    if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
 }
 /**
  * Autocomplete de cadastros
@@ -479,7 +487,7 @@ watch(route, (value) => {
                                 class="w-full mb-3" :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328"
                                 text raised
                                 @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)" />
-                            <Button label="Novo Registro para o Cadastro" v-if="itemData.id" type="button"
+                            <Button :label="`Novo Registro para o ${credorDevedor}`" v-if="itemData.id" type="button"
                                 class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised
                                 @click="registroIdentico" />
                             <Button label="Cancelar Registro" v-tooltip.top="`Cancelar não exclui o registro`"
@@ -499,13 +507,13 @@ watch(route, (value) => {
                         </div>
                     </Fieldset>
                     <RetencoesGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadRetencoes"
-                        :uProf="uProf" :mode="mode" />
+                        :uProf="uProf" :mode="mode" ref="retencoesGrid" />
                     <NotasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadNotas" :uProf="uProf"
-                        :mode="mode" />
+                        :mode="mode" ref="notasGrid" />
                 </div>
                 <div class="col-12" v-if="itemData.id">
                     <ParcelasGrid v-if="itemData.id" @reloadItems="loadParcelas" :totalLiquido="itemData.valor_liquido"
-                        :uProf="uProf" :mode="mode" :itemDataRoot="itemData" />
+                        :uProf="uProf" :mode="mode" :itemDataRoot="itemData" ref="parcelasGrid" />
                     <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" ref="eventosFieldSet" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>

@@ -21,7 +21,6 @@ const setNewItem = () => {
     mode.value = 'new';
     itemData.value = { "id_fin_lancamentos": props.idRegistro };
 }
-
 // Dados das retenções
 const itemDataNotas = ref([]);
 // Carragamento de dados do form
@@ -36,6 +35,7 @@ const loadNotas = async () => {
             return res.data;
         });
 }
+defineExpose({ loadNotas }); // Expondo a função para o componente pai
 const cancel = () => { }
 onBeforeMount(async () => {
     await loadNotas();

@@ -36,6 +36,7 @@ const loadRetencoes = async () => {
             return res.data;
         });
 }
+defineExpose({ loadRetencoes }); // Expondo a função para o componente pai
 const cancel = () => { }
 onBeforeMount(async () => {
     await loadRetencoes();
