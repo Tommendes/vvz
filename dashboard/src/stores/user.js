@@ -11,7 +11,7 @@ export const useUserStore = defineStore('users', {
         },
         profile: {},
         timeLogged: null,
-        timeToLogOut: 900,
+        timeToLogOut: 1800,
         inactivityTimer: null,
         isTokenValid: false,
         geolocation: {
@@ -76,9 +76,7 @@ export const useUserStore = defineStore('users', {
                 const lastActivity = localStorage.getItem('lastActivity');
                 const currentTime = Math.floor(Date.now() / 1000);
                 const timeDifference = (currentTime - lastActivity); // em segundos
-
                 if (timeDifference >= this.timeToLogOut) {
-                    console.log('Inatividade detectada. Realizando logout...');
                     this.logout();
                     clearInterval(this.inactivityTimer); // Limpa o intervalo após o logout
                     location.reload();

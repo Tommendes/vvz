@@ -92,10 +92,7 @@ const processEvent = (element) => {
             break;
         case classevento === 'update':
             element.evento =
-                `Edição do registro` +
-                (uProf.value.gestor >= 1
-                    ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
-                    : '');
+                `Edição do registro`;
             break;
         case classevento === 'remove':
             element.evento = 'Exclusão ou cancelamento do registro';
@@ -118,17 +115,22 @@ const processEvent = (element) => {
         case classevento === 'mkfolder':
             element.evento = 'Pasta criada para o registro';
             break;
+        case classevento === 'paymentplan':
+            element.evento = 'Registro de parcelamento financeiro';
+            break;
+        case classevento === 'removepaymentplan':
+            element.evento = 'Exclusão de parcelamento financeiro';
+            break;
         case classevento === 'commissioning':
-            element.evento =
-                `Lançamento de comissão` +
-                (uProf.value.comissoes >= 1
-                    ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
-                    : '');
+            element.evento = `Lançamento de comissão`
             break;
         default:
             element.evento = `Registro de evento: ${classevento}`;
             break;
     }
+    element.evento += (uProf.value.comissoes >= 1
+        ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
+        : '');
     element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
 };
 

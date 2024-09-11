@@ -3,6 +3,7 @@ const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'fin_parcelas'
+    const tabelaFinanceiro = 'fin_lancamentos'
     const tabelaAlias = 'Parcela'
     const tabelaAliasPL = 'Parcelas'
     const STATUS_ACTIVE = 10
@@ -11,11 +12,14 @@ module.exports = app => {
     const SITUACAO_PAGO = 2
     const SITUACAO_CONCILIADO = 3
     const SITUACAO_CANCELADO = 99
+    const { ceilTwoDecimals, formatCurrency } = app.api.facilities
 
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let body = { ...req.body }
+        const bodyMultiplicate = body.bodyMultiplicate || undefined
+        delete body.bodyMultiplicate
         delete body.id;
         if (req.params.id) body.id = req.params.id
         body.id_fin_lancamentos = req.params.id_fin_lancamentos || undefined
@@ -53,7 +57,7 @@ module.exports = app => {
             } else if (['99'].includes(String(body.situacao))) {
                 existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado')
             }
-            const unique = await app.db(tabelaDomain).where({ id_fin_lancamentos: body.id_fin_lancamentos, data_vencimento: body.data_vencimento, id_fin_contas: body.id_fin_contas, duplicata: body.duplicata, status: STATUS_ACTIVE }).first()
+            const unique = await app.db(tabelaDomain).where({ id_fin_lancamentos: body.id_fin_lancamentos, data_vencimento: body.data_vencimento, id_fin_contas: body.id_fin_contas || '', duplicata: body.duplicata, status: STATUS_ACTIVE }).first()
             if (unique && unique.id != body.id) throw 'Parcela já registrada para esta conta'
         } catch (error) {
             console.log(error);
@@ -79,19 +83,86 @@ module.exports = app => {
                 }
             })
 
-            body.evento = evento
-            body.updated_at = new Date()
-            let rowsUpdated = app.db(tabelaDomain)
-                .update(body)
-                .where({ id: body.id })
-            rowsUpdated.then((ret) => {
-                if (ret > 0) res.status(200).send(body)
-                else res.status(200).send(`${tabelaAlias} não encontrado`)
-            })
-                .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    return res.status(500).send(error)
-                })
+            app.db.transaction(async (trx) => {
+                body.evento = evento
+                body.updated_at = new Date()
+                /*
+                    Se for uma multiplicação de registros, faça:
+                    1: Edite o valor_base para receber o bodyMultiplicate.valor_base_um e atualize o valor de acordo com o calculo entre o bodyMultiplicate.valor_base_um e o percentual e
+                    2: O número da parcela será 1 
+                    3: Crie N registros (bodyMultiplicate.parcelas) com os mesmos dados exceto que a parcela será 2, 3 e assim por diante e o valor da parcela será o valor do bodyMultiplicate.valor_base_demais
+                */
+
+                if (bodyMultiplicate && bodyMultiplicate.parcelas > 1) {
+                    const valorVencimento = parseFloat(body.valor_vencimento.replace(',', '.'));
+                    const parcelas = parseInt(bodyMultiplicate.parcelas);
+
+                    // Calcular valor da primeira parcela
+                    let valorVencimentoUm = Math.floor((valorVencimento / parcelas) * 100) / 100; // Arredonda para baixo
+                    if (valorVencimentoUm * parcelas < valorVencimento) {
+                        valorVencimentoUm = Math.ceil((valorVencimento / parcelas) * 100) / 100; // Arredonda para cima
+                    }
+
+                    // Calcular valor das demais parcelas
+                    const valorVencimentoDemais = ((valorVencimento - valorVencimentoUm) / (parcelas - 1)).toFixed(2);
+
+                    body.valor_vencimento = valorVencimentoUm
+                    body.parcela = '1'
+                    const novasParcelas = {
+                        status: STATUS_ACTIVE,
+                        id_fin_lancamentos: body.id_fin_lancamentos,
+                        situacao: SITUACAO_ABERTO,
+                        valor_vencimento: valorVencimentoDemais
+                    }
+                    delete novasParcelas.id;
+                    delete novasParcelas.evento;
+                    delete novasParcelas.updated_at;
+                    delete novasParcelas.updated_at;
+                    novasParcelas.created_at = new Date();
+                    for (let i = 2; i <= parcelas; i++) {
+                        // novoVencimento é igual a data de vencimento da primeira parcela acrescentando um mês usando moment.js
+                        const novoVencimento = moment(body.data_vencimento, 'YYYY-MM-DD').add(i - 1, 'months').format('YYYY-MM-DD');
+                        novasParcelas.parcela = i
+                        novasParcelas.data_vencimento = novoVencimento
+
+                        // Evento de parcelamento financeiro. Evento informado no financeiro
+                        const { createEvent } = app.api.sisEvents
+                        const nextEventID = await createEvent({
+                            "request": req,
+                            "evento": {
+                                id_user: user.id,
+                                evento: `Parcelamento financeiro. ID do parcelamento: ${body.id}`,
+                                classevento: `PaymentPlan`,
+                                id_registro: body.id_fin_lancamentos,
+                                tabela_bd: tabelaFinanceiro
+                            }
+                        })
+
+                        novasParcelas.evento = nextEventID
+
+                        const newPaymentPlan = await trx(tabelaDomain).insert(novasParcelas)
+                    }
+                }
+
+                await trx(tabelaDomain)
+                    .update(body)
+                    .where({ id: body.id })
+                    .then(async (ret) => {
+                        if (ret > 0) {
+                            req.uParams = uParams
+                            return res.status(200).send(body)
+                        }
+                        else res.status(200).send(`${tabelaAlias} não encontrado`)
+                    })
+                    .catch(error => {
+                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                        return res.status(500).send(error)
+                    })
+            }).catch((error) => {
+                // Se ocorrer um erro, faça rollback da transação
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+                return res.status(500).send(error);
+            });
         } else {
             // Criação de um novo registro
             const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
@@ -102,17 +173,18 @@ module.exports = app => {
             body.created_at = new Date()
             app.db(tabelaDomain)
                 .insert(body)
-                .then(ret => {
+                .then(async (ret) => {
                     body.id = ret[0]
-                    // registrar o evento na tabela de eventos
-                    const { createEventIns } = app.api.sisEvents
-                    createEventIns({
-                        "notTo": ['created_at', 'evento'],
-                        "next": body,
+                    // Evento de parcelamento financeiro. Evento informado no financeiro
+                    const { createEvent } = app.api.sisEvents
+                    await createEvent({
                         "request": req,
                         "evento": {
-                            "evento": `Novo registro`,
-                            "tabela_bd": tabela,
+                            id_user: user.id,
+                            evento: `Parcelamento financeiro. ID do parcelamento: ${body.id}`,
+                            classevento: `PaymentPlan`,
+                            id_registro: body.id_fin_lancamentos,
+                            tabela_bd: tabelaFinanceiro
                         }
                     })
                     return res.json(body)
@@ -168,7 +240,7 @@ module.exports = app => {
                         case SITUACAO_CONCILIADO: item.situacaoLabel = 'Registro Conciliado'; break;
                         case SITUACAO_CANCELADO: item.situacaoLabel = 'Registro Cancelado'; break;
                         default: item.situacaoLabel = 'Situação do registro não identificada';
-                        break;
+                            break;
                     }
                     item.situacao = String(item.situacao);
                 });
@@ -221,10 +293,27 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
 
-        const registro = { status: STATUS_DELETE }
+        const registro = {
+            status: STATUS_DELETE,
+            updated_at: new Date()
+        }
         try {
             // registrar o evento na tabela de eventos
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
+
+            // Evento de parcelamento financeiro. Evento informado no financeiro
+            const { createEvent } = app.api.sisEvents
+            const nextEventID = await createEvent({
+                "request": req,
+                "evento": {
+                    id_user: user.id,
+                    evento: `Exclusão da parcela ${last.parcela} do registro financeiro. <a href="#/casaoficio/eventos?tabela_bd=fin_parcelas&id_registro=${last.id}" target="_blank">Evento de exclusão</a>`,
+                    classevento: `RemovePaymentPlan`,
+                    id_registro: last.id_fin_lancamentos,
+                    tabela_bd: tabelaFinanceiro
+                }
+            })
+
             const { createEventUpd } = app.api.sisEvents
             const evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento'],
@@ -237,7 +326,7 @@ module.exports = app => {
                     "tabela_bd": tabela,
                 }
             })
-            const rowsUpdated = await app.db(tabelaDomain).update(registro).where({ id: req.params.id })
+            const rowsUpdated = await app.db(tabelaDomain).update({ ...registro, evento: evento }).where({ id: req.params.id })
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
             res.status(204).send()

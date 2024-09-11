@@ -293,7 +293,7 @@ module.exports = app => {
             ret.first()
         }
         ret.orderBy('nome', 'asc')
-        console.log(ret.toString());
+        // console.log(ret.toString());
         
         ret.then(body => {
             const count = body.length

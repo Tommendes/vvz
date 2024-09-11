@@ -42,6 +42,7 @@ import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
 
+const eventosFieldSet = ref();
 const ANIMATION_CLASS = 'animation-color animation-fill-none'
 const animationLblCadas = ref('');
 const animationVlrLiq = ref('');
@@ -173,6 +174,7 @@ const loadRetencoes = async (parcelas) => {
     setTimeout(() => {
         animationVlrLiq.value = ANIMATION_CLASS;
     }, 150);
+    eventosFieldSet.value.getEventos();
     //     });
 }
 
@@ -180,11 +182,13 @@ const loadRetencoes = async (parcelas) => {
 const itemDataParcelas = ref([]);
 const loadParcelas = async (parcelas) => {
     itemDataParcelas.value = parcelas
+    eventosFieldSet.value.getEventos();
 }
 // Dados das notas fiscais
 const itemDataNotas = ref([]);
 const loadNotas = async (notas) => {
     itemDataNotas.value = notas
+    eventosFieldSet.value.getEventos();
 }
 /**
  * Autocomplete de cadastros
@@ -500,9 +504,9 @@ watch(route, (value) => {
                         :mode="mode" />
                 </div>
                 <div class="col-12" v-if="itemData.id">
-                    <ParcelasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadParcelas"
-                        :totalLiquido="itemData.valor_liquido" :uProf="uProf" :mode="mode" :idEmpresa="itemData.id_empresa" />
-                    <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
+                    <ParcelasGrid v-if="itemData.id" @reloadItems="loadParcelas" :totalLiquido="itemData.valor_liquido"
+                        :uProf="uProf" :mode="mode" :itemDataRoot="itemData" />
+                    <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" ref="eventosFieldSet" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">

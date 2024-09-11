@@ -10,7 +10,7 @@ import moment from 'moment';
 
 const route = useRoute();
 // Props do template
-const props = defineProps(['idRegistro', 'mode', 'uProf', 'totalLiquido', 'idEmpresa'])
+const props = defineProps(['itemDataRoot', 'mode', 'uProf', 'totalLiquido'])
 // Emit do template
 const emit = defineEmits(['reloadItems', 'cancel']);
 // Url base do form action
@@ -21,14 +21,14 @@ const itemData = ref();
 const missingValue = ref(0)
 const setNewItem = () => {
     mode.value = 'new';
-    itemData.value = { "id_fin_lancamentos": props.idRegistro };
+    itemData.value = { "id_fin_lancamentos": props.itemDataRoot.id };
 }
 
 // Dados das parcelas
 const itemDataParcelas = ref([]);
 // Carragamento de dados do form
 const loadParcelas = async () => {
-    const id = props.idRegistro || route.params.id;
+    const id = props.itemDataRoot.id || route.params.id;
     const url = `${urlBase.value}/${id}`;
     let itemPosition = 0;
     itemDataParcelas.value = [];
@@ -86,11 +86,11 @@ watch(props, (value) => {
                 </div>
             </template>
             <div class="flex justify-content-end mb-1">
-                <Button outlined type="button" v-if="props.idRegistro" severity="warning" rounded size="small"
+                <Button outlined type="button" v-if="props.itemDataRoot.id" severity="warning" rounded size="small"
                     icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
             </div>
             <ParcelaItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
-                @reloadItems="loadParcelas" :uProf="props.uProf" :idEmpresa="props.idEmpresa" />
+                @reloadItems="loadParcelas" :uProf="props.uProf" :itemDataRoot="props.itemDataRoot" />
                 <!-- colapssed = true = fechado -->
             <Fieldset :toggleable="true"
                 :collapsed="!(item.itemPosition == '0' || (String(item.situacao) == '1' && ['0', '1'].includes(String(item.situacaoVencimento))))"
@@ -105,14 +105,14 @@ watch(props, (value) => {
                     </div>
                 </template>
                 <ParcelaItem :itemData="item" @cancel="cancel" @reloadItems="loadParcelas" :uProf="props.uProf"
-                    :idEmpresa="props.idEmpresa" />
+                    :itemDataRoot="props.itemDataRoot" />
                     <!-- <p>{{ item.itemPosition == '0' }}{{ String(item.situacao) == '1' }}{{ ['0', '1'].includes(String(item.situacaoVencimento)) }}</p> -->
             </Fieldset>
-            <div v-if="itemDataParcelas.data && itemDataParcelas.data.length">
-                <h4 class="flex justify-content-end">Valor total do parcelamento: {{
+            <div v-if="missingValue || (itemDataParcelas.data && itemDataParcelas.data.length)">
+                <h4 v-if="itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end">Soma total das parcelas: {{
                     formatCurrency(itemDataParcelas.total)
                     }}</h4>
-                <h4 v-if="missingValue" class="flex justify-content-end border-bottom-1 mt-0">Valor liquido total deste
+                <h4 v-if="itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end border-bottom-1 mt-0">Valor liquido deste
                     registro: {{
                         formatCurrency(props.totalLiquido)
                     }}</h4>
@@ -125,7 +125,7 @@ watch(props, (value) => {
                 <p>itemDataParcelas.total: {{ itemDataParcelas.total }}</p>
                 <p>props.totalLiquido: {{ props.totalLiquido }}</p>
                 <p>missingValue: {{ missingValue }}</p>
-                <p>props.idEmpresa: {{ props.idEmpresa }}</p>
+                <p>props.itemDataRoot.id_empresa: {{ props.itemDataRoot.id_empresa }}</p>
             </div>
         </Fieldset>
     </div>

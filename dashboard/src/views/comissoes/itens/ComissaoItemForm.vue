@@ -435,8 +435,8 @@ watchEffect(() => {
         itemData.value.valor = '';
     }
 });
-// Calcule bodyMultiplicate.valor_base_um e bodyMultiplicate.valor_base_demais considerando que o resultado não pode ser uma dízima. Considere que o usuári opode digitar uma quantidade em bodyMultiplicate.parcelas
-// que faça com que o valor da primeir aparcela possa ser alguns centavos a mais ou a menos do que o valor base dividido pela quantidade de parcelas. Daí, calcule o valor das demais parcelas
+// Calcule bodyMultiplicate.valor_base_um e bodyMultiplicate.valor_base_demais considerando que o resultado não pode ser uma dízima. Considere que o usuário pode digitar uma quantidade em bodyMultiplicate.parcelas
+// que faça com que o valor da primeira parcela possa ser alguns centavos a mais ou a menos do que o valor base dividido pela quantidade de parcelas. Daí, calcule o valor das demais parcelas
 watchEffect(() => {
     if (bodyMultiplicate.value.parcelas > 1) {
         const valorBase = parseFloat(itemData.value.valor_base.replace(',', '.'));
