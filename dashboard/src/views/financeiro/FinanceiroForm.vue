@@ -182,7 +182,7 @@ const loadRetencoes = async (parcelas) => {
         animationVlrLiq.value = ANIMATION_CLASS;
     }, 150);
     if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
-    if (parcelasGrid.value) parcelasGrid.value.loadParcelas();
+    if (parcelasGrid.value && parcelasGrid.value.$el) parcelasGrid.value.loadParcelas();
     //     });
 }
 
@@ -506,10 +506,9 @@ watch(route, (value) => {
                                 @click="defaultWarn('Excluir registro')" />
                         </div>
                     </Fieldset>
-                    <RetencoesGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadRetencoes"
+                    <RetencoesGrid v-if="itemData.id" :itemDataRoot="itemData" @reloadItems="loadRetencoes"
                         :uProf="uProf" :mode="mode" ref="retencoesGrid" />
-                    <NotasGrid v-if="itemData.id" :idRegistro="itemData.id" @reloadItems="loadNotas" :uProf="uProf"
-                        :mode="mode" ref="notasGrid" />
+                    <NotasGrid v-if="uProf.admin >= 2 && itemData.id" :itemDataRoot="itemData" @reloadItems="loadNotas" :uProf="uProf" :mode="mode" ref="notasGrid" />
                 </div>
                 <div class="col-12" v-if="itemData.id">
                     <ParcelasGrid v-if="itemData.id" @reloadItems="loadParcelas" :totalLiquido="itemData.valor_liquido"

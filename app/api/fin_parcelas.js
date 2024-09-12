@@ -20,7 +20,6 @@ module.exports = app => {
         let body = { ...req.body }
         const bodyMultiplicate = body.bodyMultiplicate || undefined
         delete body.bodyMultiplicate
-        delete body.bodyDuplicate
         delete body.id;
         if (req.params.id) body.id = req.params.id
         body.id_fin_lancamentos = req.params.id_fin_lancamentos || undefined
@@ -99,16 +98,16 @@ module.exports = app => {
                 if (bodyMultiplicate && bodyMultiplicate.parcelas > 1) {
                     const valorVencimento = parseFloat(body.valor_vencimento.replace(',', '.'));
                     const parcelas = parseInt(bodyMultiplicate.parcelas);
+                    
 
                     // Calcular valor da primeira parcela
-                    let valorVencimentoDemais = Math.floor((valorVencimento / parcelas) * 100) / 100; // Arredonda para baixo
-                    let valorVencimentoUm = Math.floor((valorVencimento / parcelas) * 100) / 100; // Arredonda para baixo
-                    console.log(valorVencimentoUm, valorVencimentoUm * parcelas, valorVencimento);
+                    const dividirParcelas = bodyMultiplicate.dividirParcelas || false;
+
+                    let valorVencimentoDemais = Math.floor((valorVencimento / (dividirParcelas ? parcelas : 1)) * 100) / 100; // Arredonda para baixo
+                    let valorVencimentoUm = Math.floor((valorVencimento / (dividirParcelas ? parcelas : 1)) * 100) / 100; // Arredonda para baixo
 
                     if (valorVencimentoUm * parcelas < valorVencimento) {
                         valorVencimentoUm += valorVencimento - (valorVencimentoUm * parcelas)
-                    } else if (valorVencimentoUm * parcelas > valorVencimento) {
-                        valorVencimentoUm -= valorVencimento - (valorVencimentoUm * parcelas)
                     }
 
                     // Calcular valor das demais parcelas

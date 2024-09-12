@@ -38,7 +38,7 @@ const saveData = async () => {
 
     } catch (error) {
         console.log('error', error);
-        defaultWarn(error);
+        defaultWarn(error.response.data);
     }
 }
 

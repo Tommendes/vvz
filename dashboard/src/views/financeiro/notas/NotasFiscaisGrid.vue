@@ -9,7 +9,7 @@ import { formatCurrency } from '../../../global';
 
 const route = useRoute();
 // Props do template
-const props = defineProps(['idRegistro', 'mode', 'uProf'])
+const props = defineProps(['itemDataRoot', 'mode', 'uProf'])
 // Emit do template
 const emit = defineEmits(['reloadItems', 'cancel']);
 // Url base do form action
@@ -19,13 +19,13 @@ const mode = ref('grid');
 const itemData = ref();
 const setNewItem = () => {
     mode.value = 'new';
-    itemData.value = { "id_fin_lancamentos": props.idRegistro };
+    itemData.value = { "id_fin_lancamentos": props.itemDataRoot.id_empresa };
 }
 // Dados das retenções
 const itemDataNotas = ref([]);
 // Carragamento de dados do form
 const loadNotas = async () => {
-    const id = props.idRegistro || route.params.id;
+    const id = props.itemDataRoot.id_empresa || route.params.id;
     const url = `${urlBase.value}/${id}`;
     itemDataNotas.value = [];
     itemDataNotas.value = await axios.get(url)
@@ -55,7 +55,7 @@ watch(props, (value) => {
                 </div>
             </template>
             <div class="flex justify-content-end mb-3">
-                <Button outlined type="button" v-if="props.idRegistro" severity="warning" rounded size="small"
+                <Button outlined type="button" v-if="props.itemDataRoot.id_empresa" severity="warning" rounded size="small"
                     icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
             </div>
             <NotaFiscalItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"

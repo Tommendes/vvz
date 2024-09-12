@@ -8,7 +8,7 @@ const route = useRoute();
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
-import EditorComponent from '@/components/EditorComponent.vue';
+import { formatCurrency } from '@/global';
 
 import { Mask } from 'maska';
 const masks = ref({
@@ -130,10 +130,27 @@ const getContas = async () => {
     });
     // }
 };
-// Operações para multiplicar parcelas
+// Fim das operações para multiplicar parcelas
+const cancel = () => {
+    mode.value = 'view';
+    emit('cancel');
+}
 
+onMounted(async () => {
+    await loadData();
+    if (props.mode && props.mode != mode.value) mode.value = props.mode;
+
+    await getContas();
+})
+// Calcule bodyMultiplicate.valor_base_um e bodyMultiplicate.valor_base_demais considerando que o resultado não pode ser uma dízima. Considere que o usuário pode digitar uma quantidade em bodyMultiplicate.parcelas
+// que faça com que o valor da primeira parcela possa ser alguns centavos a mais ou a menos do que o valor base dividido pela quantidade de parcelas. Daí, calcule o valor das demais parcelas
+const optionsMultiplicate = ['Dividir', 'Repetir'];
+const valueMultiplicate = ref(optionsMultiplicate[0]);
+const dividirParcelas = ref(true);
+// Operações para multiplicar parcelas
 const bodyMultiplicate = ref({
-    parcelas: 1
+    parcelas: 1,
+    dividirParcelas: dividirParcelas.value,
 });
 const multiplicateItem = (event) => {
     bodyMultiplicate.value.parcelas = 1;
@@ -141,7 +158,9 @@ const multiplicateItem = (event) => {
     confirm.require({
         group: `comisMultiplicateConfirm-${itemData.value.id}`,
         target: event.currentTarget,
-        message: `Selecione abaixo a quantidade de parcelas.<br />O valor desta parcela será dividido entre elas`,
+        message: `Selecione abaixo a quantidade e como deseja parcelar`,
+        message1: `- Dividir: divide o valor atual pela quantidade`,
+        message2: `- Repetir: repete o valor em todas as demais`,
         icon: 'fa-solid fa-circle-exclamation',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -158,21 +177,24 @@ const multiplicateItem = (event) => {
         }
     });
 };
-// Fim das operações para multiplicar parcelas
-const cancel = () => {
-    mode.value = 'view';
-    emit('cancel');
-}
-
-onMounted(async () => {
-    await loadData();
-    if (props.mode && props.mode != mode.value) mode.value = props.mode;
-
-    await getContas();
-})
-// Calcule bodyMultiplicate.valor_vencimento_um e bodyMultiplicate.valor_vencimento_demais considerando que o resultado não pode ser uma dízima. Considere que o usuário pode digitar uma quantidade em bodyMultiplicate.parcelas
-// que faça com que o valor da primeira parcela possa ser alguns centavos a mais ou a menos do que o valor base dividido pela quantidade de parcelas. Daí, calcule o valor das demais parcelas
 watchEffect(() => {
+    if (bodyMultiplicate.value.parcelas > 1) {
+        const valorVencimento = parseFloat(itemData.value.valor_vencimento.replace(',', '.'));
+        const parcelas = parseInt(bodyMultiplicate.value.parcelas);
+
+        // Calcular valor da primeira parcela
+        dividirParcelas.value = (valueMultiplicate.value == optionsMultiplicate[0])
+        let valorVencimentoDemais = Math.floor((valorVencimento / (dividirParcelas.value ? parcelas : 1)) * 100) / 100; // Arredonda para baixo
+        let valorVencimentoUm = Math.floor((valorVencimento / (dividirParcelas.value ? parcelas : 1)) * 100) / 100; // Arredonda para baixo
+
+        if (valorVencimentoUm * parcelas < valorVencimento) {
+            valorVencimentoUm += valorVencimento - (valorVencimentoUm * parcelas)
+        }
+
+        bodyMultiplicate.value.valor_vencimento_um = valorVencimentoUm.toFixed(2).replace('.', ',');
+        bodyMultiplicate.value.valor_vencimento_demais = valorVencimentoDemais.toFixed(2).replace('.', ',');
+        bodyMultiplicate.value.dividirParcelas = dividirParcelas.value;
+    }
 });
 </script>
 
@@ -182,13 +204,26 @@ watchEffect(() => {
             <div class="flex flex-column align-items-center w-full gap-3 border-bottom-1 surface-border p-3 mb-3 pb-0">
                 <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>
                 <div class="text-center text-xl" v-html="slotProps.message.message" />
-                <InputText :class="`mb-${bodyMultiplicate.parcelas > 1 ? '0' : '3'}`" autocomplete="no"
-                    v-model="bodyMultiplicate.parcelas" id="parcelas" type="number" v-maska data-maska="##"
-                    placeholder="Parcelas" min="1" max="60" @keydown.enter.prevent />
-                <div class="text-center mb-3 text-xl" v-if="bodyMultiplicate.parcelas > 1">
+                <div class="text-center text-lg" v-html="slotProps.message.message1" />
+                <div class="text-center text-lg" v-html="slotProps.message.message2" />
+                <InputGroup>
+                    <InputText autocomplete="no" v-model="bodyMultiplicate.parcelas" id="parcelas" type="number" v-maska
+                        data-maska="##" placeholder="Parcelas" min="1" max="60" @keydown.enter.prevent
+                        class="mb-2 text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2"
+                        style="padding: 0rem 1rem;" />
+                    <SelectButton v-model="valueMultiplicate" :options="optionsMultiplicate"
+                        :disabled="bodyMultiplicate.parcelas == 1"
+                        class="mb-2 text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary" />
+                </InputGroup>
+                <div class="text-center mb-3 text-xl" v-if="bodyMultiplicate.parcelas > 1 && dividirParcelas">
                     O valor da parcela 1 será atualizado para {{ formatCurrency(bodyMultiplicate.valor_vencimento_um)
                     }}<br />e {{ bodyMultiplicate.parcelas > 2 ? `as seguintes` : 'a próxima' }} para
                     {{ formatCurrency(bodyMultiplicate.valor_vencimento_demais) }}.<br />Se estiver de acordo, clique em
+                    confirmar, abaixo
+                </div>
+                <div class="text-center mb-3 text-xl" v-else-if="bodyMultiplicate.parcelas > 1 && !dividirParcelas">
+                    Todas as parcelas serão criadas com o valor de {{
+                        formatCurrency(bodyMultiplicate.valor_vencimento_demais) }} <br /> Se estiver de acordo, clique em
                     confirmar, abaixo
                 </div>
             </div>
@@ -216,13 +251,13 @@ watchEffect(() => {
                         id="valor_vencimento" type="text" v-maska data-maska="0,99"
                         data-maska-tokens="0:\d:multiple|9:\d:optional"
                         class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
-                    <Button v-tooltip.top="'Copiar valor BRUTO do registro'"  
+                    <Button v-tooltip.top="'Copiar valor BRUTO do registro'"
                         @click="itemData.valor_vencimento = props.itemDataRoot.valor_bruto" text raised
-                        :disabled="mode == 'view'"  icon="fa-solid fa-dollar-sign"
+                        :disabled="mode == 'view'" icon="fa-solid fa-dollar-sign"
                         class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary" />
                     <Button v-tooltip.top="'Copiar valor LÍQUIDO do registro'"
                         @click="itemData.valor_vencimento = props.itemDataRoot.valor_liquido" text raised
-                        :disabled="mode == 'view'"  icon="fa-solid fa-filter-circle-dollar"
+                        :disabled="mode == 'view'" icon="fa-solid fa-filter-circle-dollar"
                         class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary" />
                 </InputGroup>
             </div>
@@ -265,7 +300,8 @@ watchEffect(() => {
                     class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
             </div>
             <div class="field col-12 md:col-2">
-                <label for="documento">Documento <span v-if="!(itemData.situacao == '1') && props.itemDataRoot.centro == '2'" class="text-base"
+                <label for="documento">Documento <span
+                        v-if="!(itemData.situacao == '1') && props.itemDataRoot.centro == '2'" class="text-base"
                         style="color: red">*</span></label>
                 <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.documento"
                     id="documento" type="text" placeholder="Documento"

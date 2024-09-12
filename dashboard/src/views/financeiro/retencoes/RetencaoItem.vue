@@ -7,11 +7,12 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 
 // Props do template
-const props = defineProps(['itemData', 'mode', 'uProf']);
+const props = defineProps(['itemData', 'mode', 'uProf', 'itemDataRoot', 'retencaoTotal']);
 // Emits do template
 const emit = defineEmits(['reloadItems', 'cancel']);
 const mode = ref('view');
 const itemData = ref([]);
+const itemDataUnmuted = ref([]);
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/fin-retencoes/${route.params.id}`);
 
@@ -19,26 +20,38 @@ const loadData = async () => {
     const id = props.itemData.id;
     const url = `${urlBase.value}/${id}`;
     itemData.value = { ...props.itemData }
+    itemDataUnmuted.value = { ...props.itemData }
+}
+
+const getFormIsValid = async () => {
+    // Verificar se o valor em itemData.valor_retencao é menor ou igual a props.itemDataRoot.valir_liquido
+    let valorLiquido = Math.ceil((props.itemDataRoot.valor_bruto.replace(',', '.') - props.retencaoTotal) * 100) / 100
+    let valorRetencao = itemData.value.valor_retencao.replace(',', '.') - (itemDataUnmuted.value && itemDataUnmuted.value.valor_retencao ? itemDataUnmuted.value.valor_retencao.replace(',', '.') : 0)
+    const res = valorLiquido >= valorRetencao    
+    if (!res) return defaultWarn('Valor de retenção é maior que o líquido')
+    return res
 }
 
 const saveData = async () => {
-    const id = props.itemData.id ? `/${props.itemData.id}` : '';
-    const url = `${urlBase.value}${id}`;
+    if (await getFormIsValid()) {
+        const id = props.itemData.id ? `/${props.itemData.id}` : '';
+        const url = `${urlBase.value}${id}`;
 
-    const method = id ? 'put' : 'post';
-    const data = { ...itemData.value };
-    try {
-        const res = await axios[method](url, data)
-            .then(res => {
-                emit('reloadItems');
-                mode.value = 'view';
-                defaultSuccess('Retenção salva com sucesso!');
-            });
+        const method = id ? 'put' : 'post';
+        const data = { ...itemData.value };
+        try {
+            const res = await axios[method](url, data)
+                .then(res => {
+                    emit('reloadItems');
+                    mode.value = 'view';
+                    defaultSuccess('Retenção salva com sucesso!');
+                });
 
 
-    } catch (error) {
-        console.log('error', error);
-        defaultWarn(error);
+        } catch (error) {
+            console.log('error', error);
+            defaultWarn(error.response.data);
+        }
     }
 }
 
@@ -77,8 +90,8 @@ onMounted(() => {
                 v-model="itemData.valor_retencao" type="text" placeholder="Valor" v-maska data-maska="0,99"
                 data-maska-tokens="0:\d:multiple|9:\d:optional" @keydown.enter.prevent class="uppercase" />
             <Button type="submit" :disabled="!(props.uProf.financeiro >= 2)"
-                v-if="['edit', 'new'].includes(mode) || mode == 'new'"
-                v-tooltip.top="'Salvar retenção'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                v-if="['edit', 'new'].includes(mode) || mode == 'new'" v-tooltip.top="'Salvar retenção'"
+                icon="fa-solid fa-floppy-disk" severity="success" text raised />
             <Button type="button" :disabled="!(props.uProf.financeiro >= 3)" v-if="mode == 'view'"
                 v-tooltip.top="'Editar retenção'" icon="fa-regular fa-pen-to-square" text raised
                 @click="mode = 'edit'" />
@@ -97,6 +110,8 @@ onMounted(() => {
             </template>
             <p>mode: {{ mode }}</p>
             <p>itemData: {{ itemData }}</p>
+            <p>itemDataRoot: {{ props.itemDataRoot }}</p>
+            <p>retencaoTotal: {{ props.retencaoTotal }}</p>
         </Fieldset>
     </form>
 </template>

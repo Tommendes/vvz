@@ -92,8 +92,8 @@ watch(props, (value) => {
             </div>
             <div v-if="missingValue || (itemDataParcelas.data && itemDataParcelas.data.length)">
                 <h4 v-if="itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1">Soma total das parcelas: {{ formatCurrency(itemDataParcelas.total) }}</h4>
-                <h4 v-if="itemDataParcelas.emAtraso && itemDataParcelas.emAtraso != '0,00' && itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-red-500">Em atraso: {{ formatCurrency(itemDataParcelas.emAtraso) }}</h4>
-                <h4 v-if="itemDataParcelas.estaSemana.length && itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-orange-500" v-for="item in itemDataParcelas.estaSemana" :key="item">{{ item.labelData }} esta semana: {{ item.data }} {{ formatCurrency(item.valor) }}</h4>
+                <h4 v-if="itemDataParcelas.emAtraso && itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-red-500">Em atraso: {{ formatCurrency(itemDataParcelas.emAtraso) }}</h4>
+                <h4 v-if="itemDataParcelas.estaSemana && itemDataParcelas.estaSemana.length && itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-orange-500" v-for="item in itemDataParcelas.estaSemana" :key="item">{{ item.labelData }} esta semana: {{ item.data }} {{ formatCurrency(item.valor) }}</h4>
                 <h4 v-if="itemDataParcelas.aVencer && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-green-500">Total das parcelas a vencer: {{ formatCurrency(itemDataParcelas.aVencer) }}</h4>
                 <h4 v-if="itemDataParcelas.pago && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-primary-500">Total das parcelas pagas: {{ formatCurrency(itemDataParcelas.pago) }}</h4>
 
@@ -102,7 +102,7 @@ watch(props, (value) => {
                     registro: {{
                         formatCurrency(props.totalLiquido)
                     }}</h4>
-                <h4 v-if="missingValue" class="flex justify-content-end mt-0 text-red-600">{{ missingValue < 0
+                <h4 v-if="missingValue" class="flex justify-content-end mt-0 text-orange-700">{{ missingValue < 0
                     ? 'Falta registrar o valor de' : 'Valor registrado a maior' }}: {{ formatCurrency(missingValue <
                             0 ? missingValue * -1 : missingValue) }}</h4>
             </div>

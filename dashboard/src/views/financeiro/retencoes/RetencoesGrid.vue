@@ -9,7 +9,7 @@ import { formatCurrency } from '../../../global';
 
 const route = useRoute();
 // Props do template
-const props = defineProps(['idRegistro', 'mode', 'uProf'])
+const props = defineProps(['mode', 'uProf', 'itemDataRoot'])
 // Emit do template
 const emit = defineEmits(['reloadItems', 'cancel']);
 // Url base do form action
@@ -19,14 +19,14 @@ const mode = ref('grid');
 const itemData = ref();
 const setNewItem = () => {
     mode.value = 'new';
-    itemData.value = { "id_fin_lancamentos": props.idRegistro };
+    itemData.value = { "id_fin_lancamentos": props.itemDataRoot.id_empresa };
 }
 
 // Dados das retenções
 const itemDataRetencoes = ref([]);
 // Carragamento de dados do form
 const loadRetencoes = async () => {
-    const id = props.idRegistro || route.params.id;
+    const id = props.itemDataRoot.id || route.params.id;
     const url = `${urlBase.value}/${id}`;
     itemDataRetencoes.value = [];
     itemDataRetencoes.value = await axios.get(url)
@@ -56,21 +56,27 @@ watch(props, (value) => {
                 </div>
             </template>
             <div class="flex justify-content-end mb-3">
-                <Button outlined type="button" v-if="props.idRegistro" severity="warning" rounded size="small"
-                    icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
+                <Button outlined type="button"
+                    v-if="props.itemDataRoot.id_empresa"
+                    :disabled="Number(props.itemDataRoot.valor_liquido.replace(',', '.')) <= 0"
+                    severity="warning" rounded size="small" icon="fa-solid fa-plus fa-shake" label="Adicionar"
+                    @click="setNewItem()" />
             </div>
             <RetencaoItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
-                @reloadItems="loadRetencoes" :uProf="uProf" />
+                @reloadItems="loadRetencoes" :uProf="uProf" :itemDataRoot="props.itemDataRoot"
+                :retencaoTotal="itemDataRetencoes.total" />
             <RetencaoItem v-for="item in itemDataRetencoes.data" :key="item.id" :itemData="item" @cancel="cancel"
-                @reloadItems="loadRetencoes" :uProf="uProf" />
+                @reloadItems="loadRetencoes" :uProf="uProf" :itemDataRoot="props.itemDataRoot"
+                :retencaoTotal="itemDataRetencoes.total" />
             <div v-if="itemDataRetencoes.data && itemDataRetencoes.data.length">
                 <h4 class="flex justify-content-end">Retenção total sobre o valor bruto: {{
                     formatCurrency(itemDataRetencoes.total)
-                    }}</h4>
+                }}</h4>
             </div>
         </Fieldset>
         <div v-if="uProf.admin >= 2">
             <p>props.mode: {{ props.mode }}</p>
+            <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
         </div>
     </div>
 </template>
