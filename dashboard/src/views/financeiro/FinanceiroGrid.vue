@@ -104,7 +104,7 @@ const limitDescription = 150;
 const limitNome = 80;
 
 // Lista de tipos
-const listaNomes = ref([
+const listaNomesDefault = ref([
     { field: 'emp_fantasia', label: 'Empresa', matchMode: FilterMatchMode.EQUALS },
     { field: 'destinatario_agrupado', label: 'Credor | Devedor', matchMode: FilterMatchMode.CONTAINS, minWidth: '10rem' },
     // { field: 'data_emissao', label: 'Emissão', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
@@ -118,6 +118,7 @@ const listaNomes = ref([
     // { field: 'documento', label: 'Documento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
     // { field: 'pedido', label: 'Pedido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
 ]);
+const listaNomes = ref([...listaNomesDefault.value])
 
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -185,7 +186,7 @@ const loadLazyData = async () => {
                 }
                 if (element.destinatario.length > limitNome) destinatario_agrupado += ' ...';
                 if (element.cpf_cnpj_destinatario) destinatario_agrupado += ' ' + masks.value.cpf_cnpj.masked(element.cpf_cnpj_destinatario);
-                if (uProf.value.admin >= 1) destinatario_agrupado += `(${element.id})`;
+                if (uProf.value.admin >= 1) destinatario_agrupado += `(L:${element.id}/P:${element.id_parcela})`;
                 element.destinatario_agrupado = destinatario_agrupado;
 
                 let descricao_agrupada = element.situacaoLabel;
@@ -199,9 +200,6 @@ const loadLazyData = async () => {
                 if (element.documento && element.documento.length) descricao_agrupada += `<p>Documento: ${element.documento}</p>`;
                 if (element.pedido && element.pedido.length) descricao_agrupada += `<p>Pedido: ${element.pedido}</p>`;
                 element.descricao_agrupada = descricao_agrupada;
-
-                const numero = element.numero || undefined;
-                if (numero) element.numero = numero + (uProf.value.admin >= 1 ? ` (${element.id})` : '');
             });
             loading.value = false;
         })
@@ -381,15 +379,17 @@ const goField = (data) => {
     window.open(`#/${uProf.value.schema_description}/financeiro/${data.id}`, '_blank');
 };
 // // Carrega os dados do filtro do grid
-// watchEffect(() => {
-//     mountUrlFilters();
-// });
+watchEffect(() => {
+    // TODO: Se for selecionada uma empresa da lista, remova listaNomes[0]
+    if (Number(empresa.value) > 0) listaNomes.value.shift();
+    else listaNomes.value = [...listaNomesDefault.value];
+});
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
     window.removeEventListener('resize', updateScreenWidth);
 });
 const customFilterOptions = ref({ filterclear: false });
-const newDocument = () => { 
+const newDocument = () => {
     mode.value = 'new';
 }
 
@@ -402,7 +402,8 @@ const rowStyle = (data) => {
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb :items="[{ label: 'Registros Financeiros', to: `/${uProf.schema_description}/notas-fiscais` }]" />
+            <Breadcrumb
+                :items="[{ label: 'Registros Financeiros', to: `/${uProf.schema_description}/notas-fiscais` }]" />
         </div>
         <div class="col-12">
             <FinanceiroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
@@ -411,8 +412,8 @@ const rowStyle = (data) => {
         <div class="col-12">
             <div class="card">
                 <DataTable ref="dt" :value="gridData" lazy :rowStyle="rowStyle" paginator :rows="gridData.length"
-                    dataKey="id" :rowHover="true" v-model:filters="filters" filterDisplay="row" :loading="loading"
-                    :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
+                    dataKey="id_parcela" :rowHover="true" v-model:filters="filters" filterDisplay="row"
+                    :loading="loading" :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
                     :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200, 500]"
                     @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
@@ -464,8 +465,8 @@ const rowStyle = (data) => {
                     <template v-for="nome in listaNomes" :key="nome">
                         <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
                             :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '12rem'}; max-width: ${nome.minWidth ? nome.minWidth : '12rem'}`" sortable
-                            :sortField="nome.field" :class="nome.class">
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '12rem'}; max-width: ${nome.minWidth ? nome.minWidth : '12rem'}`"
+                            sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
                                 <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"
                                     :severity="getSeverity(data[nome.field], nome.type)" />
@@ -476,7 +477,7 @@ const rowStyle = (data) => {
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
                                 <Dropdown :id="nome.field" optionLabel="label" optionValue="value"
                                     v-model="filterModel.value" :options="nome.list" @change="filterCallback()" filter
-                                    showClear placeholder="Pesquise..." />
+                                    showClear placeholder="Pesquise" />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
                                 <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
@@ -485,7 +486,7 @@ const rowStyle = (data) => {
                             </template>
                             <template v-else #filter="{ filterModel, filterCallback }">
                                 <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                                    class="p-column-filter" placeholder="Pesquise..." />
+                                    class="p-column-filter" placeholder="Pesquise" />
                             </template>
                             <template #filterclear="{ filterCallback }">
                                 <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()"

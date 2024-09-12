@@ -38,9 +38,7 @@ const loadParcelas = async () => {
             res.data.data.forEach(element => {
                 element.itemPosition = String(itemPosition++);
             });
-            emit('reloadItems', res.data || {});
-            console.log(props.totalLiquido, res.data.total);
-
+            emit('reloadItems');
             if (props.totalLiquido && res.data.total) {
                 const totalLiquido = Number(props.totalLiquido.replace(',', '.'));
                 const totalParcelas = Number(res.data.total.replace(',', '.'))

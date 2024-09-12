@@ -547,7 +547,7 @@ onMounted(() => {
                         ainda não convertidas
                         <router-link to="#"
                             @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 0)"
-                            v-tooltip.top="'Clique para ir'">do período {{ biPeriod.dataPt }}</router-link>
+                            v-tooltip.top="'Clique para ir'">no período {{ biPeriod.dataPt }}</router-link>
                     </span>
                 </div>
             </div>

@@ -149,7 +149,6 @@ const saveData = async () => {
                     router.push({
                         path: `/${uProf.value.schema_description}/financeiro/${itemData.value.id}`
                     });
-                    await loadData();
                 } else if (route.name != 'cadastro' && id != itemData.value.id) {
                     router.push({
                         path: `/${uProf.value.schema_description}/financeiro/${itemData.value.id}`
@@ -158,7 +157,8 @@ const saveData = async () => {
                     animationLblCadas.value = '';
                     await loadData();
                     animationLblCadas.value = animation;
-                } else reload();
+                }
+                reload();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -358,8 +358,8 @@ watch(selectedCadastro, (value) => {
     }
 });
 watch(route, (value) => {
-    if (value !== itemData.value.id) {
-        reload();
+    if (value.params.id !== itemData.value.id) {
+        window.location.reload();
     }
 });
 </script>
@@ -514,7 +514,8 @@ watch(route, (value) => {
                 <div class="col-12" v-if="itemData.id">
                     <ParcelasGrid v-if="itemData.id" @reloadItems="loadParcelas" :totalLiquido="itemData.valor_liquido"
                         :uProf="uProf" :mode="mode" :itemDataRoot="itemData" ref="parcelasGrid" />
-                    <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" ref="eventosFieldSet" />
+                    <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id"
+                        ref="eventosFieldSet" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">

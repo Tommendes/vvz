@@ -18,9 +18,9 @@ const timeRemainingFormatted = ref("00:00");
 
 // Função para calcular o tempo restante com base na última atividade
 const updateTimeRemaining = () => {
-    const lastActivity = parseInt(localStorage.getItem('lastActivity'), 10) || Math.floor(Date.now() / 1000);
+    const __lastActivity = parseInt(localStorage.getItem('__lastActivity'), 10) || Math.floor(Date.now() / 1000);
     const currentTime = Math.floor(Date.now() / 1000);
-    const timePassed = currentTime - lastActivity;
+    const timePassed = currentTime - __lastActivity;
 
     // Calcula o tempo restante com base no timeToLogOut
     const timeRemaining = Math.max(store.timeToLogOut - timePassed, 0); // Garante que o tempo não seja negativo

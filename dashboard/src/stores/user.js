@@ -69,13 +69,13 @@ export const useUserStore = defineStore('users', {
             this.clearInactivityTimer();
 
             // Atualiza o localStorage com o tempo da última atividade
-            localStorage.setItem('lastActivity', Math.floor(Date.now() / 1000));
+            localStorage.setItem('__lastActivity', Math.floor(Date.now() / 1000));
 
             // Cria um intervalo para verificar o tempo de inatividade
             this.inactivityTimer = setInterval(() => {
-                const lastActivity = localStorage.getItem('lastActivity');
+                const __lastActivity = localStorage.getItem('__lastActivity');
                 const currentTime = Math.floor(Date.now() / 1000);
-                const timeDifference = (currentTime - lastActivity); // em segundos
+                const timeDifference = (currentTime - __lastActivity); // em segundos
                 if (timeDifference >= this.timeToLogOut) {
                     this.logout();
                     clearInterval(this.inactivityTimer); // Limpa o intervalo após o logout
@@ -91,7 +91,7 @@ export const useUserStore = defineStore('users', {
         },
         resetInactivityTimer() {
             // Atualiza a última atividade no localStorage
-            localStorage.setItem('lastActivity', Math.floor(Date.now() / 1000));
+            localStorage.setItem('__lastActivity', Math.floor(Date.now() / 1000));
         },
         async findUser(cpf) {
             const url = `${baseApiAuthUrl}/signin`;

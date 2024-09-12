@@ -287,7 +287,7 @@ module.exports = app => {
 
         totalRecords = await totalRecords
 
-        ret.select(app.db.raw(`fl.id, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta`))
+        ret.select(app.db.raw(`fl.id, tbl1.id AS id_parcela, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta`))
             .select(app.db.raw(`(select fl.valor_bruto - coalesce(sum(r.valor_retencao), 0) from ${tabelaRetencoesDomain} r where r.id_fin_lancamentos = fl.id) AS valor_liquido_conta`))
             .select(app.db.raw(`tbl1.valor_vencimento AS valor_vencimento_parcela, tbl1.duplicata, tbl1.documento`))
             .select(app.db.raw(`fl.pedido, tbl1.descricao AS descricao_parcela, fl.descricao AS descricao_conta, fl.id_empresa, e.razaosocial AS empresa, e.fantasia AS emp_fantasia`))

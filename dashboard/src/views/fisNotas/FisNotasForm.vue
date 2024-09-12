@@ -410,8 +410,8 @@ watch(selectedFornecedor, (value) => {
     }
 });
 watch(route, (value) => {
-    if (value !== itemData.value.id) {
-        reload();
+    if (value.params.id !== itemData.value.id) {
+        window.location.reload();
     }
 });
 </script>
