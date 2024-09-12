@@ -468,7 +468,7 @@ onMounted(async () => {
                     <div class="col-12 md:col-12">
                         <label for="descricao">Descrição dos serviços</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <EditorComponent v-else :readonly="mode != 'view'" v-model="itemData.descricao" id="descricao"
+                        <EditorComponent v-else :readonly="(loading || ['view', 'expandedFormMode'].includes(mode))" v-model="itemData.descricao" id="descricao"
                             :editorStyle="{ height: '320px' }" aria-describedby="editor-error" />
                     </div>
                 </div>

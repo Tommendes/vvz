@@ -903,7 +903,7 @@ watch(route, (value) => {
                         <div class="col-12 lg:col12">
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="!(loading || ['view', 'expandedFormMode'].includes(mode))"
+                            <EditorComponent v-else :readonly="loading || ['view', 'expandedFormMode'].includes(mode)"
                                 v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
                                 aria-describedby="editor-error" />
                         </div>
