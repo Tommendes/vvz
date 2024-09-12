@@ -405,7 +405,7 @@ const onImageRightClick = (event) => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[
         { label: 'Todas as Empresas', to: `/${uProf.schema_description}/empresas` },
-        { label: itemData.razaosocial + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        { label: itemData.razaosocial + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
     ]" />
     <div class="card">
         <form @submit.prevent="saveData">

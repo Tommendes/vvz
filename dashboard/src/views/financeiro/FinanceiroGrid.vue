@@ -506,7 +506,7 @@ const rowStyle = (data) => {
                         </template>
                     </Column>
                 </DataTable>
-                <div v-if="uProf.admin >= 1">
+                <div v-if="uProf.admin >= 2">
                     <p>mode: {{ mode }}</p>
                     <p>uProf: {{ uProf }}</p>
                     <p>empresa: {{ empresa }}</p>

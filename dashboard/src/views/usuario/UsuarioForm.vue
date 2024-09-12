@@ -262,7 +262,7 @@ onMounted(async () => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[
         { label: 'Usuários', to: `/${uProf.schema_description}/usuarios` },
-        { label: itemData.name + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        { label: itemData.name + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
     ]" />
     <div class="card">
         <form @submit.prevent="saveData">

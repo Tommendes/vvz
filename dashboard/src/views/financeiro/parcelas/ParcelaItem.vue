@@ -123,7 +123,7 @@ const getContas = async () => {
     await axios.get(url).then((res) => {
         dropdownContas.value = [];
         res.data.data.map((item) => {
-            const label = item.nome.toString().replaceAll(/_/g, ' ') + (props.uProf.admin >= 1 ? ` (${item.id})` : '');
+            const label = item.nome.toString().replaceAll(/_/g, ' ') + (props.uProf.admin >= 2 ? ` (${item.id})` : '');
             const itemList = { value: item.id, label: label };
             dropdownContas.value.push(itemList);
         });

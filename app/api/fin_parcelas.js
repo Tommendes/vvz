@@ -20,6 +20,7 @@ module.exports = app => {
         let body = { ...req.body }
         const bodyMultiplicate = body.bodyMultiplicate || undefined
         delete body.bodyMultiplicate
+        delete body.bodyDuplicate
         delete body.id;
         if (req.params.id) body.id = req.params.id
         body.id_fin_lancamentos = req.params.id_fin_lancamentos || undefined
@@ -358,7 +359,16 @@ module.exports = app => {
         }
     }
 
+    const getByFunction = async (req, res) => {
+        const func = req.params.func
+        switch (func) {
+            default:
+                res.status(404).send('Função inexitente')
+                break;
+        }
+    }
+
     return {
-        save, get, getById, remove, SITUACAO_ABERTO, SITUACAO_PAGO, SITUACAO_CONCILIADO, SITUACAO_CANCELADO
+        save, get, getById, remove, getByFunction, SITUACAO_ABERTO, SITUACAO_PAGO, SITUACAO_CONCILIADO, SITUACAO_CANCELADO
     }
 }

@@ -351,7 +351,7 @@ watch(selectedCadastro, (value) => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[
         { label: 'Todos os Protocolos', to: `/${uProf.schema_description}/protocolos` },
-        { label: itemData.registro + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        { label: itemData.registro + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
     ]" />
     <div class="card" style="max-width: 100rem">
         <form @submit.prevent="saveData">

@@ -140,7 +140,7 @@ onMounted(async () => {
         v-if="mode != 'new'"
         :items="[
             { label: 'Técnicos Pós Vendas', to: `/${uProf.schema_description}/tecnicos-pv` },
-            { label: itemData.tecnico + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+            { label: itemData.tecnico + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
         ]"
     />
     <div class="card">

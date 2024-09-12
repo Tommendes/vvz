@@ -223,7 +223,7 @@ watchEffect(() => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[
         { label: 'Mensagens', to: `/${uProf.schema_description}/messages` },
-        { label: itemData.title + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        { label: itemData.title + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
     ]" />
     <div class="card">
         <form @submit.prevent="saveData">

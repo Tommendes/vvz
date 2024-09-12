@@ -75,7 +75,7 @@ onBeforeMount(() => {
 <template>
     <Breadcrumb v-if="itemData.id" :items="[
         { label: 'Todos os cadastros', to: `/${uProf.schema_description}/cadastros` },
-        { label: itemData.nome + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        { label: itemData.nome + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
     ]" />
     <div class="grid" :style="route.name == 'cadastro' ? 'min-width: 100rem;' : ''">
         <div class="col-12">

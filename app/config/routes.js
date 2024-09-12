@@ -562,6 +562,9 @@ module.exports = app => {
         .put(app.api.fin_lancamentos.save)
         .get(app.api.fin_lancamentos.getById)
         .delete(app.api.fin_lancamentos.remove)
+    app.route('/fin-lancamentos/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.fin_lancamentos.getByFunction)
 
     /**
     * Rota de fin_etiquetas
@@ -633,6 +636,9 @@ module.exports = app => {
         .put(app.api.fin_parcelas.save)
         .get(app.api.fin_parcelas.getById)
         .delete(app.api.fin_parcelas.remove)
+    app.route('/fin-parcelas/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .get(app.api.fin_parcelas.getByFunction)
 
     /**
      * Rota para fiscal

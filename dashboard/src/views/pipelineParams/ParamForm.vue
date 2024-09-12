@@ -391,7 +391,7 @@ watch(itemData.value, () => {
             </div>
         </form>
     </div>
-    <div v-if="uProf.admin >= 1">
+    <div v-if="uProf.admin >= 2">
         <p>mode: {{ mode }}</p>
         <p>itemData: {{ itemData }}</p>
         <p>uProf: {{ uProf }}</p>

@@ -482,7 +482,7 @@ watch(selectedFornecedor, (value) => {
 <template>
     <Breadcrumb v-if="mode != 'new'" :items="[
         { label: 'Todos os produtos', to: `/${uProf.schema_description}/produtos` },
-        { label: itemData.nome_comum + (uProf.admin >= 1 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        { label: itemData.nome_comum + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
     ]" />
     <div class="card">
         <form @submit.prevent="saveData">
