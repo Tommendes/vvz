@@ -1,12 +1,13 @@
 ALTER TABLE vivazul_bceaa5.fin_lancamentos ADD COLUMN old_id INT(11) NULL;
+ALTER TABLE vivazul_bceaa5.cadastros CHANGE old_id old_id INT(10) UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id, old_id);
 ALTER TABLE mygsoft.fin_lancamentos CHANGE cod cod INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Código da conta de vencimento', CHANGE cod_cadas cod_cadas INT(10) UNSIGNED DEFAULT 0 NOT NULL COMMENT 'Codigo relacional com a tabela de cadastros'; 
 ALTER TABLE mygsoft.fin_lancamentos CHARSET=utf8mb4, COLLATE=utf8mb4_general_ci;
-ALTER TABLE vivazul_bceaa5.cadastros CHANGE old_id old_id INT(10) UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id, old_id);
 UPDATE mygsoft.fin_lancamentos SET data_lancamento = '2015-12-22 10:59:50' WHERE cod = '26638'; 
 UPDATE mygsoft.fin_lancamentos SET data_lancamento = '2016-01-11 02:34:14' WHERE cod = '26639'; 
 
 /*Importar as empresas*/
 ALTER TABLE vivazul_bceaa5.empresa ADD COLUMN old_id INT(11) NULL;
+SET FOREIGN_KEY_CHECKS = 0;
 DELETE FROM vivazul_bceaa5.empresa WHERE id > 1;
 ALTER TABLE vivazul_bceaa5.empresa AUTO_INCREMENT=0;
 INSERT INTO vivazul_bceaa5.empresa (id,evento,created_at,updated_at,STATUS,razaosocial,fantasia,cpf_cnpj_empresa,ie,ie_st,im,cnae,cep,logradouro,nr,complnr,bairro,cidade,uf,ibge,geo_ltd,geo_lng,contato,tel1,tel2,
@@ -15,6 +16,7 @@ email,email_at,email_comercial,email_financeiro,email_rh,id_cadas_resplegal,id_u
 de.email,de.emailAt,de.emailComercial,de.emailFinanceiro,NULL,NULL,NULL,cod
  FROM mygsoft.sis_demp de WHERE cod > 1 GROUP BY cnpj_empresa ORDER BY cnpj_empresa);
 UPDATE vivazul_bceaa5.empresa SET old_id = id WHERE id = 1;
+SET FOREIGN_KEY_CHECKS = 1;
 
 /*Importar Contas (fin_lancamentos x fin_contas)*/
 UPDATE mygsoft.fin_lancamentos SET forma_pagto = 'BOLETO BANCARIO' WHERE forma_pagto IN('BOL BANCARIO','BOL BANC');

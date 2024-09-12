@@ -403,7 +403,7 @@ watch(route, (value) => {
                         <div class="col-12 md:col-3">
                             <label for="data_emissao">Data Emissão <small id="text-error"
                                     class="p-error">*</small></label>
-                            <Skeleton v-if="loading.form" height="3rem"></Skeleton>
+                            <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputGroup v-else>
                                 <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska
                                     data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />

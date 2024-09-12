@@ -480,7 +480,7 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-12">
                             <label for="observacao">Observação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="!(loading.form || ['view', 'expandedFormMode'].includes(mode))"
+                            <EditorComponent v-else :readonly="!(loading || ['view', 'expandedFormMode'].includes(mode))"
                                 v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }"
                                 aria-describedby="editor-error" />
                         </div>
