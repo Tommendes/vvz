@@ -112,6 +112,7 @@ onMounted(() => {
             <p>itemData: {{ itemData }}</p>
             <p>itemDataRoot: {{ props.itemDataRoot }}</p>
             <p>retencaoTotal: {{ props.retencaoTotal }}</p>
+            <p>uProf: {{ props.uProf }}</p>
         </Fieldset>
     </form>
 </template>

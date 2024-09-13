@@ -776,7 +776,7 @@ module.exports = app => {
         }
 
         // Apenas gestores e admins podem selecionar alçadas de usuários
-        if (!(user.id && (user.gestor >= 1 || user.admin >= 1))) {
+        if (!(user.gestor >= 1 || user.admin >= 1)) {
             delete user.admin
             delete user.gestor
             delete user.multiCliente
@@ -795,8 +795,6 @@ module.exports = app => {
         // Apenas admins podem selecionar outros admins, gestores ou multiCliente
         if (!(user.admin >= 1)) {
             delete user.admin
-            delete user.gestor
-            delete user.multiCliente
         }
         if (user.id) {
             // Variáveis da edição de um registro
