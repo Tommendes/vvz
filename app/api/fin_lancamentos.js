@@ -35,6 +35,7 @@ module.exports = app => {
         delete body.old_id;
         delete body.nome;
         delete body.cpf_cnpj;
+        delete body.valor_liquido;
 
         if (body.valor_bruto) body.valor_bruto = body.valor_bruto.replace(".", "").replace(",", ".");
         else body.valor_bruto = 0;
