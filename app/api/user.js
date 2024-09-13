@@ -472,7 +472,7 @@ module.exports = app => {
         const user = userFromDB
 
         user.status = STATUS_ACTIVE
-        user.multiCliente = 1
+        user.multiCliente = '1'
         // registrar o evento na tabela de eventos
         const { createEventUpd } = app.api.sisEvents
         const evento = await createEventUpd({
@@ -775,12 +775,12 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-        // Apenas gestores e admins podem selecionar alçadas de usuários
-        if (!(user.gestor >= 1 || user.admin >= 1)) {
-            delete user.admin
-            delete user.gestor
-            delete user.multiCliente
-        }
+        // // Apenas gestores e admins podem selecionar alçadas de usuários
+        // if (!(user.gestor >= 1 || user.admin >= 1)) {
+        //     delete user.admin
+        //     delete user.gestor
+        //     delete user.multiCliente
+        // }
 
         if (user.email && !isValidEmail(user.email))
             return res.status(400).send('E-mail inválido')
@@ -792,10 +792,6 @@ module.exports = app => {
         delete user.schema_description
         delete user.j_user
         delete user.j_paswd
-        // Apenas admins podem selecionar outros admins, gestores ou multiCliente
-        if (!(user.admin >= 1)) {
-            delete user.admin
-        }
         if (user.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -815,6 +811,7 @@ module.exports = app => {
 
             user.evento = evento
             user.updated_at = new Date()
+            
             const rowsUpdated = await app.db(tabela)
                 .update(user)
                 .where({ id: user.id })
@@ -874,7 +871,7 @@ module.exports = app => {
             sql.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
             })
-        if (uParams.multiCliente == 0) {
+        if (uParams.multiCliente == '0') {
             // Não troca cliente nem domínio
             sql.where({ 'us.schema_id': uParams.schema_id })
         }
@@ -896,7 +893,7 @@ module.exports = app => {
             ret.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
             })
-        if (uParams.multiCliente == 0) {
+        if (uParams.multiCliente == '0') {
             // Não troca cliente nem domínio
             ret.where({ 'us.schema_id': uParams.schema_id })
         }
