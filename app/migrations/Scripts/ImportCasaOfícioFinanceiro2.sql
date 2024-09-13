@@ -4,6 +4,8 @@ ALTER TABLE mygsoft.fin_lancamentos CHANGE cod cod INT(10) UNSIGNED NOT NULL AUT
 ALTER TABLE mygsoft.fin_lancamentos CHARSET=utf8mb4, COLLATE=utf8mb4_general_ci;
 UPDATE mygsoft.fin_lancamentos SET data_lancamento = '2015-12-22 10:59:50' WHERE cod = '26638'; 
 UPDATE mygsoft.fin_lancamentos SET data_lancamento = '2016-01-11 02:34:14' WHERE cod = '26639'; 
+ALTER TABLE mygsoft.cadas DROP COLUMN new_id_cadas;
+ALTER TABLE mygsoft.cadas ADD COLUMN new_id_cadas INT(10) UNSIGNED NULL;
 
 /*Importar as empresas*/
 ALTER TABLE vivazul_bceaa5.empresa ADD COLUMN old_id INT(11) NULL;
@@ -17,6 +19,12 @@ de.email,de.emailAt,de.emailComercial,de.emailFinanceiro,NULL,NULL,NULL,cod
  FROM mygsoft.sis_demp de WHERE cod > 1 GROUP BY cnpj_empresa ORDER BY cnpj_empresa);
 UPDATE vivazul_bceaa5.empresa SET old_id = id WHERE id = 1;
 SET FOREIGN_KEY_CHECKS = 1;
+
+/*Buscar referências em `vivazul_bceaa5`.`cadastros`.id para marcar mygsoft.cadas.new_id_cadas*/
+SELECT id FROM `vivazul_bceaa5`.`cadastros` cv
+JOIN mygsoft.cadas mv ON mv.cpf_cnpj = cv.cpf_cnpj
+WHERE cv.`status` = 10
+GROUP BY cv.id;
 
 /*Importar Contas (fin_lancamentos x fin_contas)*/
 UPDATE mygsoft.fin_lancamentos SET forma_pagto = 'BOLETO BANCARIO' WHERE forma_pagto IN('BOL BANCARIO','BOL BANC');
