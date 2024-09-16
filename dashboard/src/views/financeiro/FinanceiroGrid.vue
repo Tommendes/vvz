@@ -176,7 +176,7 @@ const loadLazyData = async () => {
             rowsPerPageOptions.value = [...new Set(rowsPerPageOptions.value)];
             gridData.value.forEach((element) => {
                 element.data_emissao = element.data_emissao ? moment(element.data_emissao).format('DD/MM/YYYY') : '';
-                element.data_vencimento = element.data_vencimento ? moment(element.data_vencimento).format('DD/MM/YYYY') : '';
+                element.data_vencimento = `Parcela: ${element.parcela} ` + (element.data_vencimento ? moment(element.data_vencimento).format('DD/MM/YYYY') : '');
                 element.data_pagto = element.data_pagto ? moment(element.data_pagto).format('DD/MM/YYYY') : '';
                 element.centroLabel = String(element.centro) == "1" ? "Receita" : "Despesa"
 

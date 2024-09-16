@@ -44,6 +44,8 @@ const itemData = ref({});
 const listFolder = ref(null);
 // O registro tem pasta?
 const hasFolder = ref(false);
+// O registro tem conteúdo na pasta?
+const hasFolderContent = ref(false);
 // O servidor está acessível?
 const hostAccessible = ref(false);
 // Modo do formulário
@@ -152,7 +154,11 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
-                fSEventos.value.getEventos();
+                const bodyTo = { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
+                // setTimeout(async () => {
+                await mkFolder(bodyTo);
+                // }, Math.random() * 2000 + 250);
+                if (fSEventos.value && fSEventos.value.$el) fSEventos.value.getEventos();
                 emit('changed');
                 if (route.name != 'cadastro' && mode.value == 'new') {
                     router.push({
@@ -170,10 +176,6 @@ const saveData = async () => {
                 } else reload();
                 mode.value = 'view';
 
-                const bodyTo = { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
-                setTimeout(async () => {
-                    await mkFolder(bodyTo);
-                }, Math.random() * 2000 + 250);
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -519,9 +521,7 @@ const statusRecord = async (status) => {
                         defaultSuccess(`Registro convertido com sucesso`);
 
                         const bodyTo = { id_pipeline: body.data.id, path: `${body.data.documento}` };
-                        setTimeout(async () => {
-                            await mkFolder(bodyTo);
-                        }, Math.random() * 2000 + 250);
+                        await mkFolder(bodyTo);
 
                         await toFilho(body.data.id);
                     })
@@ -608,11 +608,14 @@ const lstFolder = async () => {
     await axios
         .post(url, { id_pipeline: id })
         .then((res) => {
-            if (res.data && res.data.length) {
+            if (res.data) {
                 const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
                 listFolder.value = res.data;
                 // remover de listFolder os itensToNotList
-                if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
+                if (typeof listFolder.value == 'object' && listFolder.value.length >= 1) {
+                    hasFolderContent.value = true;
+                }
+                if (typeof listFolder.value == 'object' && listFolder.value.length >= 0) {
                     listFolder.value = listFolder.value.filter((item) => {
                         return !itensToNotList.includes(item.name);
                     });
@@ -630,6 +633,7 @@ const lstFolder = async () => {
 };
 
 const mkFolder = async (body) => {
+    if (uProf.value.pipeline_ftp == 0) return;
     const url = `${baseApiUrl}/pipeline/f-a/mfd`;
     defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
 
@@ -916,7 +920,8 @@ watch(route, (value) => {
                             severity="danger" text raised
                             @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
-                    <Eventos ref="fSEventos" :tabelaBd="'pipeline'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
+                    <Eventos ref="fSEventos" :tabelaBd="'pipeline'" :idRegistro="Number(itemData.id)"
+                        v-if="itemData.id" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -950,6 +955,8 @@ watch(route, (value) => {
                         <p>itemDataLastStatus: {{ itemDataLastStatus }}</p>
                         <p>{{ unidadeLabel }}</p>
                         <p>hasFolder {{ hasFolder }}</p>
+                        <p>hasFolderContent: {{ hasFolderContent }}</p>
+                        <p>hostAccessible: {{ hostAccessible }}</p>
                         <p>editCadastro {{ editCadastro }}</p>
                         <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
                     </Fieldset>
@@ -1060,7 +1067,7 @@ watch(route, (value) => {
                                 uProf.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
                         </Timeline>
                     </Fieldset>
-                    <Fieldset :toggleable="true" :collapsed="true" v-if="itemData.id">
+                    <Fieldset :toggleable="true" :collapsed="true" v-if="uProf.pipeline_ftp && itemData.id">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
                                 <span class="fa-solid fa-clock mr-2"></span>
@@ -1072,7 +1079,8 @@ watch(route, (value) => {
                             <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
                         </ul>
                         <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>
-                        <p v-else>Não há conteúdo na pasta</p>
+                        <p v-else-if="!hasFolder">Não há na pasta<br />Você pode clicar em criar pasta acima</p>
+                        <p v-else-if="!hasFolderContent">Não há conteúdo na pasta</p>
                     </Fieldset>
                 </div>
             </div>

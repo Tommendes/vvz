@@ -52,6 +52,8 @@ module.exports = app => {
             // Verificar se a data de vencimanto é válida e converte para en
             if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimanto inválida'
             body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
+            if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) throw 'Data de pagamento inválida'
+            body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
             if (['2', '3'].includes(String(body.situacao))) {
                 existsOrError(body.data_pagto, 'Data de pagamento não informada')
                 existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`)

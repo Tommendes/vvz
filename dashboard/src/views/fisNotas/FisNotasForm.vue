@@ -40,12 +40,6 @@ import moment from 'moment';
 const animationDocNr = ref('animation-color animation-fill-forwards ');
 // Campos de formulário
 const itemData = ref({});
-// Listagem de arquivos na pasta do registro
-const listFolder = ref(null);
-// O registro tem pasta?
-const hasFolder = ref(false);
-// O servidor está acessível?
-const hostAccessible = ref(false);
 // Modo do formulário
 const mode = ref('view');
 // Loadings
@@ -194,9 +188,6 @@ const saveData = async () => {
                 mode.value = 'view';
                 const folterRoot = itemData.value.fornecedor.replaceAll(' ', '_');
                 const bodyTo = { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
-                setTimeout(async () => {
-                    await mkFolder(bodyTo);
-                }, Math.random() * 2000 + 250);
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -321,52 +312,6 @@ const registroIdentico = async () => {
     };
     mode.value = 'clone';
 };
-
-const lstFolder = async () => {
-    const id = props.idFisNotas || route.params.id;
-    const url = `${baseApiUrl}/fiscal-notas/f-a/lfd`;
-    await axios
-        .post(url, { id_fis_notas: id })
-        .then((res) => {
-            if (res.data && res.data.length) {
-                const itensToNotList = ['.', '..', '.DS_Store', 'Thumbs.db'];
-                listFolder.value = res.data;
-                // remover de listFolder os itensToNotList
-                if (typeof listFolder.value == 'object' && listFolder.value.length > 0) {
-                    listFolder.value = listFolder.value.filter((item) => {
-                        return !itensToNotList.includes(item.name);
-                    });
-                    hasFolder.value = true;
-                }
-            }
-            if (listFolder.value && typeof listFolder.value == 'object' && listFolder.value.length == 0) hasFolder.value = true;
-            hostAccessible.value = true;
-        })
-        .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response && error.response.status == 401) router.push('/');
-            hostAccessible.value = false;
-        });
-};
-
-const mkFolder = async (body) => {
-    const url = `${baseApiUrl}/fiscal-notas/f-a/mfd`;
-    defaultWarn('Tentando entrar em contato com o servidor de pastas. Por favor aguarde...');
-
-    const folterRoot = body.data.fornecedor.replaceAll(' ', '_');
-    const bodyTo = body || { id_fis_notas: itemData.value.id, path: `${folterRoot}/${itemData.value.numero}` };
-    await axios
-        .post(url, bodyTo)
-        .then(async (res) => {
-            // const msgDone = `Pasta criada com sucesso`;
-            defaultSuccess(res.data);
-            await lstFolder();
-        })
-        .catch((error) => {
-            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-            if (error.response && error.response.status == 401) router.push('/');
-        });
-};
 /**
  * Fim de ferramentas do registro
  */
@@ -396,8 +341,6 @@ onMounted(async () => {
     if (props.idFornecedor) itemData.value.id_fornecedor = props.idFornecedor;
     // Carrega os dados do formulário
     await loadData();
-    // Carrega o conteúdo da pasta
-    await lstFolder();
     // Unidades de negócio
     getEmpresas();
     // Agentes de negócio
@@ -541,25 +484,7 @@ watch(route, (value) => {
                                 type="button" :disabled="!(uProf.fiscal >= 4 && itemData.status == 10)"
                                 class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
                                 @click="defaultWarn('Excluir registro')" />
-                            <Button :disabled="!hostAccessible || hasFolder" label="Criar Pasta" type="button"
-                                class="w-full mt-3 mb-3"
-                                :icon="`fa-solid fa-folder ${hostAccessible && !hasFolder ? 'fa-shake' : ''}`"
-                                severity="success" text raised @click="mkFolder()" />
                         </div>
-                    </Fieldset>
-                    <Fieldset :toggleable="true" :collapsed="true" v-if="itemData.id">
-                        <template #legend>
-                            <div class="flex align-items-center text-primary">
-                                <span class="fa-solid fa-clock mr-2"></span>
-                                <span class="font-bold text-lg">Conteúdo da Pasta</span>
-                            </div>
-                        </template>
-                        <ul class="list-decimal"
-                            v-if="listFolder && typeof listFolder == 'object' && listFolder.length">
-                            <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
-                        </ul>
-                        <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>
-                        <p v-else>Não há conteúdo na pasta</p>
                     </Fieldset>
                 </div>
                 <div class="col-12">
@@ -621,9 +546,7 @@ watch(route, (value) => {
                         <p>itemData: {{ itemData }}</p>
                         <p v-if="props.idFornecedor">idFornecedor: {{ props.idFornecedor }}</p>
                         <p v-if="props.idFisNotas">idPipeline: {{ props.idFisNotas }}</p>
-                        <p>hasFolder {{ hasFolder }}</p>
                         <p>editFornecedor {{ editFornecedor }}</p>
-                        <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
                     </Fieldset>
                 </div>
             </div>

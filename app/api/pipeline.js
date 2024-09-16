@@ -53,7 +53,15 @@ module.exports = app => {
             if (pipeline_params_force.autom_nr == 0) {
                 existsOrError(body.documento, 'Número de documento não informado')
                 if (!(parseInt(body.documento) > 0)) throw 'Número de documento não informado'
+                try {
+                    const unique = await app.db(tabelaDomain).select('documento').where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).whereRaw(`cast(documento as unsigned) = ${Number(body.documento)}`).first()
+                    if (unique) throw 'Número de documento já cadastrado para esta unidade de negócio'
+                } catch (error) {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(400).send(error)
+                }
             }
+
             // if (body.id_com_agentes && pipeline_params_force.doc_venda >= 2) {
             //     existsOrError(body.valor_representacao, 'Valor base da comissão da representação não informado')
             //     if (body.valor_representacao < 0.01) throw 'Valor base da comissão da representação inválido'
@@ -1103,6 +1111,7 @@ module.exports = app => {
     const mkFolder = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        if (uParams.pipeline_ftp == 0) return true;
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pipeline >= 2, `${noAccessMsg} "Inclusão de pastas de documentos"`)
@@ -1174,6 +1183,7 @@ module.exports = app => {
     const lstFolder = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        if (uParams.pipeline_ftp == 0) return true;
         try {
             // Alçada do usuário
             isMatchOrError(uParams && uParams.pipeline >= 1, `${noAccessMsg} "Listagem de pastas de documentos"`)
@@ -1197,6 +1207,7 @@ module.exports = app => {
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
         const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
+        
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
         ftpParamsArray.forEach(ftpParam => {
             ftpParam.path = pathDoc;
@@ -1206,6 +1217,7 @@ module.exports = app => {
             existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
 
             let connectionResult = await connectToFTP(ftpParamsArray, uParams);
+            
 
             if (!connectionResult.success) {
                 throw new Error('Não foi possível conectar ao servidor de arquivos neste momento');
@@ -1219,10 +1231,10 @@ module.exports = app => {
 
         try {
             const list = await clientFtp.list('/' + pathDoc);
-
-            if (!list) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
-            else return res.send(list);
+            return res.send(list);
         } catch (error) {
+            console.log(error);
+            
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${pathDoc}. Error: ${error}`, sConsole: true } })
             if (error.code == 'EHOSTUNREACH') return res.status(200).send(`Servidor de arquivos temporariamente indisponível`);
             else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);

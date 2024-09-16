@@ -27,8 +27,7 @@ module.exports = app => {
         }
 
         let user = await app.db({ 'u': tabela })
-            .select('u.id', 'u.schema_id', 'u.id_empresa', 'u.tkn_api', 'u.name', 'u.cpf', 'u.email', 'u.telefone', 'u.admin', 'u.gestor', 'u.multiCliente', 'u.cadastros', 'u.pipeline', 'u.pipeline_params',
-                'u.pv', 'u.comercial', 'u.fiscal', 'u.financeiro', 'u.comissoes', 'u.prospeccoes', 'u.at', 'u.protocolo', 'u.uploads', 'u.agente_v', 'u.agente_arq', 'u.agente_at', 'u.time_to_pas_expires', 'u.status', 'sc.schema_name', 'sc.schema_description')
+            .select('u.*', 'u.status', 'u.schema_id', 'sc.schema_name', 'sc.schema_description', 'sc.pipeline_ftp')
             .join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id')
             .orWhere({ 'u.email': email })
             .orWhere({ 'u.name': email })
@@ -140,33 +139,33 @@ module.exports = app => {
                 const payload = {
                     id: user.id,
                     status: user.status,
-                    cpf: user.cpf,
-                    name: user.name,
-                    telefone: user.telefone,
                     schema_description: user.schema_description,
                     schema_name: user.schema_name,
-                    gestor: user.gestor,
-                    admin: user.admin,
-                    cadastros: user.cadastros,
-                    pipeline: user.pipeline,
-                    protocolo: user.protocolo,
-                    pv: user.pv,
-                    comercial: user.comercial,
-                    fiscal: user.fiscal,
-                    financeiro: user.financeiro,
-                    comissoes: user.comissoes,
-                    uploads: user.uploads,
-                    at: user.at,
-                    agente_v: user.agente_v,
-                    agente_arq: user.agente_arq,
-                    agente_at: user.agente_at,
-                    id_empresa: user.id_empresa,
                     schema_id: user.schema_id,
-                    multiCliente: user.multiCliente,
-                    ip: ip,
-                    ipSignin: ip,
                     iat: now,
                     exp: expirationTime
+                    // multiCliente: user.multiCliente,
+                    // cpf: user.cpf,
+                    // name: user.name,
+                    // telefone: user.telefone,
+                    // gestor: user.gestor,
+                    // admin: user.admin,
+                    // cadastros: user.cadastros,
+                    // pipeline: user.pipeline,
+                    // protocolo: user.protocolo,
+                    // pv: user.pv,
+                    // comercial: user.comercial,
+                    // fiscal: user.fiscal,
+                    // financeiro: user.financeiro,
+                    // comissoes: user.comissoes,
+                    // uploads: user.uploads,
+                    // at: user.at,
+                    // agente_v: user.agente_v,
+                    // agente_arq: user.agente_arq,
+                    // agente_at: user.agente_at,
+                    // id_empresa: user.id_empresa,
+                    // ip: ip,
+                    // ipSignin: ip,
                 }
 
                 app.api.logger.logInfo({ log: { line: `Login bem sucedido: ${user.name}`, sConsole: true } })
@@ -213,12 +212,14 @@ module.exports = app => {
     const getProfile = async (req, res) => {
         try {
             existsOrError(req.body.id, 'ID do usuário não informado')
-        } catch (error) {            
+        } catch (error) {
             return res.status(400).send(error)
         }
         let user = await app.db({ 'u': tabela })
-            .select('u.id', 'u.schema_id', 'u.id_empresa', 'u.tkn_api', 'u.name', 'u.cpf', 'u.email', 'u.telefone', 'u.admin', 'u.gestor', 'u.multiCliente', 'u.cadastros', 'u.pipeline', 'u.pipeline_params',
-                'u.pv', 'u.comercial', 'u.fiscal', 'u.financeiro', 'u.comissoes', 'u.prospeccoes', 'u.at', 'u.protocolo', 'u.uploads', 'u.agente_v', 'u.agente_arq', 'u.agente_at', 'u.time_to_pas_expires', 'u.status', 'sc.schema_name', 'sc.schema_description')
+            .select('u.id_empresa', 'u.tkn_api', 'u.name', 'u.cpf', 'u.email', 'u.telefone', 'u.password_reset_token','u.admin', 'u.gestor',
+                'u.multiCliente', 'u.empresas', 'u.cadastros', 'u.pipeline', 'u.pipeline_params', 'u.pv', 'u.comercial', 'u.fiscal', 
+                'u.financeiro', 'u.comissoes', 'u.prospeccoes', 'u.at', 'u.protocolo', 'u.uploads', 'u.agente_v', 'u.agente_arq', 
+                'u.agente_at', 'u.time_to_pas_expires', 'sc.schema_name', 'sc.schema_description', 'sc.pipeline_ftp')
             .join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id')
             .orWhere({ 'u.id': req.body.id })
             .first()
