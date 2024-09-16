@@ -53,13 +53,6 @@ module.exports = app => {
             if (pipeline_params_force.autom_nr == 0) {
                 existsOrError(body.documento, 'Número de documento não informado')
                 if (!(parseInt(body.documento) > 0)) throw 'Número de documento não informado'
-                try {
-                    const unique = await app.db(tabelaDomain).select('documento').where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).whereRaw(`cast(documento as unsigned) = ${Number(body.documento)}`).first()
-                    if (unique) throw 'Número de documento já cadastrado para esta unidade de negócio'
-                } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    return res.status(400).send(error)
-                }
             }
 
             // if (body.id_com_agentes && pipeline_params_force.doc_venda >= 2) {
@@ -82,6 +75,21 @@ module.exports = app => {
         const status_params_force = body.status_params_force || body.status_params; // Status forçado para edição
         delete body.status_params; delete body.pipeline_params_force; delete body.status_params_force;
         delete body.id_pv; delete body.id_oat;
+        try {
+            // Se não for uma conversão, verificar se o número de documento já existe                
+            if (status_params_force != STATUS_CONVERTIDO) {
+                try {
+                    const unique = await app.db(tabelaDomain).select('documento').where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).whereRaw(`cast(documento as unsigned) = ${Number(body.documento)}`).first()
+                    if (unique) throw 'Número de documento já cadastrado para esta unidade de negócio'
+                } catch (error) {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(400).send(error)
+                }
+            }
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(400).send(error)
+        }
         if (body.id) {
             // Variáveis da edição de um registro            
             let updateRecord = {
