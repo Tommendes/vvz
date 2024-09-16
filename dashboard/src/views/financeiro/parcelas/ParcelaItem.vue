@@ -232,7 +232,8 @@ watchEffect(() => {
     <form @submit.prevent="saveData">
         <div class="formgrid grid">
             <div class="field col-12 md:col-2">
-                <label for="data_vencimento">Vencimento <span class="text-base" style="color: red">*</span></label>
+                <label for="data_vencimento">Data de Vencimento <span class="text-base"
+                        style="color: red">*</span></label>
                 <InputGroup>
                     <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska data-maska="##/##/####"
                         v-model="itemData.data_vencimento" id="data_vencimento" placeholder="Vencimento"
@@ -244,7 +245,7 @@ watchEffect(() => {
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">
-                <label for="valor_vencimento">R$ Valor Parcela <span class="text-base"
+                <label for="valor_vencimento">Valor do Vencimento <span class="text-base"
                         style="color: red">*</span></label>
                 <InputGroup>
                     <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.valor_vencimento"
@@ -262,25 +263,30 @@ watchEffect(() => {
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">
-                <label for="parcela">Parcela <span class="text-base" style="color: red">*</span></label>
-                <Dropdown placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value"
-                    v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)"
-                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
-            </div>
-            <div class="field col-12 md:col-2">
-                <label for="duplicata">Duplicata</label>
-                <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.duplicata"
-                    id="duplicata" type="text" placeholder="Duplicata"
-                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
-            </div>
-            <div class="field col-12 md:col-2">
-                <label for="data_pagto">Situação <span class="text-base" style="color: red">*</span></label>
+                <label for="data_pagto">Situação do Vencimento<span class="text-base"
+                        style="color: red">*</span></label>
                 <Dropdown placeholder="Situação" id="situacao" optionLabel="label" optionValue="value"
                     v-model="itemData.situacao" :options="dropdownSituacao" :disabled="['view'].includes(mode)"
                     class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
             </div>
+            <div class="field col-12 md:col-4">
+                <div class="formgrid grid">
+                    <div class="field col-12 md:col-4">
+                        <label for="parcela">Parcela <span class="text-base" style="color: red">*</span></label>
+                        <Dropdown placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value"
+                            v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)"
+                            class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
+                    </div>
+                    <div class="field col-12 md:col-8">
+                        <label for="duplicata">Documento de Cobrança</label>
+                        <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.duplicata"
+                            id="duplicata" type="text" placeholder="Duplicata, sequencial, etc."
+                            class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
+                    </div>
+                </div>
+            </div>
             <div class="field col-12 md:col-2">
-                <label for="data_pagto">Pagamento <span v-if="!(itemData.situacao == '1')" class="text-base"
+                <label for="data_pagto">Data do Pagamento <span v-if="!(itemData.situacao == '1')" class="text-base"
                         style="color: red">*</span></label>
                 <InputGroup>
                     <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####"
@@ -293,18 +299,18 @@ watchEffect(() => {
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">
-                <label for="id_fin_constas">Conta de pagamento <span v-if="!(itemData.situacao == '1')"
+                <label for="id_fin_constas">Conta de Movimentação <span v-if="!(itemData.situacao == '1')"
                         class="text-base" style="color: red">*</span></label>
                 <Dropdown filter placeholder="Conta" id="id_fin_contas" optionLabel="label" optionValue="value"
                     v-model="itemData.id_fin_contas" :options="dropdownContas" :disabled="['view'].includes(mode)"
                     class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
             </div>
             <div class="field col-12 md:col-2">
-                <label for="documento">Documento <span
+                <label for="documento">Meio de Quitação <span
                         v-if="!(itemData.situacao == '1') && props.itemDataRoot.centro == '2'" class="text-base"
                         style="color: red">*</span></label>
                 <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.documento"
-                    id="documento" type="text" placeholder="Documento"
+                    id="documento" type="text" placeholder="Pix, TED, Boleto, etc..."
                     class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
             </div>
             <div class="field col-12 md:col-8">

@@ -1207,7 +1207,7 @@ module.exports = app => {
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
         const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
-        
+
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
         ftpParamsArray.forEach(ftpParam => {
             ftpParam.path = pathDoc;
@@ -1217,7 +1217,7 @@ module.exports = app => {
             existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
 
             let connectionResult = await connectToFTP(ftpParamsArray, uParams);
-            
+
 
             if (!connectionResult.success) {
                 throw new Error('Não foi possível conectar ao servidor de arquivos neste momento');
@@ -1233,12 +1233,20 @@ module.exports = app => {
             const list = await clientFtp.list('/' + pathDoc);
             return res.send(list);
         } catch (error) {
-            console.log(error);
-            
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${pathDoc}. Error: ${error}`, sConsole: true } })
-            if (error.code == 'EHOSTUNREACH') return res.status(200).send(`Servidor de arquivos temporariamente indisponível`);
-            else if (error.code == 550) return res.status(200).send(`Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"`);
-            else return res.status(200).send(error)
+            let errorMsg = error.message;
+            // Que tipos de erros posso receber em error.code?
+            switch (error.code) {
+                case 'EHOSTUNREACH':
+                    errorMsg = 'Servidor de arquivos temporariamente indisponível. Tente novamente ou tente mais tarde';
+                    break;
+                case 550:
+                    errorMsg = 'Pasta de arquivos não encontrado. Você pode criar uma clicando no botão "Criar pasta"';
+                    break;
+                default:
+                    break;
+            }
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${pathDoc}. Error: ${errorMsg}`, sConsole: true } })
+            return res.status(200).send(errorMsg)
         } finally {
             clientFtp.close();
         }

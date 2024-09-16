@@ -68,7 +68,7 @@ const setAdicionalVencimentoClass = (item) => {
     labelTo += moment(item.data_vencimento).format('DD/MM/YYYY')
     return { class: classTo, label: labelTo };
 }
-const cancel = () => { }
+const cancel = () => { mode.value = 'view'; }
 onBeforeMount(async () => {
     await loadParcelas();
 });
@@ -86,25 +86,41 @@ watch(props, (value) => {
                     <span class="font-bold text-lg">Planejamento Financeiro do Registro</span>
                 </div>
             </template>
-            <div class="flex justify-content-end mb-1">
-                <Button outlined type="button" v-if="props.itemDataRoot.id" severity="warning" rounded size="small"
-                    icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
-            </div>
-            <div v-if="missingValue || (itemDataParcelas.data && itemDataParcelas.data.length)">
-                <h4 v-if="itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1">Soma total das parcelas: {{ formatCurrency(itemDataParcelas.total) }}</h4>
-                <h4 v-if="itemDataParcelas.emAtraso && itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-red-500">Em atraso: {{ formatCurrency(itemDataParcelas.emAtraso) }}</h4>
-                <h4 v-if="itemDataParcelas.estaSemana && itemDataParcelas.estaSemana.length && itemDataParcelas.data && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-orange-500" v-for="item in itemDataParcelas.estaSemana" :key="item">{{ item.labelData }} esta semana: {{ item.data }} {{ formatCurrency(item.valor) }}</h4>
-                <h4 v-if="itemDataParcelas.aVencer && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-green-500">Total das parcelas a vencer: {{ formatCurrency(itemDataParcelas.aVencer) }}</h4>
-                <h4 v-if="itemDataParcelas.pago && itemDataParcelas.data.length" class="flex justify-content-end mt-1 text-primary-500">Total das parcelas pagas: {{ formatCurrency(itemDataParcelas.pago) }}</h4>
+            <div class="flex justify-content-between flex-wrap mb-1">
+                <div class="flex align-items-start">
+                    <Button outlined type="button" v-if="props.itemDataRoot.id" severity="warning" rounded size="small"
+                        icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
+                </div>
+                <div class="flex justify-content-end">
+                    <div v-if="missingValue || (itemDataParcelas.data && itemDataParcelas.data.length)">
+                        <h4 v-if="itemDataParcelas.data && itemDataParcelas.data.length" class="mt-1">Soma total das
+                            parcelas: {{
+                                formatCurrency(itemDataParcelas.total) }}</h4>
+                        <h4 v-if="itemDataParcelas.emAtraso && itemDataParcelas.data && itemDataParcelas.data.length"
+                            class="mt-1 text-red-500">Em atraso: {{ formatCurrency(itemDataParcelas.emAtraso) }}
+                        </h4>
+                        <h4 v-if="itemDataParcelas.estaSemana && itemDataParcelas.estaSemana.length && itemDataParcelas.data && itemDataParcelas.data.length"
+                            class="mt-1 text-orange-500" v-for="item in itemDataParcelas.estaSemana" :key="item">{{
+                                item.labelData
+                            }} esta semana: {{ item.data }} {{ formatCurrency(item.valor) }}</h4>
+                        <h4 v-if="itemDataParcelas.aVencer && itemDataParcelas.data.length" class="mt-1 text-green-500">
+                            Total das
+                            parcelas a vencer: {{ formatCurrency(itemDataParcelas.aVencer) }}</h4>
+                        <h4 v-if="itemDataParcelas.pago && itemDataParcelas.data.length" class="mt-1 text-primary-500">
+                            Total das
+                            parcelas pagas: {{ formatCurrency(itemDataParcelas.pago) }}</h4>
 
-                <h4 v-if="missingValue && itemDataParcelas.data && itemDataParcelas.data.length"
-                    class="flex justify-content-end border-bottom-1 mt-0">Valor liquido deste
-                    registro: {{
-                        formatCurrency(props.totalLiquido)
-                    }}</h4>
-                <h4 v-if="missingValue" class="flex justify-content-end mt-0 text-orange-700">{{ missingValue < 0
-                    ? 'Falta registrar o valor de' : 'Valor registrado a maior' }}: {{ formatCurrency(missingValue <
-                            0 ? missingValue * -1 : missingValue) }}</h4>
+                        <h4 v-if="missingValue && itemDataParcelas.data && itemDataParcelas.data.length" class="mt-0">
+                            <span class="border-bottom-1">Valor liquido deste
+                                registro: {{
+                                    formatCurrency(props.totalLiquido)
+                                }}</span>
+                        </h4>
+                        <h4 v-if="missingValue" class="mt-0 text-orange-700">{{ missingValue < 0
+                            ? 'Falta registrar o valor de' : 'Valor registrado a maior' }}: {{
+                                    formatCurrency(missingValue < 0 ? missingValue * -1 : missingValue) }}</h4>
+                    </div>
+                </div>
             </div>
             <ParcelaItem v-if="mode == 'new'" :mode="mode" :itemData="itemData" @cancel="cancel"
                 @reloadItems="loadParcelas" :uProf="props.uProf" :itemDataRoot="props.itemDataRoot" />
