@@ -578,7 +578,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-12">
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <EditorComponent :readonly ="['view'].includes(mode)" v-else v-model="itemData.observacao"
+                        <EditorComponent v-else :readonly ="['view'].includes(mode)" v-model="itemData.observacao"
                             id="observacao" :editorStyle="{ height: '80px' }" aria-describedby="editor-error" />
                         <!-- <p v-else v-html="itemData.observacao"
                             class="p-inputtext p-component p-filled p-disabled uppercase"></p> -->

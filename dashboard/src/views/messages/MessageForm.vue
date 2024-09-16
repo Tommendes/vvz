@@ -285,7 +285,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-12">
                             <label for="msg">Mensagem</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.msg" id="msg"
+                            <EditorComponent v-else :readonly="loading || mode != 'view'" v-model="itemData.msg" id="msg"
                                 :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                         <div class="col-12 md:col-5" v-if="itemData.valid_to && !errorMessages.valid_to">
@@ -297,7 +297,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-12">
                             <label for="msg_future">Mensagem Futura</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.msg_future"
+                            <EditorComponent v-else :readonly="loading || mode != 'view'" v-model="itemData.msg_future"
                                 id="msg_future" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                         <div class="col-12">

@@ -168,7 +168,7 @@ onMounted(async () => {
                         <div class="col-12 md:col-12">
                             <label for="observacao">Observação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="!loading && mode != 'view'" v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                     </div>
                     <div class="col-12" v-if="uProf.admin >= 2">
