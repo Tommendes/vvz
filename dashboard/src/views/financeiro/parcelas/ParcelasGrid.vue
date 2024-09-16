@@ -88,8 +88,8 @@ watch(props, (value) => {
             </template>
             <div class="flex justify-content-between flex-wrap mb-1">
                 <div class="flex align-items-start">
-                    <Button outlined type="button" v-if="props.itemDataRoot.id" severity="warning" rounded size="small"
-                        icon="fa-solid fa-plus fa-shake" label="Adicionar" @click="setNewItem()" />
+                    <Button type="button" v-if="props.itemDataRoot.id" severity="contrast" rounded size="large"
+                        icon="fa-solid fa-plus fa-shake" label="Adicionar Vencimento" @click="setNewItem()" />
                 </div>
                 <div class="flex justify-content-end">
                     <div v-if="missingValue || (itemDataParcelas.data && itemDataParcelas.data.length)">
