@@ -35,8 +35,8 @@ onBeforeMount(async () => {
 
 // Função para resetar o timer de inatividade
 const resetTimer = () => {
-//   store.startInactivityTimer();
-  store.resetInactivityTimer();
+    //   store.startInactivityTimer();
+    store.resetInactivityTimer();
 };
 
 // // Adicionar listeners para eventos globais
@@ -61,6 +61,11 @@ const open = () => {
 const close = () => {
     display.value = false;
 };
+// ChatPluginPlay.init({
+//     accountId: '32133-31232-312321-312312-312312',
+//     enableFloatingButton: true,
+// });
+
 </script>
 
 <template>

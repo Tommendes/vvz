@@ -141,7 +141,7 @@ const saveData = async () => {
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
 
-    itemData.value.documento = String(itemData.value.documento);
+    if (itemData.value.documento) itemData.value.documento = String(itemData.value.documento);
     let preparedBody = {
         ...itemData.value,
         pipeline_params_force: itemDataParam.value
@@ -156,7 +156,7 @@ const saveData = async () => {
                 itemData.value = body;
                 const bodyTo = { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
                 // setTimeout(async () => {
-                await mkFolder(bodyTo);
+                if (!hasFolder || mode.value == 'clone') await mkFolder(bodyTo);
                 // }, Math.random() * 2000 + 250);
                 if (fSEventos.value && fSEventos.value.$el) fSEventos.value.getEventos();
                 emit('changed');

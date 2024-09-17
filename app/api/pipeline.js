@@ -77,10 +77,10 @@ module.exports = app => {
         delete body.id_pv; delete body.id_oat;
         try {
             // Se não for uma conversão, verificar se o número de documento já existe                
-            if (status_params_force != STATUS_CONVERTIDO) {
-                try {
-                    const unique = await app.db(tabelaDomain).select('documento').where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).whereRaw(`cast(documento as unsigned) = ${Number(body.documento)}`).first()
-                    if (unique) throw 'Número de documento já cadastrado para esta unidade de negócio'
+            if (status_params_force != STATUS_CONVERTIDO && body.documento) {
+                try {                    
+                    const unique = await app.db(tabelaDomain).select('id').where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).whereRaw(`cast(documento as unsigned) = ${body.documento}`).first()
+                    if (unique && unique.id != body.id) throw 'Número de documento já cadastrado para esta unidade de negócio'
                 } catch (error) {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                     return res.status(400).send(error)
