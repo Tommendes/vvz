@@ -76,6 +76,7 @@ const items = ref([
 ]);
 
 const logout = () => {
+    ChatPluginPlay.destroy();
     useUserStore().logout();
     location.reload();
 };
@@ -235,6 +236,10 @@ const showMessage = (body) => {
     });
 };
 
+const goToChat = () => {
+    window.open(`#/${uProf.value.schema_description}/azul-chat`, '_blank');
+};
+
 onBeforeMount(() => {
     getUserMessages();
 });
@@ -256,6 +261,10 @@ onBeforeMount(() => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
+            <Button  type="button" v-if="uProf.chat_account_id && uProf.chat_status && uProf.chat_operator_access_token" label="Chat"
+                icon="fa-brands fa-whatsapp"
+                severity="info" rounded size="large" 
+                aria-haspopup="true" @click="goToChat" />
             <Button v-if="newMessages > 0" type="button"
                 :icon="`fa-regular fa-bell fa-2xl ${newMessages ? 'fa-shake' : ''}`"
                 :severity="`${newMessages > 0 ? 'info' : ''}`" rounded size="large" :badge="String(newMessages) || '0'"

@@ -157,7 +157,7 @@ const saveData = async () => {
                 defaultWarn('Erro ao salvar registro');
             }
         })
-        .catch((error) => {            
+        .catch((error) => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             if (error.response && error.response.status == 401) router.push('/');
         });
@@ -309,6 +309,10 @@ function formatarDadosParaHTML(dados) {
     htmlString += '</p>';
     return htmlString;
 }
+
+const goToChat = () => {
+    window.open(`#/${uProf.value.schema_description}/azul-chat?phone=55${itemData.value.telefone.replace(/([^\d])+/gim, "")}`, '_blank');
+};
 
 const limparFormularioCEP = () => {
     itemData.value.logradouro = '';
@@ -541,9 +545,12 @@ watchEffect(() => {
                         <label for="telefone">Telefone<small id="text-error" v-if="!itemData.prospecto" class="p-error">
                                 *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'"
-                            v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone"
-                            id="telefone" type="text" @input="validateTelefone()" class="uppercase" />
+                        <InputGroup v-else>
+                            <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'"
+                                v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone"
+                                id="telefone" type="text" @input="validateTelefone()" class="uppercase" />
+                            <Button :disabled="!validateTelefone()" @click="goToChat" icon="fa-brands fa-whatsapp" />
+                        </InputGroup>
                         <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone
                             }}</small>
                     </div>
@@ -578,7 +585,7 @@ watchEffect(() => {
                     <div class="field col-12 md:col-12">
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <EditorComponent v-else :readonly ="['view'].includes(mode)" v-model="itemData.observacao"
+                        <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.observacao"
                             id="observacao" :editorStyle="{ height: '80px' }" aria-describedby="editor-error" />
                         <!-- <p v-else v-html="itemData.observacao"
                             class="p-inputtext p-component p-filled p-disabled uppercase"></p> -->

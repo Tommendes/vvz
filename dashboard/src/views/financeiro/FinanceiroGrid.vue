@@ -106,14 +106,14 @@ const limitNome = 80;
 // Lista de tipos
 const listaNomesDefault = ref([
     { field: 'emp_fantasia', label: 'Empresa', matchMode: FilterMatchMode.EQUALS },
-    { field: 'destinatario_agrupado', label: 'Credor | Devedor', matchMode: FilterMatchMode.CONTAINS, minWidth: '10rem' },
+    { field: 'destinatario_agrupado', label: 'Credor | Devedor', matchMode: FilterMatchMode.CONTAINS, minWidth: '12rem' },
     // { field: 'data_emissao', label: 'Emissão', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
     { field: 'data_vencimento', label: 'Vencimento', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
     { field: 'data_pagto', label: 'Pagamento', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
     { field: 'valor_bruto_conta', label: 'R$ Bruto', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
     { field: 'valor_liquido_conta', label: 'R$ Liquido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
-    { field: 'valor_vencimento_parcela', label: 'R$ Vencimento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
-    { field: 'descricao_agrupada', label: 'Descrição', matchMode: FilterMatchMode.CONTAINS, minWidth: '11rem', class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : 'white-space-nowrap' },
+    // { field: 'valor_vencimento_parcela', label: 'R$ Vencimento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
+    { field: 'descricao_agrupada', label: 'Descrição', matchMode: FilterMatchMode.CONTAINS, minWidth: '12rem', class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : 'white-space-nowrap' },
     // { field: 'duplicata', label: 'Duplicata', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
     // { field: 'documento', label: 'Documento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
     // { field: 'pedido', label: 'Pedido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },

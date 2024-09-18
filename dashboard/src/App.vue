@@ -61,11 +61,6 @@ const open = () => {
 const close = () => {
     display.value = false;
 };
-// ChatPluginPlay.init({
-//     accountId: '32133-31232-312321-312312-312312',
-//     enableFloatingButton: true,
-// });
-
 </script>
 
 <template>

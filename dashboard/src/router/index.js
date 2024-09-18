@@ -13,6 +13,12 @@ const routes = [
                 name: 'dashboard',
                 component: () => import('@/views/Dashboard.vue')
             },
+            // Azul Chat
+            {
+                path: '/:client/azul-chat',
+                name: 'azul-chat',
+                component: () => import('@/views/azulChat/AzulChat.vue')
+            },
             // Seção Clientes
             {
                 path: '/:client/cadastros',

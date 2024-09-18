@@ -85,7 +85,7 @@ const loadData = async () => {
             "gestor": "0", "multiCliente": "1", "cadastros": "1", "pipeline": "1",
             "pipeline_params": "0", "pv": "1", "at": "1", "comercial": "1",
             "prospeccoes": "1", "fiscal": "1", "financeiro": "1", "protocolo": "1",
-            "comissoes": "0", "agente_arq": "0", "agente_at": "0", "status": "10", "agente_v": "0"
+            "comissoes": "0", "agente_arq": "0", "agente_at": "0", "status": "10", "agente_v": "0", "chat_operator_access_token": null
         };
     }
 };
@@ -436,8 +436,16 @@ onMounted(async () => {
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.schema_description }}</p>
                             </div> -->
+                            <div class="col-12 md:col-4">
+                                <label for="multiCliente">Token do usuário para o Azul Chat</label>
+                                <Skeleton v-if="loading" height="2rem"></Skeleton>
+                                <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                    v-model="itemData.chat_operator_access_token" id="chat_operator_access_token"
+                                    type="text" placeholder="Selecione..." />
+                            </div>
                             <div class="col-12 md:col-12" v-if="dropdownEmpresas.length > 1">
-                                <label id="secaopermissaofinanceiro">Relacionado às consultas ao Financeiro e Fiscal</label>
+                                <label id="secaopermissaofinanceiro">Relacionado às consultas ao Financeiro e
+                                    Fiscal</label>
                             </div>
                             <div class="col-12 md:col-4" v-if="dropdownEmpresas.length > 1">
                                 <label for="multiCliente">Multi Cliente</label>
