@@ -17,8 +17,6 @@ const logout = () => {
     useUserStore().logout();
     location.reload();
 };
-// ChatPluginPlay.toogleFloatingButton();
-
 </script>
 
 <template>

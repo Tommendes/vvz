@@ -31,7 +31,7 @@ const setMenuByUser = async () => {
         if (uProf.value.comercial >= 1 || uProf.value.pipeline >= 1) itemMenu.items.push({ label: 'Propostas', icon: 'fa-solid fa-bars', to: `/${uProf.value.schema_description}/propostas` });
         if (uProf.value.comercial >= 1) itemMenu.items.push({ label: 'Produtos', icon: 'fa-solid fa-shopping-cart', to: `/${uProf.value.schema_description}/produtos` });
         if (uProf.value.protocolo >= 1) itemMenu.items.push({ label: 'Protocolos', icon: 'fa-solid fa-folder', to: `/${uProf.value.schema_description}/protocolos` });
-        if (uProf.value.chat_status >= 1) itemMenu.items.push({ label: 'AzulChat', icon: 'fa-brands fa-whatsapp', to: `/${uProf.value.schema_description}/azul-chat` });
+        if (uProf.value.chat_operator_access_token) itemMenu.items.push({ label: 'AzulChat', icon: 'fa-brands fa-whatsapp', to: `/${uProf.value.schema_description}/azul-chat` });
         model.value.push(itemMenu);
     }
     if (uProf.value.pv >= 1 || uProf.value.at >= 1) {
