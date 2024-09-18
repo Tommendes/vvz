@@ -40,10 +40,9 @@ const initChat = async () => {
 
     if (phone)
         ChatPluginPlay.openChat({
-            phone: '558296061883',
+            phone: phone,
             message: 'Olá, tudo bem?',
         });
-    // ChatPluginPlay.openChat({ phone: phone });
     else ChatPluginPlay.openChat();
 };
 </script>
