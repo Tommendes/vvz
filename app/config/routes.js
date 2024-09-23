@@ -658,6 +658,22 @@ module.exports = app => {
         .post(app.api.fis_notas.getByFunction)
 
     /**
+     * Rota para whats-msgs
+     */
+    app.route('/whats-msgs')
+        .all(app.config.passport.authenticate())
+        .post(app.api.whats_msgs.save)
+        .get(app.api.whats_msgs.get)
+    app.route('/whats-msgs/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.whats_msgs.save)
+        .get(app.api.whats_msgs.getById)
+        .delete(app.api.whats_msgs.remove)
+    app.route('/whats-msgs/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .post(app.api.whats_msgs.getByFunction)
+
+    /**
      * Rota para impressão
      */
     app.route('/printing/:func')

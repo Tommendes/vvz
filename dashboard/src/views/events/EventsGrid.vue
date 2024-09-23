@@ -44,7 +44,7 @@ onMounted(async () => {
 
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
-const rowsPerPageOptions = ref([5, 10, 20, 50, 200]); // Opções de registros por página
+const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000]); // Opções de registros por página
 const loading = ref(false);
 const gridData = ref([]); // Seus dados iniciais
 

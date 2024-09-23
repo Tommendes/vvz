@@ -1,7 +1,7 @@
 const { db, migrationClientSchema } = require('../.env')
 
-exports.up = function(knex, Promise) {
-    return knex.schema.createTable(db.database+ '.users', table => {
+exports.up = function (knex, Promise) {
+    return knex.schema.createTable(db.database + '.users', table => {
         table.engine('InnoDB')
         table.charset('utf8mb4')
         table.collate('utf8mb4_general_ci')
@@ -39,6 +39,6 @@ exports.up = function(knex, Promise) {
     })
 };
 
-exports.down = function(knex, Promise) {
-    return knex.schema.dropTable(db.database+ '.users')
+exports.down = function (knex, Promise) {
+    return knex.schema.dropTable(db.database + '.users')
 };

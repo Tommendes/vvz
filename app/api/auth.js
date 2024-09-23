@@ -215,6 +215,7 @@ module.exports = app => {
         } catch (error) {
             return res.status(400).send(error)
         }
+        
         let user = await app.db({ 'u': tabela })
             .select('u.id', 'u.id_empresa', 'u.tkn_api', 'u.name', 'u.cpf', 'u.email', 'u.telefone', 'u.password_reset_token','u.admin', 'u.gestor',
                 'u.multiCliente', 'u.empresas', 'u.cadastros', 'u.pipeline', 'u.pipeline_params', 'u.pv', 'u.comercial', 'u.fiscal', 
@@ -224,6 +225,8 @@ module.exports = app => {
             .join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id')
             .orWhere({ 'u.id': req.body.id })
             .first()
+            
+        if (!user) return res.status(400).send('Usuário não encontrado')
         const msg = await showWelcomeUserMessage(user.name) || `Seja bem-vindo(a), ${user.name}! Estamos felizes em recebê-lo(a) em nossa plataforma`
         return res.send({
             ...user,

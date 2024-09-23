@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { baseApiAuthUrl, baseApiUrl } from '@/env';
-import { userKey, glKey, decodeToken } from '@/global';
+import { userKey, glKey } from '@/global';
 import interceptor from '@/axios-interceptor';
 import axios from 'axios';
 
@@ -14,6 +14,7 @@ export const useUserStore = defineStore('users', {
         timeToLogOut: 1800,
         inactivityTimer: null,
         isTokenValid: false,
+        validation: {},
         geolocation: {
             latitude: null,
             longitude: null
@@ -48,7 +49,7 @@ export const useUserStore = defineStore('users', {
                         localStorage.setItem(userKey, JSON.stringify({ ...res.data, ip: ip }));
                         this.profile = await this.getProfile(this.user);
                         if (this.profile.admin >= 2) {
-                            console.log('validation (only for dev)*', validation);
+                            console.log('validation (only for dev)*', this.validation);
                             console.log('profile (only for dev)*', this.profile);
                         }
                         this.startInactivityTimer();
@@ -106,8 +107,8 @@ export const useUserStore = defineStore('users', {
             const url = `${baseApiAuthUrl}/validateToken`;
             if (userData && userData.ip) userData.ipSignin = userData.ip;
             try {
-                const validation = await interceptor.post(url, userData)
-                this.isTokenValid = validation.data;
+                this.validation = await interceptor.post(url, userData)
+                this.isTokenValid = this.validation.data;
                 if (this.isTokenValid) {
                     this.user = userData;
                     interceptor.defaults.headers.common['Authorization'] = `bearer ${this.user.token}`;

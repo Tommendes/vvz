@@ -273,8 +273,7 @@ module.exports = app => {
             const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
             const tabelaFtp = `${dbPrefix}_api.ftp_control`
             const ftpParam = await app.db({ ftp: tabelaFtp })
-                .select('host', 'port', 'user', 'pass', 'ssl')
-                .where({ schema_id: uParams.schema_id }).first()
+                .select('host', 'port', 'user', 'pass', 'ssl')                
             clienteFTP.connect({
                 host: ftpParam.host,
                 port: ftpParam.port,
@@ -363,7 +362,8 @@ module.exports = app => {
             .where({ schema_id: uParams.schema_id }).first()
         req.ftpParam = ftpParam
         const tabelaSchema = `${dbPrefix}_api.schemas_control`
-        const schemaParam = await app.db({ sc: tabelaSchema }).where({ id: uParams.schema_id }).first()
+        const schemaParam = await app.db({ sc: tabelaSchema }).where({ id: uParams.schema_id, status: STATUS_ACTIVE }).first()
+        console.log('ftpParam', ftpParam);
         req.schemaParam = schemaParam
 
         // ftpParam contém os dados de conexão com o servidor FTP. 

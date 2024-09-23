@@ -37,7 +37,7 @@ const route = useRoute();
 const urlBase = ref(`${baseApiUrl}/fin-lancamentos`);
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
-const rowsPerPageOptions = ref([5, 10, 20, 50, 200]); // Opções de registros por página
+const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000]); // Opções de registros por página
 const sumRecords = ref(0); // O valor total de registros (deve ser atualizado com o total real)
 const loading = ref(false); // Indica se está carregando
 const gridData = ref([]); // Dados do grid
@@ -170,7 +170,10 @@ const loadLazyData = async () => {
             const quant = totalRecords.value;
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
-            // if (quant > 1) 
+            rowsPerPageOptions.value.push(quant);
+
+            // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
+            rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
             rowsPerPageOptions.value.push(quant);
             // TODO: Remova todos os valores duplicados de rowsPerPageOptions
             rowsPerPageOptions.value = [...new Set(rowsPerPageOptions.value)];
@@ -349,9 +352,9 @@ const exportXls = () => {
 // Se o registro tiver Até 7 dias, retorne 'success'
 const daysToQualify = ref([
     { days: 7, qualify: 'success', label: 'Até 7 dias' },
-    { days: 39, qualify: 'info', label: 'Inferior a 40 dias' },
-    { days: 79, qualify: 'warning', label: 'Inferior a 80 dias' },
-    { days: 119, qualify: 'help', label: 'Inferior a 120 dias' },
+    { days: 39, qualify: 'info', label: 'Anterior a 40 dias' },
+    { days: 79, qualify: 'warning', label: 'Anterior a 80 dias' },
+    { days: 119, qualify: 'help', label: 'Anterior a 120 dias' },
     { days: 120, qualify: 'danger', label: '120 dias ou mais' }
 ]);
 const getSeverity = (field, type = 'date') => {
@@ -381,8 +384,8 @@ const goField = (data) => {
 // // Carrega os dados do filtro do grid
 watchEffect(() => {
     // TODO: Se for selecionada uma empresa da lista, remova listaNomes[0]
-    if (Number(empresa.value) > 0) listaNomes.value.shift();
-    else listaNomes.value = [...listaNomesDefault.value];
+    if (Number(empresa.value) > 0 && listaNomes.value[0].field == listaNomesDefault.value[0].field) listaNomes.value.shift();
+    else if (Number(empresa.value) == 0) listaNomes.value = [...listaNomesDefault.value];
 });
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
