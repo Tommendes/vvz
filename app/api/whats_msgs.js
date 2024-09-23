@@ -208,6 +208,7 @@ module.exports = app => {
     // Método responsável por enviar uma mensagem de WhatsApp e atualizar a situação da mensagem para 2 (enviada) além de registrar o evento na tabela de eventos
     const sendMessage = async (message, uParams, tabelaDomain) => {
         try {
+            if (!uParams || uParams.chat_account_tkn === null) return;
             const config = {
                 headers: {
                     'Authorization': uParams.chat_account_tkn // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
@@ -231,9 +232,9 @@ module.exports = app => {
 
     // Método com schedule para envio de mensagens. O método deverá ficar ativo e verificar a cada minutos se há mensagens a serem enviadas. A verificação deve ocorrer a partir do campo schedule + situação. Se a situação for 1 e a data e hora de envio for menor ou igual a data e hora atual, a mensagem deve ser enviada.
     const sendScheduledMessages = async () => {
-        // Verifique em api.schema_control quais são os schemas com chat_account_tkn
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').whereNotNull('chat_account_tkn') // Certifique-se de que app.db está definido
+        if (!uParams) return;
         for (const schema of uParams) {
             const tabelaDomain = `${dbPrefix}_${schema.schema_name}.${tabela}`; // Certifique-se de que dbPrefix e tabela estão definidos
             const messages = await app.db(tabelaDomain).where({ situacao: 1, status: STATUS_ACTIVE }).orderBy('schedule', 'asc'); // Certifique-se de que app.db e STATUS_ACTIVE estão definidos
