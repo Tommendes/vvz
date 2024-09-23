@@ -233,9 +233,10 @@ module.exports = app => {
     // Método com schedule para envio de mensagens. O método deverá ficar ativo e verificar a cada minutos se há mensagens a serem enviadas. A verificação deve ocorrer a partir do campo schedule + situação. Se a situação for 1 e a data e hora de envio for menor ou igual a data e hora atual, a mensagem deve ser enviada.
     const sendScheduledMessages = async () => {
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
-        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').whereNotNull('chat_account_tkn') // Certifique-se de que app.db está definido
-        if (!uParams) return;
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id') // Certifique-se de que app.db está definido
+        if (!uParams) return;        
         for (const schema of uParams) {
+            console.log('Verificando mensagens agendadas para o schema:', schema.schema_name);
             const tabelaDomain = `${dbPrefix}_${schema.schema_name}.${tabela}`; // Certifique-se de que dbPrefix e tabela estão definidos
             const messages = await app.db(tabelaDomain).where({ situacao: 1, status: STATUS_ACTIVE }).orderBy('schedule', 'asc'); // Certifique-se de que app.db e STATUS_ACTIVE estão definidos
             const now = moment().format('YYYY-MM-DD HH:mm:ss');
@@ -333,7 +334,6 @@ module.exports = app => {
 
     // Agendar a verificação e envio de mensagens a cada minuto
     schedule.scheduleJob('* * * * *', async () => {
-        console.log('Verificando mensagens agendadas...');
         await sendScheduledMessages(); // Certifique-se de que sendScheduledMessages está definido
     });
 
