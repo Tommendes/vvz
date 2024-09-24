@@ -156,7 +156,7 @@ const saveData = async () => {
                 itemData.value = body;
                 const bodyTo = { id_pipeline: itemData.value.id, path: `${itemDataParam.value.descricao}/${itemData.value.documento}` };
                 // setTimeout(async () => {
-                if (!hasFolder || mode.value == 'clone') await mkFolder(bodyTo);
+                if (!hasFolder || ['clone','new'].includes(mode.value)) await mkFolder(bodyTo);
                 // }, Math.random() * 2000 + 250);
                 if (fSEventos.value && fSEventos.value.$el) fSEventos.value.getEventos();
                 emit('changed');
