@@ -14,6 +14,7 @@ exports.up = function (knex, Promise) {
         table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.string('schedule').notNull().comment('Data e hora do agendamento do envio')
         table.integer('destinId').comment('ID do cadastro do destinatário')
+        table.integer('identified').comment('Cabeçalho do remetente')
         table.string('phone').notNull().comment('Número do telefone')
         table.string('message', 500).notNull().comment('Mensagem a ser enviada')
         table.integer('situacao').defaultTo(1).notNull().comment('Situação da parcela (1: Aberto; 2: Enviada; 3: Editada; 99: Cancelado)')

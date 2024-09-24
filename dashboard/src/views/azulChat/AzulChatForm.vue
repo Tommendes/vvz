@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch, watchEffect } from 'vue';
+import { computed, onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -30,6 +30,7 @@ onBeforeMount(async () => {
     if (uProf.value.admin >= 2) {
         itemData.value = {
             destinId: 8094,
+            identified: true,
             message: '<p>Olá {senderName}!</p><p><br></p><p>Esta mensagem só deverá ser despachada 17:45 x2. Eu sou o assistente virtual da <strong>{clientName}</strong> e passei para te avisar que estamos testando o sistema de mensagens.</p><p><br></p><p>Se preferir continuar esta conversa por e-mail use preferencialmente o {clientEmail}. Ou pode nos chamar pelo {clientTel}. 😘</p><p><br></p><p><em>Atenciosamente</em>,</p><p>{userName}</p>',
             phone: '(82) 98149-9024',
             schedule: moment().format('DD-MM-YYYY HH:mm:00'),
@@ -38,7 +39,10 @@ onBeforeMount(async () => {
 });
 
 // Campos de formulário
-const itemData = ref({});
+const itemData = ref({
+    identified: true,
+    schedule: moment().format('DD-MM-YYYY HH:mm:00')
+});
 const minDate = ref(new Date());
 // Modo do formulário
 const mode = ref('new');
@@ -91,6 +95,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Mensagem enviada com sucesso');
                 itemData.value = {
+                    identified: true,
                     schedule: moment().format('DD-MM-YYYY HH:mm:00')
                 };
                 emit('sended', itemData.value);
@@ -125,7 +130,7 @@ const reload = async () => {
 };
 // Carregar dados do formulário
 onMounted(async () => {
-    await loadData();    
+    await loadData();
 });
 // Observar alterações nos dados do formulário
 watch(route, (value) => {
@@ -133,6 +138,17 @@ watch(route, (value) => {
         window.location.reload();
     }
 });
+// Copiar o conteúdo de um elemento para a área de transferência
+const copyToClipboard = (event) => {
+    const textToCopy = event.target.innerText;
+    const textArea = document.createElement('textarea');
+    textArea.value = textToCopy;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    defaultSuccess('Texto copiado para a área de transferência');
+};
 </script>
 
 <template>
@@ -143,7 +159,8 @@ watch(route, (value) => {
             <div class="grid">
                 <div class="col-12">
                     <label for="message" class="font-bold block mb-2 flex justify-content-end"> Mensagem </label>
-                    <Editor id="message" v-model="itemData.message" editorStyle="height: 160px" class="text-lg">
+                    <Editor id="message" v-model="itemData.message" editorStyle="height: 160px" class="text-lg"
+                        @input="limitText">
                         <template v-slot:toolbar>
                             <span class="ql-formats">
                                 <button v-tooltip.bottom="'Bold'" class="ql-bold"></button>
@@ -155,23 +172,54 @@ watch(route, (value) => {
                 <div class="col-12 md:col-6">
                     <label for="phone" class="font-bold block mb-2 flex justify-content-center"> Enviar para
                     </label>
-                    <InputText class="flex w-full uppercase" autocomplete="no" :disabled="loading"
-                        v-model="itemData.phone" id="phone" type="text" @input="validatePhone()" v-maska
-                        data-maska="['(##) ####-####', '(##) #####-####']" />
+                    <InputGroup>
+                        <InputText class="flex w-full uppercase text-lg" autocomplete="no" :disabled="loading"
+                            v-model="itemData.phone" id="phone" type="text" @input="validatePhone()" v-maska
+                            data-maska="['(##) ####-####', '(##) #####-####']" />
+                        <ToggleButton v-model="itemData.identified" class="w-8rem" onLabel="Identificado"
+                            offLabel="Anônimo" />
+                    </InputGroup>
                 </div>
                 <div class="col-12 md:col-6">
                     <label for="schedule" class="font-bold block mb-2 flex justify-content-center"> Enviar em
                     </label>
                     <InputGroup>
-                        <Calendar class="flex w-full" id="schedule" v-model="itemData.schedule" showIcon
+                        <Calendar class="flex w-full text-lg" id="schedule" v-model="itemData.schedule" showIcon
                             iconDisplay="input" inputId="schedule" showTime hourFormat="24" :disabled="loading"
-                            dateFormat="dd/mm/yy" :minDate="minDate" showButtonBar >
+                            dateFormat="dd/mm/yy" :minDate="minDate" showButtonBar>
                             <template #inputicon="{ clickCallback }">
                                 <InputIcon class="pi pi-clock cursor-pointer" @click="clickCallback" />
                             </template>
                         </Calendar>
-                        <Button type="button" icon="fa-regular fa-paper-plane" severity="success" raised @click="saveData" />
+                        <Button type="button" icon="fa-regular fa-paper-plane" severity="success" raised
+                            @click="saveData" />
                     </InputGroup>
+                </div>
+                <div class="col-12">
+                    <div class="flex flex-wrap align-items-center justify-content-center text-sm">
+                        <p class="text-xl">Utilize as tags especiais abaixo para adicionar informação à sua mensagem</p>
+                        <p class="text-1xl">Clique para copiar e a seguir cole onde desejar, na mensagem</p>
+                    </div>
+                    <div class="flex flex-wrap align-items-center justify-content-center text-sm">
+                        <div class="select-all bg-primary border-round p-3 m-3 flex align-items-center justify-content-center"
+                            @click="copyToClipboard($event)" v-tooltip.top="'Nome fantasia de sua empresa'">
+                            {clientName}</div>
+                        <div class="select-all bg-primary border-round p-3 m-3 flex align-items-center justify-content-center"
+                            @click="copyToClipboard($event)" v-tooltip.top="'CPF ou CNPJ de sua empresa'">
+                            {clientCpfCnpj}</div>
+                        <div class="select-all bg-primary border-round p-3 m-3 flex align-items-center justify-content-center"
+                            @click="copyToClipboard($event)" v-tooltip.top="'Email comercial de sua sua empresa'">
+                            {clientEmail}</div>
+                        <div class="select-all bg-primary border-round p-3 m-3 flex align-items-center justify-content-center"
+                            @click="copyToClipboard($event)" v-tooltip.top="'Telefone de sua empresa'">
+                            {clientTel}</div>
+                        <div class="select-all bg-primary border-round p-3 m-3 flex align-items-center justify-content-center"
+                            @click="copyToClipboard($event)" v-tooltip.top="'Seu nome de usuário'">
+                            {userName}</div>
+                        <!-- <div class="select-all bg-primary border-round p-3 m-3 flex align-items-center justify-content-center"
+                            @click="copyToClipboard($event)" v-tooltip.top="'Nome do cliente'">
+                            {senderName}</div> -->
+                    </div>
                 </div>
             </div>
         </form>
@@ -181,7 +229,6 @@ watch(route, (value) => {
         <div class="card bg-green-200 mt-3">
             <p>Mode: {{ mode }}</p>
             <p>itemData: {{ itemData }}</p>
-            <p>dadosPublicos: {{ dadosPublicos }}</p>
             <p>uProf: {{ uProf }}</p>
         </div>
     </div>

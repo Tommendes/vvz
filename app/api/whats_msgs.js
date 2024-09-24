@@ -48,22 +48,6 @@ module.exports = app => {
         }
 
         if (body.id) {
-            // Variáveis da edição de um registro
-            // registrar o evento na tabela de eventos
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento',],
-                "last": await app.db(tabelaDomain).where({ id: body.id }).first(),
-                "next": body,
-                "request": req,
-                "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
-                    "tabela_bd": tabela,
-                }
-            })
-
-            body.evento = evento
-            body.updated_at = new Date()
             let rowsUpdated = app.db(tabelaDomain)
                 .update(body)
                 .where({ id: body.id })
@@ -77,10 +61,6 @@ module.exports = app => {
                 })
         } else {
             // Criação de um novo registro
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
-
-            body.evento = nextEventID.count + 1
-            // Variáveis da criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
             delete body.old_id;
@@ -92,17 +72,6 @@ module.exports = app => {
                     bodyMessage.id = ret[0]
                     const now = moment().format('YYYY-MM-DD HH:mm:ss');
                     if (bodyMessage.schedule <= now) await sendMessage(bodyMessage, uParams, tabelaDomain) // Certifique-se de que sendMessage está definido
-                    // registrar o evento na tabela de eventos
-                    const { createEventIns } = app.api.sisEvents
-                    createEventIns({
-                        "notTo": ['created_at', 'evento'],
-                        "next": body,
-                        "request": req,
-                        "evento": {
-                            "evento": `Novo registro`,
-                            "tabela_bd": tabela,
-                        }
-                    })
                     return res.json(body)
                 })
                 .catch(error => {
@@ -180,20 +149,7 @@ module.exports = app => {
 
         const registro = { status: STATUS_DELETE }
         try {
-            // registrar o evento na tabela de eventos
             const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
-            const { createEventUpd } = app.api.sisEvents
-            const evento = await createEventUpd({
-                "notTo": ['created_at', 'updated_at', 'evento'],
-                "last": last,
-                "next": registro,
-                "request": req,
-                "evento": {
-                    "classevento": "Remove",
-                    "evento": `Exclusão de ${tabela}`,
-                    "tabela_bd": tabela,
-                }
-            })
             const rowsUpdated = await app.db(tabelaDomain).del().where({ id: req.params.id })
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
@@ -207,7 +163,7 @@ module.exports = app => {
     const moment = require('moment'); // Certifique-se de que está instalado
     const axios = require('axios'); // Certifique-se de que está instalado
 
-    // Método responsável por enviar uma mensagem de WhatsApp e atualizar a situação da mensagem para 2 (enviada) além de registrar o evento na tabela de eventos
+    // Método responsável por enviar uma mensagem de WhatsApp e atualizar a situação da mensagem para 2 (enviada)
     const sendMessage = async (message, uParams, tabelaDomain) => {
         try {
             if (!uParams || uParams.chat_account_tkn === null) return;
@@ -216,7 +172,14 @@ module.exports = app => {
                     'Authorization': uParams.chat_account_tkn // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
                 },
             };
-            const novoBodyMessage = await substituirAtributosEspeciais(uParams, message) // Certifique-se de que substituirAtributosEspeciais está definido
+            let novoBodyMessage = ``
+            if (message.identified) {
+                const nome = uParams.name.split(' ')
+                uParams.name = nome[0]
+                if (nome.length > 1) uParams.name += ` ${nome[nome.length - 1]}`
+                novoBodyMessage = `*${uParams.name}:*\n`
+            }
+            novoBodyMessage += await substituirAtributosEspeciais(uParams, message) // Certifique-se de que substituirAtributosEspeciais está definido
             await axios.post(`${speedchat.host}/send-text`, { message: novoBodyMessage, phone: message.phone }, config) // Certifique-se de que speedchat.host está definido
                 .then(async _ => {
                     // Atualizar a situação da mensagem para 2 (enviada)
@@ -236,7 +199,7 @@ module.exports = app => {
     const sendScheduledMessages = async () => {
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id') // Certifique-se de que app.db está definido
-        if (!uParams) return;        
+        if (!uParams) return;
         for (const schema of uParams) {
             console.log('Verificando mensagens agendadas para o schema:', schema.schema_name);
             const tabelaDomain = `${dbPrefix}_${schema.schema_name}.${tabela}`; // Certifique-se de que dbPrefix e tabela estão definidos
@@ -314,7 +277,7 @@ module.exports = app => {
                 destinatario.nome = nome[0]
                 if (nome.length > 1) destinatario.nome += ` ${nome[nome.length - 1]}`
                 messageBody.message = messageBody.message.replace(/{senderName}/g, destinatario.nome);
-            } else messageBody.message = messageBody.message.replace(/{senderName}/g, '');
+            } else messageBody.message = messageBody.message.replace(/ {senderName}/g, '').replace(/{senderName}/g, '');
         }
 
         // Substituir os placeholders pelos valores reais
@@ -338,8 +301,6 @@ module.exports = app => {
     schedule.scheduleJob('* * * * *', async () => {
         await sendScheduledMessages(); // Certifique-se de que sendScheduledMessages está definido
     });
-
-    sendScheduledMessages();
 
     return { save, get, getById, remove, getByFunction }
 }
