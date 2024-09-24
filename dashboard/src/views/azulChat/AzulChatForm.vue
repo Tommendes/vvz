@@ -27,6 +27,14 @@ const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
     uProf.value = await store.getProfile()
+    if (uProf.value.admin >= 2) {
+        itemData.value = {
+            destinId: 8094,
+            message: '<p>Olá {senderName}!</p><p><br></p><p>Esta mensagem só deverá ser despachada 17:45 x2. Eu sou o assistente virtual da <strong>{clientName}</strong> e passei para te avisar que estamos testando o sistema de mensagens.</p><p><br></p><p>Se preferir continuar esta conversa por e-mail use preferencialmente o {clientEmail}. Ou pode nos chamar pelo {clientTel}. 😘</p><p><br></p><p><em>Atenciosamente</em>,</p><p>{userName}</p>',
+            phone: '(82) 98149-9024',
+            schedule: moment().format('DD-MM-YYYY HH:mm:00'),
+        };
+    }
 });
 
 // Campos de formulário
@@ -82,6 +90,9 @@ const saveData = async () => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Mensagem enviada com sucesso');
+                itemData.value = {
+                    schedule: moment().format('DD-MM-YYYY HH:mm:00')
+                };
                 emit('sended', itemData.value);
             } else {
                 defaultWarn('Erro ao enviar mensagem');
@@ -114,13 +125,7 @@ const reload = async () => {
 };
 // Carregar dados do formulário
 onMounted(async () => {
-    await loadData();
-    itemData.value = {
-        id: null,
-        message: '<p>Olá {senderName}!</p><p>Esta mensagem só deverá ser despachada 17:45 x2. Eu sou o assistente virtual da <strong>{clientName}</strong> e passei para te avisar que estamos testando o sistema de mensagens.</p><p>Se preferir continuar esta conversa por e-mail use preferencialmente o {clientEmail}. Ou pode nos chamar pelo {clientTel}. 😘</p><p><br></p><p><em>Atenciosamente</em>,</p><p>{userName}</p>',
-        phone: '(82) 98149-9024',
-        schedule: moment().format('DD-MM-YYYY HH:mm:00'),
-    };
+    await loadData();    
 });
 // Observar alterações nos dados do formulário
 watch(route, (value) => {
@@ -165,7 +170,7 @@ watch(route, (value) => {
                                 <InputIcon class="pi pi-clock cursor-pointer" @click="clickCallback" />
                             </template>
                         </Calendar>
-                        <Button type="button" icon="fa-regular fa-paper-plane"  text raised @click="saveData" />
+                        <Button type="button" icon="fa-regular fa-paper-plane" severity="success" raised @click="saveData" />
                     </InputGroup>
                 </div>
             </div>
@@ -177,6 +182,7 @@ watch(route, (value) => {
             <p>Mode: {{ mode }}</p>
             <p>itemData: {{ itemData }}</p>
             <p>dadosPublicos: {{ dadosPublicos }}</p>
+            <p>uProf: {{ uProf }}</p>
         </div>
     </div>
 </template>

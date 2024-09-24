@@ -31,6 +31,10 @@ module.exports = app => {
         body.situacao = body.situacao || 1
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         try {
+            existsOrError(body.message, 'Mensagem não informada')
+            body.message = convertHtmlToWhatsappFormat(body.message)
+            // O corpo da mensagem deve ser no máximo 500 caracteres
+            if (body.message.length > 500) throw 'Mensagem deve ter no máximo 500 caracteres'
             existsOrError(body.schedule, 'Data e hora do envio não informada')
             // Verificar formato da data e hora (YYYY-MM-DD HH:mm:ss)
             if (!moment(body.schedule, 'YYYY-MM-DD HH:mm:ss', true).isValid()) throw 'Data e hora do envio inválida'
@@ -39,10 +43,6 @@ module.exports = app => {
             if (!/^\d{10,}$/.test(body.phone)) throw 'Número de telefone inválido'
             // Onde phone é um número de telefone no formato 5511999999999, se o valor for 11999999999, o sistema deve adicionar o 55
             if ([10, 11].includes(body.phone.length)) body.phone = `55${body.phone}`
-            existsOrError(body.message, 'Mensagem não informada')
-            body.message = convertHtmlToWhatsappFormat(body.message)
-            // O corpo da mensagem deve ser no máximo 500 caracteres
-            if (body.message.length > 500) throw 'Mensagem deve ter no máximo 500 caracteres'
         } catch (error) {
             return res.status(400).send(error)
         }

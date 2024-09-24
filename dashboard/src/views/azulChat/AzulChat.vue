@@ -7,7 +7,8 @@
         </div>
         <div class="col-12 md:col-6">
             <div class="text-center mt-5">
-                <h1 class="text-4xl">Clique <span @click="openChat" class="cursor-pointer text-blue-900">aqui</span> para abrir o chat ou digite uma mensagem abaixo para iniciar</h1>
+                <h1 class="text-4xl">Clique <span @click="openChat" class="cursor-pointer text-blue-900">aqui</span> para abrir o chat ou digite uma mensagem abaixo</h1>
+                <h1 class="text-2xl">Você pode enviar imediatamente ou programar o envio</h1>
             </div>
             <AzulChatForm />
         </div>
