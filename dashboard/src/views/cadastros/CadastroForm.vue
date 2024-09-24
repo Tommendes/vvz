@@ -106,6 +106,9 @@ const loadData = async () => {
                 if (itemData.value.telefone) itemData.value.telefone = masks.value.telefone.masked(itemData.value.telefone);
                 loading.value.form = false;
             } else {
+            }
+        }).catch((error) => {
+            if (error.response && error.response.status == 401) {
                 defaultWarn('Registro não localizado');
                 router.push({ path: `/${uProf.value.schema_description}/cadastros` });
             }

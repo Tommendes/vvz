@@ -1,11 +1,23 @@
 <template>
-    <div class="overflow-hidden">
-        <div class="bg-cover md:bg-contain bg-center bg-no-repeat border-round h-25rem w-full"
-            style="background-image: url('/assets/images/azulChatAppQuadLogo.png');">
+    <div class="grid">
+        <div class="block md:hidden col-12">
+            <div class="overflow-hidden">                
+                <div class="bg-cover bg-center bg-no-repeat border-round h-30rem w-full" style="background-image: url('/assets/images/azulChatAppQuadLogo.png');"></div>
+            </div>
         </div>
-    </div>
-    <div class="text-center mt-5">
-        <h1 class="text-4xl">Se o chat não abrir ou se fechar, atualize a página</h1>
+        <div class="col-12 md:col-6">
+            <div class="text-center mt-5">
+                <h1 class="text-4xl">Clique <span @click="openChat" class="text-blue-900">aqui</span> para abrir o chat ou digite uma mensagem abaixo para iniciar</h1>
+            </div>
+            <AzulChatForm />
+        </div>
+        <div class="hidden md: block md:col-6 mt-6">
+            <div class="overflow-hidden mt-5">
+                <div class="h-30rem flex align-items-center justify-content-center md:bg-contain bg-center bg-no-repeat border-round w-full"
+                    style="background-image: url('/assets/images/azulChatAppQuadLogo.png');">
+                </div>
+            </div>
+        </div>
     </div>
     <!-- <img src="/assets/images/azulChatAppLogo.png" alt="Imagem do Azul Chat" max-width="90%" /> -->
 </template>
@@ -14,6 +26,8 @@
 import { onBeforeMount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 const route = useRoute();
+
+import AzulChatForm from './AzulChatForm.vue';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -38,12 +52,18 @@ const initChat = async () => {
         operatorAccessToken: uProf.value.chat_operator_access_token
     });
 
-    if (phone)
-        ChatPluginPlay.openChat({
-            phone: phone,
-            message: 'Olá, tudo bem?',
-        });
-    else ChatPluginPlay.openChat();
+    // Comentado pois o SDK não está executando a função
+    // if (phone)
+    //     ChatPluginPlay.openChat({
+    //         phone: phone,
+    //         message: 'Olá, tudo bem?',
+    //     });
+    // else 
+
+    // ChatPluginPlay.openChat();
+};
+const openChat = async () => {
+    ChatPluginPlay.openChat();
 };
 </script>
 
