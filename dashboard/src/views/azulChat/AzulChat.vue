@@ -4,7 +4,7 @@
             style="background-image: url('/assets/images/azulChatAppQuadLogo.png');">
         </div>
     </div>
-    <div class="flex text-center h-full mt-5">
+    <div class="text-center mt-5">
         <h1 class="text-4xl">Se o chat não abrir ou se fechar, atualize a página</h1>
     </div>
     <!-- <img src="/assets/images/azulChatAppLogo.png" alt="Imagem do Azul Chat" max-width="90%" /> -->

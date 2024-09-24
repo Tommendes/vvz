@@ -1140,25 +1140,27 @@ module.exports = app => {
 
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
+        console.log('pathDoc', pathDoc);
+                
         ftpParamsArray.forEach(ftpParam => {
             ftpParam.path = pathDoc;
         });
         let clientFtp = undefined;
         try {
             existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
-
+            
             let connectionResult = await connectToFTP(ftpParamsArray, uParams);
-
+            
             if (!connectionResult.success) {
                 throw new Error('Não foi possível conectar ao servidor de arquivos neste momento');
             }
-
+            
             clientFtp = connectionResult.client;
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error.message);
         }
-
+        
         try {
             await clientFtp.ensureDir(pathDoc);
             app.api.logger.logInfo({ log: { line: `Folder created: ${pathDoc}`, sConsole: true } })
