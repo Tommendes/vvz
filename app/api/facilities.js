@@ -127,10 +127,18 @@ module.exports = app => {
         return Math.ceil(num * 100) / 100;
     }
 
+    function convertHtmlToWhatsappFormat(html) {
+        return html
+            .replace(/<strong>(.*?)<\/strong>/g, '*$1*') // Negrito
+            .replace(/<em>(.*?)<\/em>/g, '_$1_') // Itálico
+            .replace(/<p>(.*?)<\/p>/g, '$1\n') // Parágrafo
+            .replace(/<br>/g, '\n') // Parágrafo
+    }
+
     return {
         capitalizeFirstLetter, titleCase, removeAccents, removeAccentsObj,
         numbersOrZero, changeUpperCase, diffInDays, encryptPassword, comparePassword,
         convertESocialTextToJson, getIdParam, getIdCidade, getIdCargos, countOccurrences,
-        formatCurrency, ceilTwoDecimals
+        formatCurrency, ceilTwoDecimals, convertHtmlToWhatsappFormat
     }
 }

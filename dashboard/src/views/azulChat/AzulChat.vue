@@ -7,7 +7,7 @@
         </div>
         <div class="col-12 md:col-6">
             <div class="text-center mt-5">
-                <h1 class="text-4xl">Clique <span @click="openChat" class="text-blue-900">aqui</span> para abrir o chat ou digite uma mensagem abaixo para iniciar</h1>
+                <h1 class="text-4xl">Clique <span @click="openChat" class="cursor-pointer text-blue-900">aqui</span> para abrir o chat ou digite uma mensagem abaixo para iniciar</h1>
             </div>
             <AzulChatForm />
         </div>
@@ -27,6 +27,8 @@ import { onBeforeMount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 const route = useRoute();
 
+const baseURL = ref(window.location.origin);
+
 import AzulChatForm from './AzulChatForm.vue';
 
 // Profile do usuário
@@ -40,14 +42,14 @@ onBeforeMount(async () => {
 
 const initChat = async () => {
     if (!(uProf.value.chat_account_id && uProf.value.chat_status && uProf.value.chat_operator_access_token)) return;
-    const baseURL = `${window.location.origin}`;
+    
     const phone = route.query.phone;
     ChatPluginPlay.init({
         accountId: uProf.value.chat_account_id,
         enableFloatingButton: false,
         appName: 'Meu Chat',
-        appIcon: `${baseURL}/assets/images/logo-app.png`,
-        appLogo: `${baseURL}/assets/images/azulChatAppLogo.png`,
+        appIcon: `${baseURL.value}/assets/images/logo-app.png`,
+        appLogo: `${baseURL.value}/assets/images/azulChatAppLogo.png`,
         appPrimaryColor: '#455CC7',
         operatorAccessToken: uProf.value.chat_operator_access_token
     });

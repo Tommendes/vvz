@@ -4,6 +4,7 @@ const moment = require('moment')
 const axios = require('axios')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
+    const { convertHtmlToWhatsappFormat } = app.api.facilities
     const tabela = 'whats_msgs'
     const tabelaAliasPL = 'Mensagens de WhatsApp'
     const tabelaAlias = 'Mensagem de WhatsApp'
@@ -37,8 +38,9 @@ module.exports = app => {
             // Validar o número de telefone com regex onde deve conter no mínimo 10 dígitos
             if (!/^\d{10,}$/.test(body.phone)) throw 'Número de telefone inválido'
             // Onde phone é um número de telefone no formato 5511999999999, se o valor for 11999999999, o sistema deve adicionar o 55
-            if (body.phone.length === 11) body.phone = `55${body.phone}`
+            if ([10, 11].includes(body.phone.length)) body.phone = `55${body.phone}`
             existsOrError(body.message, 'Mensagem não informada')
+            body.message = convertHtmlToWhatsappFormat(body.message)
             // O corpo da mensagem deve ser no máximo 500 caracteres
             if (body.message.length > 500) throw 'Mensagem deve ter no máximo 500 caracteres'
         } catch (error) {
@@ -317,7 +319,7 @@ module.exports = app => {
 
         // Substituir os placeholders pelos valores reais
         messageBody.message = messageBody.message
-            .replace(/{clientName}/g, `*${empresa.fantasia}*`)
+            .replace(/{clientName}/g, `${empresa.fantasia}`)
             .replace(/{clientCpfCnpj}/g, empresa.cpf_cnpj_empresa)
             .replace(/{clientEmail}/g, empresa.email_comercial)
             .replace(/{clientTel}/g, empresa.tel1)

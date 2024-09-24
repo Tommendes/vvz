@@ -3,15 +3,11 @@ import { onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
-import { removeHtmlTags, capitalizeFirst } from '@/global';
 import moment from 'moment';
 import { guide } from '@/guides/cadastroFormGuide.js';
 
 import { Mask } from 'maska';
 const masks = ref({
-    cpf_cnpj: new Mask({
-        mask: ['###.###.###-##', '##.###.###/####-##']
-    }),
     datePt: new Mask({
         mask: '##/##/####'
     }),
@@ -33,13 +29,9 @@ onBeforeMount(async () => {
     uProf.value = await store.getProfile()
 });
 
-// Validar o cpf_cnpj
-import { cpf, cnpj } from 'cpf-cnpj-validator';
-
 // Campos de formulário
 const itemData = ref({});
 const minDate = ref(new Date());
-const datetime24h = ref(new Date());
 // Modo do formulário
 const mode = ref('new');
 const loading = ref(false);
@@ -82,7 +74,7 @@ const saveData = async () => {
     const obj = { ...itemData.value };
 
     if (obj.cpf_cnpj) obj.cpf_cnpj = masks.value.cpf_cnpj.unmasked(obj.cpf_cnpj);
-    if (obj.schedule) obj.schedule = moment(obj.schedule, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    if (obj.schedule) obj.schedule = moment(obj.schedule, 'DD/MM/YYYY HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
     if (obj.phone) obj.phone = obj.phone.replace(/([^\d])+/gim, '');
     if (obj.cep) obj.cep = obj.cep.replace(/([^\d])+/gim, '');
     await axios[method](url, obj)
@@ -90,7 +82,6 @@ const saveData = async () => {
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Mensagem enviada com sucesso');
-                itemData.value = body;
                 emit('sended', itemData.value);
             } else {
                 defaultWarn('Erro ao enviar mensagem');
@@ -107,9 +98,7 @@ const goToChat = () => {
 };
 // Validar telefone
 const validatePhone = () => {
-    errorMessages.value.telefone = null;
-    if (itemData.value.telefone && itemData.value.telefone.length > 0 && ![10, 11].includes(itemData.value.telefone.replace(/([^\d])+/gim, '').length)) {
-        errorMessages.value.telefone = 'Formato de telefone inválido';
+    if (itemData.value.phone && itemData.value.phone.length > 0 && ![10, 11].includes(itemData.value.phone.replace(/([^\d])+/gim, '').length)) {
         return false;
     }
     return true;
@@ -121,7 +110,6 @@ const formIsValid = () => {
 // Recarregar dados do formulário
 const reload = async () => {
     mode.value = 'new';
-    errorMessages.value = {};
     await loadData();
 };
 // Carregar dados do formulário
@@ -129,9 +117,9 @@ onMounted(async () => {
     await loadData();
     itemData.value = {
         id: null,
-        message: 'Teste de mensagem',
+        message: '<p>Olá {senderName}!</p><p>Esta mensagem só deverá ser despachada 17:45 x2. Eu sou o assistente virtual da <strong>{clientName}</strong> e passei para te avisar que estamos testando o sistema de mensagens.</p><p>Se preferir continuar esta conversa por e-mail use preferencialmente o {clientEmail}. Ou pode nos chamar pelo {clientTel}. 😘</p><p><br></p><p><em>Atenciosamente</em>,</p><p>{userName}</p>',
         phone: '(82) 98149-9024',
-        schedule: moment().format('YYYY-MM-DD HH:mm:00'),
+        schedule: moment().format('DD-MM-YYYY HH:mm:00'),
     };
 });
 // Observar alterações nos dados do formulário
@@ -139,11 +127,6 @@ watch(route, (value) => {
     if (value.params.id !== itemData.value.id) {
         window.location.reload();
     }
-});
-watchEffect(() => {
-    // if (itemData.value.message) itemData.value.messageClear = removeHtmlTags(itemData.value.message);
-    // Se datetime24h for alterado, atualiza o itemData.schedule no formato YYYY-MM-DD HH:mm:ss
-    if (datetime24h.value) itemData.value.schedule = moment(datetime24h.value).format('YYYY-MM-DD HH:mm:00');
 });
 </script>
 
@@ -160,37 +143,42 @@ watchEffect(() => {
                             <span class="ql-formats">
                                 <button v-tooltip.bottom="'Bold'" class="ql-bold"></button>
                                 <button v-tooltip.bottom="'Italic'" class="ql-italic"></button>
-                                <button v-tooltip.bottom="'Underline'" class="ql-underline"></button>
                             </span>
                         </template>
                     </Editor>
                 </div>
                 <div class="col-12 md:col-6">
-                    <label for="phone" class="font-bold block mb-2 flex justify-content-end"> Enviar para </label>
+                    <label for="phone" class="font-bold block mb-2 flex justify-content-center"> Enviar para
+                    </label>
                     <InputText class="flex w-full uppercase" autocomplete="no" :disabled="loading"
                         v-model="itemData.phone" id="phone" type="text" @input="validatePhone()" v-maska
                         data-maska="['(##) ####-####', '(##) #####-####']" />
                 </div>
                 <div class="col-12 md:col-6">
-                    <label for="datetime24h" class="font-bold block mb-2 flex justify-content-end"> Enviar em </label>
-                    <Calendar class="flex w-full" id="datetime24h" v-model="datetime24h" showIcon iconDisplay="input" inputId="datetime24h" showTime hourFormat="24"
-                        :disabled="loading" dateFormat="dd/mm/yy" :minDate="minDate">
-                        <template #inputicon="{ clickCallback }">
-                            <InputIcon class="pi pi-clock cursor-pointer" @click="clickCallback" />
-                        </template>
-                    </Calendar>
+                    <label for="schedule" class="font-bold block mb-2 flex justify-content-center"> Enviar em
+                    </label>
+                    <InputGroup>
+                        <Calendar class="flex w-full" id="schedule" v-model="itemData.schedule" showIcon
+                            iconDisplay="input" inputId="schedule" showTime hourFormat="24" :disabled="loading"
+                            dateFormat="dd/mm/yy" :minDate="minDate" showButtonBar >
+                            <template #inputicon="{ clickCallback }">
+                                <InputIcon class="pi pi-clock cursor-pointer" @click="clickCallback" />
+                            </template>
+                        </Calendar>
+                        <Button type="button" icon="fa-regular fa-paper-plane"  text raised @click="saveData" />
+                    </InputGroup>
                 </div>
             </div>
         </form>
         <!-- </div> -->
     </div>
-    <!-- <div class="col-12" v-if="uProf.admin >= 2">
+    <div class="col-12" v-if="uProf.admin >= 2">
         <div class="card bg-green-200 mt-3">
             <p>Mode: {{ mode }}</p>
             <p>itemData: {{ itemData }}</p>
             <p>dadosPublicos: {{ dadosPublicos }}</p>
         </div>
-    </div> -->
+    </div>
 </template>
 
 <style scoped>
