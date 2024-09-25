@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watchEffect } from 'vue';
+import { onMounted, ref, watch, watchEffect } from 'vue';
 import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
@@ -313,10 +313,6 @@ function formatarDadosParaHTML(dados) {
     return htmlString;
 }
 
-const goToChat = () => {
-    window.open(`#/${uProf.value.schema_description}/azul-chat?phone=55${itemData.value.telefone.replace(/([^\d])+/gim, "")}`, '_blank');
-};
-
 const limparFormularioCEP = () => {
     itemData.value.logradouro = '';
     itemData.value.bairro = '';
@@ -383,6 +379,33 @@ const validateCep = () => {
 const formIsValid = () => {
     return validateCPF() && validateEmail() && validateTelefone();
 };
+
+import { useDialog } from 'primevue/usedialog';
+import AzulChatForm from '@/views/azulChat/AzulChatForm.vue';
+const dialog = useDialog();
+const sendAzulChatMessage = () => {
+    dialog.open(AzulChatForm, {
+        data: {
+            destinId: itemData.value.id,
+            phone: itemData.value.telefone.replace(/([^\d])+/gim, '')
+        },
+        props: {
+            header: `${itemData.value.nome} ${masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj)}`,
+            style: {
+                width: Math.floor(window.innerWidth * 0.5) + 'px'
+            },
+            breakpoints: {
+                '1199px': '95vw',
+                '575px': '90vw'
+            },
+            modal: true
+        },
+       onClose: () => {},
+       onCancel: () => {},
+       onSended: () => {}
+    });
+};
+
 // Recarregar dados do formulário
 const reload = async () => {
     mode.value = 'view';
@@ -466,6 +489,11 @@ watchEffect(() => {
         labels.value.aniversario = 'Nascimento';
         labels.value.rg_ie = 'RG';
         labels.value.cpf_cnpj = 'CPF';
+    }
+});
+watch(route, (value) => {
+    if (value.params.id !== itemData.value.id) {
+        window.location.reload();
     }
 });
 </script>
@@ -552,7 +580,7 @@ watchEffect(() => {
                             <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'"
                                 v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone"
                                 id="telefone" type="text" @input="validateTelefone()" class="uppercase" />
-                            <Button :disabled="!validateTelefone()" @click="goToChat" icon="fa-brands fa-whatsapp" />
+                            <Button :disabled="!validateTelefone()" @click="sendAzulChatMessage" icon="fa-brands fa-whatsapp" />
                         </InputGroup>
                         <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone
                             }}</small>

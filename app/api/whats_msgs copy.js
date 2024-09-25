@@ -38,7 +38,6 @@ module.exports = app => {
             existsOrError(body.schedule, 'Data e hora do envio não informada')
             // Verificar formato da data e hora (YYYY-MM-DD HH:mm:ss)
             if (!moment(body.schedule, 'YYYY-MM-DD HH:mm:ss', true).isValid()) throw 'Data e hora do envio inválida'
-            if (body.recurrence.end_date && !moment(body.recurrence.end_date, 'YYYY-MM-DD HH:mm:ss', true).isValid()) throw 'Data e hora final da recorrência inválida'
             existsOrError(body.phone, 'Número do telefone não informado')
             // Validar o número de telefone com regex onde deve conter no mínimo 10 dígitos
             if (!/^\d{10,}$/.test(body.phone)) throw 'Número de telefone inválido'
@@ -61,34 +60,23 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         } else {
-            // Criar nova mensagem
+            // Criação de um novo registro
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
             delete body.old_id;
-            let recurrence = undefined
-            if (body.recurrence) {
-                console.log('body.recurrence', body.recurrence);
-                recurrence = {
-                    frequency: body.recurrence.frequency,
-                    interval: body.recurrence.interval,
-                    next_run: moment(body.schedule).add(body.recurrence.interval, body.recurrence.frequency).format('YYYY-MM-DD HH:mm:ss'),
-                    end_date: body.recurrence.end_date ? moment(body.recurrence.end_date).format('YYYY-MM-DD HH:mm:ss') : null
-                };
-                console.log('recurrence', recurrence);
-                delete body.recurrence;
-            }
+            const bodyMessage = body
             await app.db(tabelaDomain)
                 .insert(body)
                 .then(async (ret) => {
-                    const msgId = ret[0];
-                    if (recurrence) {
-                        recurrence.msg_id = msgId;
-                        await app.db(`${dbPrefix}_${uParams.schema_name}.whats_msgs_recurrences`).insert(recurrence);
-                    }
+                    body.id = ret[0]
+                    bodyMessage.id = ret[0]
+                    const now = moment().format('YYYY-MM-DD HH:mm:ss');
+                    if (bodyMessage.schedule <= now) await sendMessage(bodyMessage, uParams, tabelaDomain) // Certifique-se de que sendMessage está definido
+                    return res.json(body)
                 })
                 .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    return res.status(401).send(error)
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
                 })
         }
     }
@@ -210,36 +198,17 @@ module.exports = app => {
     // Método com schedule para envio de mensagens. O método deverá ficar ativo e verificar a cada minutos se há mensagens a serem enviadas. A verificação deve ocorrer a partir do campo schedule + situação. Se a situação for 1 e a data e hora de envio for menor ou igual a data e hora atual, a mensagem deve ser enviada.
     const sendScheduledMessages = async () => {
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
-        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id')
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id') // Certifique-se de que app.db está definido
         if (!uParams) return;
-    
         for (const schema of uParams) {
-            const tabelaDomain = `${dbPrefix}_${schema.schema_name}.${tabela}`;
-            const messages = await app.db({ tbl1: tabelaDomain })
-                .leftJoin({ rec: `${dbPrefix}_${schema.schema_name}.whats_msgs_recurrences` }, 'tbl1.id', 'rec.msg_id')
-                .where(function() {
-                    this.where('tbl1.situacao', 1)
-                        .orWhere('rec.next_run', '<=', moment().format('YYYY-MM-DD HH:mm:ss'))
-                        .andWhere(function() {
-                            this.whereNull('rec.end_date')
-                                .orWhere('rec.end_date', '>=', moment().format('YYYY-MM-DD HH:mm:ss'));
-                        });
-                })
-                .andWhere('tbl1.status', STATUS_ACTIVE);
-    
+            console.log('Verificando mensagens agendadas para o schema:', schema.schema_name);
+            const tabelaDomain = `${dbPrefix}_${schema.schema_name}.${tabela}`; // Certifique-se de que dbPrefix e tabela estão definidos
+            const messages = await app.db(tabelaDomain).where({ situacao: 1, status: STATUS_ACTIVE }).orderBy('schedule', 'asc'); // Certifique-se de que app.db e STATUS_ACTIVE estão definidos
+            const now = moment().format('YYYY-MM-DD HH:mm:ss');
             for (const message of messages) {
-                await sendMessage(message, schema, tabelaDomain);
-                await app.db(tabelaDomain)
-                    .where({ id: message.id })
-                    .update({ situacao: 2, delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') });
-    
-                if (message.recurrence_id) {
-                    const nextRun = moment(message.schedule).add(message.interval, message.frequency).format('YYYY-MM-DD HH:mm:ss');
-                    if (message.end_date && moment(nextRun).isAfter(message.end_date)) {
-                        await app.db(`${dbPrefix}_${schema.schema_name}.whats_msgs_recurrences`).where({ id: message.recurrence_id }).del();
-                    } else {
-                        await app.db(`${dbPrefix}_${schema.schema_name}.whats_msgs_recurrences`).where({ id: message.recurrence_id }).update({ next_run: nextRun });
-                    }
+                if (message.schedule <= now) {
+                    message.message = await substituirAtributosEspeciais(schema, message) // Certifique-se de que substituirAtributosEspeciais está definido
+                    await sendMessage(message, schema, tabelaDomain); // Certifique-se de que sendMessage está definido
                 }
             }
         }
@@ -332,6 +301,6 @@ module.exports = app => {
     schedule.scheduleJob('* * * * *', async () => {
         await sendScheduledMessages(); // Certifique-se de que sendScheduledMessages está definido
     });
-    sendScheduledMessages();
+
     return { save, get, getById, remove, getByFunction }
 }
