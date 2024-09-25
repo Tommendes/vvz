@@ -184,7 +184,7 @@ module.exports = app => {
                 .then(async _ => {
                     // Atualizar a situação da mensagem para 2 (enviada)
                     await app.db(tabelaDomain) // Certifique-se de que app.db está definido
-                        .update({ situacao: 2 })
+                        .update({ situacao: 2, delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') })
                         .where({ id: message.id });
                 })
                 .catch(error => {
