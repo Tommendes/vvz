@@ -49,7 +49,7 @@ const closeDialog = () => {
 const itemData = ref({
     recurrent: false,
     recurrence: {
-        frequency: '',
+        frequency: null,
         interval: 0,
         end_date: null
     }
