@@ -83,7 +83,6 @@ module.exports = app => {
                         recurrence.msg_id = msgId;
                         await app.db(`${dbPrefix}_${uParams.schema_name}.whats_msgs_recurrences`).insert(recurrence);
                     }
-                    sendScheduledMessages();
                     return res.status(200).send({ id: msgId })
                 })
                 .catch(error => {
@@ -251,7 +250,7 @@ module.exports = app => {
         const func = req.params.func
         switch (func) {
             case 'swm':
-                sendWhatsappMessage(req, res) // Certifique-se de que sendWhatsappMessage está definido
+                sendWhatsappMessage(req, res) 
                 break;
             default:
                 res.status(404).send('Função inexistente')
@@ -287,7 +286,7 @@ module.exports = app => {
         */
         const novoBodyMessage = await substituirAtributosEspeciais(uParams, body) // Certifique-se de que substituirAtributosEspeciais está definido
         try {
-            await sendMessage({ id: body.id, message: novoBodyMessage, phone: body.phone }, uParams, tabelaDomain) // Certifique-se de que sendMessage está definido
+            await sendMessage({ id: body.id, message: novoBodyMessage, phone: body.phone }, uParams, tabelaDomain)
             return res.status(200).send('Mensagem enviada com sucesso')
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }) // Certifique-se de que app.api.logger.logError está definido
@@ -332,8 +331,8 @@ module.exports = app => {
 
     // Agendar a verificação e envio de mensagens a cada minuto
     schedule.scheduleJob('* * * * *', async () => {
-        await sendScheduledMessages(); // Certifique-se de que sendScheduledMessages está definido
+        await sendScheduledMessages();
     });
-    sendScheduledMessages();
+    
     return { save, get, getById, remove, getByFunction }
 }
