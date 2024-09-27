@@ -210,6 +210,7 @@ module.exports = app => {
     const sendScheduledMessages = async () => {
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id')
+
         if (!uParams) return;
 
         for (const schema of uParams) {
@@ -232,9 +233,9 @@ module.exports = app => {
 
             for (const message of messages) {
                 await sendMessage(message, schema, tabelaDomain);
-                await app.db(tabelaDomain)
-                    .where({ id: message.id })
-                    .update({ situacao: 2, delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') });
+                // await app.db(tabelaDomain)
+                //     .where({ id: message.id })
+                //     .update({ situacao: 2, delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') });
 
                 if (message.recurrence_id) {
                     // Corrigir a lógica de cálculo da próxima execução
@@ -333,8 +334,8 @@ module.exports = app => {
     }
 
     // Agendar a verificação e envio de mensagens a cada minuto
-    schedule.scheduleJob('* * * * *', async () => {
-        await sendScheduledMessages();
+    schedule.scheduleJob('* * * * *', () => {
+        sendScheduledMessages();
     });
 
     return { save, get, getById, remove, getByFunction }
