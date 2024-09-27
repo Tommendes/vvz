@@ -66,15 +66,15 @@ module.exports = app => {
             body.created_at = new Date()
             delete body.old_id;
             let recurrence = undefined
-            if (body.recurrence) {
+            if (body.recurrent && body.recurrence) {
                 recurrence = {
                     frequency: body.recurrence.frequency,
                     interval: body.recurrence.interval,
                     next_run: moment(body.schedule).format('YYYY-MM-DD HH:mm:ss'),//.add(body.recurrence.interval, body.recurrence.frequency).format('YYYY-MM-DD HH:mm:ss'),
                     end_date: body.recurrence.end_date ? moment(body.recurrence.end_date).format('YYYY-MM-DD HH:mm:ss') : null
                 };
-                delete body.recurrence;
             }
+            delete body.recurrence;
             await app.db(tabelaDomain)
                 .insert(body)
                 .then(async (ret) => {
@@ -219,10 +219,13 @@ module.exports = app => {
                 .leftJoin({ rec: `${dbPrefix}_${schema.schema_name}.whats_msgs_recurrences` }, 'tbl1.id', 'rec.msg_id')
                 .where(function () {
                     this.where('tbl1.situacao', 1)
-                        .orWhere('rec.next_run', '<=', moment().format('YYYY-MM-DD HH:mm:ss'))
-                        .andWhere(function () {
-                            this.whereNull('rec.end_date')
-                                .orWhere('rec.end_date', '>=', moment().format('YYYY-MM-DD HH:mm:ss'));
+                        .andWhere('tbl1.schedule', '<=', moment().format('YYYY-MM-DD HH:mm:ss'))
+                        .orWhere(function () {
+                            this.where('rec.next_run', '<=', moment().format('YYYY-MM-DD HH:mm:ss'))
+                                .andWhere(function () {
+                                    this.whereNull('rec.end_date')
+                                        .orWhere('rec.end_date', '>=', moment().format('YYYY-MM-DD HH:mm:ss'));
+                                });
                         });
                 })
                 .andWhere('tbl1.status', STATUS_ACTIVE);
@@ -250,7 +253,7 @@ module.exports = app => {
         const func = req.params.func
         switch (func) {
             case 'swm':
-                sendWhatsappMessage(req, res) 
+                sendWhatsappMessage(req, res)
                 break;
             default:
                 res.status(404).send('Função inexistente')
@@ -333,6 +336,6 @@ module.exports = app => {
     schedule.scheduleJob('* * * * *', async () => {
         await sendScheduledMessages();
     });
-    
+
     return { save, get, getById, remove, getByFunction }
 }
