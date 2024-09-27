@@ -381,10 +381,10 @@ const formIsValid = () => {
 };
 
 import { useDialog } from 'primevue/usedialog';
-import AzulChatForm from '@/views/azulBot/AzulChatForm.vue';
+import AzulBotForm from '@/views/azulBot/AzulBotForm.vue';
 const dialog = useDialog();
 const sendAzulChatMessage = () => {
-    dialog.open(AzulChatForm, {
+    dialog.open(AzulBotForm, {
         data: {
             destinId: itemData.value.id,
             phone: itemData.value.telefone.replace(/([^\d])+/gim, '')

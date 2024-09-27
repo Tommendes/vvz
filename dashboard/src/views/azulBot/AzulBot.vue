@@ -10,7 +10,7 @@
                 <!-- <h1 class="text-4xl">Clique <span @click="openChat" class="cursor-pointer text-blue-900">aqui</span> para abrir o chat ou digite uma mensagem abaixo</h1> -->
                 <h1 class="text-4xl">Digite abaixo uma mensagem</h1>
             </div>
-            <AzulChatForm />
+            <AzulBotForm />
         </div>
         <div class="hidden md: block md:col-6 mt-6">
             <div class="overflow-hidden mt-5">
@@ -30,7 +30,7 @@ const route = useRoute();
 
 const baseURL = ref(window.location.origin);
 
-import AzulChatForm from './AzulBotForm.vue';
+import AzulBotForm from './AzulBotForm.vue';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
