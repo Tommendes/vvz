@@ -363,7 +363,6 @@ module.exports = app => {
         req.ftpParam = ftpParam
         const tabelaSchema = `${dbPrefix}_api.schemas_control`
         const schemaParam = await app.db({ sc: tabelaSchema }).where({ id: uParams.schema_id, status: STATUS_ACTIVE }).first()
-        console.log('ftpParam', ftpParam);
         req.schemaParam = schemaParam
 
         // ftpParam contém os dados de conexão com o servidor FTP. 

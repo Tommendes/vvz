@@ -1140,7 +1140,6 @@ module.exports = app => {
 
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
-        console.log('pathDoc', pathDoc);
                 
         ftpParamsArray.forEach(ftpParam => {
             ftpParam.path = pathDoc;

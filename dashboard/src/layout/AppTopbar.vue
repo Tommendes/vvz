@@ -76,7 +76,7 @@ const items = ref([
 ]);
 
 const logout = () => {
-    ChatPluginPlay.destroy();
+    // ChatPluginPlay.destroy();
     useUserStore().logout();
     location.reload();
 };
@@ -237,7 +237,7 @@ const showMessage = (body) => {
 };
 
 const goToChat = () => {
-    window.open(`#/${uProf.value.schema_description}/azul-chat`, '_blank');
+    window.open(`#/${uProf.value.schema_description}/azul-bot`, '_blank');
 };
 
 onBeforeMount(() => {
@@ -261,7 +261,7 @@ onBeforeMount(() => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <Button  type="button" v-if="uProf.chat_account_id && uProf.chat_status && uProf.chat_operator_access_token" label="Chat"
+            <Button  type="button" v-if="uProf.chat_account_id && uProf.chat_status && uProf.chat_operator_access_token" label="Bot"
                 icon="fa-brands fa-whatsapp"
                 severity="info" rounded size="large" 
                 aria-haspopup="true" @click="goToChat" />

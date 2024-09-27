@@ -97,8 +97,6 @@ const loadLazyData = async () => {
         });
     }
     const url = `${urlBase.value}${urlFilters.value}${urlQueryes}`;
-    console.log(url);
-    
     const maxStringLength = 100;
     axios
         .get(url)

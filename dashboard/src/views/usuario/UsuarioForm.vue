@@ -437,7 +437,7 @@ onMounted(async () => {
                                 <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.schema_description }}</p>
                             </div> -->
                             <div class="col-12 md:col-4">
-                                <label for="multiCliente">Token do usuário para o Azul Chat</label>
+                                <label for="multiCliente">Token do usuário para o Azul Bot</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <InputText v-else autocomplete="no" :disabled="mode == 'view'"
                                     v-model="itemData.chat_operator_access_token" id="chat_operator_access_token"

@@ -381,7 +381,7 @@ const formIsValid = () => {
 };
 
 import { useDialog } from 'primevue/usedialog';
-import AzulChatForm from '@/views/azulChat/AzulChatForm.vue';
+import AzulChatForm from '@/views/azulBot/AzulChatForm.vue';
 const dialog = useDialog();
 const sendAzulChatMessage = () => {
     dialog.open(AzulChatForm, {

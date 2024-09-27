@@ -15,10 +15,12 @@ const validateToken = async () => {
     const jsonGLK = localStorage.getItem(glKey);
     const geoLocationData = JSON.parse(jsonGLK);
 
-    await store.validateToken(userData, geoLocationData);
-    isTokenValid.value = store.isTokenValid;
-    if (!isTokenValid.value) router.push('/');
-    if (isTokenValid.value && !(geoLocationData && geoLocationData.geolocation)) open();
+    if (userData) {
+        await store.validateToken(userData, geoLocationData);
+        isTokenValid.value = store.isTokenValid;
+        if (!isTokenValid.value) router.push('/');
+        if (isTokenValid.value && !(geoLocationData && geoLocationData.geolocation)) open();
+    }
 };
 
 const getIp = async () => {

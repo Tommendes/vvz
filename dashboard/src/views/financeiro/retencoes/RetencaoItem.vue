@@ -27,8 +27,11 @@ const getFormIsValid = async () => {
     // Verificar se o valor em itemData.valor_retencao é menor ou igual a props.itemDataRoot.valir_liquido
     let valorLiquido = Math.ceil((props.itemDataRoot.valor_bruto.replace(',', '.') - props.retencaoTotal) * 100) / 100
     let valorRetencao = itemData.value.valor_retencao.replace(',', '.') - (itemDataUnmuted.value && itemDataUnmuted.value.valor_retencao ? itemDataUnmuted.value.valor_retencao.replace(',', '.') : 0)
-    const res = valorLiquido >= valorRetencao    
-    if (!res) return defaultWarn('Valor de retenção é maior que o líquido')
+    const res = valorLiquido >= valorRetencao
+    if (!res) {
+        defaultWarn('Valor de retenção é maior que o líquido')
+        return
+    }
     return res
 }
 

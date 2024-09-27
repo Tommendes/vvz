@@ -67,14 +67,12 @@ module.exports = app => {
             delete body.old_id;
             let recurrence = undefined
             if (body.recurrence) {
-                console.log('body.recurrence', body.recurrence);
                 recurrence = {
                     frequency: body.recurrence.frequency,
                     interval: body.recurrence.interval,
-                    next_run: moment(body.schedule).add(body.recurrence.interval, body.recurrence.frequency).format('YYYY-MM-DD HH:mm:ss'),
+                    next_run: moment(body.schedule).format('YYYY-MM-DD HH:mm:ss'),//.add(body.recurrence.interval, body.recurrence.frequency).format('YYYY-MM-DD HH:mm:ss'),
                     end_date: body.recurrence.end_date ? moment(body.recurrence.end_date).format('YYYY-MM-DD HH:mm:ss') : null
                 };
-                console.log('recurrence', recurrence);
                 delete body.recurrence;
             }
             await app.db(tabelaDomain)
@@ -85,6 +83,8 @@ module.exports = app => {
                         recurrence.msg_id = msgId;
                         await app.db(`${dbPrefix}_${uParams.schema_name}.whats_msgs_recurrences`).insert(recurrence);
                     }
+                    sendScheduledMessages();
+                    return res.status(200).send({ id: msgId })
                 })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -212,29 +212,31 @@ module.exports = app => {
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id')
         if (!uParams) return;
-    
+
         for (const schema of uParams) {
             const tabelaDomain = `${dbPrefix}_${schema.schema_name}.${tabela}`;
             const messages = await app.db({ tbl1: tabelaDomain })
+                .select(app.db.raw(`tbl1.*, rec.id as recurrence_id, rec.next_run, rec.frequency, rec.interval, rec.end_date`))
                 .leftJoin({ rec: `${dbPrefix}_${schema.schema_name}.whats_msgs_recurrences` }, 'tbl1.id', 'rec.msg_id')
-                .where(function() {
+                .where(function () {
                     this.where('tbl1.situacao', 1)
                         .orWhere('rec.next_run', '<=', moment().format('YYYY-MM-DD HH:mm:ss'))
-                        .andWhere(function() {
+                        .andWhere(function () {
                             this.whereNull('rec.end_date')
                                 .orWhere('rec.end_date', '>=', moment().format('YYYY-MM-DD HH:mm:ss'));
                         });
                 })
                 .andWhere('tbl1.status', STATUS_ACTIVE);
-    
+
             for (const message of messages) {
                 await sendMessage(message, schema, tabelaDomain);
                 await app.db(tabelaDomain)
                     .where({ id: message.id })
                     .update({ situacao: 2, delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') });
-    
+
                 if (message.recurrence_id) {
-                    const nextRun = moment(message.schedule).add(message.interval, message.frequency).format('YYYY-MM-DD HH:mm:ss');
+                    // Corrigir a lógica de cálculo da próxima execução
+                    const nextRun = moment(message.next_run).add(message.interval, message.frequency).format('YYYY-MM-DD HH:mm:ss');
                     if (message.end_date && moment(nextRun).isAfter(message.end_date)) {
                         await app.db(`${dbPrefix}_${schema.schema_name}.whats_msgs_recurrences`).where({ id: message.recurrence_id }).del();
                     } else {

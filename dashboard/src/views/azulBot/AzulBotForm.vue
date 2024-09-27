@@ -77,7 +77,7 @@ const urlBase = ref(`${baseApiUrl}/whats-msgs`);
 // Carragamento de dados do form
 const loadData = async () => {
     loading.value = true;
-    if (['azul-chat'].includes(route.name) && (route.params.id || itemData.value.id)) {
+    if (['azul-bot'].includes(route.name) && (route.params.id || itemData.value.id)) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
         await axios.get(url).then((res) => {
@@ -88,7 +88,7 @@ const loadData = async () => {
                 loading.value = false;
             } else {
                 defaultWarn('Registro não localizado');
-                router.push({ path: `/${uProf.value.schema_description}/azul-chat` });
+                router.push({ path: `/${uProf.value.schema_description}/azul-bot` });
 
             }
         });
@@ -113,19 +113,17 @@ const saveData = async () => {
     if (obj.cep) obj.cep = obj.cep.replace(/([^\d])+/gim, '');
     await axios[method](url, obj)
         .then(async (res) => {
-            const body = res.data;
-            console.log('body', body);
-            
+            const body = res.data;            
             if (body && body.id) {
-                defaultSuccess('Mensagem enviada com sucesso');
+                defaultSuccess('Mensagem programada com sucesso');
                 itemData.value = {
                     identified: true,
                     schedule: moment().format('DD-MM-YYYY HH:mm:00'),
-                    phone: dialogRef.value.data.phone ? dialogRef.value.data.phone : undefined,
+                    phone: dialogRef && dialogRef.value.data.phone ? dialogRef.value.data.phone : undefined,
                 };
-                emit('sended', itemData.value);
+                loading.value = false;
             } else {
-                defaultWarn('Erro ao enviar mensagem');
+                defaultWarn('Erro ao programar mensagem');
             }
         })
         .catch((error) => {
@@ -135,7 +133,7 @@ const saveData = async () => {
     loading.value = false;
 };
 const goToChat = () => {
-    window.open(`#/${uProf.value.schema_description}/azul-chat`, '_blank');
+    window.open(`#/${uProf.value.schema_description}/azul-bot`, '_blank');
 };
 // Validar telefone
 const validatePhone = () => {
@@ -156,7 +154,6 @@ const reload = async () => {
 // Carregar dados do formulário
 onMounted(async () => {
     await loadData();
-
     if (dialogRef && dialogRef.value.data.destinId) {
         itemData.value = {
             destinId: dialogRef.value.data.destinId ? dialogRef.value.data.destinId : undefined,
@@ -170,9 +167,9 @@ onMounted(async () => {
 watchEffect(() => {
     if (itemData.value.recurrent) {
         itemData.value.recurrence = {
-            frequency: 'days',
-            interval: 1,
-            end_date: moment(itemData.value.schedule, 'DD-MM-YYYY HH:mm:00').add(1, 'days').format('DD-MM-YYYY HH:mm:00')
+            frequency: itemData.value.recurrence.frequency || 'days',
+            interval: itemData.value.recurrence.interval || 1,
+            end_date: moment(itemData.value.schedule, 'DD-MM-YYYY HH:mm:00').add(itemData.value.recurrence.interval, itemData.value.recurrence.frequency).format('DD-MM-YYYY HH:mm:00')
         };
     } else {
         itemData.value.recurrence = {};

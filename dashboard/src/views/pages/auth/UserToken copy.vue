@@ -48,7 +48,8 @@ const unlock = async () => {
                     router.push({ name: 'signin' });
                 })
                 .catch((error) => {
-                    return defaultError(error.response.data.msg);
+                    defaultError(error.response.data.msg);
+                    return;
                 });
         }
     }
@@ -96,7 +97,8 @@ const getNewToken = async () => {
             defaultSuccess(body.data.msg);
         })
         .catch((error) => {
-            return defaultError(error.response.data.msg);
+            defaultError(error.response.data.msg);
+            return;
         });
 };
 

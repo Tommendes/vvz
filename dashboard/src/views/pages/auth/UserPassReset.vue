@@ -44,12 +44,13 @@ const passReset = async () => {
                 })
                 .then((body) => {
                     const user = body.data;
-                    if (!user.isValidPassword) return defaultError(user.msg);
+                    if (!user.isValidPassword) defaultError(user.msg);
                     router.push({ path: '/signin' });
                     defaultSuccess(user.msg);
                 })
                 .catch((error) => {
-                    return defaultError(error.response.data);
+                    defaultError(error.response.data);
+                    return;
                 });
         }
     }
@@ -83,7 +84,8 @@ const getTokenTime = async () => {
                 // if (data.isToken == false) return router.push({ path: '/' });
             });
     } else {
-        return defaultError('Token de validação não informado');
+        defaultError('Token de validação não informado');
+        return;
     }
 };
 
@@ -97,7 +99,8 @@ const getNewToken = async () => {
             defaultSuccess(body.data.msg);
         })
         .catch((error) => {
-            return defaultError(error.response.data.msg);
+            defaultError(error.response.data.msg);
+            return;
         });
 };
 </script>
