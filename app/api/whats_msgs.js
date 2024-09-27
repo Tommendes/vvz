@@ -233,9 +233,6 @@ module.exports = app => {
 
             for (const message of messages) {
                 await sendMessage(message, schema, tabelaDomain);
-                // await app.db(tabelaDomain)
-                //     .where({ id: message.id })
-                //     .update({ situacao: 2, delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') });
 
                 if (message.recurrence_id) {
                     // Corrigir a lógica de cálculo da próxima execução
