@@ -1,8 +1,6 @@
 const { dbPrefix, speedchat } = require("../.env")
 const schedule = require('node-schedule');
-const moment = require('moment')
 const axios = require('axios');
-const { errors } = require("formidable");
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const urlSpeedChat = `https://www.speedtest.dev.br/api/whatsapp/`
