@@ -15,7 +15,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRoute } from 'vue-router';
@@ -119,8 +119,7 @@ onMounted(async () => {
         <div class="col-12">
             <div class="card">
                 <PipelineForm ref="pipelineForm" />
-                <div
-                    v-if="itemData.id && itemDataParam.doc_venda >= 2 && (uProf.comissoes >= 1 || uProf.financeiro >= 3)">
+                <div v-if="itemData.id && itemDataParam.doc_venda >= 2 && (uProf.comissoes >= 1 || uProf.financeiro >= 3)">
                     <div class="p-fluid grid">
                         <div class="col-12" style="text-align: center">
                             <div class="flex align-items-end flex-wrap card-container purple-container">
@@ -131,8 +130,7 @@ onMounted(async () => {
                             </div>
                         </div>
                     </div>
-                    <ComissoesItensGrid v-if="route.name == 'pipeline-one'" ref="comissoesItensGrid"
-                        :itemDataRoot="itemData" @refreshPipeline="refreshPipeline()" />
+                    <ComissoesItensGrid v-if="route.name == 'pipeline-one'" ref="comissoesItensGrid" :itemDataRoot="itemData" @refreshPipeline="refreshPipeline()" />
                 </div>
                 <div v-if="uProf.admin >= 2">
                     <p>route.name {{ route.name }}</p>

@@ -12,7 +12,7 @@ axios.interceptors.request.use((config) => {
     if (user && user.ip) {
         config.headers['x-ip-address'] = user.ip;
     }
-    
+
     if (user && user.token) {
         config.headers.Authorization = `bearer ${user.token}`;
     }

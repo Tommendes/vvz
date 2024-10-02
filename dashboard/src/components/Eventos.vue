@@ -49,7 +49,7 @@ const props = defineProps({
     mode: {
         type: String,
         default: ''
-    },
+    }
 });
 
 // Eventos do registro
@@ -79,11 +79,11 @@ const getEventos = async () => {
 const processEvent = (element) => {
     const classevento = element.classevento.toLowerCase();
     const statusComissioning = {
-        '10': { label: 'Aberto' },
-        '20': { label: 'Liquidado' },
-        '30': { label: 'Encerrado' },
-        '40': { label: 'Faturado' },
-        '50': { label: 'Confirmado' }
+        10: { label: 'Aberto' },
+        20: { label: 'Liquidado' },
+        30: { label: 'Encerrado' },
+        40: { label: 'Faturado' },
+        50: { label: 'Confirmado' }
     };
 
     switch (true) {
@@ -91,8 +91,7 @@ const processEvent = (element) => {
             element.evento = 'Criação do registro';
             break;
         case classevento === 'update':
-            element.evento =
-                `Edição do registro`;
+            element.evento = `Edição do registro`;
             break;
         case classevento === 'remove':
             element.evento = 'Exclusão ou cancelamento do registro';
@@ -122,15 +121,16 @@ const processEvent = (element) => {
             element.evento = 'Exclusão de parcelamento financeiro';
             break;
         case classevento === 'commissioning':
-            element.evento = `Lançamento de comissão`
+            element.evento = `Lançamento de comissão`;
             break;
         default:
             element.evento = `Registro de evento: ${classevento}`;
             break;
     }
-    element.evento += (uProf.value.comissoes >= 1
-        ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
-        : '');
+    element.evento +=
+        uProf.value.comissoes >= 1
+            ? `. Para mais detalhes <a href="#/${uProf.value.schema_description}/eventos?tabela_bd=${props.tabelaBd}&id_registro=${props.idRegistro}" target="_blank">acesse o log de eventos</a> e pesquise: Tabela = ${props.tabelaBd}; Registro = ${props.idRegistro}. Número deste evento: ${element.id}`
+            : '';
     element.data = moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', '');
 };
 

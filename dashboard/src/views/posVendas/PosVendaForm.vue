@@ -11,7 +11,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { guide } from '@/guides/pvFormGuide.js';
@@ -443,51 +443,55 @@ watch(selectedCadastro, (value) => {
                 <div :class="`col-12 md:col-${mode == 'new' ? '12' : '9'}`">
                     <div class="p-fluid grid">
                         <div class="col-12" v-if="itemData.pv_nr" style="margin: 0">
-                            <h3>Número do Pós-venda: {{ itemData.pv_nr }}{{ uProf.admin >= 2 ? ` (${itemData.id})` :
-                                '' }}</h3>
+                            <h3>Número do Pós-venda: {{ itemData.pv_nr }}{{ uProf.admin >= 2 ? ` (${itemData.id})` : '' }}</h3>
                         </div>
                         <div class="col-12 md:col-9">
                             <label for="id_cadastros">Cliente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete
                                 v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
-                                v-model="selectedCadastro" :dropdown="false" optionLabel="name" :suggestions="filteredCadastros"
-                                @complete="searchCadastros" forceSelection @keydown.enter.prevent />
+                                v-model="selectedCadastro"
+                                :dropdown="false"
+                                optionLabel="name"
+                                :suggestions="filteredCadastros"
+                                @complete="searchCadastros"
+                                forceSelection
+                                @keydown.enter.prevent
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil" severity="primary"
-                                    @click="confirmEditCadastro()" :disabled="mode == 'view'" />
+                                <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="tipo">Tipo do Pós-venda</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else placeholder="Selecione..." :showClear="!!itemData.tipo" id="tipo"
-                                optionLabel="label" optionValue="value" v-model="itemData.tipo"
-                                :options="dropdownTiposPv" :disabled="mode == 'view'" />
+                            <Dropdown v-else placeholder="Selecione..." :showClear="!!itemData.tipo" id="tipo" optionLabel="label" optionValue="value" v-model="itemData.tipo" :options="dropdownTiposPv" :disabled="mode == 'view'" />
                         </div>
-                        <div class="col-12"
-                            v-if="dropdownPipelineByCadastro.length && (itemData.id_pipeline || mode != 'view')">
+                        <div class="col-12" v-if="dropdownPipelineByCadastro.length && (itemData.id_pipeline || mode != 'view')">
                             <label for="id_pipeline">Pipeline</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <div class="p-inputgroup flex-1" v-else>
-                                <Dropdown filter placeholder="Selecione..." :showClear="!!itemData.id_pipeline"
-                                    id="id_pipeline" optionLabel="label" optionValue="value"
-                                    v-model="itemData.id_pipeline" :options="dropdownPipelineByCadastro"
-                                    :disabled="mode == 'view'" />
+                                <Dropdown
+                                    filter
+                                    placeholder="Selecione..."
+                                    :showClear="!!itemData.id_pipeline"
+                                    id="id_pipeline"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    v-model="itemData.id_pipeline"
+                                    :options="dropdownPipelineByCadastro"
+                                    :disabled="mode == 'view'"
+                                />
                             </div>
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="observacao">Observação</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="loading || ['view', 'expandedFormMode'].includes(mode)"
-                                v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }"
-                                aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="loading || ['view', 'expandedFormMode'].includes(mode)" v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                     </div>
-                    <OatsGrid ref="oatsGrid" :toOpenOat="toOpenOat"
-                        v-if="itemData.id && mode == 'view' && !props.idCadastro"
-                        :itemDataRoot="{ ...itemData, last_status: itemDataLastStatus.status_pv }" />
+                    <OatsGrid ref="oatsGrid" :toOpenOat="toOpenOat" v-if="itemData.id && mode == 'view' && !props.idCadastro" :itemDataRoot="{ ...itemData, last_status: itemDataLastStatus.status_pv }" />
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
                     <Fieldset :toggleable="true" class="mb-3">
@@ -497,55 +501,104 @@ watch(selectedCadastro, (value) => {
                                 <span class="font-bold text-lg">Ações do Registro</span>
                             </div>
                         </template>
-                        <div
-                            v-if="mode != 'new' && itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO">
-                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'"
-                                icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'"
-                                icon="fa-solid fa-floppy-disk" severity="success" />
-                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'"
-                                icon="fa-solid fa-ban" severity="danger"
-                                @click="mode == 'edit' ? reload() : toGrid()" />
+                        <div v-if="mode != 'new' && itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO">
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr />
-                            <Button v-if="route.name == 'pos-venda'" label="Ir ao Cadastro" type="button"
-                                class="w-full mb-3" :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328"
-                                text raised
-                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)" />
-                            <Button v-if="route.name == 'pos-venda'" label="Ir ao Pipeline" type="button"
-                                class="w-full mb-3" :icon="`fa-solid fa-paperclip fa-shake`" text raised
-                                @click="router.push(`/${uProf.schema_description}/pipeline/${itemData.id_pipeline}`)" />
-                            <Button label="Criar OAT"
+                            <Button
+                                v-if="route.name == 'pos-venda'"
+                                label="Ir ao Cadastro"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-regular fa-address-card fa-shake`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)"
+                            />
+                            <Button
+                                v-if="route.name == 'pos-venda'"
+                                label="Ir ao Pipeline"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-paperclip fa-shake`"
+                                text
+                                raised
+                                @click="router.push(`/${uProf.schema_description}/pipeline/${itemData.id_pipeline}`)"
+                            />
+                            <Button
+                                label="Criar OAT"
                                 v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO"
-                                type="button" class="w-full mb-3" :icon="`fa-solid fa-screwdriver-wrench fa-shake`"
-                                style="color: #a97328" text raised @click="showPvOatForm" />
-                            <Button v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO"
-                                label="Finalizar Atendimento" type="button" class="w-full mb-3"
-                                :icon="`fa-solid fa-check fa-shake'`" severity="success"
-                                :disabled="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_FINALIZADO" text
-                                raised @click="statusRecord(andamentoRegistroPv.STATUS_FINALIZADO)" />
-                            <Button v-if="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_FINALIZADO"
-                                label="Reabrir Atendimento" type="button" class="w-full mb-3"
-                                :icon="`fa-solid fa-check fa-shake'`" severity="success" text raised
-                                @click="statusRecord(andamentoRegistroPv.STATUS_EM_ANDAMENTO)" />
-                            <Button label="Cancelar Atendimento"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-screwdriver-wrench fa-shake`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="showPvOatForm"
+                            />
+                            <Button
+                                v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_FINALIZADO"
+                                label="Finalizar Atendimento"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-check fa-shake'`"
+                                severity="success"
+                                :disabled="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_FINALIZADO"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_FINALIZADO)"
+                            />
+                            <Button
+                                v-if="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_FINALIZADO"
+                                label="Reabrir Atendimento"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-check fa-shake'`"
+                                severity="success"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_EM_ANDAMENTO)"
+                            />
+                            <Button
+                                label="Cancelar Atendimento"
                                 v-tooltip.top="'Cancela o atendimento, mas não o exclui!'"
-                                v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_CANCELADO" type="button"
-                                :disabled="!(uProf.pv >= 3 && itemData.status == 10)" class="w-full mb-3"
-                                :icon="`fa-solid fa-ban`" severity="warning" text raised
-                                @click="statusRecord(andamentoRegistroPv.STATUS_CANCELADO)" />
-                            <Button label="Reativar Atendimento"
+                                v-if="itemDataLastStatus.status_pv < andamentoRegistroPv.STATUS_CANCELADO"
+                                type="button"
+                                :disabled="!(uProf.pv >= 3 && itemData.status == 10)"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-ban`"
+                                severity="warning"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_CANCELADO)"
+                            />
+                            <Button
+                                label="Reativar Atendimento"
                                 v-else-if="itemDataLastStatus.status_pv >= andamentoRegistroPv.STATUS_CANCELADO"
-                                type="button" class="w-full mb-3" :icon="`fa-solid fa-file-invoice fa-shake'`"
-                                severity="warning" text raised
-                                @click="statusRecord(andamentoRegistroPv.STATUS_REATIVADO)" />
-                            <Button label="Excluir Atendimento"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-file-invoice fa-shake'`"
+                                severity="warning"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_REATIVADO)"
+                            />
+                            <Button
+                                label="Excluir Atendimento"
                                 v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
                                 type="button"
                                 :disabled="!(uProf.pv >= 4 && itemData.status != andamentoRegistroPv.STATUS_EXCLUIDO)"
-                                class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
-                                @click="statusRecord(andamentoRegistroPv.STATUS_EXCLUIDO)" />
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-fire`"
+                                severity="danger"
+                                text
+                                raised
+                                @click="statusRecord(andamentoRegistroPv.STATUS_EXCLUIDO)"
+                            />
                         </div>
                     </Fieldset>
                     <Fieldset :toggleable="true">
@@ -558,9 +611,7 @@ watch(selectedCadastro, (value) => {
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                         <Timeline v-else :value="itemDataStatus">
                             <template #marker="slotProps">
-                                <span
-                                    class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
-                                    :style="{ backgroundColor: slotProps.item.color }">
+                                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
                                     <i :class="slotProps.item.icon"></i>
                                 </span>
                             </template>
@@ -575,10 +626,8 @@ watch(selectedCadastro, (value) => {
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3" v-if="mode == 'new'">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                            severity="danger" text raised @click="mode == 'edit' ? reload() : toGrid()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' ? reload() : toGrid()" />
                     </div>
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
@@ -588,10 +637,7 @@ watch(selectedCadastro, (value) => {
                             </div>
                         </template>
                         <p class="mb-3" v-if="itemData.old_id">
-                            <span>Para acessar o registro no lynkos.com.br acesse <a
-                                    :href="`https://lynkos.com.br/pv/${itemData.old_id}`" target="_blank">aqui</a>.
-                                Edições e inclusões
-                                não são mais permitidas no LynkOs</span>
+                            <span>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/pv/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</span>
                             <span style="font-size: 20px">&#128521;</span>
                         </p>
                         <p class="m-0">

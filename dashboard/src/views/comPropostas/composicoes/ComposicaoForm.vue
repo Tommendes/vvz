@@ -12,7 +12,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRoute, useRouter } from 'vue-router';
@@ -132,45 +132,36 @@ onMounted(async () => {
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-8">
                             <div class="flex justify-content-start gap-5">
-                                <div class="switch-label" v-if="itemData.compos_nr">Número da composição: {{
-                                    itemData.compos_nr }}</div>
+                                <div class="switch-label" v-if="itemData.compos_nr">Número da composição: {{ itemData.compos_nr }}</div>
                                 <div class="switch-label" v-else>Nova composição</div>
                                 <div class="switch-label">
                                     Composição ativa
-                                    <InputSwitch id="comp_ativa" :disabled="mode == 'view'"
-                                        v-model="itemData.comp_ativa" />
+                                    <InputSwitch id="comp_ativa" :disabled="mode == 'view'" v-model="itemData.comp_ativa" />
                                 </div>
                                 <div class="switch-label">
                                     Compõe valor
-                                    <InputSwitch id="compoe_valor" :disabled="mode == 'view'"
-                                        v-model="itemData.compoe_valor" />
+                                    <InputSwitch id="compoe_valor" :disabled="mode == 'view'" v-model="itemData.compoe_valor" />
                                 </div>
                             </div>
                         </div>
                         <div class="col-12 md:col-5">
                             <label for="localizacao">Descrição curta(60 caracteres)</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'"
-                                v-model="itemData.localizacao" id="localizacao" type="text" maxlength="60" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.localizacao" id="localizacao" type="text" maxlength="60" />
                         </div>
                         <div class="col-12 md:col-7">
                             <label for="tombamento">Descrição longa(90 caracteres)</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tombamento"
-                                id="tombamento" type="text" maxlength="90" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.tombamento" id="tombamento" type="text" maxlength="90" />
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar"
-                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="button" v-if="mode == 'view'" label="Fechar" icon="fa-solid fa-xmark"
-                            severity="secondary" text raised @click="reload()" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                            severity="danger" text raised @click="reload()" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="button" v-if="mode == 'view'" label="Fechar" icon="fa-solid fa-xmark" severity="secondary" text raised @click="reload()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload()" />
                     </div>
                 </div>
                 <div class="col-12">

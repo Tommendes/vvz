@@ -14,7 +14,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRouter } from 'vue-router';
@@ -235,8 +235,7 @@ const goField = (data) => {
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb v-if="mode != 'new'"
-                :items="[{ label: 'Todos os Cadastros', to: `/${uProf.schema_description}/cadastros` }]" />
+            <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Todos os Cadastros', to: `/${uProf.schema_description}/cadastros` }]" />
         </div>
         <div class="col-12">
             <CadastroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
@@ -244,65 +243,82 @@ const goField = (data) => {
 
         <div class="col-12">
             <div class="card">
-                <DataTable :value="gridData" lazy paginator :first="0" v-model:filters="filters" ref="dt" dataKey="id"
-                    :totalRecords="totalRecords" :rows="gridData.length" :rowsPerPageOptions="rowsPerPageOptions"
-                    :loading="loading" @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
+                <DataTable
+                    :value="gridData"
+                    lazy
+                    paginator
+                    :first="0"
+                    v-model:filters="filters"
+                    ref="dt"
+                    dataKey="id"
+                    :totalRecords="totalRecords"
+                    :rows="gridData.length"
+                    :rowsPerPageOptions="rowsPerPageOptions"
+                    :loading="loading"
+                    @page="onPage($event)"
+                    @sort="onSort($event)"
+                    @filter="onFilter($event)"
                     filterDisplay="row"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable>
+                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
+                    scrollable
+                >
                     <!-- scrollHeight="420px" -->
                     <template #header>
                         <div class="flex justify-content-end gap-3">
-                            <Dropdown filter placeholder="Filtrar por Tipo de Cadastro..." :showClear="tipoCadastro"
-                                style="min-width: 200px" id="tipoCadastro" optionLabel="label" optionValue="value"
-                                v-model="tipoCadastro" :options="dropdownTipoCadastro" @change="mountUrlFilters()" />
-                            <Dropdown filter placeholder="Filtrar por Área de Atuação..." :showClear="areaAtuacao"
-                                style="min-width: 200px" id="areaAtuacao" optionLabel="label" optionValue="value"
-                                v-model="areaAtuacao" :options="dropdownAtuacao" @change="mountUrlFilters()" />
-                            <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar"
-                                @click="exportCSV($event)" />
-                            <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
-                                @click="clearFilter()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
-                                @click="novoRegistro()" />
+                            <Dropdown
+                                filter
+                                placeholder="Filtrar por Tipo de Cadastro..."
+                                :showClear="tipoCadastro"
+                                style="min-width: 200px"
+                                id="tipoCadastro"
+                                optionLabel="label"
+                                optionValue="value"
+                                v-model="tipoCadastro"
+                                :options="dropdownTipoCadastro"
+                                @change="mountUrlFilters()"
+                            />
+                            <Dropdown
+                                filter
+                                placeholder="Filtrar por Área de Atuação..."
+                                :showClear="areaAtuacao"
+                                style="min-width: 200px"
+                                id="areaAtuacao"
+                                optionLabel="label"
+                                optionValue="value"
+                                v-model="areaAtuacao"
+                                :options="dropdownAtuacao"
+                                @change="mountUrlFilters()"
+                            />
+                            <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
+                            <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="novoRegistro()" />
                         </div>
                         <div class="flex justify-content-end gap-3 mt-3 p-tag-esp">
                             <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} resultados</span>
                         </div>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">
-                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
-                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem"
-                            sortable :sortField="nome.field" :class="nome.class">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" filter optionLabel="label" optionValue="value"
-                                    v-model="filterModel.value" :options="nome.list" @change="filterCallback()"
-                                    :class="nome.class" :style="``" />
+                                <Dropdown :id="nome.field" filter optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" :class="nome.class" :style="``" />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                                    :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
-                                    @input="filterCallback()" :style="``" />
+                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" :style="``" />
                             </template>
                             <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                                    class="p-column-filter" placeholder="Pesquise..." :style="``" />
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="``" />
                             </template>
                             <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true" :value="data[nome.field]"
-                                    :severity="getSeverity(data[nome.field])" />
-                                <span v-else-if="data[nome.field] && nome.mask"
-                                    v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                                <span v-else
-                                    v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                                <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                                <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
+                                <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center"
-                        bodyStyle="text-align: center; overflow: visible">
+                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
-                                @click="goField(data)" title="Clique para mais opções" />
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" title="Clique para mais opções" />
                         </template>
                     </Column>
                 </DataTable>

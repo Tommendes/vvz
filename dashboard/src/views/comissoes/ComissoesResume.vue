@@ -36,33 +36,35 @@ const loadData = async () => {
     const dataInicio = (dataCorte.value.parametros && dataCorte.value.parametros.dataInicio) || '';
     const dataFim = (dataCorte.value.parametros && dataCorte.value.parametros.dataFim) || '';
     const url = `${baseApiUrl}/comissoes/f-a/gps?dataInicio=${dataInicio}&dataFim=${dataFim}`;
-    await axios.get(url).then((res) => {
-        gridData.value = res.data;
-        gridData.value.forEach((element) => {
-            switch (element.agente_representante) {
-                case 0:
-                    element.agente_representante = { label: 'Representaçoes', tipo: element.agente_representante };
-                    break;
-                case 1:
-                    element.agente_representante = { label: 'Representadas', tipo: element.agente_representante };
-                    break;
-                case 2:
-                    element.agente_representante = { label: 'Agentes', tipo: element.agente_representante };
-                    break;
-                case 3:
-                    element.agente_representante = { label: 'Terceiros', tipo: element.agente_representante };
-                    break;
-                default:
-                    element.agente_representante;
-                    break;
-            }
+    await axios
+        .get(url)
+        .then((res) => {
+            gridData.value = res.data;
+            gridData.value.forEach((element) => {
+                switch (element.agente_representante) {
+                    case 0:
+                        element.agente_representante = { label: 'Representaçoes', tipo: element.agente_representante };
+                        break;
+                    case 1:
+                        element.agente_representante = { label: 'Representadas', tipo: element.agente_representante };
+                        break;
+                    case 2:
+                        element.agente_representante = { label: 'Agentes', tipo: element.agente_representante };
+                        break;
+                    case 3:
+                        element.agente_representante = { label: 'Terceiros', tipo: element.agente_representante };
+                        break;
+                    default:
+                        element.agente_representante;
+                        break;
+                }
+            });
+            loading.value = false;
         })
-        loading.value = false;
-    })
         .catch((error) => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             if (error.response && error.response.status == 401) router.push('/');
-        });;
+        });
 };
 
 const setMonthPeriod = async () => {
@@ -204,30 +206,37 @@ onMounted(async () => {
 
 <template>
     <div class="card">
-        <DataTable v-model:filters="filters" :value="gridData" dataKey="id" filterDisplay="row" :loading="loading"
-            :globalFilterFields="['ordem', 'nome_comum']" rowGroupMode="subheader"
-            groupRowsBy="agente_representante.tipo" rowGroupHeader:class="p-row-even bg-primary" scrollable
-            scrollHeight="400px" removableSort>
+        <DataTable
+            v-model:filters="filters"
+            :value="gridData"
+            dataKey="id"
+            filterDisplay="row"
+            :loading="loading"
+            :globalFilterFields="['ordem', 'nome_comum']"
+            rowGroupMode="subheader"
+            groupRowsBy="agente_representante.tipo"
+            rowGroupHeader:class="p-row-even bg-primary"
+            scrollable
+            scrollHeight="400px"
+            removableSort
+        >
             <template #header>
                 <!-- <div class="flex align-content-center flex-wrap"> -->
                 <div class="flex justify-content-between">
                     <div class="flex justify-content-start flex align-content-center flex-wrap">
                         <div class="flex align-items-center justify-content-center" v-if="dataCorte.parametros">
-                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }}
-                                e {{ dataCorte.parametros.dataFim }}</p>
+                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFim }}</p>
                         </div>
                     </div>
                     <div class="flex justify-content-end">
-                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon
-                            iconDisplay="input" @update:modelValue="adjustDates" />
+                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon iconDisplay="input" @update:modelValue="adjustDates" />
                         <IconField iconPosition="left">
                             <InputIcon>
                                 <i class="fa-solid fa-magnifying-glass" />
                             </InputIcon>
                             <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                         </IconField>
-                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined
-                            @click="initFilters()" />
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined @click="initFilters()" />
                     </div>
                     <!-- </div> -->
                 </div>
@@ -259,9 +268,7 @@ onMounted(async () => {
             </Column>
             <Column field="id" header="Ações" class="text-right">
                 <template #body="slotProps">
-                    <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'"
-                        rounded outlined aria-label="Bookmark"
-                        @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo)" />
+                    <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'" rounded outlined aria-label="Bookmark" @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo)" />
                 </template>
             </Column>
             <template #groupheader="slotProps">
@@ -271,15 +278,9 @@ onMounted(async () => {
             </template>
             <template #groupfooter="slotProps">
                 <div class="flex justify-content-end font-bold w-full">
-                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{
-                        calculateCustomerTotal(slotProps.data.agente_representante.label) }} {{
-                            slotProps.data.agente_representante.label }}</div>
-                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
-                        formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalPendente)
-                        }}</div>
-                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
-                        formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado)
-                        }}</div>
+                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{ calculateCustomerTotal(slotProps.data.agente_representante.label) }} {{ slotProps.data.agente_representante.label }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalPendente) }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado) }}</div>
                 </div>
             </template>
         </DataTable>

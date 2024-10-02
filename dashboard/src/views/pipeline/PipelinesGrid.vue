@@ -20,7 +20,7 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRouter, useRoute } from 'vue-router';
@@ -421,66 +421,99 @@ const customFilterOptions = ref({ filterclear: false });
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb v-if="mode != 'new' && !props.idCadastro"
-                :items="[{ label: 'Todo o Pipeline', to: `/${uProf.schema_description}/pipeline` }]" />
+            <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Todo o Pipeline', to: `/${uProf.schema_description}/pipeline` }]" />
         </div>
         <div class="col-12">
-            <PipelineForm :mode="mode" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'"
-                v-if="mode == 'new'" />
+            <PipelineForm :mode="mode" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
         </div>
 
         <div class="col-12">
             <div class="card">
-                <DataTable ref="dt" :value="gridData" lazy paginator :rows="gridData.length" dataKey="id"
-                    :rowHover="true" v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
-                    responsiveLayout="scroll" :totalRecords="totalRecords"
+                <DataTable
+                    ref="dt"
+                    :value="gridData"
+                    lazy
+                    paginator
+                    :rows="gridData.length"
+                    dataKey="id"
+                    :rowHover="true"
+                    v-model:filters="filters"
+                    filterDisplay="row"
+                    :loading="loading"
+                    :filters="filters"
+                    responsiveLayout="scroll"
+                    :totalRecords="totalRecords"
                     :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200]"
-                    @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
+                    @page="onPage($event)"
+                    @sort="onSort($event)"
+                    @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
-                    :filter-options="customFilterOptions" removableSort>
+                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
+                    scrollable
+                    :filter-options="customFilterOptions"
+                    removableSort
+                >
                     <template #header>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify"
-                                :key="qualify" :value="qualify.label"> </Tag>
-                            <Tag class="tagRes"
-                                :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
-                            </Tag>
+                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
+                            <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
                         </div>
                         <div class="grid">
                             <div class="col-6 md:col-3">
-                                <Dropdown placeholder="Todos...?" :showClear="!!tipoDoc" class="flex-none flex"
-                                    id="doc_venda" optionLabel="label" optionValue="value" v-model="tipoDoc"
-                                    :options="dropdownTiposDoc" @change="mountUrlFilters();
-                                    filtrarUnidades();
-                                    " />
+                                <Dropdown
+                                    placeholder="Todos...?"
+                                    :showClear="!!tipoDoc"
+                                    class="flex-none flex"
+                                    id="doc_venda"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    v-model="tipoDoc"
+                                    :options="dropdownTiposDoc"
+                                    @change="
+                                        mountUrlFilters();
+                                        filtrarUnidades();
+                                    "
+                                />
                             </div>
                             <div class="col-6 md:col-3">
-                                <Dropdown filter placeholder="Filtrar por Representada..." :showClear="!!unidade"
-                                    class="flex-none flex" id="unidades" optionLabel="label" optionValue="value"
-                                    v-model="unidade" :options="dropdownUnidades" @change="mountUrlFilters();
-                                    filtrarUnidadesDescricao();
-                                    " />
+                                <Dropdown
+                                    filter
+                                    placeholder="Filtrar por Representada..."
+                                    :showClear="!!unidade"
+                                    class="flex-none flex"
+                                    id="unidades"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    v-model="unidade"
+                                    :options="dropdownUnidades"
+                                    @change="
+                                        mountUrlFilters();
+                                        filtrarUnidadesDescricao();
+                                    "
+                                />
                             </div>
                             <div class="col-12 md:col-6">
-                                <Dropdown filter placeholder="Filtrar por Tipo..." :showClear="!!unidadeNegocio"
-                                    class="flex-grow-1 flex" id="unidade_tipos" optionLabel="label" optionValue="value"
-                                    v-model="unidadeNegocio" :options="dropdownUnidadesFilter"
-                                    @change="mountUrlFilters();" />
+                                <Dropdown
+                                    filter
+                                    placeholder="Filtrar por Tipo..."
+                                    :showClear="!!unidadeNegocio"
+                                    class="flex-grow-1 flex"
+                                    id="unidade_tipos"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    v-model="unidadeNegocio"
+                                    :options="dropdownUnidadesFilter"
+                                    @change="mountUrlFilters()"
+                                />
                             </div>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
-                                gridData.length }}
-                                resultados</span>
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} resultados</span>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"
-                                @click="exportXls()" />
-                            <Button type="button" icon="fa-solid fa-filter-circle-xmark" label="Limpar consulta"
-                                outlined @click="clearFilter()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
-                                @click="(mode = 'new'), scrollToTop()" />
+                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" @click="exportXls()" />
+                            <Button type="button" icon="fa-solid fa-filter-circle-xmark" label="Limpar consulta" outlined @click="clearFilter()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
                         </div>
                     </template>
                     <template #empty>
@@ -490,44 +523,31 @@ const customFilterOptions = ref({ filterclear: false });
                         <h2>Carregando dados. Por favor aguarde...</h2>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">
-                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
-                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem"
-                            sortable :sortField="nome.field" :class="nome.class">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true" :value="data[nome.field]"
-                                    :severity="getSeverity(data[nome.field])" />
-                                <span v-else
-                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                                <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                                <span v-else v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                             </template>
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value"
-                                    v-model="filterModel.value" :options="nome.list" @change="filterCallback()"
-                                    showClear placeholder="Pesquise..." />
+                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" showClear placeholder="Pesquise..." />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                                    showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
-                                    @update:modelValue="filterCallback()" />
+                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @update:modelValue="filterCallback()" />
                             </template>
                             <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                                    class="p-column-filter" placeholder="Pesquise..." />
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                             </template>
                             <template #filterclear="{ filterCallback }">
-                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()"
-                                    class="p-button-secondary"></Button>
+                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()" class="p-button-secondary"></Button>
                             </template>
                             <template #filterapply="{ filterCallback }">
-                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()"
-                                    class="p-button-success"></Button>
+                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()" class="p-button-success"></Button>
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center"
-                        bodyStyle="text-align: center; overflow: visible">
+                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
-                                @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                         </template>
                     </Column>
                 </DataTable>

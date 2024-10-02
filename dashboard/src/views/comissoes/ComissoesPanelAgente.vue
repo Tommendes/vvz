@@ -14,14 +14,14 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
-// Andamento do registro        
-const STATUS_ABERTO = 10
-const STATUS_LIQUIDADO = 20
-const STATUS_ENCERRADO = 30
-const STATUS_CONFIRMADO = 50
+// Andamento do registro
+const STATUS_ABERTO = 10;
+const STATUS_LIQUIDADO = 20;
+const STATUS_ENCERRADO = 30;
+const STATUS_CONFIRMADO = 50;
 
 const itemData = ref({});
 const emit = defineEmits(['dataCorte']);
@@ -187,7 +187,6 @@ const setStatusConfirm = (item) => {
         confirm_date: itemData.value.created_at
     };
     setTimeout(() => {
-
         confirm.require({
             group: `comisStatusConfirm-${itemData.value.id}`,
             header: 'Confirmar COMISSÃO',
@@ -224,7 +223,6 @@ const onRowGroupCollapse = (event) => {
     // defaultSuccess('Row Group Collapsed: ' + 'Value: ' + event.data)
 };
 
-
 onBeforeMount(() => {
     initFilters();
 });
@@ -238,8 +236,7 @@ onMounted(async () => {
     <ConfirmDialog :group="`comisStatusConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
-                <div
-                    class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
                     <i class="fa-solid fa-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
@@ -255,31 +252,40 @@ onMounted(async () => {
     </ConfirmDialog>
     <div class="card">
         <h3>Minhas Comissões</h3>
-        <DataTable v-model:filters="filters" v-model:expandedRowGroups="expandedRowGroups" :value="gridData"
-            dataKey="id" filterDisplay="row" :loading="loading"
-            :globalFilterFields="['unidade', 'documento', 'cliente', 'cpf_cnpj']" expandableRowGroups
-            @rowgroup-expand="onRowGroupExpand" @rowgroup-collapse="onRowGroupCollapse" rowGroupMode="subheader"
-            groupRowsBy="status_comiss.tipo" rowGroupHeader:class="p-row-even bg-primary" scrollable
-            scrollHeight="450px" removableSort>
+        <DataTable
+            v-model:filters="filters"
+            v-model:expandedRowGroups="expandedRowGroups"
+            :value="gridData"
+            dataKey="id"
+            filterDisplay="row"
+            :loading="loading"
+            :globalFilterFields="['unidade', 'documento', 'cliente', 'cpf_cnpj']"
+            expandableRowGroups
+            @rowgroup-expand="onRowGroupExpand"
+            @rowgroup-collapse="onRowGroupCollapse"
+            rowGroupMode="subheader"
+            groupRowsBy="status_comiss.tipo"
+            rowGroupHeader:class="p-row-even bg-primary"
+            scrollable
+            scrollHeight="450px"
+            removableSort
+        >
             <template #header>
                 <div class="flex justify-content-between">
                     <div class="flex justify-content-start flex align-content-center flex-wrap">
                         <div class="flex align-items-center justify-content-center" v-if="dataCorte.parametros">
-                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }}
-                                e {{ dataCorte.parametros.dataFim }}</p>
+                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFim }}</p>
                         </div>
                     </div>
                     <div class="flex justify-content-end">
-                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon
-                            iconDisplay="input" @update:modelValue="adjustDates" />
+                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon iconDisplay="input" @update:modelValue="adjustDates" />
                         <IconField iconPosition="left">
                             <InputIcon>
                                 <i class="fa-solid fa-magnifying-glass" />
                             </InputIcon>
                             <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                         </IconField>
-                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined
-                            @click="initFilters()" />
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined @click="initFilters()" />
                     </div>
                 </div>
             </template>
@@ -288,13 +294,12 @@ onMounted(async () => {
                 <h3>Carregando dados. Por favor aguarde.</h3>
             </template>
             <template #groupheader="slotProps">
-                <span class="vertical-align-middle ml-2 font-bold line-height-3">{{ slotProps.data.status_comiss.label
-                    }}</span>
+                <span class="vertical-align-middle ml-2 font-bold line-height-3">{{ slotProps.data.status_comiss.label }}</span>
             </template>
             <Column field="status_comiss.tipo" header="Tipo" class="text-center"></Column>
             <Column field="unidade" header="Documento">
                 <template #body="{ data }">
-                    {{ `${data.unidade.replace("_", " ")} ${data.documento}` }}
+                    {{ `${data.unidade.replace('_', ' ')} ${data.documento}` }}
                 </template>
             </Column>
             <Column field="parcela" header="Parcela">
@@ -324,13 +329,17 @@ onMounted(async () => {
             </Column>
             <Column field="id" header="Ações" class="text-right">
                 <template #body="slotProps">
-                    <Button v-if="slotProps.data.status_comiss.tipo == STATUS_LIQUIDADO" icon="fa-solid fa-check-double"
-                        severity="info" v-tooltip:top="'Clique para confirmar estes dados'" rounded outlined
-                        aria-label="Bookmark" @click="setStatusConfirm(slotProps.data)" />
-                    <Button v-else-if="slotProps.data.status_comiss.tipo == STATUS_CONFIRMADO"
-                        icon="fa-solid fa-check-double" severity="warning"
-                        v-tooltip:top="'Comissão já encaminhada para pagamento'" rounded outlined
-                        aria-label="Bookmark" />
+                    <Button
+                        v-if="slotProps.data.status_comiss.tipo == STATUS_LIQUIDADO"
+                        icon="fa-solid fa-check-double"
+                        severity="info"
+                        v-tooltip:top="'Clique para confirmar estes dados'"
+                        rounded
+                        outlined
+                        aria-label="Bookmark"
+                        @click="setStatusConfirm(slotProps.data)"
+                    />
+                    <Button v-else-if="slotProps.data.status_comiss.tipo == STATUS_CONFIRMADO" icon="fa-solid fa-check-double" severity="warning" v-tooltip:top="'Comissão já encaminhada para pagamento'" rounded outlined aria-label="Bookmark" />
                 </template>
             </Column>
             <!-- <template #groupheader="slotProps">
@@ -340,11 +349,8 @@ onMounted(async () => {
             </template> -->
             <template #groupfooter="slotProps">
                 <div class="flex justify-content-end font-bold w-full">
-                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{
-                        calculateCustomerTotal(slotProps.data.status_comiss.label) }} {{
-                            slotProps.data.status_comiss.label }}</div>
-                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
-                        formatCurrency(calculateCustomerTotalValue(slotProps.data.status_comiss.label).total) }}</div>
+                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{ calculateCustomerTotal(slotProps.data.status_comiss.label) }} {{ slotProps.data.status_comiss.label }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.status_comiss.label).total) }}</div>
                 </div>
             </template>
         </DataTable>

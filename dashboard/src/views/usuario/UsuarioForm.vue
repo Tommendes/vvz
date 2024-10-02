@@ -34,7 +34,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
     if (uProf.value.admin >= 1) dropdownMulticliente.value.push({ value: '2', label: 'Multi Cliente e Multi Schema' });
 });
 
@@ -60,19 +60,21 @@ const loadData = async () => {
     if (route.params.id) {
         loading.value = true;
         const url = `${urlBase.value}/${route.params.id}`;
-        await axios.get(url).then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
+        await axios
+            .get(url)
+            .then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
 
-                itemData.value = body;
-                if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
-            } else {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${uProf.value.schema_description}/usuarios` });
-            }
-            loading.value = false;
-        })
+                    itemData.value = body;
+                    if (itemData.value.cpf) itemData.value.cpf = masks.value.cpf_cnpj.masked(itemData.value.cpf);
+                } else {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${uProf.value.schema_description}/usuarios` });
+                }
+                loading.value = false;
+            })
             .catch((error) => {
                 defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
                 if (error.response && error.response.status == 401) router.push('/');
@@ -80,12 +82,29 @@ const loadData = async () => {
             });
     } else {
         itemData.value = {
-            "name": undefined,
-            "cpf": undefined, "email": undefined, "telefone": undefined, "id_empresa": uProf.value.id_empresa,
-            "gestor": "0", "multiCliente": "1", "cadastros": "1", "pipeline": "1",
-            "pipeline_params": "0", "pv": "1", "at": "1", "comercial": "1",
-            "prospeccoes": "1", "fiscal": "1", "financeiro": "1", "protocolo": "1",
-            "comissoes": "0", "agente_arq": "0", "agente_at": "0", "status": "10", "agente_v": "0", "chat_operator_access_token": null
+            name: undefined,
+            cpf: undefined,
+            email: undefined,
+            telefone: undefined,
+            id_empresa: uProf.value.id_empresa,
+            gestor: '0',
+            multiCliente: '1',
+            cadastros: '1',
+            pipeline: '1',
+            pipeline_params: '0',
+            pv: '1',
+            at: '1',
+            comercial: '1',
+            prospeccoes: '1',
+            fiscal: '1',
+            financeiro: '1',
+            protocolo: '1',
+            comissoes: '0',
+            agente_arq: '0',
+            agente_at: '0',
+            status: '10',
+            agente_v: '0',
+            chat_operator_access_token: null
         };
     }
 };
@@ -122,7 +141,7 @@ const getEmpresas = async () => {
     const url = `${baseApiUrl}/empresas/f-a/glf?fld=1&vl=1&literal=1&slct=id,razaosocial,cpf_cnpj_empresa`;
     await axios.get(url).then((res) => {
         const body = res.data.data;
-        body.forEach(element => {
+        body.forEach((element) => {
             dropdownEmpresas.value.push({ value: String(element.id), label: `${element.razaosocial} - ${masks.value.cpf_cnpj.masked(element.cpf_cnpj_empresa)}` });
         });
     });
@@ -151,7 +170,7 @@ const getAgentesV = async () => {
     const url = `${baseApiUrl}/comis-agentes/f-a/gag?agente_representante=2`;
     await axios.get(url).then((res) => {
         const body = res.data;
-        body.forEach(element => {
+        body.forEach((element) => {
             dropdownAgentesV.value.push({ value: String(element.id), label: `${element.nome || element.apelido}(${element.ordem})` });
         });
     });
@@ -162,7 +181,7 @@ const dropdownSN = ref([
 ]);
 const dropdownMulticliente = ref([
     { value: '0', label: 'Não' },
-    { value: '1', label: 'Sim' },
+    { value: '1', label: 'Sim' }
 ]);
 const dropdownAlcadas = ref([
     { value: '0', label: 'Negado' },
@@ -246,7 +265,7 @@ const reload = () => {
     emit('cancel');
 };
 // Carregar dados do formulário
-onBeforeMount(() => { });
+onBeforeMount(() => {});
 onMounted(async () => {
     getAgentesV();
     getEmpresas();
@@ -260,10 +279,13 @@ onMounted(async () => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[
-        { label: 'Usuários', to: `/${uProf.schema_description}/usuarios` },
-        { label: itemData.name + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
-    ]" />
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Usuários', to: `/${uProf.schema_description}/usuarios` },
+            { label: itemData.name + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -275,45 +297,42 @@ onMounted(async () => {
                         <div class="col-12 md:col-3">
                             <label for="name">Nome</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.name"
-                                id="name" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.name">{{ errorMessages.name
-                                }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.name" id="name" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.name">{{ errorMessages.name }}</small>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="cpf">CPF/CNPJ</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else-if="uProf.admin || uProf.gestor" autocomplete="no"
-                                :disabled="mode == 'view'" v-model="itemData.cpf" id="cpf" type="text"
-                                @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
-                            <p v-else class="p-inputtext p-component p-filled p-variant-filled"
-                                style="line-height: inherit">{{
-                                    itemData.cpf }}</p>
-                            <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf
-                                }}</small>
+                            <InputText
+                                v-else-if="uProf.admin || uProf.gestor"
+                                autocomplete="no"
+                                :disabled="mode == 'view'"
+                                v-model="itemData.cpf"
+                                id="cpf"
+                                type="text"
+                                @input="validateCPF()"
+                                v-maska
+                                data-maska="['##.###.###/####-##','###.###.###-##']"
+                            />
+                            <p v-else class="p-inputtext p-component p-filled p-variant-filled" style="line-height: inherit">{{ itemData.cpf }}</p>
+                            <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
                         </div>
                         <div v-if="!itemData.id && mode == 'new'" class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email"
-                                id="email" type="text" @input="validateEmail()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email
-                                }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                         </div>
                         <div v-else class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else class="p-inputtext p-component p-filled p-variant-filled"
-                                style="line-height: inherit">{{ itemData.email }}</p>
+                            <p v-else class="p-inputtext p-component p-filled p-variant-filled" style="line-height: inherit">{{ itemData.email }}</p>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="telefone">Telefone</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                                data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone"
-                                id="telefone" type="text" @input="validateTelefone()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{
-                                errorMessages.telefone }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone" id="telefone" type="text" @input="validateTelefone()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
                         </div>
                         <div class="grid" v-if="uProf.admin + uProf.gestor >= 1">
                             <div class="col-12 md:col-12">
@@ -322,114 +341,82 @@ onMounted(async () => {
                             <div class="col-12 md:col-2">
                                 <label for="gestor">Gestor</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="gestor" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.gestor" :options="dropdownSN"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="gestor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gestor" :options="dropdownSN" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="cadastros">Cadastros</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.cadastros" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="cadastros" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.cadastros" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="pipeline">Pipeline</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.pipeline" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="pipeline" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="pipeline_params">Parâmetros do pipeline</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="pipeline_params" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.pipeline_params" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="pipeline_params" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pipeline_params" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="pv">Pós-venda</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.pv" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="pv" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.pv" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="at">Assistência técnica</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="at" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.at" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.at" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="comercial">Comercial</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.comercial" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="comercial" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comercial" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="prospeccoes">Prospecções</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="prospeccoes" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.prospeccoes" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="prospeccoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.prospeccoes" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="fiscal">Fiscal</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.fiscal" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="fiscal" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.fiscal" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="financeiro">Financeira</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.financeiro" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="financeiro" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.financeiro" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="protocolo">Protocolo</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="protocolo" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.protocolo" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="protocolo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.protocolo" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="comissoes">Comissões</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="comissoes" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.comissoes" :options="dropdownAlcadas" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-6">
                                 <label for="agente_v">Usuário vendedor (Agente de vendas)</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.agente_v" :options="dropdownAgentesV"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="agente_v" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_v" :options="dropdownAgentesV" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="agente_arq">Usuário arquiteto</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.agente_arq" :options="dropdownSN"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="agente_arq" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_arq" :options="dropdownSN" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="agente_at">Usuário de AT</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.agente_at" :options="dropdownSN"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="agente_at" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_at" :options="dropdownSN" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-2">
                                 <label for="status">Status</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="status" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.status" :options="dropdownStatus"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="status" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.status" :options="dropdownStatus" placeholder="Selecione..." />
                             </div>
                             <!-- <div class="col-12 md:col-2">
                                 <label for="schema_description">Domínio de dados do usuário</label>
@@ -439,45 +426,33 @@ onMounted(async () => {
                             <div class="col-12 md:col-4">
                                 <label for="multiCliente">Token do usuário para o Azul Bot</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <InputText v-else autocomplete="no" :disabled="mode == 'view'"
-                                    v-model="itemData.chat_operator_access_token" id="chat_operator_access_token"
-                                    type="text" placeholder="Selecione..." />
+                                <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.chat_operator_access_token" id="chat_operator_access_token" type="text" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-12" v-if="dropdownEmpresas.length > 1">
-                                <label id="secaopermissaofinanceiro">Relacionado às consultas ao Financeiro e
-                                    Fiscal</label>
+                                <label id="secaopermissaofinanceiro">Relacionado às consultas ao Financeiro e Fiscal</label>
                             </div>
                             <div class="col-12 md:col-4" v-if="dropdownEmpresas.length > 1">
                                 <label for="multiCliente">Multi Cliente</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.multiCliente" :options="dropdownMulticliente"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="multiCliente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.multiCliente" :options="dropdownMulticliente" placeholder="Selecione..." />
                             </div>
                             <div class="col-12 md:col-8" v-if="dropdownEmpresas.length > 1">
                                 <label for="id_empresa">Empresa Atual do usuário</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <Dropdown v-else id="id_empresa" :disabled="mode == 'view'" optionLabel="label"
-                                    optionValue="value" v-model="itemData.id_empresa" :options="dropdownEmpresas"
-                                    placeholder="Selecione..." />
+                                <Dropdown v-else id="id_empresa" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_empresa" :options="dropdownEmpresas" placeholder="Selecione..." />
                             </div>
                         </div>
                         <!-- Botão trocar senha -->
                         <div v-if="itemData.id" id="divTS" class="col-12 md:col-2 m-0 font-normal">
-                            <Button id="btnTS" class="shadow-none text-left font-normal custom-font-weight"
-                                @click="changePassword" label="Trocar Senha" icon="fa-solid fa-external-link" raised
-                                :disabled="mode === 'view'" />
+                            <Button id="btnTS" class="shadow-none text-left font-normal custom-font-weight" @click="changePassword" label="Trocar Senha" icon="fa-solid fa-external-link" raised :disabled="mode === 'view'" />
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar"
-                            icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                            severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
                 <div class="col-12">

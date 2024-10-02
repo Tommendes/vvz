@@ -17,7 +17,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRoute, useRouter } from 'vue-router';
@@ -62,7 +62,7 @@ const scrollToTop = () => {
 const listaNomes = ref([
     { field: 'tecnico', label: 'Técnico', minWidth: '20rem' },
     { field: 'telefone_contato', label: 'Telefone de Contato', minWidth: '20rem' },
-    { field: 'email_contato', label: 'E-mail para Contato', minWidth: '20rem' },
+    { field: 'email_contato', label: 'E-mail para Contato', minWidth: '20rem' }
 ]);
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -122,15 +122,24 @@ onMounted(async () => {
     <Breadcrumb v-if="mode != 'new'" :items="[{ label: 'Técnicos Pós Vendas', to: route.fullPath }]" />
     <div class="card">
         <TecnicoForm :mode="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="mode == 'new'" />
-        <DataTable style="font-size: 1rem" :value="gridData" :paginator="true" :rows="10" dataKey="id" :rowHover="true"
-            v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
-            responsiveLayout="scroll" :globalFilterFields="['tecnico', 'telefone_contato', 'email_contato']">
+        <DataTable
+            style="font-size: 1rem"
+            :value="gridData"
+            :paginator="true"
+            :rows="10"
+            dataKey="id"
+            :rowHover="true"
+            v-model:filters="filters"
+            filterDisplay="menu"
+            :loading="loading"
+            :filters="filters"
+            responsiveLayout="scroll"
+            :globalFilterFields="['tecnico', 'telefone_contato', 'email_contato']"
+        >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
-                        @click="mode = 'new', scrollToTop()" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
-                        @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
@@ -138,19 +147,15 @@ onMounted(async () => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'"
-                    sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value"
-                            :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                            :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                            class="p-column-filter" placeholder="Pesquise..." />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
                         <span v-html="data[nome.field]"></span>
@@ -159,8 +164,7 @@ onMounted(async () => {
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="fa-solid fa-bars" rounded v-on:click="getItem(data)" @click="toggle"
-                        aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
+                    <Button type="button" icon="fa-solid fa-bars" rounded v-on:click="getItem(data)" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-button-outlined" />
                     <Menu ref="menu" id="overlay_menu" :model="itemsButtons" :popup="true" />
                 </template>
             </Column>

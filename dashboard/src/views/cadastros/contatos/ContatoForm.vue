@@ -14,7 +14,7 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 // Campos de formulário
 const itemData = ref({});
@@ -172,10 +172,8 @@ onMounted(async () => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                     <div class="p-inputgroup flex-1" v-else>
-                        <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
-                                class="fa-solid fa-id-card"></i></div>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome"
-                            type="text" @keydown.enter.prevent :placeholder="`Digite o nome...`" />
+                        <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-id-card"></i></div>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome" type="text" @keydown.enter.prevent :placeholder="`Digite o nome...`" />
                     </div>
                 </div>
             </div>
@@ -183,11 +181,8 @@ onMounted(async () => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                     <div class="p-inputgroup flex-0" v-else>
-                        <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
-                                class="fa-solid fa-arrow-right-to-city"></i></div>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.departamento"
-                            id="departamento" type="text" @keydown.enter.prevent
-                            :placeholder="`Digite o departamento...`" />
+                        <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-arrow-right-to-city"></i></div>
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.departamento" id="departamento" type="text" @keydown.enter.prevent :placeholder="`Digite o departamento...`" />
                     </div>
                 </div>
             </div>
@@ -195,12 +190,20 @@ onMounted(async () => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                     <div class="p-inputgroup flex-0" v-else>
-                        <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
-                                class="fa-solid fa-mobile-screen-button"></i></div>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.celular" id="celular"
-                            type="text" @blur="validateTelefone('celular')" v-maska data-maska="(##) #####-####"
-                            @keydown.enter.prevent :placeholder="`Digite o celular...`"
-                            :invalid="errorMessages.celular" />
+                        <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                        <InputText
+                            autocomplete="no"
+                            :disabled="mode == 'view'"
+                            v-model="itemData.celular"
+                            id="celular"
+                            type="text"
+                            @blur="validateTelefone('celular')"
+                            v-maska
+                            data-maska="(##) #####-####"
+                            @keydown.enter.prevent
+                            :placeholder="`Digite o celular...`"
+                            :invalid="errorMessages.celular"
+                        />
                     </div>
                 </div>
             </div>
@@ -208,11 +211,20 @@ onMounted(async () => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                     <div class="p-inputgroup flex-0" v-else>
-                        <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
-                                class="fa-solid fa-tty"></i></div>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.fixo" id="fixo"
-                            type="text" @blur="validateTelefone('fixo')" v-maska data-maska="(##) ####-####"
-                            @keydown.enter.prevent :placeholder="`Digite o fixo...`" :invalid="errorMessages.fixo" />
+                        <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-tty"></i></div>
+                        <InputText
+                            autocomplete="no"
+                            :disabled="mode == 'view'"
+                            v-model="itemData.fixo"
+                            id="fixo"
+                            type="text"
+                            @blur="validateTelefone('fixo')"
+                            v-maska
+                            data-maska="(##) ####-####"
+                            @keydown.enter.prevent
+                            :placeholder="`Digite o fixo...`"
+                            :invalid="errorMessages.fixo"
+                        />
                     </div>
                 </div>
             </div>
@@ -220,30 +232,28 @@ onMounted(async () => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                     <div class="p-inputgroup flex-0" v-else>
-                        <div id="email" :class="linkClass" data-pc-name="inputgroupaddon"
-                            v-tooltip.top="itemData.email ? 'Clique para seguir' : ''" data-pc-section="root"
-                            @mousemove="getLinkClass('move')" @mouseleave="getLinkClass('leave')" @click="toEmail">
+                        <div
+                            id="email"
+                            :class="linkClass"
+                            data-pc-name="inputgroupaddon"
+                            v-tooltip.top="itemData.email ? 'Clique para seguir' : ''"
+                            data-pc-section="root"
+                            @mousemove="getLinkClass('move')"
+                            @mouseleave="getLinkClass('leave')"
+                            @click="toEmail"
+                        >
                             <i class="fa-solid fa-at"></i>
                         </div>
-                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" type="text"
-                            id="email" @blur="validateEmail()" @keydown.enter.prevent :placeholder="`Digite o email...`"
-                            :invalid="errorMessages.email" />
+                        <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" type="text" id="email" @blur="validateEmail()" @keydown.enter.prevent :placeholder="`Digite o email...`" :invalid="errorMessages.email" />
                     </div>
                 </div>
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <Button type="submit" :disabled="!(uProf.cadastros >= 2)" v-if="['edit', 'new'].includes(mode)"
-                        v-tooltip.top="'Salvar contato'" icon="fa-solid fa-floppy-disk" severity="success" text
-                        raised />
-                    <Button type="button" :disabled="!(uProf.cadastros >= 3)" v-if="mode == 'view'"
-                        v-tooltip.top="'Editar contato'" icon="fa-regular fa-pen-to-square" text raised
-                        @click="mode = 'edit'" />
-                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'"
-                        icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
-                    <Button type="button" :disabled="!(uProf.cadastros >= 4)" v-if="['view'].includes(mode)"
-                        v-tooltip.top="'Excluir contato'" icon="fa-solid fa-trash" severity="danger" text raised
-                        @click="deleteItem" />
+                    <Button type="submit" :disabled="!(uProf.cadastros >= 2)" v-if="['edit', 'new'].includes(mode)" v-tooltip.top="'Salvar contato'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" :disabled="!(uProf.cadastros >= 3)" v-if="mode == 'view'" v-tooltip.top="'Editar contato'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
+                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
+                    <Button type="button" :disabled="!(uProf.cadastros >= 4)" v-if="['view'].includes(mode)" v-tooltip.top="'Excluir contato'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
                 </div>
             </div>
         </div>

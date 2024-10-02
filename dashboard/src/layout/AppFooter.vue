@@ -14,7 +14,7 @@ onBeforeMount(async () => {
 });
 
 // Computed property para o Tempo restante da sessão
-const timeRemainingFormatted = ref("00:00");
+const timeRemainingFormatted = ref('00:00');
 
 // Função para calcular o tempo restante com base na última atividade
 const updateTimeRemaining = () => {
@@ -35,7 +35,7 @@ const updateTimeRemaining = () => {
 onMounted(() => {
     updateTimeRemaining(); // Atualiza imediatamente ao montar
     const interval = setInterval(updateTimeRemaining, 1000); // Atualiza a cada segundo
-    
+
     // Limpa o intervalo quando o componente for desmontado
     onUnmounted(() => {
         clearInterval(interval);

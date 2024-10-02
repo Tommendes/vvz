@@ -2,7 +2,7 @@ import { supportEmail, supportMsgs } from '@/env';
 import { ref } from 'vue';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
-const userData = JSON.parse(json)
+const userData = JSON.parse(json);
 
 export const guide = `
     <p>Nesta página você pode criar e editar registros de pipeline. Ela fornece acesso a várias funcionalidades para gerenciar esses registros. O formulário é composto por diferentes campos e recursos para auxiliar na entrada de dados, validação e interação com a API.</p>

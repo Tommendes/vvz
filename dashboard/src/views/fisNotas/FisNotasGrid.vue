@@ -25,7 +25,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRouter, useRoute } from 'vue-router';
@@ -127,7 +127,7 @@ const loadLazyData = async () => {
             const quant = totalRecords.value;
             // TODO: Remover todos os valores eu rowsPerPageOptions que forem maiores que o total de registros e ao fim adicionar rowsPerPageOptions.value.push(quant);
             rowsPerPageOptions.value = rowsPerPageOptions.value.filter((item) => item <= totalRecords.value);
-            // if (quant > 1) 
+            // if (quant > 1)
             rowsPerPageOptions.value.push(quant);
             // TODO: Remova todos os valores duplicados de rowsPerPageOptions
             rowsPerPageOptions.value = [...new Set(rowsPerPageOptions.value)];
@@ -139,7 +139,7 @@ const loadLazyData = async () => {
             loading.value = false;
         })
         .catch((error) => {
-            const erro = error.response.data || error.response || 'Erro ao carregar dados!'
+            const erro = error.response.data || error.response || 'Erro ao carregar dados!';
             defaultWarn(erro);
             if (error.response && error.response.status == 401) router.push('/');
         });
@@ -206,45 +206,49 @@ let dataToExcelExport = [
         sheet: 'Notas Fiscais',
         columns: [
             {
-                label: "Movimento E/S", value: (row) => {
+                label: 'Movimento E/S',
+                value: (row) => {
                     let answer = row.data_e_s;
                     switch (row.data_e_s) {
-                        case '0': answer = 'Entrada';
+                        case '0':
+                            answer = 'Entrada';
                             break;
-                        case '1': answer = 'Saída';
+                        case '1':
+                            answer = 'Saída';
                             break;
-                        default: answer = 'Entrada';
+                        default:
+                            answer = 'Entrada';
                             break;
                     }
                     return answer;
                 }
             },
-            { label: "Número", value: (row) => row.numero },
-            { label: "Série", value: (row) => row.serie },
-            { label: "Chave", value: (row) => row.chave },
-            { label: "Emissão em", value: (row) => moment(row.data_emissao).format('DD/MM/YYYY') },
-            { label: "Fornecedor", value: (row) => row.fornecedor },
-            { label: "Doc Fornecedor", value: (row) => row.cpf_cnpj_fornecedor },
-            { label: "Empresa", value: (row) => row.empresa },
-            { label: "Doc Empresa", value: (row) => row.cpf_cnpj_empresa },
-            { label: "Descricao", value: (row) => row.descricao },
-            { label: "Valor Total", value: (row) => Number(row.valor_total), format: 'R$ #,##0.00' },
-            { label: "Valor Desconto", value: (row) => Number(row.valor_desconto), format: 'R$ #,##0.00' },
-            { label: "Valor Liquido", value: (row) => Number(row.valor_liquido), format: 'R$ #,##0.00' },
-            { label: "Valor Icms", value: (row) => Number(row.valor_icms), format: 'R$ #,##0.00' },
-            { label: "Valor Ipi", value: (row) => Number(row.valor_ipi), format: 'R$ #,##0.00' },
-            { label: "Valor Pis", value: (row) => Number(row.valor_pis), format: 'R$ #,##0.00' },
-            { label: "Valor Cofins", value: (row) => Number(row.valor_cofins), format: 'R$ #,##0.00' },
-            { label: "Valor Iss", value: (row) => Number(row.valor_iss), format: 'R$ #,##0.00' },
-            { label: "Valor IR", value: (row) => Number(row.valor_ir), format: 'R$ #,##0.00' },
-            { label: "Valor Csll", value: (row) => Number(row.valor_csll), format: 'R$ #,##0.00' },
-            { label: "Valor Inss", value: (row) => Number(row.valor_inss), format: 'R$ #,##0.00' },
-            { label: "Valor Outros", value: (row) => Number(row.valor_outros), format: 'R$ #,##0.00' },
-            { label: "Valor Servicos", value: (row) => Number(row.valor_servicos), format: 'R$ #,##0.00' },
-            { label: "Valor Produtos", value: (row) => Number(row.valor_produtos), format: 'R$ #,##0.00' },
-            { label: "Valor Frete", value: (row) => Number(row.valor_frete), format: 'R$ #,##0.00' },
-            { label: "Valor Seguro", value: (row) => Number(row.valor_seguro), format: 'R$ #,##0.00' },
-            { label: "Valor Despesas", value: (row) => Number(row.valor_despesas), format: 'R$ #,##0.00' }
+            { label: 'Número', value: (row) => row.numero },
+            { label: 'Série', value: (row) => row.serie },
+            { label: 'Chave', value: (row) => row.chave },
+            { label: 'Emissão em', value: (row) => moment(row.data_emissao).format('DD/MM/YYYY') },
+            { label: 'Fornecedor', value: (row) => row.fornecedor },
+            { label: 'Doc Fornecedor', value: (row) => row.cpf_cnpj_fornecedor },
+            { label: 'Empresa', value: (row) => row.empresa },
+            { label: 'Doc Empresa', value: (row) => row.cpf_cnpj_empresa },
+            { label: 'Descricao', value: (row) => row.descricao },
+            { label: 'Valor Total', value: (row) => Number(row.valor_total), format: 'R$ #,##0.00' },
+            { label: 'Valor Desconto', value: (row) => Number(row.valor_desconto), format: 'R$ #,##0.00' },
+            { label: 'Valor Liquido', value: (row) => Number(row.valor_liquido), format: 'R$ #,##0.00' },
+            { label: 'Valor Icms', value: (row) => Number(row.valor_icms), format: 'R$ #,##0.00' },
+            { label: 'Valor Ipi', value: (row) => Number(row.valor_ipi), format: 'R$ #,##0.00' },
+            { label: 'Valor Pis', value: (row) => Number(row.valor_pis), format: 'R$ #,##0.00' },
+            { label: 'Valor Cofins', value: (row) => Number(row.valor_cofins), format: 'R$ #,##0.00' },
+            { label: 'Valor Iss', value: (row) => Number(row.valor_iss), format: 'R$ #,##0.00' },
+            { label: 'Valor IR', value: (row) => Number(row.valor_ir), format: 'R$ #,##0.00' },
+            { label: 'Valor Csll', value: (row) => Number(row.valor_csll), format: 'R$ #,##0.00' },
+            { label: 'Valor Inss', value: (row) => Number(row.valor_inss), format: 'R$ #,##0.00' },
+            { label: 'Valor Outros', value: (row) => Number(row.valor_outros), format: 'R$ #,##0.00' },
+            { label: 'Valor Servicos', value: (row) => Number(row.valor_servicos), format: 'R$ #,##0.00' },
+            { label: 'Valor Produtos', value: (row) => Number(row.valor_produtos), format: 'R$ #,##0.00' },
+            { label: 'Valor Frete', value: (row) => Number(row.valor_frete), format: 'R$ #,##0.00' },
+            { label: 'Valor Seguro', value: (row) => Number(row.valor_seguro), format: 'R$ #,##0.00' },
+            { label: 'Valor Despesas', value: (row) => Number(row.valor_despesas), format: 'R$ #,##0.00' }
         ],
         content: []
     }
@@ -363,7 +367,10 @@ const newDocument = () => {
     // });
     showMessage({
         label: 'Nova Nota Fiscal',
-        message: ["Pressione ESC para fechar", `<p>Para registrar uma nota fiscal, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`],
+        message: [
+            'Pressione ESC para fechar',
+            `<p>Para registrar uma nota fiscal, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`
+        ],
         buttons: messagesButtoms.value
     });
 };
@@ -380,34 +387,41 @@ const newDocument = () => {
 
         <div class="col-12">
             <div class="card">
-                <DataTable ref="dt" :value="gridData" lazy paginator :rows="rowsPerPage" dataKey="id" :rowHover="true"
-                    v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
-                    responsiveLayout="scroll" :totalRecords="totalRecords"
+                <DataTable
+                    ref="dt"
+                    :value="gridData"
+                    lazy
+                    paginator
+                    :rows="rowsPerPage"
+                    dataKey="id"
+                    :rowHover="true"
+                    v-model:filters="filters"
+                    filterDisplay="row"
+                    :loading="loading"
+                    :filters="filters"
+                    responsiveLayout="scroll"
+                    :totalRecords="totalRecords"
                     :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200]"
-                    @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
+                    @page="onPage($event)"
+                    @sort="onSort($event)"
+                    @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
-                    :filter-options="customFilterOptions">
+                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
+                    scrollable
+                    :filter-options="customFilterOptions"
+                >
                     <template #header>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify"
-                                :key="qualify" :value="qualify.label"> </Tag>
-                            <Tag class="tagRes"
-                                :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
-                            </Tag>
+                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
+                            <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
-                                gridData.length }}
-                                resultados</span>
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} resultados</span>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"
-                                @click="exportXls()" />
-                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
-                                @click="reload()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Lançamento" outlined
-                                @click="newDocument()" />
+                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" @click="exportXls()" />
+                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined @click="reload()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Lançamento" outlined @click="newDocument()" />
                         </div>
                     </template>
                     <template #empty>
@@ -417,45 +431,35 @@ const newDocument = () => {
                         <h2>Carregando dados. Por favor aguarde...</h2>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">
-                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
-                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem"
-                            sortable :sortField="nome.field" :class="nome.class">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"
-                                    :severity="getSeverity(data[nome.field], nome.type)" />
-                                <span v-else-if="data[nome.field]"
-                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]" :severity="getSeverity(data[nome.field], nome.type)" />
+                                <span
+                                    v-else-if="data[nome.field]"
+                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"
+                                ></span>
                                 <span v-else v-html="''"></span>
                             </template>
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value"
-                                    v-model="filterModel.value" :options="nome.list" @change="filterCallback()" filter
-                                    showClear placeholder="Pesquise..." />
+                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" filter showClear placeholder="Pesquise..." />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                                    showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
-                                    @update:modelValue="filterCallback()" />
+                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @update:modelValue="filterCallback()" />
                             </template>
                             <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                                    class="p-column-filter" placeholder="Pesquise..." />
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                             </template>
                             <template #filterclear="{ filterCallback }">
-                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()"
-                                    class="p-button-secondary"></Button>
+                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()" class="p-button-secondary"></Button>
                             </template>
                             <template #filterapply="{ filterCallback }">
-                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()"
-                                    class="p-button-success"></Button>
+                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()" class="p-button-success"></Button>
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center"
-                        bodyStyle="text-align: center; overflow: visible">
+                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
-                                @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                         </template>
                     </Column>
                 </DataTable>

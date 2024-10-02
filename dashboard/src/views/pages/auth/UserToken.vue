@@ -56,18 +56,21 @@ const getTokenTime = async () => {
             .then((body) => {
                 const gtt = body.data.gtt;
                 tokenTimeLeft.value = gtt;
-                setInterval(() => {
-                    if (tokenTimeLeft.value > 0) {
-                        tokenTimeLeft.value--;
-                        tokenTimeMinutesLeft.value = Math.floor(tokenTimeLeft.value / 60) + 1;
-                        if (tokenTimeMinutesLeft.value > 1) {
-                            tokenTimeMessage.value = `Dentro de ${tokenTimeMinutesLeft.value} minutos, informe o token enviado por e-mail`;
-                            tokenTimeLeftMessage.value = `Aguarde ${tokenTimeMinutesLeft.value} minutos para solicitar novo token`;
-                        } else {
-                            tokenTimeMessage.value = `Dentro de ${tokenTimeLeft.value + 1} segundos, informe o token enviado por e-mail`;
-                        }
-                    } else tokenTimeLeftMessage.value = `Seu token venceu.<br>Clique abaixo para solicitar novo token`;
-                }, Math.random() * 1000 + 250);
+                setInterval(
+                    () => {
+                        if (tokenTimeLeft.value > 0) {
+                            tokenTimeLeft.value--;
+                            tokenTimeMinutesLeft.value = Math.floor(tokenTimeLeft.value / 60) + 1;
+                            if (tokenTimeMinutesLeft.value > 1) {
+                                tokenTimeMessage.value = `Dentro de ${tokenTimeMinutesLeft.value} minutos, informe o token enviado por e-mail`;
+                                tokenTimeLeftMessage.value = `Aguarde ${tokenTimeMinutesLeft.value} minutos para solicitar novo token`;
+                            } else {
+                                tokenTimeMessage.value = `Dentro de ${tokenTimeLeft.value + 1} segundos, informe o token enviado por e-mail`;
+                            }
+                        } else tokenTimeLeftMessage.value = `Seu token venceu.<br>Clique abaixo para solicitar novo token`;
+                    },
+                    Math.random() * 1000 + 250
+                );
             })
             .catch((error) => {
                 const data = error.response.data;

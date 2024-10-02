@@ -15,7 +15,7 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { Mask } from 'maska';
@@ -134,18 +134,34 @@ const getSeverity = (value) => {
 <template>
     <Breadcrumb :items="breadCrumbItems" />
     <div class="card">
-        <AgenteForm :mode="mode" :itemDataRoot="itemData" @changed="
-            mode = 'grid';
-        loadData();
-        " @cancel="reload" v-if="['new', 'view'].includes(mode)" />
-        <DataTable style="font-size: 1rem" :value="gridData" :paginator="true" :rows="10" dataKey="id" :rowHover="true"
-            v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
-            responsiveLayout="scroll" :globalFilterFields="['name', 'apelido', 'ordem']">
+        <AgenteForm
+            :mode="mode"
+            :itemDataRoot="itemData"
+            @changed="
+                mode = 'grid';
+                loadData();
+            "
+            @cancel="reload"
+            v-if="['new', 'view'].includes(mode)"
+        />
+        <DataTable
+            style="font-size: 1rem"
+            :value="gridData"
+            :paginator="true"
+            :rows="10"
+            dataKey="id"
+            :rowHover="true"
+            v-model:filters="filters"
+            filterDisplay="menu"
+            :loading="loading"
+            :filters="filters"
+            responsiveLayout="scroll"
+            :globalFilterFields="['name', 'apelido', 'ordem']"
+        >
             <template #header>
                 <div class="flex justify-content-end gap-3">
                     <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newAgent" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
-                        @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
@@ -153,31 +169,25 @@ const getSeverity = (value) => {
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'"
-                    sortable :dataType="nome.type">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value"
-                            :options="nome.list" @change="filterCallback()" />
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                            :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                            class="p-column-filter" placeholder="Pesquise..." />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                     </template>
                     <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]"
-                            :severity="getSeverity(data[nome.field])" />
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                         <span v-else v-html="data[nome.field]"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" icon="fa-solid fa-bars" rounded @click="getItem(data)"
-                        class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" icon="fa-solid fa-bars" rounded @click="getItem(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

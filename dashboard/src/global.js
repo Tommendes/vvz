@@ -1,5 +1,5 @@
 import { Mask } from 'maska';
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from 'jwt-decode';
 export const userKey = '__vivazul_user';
 export const glKey = '__gl_user';
 export const appName = 'Vivazul';
@@ -146,7 +146,7 @@ export function renderizarHTML(conteudo, options) {
 // Remove as tags HTML
 export function removeHtmlTags(str) {
     if (!str) return str;
-    
+
     return str
         .toString()
         .replace(/<br\s*\/?>/gi, '\r\n') // Substitui <br> por \r\n

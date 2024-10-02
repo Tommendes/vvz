@@ -55,7 +55,6 @@ document.addEventListener('mousemove', resetTimer);
 document.addEventListener('click', resetTimer);
 document.addEventListener('keydown', resetTimer);
 
-
 const display = ref(false);
 const open = () => {
     display.value = true;
@@ -69,13 +68,11 @@ const close = () => {
     <div class="container">
         <router-view />
         <Toast position="bottom-right" v-if="!isTokenValid" />
-        <Dialog id="mdlGeoLoc" header="Segurança" v-model:visible="display" :breakpoints="{ '960px': '75vw' }"
-            :style="{ width: '30vw' }" :modal="true">
+        <Dialog id="mdlGeoLoc" header="Segurança" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '30vw' }" :modal="true">
             <p class="line-height-3 m-0">
                 <strong>Atenção!</strong>
                 <br />
-                Nós cuidamos de sua segurança. Por isso, desse ponto em diante, algumas funcionalidades dependem de sua
-                localização. Não se preocupe, não compartilharemos seus dados!
+                Nós cuidamos de sua segurança. Por isso, desse ponto em diante, algumas funcionalidades dependem de sua localização. Não se preocupe, não compartilharemos seus dados!
                 <br />
                 Se deseja acesso total, permita o acesso à sua localização.
             </p>

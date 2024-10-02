@@ -13,7 +13,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRoute, useRouter } from 'vue-router';
@@ -109,7 +109,7 @@ const saveData = async () => {
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
                 // Caso a operação seja resultado de uma duplicação de item em uma composição diferente da original
-                if (props.modeParent == 'clone' && props.idComposicao != itemData.value.id_com_prop_compos) emit('cancel')
+                if (props.modeParent == 'clone' && props.idComposicao != itemData.value.id_com_prop_compos) emit('cancel');
                 else {
                     itemData.value.id = body.id;
 
@@ -303,23 +303,32 @@ onMounted(async () => {
                                 <div class="switch-label" v-if="itemData.item">Número do item: {{ itemData.item }}</div>
                                 <div class="switch-label">
                                     Item ativo
-                                    <InputSwitch id="item_ativo" :disabled="mode == 'view'"
-                                        v-model="itemData.item_ativo" />
+                                    <InputSwitch id="item_ativo" :disabled="mode == 'view'" v-model="itemData.item_ativo" />
                                 </div>
                                 <div class="switch-label">
                                     Compõe valor
-                                    <InputSwitch id="compoe_valor" :disabled="mode == 'view'"
-                                        v-model="itemData.compoe_valor" />
+                                    <InputSwitch id="compoe_valor" :disabled="mode == 'view'" v-model="itemData.compoe_valor" />
                                 </div>
                             </div>
                         </div>
                         <div class="col-12">
                             <label for="id_com_prop_compos">Composição</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else v-model="itemData.id_com_prop_compos" :options="dropdownComposicoes"
-                                id="id_com_prop_compos" showClear filter :disabled="mode == 'view'"
-                                placeholder="Selecione a composição" optionLabel="label" optionValue="value"
-                                optionGroupLabel="label" optionGroupChildren="items" :loading="loading">
+                            <Dropdown
+                                v-else
+                                v-model="itemData.id_com_prop_compos"
+                                :options="dropdownComposicoes"
+                                id="id_com_prop_compos"
+                                showClear
+                                filter
+                                :disabled="mode == 'view'"
+                                placeholder="Selecione a composição"
+                                optionLabel="label"
+                                optionValue="value"
+                                optionGroupLabel="label"
+                                optionGroupChildren="items"
+                                :loading="loading"
+                            >
                                 <template #optiongroup="slotProps">
                                     <div class="flex align-items-center">
                                         <i v-if="slotProps.option.comp_ativa == 10" class="fa-solid fa-toggle-on"> </i>
@@ -332,14 +341,20 @@ onMounted(async () => {
                         <div class="col-12 md:col-10">
                             <label for="id_com_produtos">Produto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editProduto || (mode == 'new' && props.modeParent != 'clone')"
-                                v-model="selectedProduto" :dropdown="false" optionLabel="name"
-                                :suggestions="filteredProdutos" @complete="searchProdutos" forceSelection
-                                @keydown.enter.prevent panelClass="p-autocomplete-panel-red" />
+                            <AutoComplete
+                                v-else-if="editProduto || (mode == 'new' && props.modeParent != 'clone')"
+                                v-model="selectedProduto"
+                                :dropdown="false"
+                                optionLabel="name"
+                                :suggestions="filteredProdutos"
+                                @complete="searchProdutos"
+                                forceSelection
+                                @keydown.enter.prevent
+                                panelClass="p-autocomplete-panel-red"
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeProduto" />
-                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditProduto()"
-                                    :disabled="mode == 'view'" />
+                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditProduto()" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-2">
@@ -347,24 +362,17 @@ onMounted(async () => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <!-- <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade" id="quantidade" type="text" /> -->
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                <span class="p-inputgroup-addon"
-                                    @click="['new', 'edit'].includes(mode) ? itemData.quantidade++ : true">+</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade"
-                                    id="quantidade" v-maska data-maska="0,99"
-                                    data-maska-tokens="0:\d:multiple|9:\d:optional" />
-                                <span class="p-inputgroup-addon"
-                                    @click="['new', 'edit'].includes(mode) && itemData.quantidade > 0 ? itemData.quantidade-- : true">-</span>
+                                <span class="p-inputgroup-addon" @click="['new', 'edit'].includes(mode) ? itemData.quantidade++ : true">+</span>
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.quantidade" id="quantidade" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                <span class="p-inputgroup-addon" @click="['new', 'edit'].includes(mode) && itemData.quantidade > 0 ? itemData.quantidade-- : true">-</span>
                             </div>
                         </div>
                         <div class="col-12 md:col-4">
-                            <label for="valor_unitario">Valor Unitário (Valor de venda do registro: R$ {{
-                                valorVendaProduto }})</label>
+                            <label for="valor_unitario">Valor Unitário (Valor de venda do registro: R$ {{ valorVendaProduto }})</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'"
-                                    v-model="itemData.valor_unitario" id="valor_unitario" type="text" v-maska
-                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_unitario" id="valor_unitario" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                             </div>
                         </div>
                         <div class="col-12 md:col-4">
@@ -372,36 +380,27 @@ onMounted(async () => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="mode == 'view'"
-                                    v-model="itemData.desconto_total" id="desconto_total" type="text" v-maska
-                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                             </div>
                         </div>
                         <div class="col-12 md:col-4">
                             <label for="desconto_ativo">Desconto Ativo</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" placeholder="Selecione ..."
-                                optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo"
-                                :options="dropdownDescAtivo" />
+                            <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" placeholder="Selecione ..." optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescAtivo" />
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="descricao">Descrição</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.descricao"
-                                id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar"
-                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="button" v-if="mode == 'view'" label="Fechar" icon="fa-solid fa-xmark"
-                            severity="secondary" text raised @click="reload()" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                            severity="danger" text raised @click="reload()" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="button" v-if="mode == 'view'" label="Fechar" icon="fa-solid fa-xmark" severity="secondary" text raised @click="reload()" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload()" />
                     </div>
                 </div>
                 <div class="col-12">

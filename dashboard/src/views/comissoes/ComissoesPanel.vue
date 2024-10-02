@@ -12,7 +12,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useConfirm } from 'primevue/useconfirm';
@@ -75,8 +75,8 @@ const printPosicaoMensal = async () => {
 const confirmClose = ref(false);
 const confirmBody = ref({});
 const released = ref({
-    "endDate": "",
-    "quant": 0
+    endDate: '',
+    quant: 0
 });
 const progressBar = ref(0);
 const bodyRelease = {
@@ -84,59 +84,56 @@ const bodyRelease = {
        Se for passada a data então que esteja no formato YYYY-MM-DD. Se não for passada, será considerada a data de hoje.
        Será executado o encerramento até o período anterior ao dOper. O período finaliza um dia antes de comis_corte em local_params.
     */
-    // "dOper": "2024-06-05" 
-}
+    // "dOper": "2024-06-05"
+};
 const setStatusClosed = () => {
     let url = `${baseApiUrl}/comis-status/f-a/ssc`;
-    axios.post(url, bodyRelease)
+    axios.post(url, bodyRelease);
     // A cada segundo, verificar a quantidade que ainda não foi fechada e calcular o percentual para a barra de progresso alterando assim o valor em progressBar.value
     setInterval(() => {
         let url = `${baseApiUrl}/comis-status/f-a/gsr`;
-        axios.post(url, bodyRelease)
-            .then((res) => {
-                const body = res.data;
-                const quantInicial = released.value.quant;
-                progressBar.value = Math.round(((quantInicial - body.quant) / quantInicial) * 100);
-                confirmBody.value = {
-                    header: 'Encerrar Liquidações',
-                    message1: `ENCERRAMENTO iniciado. Por favor aguarde`,
-                    message2: '<strong>Não feche esta aba e não atualize a página</strong>',
-                    message3: 'Esta mensagem se fechará automaticamente ao finalizar o processo.'
-                } 
-                if (body.quant == 0) {
-                    defaultSuccess('Liquidações encerradas com sucesso!');
-                    confirmClose.value = false;
-                    window.location.reload();
-                }
-            });
+        axios.post(url, bodyRelease).then((res) => {
+            const body = res.data;
+            const quantInicial = released.value.quant;
+            progressBar.value = Math.round(((quantInicial - body.quant) / quantInicial) * 100);
+            confirmBody.value = {
+                header: 'Encerrar Liquidações',
+                message1: `ENCERRAMENTO iniciado. Por favor aguarde`,
+                message2: '<strong>Não feche esta aba e não atualize a página</strong>',
+                message3: 'Esta mensagem se fechará automaticamente ao finalizar o processo.'
+            };
+            if (body.quant == 0) {
+                defaultSuccess('Liquidações encerradas com sucesso!');
+                confirmClose.value = false;
+                window.location.reload();
+            }
+        });
     }, 1000);
-
 };
 const getStatusReleased = async () => {
     let url = `${baseApiUrl}/comis-status/f-a/gsr`;
-    axios.post(url, bodyRelease)
-        .then((res) => {
-            const body = res.data;
-            released.value = body;
-            confirmClose.value = true;
-            confirmBody.value = {
-                header: 'Encerrar Liquidações',
-                message0: `Não há Liquidações para serem encerradas`,
-                message1: `Confirma o ENCERRAMENTO DEFINITIVO de ${body.quant} liquidações até a data de ${moment(body.endDate).format('DD/MM/YYYY')}?`,
-                message2: '<strong>Esta operação não poderá ser desfeita e as liquidações não poderão mais ser editadas</strong>',
-                accept: async () => setStatusClosed(),
-                reject: () => confirmClose.value = false
-            } 
-        })
+    axios.post(url, bodyRelease).then((res) => {
+        const body = res.data;
+        released.value = body;
+        confirmClose.value = true;
+        confirmBody.value = {
+            header: 'Encerrar Liquidações',
+            message0: `Não há Liquidações para serem encerradas`,
+            message1: `Confirma o ENCERRAMENTO DEFINITIVO de ${body.quant} liquidações até a data de ${moment(body.endDate).format('DD/MM/YYYY')}?`,
+            message2: '<strong>Esta operação não poderá ser desfeita e as liquidações não poderão mais ser editadas</strong>',
+            accept: async () => setStatusClosed(),
+            reject: () => (confirmClose.value = false)
+        };
+    });
 };
 </script>
 
 <template>
     <Dialog v-model:visible="confirmClose" modal :header="confirmBody.header" :style="{ width: '50rem' }">
-        <p v-if="!released.quant" class="font-semibold text-2xl text-center" v-html="confirmBody.message0"/>
-        <p v-if="released.quant" class="font-semibold text-2xl text-center" v-html="confirmBody.message1"/>
-        <p v-if="released.quant" class="font-semibold text-center" v-html="confirmBody.message2"/>
-        <p class="font-semibold text-center" v-if="confirmBody.message3" v-html="confirmBody.message3"/>
+        <p v-if="!released.quant" class="font-semibold text-2xl text-center" v-html="confirmBody.message0" />
+        <p v-if="released.quant" class="font-semibold text-2xl text-center" v-html="confirmBody.message1" />
+        <p v-if="released.quant" class="font-semibold text-center" v-html="confirmBody.message2" />
+        <p class="font-semibold text-center" v-if="confirmBody.message3" v-html="confirmBody.message3" />
         <div class="card" v-if="progressBar">
             <ProgressBar :value="progressBar" />
         </div>
@@ -160,18 +157,12 @@ const getStatusReleased = async () => {
                                 <span class="font-bold text-lg">Ações</span>
                             </div>
                         </template>
-                        <Button label="Imprimir Diário - Representações" outlined severity="success" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printDiario(0)" />
-                        <Button label="Imprimir Diário - Representadas" outlined severity="warning" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printDiario(1)" />
-                        <Button label="Imprimir Diário - Agentes" outlined severity="Info" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printDiario(2)" />
-                        <Button label="Imprimir Diário - Terceiros" outlined severity="secondary" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printDiario(3)" />
-                        <Button label="Imprimir Posição Mensal" outlined severity="contrast" class="w-full m-2"
-                            type="button" icon="fa-solid fa-print" @click="printPosicaoMensal()" />
-                        <Button label="Encerrar Liquidações" outlined severity="danger" class="w-full m-2" type="button"
-                            icon="fa-regular fa-calendar-check" @click="getStatusReleased()" />
+                        <Button label="Imprimir Diário - Representações" outlined severity="success" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printDiario(0)" />
+                        <Button label="Imprimir Diário - Representadas" outlined severity="warning" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printDiario(1)" />
+                        <Button label="Imprimir Diário - Agentes" outlined severity="Info" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printDiario(2)" />
+                        <Button label="Imprimir Diário - Terceiros" outlined severity="secondary" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printDiario(3)" />
+                        <Button label="Imprimir Posição Mensal" outlined severity="contrast" class="w-full m-2" type="button" icon="fa-solid fa-print" @click="printPosicaoMensal()" />
+                        <Button label="Encerrar Liquidações" outlined severity="danger" class="w-full m-2" type="button" icon="fa-regular fa-calendar-check" @click="getStatusReleased()" />
                     </Fieldset>
                 </div>
             </div>

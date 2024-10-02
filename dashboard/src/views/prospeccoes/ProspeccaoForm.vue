@@ -13,7 +13,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import Breadcrumb from '@/components/Breadcrumb.vue';
@@ -209,7 +209,7 @@ const loadEnderecos = async () => {
     dropdownEnderecos.value = [];
     if (itemData.value.id_cadastros) {
         const url = `${baseApiUrl}/cad-enderecos/${itemData.value.id_cadastros}`;
-        
+
         await axios.get(url).then((res) => {
             res.data.data.map((item) => {
                 const label = `${item.logradouro}${item.nr ? ', ' + item.nr : ''}${item.complnr ? ' ' + item.complnr : ''}${item.bairro ? ' - ' + item.bairro : ''}${uProf.value.admin >= 2 ? ` (${item.id})` : ''}`;
@@ -241,36 +241,38 @@ onMounted(async () => {
                         <div class="col-12 md:col-3">
                             <label for="id_agente">Agente</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_agente" :disabled="mode == 'view'" :showClear="!!itemData.id_agente"
-                                optionLabel="label" placeholder="Selecione um agente" optionValue="value"
-                                v-model="itemData.id_agente" :options="dropdownAgentes" />
+                            <Dropdown
+                                v-else
+                                id="id_agente"
+                                :disabled="mode == 'view'"
+                                :showClear="!!itemData.id_agente"
+                                optionLabel="label"
+                                placeholder="Selecione um agente"
+                                optionValue="value"
+                                v-model="itemData.id_agente"
+                                :options="dropdownAgentes"
+                            />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="data_visita">Data da Visita</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                                data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_visita" id="data_visita" type="text" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="periodo">Período da Visita</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="periodo" :disabled="mode == 'view'" placeholder="Selecione o período"
-                                optionLabel="label" optionValue="value" v-model="itemData.periodo"
-                                :options="dropdownPeriodo" />
+                            <Dropdown v-else id="periodo" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.periodo" :options="dropdownPeriodo" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="pessoa">Pessoa Contatada</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa"
-                                id="pessoa" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa" id="pessoa" type="text" />
                         </div>
                         <div class="col-12 md:col-3 contato">
                             <label for="contato">Contato</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato"
-                                id="contato" type="text" placeholder="Email ou Telefone" @blur="validateContato()" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.contato">{{ errorMessages.contato
-                                }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.contato" id="contato" type="text" placeholder="Email ou Telefone" @blur="validateContato()" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.contato">{{ errorMessages.contato }}</small>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="id_cadastros">Cadastro</label>
@@ -282,16 +284,22 @@ onMounted(async () => {
                         <div class="col-12 md:col-6">
                             <label for="id_cad_end">Endereço</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else id="id_cad_end" :disabled="mode == 'view'"
-                                :showClear="!!itemData.id_cad_end" optionLabel="label"
-                                placeholder="Selecione um endereço" optionValue="value" v-model="itemData.id_cad_end"
-                                :options="dropdownEnderecos" />
+                            <Dropdown
+                                v-else
+                                id="id_cad_end"
+                                :disabled="mode == 'view'"
+                                :showClear="!!itemData.id_cad_end"
+                                optionLabel="label"
+                                placeholder="Selecione um endereço"
+                                optionValue="value"
+                                v-model="itemData.id_cad_end"
+                                :options="dropdownEnderecos"
+                            />
                         </div>
                         <div class="col-12 md:col-12">
                             <label for="observacoes">Observações</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.observacoes"
-                                id="observacoes" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.observacoes" id="observacoes" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                     </div>
                     <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
@@ -305,12 +313,9 @@ onMounted(async () => {
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar"
-                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                            severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
             </div>

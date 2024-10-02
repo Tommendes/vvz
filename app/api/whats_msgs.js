@@ -83,6 +83,7 @@ module.exports = app => {
                         recurrence.msg_id = msgId;
                         await app.db(`${dbPrefix}_${uParams.schema_name}.whats_msgs_recurrences`).insert(recurrence);
                     }
+                    if (body.schedule <= moment().format('YYYY-MM-DD HH:mm:ss')) await sendMessage({ id: msgId, message: body.message, phone: body.phone }, uParams, tabelaDomain)
                     return res.status(200).send({ id: msgId })
                 })
                 .catch(error => {

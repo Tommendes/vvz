@@ -14,7 +14,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRouter, useRoute } from 'vue-router';
@@ -180,62 +180,89 @@ const goField = (data) => {
 <template>
     <Breadcrumb v-if="mode != 'new' && !props.idCadastro" :items="[{ label: 'Prospecções', to: route.fullPath }]" />
     <div class="card">
-        <ProspeccaoForm :mode="'new'" :idCadastro="props.idCadastro" @changed="loadLazyData()" @cancel="
-            mode = 'grid';
-        idRegs = undefined;
-        " v-if="mode == 'new'" />
-        <DataTable style="font-size: 1rem" :value="gridData" lazy paginator :first="0" v-model:filters="filters"
-            ref="dt" dataKey="id" :totalRecords="totalRecords" :rows="rowsPerPage"
-            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]" :loading="loading" @page="onPage($event)"
-            @sort="onSort($event)" @filter="onFilter($event)" filterDisplay="row" tableStyle="min-width: 75rem"
+        <ProspeccaoForm
+            :mode="'new'"
+            :idCadastro="props.idCadastro"
+            @changed="loadLazyData()"
+            @cancel="
+                mode = 'grid';
+                idRegs = undefined;
+            "
+            v-if="mode == 'new'"
+        />
+        <DataTable
+            style="font-size: 1rem"
+            :value="gridData"
+            lazy
+            paginator
+            :first="0"
+            v-model:filters="filters"
+            ref="dt"
+            dataKey="id"
+            :totalRecords="totalRecords"
+            :rows="rowsPerPage"
+            :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
+            :loading="loading"
+            @page="onPage($event)"
+            @sort="onSort($event)"
+            @filter="onFilter($event)"
+            filterDisplay="row"
+            tableStyle="min-width: 75rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable>
+            :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
+            scrollable
+        >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar"
-                        @click="exportCSV($event)" />
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
-                        @click="clearFilter()" />
-                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
-                        @click="(mode = 'new'), scrollToTop()" />
+                    <Button v-if="uProf.gestor" icon="fa-solid fa-cloud-arrow-down" label="Exportar" @click="exportCSV($event)" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="(mode = 'new'), scrollToTop()" />
                 </div>
                 <div class="flex justify-content-end gap-3 mt-3 p-tag-esp">
-                    <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
-                        gridData.length }}
-                        resultados</span>
+                    <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} resultados</span>
                 </div>
             </template>
             <template v-for="nome in listaNomes" :key="nome">
-                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'"
-                    sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
                     <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value"
-                            :options="nome.list" @change="filterCallback()" :class="nome.class"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" placeholder="Pesquise..." />
+                        <Dropdown
+                            :id="nome.field"
+                            optionLabel="label"
+                            optionValue="value"
+                            v-model="filterModel.value"
+                            :options="nome.list"
+                            @change="filterCallback()"
+                            :class="nome.class"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
+                            placeholder="Pesquise..."
+                        />
                     </template>
                     <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar
-                            :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <Calendar
+                            v-model="filterModel.value"
+                            dateFormat="dd/mm/yy"
+                            selectionMode="range"
+                            showButtonBar
+                            :numberOfMonths="2"
+                            placeholder="dd/mm/aaaa"
+                            mask="99/99/9999"
+                            @input="filterCallback()"
+                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`"
+                        />
                     </template>
                     <template v-else #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                            class="p-column-filter" placeholder="Pesquise..."
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`" />
                     </template>
                     <template #body="{ data }">
-                        <Tag v-if="nome.tagged == true" :value="data[nome.field]"
-                            :severity="getSeverity(data[nome.field])" />
+                        <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
                         <span v-else-if="nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                        <span v-else
-                            v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                        <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
                     </template>
                 </Column>
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
-                        @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

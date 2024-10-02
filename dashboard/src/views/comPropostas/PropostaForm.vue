@@ -14,7 +14,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { Mask } from 'maska';
@@ -173,7 +173,7 @@ onMounted(async () => {
     loadData();
 });
 // Observar alterações nos dados do formulário
-watchEffect(() => { });
+watchEffect(() => {});
 </script>
 
 <template>
@@ -184,115 +184,88 @@ watchEffect(() => { });
                     <div class="col-12 md:col-3">
                         <label for="pessoa_contato">Contato</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato"
-                            id="pessoa_contato" type="text" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
                     </div>
                     <div class="col-12 md:col-3">
                         <label for="telefone_contato">Telefone</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                            data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato"
-                            id="telefone_contato" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{
-                            errorMessages.telefone_contato }}</small>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato }}</small>
                     </div>
                     <div class="col-12 md:col-4">
                         <label for="email_contato">Email</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato"
-                            id="email_contato" type="text" class="lowercase" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{
-                            errorMessages.email_contato }}</small>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" class="lowercase" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato }}</small>
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="prz_entrega">Prazo de Entrega</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <Dropdown v-else id="prz_entrega" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.prz_entrega" :options="dropdownPrazo"
-                            placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="prz_entrega" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.prz_entrega" :options="dropdownPrazo" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="col-12 md:col-4">
                         <label for="forma_pagto">Forma de Pagamento</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <Dropdown v-else id="forma_pagto" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.forma_pagto" :options="dropdownFormaPagto"
-                            placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="forma_pagto" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.forma_pagto" :options="dropdownFormaPagto" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="col-12 md:col-4">
                         <label for="validade_prop">Validade da Proposta</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <Dropdown v-else id="validade_prop" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.validade_prop" :options="dropdownValidade"
-                            placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="validade_prop" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.validade_prop" :options="dropdownValidade" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="desconto_total">Desconto Total</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
                         <div v-else-if="!['view'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                             <span class="p-inputgroup-addon">R$</span>
-                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total"
-                                id="desconto_total" type="text" v-maska data-maska="0,99"
-                                data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.desconto_total" id="desconto_total" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                         </div>
                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                             <span class="p-inputgroup-addon">R$</span>
-                            <span disabled v-html="formatCurrency(itemData.desconto_total || 0)" id="desconto_total"
-                                class="p-inputtext p-component disabled" />
+                            <span disabled v-html="formatCurrency(itemData.desconto_total || 0)" id="desconto_total" class="p-inputtext p-component disabled" />
                         </div>
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="desconto_ativo">Desconto Ativo</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" optionLabel="label"
-                            optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescontoAtivo" />
+                        <Dropdown v-else id="desconto_ativo" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.desconto_ativo" :options="dropdownDescontoAtivo" />
                     </div>
                 </div>
                 <div class="p-fluid grid" v-if="props.padroes">
                     <div class="col-12 md:col-6">
                         <label for="saudacao_inicial">Saudação Inicial</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.saudacao_inicial"
-                            id="saudacao_inicial" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.saudacao_inicial" id="saudacao_inicial" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="garantia">Garantia</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.garantia"
-                            id="garantia" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.garantia" id="garantia" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="conclusao">Conclusão</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.conclusao"
-                            id="conclusao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.conclusao" id="conclusao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-6">
                         <label for="assinatura">Assinatura</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.assinatura"
-                            id="assinatura" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.assinatura" id="assinatura" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                     <div class="col-12 md:col-12">
                         <label for="observacoes_finais">Observacoes Finais</label>
                         <Skeleton v-if="loading" height="2rem"></Skeleton>
-                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.observacoes_finais"
-                            id="observacoes_finais" :editorStyle="{ height: '160px' }"
-                            aria-describedby="editor-error" />
+                        <EditorComponent v-else :readonly="loading || mode == 'view'" v-model="itemData.observacoes_finais" id="observacoes_finais" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                     </div>
                 </div>
             </div>
             <div class="col-12">
                 <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="button" v-if="mode == 'view'" label="Editar"
-                        icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                        severity="success" text raised />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                        severity="danger" text raised @click="reload" />
-                    <Button type="button" v-if="props.padroes" label="Imprimir Proposta" icon="fa-solid fa-print"
-                        severity="success" text raised @click="imprimirProposta()" />
-                    <Button type="button" v-if="props.padroes" label="Imprimir Resumo" icon="fa-solid fa-cash-register"
-                        severity="success" text raised @click="imprimirProposta(true)" />
+                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                    <Button type="button" v-if="props.padroes" label="Imprimir Proposta" icon="fa-solid fa-print" severity="success" text raised @click="imprimirProposta()" />
+                    <Button type="button" v-if="props.padroes" label="Imprimir Resumo" icon="fa-solid fa-cash-register" severity="success" text raised @click="imprimirProposta(true)" />
                 </div>
             </div>
             <div class="col-12">
@@ -304,10 +277,7 @@ watchEffect(() => { });
                         </div>
                     </template>
                     <p class="mb-3" v-if="itemData.old_id">
-                        <span>Para acessar o registro no lynkos.com.br acesse <a
-                                :href="`https://lynkos.com.br/com-proposta/${itemData.old_id}`"
-                                target="_blank">aqui</a>. Edições e
-                            inclusões não são mais permitidas no LynkOs</span>
+                        <span>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/com-proposta/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</span>
                         <span style="font-size: 20px">&#128521;</span>
                     </p>
                     <p class="m-0">

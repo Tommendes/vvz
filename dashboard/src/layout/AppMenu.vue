@@ -7,14 +7,15 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile();    
+    uProf.value = await store.getProfile();
     await setMenuByUser();
 });
 
-const model = ref([{
-    // label: 'Home',
-    items: [{ label: 'Dashboard', icon: 'fa-solid fa-home', to: `/${uProf.value.schema_description}` }]
-}
+const model = ref([
+    {
+        // label: 'Home',
+        items: [{ label: 'Dashboard', icon: 'fa-solid fa-home', to: `/${uProf.value.schema_description}` }]
+    }
 ]);
 
 const setMenuByUser = async () => {
@@ -42,8 +43,10 @@ const setMenuByUser = async () => {
     }
     if ((uProf.value.financeiro >= 1 && uProf.value.comissoes >= 1) || uProf.value.comissoes >= 1 || uProf.value.agente_v >= 1) {
         const itemMenu = { label: 'Comissionamento', items: [] };
-        if ((uProf.value.comissoes >= 1 && (!uProf.value.agente_v || uProf.value.gestor >= 1)) || (uProf.value.agente_v >= 1 && uProf.value.gestor >= 1)) itemMenu.items.push({ label: 'Comissões', icon: 'fa-solid fa-dollar', to: `/${uProf.value.schema_description}/comissoes` });
-        if ((uProf.value.comissoes >= 1 && (!uProf.value.agente_v || uProf.value.gestor >= 1)) || (uProf.value.agente_v >= 1 && uProf.value.gestor >= 1)) itemMenu.items.push({ label: 'Agentes', icon: 'fa-solid fa-users', to: `/${uProf.value.schema_description}/comiss-agentes` });
+        if ((uProf.value.comissoes >= 1 && (!uProf.value.agente_v || uProf.value.gestor >= 1)) || (uProf.value.agente_v >= 1 && uProf.value.gestor >= 1))
+            itemMenu.items.push({ label: 'Comissões', icon: 'fa-solid fa-dollar', to: `/${uProf.value.schema_description}/comissoes` });
+        if ((uProf.value.comissoes >= 1 && (!uProf.value.agente_v || uProf.value.gestor >= 1)) || (uProf.value.agente_v >= 1 && uProf.value.gestor >= 1))
+            itemMenu.items.push({ label: 'Agentes', icon: 'fa-solid fa-users', to: `/${uProf.value.schema_description}/comiss-agentes` });
         if (uProf.value.agente_v >= 1) itemMenu.items.push({ label: 'Minhas Comissões', icon: 'fa-solid fa-hand-holding-dollar', to: `/${uProf.value.schema_description}/comissoes-agente` });
         model.value.push(itemMenu);
     }

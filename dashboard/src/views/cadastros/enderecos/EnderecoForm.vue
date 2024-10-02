@@ -19,7 +19,7 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 // Campos de formulário
@@ -39,19 +39,19 @@ const emit = defineEmits(['changed', 'cancel']);
 const urlBase = ref(`${baseApiUrl}/cad-enderecos/${props.itemDataRoot.id}`);
 // Carragamento de dados do form
 const loadData = async () => {
-        if (itemData && itemData.id) {
-            const url = `${urlBase.value}/${itemData.value.id}`;
-            await axios.get(url).then((res) => {
-                const body = res.data;
-                if (body && body.id) {
-                    body.id = String(body.id);
-                    itemData.value = body;
-                } else {
-                    defaultWarn('Registro não localizado');
-                    router.push({ path: `/${uProf.schema_description}/cadastros` });
-                }
-            });
-        }
+    if (itemData && itemData.id) {
+        const url = `${urlBase.value}/${itemData.value.id}`;
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                body.id = String(body.id);
+                itemData.value = body;
+            } else {
+                defaultWarn('Registro não localizado');
+                router.push({ path: `/${uProf.schema_description}/cadastros` });
+            }
+        });
+    }
 };
 const formIsValid = () => {
     if (!validateCep()) return false;
@@ -82,7 +82,7 @@ const saveData = async () => {
         })
         .catch((error) => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+            if (error.response && error.response.status == 401) router.push('/');
         });
 };
 // Validar data cep

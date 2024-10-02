@@ -14,7 +14,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { guide } from '@/guides/notasFiscaisFormGuide.js';
@@ -67,7 +67,7 @@ const setModelosNfList = async () => {
         const newItem = {
             value: item.value,
             label: `(${item.value}) ${item.label}`
-        }
+        };
         return newItem;
     });
 };
@@ -83,23 +83,23 @@ const urlBase = ref(`${baseApiUrl}/fiscal-notas`);
 const breadItems = ref([{ label: 'Todas as Notas', to: `/${uProf.value.schema_description}/notas-fiscais` }]);
 // Liste de inputs de registros financeiros
 const itemsInputsList = ref([
-    { field: "valor_total", label: "Bruto", type: "double", minValue: 0.0, defaultValue: 0.0, required: true },
-    { field: "valor_liquido", label: "Líquido", type: "double", minValue: 0.0, defaultValue: 0.0, required: true },
-    { field: "valor_desconto", label: "Desconto", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_icms", label: "ICMS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_ipi", label: "IPI", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_pis", label: "PIS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_cofins", label: "COFINS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_iss", label: "ISS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_ir", label: "IR", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_csll", label: "CSLL", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_inss", label: "INSS", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_outros", label: "Outros", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_servicos", label: "Serviços", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_produtos", label: "Produtos", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_frete", label: "Frete", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_seguro", label: "Seguro(s)", type: "double", minValue: 0.0, defaultValue: 0.0, required: false },
-    { field: "valor_despesas", label: "Despesas", type: "double", minValue: 0.0, defaultValue: 0.0, required: false }
+    { field: 'valor_total', label: 'Bruto', type: 'double', minValue: 0.0, defaultValue: 0.0, required: true },
+    { field: 'valor_liquido', label: 'Líquido', type: 'double', minValue: 0.0, defaultValue: 0.0, required: true },
+    { field: 'valor_desconto', label: 'Desconto', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_icms', label: 'ICMS', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_ipi', label: 'IPI', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_pis', label: 'PIS', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_cofins', label: 'COFINS', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_iss', label: 'ISS', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_ir', label: 'IR', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_csll', label: 'CSLL', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_inss', label: 'INSS', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_outros', label: 'Outros', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_servicos', label: 'Serviços', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_produtos', label: 'Produtos', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_frete', label: 'Frete', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_seguro', label: 'Seguro(s)', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false },
+    { field: 'valor_despesas', label: 'Despesas', type: 'double', minValue: 0.0, defaultValue: 0.0, required: false }
 ]);
 
 // Importação de componentes
@@ -369,77 +369,80 @@ watch(route, (value) => {
                         <div :class="`col-12`">
                             <label for="id_empresa">Empresa</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.id_empresa"
-                                id="id_empresa" optionLabel="label" optionValue="value" v-model="itemData.id_empresa"
-                                :options="dropdownEmpresas" :disabled="['view'].includes(mode)" />
+                            <Dropdown
+                                v-else
+                                filter
+                                placeholder="Selecione..."
+                                :showClear="!!itemData.id_empresa"
+                                id="id_empresa"
+                                optionLabel="label"
+                                optionValue="value"
+                                v-model="itemData.id_empresa"
+                                :options="dropdownEmpresas"
+                                :disabled="['view'].includes(mode)"
+                            />
                         </div>
                         <div :class="`col-12`">
                             <label for="id_fornecedor">Fornecedor</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="route.name != 'cadastro' && (editFornecedor || mode == 'new')"
-                                v-model="selectedFornecedor" dropdown optionLabel="name"
-                                :suggestions="filteredFornecedores" @complete="searchFornecedores" forceSelection
-                                @keydown.enter.prevent />
+                            <AutoComplete
+                                v-else-if="route.name != 'cadastro' && (editFornecedor || mode == 'new')"
+                                v-model="selectedFornecedor"
+                                dropdown
+                                optionLabel="name"
+                                :suggestions="filteredFornecedores"
+                                @complete="searchFornecedores"
+                                forceSelection
+                                @keydown.enter.prevent
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeFornecedor" />
                                 <Button
                                     v-if="(route.name != 'cadastro' && (!itemData.status || itemData.status < 80) && uProf.fiscal >= 4) || mode == 'clone'"
-                                    icon="fa-solid fa-pencil" severity="primary" @click="confirmEditFornecedor()"
-                                    :disabled="mode == 'view'" />
+                                    icon="fa-solid fa-pencil"
+                                    severity="primary"
+                                    @click="confirmEditFornecedor()"
+                                    :disabled="mode == 'view'"
+                                />
                             </div>
                         </div>
                         <div class="col-12 lg:col-2">
                             <label for="mov_e_s">Movimento <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else placeholder="Selecione..." id="mov_e_s" optionLabel="label"
-                                optionValue="value" v-model="itemData.mov_e_s" :options="dropdownES"
-                                :disabled="['view'].includes(mode)" />
+                            <Dropdown v-else placeholder="Selecione..." id="mov_e_s" optionLabel="label" optionValue="value" v-model="itemData.mov_e_s" :options="dropdownES" :disabled="['view'].includes(mode)" />
                         </div>
                         <div class="col-12 lg:col-6">
                             <label for="modelo_nf">Tipo Nota <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else placeholder="Selecione..." id="modelo_nf" optionLabel="label"
-                                optionValue="value" v-model="itemData.modelo_nf" filter :options="dropdownModelosNF"
-                                :disabled="['view'].includes(mode)" />
+                            <Dropdown v-else placeholder="Selecione..." id="modelo_nf" optionLabel="label" optionValue="value" v-model="itemData.modelo_nf" filter :options="dropdownModelosNF" :disabled="['view'].includes(mode)" />
                         </div>
                         <div class="col-12 lg:col-2">
                             <label for="numero">Documento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
-                                v-model="itemData.numero" id="numero" type="text" maxlength="20" />
+                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.numero" id="numero" type="text" maxlength="20" />
                         </div>
                         <div class="col-12 lg:col-2">
                             <label for="serie">Série</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
-                                v-model="itemData.serie" id="serie" type="text" maxlength="10" />
+                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.serie" id="serie" type="text" maxlength="10" />
                         </div>
                         <div class="col-12 lg:col-12">
                             <label for="chave">Chave NF-e</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <div class="p-inputgroup flex-1" v-else>
-                                <InputText autocomplete="no" :disabled="['view'].includes(mode)"
-                                    v-model="itemData.chave" id="chave" type="text" maxlength="44" />
-                                <Button icon="fa-solid fa-file-arrow-down" severity="primary"
-                                    @click="defaultSuccess('Em breve será possível baixar os dados direto do SPED')"
-                                    :disabled="mode == 'view'" />
+                                <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.chave" id="chave" type="text" maxlength="44" />
+                                <Button icon="fa-solid fa-file-arrow-down" severity="primary" @click="defaultSuccess('Em breve será possível baixar os dados direto do SPED')" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 lg:col12">
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="loading || ['view'].includes(mode)"
-                                v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
-                                aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="loading || ['view'].includes(mode)" v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                     </div>
-                    <div class="card flex justify-content-center flex-wrap gap-3"
-                        v-if="['new', 'clone'].includes(mode)">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                            severity="danger" text raised
-                            @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
+                    <div class="card flex justify-content-center flex-wrap gap-3" v-if="['new', 'clone'].includes(mode)">
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new'].includes(mode)">
@@ -451,67 +454,83 @@ watch(route, (value) => {
                             </div>
                         </template>
 
-                        <div
-                            v-if="(['new', 'clone'].includes(mode) || (!itemData.status || itemData.status < 80)) && !itemData.id_filho">
-                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'"
-                                icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'"
-                                icon="fa-solid fa-floppy-disk" severity="success" />
-                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'"
-                                icon="fa-solid fa-ban" severity="danger"
-                                @click="mode == 'edit' ? reload() : toGrid()" />
+                        <div v-if="(['new', 'clone'].includes(mode) || !itemData.status || itemData.status < 80) && !itemData.id_filho">
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr class="w-full mb-3" v-if="!itemData.id_filho" />
-                            <Button v-if="route.name == 'pipeline-one'" label="Ir ao Fornecedor" type="button"
-                                class="w-full mb-3" :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328"
-                                text raised
-                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_fornecedor}`)" />
-                            <Button label="Novo Registro para o Fornecedor" v-if="itemData.id && !itemData.id_pai"
-                                type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary"
-                                text raised @click="registroIdentico" />
-                            <Button label="Cancelar Registro" v-tooltip.top="`Cancelar não exclui o registro`"
-                                v-if="(!itemData.status || itemData.status < 80)" type="button"
+                            <Button
+                                v-if="route.name == 'pipeline-one'"
+                                label="Ir ao Fornecedor"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-regular fa-address-card fa-shake`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_fornecedor}`)"
+                            />
+                            <Button label="Novo Registro para o Fornecedor" v-if="itemData.id && !itemData.id_pai" type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised @click="registroIdentico" />
+                            <Button
+                                label="Cancelar Registro"
+                                v-tooltip.top="`Cancelar não exclui o registro`"
+                                v-if="!itemData.status || itemData.status < 80"
+                                type="button"
                                 :disabled="!(uProf.fiscal >= 3 && (itemData.status == 0 || itemData.status == 10))"
-                                class="w-full mb-3" :icon="`fa-solid fa-ban`" severity="warning" text raised
-                                @click="defaultWarn('Cancelar registro')" />
-                            <Button label="Reativar Registro" v-tooltip.top="`Reative o registro cancelado`"
-                                v-else-if="uProf.fiscal >= 4 && itemData.status >= 89" type="button" class="w-full mb-3"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-ban`"
+                                severity="warning"
+                                text
+                                raised
+                                @click="defaultWarn('Cancelar registro')"
+                            />
+                            <Button
+                                label="Reativar Registro"
+                                v-tooltip.top="`Reative o registro cancelado`"
+                                v-else-if="uProf.fiscal >= 4 && itemData.status >= 89"
+                                type="button"
+                                class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice ${itemData.status == 0 ? 'fa-shake' : ''}`"
-                                severity="warning" text raised @click="defaultWarn('Reativar registro')" />
-                            <Button v-if="uProf.fiscal >= 4 && itemData.status == 10" label="Excluir Registro"
+                                severity="warning"
+                                text
+                                raised
+                                @click="defaultWarn('Reativar registro')"
+                            />
+                            <Button
+                                v-if="uProf.fiscal >= 4 && itemData.status == 10"
+                                label="Excluir Registro"
                                 v-tooltip.top="`Não pode ser desfeito! Se excluir, excluirá o documento relacionado e os registros financeiros ficarão órfãos, caso haja algum!`"
-                                type="button" :disabled="!(uProf.fiscal >= 4 && itemData.status == 10)"
-                                class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
-                                @click="defaultWarn('Excluir registro')" />
+                                type="button"
+                                :disabled="!(uProf.fiscal >= 4 && itemData.status == 10)"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-fire`"
+                                severity="danger"
+                                text
+                                raised
+                                @click="defaultWarn('Excluir registro')"
+                            />
                         </div>
                     </Fieldset>
                 </div>
                 <div class="col-12">
                     <div class="grid">
                         <div class="col-12" style="text-align: center">
-                            <div
-                                class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
-                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Valores financeiros do
-                                documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
+                            <div class="flex-grow-1 flex align-items-center justify-content-center font-bold m-2 px-5 py-3 surface-200 border-round">
+                                <i class="fa-solid fa-angles-down fa-shake"></i>&nbsp;&nbsp;Valores financeiros do documento&nbsp;&nbsp;<i class="fa-solid fa-angles-down fa-shake" />
                             </div>
                         </div>
                         <div :class="`col-12 lg:col-2`" v-for="item in itemsInputsList" :key="item">
-                            <label :for="item.field">{{ item.label }}<span v-if="item.required" class="text-base"
-                                    style="color: red">
-                                    *</span></label>
+                            <label :for="item.field">{{ item.label }}<span v-if="item.required" class="text-base" style="color: red"> *</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <div v-else-if="!['view'].includes(mode)" class="p-inputgroup flex-1"
-                                style="font-size: 1rem">
+                            <div v-else-if="!['view'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="['view'].includes(mode)"
-                                    v-model="itemData[item.field]" :id="item.field" type="text" v-maska
-                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData[item.field]" :id="item.field" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                             </div>
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
-                                <span disabled v-html="itemData[item.field]" :id="item.field"
-                                    class="p-inputtext p-component" />
+                                <span disabled v-html="itemData[item.field]" :id="item.field" class="p-inputtext p-component" />
                             </div>
                         </div>
                     </div>
@@ -524,9 +543,7 @@ watch(route, (value) => {
                             </div>
                         </template>
                         <p class="mb-3" v-if="itemData.old_id">
-                            <span>Para acessar o registro no lynkos.com.br acesse <a
-                                    :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>.
-                                Edições e inclusões não são mais permitidas no LynkOs</span>
+                            <span>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</span>
                             <span style="font-size: 20px">&#128521;</span>
                         </p>
                         <p class="m-0">

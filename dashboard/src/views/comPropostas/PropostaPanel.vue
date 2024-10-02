@@ -17,7 +17,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRoute } from 'vue-router';
@@ -131,9 +131,7 @@ onMounted(async () => {
     <div class="grid">
         <div class="col-12">
             <div class="card">
-                <h3
-                    v-if="itemDataPipelineParams && itemDataPipelineParams.descricao && itemDataPipeline && itemDataPipeline.documento">
-                    {{ itemDataPipelineParams.descricao.replaceAll('_', ' ') }} {{ itemDataPipeline.documento }}</h3>
+                <h3 v-if="itemDataPipelineParams && itemDataPipelineParams.descricao && itemDataPipeline && itemDataPipeline.documento">{{ itemDataPipelineParams.descricao.replaceAll('_', ' ') }} {{ itemDataPipeline.documento }}</h3>
                 <TabView lazy>
                     <TabPanel :disabled="!itemData.id">
                         <template #header>

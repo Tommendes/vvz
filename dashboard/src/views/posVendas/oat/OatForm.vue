@@ -19,7 +19,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 // Campos de formulário
@@ -401,65 +401,51 @@ onMounted(async () => {
                     <div class="col-12 md:col-5">
                         <label for="id_cadastro_endereco">Endereço do atendimento</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_cadastro_endereco" :disabled="mode == 'view'" optionLabel="label"
-                            optionValue="value" v-model="itemData.id_cadastro_endereco" :options="dropdownEnderecos" />
+                        <Dropdown v-else id="id_cadastro_endereco" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_cadastro_endereco" :options="dropdownEnderecos" />
                     </div>
                     <div class="col-12 md:col-3">
                         <label for="id_tecnico">Técnico responsável</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_tecnico" :disabled="mode == 'view'" optionLabel="label"
-                            optionValue="value" v-model="itemData.id_tecnico" :options="dropdownTecnicos" />
+                        <Dropdown v-else id="id_tecnico" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.id_tecnico" :options="dropdownTecnicos" />
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="int_ext">Interno/Externo</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value"
-                            v-model="itemData.int_ext" :options="dropdownIntExt" />
+                        <Dropdown v-else id="int_ext" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.int_ext" :options="dropdownIntExt" />
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="garantia">Garantia</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <Dropdown v-else id="garantia" :disabled="mode == 'view'" optionLabel="label"
-                            optionValue="value" v-model="itemData.garantia" :options="dropdownGarantia" />
+                        <Dropdown v-else id="garantia" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.garantia" :options="dropdownGarantia" />
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="nf_garantia">NF do produto</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'"
-                            :required="itemData.garantia == 1" v-model="itemData.nf_garantia" id="nf_garantia"
-                            type="text" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" :required="itemData.garantia == 1" v-model="itemData.nf_garantia" id="nf_garantia" type="text" />
                     </div>
                     <div class="col-12 md:col-3">
                         <label for="pessoa_contato">Contato no cliente</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato"
-                            id="pessoa_contato" type="text" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.pessoa_contato" id="pessoa_contato" type="text" />
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="telefone_contato">Telefone do contato</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska
-                            data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato"
-                            id="telefone_contato" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{
-                            errorMessages.telefone_contato }}</small>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone_contato" id="telefone_contato" type="text" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.telefone_contato">{{ errorMessages.telefone_contato }}</small>
                     </div>
                     <div class="col-12 md:col-3">
                         <label for="email_contato">Email do contato</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato"
-                            id="email_contato" type="text" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{
-                            errorMessages.email_contato }}</small>
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_contato" id="email_contato" type="text" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.email_contato">{{ errorMessages.email_contato }}</small>
                     </div>
                     <div class="col-12 md:col-2">
                         <label for="valor_total">Valor dos serviços</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                             <span class="p-inputgroup-addon">R$</span>
-                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_total"
-                                id="valor_total" type="text" v-maska data-maska="0,99"
-                                data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                            <InputText autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_total" id="valor_total" type="text" v-maska data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                         </div>
                     </div>
                     <div class="col-12 md:col-12" v-if="itemData.aceite_do_cliente">
@@ -468,17 +454,14 @@ onMounted(async () => {
                     <div class="col-12 md:col-12">
                         <label for="descricao">Descrição dos serviços</label>
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
-                        <EditorComponent v-else :readonly="loading || ['view', 'expandedFormMode'].includes(mode)" v-model="itemData.descricao" id="descricao"
-                            :editorStyle="{ height: '320px' }" aria-describedby="editor-error" />
+                        <EditorComponent v-else :readonly="loading || ['view', 'expandedFormMode'].includes(mode)" v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '320px' }" aria-describedby="editor-error" />
                     </div>
                 </div>
             </div>
             <div class="col-12" v-if="mode == 'new'">
                 <div class="col-12 card flex justify-content-center flex-wrap gap-3">
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                        severity="success" text raised />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                        severity="danger" text raised @click="mode == 'new' ? closeDialog() : (mode = 'view')" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'new' ? closeDialog() : (mode = 'view')" />
                 </div>
             </div>
             <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
@@ -489,49 +472,92 @@ onMounted(async () => {
                             <span class="font-bold text-lg">Ações do Registro</span>
                         </div>
                     </template>
-                    <div
-                        v-if="dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO && itemDataLastStatus.status_pv_oat < andamentoRegistroPvOat.STATUS_FINALIZADO">
-                        <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'"
-                            icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                        <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'"
-                            icon="fa-solid fa-floppy-disk" severity="success" />
-                        <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'"
-                            icon="fa-solid fa-ban" severity="danger"
-                            @click="mode == 'edit' ? reload() : closeDialog()" />
+                    <div v-if="dialogRef.data.lastStatus < andamentoRegistroPv.STATUS_FINALIZADO && itemDataLastStatus.status_pv_oat < andamentoRegistroPvOat.STATUS_FINALIZADO">
+                        <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                        <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
+                        <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : closeDialog()" />
                     </div>
                     <div v-if="mode != 'edit'">
                         <hr />
-                        <Button label="Ir ao Cadastro" type="button" class="w-full mb-3"
-                            :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328" text raised
-                            @click="openInNewTab(`#/${uProf.schema_description}/cadastro/${dialogRef.data.idCadastro}`)" />
-                        <Button label="Finalizar Oat" type="button" class="w-full mb-3"
-                            :icon="`fa-solid fa-check fa-shake'`" severity="success"
+                        <Button
+                            label="Ir ao Cadastro"
+                            type="button"
+                            class="w-full mb-3"
+                            :icon="`fa-regular fa-address-card fa-shake`"
+                            style="color: #a97328"
+                            text
+                            raised
+                            @click="openInNewTab(`#/${uProf.schema_description}/cadastro/${dialogRef.data.idCadastro}`)"
+                        />
+                        <Button
+                            label="Finalizar Oat"
+                            type="button"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-check fa-shake'`"
+                            severity="success"
                             :disabled="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_FINALIZADO"
-                            text raised @click="statusRecord(andamentoRegistroPvOat.STATUS_FINALIZADO)" />
-                        <Button label="Clonar Oat" type="button" class="w-full mb-3"
-                            :icon="`fa-solid fa-clone fa-shake'`" severity="success"
-                            :disabled="dialogRef.data.lastStatus >= andamentoRegistroPv.STATUS_FINALIZADO" text raised
-                            @click="clone()" />
-                        <Button label="Imprimir Oat" type="button" class="w-full mb-3"
-                            :icon="`fa-solid fa-print fa-shake'`" style="color: #1d067a"
-                            :disabled="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_EXCLUIDO" text
-                            raised @click="imprimirOat()" />
-                        <Button label="Cancelar Oat" v-tooltip.top="'Cancela o Oat, mas não o exclui!'"
+                            text
+                            raised
+                            @click="statusRecord(andamentoRegistroPvOat.STATUS_FINALIZADO)"
+                        />
+                        <Button
+                            label="Clonar Oat"
+                            type="button"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-clone fa-shake'`"
+                            severity="success"
+                            :disabled="dialogRef.data.lastStatus >= andamentoRegistroPv.STATUS_FINALIZADO"
+                            text
+                            raised
+                            @click="clone()"
+                        />
+                        <Button
+                            label="Imprimir Oat"
+                            type="button"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-print fa-shake'`"
+                            style="color: #1d067a"
+                            :disabled="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_EXCLUIDO"
+                            text
+                            raised
+                            @click="imprimirOat()"
+                        />
+                        <Button
+                            label="Cancelar Oat"
+                            v-tooltip.top="'Cancela o Oat, mas não o exclui!'"
                             v-if="itemDataLastStatus.status_pv_oat < andamentoRegistroPvOat.STATUS_CANCELADO"
-                            type="button" :disabled="!(uProf.pv >= 3 && itemData.status == 10)" class="w-full mb-3"
-                            :icon="`fa-solid fa-ban`" severity="warning" text raised
-                            @click="statusRecord(andamentoRegistroPvOat.STATUS_CANCELADO)" />
-                        <Button label="Reativar Oat"
+                            type="button"
+                            :disabled="!(uProf.pv >= 3 && itemData.status == 10)"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-ban`"
+                            severity="warning"
+                            text
+                            raised
+                            @click="statusRecord(andamentoRegistroPvOat.STATUS_CANCELADO)"
+                        />
+                        <Button
+                            label="Reativar Oat"
                             v-else-if="itemDataLastStatus.status_pv_oat >= andamentoRegistroPvOat.STATUS_CANCELADO"
-                            type="button" class="w-full mb-3" :icon="`fa-solid fa-file-invoice fa-shake'`"
-                            severity="warning" text raised
-                            @click="statusRecord(andamentoRegistroPvOat.STATUS_REATIVADO)" />
-                        <Button label="Excluir Oat"
+                            type="button"
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-file-invoice fa-shake'`"
+                            severity="warning"
+                            text
+                            raised
+                            @click="statusRecord(andamentoRegistroPvOat.STATUS_REATIVADO)"
+                        />
+                        <Button
+                            label="Excluir Oat"
                             v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
                             type="button"
                             :disabled="!(uProf.pv >= 4 && itemData.status != andamentoRegistroPvOat.STATUS_EXCLUIDO)"
-                            class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
-                            @click="statusRecord(andamentoRegistroPvOat.STATUS_EXCLUIDO)" />
+                            class="w-full mb-3"
+                            :icon="`fa-solid fa-fire`"
+                            severity="danger"
+                            text
+                            raised
+                            @click="statusRecord(andamentoRegistroPvOat.STATUS_EXCLUIDO)"
+                        />
                     </div>
                 </Fieldset>
                 <Fieldset :toggleable="true">
@@ -544,9 +570,7 @@ onMounted(async () => {
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                     <Timeline v-else :value="itemDataStatus">
                         <template #marker="slotProps">
-                            <span
-                                class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
-                                :style="{ backgroundColor: slotProps.item.color }">
+                            <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
                                 <i :class="slotProps.item.icon"></i>
                             </span>
                         </template>

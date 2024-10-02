@@ -29,7 +29,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 // Campos de formulário
@@ -281,62 +281,46 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-7">
                             <label for="id_cadastros">Registro no cadastro</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro"
-                                optionLabel="name" :dropdown="false" :suggestions="filteredCadastros" @complete="searchCadastros"
-                                forceSelection @keydown.enter.prevent />
+                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :dropdown="false" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"
-                                    :disabled="mode == 'view'" />
+                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                             </div>
-                            <span v-if="!nomeCliente" class="text-xs" style="color: red">* utilize apenas se o agente já
-                                estiver registrado no cadastro do Vivazul</span>
+                            <span v-if="!nomeCliente" class="text-xs" style="color: red">* utilize apenas se o agente já estiver registrado no cadastro do Vivazul</span>
                         </div>
                         <div class="col-12 md:col-3">
                             <label for="apelido">Nome curto</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'"
-                                v-model="itemData.apelido" id="apelido" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.apelido" id="apelido" />
                         </div>
                         <div class="col-12 md:col-2">
                             <label for="ordem">Ordem<small id="text-error" class="p-error"> *</small></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'"
-                                v-model="itemData.ordem" id="ordem" type="text" v-maska data-maska="###" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ordem" id="ordem" type="text" v-maska data-maska="###" />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="agente_representante">Tipo<small id="text-error" class="p-error">
-                                    *</small></label>
+                            <label for="agente_representante">Tipo<small id="text-error" class="p-error"> *</small></label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label"
-                                optionValue="value" v-model="itemData.agente_representante" :options="dropdownTiposAR"
-                                placeholder="Selecione..." />
+                            <Dropdown v-else id="agente_representante" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.agente_representante" :options="dropdownTiposAR" placeholder="Selecione..." />
                         </div>
                         <div class="col-12 md:col-6">
-                            <label for="dsr">Destacar o "Descanso semanal remunerado" (DSR)<small id="text-error"
-                                    class="p-error"> *</small></label>
+                            <label for="dsr">Destacar o "Descanso semanal remunerado" (DSR)<small id="text-error" class="p-error"> *</small></label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="dsr" :disabled="mode == 'view'" optionLabel="label" optionValue="value"
-                                v-model="itemData.dsr" :options="dropdownSN" placeholder="Selecione..." />
+                            <Dropdown v-else id="dsr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.dsr" :options="dropdownSN" placeholder="Selecione..." />
                         </div>
                         <div class="col-12">
                             <label for="observacao">Observações</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'"
-                                v-model="itemData.observacoes" id="observacao" type="text" />
+                            <InputText v-else class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.observacoes" id="observacao" type="text" />
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar"
-                            icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode == 'view'" label="Excluir" icon="fa-solid fa-trash"
-                            severity="danger" text raised @click="deleteItem" />
-                        <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised
-                            @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode == 'view'" label="Excluir" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
+                        <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
             </div>

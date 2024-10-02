@@ -24,15 +24,18 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
     // Primeiro e último nomes do usuário
     const uName = uProf.value.name.split(' ');
     uProf.value.firstName = uName[0];
     uProf.value.lastName = uName[uName.length - 1];
-    items.value = [{
+    items.value = [
+        {
             label: `${uProf.value.firstName} ${uProf.value.lastName}`,
-            disabled: true,
-        }, ...items.value];
+            disabled: true
+        },
+        ...items.value
+    ];
 });
 
 const jsonLayer = localStorage.getItem('__layoutCfg');
@@ -143,41 +146,44 @@ const toggleAppConfig = () => {
 };
 const newMessages = ref(0);
 const getUserMessages = async () => {
-    setTimeout(async () => {
-        const url = `${baseApiUrl}/sis-messages/f-a/gbf?fld=id_user&vl=${uProf.value.id}&slct=id,title,msg,status`;
-        await axios.get(url).then((res) => {
-            const body = res.data.data;
-            itemsMessages.value = [];
-            newMessages.value = 0;
-            if (body && body.length) {
-                body.forEach((element) => {
-                    if (element.status == 10) ++newMessages.value;
-                    // element.msg = element.msg.replaceAll('[userName]', uProf.value.name.split(' ')[0]);
-                    // Substitua [userName] pelos dois primeiros nomes do usuário com o cuidade de que o usuário pode ter apenas um nome registrado
-                    element.msg = element.msg.replace('[userName]', uProf.value.name.split(' ').slice(0, 2).join(' '));
-                    itemsMessages.value.push({
-                        icon: element.status == 10 ? 'fa-solid fa-asterisk fa-fade' : 'fa-solid fa-check',
-                        status: element.status,
-                        label: element.title,
-                        message: element.msg,
-                        command: () => {
-                            messagesButtoms.value.forEach((elementButton) => {
-                                // Adicionar ao elementButton o id da mensagem
-                                elementButton.id = element.id;
-                                elementButton.message = element.msg;
-                                elementButton.title = element.title;
-                            });
-                            showMessage({
-                                label: element.title,
-                                message: element.msg,
-                                buttons: messagesButtoms.value
-                            });
-                        }
+    setTimeout(
+        async () => {
+            const url = `${baseApiUrl}/sis-messages/f-a/gbf?fld=id_user&vl=${uProf.value.id}&slct=id,title,msg,status`;
+            await axios.get(url).then((res) => {
+                const body = res.data.data;
+                itemsMessages.value = [];
+                newMessages.value = 0;
+                if (body && body.length) {
+                    body.forEach((element) => {
+                        if (element.status == 10) ++newMessages.value;
+                        // element.msg = element.msg.replaceAll('[userName]', uProf.value.name.split(' ')[0]);
+                        // Substitua [userName] pelos dois primeiros nomes do usuário com o cuidade de que o usuário pode ter apenas um nome registrado
+                        element.msg = element.msg.replace('[userName]', uProf.value.name.split(' ').slice(0, 2).join(' '));
+                        itemsMessages.value.push({
+                            icon: element.status == 10 ? 'fa-solid fa-asterisk fa-fade' : 'fa-solid fa-check',
+                            status: element.status,
+                            label: element.title,
+                            message: element.msg,
+                            command: () => {
+                                messagesButtoms.value.forEach((elementButton) => {
+                                    // Adicionar ao elementButton o id da mensagem
+                                    elementButton.id = element.id;
+                                    elementButton.message = element.msg;
+                                    elementButton.title = element.title;
+                                });
+                                showMessage({
+                                    label: element.title,
+                                    message: element.msg,
+                                    buttons: messagesButtoms.value
+                                });
+                            }
+                        });
                     });
-                });
-            }
-        });
-    }, Math.floor(Math.random() * 1000 + 250) + 250);
+                }
+            });
+        },
+        Math.floor(Math.random() * 1000 + 250) + 250
+    );
 };
 const dialogRef = ref(null);
 const messagesButtoms = ref([
@@ -261,23 +267,23 @@ onBeforeMount(() => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <Button  type="button" v-if="uProf.chat_account_id && uProf.chat_status && uProf.chat_operator_access_token" label="Bot"
-                icon="fa-brands fa-whatsapp"
-                severity="info" rounded size="large" 
-                aria-haspopup="true" @click="goToChat" />
-            <Button v-if="newMessages > 0" type="button"
+            <Button type="button" v-if="uProf.chat_account_id && uProf.chat_status && uProf.chat_operator_access_token" label="Bot" icon="fa-brands fa-whatsapp" severity="info" rounded size="large" aria-haspopup="true" @click="goToChat" />
+            <Button
+                v-if="newMessages > 0"
+                type="button"
                 :icon="`fa-regular fa-bell fa-2xl ${newMessages ? 'fa-shake' : ''}`"
-                :severity="`${newMessages > 0 ? 'info' : ''}`" rounded size="large" :badge="String(newMessages) || '0'"
-                aria-haspopup="true" @click="toggleMenuMessages" />
-            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle"
-                @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages"
-                class="p-link layout-topbar-button p-button-transparent">
+                :severity="`${newMessages > 0 ? 'info' : ''}`"
+                rounded
+                size="large"
+                :badge="String(newMessages) || '0'"
+                aria-haspopup="true"
+                @click="toggleMenuMessages"
+            />
+            <Button v-else-if="newMessages == 0 && itemsMessages.length > 0" type="button" label="Toggle" @click="toggleMenuMessages" aria-haspopup="true" aria-controls="overlay_menumessages" class="p-link layout-topbar-button p-button-transparent">
                 <i class="fa-regular fa-bell"></i>
             </Button>
-            <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true"
-                v-if="itemsMessages.length" />
-            <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu"
-                class="p-link layout-topbar-button p-button-transparent">
+            <Menu ref="menuMessages" id="overlay_messages" :model="itemsMessages" :popup="true" v-if="itemsMessages.length" />
+            <Button type="button" label="Toggle" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button p-button-transparent">
                 <i class="fa-regular fa-user"></i>
                 <span>Perfil</span>
             </Button>

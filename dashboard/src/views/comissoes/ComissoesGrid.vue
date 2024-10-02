@@ -24,7 +24,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRouter, useRoute } from 'vue-router';
@@ -394,7 +394,10 @@ const newCommissioning = () => {
     // });
     showMessage({
         label: 'Novo Comisionamento',
-        message: ["Pressione ESC para fechar", `<p>Para registrar uma comissão, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`],
+        message: [
+            'Pressione ESC para fechar',
+            `<p>Para registrar uma comissão, clique no botão "${messagesButtoms.value[1].label}" abaixo. Você será direcionado para o Pipeline</p><p>Após selecionar o pedido, clique no botão "Comissionamento" para registrar a comissão</p>`
+        ],
         buttons: messagesButtoms.value
     });
 };
@@ -411,36 +414,54 @@ const newCommissioning = () => {
 
         <div class="col-12">
             <div class="card">
-                <DataTable ref="dt" :value="gridData" lazy paginator :rows="rowsPerPage" dataKey="id" :rowHover="true"
-                    v-model:filters="filters" filterDisplay="row" :loading="loading" :filters="filters"
-                    responsiveLayout="scroll" :totalRecords="totalRecords"
-                    :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]" @page="onPage($event)" @sort="onSort($event)"
+                <DataTable
+                    ref="dt"
+                    :value="gridData"
+                    lazy
+                    paginator
+                    :rows="rowsPerPage"
+                    dataKey="id"
+                    :rowHover="true"
+                    v-model:filters="filters"
+                    filterDisplay="row"
+                    :loading="loading"
+                    :filters="filters"
+                    responsiveLayout="scroll"
+                    :totalRecords="totalRecords"
+                    :rowsPerPageOptions="[5, 10, 20, 50, 200, 500]"
+                    @page="onPage($event)"
+                    @sort="onSort($event)"
                     @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
-                    :filter-options="customFilterOptions">
+                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
+                    scrollable
+                    :filter-options="customFilterOptions"
+                >
                     <template #header>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify"
-                                :key="qualify" :value="qualify.label"> </Tag>
-                            <Tag class="tagRes"
-                                :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
-                            </Tag>
+                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
+                            <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
                         </div>
                         <div class="grid">
                             <div class="col-12 md:col-3">
-                                <Dropdown filter placeholder="Filtrar por Representada..." :showClear="!!unidade"
-                                    class="flex-none flex" id="unidades" optionLabel="label" optionValue="value"
-                                    v-model="unidade" :options="dropdownUnidades" @change="loadLazyData()" />
+                                <Dropdown
+                                    filter
+                                    placeholder="Filtrar por Representada..."
+                                    :showClear="!!unidade"
+                                    class="flex-none flex"
+                                    id="unidades"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    v-model="unidade"
+                                    :options="dropdownUnidades"
+                                    @change="loadLazyData()"
+                                />
                             </div>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"
-                                @click="exportXls()" />
-                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
-                                @click="reload()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Comissionamento" outlined
-                                @click="newCommissioning()" />
+                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" @click="exportXls()" />
+                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined @click="reload()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Comissionamento" outlined @click="newCommissioning()" />
                         </div>
                     </template>
                     <template #empty>
@@ -450,45 +471,35 @@ const newCommissioning = () => {
                         <h2>Carregando dados. Por favor aguarde...</h2>
                     </template>
                     <template v-for="nome in listaNomes" :key="nome">
-                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
-                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem"
-                            sortable :sortField="nome.field" :class="nome.class">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field" :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }" style="min-width: 12rem" sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"
-                                    :severity="getSeverity(data[nome.field], nome.type)" />
-                                <span v-else-if="data[nome.field]"
-                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]" :severity="getSeverity(data[nome.field], nome.type)" />
+                                <span
+                                    v-else-if="data[nome.field]"
+                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"
+                                ></span>
                                 <span v-else v-html="''"></span>
                             </template>
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value"
-                                    v-model="filterModel.value" :options="nome.list" @change="filterCallback()"
-                                    showClear placeholder="Pesquise..." />
+                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" showClear placeholder="Pesquise..." />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                                    showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
-                                    @update:modelValue="filterCallback()" />
+                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @update:modelValue="filterCallback()" />
                             </template>
                             <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                                    class="p-column-filter" placeholder="Pesquise..." />
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                             </template>
                             <template #filterclear="{ filterCallback }">
-                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()"
-                                    class="p-button-secondary"></Button>
+                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()" class="p-button-secondary"></Button>
                             </template>
                             <template #filterapply="{ filterCallback }">
-                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()"
-                                    class="p-button-success"></Button>
+                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()" class="p-button-success"></Button>
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center"
-                        bodyStyle="text-align: center; overflow: visible">
+                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
-                                @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                         </template>
                     </Column>
                 </DataTable>

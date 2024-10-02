@@ -27,7 +27,7 @@ export const useUserStore = defineStore('users', {
         },
         userGeoLoc(state) {
             return state.geolocation;
-        },
+        }
     },
     actions: {
         async registerUser(email, password) {
@@ -76,7 +76,7 @@ export const useUserStore = defineStore('users', {
             this.inactivityTimer = setInterval(() => {
                 const __lastActivity = localStorage.getItem('__lastActivity');
                 const currentTime = Math.floor(Date.now() / 1000);
-                const timeDifference = (currentTime - __lastActivity); // em segundos
+                const timeDifference = currentTime - __lastActivity; // em segundos
                 if (timeDifference >= this.timeToLogOut) {
                     this.logout();
                     clearInterval(this.inactivityTimer); // Limpa o intervalo após o logout
@@ -107,7 +107,7 @@ export const useUserStore = defineStore('users', {
             const url = `${baseApiAuthUrl}/validateToken`;
             if (userData && userData.ip) userData.ipSignin = userData.ip;
             try {
-                this.validation = await interceptor.post(url, userData)
+                this.validation = await interceptor.post(url, userData);
                 this.isTokenValid = this.validation.data;
                 if (this.isTokenValid) {
                     this.user = userData;
@@ -131,7 +131,7 @@ export const useUserStore = defineStore('users', {
         // },
         async getProfile(token) {
             const json = localStorage.getItem(userKey);
-            const userData = JSON.parse(json)
+            const userData = JSON.parse(json);
             // const th = await axios.post(`${baseApiUrl}/gth`);
             // const untokenized = await decodeToken(token || this.user.token || userData.token, th.data);
             const profile = await axios.post(`${baseApiUrl}/gprof`, { id: this.user.id || userData.id });

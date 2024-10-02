@@ -43,7 +43,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 // Validar o cpf_cnpj
@@ -94,25 +94,28 @@ const loadData = async () => {
     if (route.params.id || itemData.value.id) {
         if (route.params.id) itemData.value.id = route.params.id;
         const url = `${urlBase.value}/${itemData.value.id}`;
-        await axios.get(url).then((res) => {
-            const body = res.data;
-            if (body && body.id) {
-                body.id = String(body.id);
-                body.prospecto = isTrue(body.prospecto);
+        await axios
+            .get(url)
+            .then((res) => {
+                const body = res.data;
+                if (body && body.id) {
+                    body.id = String(body.id);
+                    body.prospecto = isTrue(body.prospecto);
 
-                itemData.value = body;
-                if (itemData.value.cpf_cnpj) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj);
-                if (itemData.value.aniversario) itemData.value.aniversario = masks.value.aniversario.masked(moment(itemData.value.aniversario).format('DD/MM/YYYY'));
-                if (itemData.value.telefone) itemData.value.telefone = masks.value.telefone.masked(itemData.value.telefone);
-                loading.value.form = false;
-            } else {
-            }
-        }).catch((error) => {
-            if (error.response && error.response.status == 401) {
-                defaultWarn('Registro não localizado');
-                router.push({ path: `/${uProf.value.schema_description}/cadastros` });
-            }
-        });
+                    itemData.value = body;
+                    if (itemData.value.cpf_cnpj) itemData.value.cpf_cnpj = masks.value.cpf_cnpj.masked(itemData.value.cpf_cnpj);
+                    if (itemData.value.aniversario) itemData.value.aniversario = masks.value.aniversario.masked(moment(itemData.value.aniversario).format('DD/MM/YYYY'));
+                    if (itemData.value.telefone) itemData.value.telefone = masks.value.telefone.masked(itemData.value.telefone);
+                    loading.value.form = false;
+                } else {
+                }
+            })
+            .catch((error) => {
+                if (error.response && error.response.status == 401) {
+                    defaultWarn('Registro não localizado');
+                    router.push({ path: `/${uProf.value.schema_description}/cadastros` });
+                }
+            });
     } else loading.value.form = false;
 };
 // Salvar dados do formulário
@@ -400,9 +403,9 @@ const sendAzulChatMessage = () => {
             },
             modal: true
         },
-       onClose: () => {},
-       onCancel: () => {},
-       onSended: () => {}
+        onClose: () => {},
+        onCancel: () => {},
+        onSended: () => {}
     });
 };
 
@@ -504,108 +507,135 @@ watch(route, (value) => {
             <div class="col-12">
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo">Tipo de Registro<small id="text-error" class="p-error">
-                                *</small></label>
+                        <label for="id_params_tipo">Tipo de Registro<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_tipo" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo"
-                            placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cpf_cnpj">CPF/CNPJ<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                            <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'"
-                                v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska
-                                data-maska="['##.###.###/####-##','###.###.###-##']" />
-                            <Button v-if="labels.pfpj == 'pj'" :disabled="mode == 'view'"
+                            <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
+                            <Button
+                                v-if="labels.pfpj == 'pj'"
+                                :disabled="mode == 'view'"
                                 :icon="`fa-solid fa-arrows-rotate${!(mode == 'view' || searched) ? ' fa-spin' : ''}`"
-                                v-tooltip.top="'Clique para buscar os dados públicos'" class="bg-blue-500"
-                                @click="buscarCNPJ()" />
+                                v-tooltip.top="'Clique para buscar os dados públicos'"
+                                class="bg-blue-500"
+                                @click="buscarCNPJ()"
+                            />
                         </div>
-                        <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj">{{ errorMessages.cpf_cnpj
-                            }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj">{{ errorMessages.cpf_cnpj }}</small>
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="nome">{{ labels.nome }}<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome"
-                            type="text" :class="`${animationDocNr}`" class="uppercase" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome" type="text" :class="`${animationDocNr}`" class="uppercase" />
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="rg_ie">{{ labels.rg_ie }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie"
-                            id="rg_ie" type="text" class="uppercase" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie" type="text" class="uppercase" />
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pf'">
-                        <label for="id_params_sexo">Sexo<small id="text-error" v-if="!itemData.prospecto"
-                                class="p-error"> *</small></label>
+                        <label for="id_params_sexo">Sexo<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_sexo" :required="!itemData.prospecto" optionLabel="label"
-                            optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_sexo"
-                            :options="dropdownSexo" placeholder="Selecione..."></Dropdown>
+                        <Dropdown
+                            v-else
+                            id="id_params_sexo"
+                            :required="!itemData.prospecto"
+                            optionLabel="label"
+                            optionValue="value"
+                            :disabled="mode == 'view'"
+                            v-model="itemData.id_params_sexo"
+                            :options="dropdownSexo"
+                            placeholder="Selecione..."
+                        ></Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="aniversario">{{ labels.aniversario }}<small id="text-error"
-                                v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <label for="aniversario">{{ labels.aniversario }}<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'"
-                            v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text"
-                            :class="`${animationDocNr}`" class="uppercase" />
+                        <InputText
+                            v-else
+                            autocomplete="no"
+                            :required="!itemData.prospecto"
+                            :disabled="mode == 'view'"
+                            v-maska
+                            data-maska="##/##/####"
+                            v-model="itemData.aniversario"
+                            id="aniversario"
+                            type="text"
+                            :class="`${animationDocNr}`"
+                            class="uppercase"
+                        />
                     </div>
                     <div class="field col-12 md:col-3">
-                        <label for="id_params_p_nascto">País de Origem<small id="text-error" v-if="!itemData.prospecto"
-                                class="p-error"> *</small></label>
+                        <label for="id_params_p_nascto">País de Origem<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_p_nascto" :required="!itemData.prospecto" optionLabel="label"
-                            optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_p_nascto"
-                            :options="dropdownPaisNascim" placeholder="Selecione...">
+                        <Dropdown
+                            v-else
+                            id="id_params_p_nascto"
+                            :required="!itemData.prospecto"
+                            optionLabel="label"
+                            optionValue="value"
+                            :disabled="mode == 'view'"
+                            v-model="itemData.id_params_p_nascto"
+                            :options="dropdownPaisNascim"
+                            placeholder="Selecione..."
+                        >
                         </Dropdown>
                     </div>
                     <div class="field col-12 md:col-5">
-                        <label for="id_params_atuacao">Área de Atuação<small id="text-error" v-if="!itemData.prospecto"
-                                class="p-error"> *</small></label>
+                        <label for="id_params_atuacao">Área de Atuação<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_atuacao" :required="!itemData.prospecto" optionLabel="label"
-                            optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_atuacao"
-                            :options="dropdownAtuacao" placeholder="Selecione...">
+                        <Dropdown
+                            v-else
+                            id="id_params_atuacao"
+                            :required="!itemData.prospecto"
+                            optionLabel="label"
+                            optionValue="value"
+                            :disabled="mode == 'view'"
+                            v-model="itemData.id_params_atuacao"
+                            :options="dropdownAtuacao"
+                            placeholder="Selecione..."
+                        >
                         </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="telefone">Telefone<small id="text-error" v-if="!itemData.prospecto" class="p-error">
-                                *</small></label>
+                        <label for="telefone">Telefone<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputGroup v-else>
-                            <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'"
-                                v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone"
-                                id="telefone" type="text" @input="validateTelefone()" class="uppercase" />
+                            <InputText
+                                autocomplete="no"
+                                :required="!itemData.prospecto"
+                                :disabled="mode == 'view'"
+                                v-maska
+                                data-maska="['(##) ####-####', '(##) #####-####']"
+                                v-model="itemData.telefone"
+                                id="telefone"
+                                type="text"
+                                @input="validateTelefone()"
+                                class="uppercase"
+                            />
                             <Button :disabled="!validateTelefone()" @click="sendAzulChatMessage" icon="fa-brands fa-whatsapp" />
                         </InputGroup>
-                        <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone
-                            }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="email">E-mail<small id="text-error" v-if="!itemData.prospecto" class="p-error">
-                                *</small></label>
+                        <label for="email">E-mail<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else :required="!itemData.prospecto" class="uppercase" autocomplete="no"
-                            :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text"
-                            @input="validateEmail()" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email
-                            }}</small>
+                        <InputText v-else :required="!itemData.prospecto" class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pj'">
                         <label for="cim">CIM</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'"
-                            v-model="itemData.cim" id="cim" type="text" />
+                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'" v-model="itemData.cim" id="cim" type="text" />
                     </div>
                     <div class="field col-12 md:col-5">
                         <label for="doc_esp">Outro Documento(Especifique)</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'"
-                            v-model="itemData.doc_esp" id="doc_esp" type="text" />
+                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'" v-model="itemData.doc_esp" id="doc_esp" type="text" />
                     </div>
                     <div class="field col-12 md:col-1">
                         <label for="prospecto">Prospecto</label>
@@ -616,89 +646,71 @@ watch(route, (value) => {
                     <div class="field col-12 md:col-12">
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.observacao"
-                            id="observacao" :editorStyle="{ height: '80px' }" aria-describedby="editor-error" />
+                        <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '80px' }" aria-describedby="editor-error" />
                         <!-- <p v-else v-html="itemData.observacao"
                             class="p-inputtext p-component p-filled p-disabled uppercase"></p> -->
                     </div>
 
                     <hr />
                     <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo_end">Tipo de Endereço<small id="text-error"
-                                v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <Dropdown id="id_params_tipo_end" optionLabel="label" optionValue="value"
-                            :disabled="mode == 'view'" v-model="itemData.id_params_tipo_end"
-                            :options="dropdownTipoEndereco" placeholder="Selecione..."> </Dropdown>
+                        <label for="id_params_tipo_end">Tipo de Endereço<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <Dropdown id="id_params_tipo_end" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo_end" :options="dropdownTipoEndereco" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="cep">CEP<small id="text-error" v-if="!itemData.prospecto" class="p-error">
-                                *</small></label>
-                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska
-                            data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()"
-                            @blur="buscarCEP" :class="`${animationDocNr} uppercase`" />
+                        <label for="cep">CEP<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <InputText
+                            autocomplete="no"
+                            :required="!itemData.prospecto"
+                            :disabled="mode == 'view'"
+                            v-maska
+                            data-maska="##.###-###"
+                            v-model="itemData.cep"
+                            id="cep"
+                            type="text"
+                            @input="validateCep()"
+                            @blur="buscarCEP"
+                            :class="`${animationDocNr} uppercase`"
+                        />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
-                        <label for="logradouro">Logradouro<small id="text-error" v-if="!itemData.prospecto"
-                                class="p-error"> *</small></label>
-                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto"
-                            :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text"
-                            :class="`${animationDocNr}`" />
+                        <label for="logradouro">Logradouro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-1">
-                        <label for="nr">Número<small id="text-error" v-if="!itemData.prospecto" class="p-error">
-                                *</small></label>
-                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto"
-                            :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text"
-                            :class="`${animationDocNr}`" />
+                        <label for="nr">Número<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="complnr">Complemento</label>
-                        <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'"
-                            v-model="itemData.complnr" id="complnr" type="text" />
+                        <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr" type="text" />
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="bairro">Bairro<small id="text-error" v-if="!itemData.prospecto" class="p-error">
-                                *</small></label>
-                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto"
-                            :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text"
-                            :class="`${animationDocNr}`" />
+                        <label for="bairro">Bairro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="cidade">Cidade<small id="text-error" v-if="!itemData.prospecto" class="p-error">
-                                *</small></label>
-                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto"
-                            :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text"
-                            :class="`${animationDocNr}`" />
+                        <label for="cidade">Cidade<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-1">
-                        <label for="uf">UF<small id="text-error" v-if="!itemData.prospecto" class="p-error">
-                                *</small></label>
-                        <Dropdown id="uf" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
-                            v-model="itemData.uf" :options="dropdownUfs" placeholder="Selecione..."
-                            :class="`${animationDocNr}`"></Dropdown>
+                        <label for="uf">UF<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <Dropdown id="uf" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.uf" :options="dropdownUfs" placeholder="Selecione..." :class="`${animationDocNr}`"></Dropdown>
                     </div>
-                    <div class="field col-12 md:col-12"
-                        v-if="(itemData.observacao_endereco && itemData.observacao_endereco.length) || mode != 'view'">
+                    <div class="field col-12 md:col-12" v-if="(itemData.observacao_endereco && itemData.observacao_endereco.length) || mode != 'view'">
                         <label for="observacao_endereco">Observação do Endereço</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no"
-                            v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text"
-                            class="uppercase" />
-                        <p v-else v-html="itemData.observacao_endereco"
-                            class="p-inputtext p-component p-filled p-disabled uppercase"></p>
+                        <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no" v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text" class="uppercase" />
+                        <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled p-disabled uppercase"></p>
                     </div>
                     <div class="field col-12 md:col-12" v-if="itemData.id">
                         <ContatosGrid :itemDataRoot="itemData" />
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="button" v-if="mode == 'view'" label="Editar"
-                        icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                        severity="success" text raised />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                        severity="danger" text raised @click="reload" />
+                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                 </div>
 
                 <Eventos ref="fSEventos" :tabelaBd="'cadastros'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
@@ -711,10 +723,7 @@ watch(route, (value) => {
                             </div>
                         </template>
                         <p class="mb-3" v-if="itemData.old_id">
-                            <span>Para acessar o registro no lynkos.com.br acesse <a
-                                    :href="`https://lynkos.com.br/cadastros/${itemData.old_id}`"
-                                    target="_blank">aqui</a>. Edições e inclusões
-                                não são mais permitidas no LynkOs</span>
+                            <span>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/cadastros/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</span>
                             <span style="font-size: 20px">&#128521;</span>
                         </p>
                         <p class="m-0">

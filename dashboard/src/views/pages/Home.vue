@@ -36,7 +36,7 @@ const logout = () => {
                 </section>
             </div>
             <div class="col-12 md:col-6 flex-grow-1 flex overflow-hidden justify-content-center">
-                <img src="/assets/images/logo-app.png" alt="Image" class=" mb-5 md:max-w-20rem md:mb-0 md:imgApp" />
+                <img src="/assets/images/logo-app.png" alt="Image" class="mb-5 md:max-w-20rem md:mb-0 md:imgApp" />
             </div>
         </div>
     </div>

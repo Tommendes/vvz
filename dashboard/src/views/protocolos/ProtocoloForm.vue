@@ -12,7 +12,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRoute, useRouter } from 'vue-router';
@@ -130,7 +130,6 @@ const saveDataProtDocs = async () => {
                 itemDataProtDocs.value = { id_protocolos: itemData.value.id };
                 selectedTitulo.value = undefined;
                 document.getElementById('tp_documento').focus();
-
             } else {
                 defaultWarn('Erro ao salvar documentos');
             }
@@ -349,10 +348,13 @@ watch(selectedCadastro, (value) => {
 </script>
 
 <template>
-    <Breadcrumb v-if="mode != 'new'" :items="[
-        { label: 'Todos os Protocolos', to: `/${uProf.schema_description}/protocolos` },
-        { label: itemData.registro + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
-    ]" />
+    <Breadcrumb
+        v-if="mode != 'new'"
+        :items="[
+            { label: 'Todos os Protocolos', to: `/${uProf.schema_description}/protocolos` },
+            { label: itemData.registro + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="card" style="max-width: 100rem">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -366,45 +368,35 @@ watch(selectedCadastro, (value) => {
                         <div class="col-12 md:col-6">
                             <label for="id_cadastros">Destinatário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro"
-                                optionLabel="name" :dropdown="false" :suggestions="filteredCadastros"
-                                @complete="searchCadastros" forceSelection @keydown.enter.prevent />
+                            <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :dropdown="false" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
-                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"
-                                    :disabled="mode == 'view'" />
+                                <Button icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()" :disabled="mode == 'view'" />
                             </div>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="titulo">Título do Protocolo</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.titulo"
-                                id="titulo" type="text" />
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.titulo" id="titulo" type="text" />
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="email_destinatario">Email do Destinatário</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="mode == 'view'"
-                                v-model="itemData.email_destinatario" id="email_destinatario" type="text" />
-                            <small id="text-error" class="p-error" v-if="errorMessages.email_destinatario">{{
-                                errorMessages.email_destinatario }}</small>
+                            <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email_destinatario" id="email_destinatario" type="text" />
+                            <small id="text-error" class="p-error" v-if="errorMessages.email_destinatario">{{ errorMessages.email_destinatario }}</small>
                         </div>
                         <div class="col-12 md:col-6">
                             <label for="e_s">Movimento</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Dropdown v-else id="e_s" :disabled="mode == 'view'" optionLabel="label" optionValue="value"
-                                v-model="itemData.e_s" :options="dropdownMovimento" />
+                            <Dropdown v-else id="e_s" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.e_s" :options="dropdownMovimento" />
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar"
-                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                            severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                     </div>
                 </div>
             </div>
@@ -420,20 +412,14 @@ watch(selectedCadastro, (value) => {
                                     <div class="col-6">
                                         <div class="col-12 md:col-12">
                                             <label for="tp_documento">Tipo de Documento</label>
-                                            <AutoComplete v-model="selectedTitulo" id="tp_documento" optionLabel="name"
-                                                :suggestions="filteredTitulos" dropdown @complete="searchTitulos"
-                                                @keydown.enter.prevent />
+                                            <AutoComplete v-model="selectedTitulo" id="tp_documento" optionLabel="name" :suggestions="filteredTitulos" dropdown @complete="searchTitulos" @keydown.enter.prevent />
                                         </div>
                                         <div class="col-12 md:col-12">
-                                            <label for="descricao">Lista de Documentos (pressione Enter ou vírgula para
-                                                novos itens)</label>
+                                            <label for="descricao">Lista de Documentos (pressione Enter ou vírgula para novos itens)</label>
                                             <Chips v-model="itemDataProtDocs.items" separator="," />
                                         </div>
                                         <div class="col-12 md:col-12">
-                                            <Button type="button"
-                                                v-if="(itemDataProtDocs.tp_documento || selectedTitulo) && itemDataProtDocs.items"
-                                                label="Salvar documentos" severity="success" text raised
-                                                @click="saveDataProtDocs" />
+                                            <Button type="button" v-if="(itemDataProtDocs.tp_documento || selectedTitulo) && itemDataProtDocs.items" label="Salvar documentos" severity="success" text raised @click="saveDataProtDocs" />
                                         </div>
                                     </div>
                                     <div class="col-6">
@@ -441,12 +427,8 @@ watch(selectedCadastro, (value) => {
                                         <ol>
                                             <li v-for="(item, index) in gridDatProtoDocs" :key="item.id">
                                                 {{ item.tp_documento }} - {{ item.descricao.replaceAll(',', ', ') }}
-                                                <i class="fa-solid fa-pencil fa-shake"
-                                                    style="font-size: 1rem; color: slateblue" @click="editItem(item)"
-                                                    v-tooltip.top="'Clique para alterar'"></i>
-                                                <i class="fa-solid fa-trash ml-2"
-                                                    style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)"
-                                                    v-tooltip.top="'Clique para excluir toda a lista'"></i>
+                                                <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
+                                                <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir toda a lista'"></i>
                                             </li>
                                         </ol>
                                     </div>

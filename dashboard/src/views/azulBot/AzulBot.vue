@@ -1,8 +1,8 @@
 <template>
     <div class="grid">
         <div class="block md:hidden col-12">
-            <div class="overflow-hidden">                
-                <div class="bg-cover bg-center bg-no-repeat border-round h-30rem w-full" style="background-image: url('/assets/images/azulBotAppQuadLogo.png');"></div>
+            <div class="overflow-hidden">
+                <div class="bg-cover bg-center bg-no-repeat border-round h-30rem w-full" style="background-image: url('/assets/images/azulBotAppQuadLogo.png')"></div>
             </div>
         </div>
         <div class="col-12 md:col-6">
@@ -14,9 +14,7 @@
         </div>
         <div class="hidden md: block md:col-6 mt-6">
             <div class="overflow-hidden mt-5">
-                <div class="h-30rem flex align-items-center justify-content-center md:bg-contain bg-center bg-no-repeat border-round w-full"
-                    style="background-image: url('/assets/images/azulBotAppQuadLogo.png');">
-                </div>
+                <div class="h-30rem flex align-items-center justify-content-center md:bg-contain bg-center bg-no-repeat border-round w-full" style="background-image: url('/assets/images/azulBotAppQuadLogo.png')"></div>
             </div>
         </div>
     </div>
@@ -37,13 +35,13 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
     await initChat();
 });
 
 const initChat = async () => {
     if (!(uProf.value.chat_account_id && uProf.value.chat_status && uProf.value.chat_operator_access_token)) return;
-    
+
     const phone = route.query.phone;
     // ChatPluginPlay.init({
     //     accountId: uProf.value.chat_account_id,
@@ -61,7 +59,7 @@ const initChat = async () => {
     //         phone: phone,
     //         message: 'Olá, tudo bem?',
     //     });
-    // else 
+    // else
 
     // ChatPluginPlay.openChat();
 };

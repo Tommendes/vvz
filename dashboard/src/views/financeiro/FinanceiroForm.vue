@@ -16,7 +16,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { guide } from '@/guides/notasFiscaisFormGuide.js';
@@ -49,7 +49,7 @@ const notasGrid = ref();
 const parcelasGrid = ref();
 
 // Classes especiais
-const ANIMATION_CLASS = 'animation-color animation-fill-none'
+const ANIMATION_CLASS = 'animation-color animation-fill-none';
 const animationLblCadas = ref('');
 const animationVlrLiq = ref('');
 // Campos de formulário
@@ -70,7 +70,7 @@ const dropdownEmpresas = ref([]); // Itens do dropdown de Empresas
 // Props do template
 const props = defineProps({
     mode: { type: String, default: 'view' },
-    idRegistro: { type: Number, default: 0 },
+    idRegistro: { type: Number, default: 0 }
 });
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);
@@ -174,9 +174,11 @@ const saveData = async () => {
 const itemDataRetencoes = ref([]);
 // Carragamento de dados do form
 const loadRetencoes = async (parcelas) => {
-    itemDataRetencoes.value = parcelas
+    itemDataRetencoes.value = parcelas;
     const valorBruto = parseFloat(itemData.value.valor_bruto.replace(',', '.'));
-    itemData.value.valor_liquido = parseFloat(valorBruto - (itemDataRetencoes.value.total || 0)).toFixed(2).replace('.', ',');
+    itemData.value.valor_liquido = parseFloat(valorBruto - (itemDataRetencoes.value.total || 0))
+        .toFixed(2)
+        .replace('.', ',');
     animationVlrLiq.value = '';
     setTimeout(() => {
         animationVlrLiq.value = ANIMATION_CLASS;
@@ -184,20 +186,20 @@ const loadRetencoes = async (parcelas) => {
     if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
     if (parcelasGrid.value && parcelasGrid.value.$el) parcelasGrid.value.loadParcelas();
     //     });
-}
+};
 
 // Dados dados das parcelas
 const itemDataParcelas = ref([]);
 const loadParcelas = async (parcelas) => {
-    itemDataParcelas.value = parcelas
+    itemDataParcelas.value = parcelas;
     if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
-}
+};
 // Dados das notas fiscais
 const itemDataNotas = ref([]);
 const loadNotas = async (notas) => {
-    itemDataNotas.value = notas
+    itemDataNotas.value = notas;
     if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
-}
+};
 /**
  * Autocomplete de cadastros
  */
@@ -302,7 +304,7 @@ computed(() => {
 const registroIdentico = async () => {
     itemData.value = {
         id_cadastros: itemData.value.id_cadastros,
-        valor_bruto: "0",
+        valor_bruto: '0',
         valor_liquido: 0
     };
     mode.value = 'clone';
@@ -374,59 +376,74 @@ watch(route, (value) => {
                         <div :class="`col-12`">
                             <label for="id_empresa">Empresa <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else placeholder="Selecione..." :showClear="!!itemData.id_empresa"
-                                id="id_empresa" optionLabel="label" optionValue="value" v-model="itemData.id_empresa"
-                                :options="dropdownEmpresas" :disabled="['view'].includes(mode)" />
+                            <Dropdown
+                                v-else
+                                placeholder="Selecione..."
+                                :showClear="!!itemData.id_empresa"
+                                id="id_empresa"
+                                optionLabel="label"
+                                optionValue="value"
+                                v-model="itemData.id_empresa"
+                                :options="dropdownEmpresas"
+                                :disabled="['view'].includes(mode)"
+                            />
                         </div>
                         <div class="col-12 lg:col-2">
                             <label for="centro">Centro <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown v-else placeholder="Selecione..." id="centro" optionLabel="label"
-                                optionValue="value" v-model="itemData.centro" :options="dropdownCentro"
-                                :disabled="['view'].includes(mode)" @change="getCredorDevedor()" />
+                            <Dropdown v-else placeholder="Selecione..." id="centro" optionLabel="label" optionValue="value" v-model="itemData.centro" :options="dropdownCentro" :disabled="['view'].includes(mode)" @change="getCredorDevedor()" />
                         </div>
                         <div :class="`col-10`">
-                            <label for="id_cadastros" :class="`${animationLblCadas}`">{{ credorDevedor }} <span
-                                    class="text-base" style="color: red">*</span></label>
+                            <label for="id_cadastros" :class="`${animationLblCadas}`">{{ credorDevedor }} <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <AutoComplete v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')"
-                                v-model="selectedCadastro" dropdown optionLabel="name" :suggestions="filteredCadastro"
-                                @complete="searchCadastro" forceSelection @keydown.enter.prevent />
+                            <AutoComplete
+                                v-else-if="route.name != 'cadastro' && (editCadastro || mode == 'new')"
+                                v-model="selectedCadastro"
+                                dropdown
+                                optionLabel="name"
+                                :suggestions="filteredCadastro"
+                                @complete="searchCadastro"
+                                forceSelection
+                                @keydown.enter.prevent
+                            />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCadastro" />
                                 <Button
                                     v-if="(route.name != 'cadastro' && (!itemData.status || itemData.status < 80) && uProf.fiscal >= 4) || mode == 'clone'"
-                                    icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"
-                                    :disabled="mode == 'view'" />
+                                    icon="fa-solid fa-pencil"
+                                    severity="primary"
+                                    @click="confirmEditCadastro()"
+                                    :disabled="mode == 'view'"
+                                />
                             </div>
                         </div>
                         <div class="col-12 md:col-3">
-                            <label for="data_emissao">Data Emissão <small id="text-error"
-                                    class="p-error">*</small></label>
+                            <label for="data_emissao">Data Emissão <small id="text-error" class="p-error">*</small></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputGroup v-else>
-                                <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska
-                                    data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />
-                                <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
-                                    @click="itemData.data_emissao = moment().format('DD/MM/YYYY')" text raised
-                                    :disabled="mode == 'view'" />
+                                <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />
+                                <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day" @click="itemData.data_emissao = moment().format('DD/MM/YYYY')" text raised :disabled="mode == 'view'" />
                             </InputGroup>
                         </div>
                         <div :class="`col-12 lg:col-3`">
-                            <label for="valor_bruto">Valor Bruto <span class="text-base"
-                                    style="color: red">*</span></label>
+                            <label for="valor_bruto">Valor Bruto <span class="text-base" style="color: red">*</span></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1"
-                                style="font-size: 1rem">
+                            <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
-                                <InputText autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                    v-model="itemData.valor_bruto" id="valor_bruto" type="text" v-maska
-                                    data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                <InputText
+                                    autocomplete="no"
+                                    :disabled="['view', 'expandedFormMode'].includes(mode)"
+                                    v-model="itemData.valor_bruto"
+                                    id="valor_bruto"
+                                    type="text"
+                                    v-maska
+                                    data-maska="0,99"
+                                    data-maska-tokens="0:\d:multiple|9:\d:optional"
+                                />
                             </div>
                             <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
-                                <span disabled v-html="itemData.valor_bruto" id="valor_bruto"
-                                    class="p-inputtext p-component p-filled p-variant-filled" />
+                                <span disabled v-html="itemData.valor_bruto" id="valor_bruto" class="p-inputtext p-component p-filled p-variant-filled" />
                             </div>
                         </div>
                         <div :class="`col-12 lg:col-3`">
@@ -434,32 +451,25 @@ watch(route, (value) => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <div class="p-inputgroup flex-1" style="font-size: 1rem">
                                 <span class="p-inputgroup-addon">R$</span>
-                                <span disabled v-html="itemData.valor_liquido" id="valor_liquido"
-                                    class="p-inputtext p-component p-filled p-variant-filled" />
+                                <span disabled v-html="itemData.valor_liquido" id="valor_liquido" class="p-inputtext p-component p-filled p-variant-filled" />
                             </div>
                         </div>
                         <div class="col-12 lg:col-3">
                             <label for="pedido">Pedido</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)"
-                                v-model="itemData.pedido" id="pedido" type="text" maxlength="20" />
+                            <InputText v-else autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.pedido" id="pedido" type="text" maxlength="20" />
                         </div>
                         <div class="col-12 lg:col12">
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.descricao"
-                                id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                             <!-- <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p> -->
                             <!-- <Textarea disabled v-else v-model="itemData.descricao" rows="5" class="p-inputtext p-component p-filled"></Textarea> -->
                         </div>
                     </div>
-                    <div class="card flex justify-content-center flex-wrap gap-3"
-                        v-if="['new', 'clone'].includes(mode)">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
-                            severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
-                            severity="danger" text raised
-                            @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
+                    <div class="card flex justify-content-center flex-wrap gap-3" v-if="['new', 'clone'].includes(mode)">
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
                 </div>
                 <div class="col-12 md:col-4" v-if="itemData.id">
@@ -471,50 +481,71 @@ watch(route, (value) => {
                             </div>
                         </template>
 
-                        <div
-                            v-if="(['new', 'clone'].includes(mode) || (!itemData.status || itemData.status < 80)) && !itemData.id_filho">
-                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'"
-                                icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'"
-                                icon="fa-solid fa-floppy-disk" severity="success" />
-                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'"
-                                icon="fa-solid fa-ban" severity="danger"
-                                @click="mode == 'edit' ? reload() : toGrid()" />
+                        <div v-if="(['new', 'clone'].includes(mode) || !itemData.status || itemData.status < 80) && !itemData.id_filho">
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr class="w-full mb-3" v-if="!itemData.id_filho" />
-                            <Button v-if="route.name == 'pipeline-one'" label="Ir ao Fornecedor" type="button"
-                                class="w-full mb-3" :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328"
-                                text raised
-                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)" />
-                            <Button :label="`Novo Registro para o ${credorDevedor}`" v-if="itemData.id" type="button"
-                                class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised
-                                @click="registroIdentico" />
-                            <Button label="Cancelar Registro" v-tooltip.top="`Cancelar não exclui o registro`"
-                                v-if="(!itemData.status || itemData.status < 80)" type="button"
+                            <Button
+                                v-if="route.name == 'pipeline-one'"
+                                label="Ir ao Fornecedor"
+                                type="button"
+                                class="w-full mb-3"
+                                :icon="`fa-regular fa-address-card fa-shake`"
+                                style="color: #a97328"
+                                text
+                                raised
+                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)"
+                            />
+                            <Button :label="`Novo Registro para o ${credorDevedor}`" v-if="itemData.id" type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised @click="registroIdentico" />
+                            <Button
+                                label="Cancelar Registro"
+                                v-tooltip.top="`Cancelar não exclui o registro`"
+                                v-if="!itemData.status || itemData.status < 80"
+                                type="button"
                                 :disabled="!(uProf.fiscal >= 3 && (itemData.status == 0 || itemData.status == 10))"
-                                class="w-full mb-3" :icon="`fa-solid fa-ban`" severity="warning" text raised
-                                @click="defaultWarn('Cancelar registro')" />
-                            <Button label="Reativar Registro" v-tooltip.top="`Reative o registro cancelado`"
-                                v-else-if="uProf.fiscal >= 4 && itemData.status >= 89" type="button" class="w-full mb-3"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-ban`"
+                                severity="warning"
+                                text
+                                raised
+                                @click="defaultWarn('Cancelar registro')"
+                            />
+                            <Button
+                                label="Reativar Registro"
+                                v-tooltip.top="`Reative o registro cancelado`"
+                                v-else-if="uProf.fiscal >= 4 && itemData.status >= 89"
+                                type="button"
+                                class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice ${itemData.status == 0 ? 'fa-shake' : ''}`"
-                                severity="warning" text raised @click="defaultWarn('Reativar registro')" />
-                            <Button v-if="uProf.fiscal >= 4 && itemData.status == 10" label="Excluir Registro"
+                                severity="warning"
+                                text
+                                raised
+                                @click="defaultWarn('Reativar registro')"
+                            />
+                            <Button
+                                v-if="uProf.fiscal >= 4 && itemData.status == 10"
+                                label="Excluir Registro"
                                 v-tooltip.top="`Não pode ser desfeito! Se excluir, excluirá o documento relacionado e os registros financeiros ficarão órfãos, caso haja algum!`"
-                                type="button" :disabled="!(uProf.fiscal >= 4 && itemData.status == 10)"
-                                class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
-                                @click="defaultWarn('Excluir registro')" />
+                                type="button"
+                                :disabled="!(uProf.fiscal >= 4 && itemData.status == 10)"
+                                class="w-full mb-3"
+                                :icon="`fa-solid fa-fire`"
+                                severity="danger"
+                                text
+                                raised
+                                @click="defaultWarn('Excluir registro')"
+                            />
                         </div>
                     </Fieldset>
-                    <RetencoesGrid v-if="itemData.id" :itemDataRoot="itemData" @reloadItems="loadRetencoes"
-                        :uProf="uProf" :mode="mode" ref="retencoesGrid" />
+                    <RetencoesGrid v-if="itemData.id" :itemDataRoot="itemData" @reloadItems="loadRetencoes" :uProf="uProf" :mode="mode" ref="retencoesGrid" />
                     <NotasGrid v-if="uProf.admin >= 2 && itemData.id" :itemDataRoot="itemData" @reloadItems="loadNotas" :uProf="uProf" :mode="mode" ref="notasGrid" />
                 </div>
                 <div class="col-12" v-if="itemData.id">
-                    <ParcelasGrid v-if="itemData.id" @reloadItems="loadParcelas" :totalLiquido="itemData.valor_liquido"
-                        :uProf="uProf" :mode="mode" :itemDataRoot="itemData" ref="parcelasGrid" />
-                    <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id"
-                        ref="eventosFieldSet" />
+                    <ParcelasGrid v-if="itemData.id" @reloadItems="loadParcelas" :totalLiquido="itemData.valor_liquido" :uProf="uProf" :mode="mode" :itemDataRoot="itemData" ref="parcelasGrid" />
+                    <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" ref="eventosFieldSet" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -523,9 +554,7 @@ watch(route, (value) => {
                             </div>
                         </template>
                         <p class="mb-3" v-if="itemData.old_id">
-                            <span>Para acessar o registro no lynkos.com.br acesse <a
-                                    :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>.
-                                Edições e inclusões não são mais permitidas no LynkOs</span>
+                            <span>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/ged/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</span>
                             <span style="font-size: 20px">&#128521;</span>
                         </p>
                         <p class="m-0">

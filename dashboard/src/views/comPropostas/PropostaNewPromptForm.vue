@@ -14,7 +14,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 const dialogRef = inject('dialogRef');
@@ -87,7 +87,7 @@ const saveData = async () => {
         })
         .catch((error) => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
-if (error.response && error.response.status == 401) router.push('/');
+            if (error.response && error.response.status == 401) router.push('/');
         });
 };
 </script>

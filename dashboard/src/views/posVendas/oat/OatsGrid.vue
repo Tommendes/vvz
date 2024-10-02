@@ -16,7 +16,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 // Props do template
 const props = defineProps(['itemDataRoot', 'toOpenOat']); // O próprio pv
@@ -117,23 +117,33 @@ onMounted(async () => {
             <div class="card bg-green-200 mt-3">
                 <div class="flex flex-wrap align-items-center justify-content-center">
                     <div class="border-round bg-primary-100 h-12rem p-3 m-3">
-                        <div
-                            class="min-h-full border-round bg-primary font-bold p-3 flex align-items-center justify-content-center">
-                            Não foram registradas OATs para este Pós Venda</div>
+                        <div class="min-h-full border-round bg-primary font-bold p-3 flex align-items-center justify-content-center">Não foram registradas OATs para este Pós Venda</div>
                     </div>
                 </div>
             </div>
         </div>
-        <DataTable v-else style="font-size: 1rem" ref="dt" :value="gridData" :paginator="true"
-            :rowsPerPageOptions="[5, 10, 20, 50]" :rows="5" dataKey="id" :rowHover="true" v-model:filters="filters"
-            filterDisplay="menu" :filters="filters"
+        <DataTable
+            v-else
+            style="font-size: 1rem"
+            ref="dt"
+            :value="gridData"
+            :paginator="true"
+            :rowsPerPageOptions="[5, 10, 20, 50]"
+            :rows="5"
+            dataKey="id"
+            :rowHover="true"
+            v-model:filters="filters"
+            filterDisplay="menu"
+            :filters="filters"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            currentPageReportTemplate="{first} a {last} de {totalRecords} registros" scrollable scrollHeight="415px"
-            :globalFilterFields="['nr_oat', 'int_ext', 'descricao']">
+            currentPageReportTemplate="{first} a {last} de {totalRecords} registros"
+            scrollable
+            scrollHeight="415px"
+            :globalFilterFields="['nr_oat', 'int_ext', 'descricao']"
+        >
             <template #header>
                 <div class="flex justify-content-end gap-3">
-                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
-                        @click="clearFilter()" />
+                    <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                     <span class="p-input-icon-left">
                         <i class="fa-solid fa-magnifying-glass" />
                         <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
@@ -160,13 +170,11 @@ onMounted(async () => {
                 </template>
             </Column>
             <template #filter="{ filterModel }">
-                <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-                    placeholder="Filtre por informações" />
+                <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Filtre por informações" />
             </template>
             <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
                 <template #body="{ data }">
-                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
-                        @click="showPvOatForm(data)" v-tooltip.left="'Clique para mais opções'" />
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="showPvOatForm(data)" v-tooltip.left="'Clique para mais opções'" />
                 </template>
             </Column>
         </DataTable>

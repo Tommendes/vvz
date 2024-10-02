@@ -19,7 +19,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { guide } from '@/guides/comissoesGrid.js';
@@ -51,7 +51,7 @@ const reload = async () => {
 const loadData = async () => {
     const url = `${urlBase.value}?id_pipeline=${props.itemDataRoot.id}`;
     gridData.value = [];
-    setTimeout(() => { }, 100);
+    setTimeout(() => {}, 100);
     await axios
         .get(url)
         .then((axiosRes) => {
@@ -111,7 +111,7 @@ const executeGroupSettlement = () => {
     confirm.require({
         group: 'comisGroupLiquidateConfirm',
         header: 'Liquidação total dos programados',
-        message: ["Pressione ESC para fechar", `Confirma a liquidação deste${pendingCommissionsQuantity() > 1 ? 's' : ''} ${pendingCommissionsQuantity()} registros?`, 'Essa operação <strong>NÃO PODERÁ SER REVERTIDA</strong>.'],
+        message: ['Pressione ESC para fechar', `Confirma a liquidação deste${pendingCommissionsQuantity() > 1 ? 's' : ''} ${pendingCommissionsQuantity()} registros?`, 'Essa operação <strong>NÃO PODERÁ SER REVERTIDA</strong>.'],
         icon: 'fa-solid fa-question fa-beat',
         acceptIcon: 'fa-solid fa-check',
         rejectIcon: 'fa-solid fa-xmark',
@@ -202,33 +202,40 @@ onMounted(async () => {
 </script>
 
 <template>
-    <Dialog id="InfoDialog" v-model:visible="infoDialogisVisible" modal :pt="{
-        root: 'border-none',
-        mask: {
-            style: 'backdrop-filter: blur(5px)'
-        }
-    }">
+    <Dialog
+        id="InfoDialog"
+        v-model:visible="infoDialogisVisible"
+        modal
+        :pt="{
+            root: 'border-none',
+            mask: {
+                style: 'backdrop-filter: blur(5px)'
+            }
+        }"
+    >
         <template #container="{ closeCallback }">
-            <div class="flex flex-column px-5 py-5 gap-4"
-                style="border-radius: 12px; background-image: radial-gradient(circle at left top, var(--blue-400), var(--blue-700), var(--blue-400)); color: #fff">
+            <div class="flex flex-column px-5 py-5 gap-4" style="border-radius: 12px; background-image: radial-gradient(circle at left top, var(--blue-400), var(--blue-700), var(--blue-400)); color: #fff">
                 <div class="block mx-auto text-8xl">
                     <i class="fa-solid fa-circle-info fa-fade"></i>
                 </div>
                 <div class="block mx-auto text-2xl">
-                    <p class="mb-3 text-center text-white">Ainda resta informar a data de liquidação de um ou mais
-                        registros</p>
+                    <p class="mb-3 text-center text-white">Ainda resta informar a data de liquidação de um ou mais registros</p>
                     <p class="mb-3 text-center text-white">Favor informar primeiro</p>
-                    <p class="mb-3 text-center text-white">Se desejar, pode programar em grupo com o botão abaixo<br />e
-                        depois executar a liquidação total novamente</p>
+                    <p class="mb-3 text-center text-white">Se desejar, pode programar em grupo com o botão abaixo<br />e depois executar a liquidação total novamente</p>
                 </div>
 
                 <div class="flex justify-content-center align-items-center gap-3">
-                    <Button label="Ok" @click="closeCallback" text
-                        class="w-10rem p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10"></Button>
-                    <Button type="button" icon="fa-solid fa-file-invoice-dollar fa-fade" label="Liquidar todos"
-                        v-on:click="closeCallback" @click="scheduleGroupSettlement()" text
+                    <Button label="Ok" @click="closeCallback" text class="w-10rem p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10"></Button>
+                    <Button
+                        type="button"
+                        icon="fa-solid fa-file-invoice-dollar fa-fade"
+                        label="Liquidar todos"
+                        v-on:click="closeCallback"
+                        @click="scheduleGroupSettlement()"
+                        text
                         v-tooltip.top="'Clique para liquidar todas as comissões pendentes'"
-                        class="p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10" />
+                        class="p-button-lg text-primary-50 border-1 border-white-alpha-30 hover:bg-white-alpha-10"
+                    />
                 </div>
             </div>
         </template>
@@ -236,8 +243,7 @@ onMounted(async () => {
     <ConfirmDialog group="comisGroupLiquidateConfirm">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
-                <div
-                    class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
                     <i class="fa-solid fa-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
@@ -250,12 +256,17 @@ onMounted(async () => {
         </template>
     </ConfirmDialog>
     <div class="flex justify-content-end gap-3 mb-5">
-        <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" :disabled="!(uProf.comissoes >= 2)" outlined
-            @click="newItem()" v-tooltip.top="'Clique para registrar uma nova comissão'" />
-        <Button v-if="gridData && gridData.length > 0" type="button" icon="fa-solid fa-file-invoice-dollar"
-            label="Liquidar todos" :outlined="hasPendingCommissions()" :disabled="!hasPendingCommissions()"
+        <Button type="button" icon="fa-solid fa-plus" label="Nova Comissão" :disabled="!(uProf.comissoes >= 2)" outlined @click="newItem()" v-tooltip.top="'Clique para registrar uma nova comissão'" />
+        <Button
+            v-if="gridData && gridData.length > 0"
+            type="button"
+            icon="fa-solid fa-file-invoice-dollar"
+            label="Liquidar todos"
+            :outlined="hasPendingCommissions()"
+            :disabled="!hasPendingCommissions()"
             @click="scheduleGroupSettlement()"
-            v-tooltip.top="'Clique para liberar o pagamento de todas as comissões pendentes'" />
+            v-tooltip.top="'Clique para liberar o pagamento de todas as comissões pendentes'"
+        />
         <!-- <Button
             v-if="gridData && gridData.length > 0"
             type="button"
@@ -267,11 +278,9 @@ onMounted(async () => {
             v-tooltip.top="'Clique para liquidar todas as comissões pendentes'"
         /> -->
     </div>
-    <ComissaoItemForm v-if="mode == 'newItem'" @cancel="cancelNewItem()" @newItem="reload()"
-        @refreshPipeline="refreshPipeline()" :itemDataRoot="itemData" />
+    <ComissaoItemForm v-if="mode == 'newItem'" @cancel="cancelNewItem()" @newItem="reload()" @refreshPipeline="refreshPipeline()" :itemDataRoot="itemData" />
     <div v-if="gridData && gridData.length > 0">
-        <ComissaoItemForm v-for="item in gridData" :key="item.id" :itemDataRoot="item" @cancel="reload()"
-            @refreshPipeline="refreshPipeline()" />
+        <ComissaoItemForm v-for="item in gridData" :key="item.id" :itemDataRoot="item" @cancel="reload()" @refreshPipeline="refreshPipeline()" />
     </div>
     <div class="col-12">
         <Fieldset class="bg-green-200" toggleable :collapsed="true">

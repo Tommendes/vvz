@@ -16,7 +16,7 @@ import { useUserStore } from '@/stores/user';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRoute, useRouter } from 'vue-router';
@@ -73,10 +73,13 @@ onBeforeMount(() => {
 </script>
 
 <template>
-    <Breadcrumb v-if="itemData.id" :items="[
-        { label: 'Todos os cadastros', to: `/${uProf.schema_description}/cadastros` },
-        { label: itemData.nome + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
-    ]" />
+    <Breadcrumb
+        v-if="itemData.id"
+        :items="[
+            { label: 'Todos os cadastros', to: `/${uProf.schema_description}/cadastros` },
+            { label: itemData.nome + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
+        ]"
+    />
     <div class="grid" :style="route.name == 'cadastro' ? 'min-width: 100rem;' : ''">
         <div class="col-12">
             <div class="card">
@@ -86,10 +89,12 @@ onBeforeMount(() => {
                             <i class="fa-regular fa-address-card mr-2"></i>
                             <span>Dados básicos</span>
                         </template>
-                        <CadastroForm @dadosPublicos="
-                            loadDataDadosPublicos();
-                        flashDadosPublicos();
-                        " />
+                        <CadastroForm
+                            @dadosPublicos="
+                                loadDataDadosPublicos();
+                                flashDadosPublicos();
+                            "
+                        />
                     </TabPanel>
                     <TabPanel v-if="itemDataDadosPublicos.id">
                         <template #header>

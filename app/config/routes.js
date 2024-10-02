@@ -672,6 +672,9 @@ module.exports = app => {
     app.route('/whats-msgs/f-a/:func')
         .all(app.config.passport.authenticate())
         .post(app.api.whats_msgs.getByFunction)
+    app.route('/whats-apis/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .post(app.api.whats_apis.getByFunction)
 
     /**
      * Rota para impressão

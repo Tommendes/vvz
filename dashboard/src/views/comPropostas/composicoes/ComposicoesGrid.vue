@@ -12,7 +12,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 import { useRoute } from 'vue-router';
@@ -118,7 +118,7 @@ const getSeverity = (value) => {
 const newCompos = () => {
     mode.value = 'grid';
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => { }, 250);
+    setTimeout(() => {}, 250);
     itemData.value = {};
     mode.value = 'new';
 };
@@ -131,20 +131,27 @@ onMounted(async () => {
 <template>
     <div class="grid">
         <div class="col-12">
-            <ComposicaoForm :idComposicao="itemData.id" :modeParent="mode" @changed="loadData" @cancel="mode = 'grid'"
-                v-if="['view', 'new', 'edit', 'clone'].includes(mode)" />
+            <ComposicaoForm :idComposicao="itemData.id" :modeParent="mode" @changed="loadData" @cancel="mode = 'grid'" v-if="['view', 'new', 'edit', 'clone'].includes(mode)" />
         </div>
         <div class="col-12">
-            <DataTable :value="gridData" :paginator="true" :rows="10" dataKey="id" :rowHover="true"
-                v-model:filters="filters" filterDisplay="menu" :loading="loading" :filters="filters"
-                responsiveLayout="scroll" :globalFilterFields="['compos_nr', 'localizacao', 'tombamento']"
-                v-model:expandedRows="expandedRows">
+            <DataTable
+                :value="gridData"
+                :paginator="true"
+                :rows="10"
+                dataKey="id"
+                :rowHover="true"
+                v-model:filters="filters"
+                filterDisplay="menu"
+                :loading="loading"
+                :filters="filters"
+                responsiveLayout="scroll"
+                :globalFilterFields="['compos_nr', 'localizacao', 'tombamento']"
+                v-model:expandedRows="expandedRows"
+            >
                 <template #header>
                     <div class="flex justify-content-end gap-3">
-                        <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined
-                            @click="newCompos" />
-                        <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined
-                            @click="clearFilter()" />
+                        <Button type="button" icon="fa-solid fa-plus" label="Novo Registro" outlined @click="newCompos" />
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar filtro" outlined @click="clearFilter()" />
                         <span class="p-input-icon-left">
                             <i class="fa-solid fa-magnifying-glass" />
                             <InputText id="searchInput" v-model="filters['global'].value" placeholder="Pesquise..." />
@@ -155,52 +162,42 @@ onMounted(async () => {
                 </template>
                 <Column expander style="width: 5rem" />
                 <template v-for="nome in listaNomes" :key="nome">
-                    <Column :field="nome.field" :header="nome.label" :filterField="nome.field"
-                        :filterMatchMode="'contains'" sortable :dataType="nome.type"
-                        :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
+                    <Column :field="nome.field" :header="nome.label" :filterField="nome.field" :filterMatchMode="'contains'" sortable :dataType="nome.type" :style="`min-width: ${nome.minWidth ? nome.minWidth : '6rem'}`">
                         <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                            <Dropdown :id="nome.field" optionLabel="label" optionValue="value"
-                                v-model="filterModel.value" :options="nome.list" @change="filterCallback()"
-                                style="min-width: 20rem" />
+                            <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" style="min-width: 20rem" />
                         </template>
                         <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                            <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                                :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
-                                @input="filterCallback()" />
+                            <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @input="filterCallback()" />
                         </template>
                         <template v-else #filter="{ filterModel, filterCallback }">
-                            <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                                class="p-column-filter" placeholder="Pesquise..." />
+                            <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise..." />
                         </template>
                         <template #body="{ data }">
-                            <Tag v-if="nome.tagged == true" :value="data[nome.field]"
-                                :severity="getSeverity(data[nome.field])" />
-                            <span v-else-if="data[nome.field] && nome.mask"
-                                v-html="masks[nome.mask].masked(data[nome.field])"></span>
-                            <span v-else
-                                v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
+                            <Tag v-if="nome.tagged == true" :value="data[nome.field]" :severity="getSeverity(data[nome.field])" />
+                            <span v-else-if="data[nome.field] && nome.mask" v-html="masks[nome.mask].masked(data[nome.field])"></span>
+                            <span v-else v-html="data[nome.maxLength] ? String(data[nome.field]).trim().substring(0, data[nome.maxLength]) : String(data[nome.field]).trim()"></span>
                         </template>
                     </Column>
                 </template>
                 <template #expansion="slotProps">
                     <div class="ml-5 p-3">
-                        <ItensGrid :mode="'expandedFormMode'" :idComposicao="slotProps.data.id" @changed="loadData()"
+                        <ItensGrid
+                            :mode="'expandedFormMode'"
+                            :idComposicao="slotProps.data.id"
+                            @changed="loadData()"
                             @cancel="
                                 mode = 'grid';
-                            idComposicao = undefined;
-                            " />
+                                idComposicao = undefined;
+                            "
+                        />
                     </div>
                 </template>
                 <Column headerStyle="text-align: center" bodyStyle="text-align: center; overflow: visible">
                     <template #body="{ data }">
                         <div class="flex justify-content-center gap-1">
-                            <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)"
-                                class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
-                            <Button type="button" icon="fa-regular fa-copy" rounded @click="duplicateField(data)"
-                                class="p-button-outlined" v-tooltip.left="'Clique para duplicar a composição'" />
-                            <Button type="button" icon="fa-solid fa-trash" rounded @click="removeComposicao(data)"
-                                class="p-button-outlined" severity="danger"
-                                v-tooltip.left="'Clique para excluir a composição'" />
+                            <Button type="button" icon="fa-solid fa-bars" rounded @click="goField(data)" class="p-button-outlined" v-tooltip.left="'Clique para mais opções'" />
+                            <Button type="button" icon="fa-regular fa-copy" rounded @click="duplicateField(data)" class="p-button-outlined" v-tooltip.left="'Clique para duplicar a composição'" />
+                            <Button type="button" icon="fa-solid fa-trash" rounded @click="removeComposicao(data)" class="p-button-outlined" severity="danger" v-tooltip.left="'Clique para excluir a composição'" />
                         </div>
                     </template>
                 </Column>

@@ -13,7 +13,7 @@ import { onBeforeMount } from 'vue';
 const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
-    uProf.value = await store.getProfile()
+    uProf.value = await store.getProfile();
 });
 
 const biPeriod = ref();
@@ -458,14 +458,12 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${uProf.schema_description}/cadastros`"
-                                v-tooltip.top="'Clique para ir'">Cadastros <span v-if="biData.cadastros.total"
-                                    class="text-900 font-medium text-xl"> ({{ biData.cadastros.total }})</span>
+                            <router-link :to="`/${uProf.schema_description}/cadastros`" v-tooltip.top="'Clique para ir'"
+                                >Cadastros <span v-if="biData.cadastros.total" class="text-900 font-medium text-xl"> ({{ biData.cadastros.total }})</span>
                             </router-link>
                         </span>
                     </div>
-                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round"
-                        style="width: 2.5rem; height: 2.5rem">
+                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
                         <i class="fa fa-users text-gray-500 text-xl"></i>
                     </div>
                 </div>
@@ -476,10 +474,8 @@ onMounted(() => {
                 </div>
                 <div>
                     <Skeleton v-if="biData.cadastros.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.cadastros.noPeriodo }} cadastros
-                        novos </span>
-                    <span v-if="!biData.cadastros.loading" class="text-500 font-ligth text-base">no período {{
-                        biPeriod.dataPt }}</span>
+                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.cadastros.noPeriodo }} cadastros novos </span>
+                    <span v-if="!biData.cadastros.loading" class="text-500 font-ligth text-base">no período {{ biPeriod.dataPt }}</span>
                 </div>
             </div>
         </div>
@@ -489,15 +485,13 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link :to="`/${uProf.schema_description}/prospeccoes`"
-                                v-tooltip.top="'Clique para ir'">Visitas a Clientes
-                                <span v-if="biData.prospectos.total" class="text-900 font-medium text-xl"> ({{
-                                    biData.prospectos.total }})</span>
+                            <router-link :to="`/${uProf.schema_description}/prospeccoes`" v-tooltip.top="'Clique para ir'"
+                                >Visitas a Clientes
+                                <span v-if="biData.prospectos.total" class="text-900 font-medium text-xl"> ({{ biData.prospectos.total }})</span>
                             </router-link>
                         </span>
                     </div>
-                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round"
-                        style="width: 2.5rem; height: 2.5rem">
+                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
                         <i class="fa fa-comments-o text-gray-500 text-xl"></i>
                     </div>
                 </div>
@@ -508,10 +502,8 @@ onMounted(() => {
                 </div>
                 <div>
                     <Skeleton v-if="biData.prospectos.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.prospectos.noPeriodo }} novas
-                        visitas </span>
-                    <span v-if="!biData.prospectos.loading" class="text-500 font-ligth text-base">no período {{
-                        biPeriod.dataPt }}</span>
+                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.prospectos.noPeriodo }} novas visitas </span>
+                    <span v-if="!biData.prospectos.loading" class="text-500 font-ligth text-base">no período {{ biPeriod.dataPt }}</span>
                 </div>
             </div>
         </div>
@@ -521,14 +513,12 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link to="#" @click="irPipelineFilter(1, null, null, null, null, 0)"
-                                v-tooltip.top="'Clique para ver todas as propostas'">Propostas não convertidas <span
-                                    v-if="biData.propostas.total" class="text-900 font-medium text-xl"> ({{
-                                    biData.propostas.total }})</span></router-link>
+                            <router-link to="#" @click="irPipelineFilter(1, null, null, null, null, 0)" v-tooltip.top="'Clique para ver todas as propostas'"
+                                >Propostas não convertidas <span v-if="biData.propostas.total" class="text-900 font-medium text-xl"> ({{ biData.propostas.total }})</span></router-link
+                            >
                         </span>
                     </div>
-                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round"
-                        style="width: 2.5rem; height: 2.5rem">
+                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
                         <i class="fa fa-list-alt text-gray-500 text-xl"></i>
                     </div>
                 </div>
@@ -536,18 +526,14 @@ onMounted(() => {
                     <Skeleton v-if="biData.propostas.loading" width="20rem" height="2rem"></Skeleton>
                     <span v-else class="text-green-500 font-medium">{{ biData.propostas.novos }} propostas </span>
                     <span v-if="!biData.propostas.loading" class="text-500">
-                        <router-link to="#"
-                            @click="irPipelineFilter(1, dateStartOfMonth, dateEndOfMonth, null, null, 0)"
-                            v-tooltip.top="'Clique para ir'">novas este mês</router-link>
+                        <router-link to="#" @click="irPipelineFilter(1, dateStartOfMonth, dateEndOfMonth, null, null, 0)" v-tooltip.top="'Clique para ir'">novas este mês</router-link>
                     </span>
                 </div>
                 <div>
                     <Skeleton v-if="biData.propostas.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.propostas.noPeriodo }} propostas
-                        ainda não convertidas
-                        <router-link to="#"
-                            @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 0)"
-                            v-tooltip.top="'Clique para ir'">no período {{ biPeriod.dataPt }}</router-link>
+                    <span v-else class="text-green-500 font-ligth text-base"
+                        >{{ biData.propostas.noPeriodo }} propostas ainda não convertidas
+                        <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 0)" v-tooltip.top="'Clique para ir'">no período {{ biPeriod.dataPt }}</router-link>
                     </span>
                 </div>
             </div>
@@ -558,14 +544,12 @@ onMounted(() => {
                 <div class="flex justify-content-between mb-3">
                     <div>
                         <span class="block text-500 font-medium mb-3">
-                            <router-link to="#" @click="irPipelineFilter(2, null, null, null, null, 20)"
-                                v-tooltip.top="'Clique para ver todos os pedidos'">Pedidos<span
-                                    v-if="biData.pedidos.total" class="text-900 font-medium text-xl"> ({{
-                                    biData.pedidos.total }})</span></router-link>
+                            <router-link to="#" @click="irPipelineFilter(2, null, null, null, null, 20)" v-tooltip.top="'Clique para ver todos os pedidos'"
+                                >Pedidos<span v-if="biData.pedidos.total" class="text-900 font-medium text-xl"> ({{ biData.pedidos.total }})</span></router-link
+                            >
                         </span>
                     </div>
-                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round"
-                        style="width: 2.5rem; height: 2.5rem">
+                    <div class="flex align-items-center justify-content-center bg-gray-100 border-round" style="width: 2.5rem; height: 2.5rem">
                         <i class="fa fa-pie-chart text-gray-500 text-xl"></i>
                     </div>
                 </div>
@@ -573,19 +557,14 @@ onMounted(() => {
                     <Skeleton v-if="biData.pedidos.loading" width="20rem" height="2rem"></Skeleton>
                     <span v-else class="text-green-500 font-medium">{{ biData.pedidos.novos }} pedidos </span>
                     <span v-if="!biData.pedidos.loading" class="text-500">
-                        <router-link to="#"
-                            @click="irPipelineFilter(2, dateStartOfMonth, dateEndOfMonth, null, null, 20)"
-                            v-tooltip.top="'Clique para ir'">neste mês</router-link>
+                        <router-link to="#" @click="irPipelineFilter(2, dateStartOfMonth, dateEndOfMonth, null, null, 20)" v-tooltip.top="'Clique para ir'">neste mês</router-link>
                     </span>
                 </div>
                 <div>
                     <Skeleton v-if="biData.pedidos.loading" width="20rem" height="1rem"></Skeleton>
-                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.pedidos.noPeriodo }} novos
-                        pedidos </span>
+                    <span v-else class="text-green-500 font-ligth text-base">{{ biData.pedidos.noPeriodo }} novos pedidos </span>
                     <span v-if="!biData.pedidos.loading" class="text-500 font-ligth text-base">
-                        <router-link to="#"
-                            @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 20)"
-                            v-tooltip.top="'Clique para ir'">no período {{ biPeriod.dataPt }}</router-link>
+                        <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, null, 20)" v-tooltip.top="'Clique para ir'">no período {{ biPeriod.dataPt }}</router-link>
                     </span>
                 </div>
             </div>
@@ -595,30 +574,23 @@ onMounted(() => {
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h4>
-                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows + ' empresas ' : 'Empresa' }} com mais
-                        vendas<br /><span v-if="!biData.topSellings.loading"
-                            class="text-green-500 font-ligth text-base">
-                            No período {{ biPeriod.dataPt }}</span>
+                        {{ biData.topSellings.rows > 1 ? biData.topSellings.rows + ' empresas ' : 'Empresa' }} com mais vendas<br /><span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-base">
+                            No período {{ biPeriod.dataPt }}</span
+                        >
                     </h4>
                     <div>
-                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
-                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopSeilling('all')" v-tooltip.top="'Clique para todos'" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSeilling('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="item in biData.topSellings.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <router-link to="#"
-                                @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao, null, 20)"
-                                v-tooltip.top="'Clique para ir'">
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao, null, 20)" v-tooltip.top="'Clique para ir'">
                                 <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.representacao }}</span>
                             </router-link>
-                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{
-                                formatCurrency(item.valor_bruto) }})</div>
+                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
                         </div>
                         <div class="mt-2 md:mt-0 flex align-items-center">
                             <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
@@ -630,12 +602,11 @@ onMounted(() => {
                 </ul>
                 <div class="flex justify-content-end align-items-center mb-5">
                     <span v-if="!biData.topSellings.loading" class="text-green-500 font-ligth text-base">
-                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de
-                        {{ biData.topSellings.totalSellQuantity }} venda{{ `${biData.topSellings.rows > 1 ? 's' : ''}`
-                        }} desta{{
+                        Fechamento total no período: {{ formatCurrency(biData.topSellings.totalSell) }}, proveniente de {{ biData.topSellings.totalSellQuantity }} venda{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }} desta{{
                             `${biData.topSellings.rows > 1 ? 's' : ''}`
                         }}
-                        empresa{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }}</span>
+                        empresa{{ `${biData.topSellings.rows > 1 ? 's' : ''}` }}</span
+                    >
                 </div>
             </div>
         </div>
@@ -645,31 +616,23 @@ onMounted(() => {
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h4>
                         Resultados por agente
-                        <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-base"> No
-                            período {{ biPeriod.dataPt }}</span> <br /><span v-if="!biData.topSellers.loading"
-                            class="text-green-500 font-ligth text-base">
-                            {{ biData.topSellers.rows }} primeiro{{ `${biData.topSellers.rows > 1 ? 's' : ''}` }} no
-                            ranking</span>
+                        <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-base"> No período {{ biPeriod.dataPt }}</span> <br /><span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-base">
+                            {{ biData.topSellers.rows }} primeiro{{ `${biData.topSellers.rows > 1 ? 's' : ''}` }} no ranking</span
+                        >
                     </h4>
                     <div>
-                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopSellers('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopSellers('plus')" v-tooltip.top="'Clique para adicionar'" />
-                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopSellers('all')" v-tooltip.top="'Clique para todos'" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopSellers('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="item in biData.topSellers.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <router-link to="#"
-                                @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, item.agente, 20)"
-                                v-tooltip.top="'Clique para ir'">
+                            <router-link to="#" @click="irPipelineFilter(2, biPeriod.dataEn.di, biPeriod.dataEn.df, null, item.agente, 20)" v-tooltip.top="'Clique para ir'">
                                 <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.agente }}</span>
                             </router-link>
-                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{
-                                formatCurrency(item.valor_bruto) }})</div>
+                            <div class="mt-1 text-600">{{ item.quantidade }} fechamentos ({{ formatCurrency(item.valor_bruto) }})</div>
                         </div>
                         <div class="mt-2 md:mt-0 flex align-items-center">
                             <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
@@ -681,9 +644,8 @@ onMounted(() => {
                 </ul>
                 <div class="flex justify-content-end align-items-center mb-5">
                     <span v-if="!biData.topSellers.loading" class="text-green-500 font-ligth text-base">
-                        Fechamento total no período: {{ formatCurrency(biData.topSellers.totalSell) }}, proveniente de
-                        {{ biData.topSellers.totalSellQuantity }} venda{{ `${biData.topSellers.totalSellQuantity > 1 ?
-                        's' : ''}` }}</span>
+                        Fechamento total no período: {{ formatCurrency(biData.topSellers.totalSell) }}, proveniente de {{ biData.topSellers.totalSellQuantity }} venda{{ `${biData.topSellers.totalSellQuantity > 1 ? 's' : ''}` }}</span
+                    >
                 </div>
             </div>
         </div>
@@ -692,34 +654,24 @@ onMounted(() => {
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h4>
-                        Vendas recentes<br /><span v-if="!biData.recentSales.loading"
-                            class="text-green-500 font-ligth text-base"> Últimas {{ biData.recentSales.rows }}
-                            vendas</span>
+                        Vendas recentes<br /><span v-if="!biData.recentSales.loading" class="text-green-500 font-ligth text-base"> Últimas {{ biData.recentSales.rows }} vendas</span>
                     </h4>
                     <div>
-                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiRecentSales('less')" v-tooltip.top="'Clique para reduzir'"
-                            v-if="biData.recentSales.rows > 1" />
-                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiRecentSales('plus')" v-tooltip.top="'Clique para adicionar'"
-                            v-if="biData.recentSales.rows < 10" />
-                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiRecentSales('all')" v-tooltip.top="'Clique para todos'" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('less')" v-tooltip.top="'Clique para reduzir'" v-if="biData.recentSales.rows > 1" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('plus')" v-tooltip.top="'Clique para adicionar'" v-if="biData.recentSales.rows < 10" />
+                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiRecentSales('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
-                <DataTable :value="biData.recentSales.data" :rows="biData.recentSales.rows" :paginator="false"
-                    responsiveLayout="scroll">
+                <DataTable :value="biData.recentSales.data" :rows="biData.recentSales.rows" :paginator="false" responsiveLayout="scroll">
                     <Column style="width: 10%">
                         <template #header> Representação </template>
                         <template #body="slotProps">
-                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/DefaultLogomarca.png'}`"
-                                :alt="slotProps.data.representacao" width="50" class="shadow-2" />
+                            <img :src="`${slotProps.data.url_logo ? slotProps.data.url_logo : '/assets/images/DefaultLogomarca.png'}`" :alt="slotProps.data.representacao" width="50" class="shadow-2" />
                         </template>
                     </Column>
                     <Column style="width: 45%">
                         <template #header> Documento </template>
-                        <template #body="slotProps"> {{ slotProps.data.representacao }} {{ slotProps.data.documento }}
-                        </template>
+                        <template #body="slotProps"> {{ slotProps.data.representacao }} {{ slotProps.data.documento }} </template>
                     </Column>
                     <Column style="width: 15%">
                         <template #header> Bruto </template>
@@ -731,8 +683,7 @@ onMounted(() => {
                     <Column style="width: 5%">
                         <template #header> Ir </template>
                         <template #body="slotProps">
-                            <Button icon="fa-solid fa-magnifying-glass" type="button" class="p-button-text"
-                                @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para ir'" />
+                            <Button icon="fa-solid fa-magnifying-glass" type="button" class="p-button-text" @click="irRecentSale(slotProps.data.id)" v-tooltip.left="'Clique para ir'" />
                         </template>
                     </Column>
                 </DataTable>
@@ -743,32 +694,23 @@ onMounted(() => {
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h4>
-                        {{ biData.topProposals.rows > 1 ? biData.topProposals.rows + ' empresas ' : 'Empresa' }} com
-                        mais
-                        propostas pendentes<br /><span v-if="!biData.topProposals.loading"
-                            class="text-green-500 font-ligth text-base">
-                            Lançadas no período {{ biPeriod.dataPt }}</span>
+                        {{ biData.topProposals.rows > 1 ? biData.topProposals.rows + ' empresas ' : 'Empresa' }} com mais propostas pendentes<br /><span v-if="!biData.topProposals.loading" class="text-green-500 font-ligth text-base">
+                            Lançadas no período {{ biPeriod.dataPt }}</span
+                        >
                     </h4>
                     <div>
-                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopProposals('less')" v-tooltip.top="'Clique para reduzir'" />
-                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopProposals('plus')" v-tooltip.top="'Clique para adicionar'" />
-                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded"
-                            @click="applyBiTopProposals('all')" v-tooltip.top="'Clique para todos'" />
+                        <Button icon="fa-solid fa-minus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('less')" v-tooltip.top="'Clique para reduzir'" />
+                        <Button icon="fa-solid fa-plus" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('plus')" v-tooltip.top="'Clique para adicionar'" />
+                        <Button icon="fa-solid fa-list-ol" class="p-button-text p-button-plain p-button-rounded" @click="applyBiTopProposals('all')" v-tooltip.top="'Clique para todos'" />
                     </div>
                 </div>
                 <ul class="list-none p-0 m-0" v-for="item in biData.topProposals.data" :key="item.id">
                     <li class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
                         <div>
-                            <router-link to="#"
-                                @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao, 0)"
-                                v-tooltip.top="'Clique para ir'">
+                            <router-link to="#" @click="irPipelineFilter(1, biPeriod.dataEn.di, biPeriod.dataEn.df, item.unidade_descricao, 0)" v-tooltip.top="'Clique para ir'">
                                 <span class="font-medium mr-2 mb-1 md:mb-0">{{ item.representacao }}</span>
                             </router-link>
-                            <div class="mt-1 text-600">{{ item.quantidade }} propostas ({{
-                                formatCurrency(item.valor_bruto) }})
-                            </div>
+                            <div class="mt-1 text-600">{{ item.quantidade }} propostas ({{ formatCurrency(item.valor_bruto) }})</div>
                         </div>
                         <div class="mt-2 md:mt-0 flex align-items-center">
                             <div class="surface-300 border-round overflow-hidden w-10rem lg:w-6rem" style="height: 8px">
@@ -780,13 +722,11 @@ onMounted(() => {
                 </ul>
                 <div class="flex justify-content-end align-items-center mb-5">
                     <span v-if="!biData.topProposals.loading" class="text-green-500 font-ligth text-base">
-                        Total no período: {{ formatCurrency(biData.topProposals.totalProposed) }}, proveniente de {{
-                            biData.topProposals.totalProposedQuantity }} proposta{{ `${biData.topProposals.rows > 1 ? 's' :
-                        ''}` }}
-                        desta{{
+                        Total no período: {{ formatCurrency(biData.topProposals.totalProposed) }}, proveniente de {{ biData.topProposals.totalProposedQuantity }} proposta{{ `${biData.topProposals.rows > 1 ? 's' : ''}` }} desta{{
                             `${biData.topProposals.rows > 1 ? 's' : ''}`
                         }}
-                        empresa{{ `${biData.topProposals.rows > 1 ? 's' : ''}` }}</span>
+                        empresa{{ `${biData.topProposals.rows > 1 ? 's' : ''}` }}</span
+                    >
                 </div>
             </div>
         </div>
@@ -796,14 +736,20 @@ onMounted(() => {
                 <div class="flex justify-content-between align-items-center mb-5">
                     <h4>Visão geral de vendas sobre os produtos mais vendidos</h4>
                     <div class="p-inputgroup">
-                        <SplitButton label="Exportar" :model="chartExportItems" icon="fa-solid fa-ellipsis-vertical"
-                            @click="exportToPNG" text severity="info"></SplitButton>
-                        <Dropdown v-model="biPeriodVG" :options="biPeriodOptions" optionLabel="label"
-                            optionValue="value" placeholder="Predefinições" class="mr-2 ml-2"
-                            @update:modelValue="applyBiParamsVG()" />
-                        <Calendar aria-describedby="username-help" showIcon dateFormat="dd/mm/yy" v-model="biPeriodVG"
-                            selectionMode="range" :numberOfMonths="2" :manualInput="true" showButtonBar
-                            class="custom-calendar" @update:modelValue="applyBiParamsVG()" />
+                        <SplitButton label="Exportar" :model="chartExportItems" icon="fa-solid fa-ellipsis-vertical" @click="exportToPNG" text severity="info"></SplitButton>
+                        <Dropdown v-model="biPeriodVG" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="mr-2 ml-2" @update:modelValue="applyBiParamsVG()" />
+                        <Calendar
+                            aria-describedby="username-help"
+                            showIcon
+                            dateFormat="dd/mm/yy"
+                            v-model="biPeriodVG"
+                            selectionMode="range"
+                            :numberOfMonths="2"
+                            :manualInput="true"
+                            showButtonBar
+                            class="custom-calendar"
+                            @update:modelValue="applyBiParamsVG()"
+                        />
                     </div>
                 </div>
                 <Chart type="line" :data="lineData" :options="lineOptions" />
@@ -819,26 +765,40 @@ onMounted(() => {
                     <div class="flex flex-column gap-2">
                         <label for="biPeriod" style="text-align: end">Período de Exibição Geral</label>
                         <div class="p-inputgroup">
-                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label"
-                                optionValue="value" placeholder="Predefinições" class="w-full md:w-16rem mr-2"
-                                @update:modelValue="applyBiParams()" />
-                            <Calendar aria-describedby="username-help" showIcon dateFormat="dd/mm/yy" v-model="biPeriod"
-                                selectionMode="range" :numberOfMonths="2" :manualInput="true" showButtonBar
-                                class="custom-calendar w-full md:w-16rem" @update:modelValue="applyBiParams()" />
+                            <Dropdown v-model="biPeriod" :options="biPeriodOptions" optionLabel="label" optionValue="value" placeholder="Predefinições" class="w-full md:w-16rem mr-2" @update:modelValue="applyBiParams()" />
+                            <Calendar
+                                aria-describedby="username-help"
+                                showIcon
+                                dateFormat="dd/mm/yy"
+                                v-model="biPeriod"
+                                selectionMode="range"
+                                :numberOfMonths="2"
+                                :manualInput="true"
+                                showButtonBar
+                                class="custom-calendar w-full md:w-16rem"
+                                @update:modelValue="applyBiParams()"
+                            />
                         </div>
                         <!-- <p>{{ biPeriod }}</p> -->
-                        <small id="username-help">Selecione acima o período desejado para apresentar os
-                            resultados</small>
+                        <small id="username-help">Selecione acima o período desejado para apresentar os resultados</small>
                     </div>
                 </div>
                 <div class="flex justify-content-end mb-5" v-if="lineData.labels.length == 0">
                     <div class="flex flex-column gap-2">
                         <label for="biPeriodVG" style="text-align: end">Período de Exibição do Gráfico</label>
-                        <Calendar aria-describedby="username-help" showIcon dateFormat="dd/mm/yy" v-model="biPeriodVG"
-                            selectionMode="range" :numberOfMonths="2" :manualInput="true" showButtonBar
-                            class="custom-calendar" @update:modelValue="applyBiParamsVG()" />
-                        <small id="username-help">Selecione acima o período desejado para apresentar os resultados no
-                            gráfico.</small>
+                        <Calendar
+                            aria-describedby="username-help"
+                            showIcon
+                            dateFormat="dd/mm/yy"
+                            v-model="biPeriodVG"
+                            selectionMode="range"
+                            :numberOfMonths="2"
+                            :manualInput="true"
+                            showButtonBar
+                            class="custom-calendar"
+                            @update:modelValue="applyBiParamsVG()"
+                        />
+                        <small id="username-help">Selecione acima o período desejado para apresentar os resultados no gráfico.</small>
                     </div>
                 </div>
             </div>
