@@ -29,18 +29,18 @@ module.exports = app => {
     function removeAccents(value) {
         return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         // return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')        
-    //     let ret = value || ""
-    //     ret = ret.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
-    //     ret = ret.replace('/[áàãâä]/ui', 'a');
-    //     ret = ret.replace('/[éèêë]/ui', 'e');
-    //     ret = ret.replace('/[íìîï]/ui', 'i');
-    //     ret = ret.replace('/[óòõôö]/ui', 'o');
-    //     ret = ret.replace('/[úùûü]/ui', 'u');
-    //     ret = ret.replace('/[ç]/ui', 'c');
-    //     ret = ret.replace('/[^a-z0-9]/i', '_');
-    //     ret = ret.replace('/_+/', '_');
-    //     // ret = ret.replaceAll('º', 'o')
-    //     return ret
+        //     let ret = value || ""
+        //     ret = ret.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+        //     ret = ret.replace('/[áàãâä]/ui', 'a');
+        //     ret = ret.replace('/[éèêë]/ui', 'e');
+        //     ret = ret.replace('/[íìîï]/ui', 'i');
+        //     ret = ret.replace('/[óòõôö]/ui', 'o');
+        //     ret = ret.replace('/[úùûü]/ui', 'u');
+        //     ret = ret.replace('/[ç]/ui', 'c');
+        //     ret = ret.replace('/[^a-z0-9]/i', '_');
+        //     ret = ret.replace('/_+/', '_');
+        //     // ret = ret.replaceAll('º', 'o')
+        //     return ret
     }
 
     function removeAccentsObj(key, value) {
@@ -127,6 +127,7 @@ module.exports = app => {
         return Math.ceil(num * 100) / 100;
     }
 
+    // Remove tags html e formata texto para o padrão do WhatsApp
     function convertHtmlToWhatsappFormat(html) {
         return html
             .replace(/<strong>(.*?)<\/strong>/g, '*$1*') // Negrito
@@ -135,10 +136,36 @@ module.exports = app => {
             .replace(/<br>/g, '\n') // Parágrafo
     }
 
+    // Substitui tags whastapp por tags html
+    function convertWhatsappFormattoHtml(html, limit = 0, removeParagraph = false) {
+        if (!html) return '';
+        html = html.trim().toString();
+        if (limit > 0) {
+            html = html.substring(0, limit) + '...';
+        }
+        // Escapa caracteres especiais HTML
+        // html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        // Substitui marcações de negrito e itálico
+        html = html
+            .replace(/\*(.*?)\*/g, '<strong>$1</strong>') // Negrito
+            .replace(/_(.*?)_/g, '<em>$1</em>'); // Itálico
+        // Substitui quebras de linha simples por <p>
+        html = html
+            .split('\\n')
+            .map((line) => {
+                if (removeParagraph) return ` ${line} `;
+                else return `<p>${line}</p>`;
+            })
+            .join('')
+            .trim();
+    
+        return html;
+    }
+
     return {
         capitalizeFirstLetter, titleCase, removeAccents, removeAccentsObj,
         numbersOrZero, changeUpperCase, diffInDays, encryptPassword, comparePassword,
         convertESocialTextToJson, getIdParam, getIdCidade, getIdCargos, countOccurrences,
-        formatCurrency, ceilTwoDecimals, convertHtmlToWhatsappFormat
+        formatCurrency, ceilTwoDecimals, convertHtmlToWhatsappFormat, convertWhatsappFormattoHtml
     }
 }
