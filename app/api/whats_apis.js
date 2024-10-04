@@ -204,6 +204,8 @@ module.exports = app => {
                 // Insere o nono dígito no telefone
                 for (let i = 0; i < body.length; i++) {
                     body[i].phone = addNinthDigit(body[i].phone)
+                    body[i].status = STATUS_ACTIVE
+                    body[i].created_at = new Date()
                 }
                 // Inserir contatos no banco de dados local
                 try {
