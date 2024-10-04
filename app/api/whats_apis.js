@@ -187,7 +187,7 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
-        
+
         await app.db(`${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`).where({ status: STATUS_ACTIVE }).update({ status: STATUS_INACTIVE })
 
         const url = `${urlPlugChat}contacts?page=1&pageSize=10000`
@@ -199,9 +199,18 @@ module.exports = app => {
         axios.get(url, config)
             .then(async response => {
                 const body = response.data
-                const count = body.length
-
-                return res.status(200).send({ count, body })
+                // Insere o nono dígito no telefone
+                for (let i = 0; i < body.length; i++) {
+                    body[i].phone = addNinthDigit(body[i].phone)
+                }
+                // Inserir contatos no banco de dados local
+                app.db(tabelaDomain).insert(body).then((res) => {
+                    const count = res.length
+                    return res.status(200).send({ count, res })
+                }).catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    res.status(500).send(error)
+                })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
@@ -262,5 +271,38 @@ module.exports = app => {
         }
     }
 
+    // Função para Adicionar o Nono Dígito
+    function addNinthDigit(phone) {
+        // Remove espaços, hifens e parênteses
+        phone = phone.replace(/\s|[-()]/g, '');
+
+        // Verifica se o número é do Brasil
+        const isBrasil = phone.startsWith('+55') || phone.startsWith('55');
+
+        if (isBrasil) {
+            // Remove o código do país para facilitar a verificação
+            phone = phone.replace(/^(\+55|55)/, '');
+
+            // Verifica se o número tem 10 dígitos (fixo) ou 11 dígitos (celular)
+            if (phone.length === 10) {
+                // Número fixo, não adiciona o nono dígito
+                return '+55' + phone;
+            } else if (phone.length === 11) {
+                // Número celular, verifica se precisa adicionar o nono dígito
+                const ddd = phone.slice(0, 2);
+                const primeiroDigito = phone[2];
+
+                if (['9', '8', '7', '6'].includes(primeiroDigito)) {
+                    // Número celular, adiciona o nono dígito se não estiver presente
+                    if (phone[2] !== '9') {
+                        return '+55' + ddd + '9' + phone.slice(2);
+                    }
+                }
+            }
+        }
+
+        // Retorna o número original se não for do Brasil ou não precisar de ajuste
+        return phone;
+    }
     return { getByFunction }
 }
