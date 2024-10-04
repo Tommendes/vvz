@@ -11,6 +11,8 @@ module.exports = app => {
     const STATUS_ACTIVE = 10
     const STATUS_INACTIVE = 20
     const STATUS_DELETED = 99
+
+    // retorna os contatos presentes no banco de dados local
     const getLocalContacts = async (req, res) => {
         let user = req.user
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
@@ -30,14 +32,20 @@ module.exports = app => {
             .leftJoin({ msgs: tabelaMsgsDomain }, 'tbl1.phone', 'msgs.phone')
             .select('msgs.schedule', app.db.raw('COUNT(msgs.id) as quant'), 'msgs.situacao', 'msgs.message', 'tbl1.id', 'tbl1.name', 'tbl1.phone', 'tbl1.short', 'tbl1.verify', 'tbl1.image')
         if (filter) {
-            ret.where('tbl1.name', 'like', `%${filter}%`)
-                .orWhere('tbl1.phone', 'like', `%${filter}%`)
+            ret.where(function () {
+                this.where('tbl1.name', 'like', `%${filter}%`)
+                    .orWhere('tbl1.phone', 'like', `%${filter}%`)
+            })
         }
-        ret.groupBy('tbl1.id')
+        ret.andWhere('tbl1.status', STATUS_ACTIVE)
+            .groupBy('tbl1.id')
             .orderBy('msgs.situacao', 'desc')
             .orderBy('msgs.schedule', 'desc')
             .orderBy('tbl1.name', 'asc')
             .limit(20)
+
+        console.log(ret.toString());
+
 
         ret.then(body => {
             body.forEach(element => {
@@ -104,12 +112,8 @@ module.exports = app => {
             },
         };
         const url = `${urlPlugChat}profile-picture?phone=${phone}`
-        try {
-            const data = await axios.get(url, config)
-            return data.data
-        } catch (error) {
-
-        }
+        const picture = await axios.get(url, config)
+        return picture.data
     }
 
     const getContacts = async (req, res) => {
@@ -237,7 +241,8 @@ module.exports = app => {
 
         const phone = req.query.phone
         const imageProfile = await getProfileImage(phone, uParams)
-        if (imageProfile && imageProfile.link) {
+
+        if (imageProfile && imageProfile.link && imageProfile.link != 'null') {
             const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
             await app.db(tabelaDomain).update({ image: imageProfile.link }).where({ phone }).then(() => {
                 return res.status(200).send(imageProfile)
@@ -268,7 +273,8 @@ module.exports = app => {
                 initializeContactsInLocal(req, res)
                 break;
             case 'upl':
-                updateProfileImageInLocal(req, res)
+                updateProfileImageInLocal(req, res);
+                break;
             default:
                 res.status(404).send('Função inexistente')
                 break;
