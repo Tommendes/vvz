@@ -190,6 +190,8 @@ module.exports = app => {
 
         await app.db(`${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`).where({ status: STATUS_ACTIVE }).update({ status: STATUS_INACTIVE })
 
+        const tabelaProfilesDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
+
         const url = `${urlPlugChat}contacts?page=1&pageSize=10000`
         const config = {
             headers: {
@@ -204,13 +206,13 @@ module.exports = app => {
                     body[i].phone = addNinthDigit(body[i].phone)
                 }
                 // Inserir contatos no banco de dados local
-                app.db(tabelaDomain).insert(body).then((res) => {
-                    const count = res.length
-                    return res.status(200).send({ count, res })
-                }).catch(error => {
+                try {
+                    const insertBody = await app.db(tabelaProfilesDomain).insert(body)
+                } catch (error) {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    res.status(500).send(error)
-                })
+                }
+                const count = body.length
+                return res.status(200).send({ count, body })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
