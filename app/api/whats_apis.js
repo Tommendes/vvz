@@ -8,7 +8,9 @@ module.exports = app => {
     const urlSpeedChat = `https://www.speedtest.dev.br/api/whatsapp/`
     const urlPlugChat = `https://www.plugchat.com.br/api/whatsapp/`
     const tabelaProfiles = 'whats_profiles'
-
+    const STATUS_ACTIVE = 10
+    const STATUS_INACTIVE = 20
+    const STATUS_DELETED = 99
     const getLocalContacts = async (req, res) => {
         let user = req.user
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
@@ -185,6 +187,9 @@ module.exports = app => {
             return res.status(401).send(error)
         }
 
+        
+        await app.db(`${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`).where({ status: STATUS_ACTIVE }).update({ status: STATUS_INACTIVE })
+
         const url = `${urlPlugChat}contacts?page=1&pageSize=10000`
         const config = {
             headers: {
@@ -194,21 +199,41 @@ module.exports = app => {
         axios.get(url, config)
             .then(async response => {
                 const body = response.data
-                for (let i = 0; i < body.length; i++) {
-                    const imageProfile = await getProfileImage(body[i].phone, uParams)
-                    if (imageProfile && imageProfile.link) body[i].image = imageProfile.link
-                    body[i].created_at = new Date()
-                    // Excluir contato se existir antes de inserir
-                    await app.db(`${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`).where({ phone: body[i].phone }).del()
-                    await app.db(`${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`).insert(body[i])
-                }
                 const count = body.length
+
                 return res.status(200).send({ count, body })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 return res.status(500).send(error)
             })
+    }
+
+    // Esta função será responsável por atualizar as imagens de perfil do perfil informado a partir do plugchat
+    const updateProfileImageInLocal = async (req, res) => {
+        let user = req.user
+        const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const phone = req.query.phone
+        const imageProfile = await getProfileImage(phone, uParams)
+        if (imageProfile && imageProfile.link) {
+            const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
+            await app.db(tabelaDomain).update({ image: imageProfile.link }).where({ phone }).then(() => {
+                return res.status(200).send(imageProfile)
+            }).catch(error => {
+                return res.status(500).send(error)
+            })
+        } else {
+            return res.status(404).send('Imagem não encontrada')
+        }
     }
 
     const getByFunction = async (req, res) => {
@@ -226,9 +251,11 @@ module.exports = app => {
             case 'scl':
                 setContactsInLocal(req, res)
                 break;
-            case 'inc':
+            case 'icl':
                 initializeContactsInLocal(req, res)
                 break;
+            case 'upl':
+                updateProfileImageInLocal(req, res)
             default:
                 res.status(404).send('Função inexistente')
                 break;
