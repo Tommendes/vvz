@@ -294,10 +294,8 @@ module.exports = app => {
                 const primeiroDigito = phone[2];
 
                 if (['9', '8', '7', '6'].includes(primeiroDigito)) {
-                    // Número celular, adiciona o nono dígito se não estiver presente
-                    if (phone[2] !== '9') {
-                        return '55' + ddd + '9' + phone.slice(2);
-                    }
+                    // Número celular, adiciona o nono dígito
+                    return '55' + ddd + '9' + phone.slice(2);
                 }
             } else if (phone.length === 11) {
                 // Número fixo, não adiciona o nono dígito
@@ -308,17 +306,19 @@ module.exports = app => {
         // Retorna o número original se não for do Brasil ou não precisar de ajuste
         return phone;
     }
-    // Teste
-    const numeros = [
-        '5511987654321', // Número celular com nono dígito
-        '551187654321',  // Número celular sem nono dígito
-        '551134567890',  // Número fixo
-        '1234567890',    // Número de outro país
-    ];
+    // // Teste
+    // const numeros = [
+    //     '5511987654321', // Número celular com nono dígito
+    //     '558294156145', // Número celular sem nono dígito
+    //     '558281499024', // Número celular sem nono dígito
+    //     '551187654321',  // Número celular sem nono dígito
+    //     '551134567890',  // Número fixo
+    //     '1234567890',    // Número de outro país
+    // ];
 
-    numeros.forEach(numero => {
-        console.log(addNinthDigit(numero));
-    });
+    // numeros.forEach(numero => {
+    //     console.log(addNinthDigit(numero));
+    // });
 
     return { getByFunction }
 }
