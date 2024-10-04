@@ -289,9 +289,6 @@ module.exports = app => {
 
             // Verifica se o número tem 10 dígitos (fixo) ou 11 dígitos (celular)
             if (phone.length === 10) {
-                // Número fixo, não adiciona o nono dígito
-                return '+55' + phone;
-            } else if (phone.length === 11) {
                 // Número celular, verifica se precisa adicionar o nono dígito
                 const ddd = phone.slice(0, 2);
                 const primeiroDigito = phone[2];
@@ -299,14 +296,29 @@ module.exports = app => {
                 if (['9', '8', '7', '6'].includes(primeiroDigito)) {
                     // Número celular, adiciona o nono dígito se não estiver presente
                     if (phone[2] !== '9') {
-                        return '+55' + ddd + '9' + phone.slice(2);
+                        return '55' + ddd + '9' + phone.slice(2);
                     }
                 }
+            } else if (phone.length === 11) {
+                // Número fixo, não adiciona o nono dígito
+                return '55' + phone;
             }
         }
 
         // Retorna o número original se não for do Brasil ou não precisar de ajuste
         return phone;
     }
+    // Teste
+    const numeros = [
+        '5511987654321', // Número celular com nono dígito
+        '551187654321',  // Número celular sem nono dígito
+        '551134567890',  // Número fixo
+        '1234567890',    // Número de outro país
+    ];
+
+    numeros.forEach(numero => {
+        console.log(addNinthDigit(numero));
+    });
+
     return { getByFunction }
 }
