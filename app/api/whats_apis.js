@@ -12,6 +12,38 @@ module.exports = app => {
     const STATUS_INACTIVE = 20
     const STATUS_DELETED = 99
 
+    // Retorna os contatos do plugchat 
+    const getContacts = async (req, res) => {
+        let user = req.user
+        const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const urlQueryes = req.query
+        const url = `${urlPlugChat}contacts?page=${urlQueryes.page || 1}&pageSize=${urlQueryes.pageSize || 999999}`
+
+        const config = {
+            headers: {
+                'Authorization': uParams.chat_account_tkn
+            },
+        };
+        axios.get(url, config)
+            .then(response => {
+                const count = response.data.length
+                return res.json({ count, data: response.data })
+            })
+            .catch(error => {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                return res.status(500).send(error)
+            })
+    }
+
     // retorna os contatos presentes no banco de dados local
     const getLocalContacts = async (req, res) => {
         let user = req.user
@@ -44,9 +76,6 @@ module.exports = app => {
             .orderBy('tbl1.name', 'asc')
             .limit(20)
 
-        console.log(ret.toString());
-
-
         ret.then(body => {
             body.forEach(element => {
                 if (element.schedule) {
@@ -61,50 +90,6 @@ module.exports = app => {
             })
     }
 
-    const setContactsInLocal = async (req, res) => {
-        let user = req.user
-        const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
-        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        try {
-            // Alçada do usuário
-            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            return res.status(401).send(error)
-        }
-        const body = req.body
-        for (let i = 0; i < body.length; i++) {
-            try {
-                existsOrError(body[i].phone, 'Telefone não informado')
-            } catch (error) {
-                return res.status(400).send(error)
-            }
-        }
-        // return res.status(200).send(body)
-        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
-        // Criar um update or insert baseado em body.phone
-        let errors = []
-        let success = 0
-        try {
-            for (let i = 0; i < body.length; i++) {
-                const imageProfile = await getProfileImage(body[i].phone, uParams)
-                if (imageProfile && imageProfile.link) body[i].image = imageProfile.link
-                const ret = await app.db(tabelaDomain).where({ phone: body[i].phone }).first()
-                if (ret) {
-                    body[i].updated_at = new Date()
-                    await app.db(tabelaDomain).update(body[i]).where({ phone: body[i].phone }).then(() => success++).catch(error => errors.push(error))
-                } else {
-                    body[i].created_at = new Date()
-                    await app.db(tabelaDomain).insert(body[i]).then(() => success++).catch(error => errors.push(error))
-                }
-            }
-            return res.status(200).send({ body, errors })
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            return res.status(500).send(errors)
-        }
-    }
-
     const getProfileImage = async (phone, uParams) => {
         const config = {
             headers: {
@@ -114,36 +99,6 @@ module.exports = app => {
         const url = `${urlPlugChat}profile-picture?phone=${phone}`
         const picture = await axios.get(url, config)
         return picture.data
-    }
-
-    const getContacts = async (req, res) => {
-        let user = req.user
-        const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
-        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        try {
-            // Alçada do usuário
-            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            return res.status(401).send(error)
-        }
-
-        const urlQueryes = req.query
-        const url = `${urlPlugChat}contacts?page=${urlQueryes.page || 1}&pageSize=${urlQueryes.pageSize || 20}`
-
-        const config = {
-            headers: {
-                'Authorization': uParams.chat_account_tkn
-            },
-        };
-        axios.get(url, config)
-            .then(response => {
-                return res.json(response.data)
-            })
-            .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                return res.status(500).send(error)
-            })
     }
 
     const getGeneric = async (req, res) => {
@@ -218,7 +173,7 @@ module.exports = app => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
                 }
                 const count = body.length
-                return res.status(200).send({ count, body })
+                return res.status(200).send({ count, data: body })
             })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
