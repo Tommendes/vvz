@@ -58,6 +58,7 @@ module.exports = app => {
         }
 
         const filter = req.query.filter || undefined
+        const pageSize = req.query.pageSize || 99999
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
         const tabelaMsgsDomain = `${dbPrefix}_${uParams.schema_name}.whats_msgs`
         const ret = app.db({ tbl1: tabelaDomain })
@@ -74,7 +75,8 @@ module.exports = app => {
             .orderBy('msgs.situacao', 'desc')
             .orderBy('msgs.schedule', 'desc')
             .orderBy('tbl1.name', 'asc')
-            .limit(20)
+            .limit(pageSize)
+            .offset((req.query.page || 1 - 1) * pageSize)
 
         ret.then(body => {
             body.forEach(element => {
@@ -204,8 +206,6 @@ module.exports = app => {
             }).catch(error => {
                 return res.status(500).send(error)
             })
-        } else {
-            return res.status(404).send('Imagem não encontrada')
         }
     }
 
@@ -214,6 +214,9 @@ module.exports = app => {
         switch (func) {
             case 'contacts':
                 getContacts(req, res)
+                break;
+            case 'lstContacts':
+                getListContacts(req, res)
                 break;
             case 'gen':
                 getGeneric(req, res)
