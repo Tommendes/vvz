@@ -37,19 +37,8 @@ onBeforeMount(async () => {
 
 // Função para resetar o timer de inatividade
 const resetTimer = () => {
-    //   store.startInactivityTimer();
     store.resetInactivityTimer();
 };
-
-// // Adicionar listeners para eventos globais
-// onMounted(() => {
-//   window.addEventListener('click', resetTimer);
-// });
-
-// // Remover listeners quando o componente for destruído
-// onBeforeUnmount(() => {
-//   window.removeEventListener('click', resetTimer);
-// });
 
 document.addEventListener('mousemove', resetTimer);
 document.addEventListener('click', resetTimer);

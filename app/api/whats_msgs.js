@@ -10,7 +10,7 @@ module.exports = app => {
     const tabelaAlias = 'Mensagem de WhatsApp'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
-
+    const MAX_BODY_LENGTH = 1000
 
     const save = async (req, res) => {
         let user = req.user
@@ -32,9 +32,14 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         try {
             existsOrError(body.message, 'Mensagem não informada')
-            body.message = convertHtmlToWhatsappFormat(body.message)
-            // O corpo da mensagem deve ser no máximo 500 caracteres
-            if (body.message.length > 500) throw 'Mensagem deve ter no máximo 500 caracteres'
+            // body.message = await convertHtmlToWhatsappFormat(body.message)
+            // console.log('body.message', body.message);
+
+            // O corpo da mensagem deve ser no máximo ${MAX_BODY_LENGTH} caracteres
+            if (body.message.length > MAX_BODY_LENGTH) {
+                console.log(`Mensagem deve ter no máximo ${MAX_BODY_LENGTH} caracteres.`, body.message.length);
+                throw `Mensagem deve ter no máximo ${MAX_BODY_LENGTH} caracteres.`
+            }
             existsOrError(body.schedule, 'Data e hora do envio não informada')
             // Verificar formato da data e hora (YYYY-MM-DD HH:mm:ss)
             if (!moment(body.schedule, 'YYYY-MM-DD HH:mm:ss', true).isValid()) throw 'Data e hora do envio inválida'
@@ -61,6 +66,8 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         } else {
+            // Se body.schedule for menor que agora, alterar para agora
+            if (moment(body.schedule).isBefore(moment())) body.schedule = moment().format('YYYY-MM-DD HH:mm:00')
             // Criar nova mensagem
             body.status = STATUS_ACTIVE
             body.created_at = new Date()
@@ -68,7 +75,7 @@ module.exports = app => {
             let recurrence = undefined
             if (body.recurrent && body.recurrence) {
                 recurrence = {
-                    frequency: body.recurrence.frequency,
+                    frequency: body.recurrence.frequency.code,
                     interval: body.recurrence.interval,
                     next_run: moment(body.schedule).format('YYYY-MM-DD HH:mm:ss'),//.add(body.recurrence.interval, body.recurrence.frequency).format('YYYY-MM-DD HH:mm:ss'),
                     end_date: body.recurrence.end_date ? moment(body.recurrence.end_date).format('YYYY-MM-DD HH:mm:ss') : null
@@ -83,7 +90,7 @@ module.exports = app => {
                         recurrence.msg_id = msgId;
                         await app.db(`${dbPrefix}_${uParams.schema_name}.whats_msgs_recurrences`).insert(recurrence);
                     }
-                    if (body.schedule <= moment().format('YYYY-MM-DD HH:mm:ss')) await sendMessage({ id: msgId, message: body.message, phone: body.phone }, uParams, tabelaDomain)
+                    if (body.schedule <= moment().format('YYYY-MM-DD HH:mm:ss')) await sendMessage({ id: msgId, message: body.message, id_profile: body.id_profile, phone: body.phone }, uParams, tabelaDomain)
                     return res.status(200).send({ id: msgId })
                 })
                 .catch(error => {
@@ -106,7 +113,8 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const ret = app.db({ tbl1: tabelaDomain }).where({ status: STATUS_ACTIVE }).orderBy('created_at', 'desc')
+        const ret = app.db({ tbl1: tabelaDomain })
+            .where({ status: STATUS_ACTIVE, id_profile: req.params.id_profile }).orderBy('created_at', 'desc')
 
         if (req.query.situacao) ret.andWhere('tbl1.situacao', req.query.situacao)
 
@@ -192,6 +200,7 @@ module.exports = app => {
                 novoBodyMessage = `*${uParams.name}:*\n`
             }
             novoBodyMessage += await substituirAtributosEspeciais(uParams, message) // Certifique-se de que substituirAtributosEspeciais está definido
+            novoBodyMessage = await convertHtmlToWhatsappFormat(novoBodyMessage) // Certifique-se de que convertHtmlToWhatsappFormat está definido
             await axios.post(`${speedchat.host}/send-text`, { message: novoBodyMessage, phone: message.phone }, config) // Certifique-se de que speedchat.host está definido
                 .then(async _ => {
                     // Atualizar a situação da mensagem para 2 (enviada)
@@ -284,6 +293,8 @@ module.exports = app => {
          * {clientEmail} = email da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
          * {clientTel} = tel1 da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
          * {userName} = nome do usuário que enviou a mensagem (remetente)
+         * {time-1:mi} = momento do envio - 1:(mi)nuto,(h)ora,(d)ia,(s)emana,(m)es,(a)no
+         * {time} = momento do envio
          * {senderName} = nome do usuário que receberá a mensagem (destinatário)
         */
         const novoBodyMessage = await substituirAtributosEspeciais(uParams, body) // Certifique-se de que substituirAtributosEspeciais está definido
@@ -302,18 +313,50 @@ module.exports = app => {
         const tabelaEmpresaDomain = `${dbPrefix}_${remetente.schema_name}.empresa` // Certifique-se de que dbPrefix está definido
         let empresa = await app.db(tabelaEmpresaDomain).where({ id: remetente.id_empresa }).first(); // Certifique-se de que app.db está definido
         let destinatario = {}
-        // Verificar se a mensagem possui uma tag {senderName} e se possuir, validar se existe messageBody.destinId
+        // Verificar se a mensagem possui uma tag {senderName} e se possuir, validar se existe messageBody.id_profile
         if (messageBody.message.includes('{senderName}')) {
-            if (messageBody.destinId) {
-                destinatario = await obterDadosDestinatario(remetente, messageBody.destinId); // Certifique-se de que obterDadosDestinatario está definido
+            if (messageBody.id_profile) {
+                destinatario = await obterDadosDestinatario(remetente, messageBody.id_profile); // Certifique-se de que obterDadosDestinatario está definido
                 // Capturar o primeiro e último nome do destinatário.nome
-                const nome = destinatario.nome.split(' ')
-                destinatario.nome = nome[0]
-                if (nome.length > 1) destinatario.nome += ` ${nome[nome.length - 1]}`
-                messageBody.message = messageBody.message.replace(/{senderName}/g, destinatario.nome);
+                const name = destinatario.name.split(' ')
+                destinatario.name = name[0]
+                // if (name.length > 1) destinatario.name += ` ${name[name.length - 1]}`
+                messageBody.message = messageBody.message.replace(/{senderName}/g, destinatario.name);
             } else messageBody.message = messageBody.message.replace(/ {senderName}/g, '').replace(/{senderName}/g, '');
         }
 
+        // Detectar e formatar o valor da tag especial {time-1:mi} ou {time+2:h}
+        const timeRegex = /{time([+-])(\d+):([a-z]+)}/g;
+        const timeMatches = messageBody.message.match(timeRegex);
+
+        if (timeMatches) {
+            for (const match of timeMatches) {
+                const timeMatch = match.match(/{time([+-])(\d+):([a-z]+)}/);
+                const operator = timeMatch[1];
+                const timeValue = parseInt(timeMatch[2]);
+                let timeUnit = timeMatch[3];
+                switch (timeUnit) {
+                    case 'mi': timeUnit = 'minutes'; break;
+                    case 'h': timeUnit = 'hours'; break;
+                    case 'd': timeUnit = 'days'; break;
+                    case 's': timeUnit = 'weeks'; break;
+                    case 'm': timeUnit = 'months'; break;
+                    case 'a': timeUnit = 'years'; break;
+                    default: timeUnit = 'minutes'; break;
+                }
+                
+                let time;
+                if (operator === '+') {
+                    if (['d', 's', 'm', 'a'].includes(timeMatch[3])) time = moment().add(timeValue, timeUnit).format('DD/MM/YYYY');
+                    else time = moment().add(timeValue, timeUnit).format('HH:mm');
+                } else {
+                    if (['d', 's', 'm', 'a'].includes(timeMatch[3])) time = moment().subtract(timeValue, timeUnit).format('DD/MM/YYYY');
+                    else time = moment().subtract(timeValue, timeUnit).format('HH:mm');
+                }
+
+                messageBody.message = messageBody.message.replace(timeMatch[0], time);
+            }
+        }
         // Substituir os placeholders pelos valores reais
         messageBody.message = messageBody.message
             .replace(/{clientName}/g, `${empresa.fantasia}`)
@@ -321,13 +364,14 @@ module.exports = app => {
             .replace(/{clientEmail}/g, empresa.email_comercial)
             .replace(/{clientTel}/g, empresa.tel1)
             .replace(/{userName}/g, remetente.name)
+            .replace(/{time}/g, moment().format('HH:mm'))
 
         return messageBody.message;
     };
 
     const obterDadosDestinatario = async (remetente, destinatarioId) => {
-        const tabelaCadastrosDomain = `${dbPrefix}_${remetente.schema_name}.cadastros` // Certifique-se de que dbPrefix está definido
-        const destinatario = await app.db({ u: tabelaCadastrosDomain }).select('nome').where({ 'id': destinatarioId }).first(); // Certifique-se de que app.db está definido
+        const tabelaCadastrosDomain = `${dbPrefix}_${remetente.schema_name}.whats_profiles` // Certifique-se de que dbPrefix está definido
+        const destinatario = await app.db({ u: tabelaCadastrosDomain }).select('name').where({ 'id': destinatarioId }).first(); // Certifique-se de que app.db está definido
         return destinatario;
     }
 

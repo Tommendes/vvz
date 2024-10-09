@@ -63,7 +63,9 @@ module.exports = app => {
         const tabelaMsgsDomain = `${dbPrefix}_${uParams.schema_name}.whats_msgs`
         const ret = app.db({ tbl1: tabelaDomain })
             .leftJoin({ msgs: tabelaMsgsDomain }, 'tbl1.phone', 'msgs.phone')
-            .select('msgs.schedule', app.db.raw('COUNT(msgs.id) as quant'), 'msgs.situacao', 'msgs.message', 'tbl1.id', 'tbl1.name', 'tbl1.phone', 'tbl1.short', 'tbl1.verify', 'tbl1.image')
+            .select('msgs.id as idMessage', 'msgs.schedule', app.db.raw('COUNT(msgs.id) as quant'),
+                'msgs.situacao', 'msgs.message', 'tbl1.id AS id_profile', 'tbl1.name', 'tbl1.phone',
+                'tbl1.short', 'tbl1.verify', 'tbl1.image')
         if (filter) {
             ret.where(function () {
                 this.where('tbl1.name', 'like', `%${filter}%`)
@@ -76,7 +78,7 @@ module.exports = app => {
             .orderBy('msgs.schedule', 'desc')
             .orderBy('tbl1.name', 'asc')
             .limit(pageSize)
-            .offset((req.query.page || 1 - 1) * pageSize)
+            .offset(((req.query.page || 1) - 1) * pageSize)
 
         ret.then(body => {
             body.forEach(element => {

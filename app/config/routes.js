@@ -660,11 +660,11 @@ module.exports = app => {
     /**
      * Rota para whats-msgs
      */
-    app.route('/whats-msgs')
+    app.route('/whats-msgs/:id_profile')
         .all(app.config.passport.authenticate())
         .post(app.api.whats_msgs.save)
         .get(app.api.whats_msgs.get)
-    app.route('/whats-msgs/:id')
+    app.route('/whats-msgs/:id_profile/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.whats_msgs.save)
         .get(app.api.whats_msgs.getById)
