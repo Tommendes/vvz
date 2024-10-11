@@ -247,25 +247,6 @@ module.exports = app => {
         for (const schema of uParams) {
             const tabelaDomain = `${dbPrefix}_${schema.schema_name}.${tabela}`;
             const tabelaRecurrencesDomain = `${dbPrefix}_${schema.schema_name}.whats_msgs_recurrences`;
-            console.log(app.db({ tbl1: tabelaDomain })
-                .select(app.db.raw(`tbl1.*, rec.id as recurrence_id, rec.next_run, rec.frequency, rec.interval, rec.end_date`))
-                .leftJoin({ rec: tabelaRecurrencesDomain }, 'tbl1.id', 'rec.msg_id')
-                .where('tbl1.situacao', SITUACAO_ATIVA)
-                .andWhere(function () {
-                    this.orWhere(function () {
-                        this.where('tbl1.schedule', '<=', moment().format('YYYY-MM-DD HH:mm:00'))
-                            .where('tbl1.recurrent', 0);
-                    })
-                        .orWhere(function () {
-                            this.where('rec.next_run', '<=', moment().format('YYYY-MM-DD HH:mm:00'))
-                                .andWhere(function () {
-                                    this.whereNull('rec.end_date')
-                                        .orWhere('rec.end_date', '>=', moment().format('YYYY-MM-DD HH:mm:00'));
-                                })
-                        });
-                })
-                .groupBy('tbl1.id').toString());
-
             const messages = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`tbl1.*, rec.id as recurrence_id, rec.next_run, rec.frequency, rec.interval, rec.end_date`))
                 .leftJoin({ rec: tabelaRecurrencesDomain }, 'tbl1.id', 'rec.msg_id')
