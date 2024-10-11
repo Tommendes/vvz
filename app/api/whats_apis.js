@@ -61,27 +61,44 @@ module.exports = app => {
         const pageSize = req.query.pageSize || 99999
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
         const tabelaMsgsDomain = `${dbPrefix}_${uParams.schema_name}.whats_msgs`
+        // Subconsulta para obter a última mensagem entregue para cada telefone
+        const subquery = app.db({ msgs: tabelaMsgsDomain })
+            .select('msgs.phone', app.db.raw('COUNT(msgs.id) as quant'), app.db.raw('MAX(msgs.delivered_at) as last_delivered_at'))
+            .groupBy('msgs.phone');
+
+        // Consulta principal
         const ret = app.db({ tbl1: tabelaDomain })
-            .leftJoin({ msgs: tabelaMsgsDomain }, 'tbl1.phone', 'msgs.phone')
-            .select('msgs.id as idMessage', 'msgs.schedule', app.db.raw('COUNT(msgs.id) as quant'),
+            .leftJoin({ last_msgs: subquery }, 'tbl1.phone', 'last_msgs.phone')
+            .leftJoin({ msgs: tabelaMsgsDomain }, function () {
+                this.on('tbl1.phone', '=', 'msgs.phone')
+                    .andOn('last_msgs.last_delivered_at', '=', 'msgs.delivered_at');
+            })
+            .select('msgs.id as idMessage', 'msgs.schedule', 'last_msgs.quant',
                 'msgs.situacao', 'msgs.message', 'tbl1.id AS id_profile', 'tbl1.name', 'tbl1.phone',
                 'tbl1.short', 'tbl1.verify', 'tbl1.image')
+            .where('tbl1.status', STATUS_ACTIVE)
+            .groupBy('tbl1.id')
+            .orderBy('last_msgs.last_delivered_at', 'desc')
+            .orderBy('tbl1.name', 'asc')
+            .limit(pageSize)
+            .offset(((req.query.page || 1) - 1) * pageSize);
+
         if (filter) {
             ret.where(function () {
                 this.where('tbl1.name', 'like', `%${filter}%`)
-                    .orWhere('tbl1.phone', 'like', `%${filter}%`)
-            })
+                    .orWhere('tbl1.phone', 'like', `%${filter}%`);
+            });
         }
-        ret.andWhere('tbl1.status', STATUS_ACTIVE)
-            .groupBy('tbl1.id')
-            .orderBy('msgs.situacao', 'desc')
-            .orderBy('msgs.schedule', 'desc')
-            .orderBy('tbl1.name', 'asc')
-            .limit(pageSize)
-            .offset(((req.query.page || 1) - 1) * pageSize)
 
         ret.then(body => {
             body.forEach(element => {
+
+                if (element.name) {
+                    element.composedName = `${element.name} +55${element.phone}`;
+                } else {
+                    element.composedName = `+55${element.phone}`;
+                }
+
                 if (element.schedule) {
                     element.schedule = moment(element.schedule).format('DD/MM/YYYY HH:mm')
                 }
@@ -155,7 +172,7 @@ module.exports = app => {
 
         const tabelaProfilesDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
 
-        const url = `${urlPlugChat}contacts?page=1&pageSize=10000`
+        const url = `${urlPlugChat}contacts?page=1&pageSize=99999`
         const config = {
             headers: {
                 'Authorization': uParams.chat_account_tkn
@@ -170,12 +187,30 @@ module.exports = app => {
                     body[i].status = STATUS_ACTIVE
                     body[i].created_at = new Date()
                 }
-                // Inserir contatos no banco de dados local
-                try {
-                    const insertBody = await app.db(tabelaProfilesDomain).insert(body)
-                } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                // capturar name e phone no bd local, comparar com nome baseado no phone, se não existir, inserir e se existir, atualizar
+                const localContacts = await app.db(tabelaProfilesDomain).select('name', 'phone')
+                for (let i = 0; i < body.length; i++) {
+                    const found = localContacts.find(element => element.phone == body[i].phone)
+                    if (found) {
+                        try {
+                            await app.db(tabelaProfilesDomain).update(body[i]).where({ phone: body[i].phone })
+                        } catch (error) {
+                            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                        }
+                    } else {
+                        try {
+                            await app.db(tabelaProfilesDomain).insert(body[i])
+                        } catch (error) {
+                            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                        }
+                    }
                 }
+                // // Inserir contatos no banco de dados local
+                // try {
+                //     const insertBody = await app.db(tabelaProfilesDomain).insert(body)
+                // } catch (error) {
+                //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                // }
                 const count = body.length
                 return res.status(200).send({ count, data: body })
             })

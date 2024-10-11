@@ -17,7 +17,7 @@ exports.up = function (knex, Promise) {
         table.boolean('identified').comment('Cabeçalho do remetente')
         table.string('phone').notNull().comment('Número do telefone')
         table.string('message', 1000).notNull().comment('Mensagem a ser enviada')
-        table.integer('situacao').defaultTo(1).notNull().comment('Situação da parcela (1: Aberto; 2: Enviada; 3: Editada; 99: Cancelado)')
+        table.integer('situacao').defaultTo(1).notNull().comment('Situação da mensagem (1: Ativa; 2: Enviada; 3: Pausada; 99: Cancelada)')
         table.string('delivered_at').comment('Horário real da entrega da mensagem (GMT-3)')
         table.boolean('recorrente').defaultTo(0).notNull().comment('Mensagem com recorrência')
     })
