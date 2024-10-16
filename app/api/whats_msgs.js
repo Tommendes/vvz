@@ -129,14 +129,34 @@ module.exports = app => {
         }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
+        const tabelaRecurrenciesDomain = `${dbPrefix}_${uParams.schema_name}.whats_msgs_recurrences`
         const ret = app.db({ tbl1: tabelaDomain })
-            .where({ status: STATUS_ACTIVE, id_profile: req.params.id_profile })
+            .select(app.db.raw(`tbl1.*, rec.id as recurrence_id, rec.next_run, rec.frequency, rec.interval, rec.end_date`))
+            .leftJoin({ rec: tabelaRecurrenciesDomain }, 'tbl1.id', 'rec.msg_id')
+            .where({ 'tbl1.status': STATUS_ACTIVE, id_profile: req.params.id_profile })
             .orderBy(app.db.raw('coalesce(tbl1.delivered_at, tbl1.schedule)'), 'desc')
 
         if (req.query.situacao) ret.andWhere('tbl1.situacao', req.query.situacao)
         else ret.andWhere('tbl1.situacao', '<>', SITUACAO_CANCELADA)
 
         ret.then(body => {
+            body.forEach(element => {
+                if (element.created_at) {
+                    element.created_at = moment(element.created_at).format('DD/MM/YYYY HH:mm')
+                }
+                if (element.delivered_at) {
+                    element.delivered_at = moment(element.delivered_at).format('DD/MM/YYYY HH:mm')
+                }
+                if (element.schedule) {
+                    element.schedule = moment(element.schedule).format('DD/MM/YYYY HH:mm')
+                }
+                if (element.next_run) {
+                    element.next_run = moment(element.next_run).format('DD/MM/YYYY HH:mm')
+                }
+                if (element.end_date) {
+                    element.end_date = moment(element.end_date).format('DD/MM/YYYY HH:mm')
+                }
+            });
             const quantidade = body.length
             return res.json({ data: body, count: quantidade })
         })
