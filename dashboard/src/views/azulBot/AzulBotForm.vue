@@ -32,7 +32,7 @@ onBeforeMount(async () => {
             destinId: 8094,
             identified: true,
             message:
-                '<p>Olá {senderName}!</p><p><br></p><p>Esta mensagem só deverá ser despachada 17:45 x2. Eu sou o assistente virtual da <strong>{clientName}</strong> e passei para te avisar que estamos testando o sistema de mensagens.</p><p><br></p><p>Se preferir continuar esta conversa por e-mail use preferencialmente o {clientEmail}. Ou pode nos chamar pelo {clientTel}. 😘</p><p><br></p><p><em>Atenciosamente</em>,</p><p>{userName}</p>',
+                '<p>Olá {nomeDestin}!</p><p><br></p><p>Esta mensagem só deverá ser despachada 17:45 x2. Eu sou o assistente virtual da <strong>{nomeEmpresa}</strong> e passei para te avisar que estamos testando o sistema de mensagens.</p><p><br></p><p>Se preferir continuar esta conversa por e-mail use preferencialmente o {emailComercialEmpresa}. Ou pode nos chamar pelo {telComercialEmpresa}. 😘</p><p><br></p><p><em>Atenciosamente</em>,</p><p>{seuNome}</p>',
             phone: '(82) 98149-9024',
             schedule: moment().format('DD-MM-YYYY HH:mm:00'),
             recurrent: false
@@ -294,14 +294,14 @@ const copyToClipboard = (event) => {
                         <p class="text-sm m-1">Passe o mouse para ver uma descrição</p>
                     </div>
                     <div class="flex flex-wrap align-items-center justify-content-center">
-                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'Seu nome de usuário'">{userName}</div>
-                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'Nome fantasia de sua empresa'">{clientName}</div>
-                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'CPF ou CNPJ de sua empresa'">{clientCpfCnpj}</div>
-                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'Email comercial de sua sua empresa'">{clientEmail}</div>
-                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'Telefone de sua empresa'">{clientTel}</div>
+                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'Seu nome de usuário'">{seuNome}</div>
+                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'Nome fantasia de sua empresa'">{nomeEmpresa}</div>
+                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'CPF ou CNPJ de sua empresa'">{cpfCnpjEmpresa}</div>
+                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'Email comercial de sua sua empresa'">{emailComercialEmpresa}</div>
+                        <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min" @click="copyToClipboard($event)" v-tooltip.top="'Telefone de sua empresa'">{telComercialEmpresa}</div>
                         <!-- <div class="select-all bg-primary border-round p-2 m-1 flex align-items-center justify-content-center max-w-min"
                             @click="copyToClipboard($event)" v-tooltip.top="'Nome do cliente'">
-                            {senderName}</div> -->
+                            {nomeDestin}</div> -->
                     </div>
                 </div>
             </div>

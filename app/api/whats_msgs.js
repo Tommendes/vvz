@@ -344,37 +344,37 @@ module.exports = app => {
         const tabelaEmpresaDomain = `${dbPrefix}_${remetente.schema_name}.empresa` // Certifique-se de que dbPrefix está definido
         let empresa = await app.db(tabelaEmpresaDomain).where({ id: remetente.id_empresa }).first(); // Certifique-se de que app.db está definido
         let destinatario = {}
-        // Verificar se a mensagem possui uma tag {senderName} e se possuir, validar se existe messageBody.id_profile
-        if (messageBody.message.includes('{senderName}')) {
+        // Verificar se a mensagem possui uma tag {nomeDestin} e se possuir, validar se existe messageBody.id_profile
+        if (messageBody.message.includes('{nomeDestin}')) {
             if (messageBody.id_profile) {
                 destinatario = await obterDadosDestinatario(remetente, messageBody.id_profile); // Certifique-se de que obterDadosDestinatario está definido
                 // Capturar o primeiro e último nome do destinatário.nome
                 const name = destinatario.name.split(' ')
                 destinatario.name = name[0]
                 // if (name.length > 1) destinatario.name += ` ${name[name.length - 1]}`
-                messageBody.message = messageBody.message.replace(/{senderName}/g, destinatario.name);
-            } else messageBody.message = messageBody.message.replace(/ {senderName}/g, '').replace(/{senderName}/g, '');
+                messageBody.message = messageBody.message.replace(/{nomeDestin}/g, destinatario.name);
+            } else messageBody.message = messageBody.message.replace(/ {nomeDestin}/g, '').replace(/{nomeDestin}/g, '');
         }
 
-        // Detectar e formatar o valor da tag especial {time-1:mi} ou {time+2:h}
-        const timeRegex = /{time([+-])(\d+):([a-z]+)}/g;
+        // Detectar e formatar o valor da tag especial {agora-1:mi} ou {agora+2:h}
+        const timeRegex = /{agora([+-])(\d+):([a-z]+)}/g;
         const timeMatches = messageBody.message.match(timeRegex);
 
         /**
          * O body.message poderá receber alguns atributos especiais. Identificar e substituir os valores
-         * {clientName} = fantasia da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
-         * {clientCpfCnpj} = cpf_cnpj_empresa da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
-         * {clientEmail} = email da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
-         * {clientTel} = tel1 da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
-         * {userName} = nome do usuário que enviou a mensagem (remetente)
-         * {time-1:mi} = momento do envio - 1:(mi)nuto,(h)ora,(d)ia,(s)emana,(m)es,(a)no
-         * {time} = momento do envio
-         * {senderName} = nome do usuário que receberá a mensagem (destinatário)
+         * {nomeEmpresa} = fantasia da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
+         * {cpfCnpjEmpresa} = cpf_cnpj_empresa da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
+         * {emailComercialEmpresa} = email da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
+         * {telComercialEmpresa} = tel1 da tabela empresa (id = 1 ou de acordo com o remetente caso seja uma mensagem vindo do financeiro)
+         * {seuNome} = nome do usuário que enviou a mensagem (remetente)
+         * {agora-1:mi} = momento do envio - 1:(mi)nuto,(h)ora,(d)ia,(s)emana,(m)es,(a)no
+         * {agora} = momento do envio
+         * {nomeDestin} = nome do usuário que receberá a mensagem (destinatário)
         */
 
         if (timeMatches) {
             for (const match of timeMatches) {
-                const timeMatch = match.match(/{time([+-])(\d+):([a-z]+)}/);
+                const timeMatch = match.match(/{agora([+-])(\d+):([a-z]+)}/);
                 const operator = timeMatch[1];
                 const timeValue = parseInt(timeMatch[2]);
                 let timeUnit = timeMatch[3];
@@ -402,12 +402,12 @@ module.exports = app => {
         }
         // Substituir os placeholders pelos valores reais
         messageBody.message = messageBody.message
-            .replace(/{clientName}/g, `${empresa.fantasia}`)
-            .replace(/{clientCpfCnpj}/g, empresa.cpf_cnpj_empresa)
-            .replace(/{clientEmail}/g, empresa.email_comercial)
-            .replace(/{clientTel}/g, empresa.tel1)
-            .replace(/{userName}/g, remetente.name)
-            .replace(/{time}/g, moment().format('HH:mm'))
+            .replace(/{nomeEmpresa}/g, `${empresa.fantasia}`)
+            .replace(/{cpfCnpjEmpresa}/g, empresa.cpf_cnpj_empresa)
+            .replace(/{emailComercialEmpresa}/g, empresa.email_comercial)
+            .replace(/{telComercialEmpresa}/g, empresa.tel1)
+            .replace(/{seuNome}/g, remetente.name)
+            .replace(/{agora}/g, moment().format('HH:mm'))
 
         return messageBody.message;
     };
