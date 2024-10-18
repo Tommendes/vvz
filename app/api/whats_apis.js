@@ -8,6 +8,8 @@ module.exports = app => {
     const urlSpeedChat = `https://www.speedtest.dev.br/api/whatsapp/`
     const urlPlugChat = `https://www.plugchat.com.br/api/whatsapp/`
     const tabelaProfiles = 'whats_profiles'
+    const tabelaGroups = 'whats_groups'
+    const tabelaMsgs = 'whats_msgs'
     const STATUS_ACTIVE = 10
     const STATUS_INACTIVE = 20
     const STATUS_DELETED = 99
@@ -59,30 +61,49 @@ module.exports = app => {
 
         const filter = req.query.filter || undefined
         const pageSize = req.query.pageSize || 99999
-        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
-        const tabelaMsgsDomain = `${dbPrefix}_${uParams.schema_name}.whats_msgs`
+        const isGroups = req.query.g || null
+        const isContacts = req.query.c || null
+        const tabelaProfilesDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
+        const tabelaGroupsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaGroups}`
+        const tabelaMsgsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaMsgs}`
         // Subconsulta para obter a última mensagem entregue para cada telefone
         const subquery = app.db({ msgs: tabelaMsgsDomain })
-            .select('msgs.phone', app.db.raw('COUNT(msgs.id) as quant'), app.db.raw('MAX(msgs.delivered_at) as last_delivered_at'))
+            .select('msgs.id_profile', 'msgs.id_group', app.db.raw('COUNT(msgs.id) as quant'), app.db.raw('MAX(msgs.delivered_at) as last_delivered_at'))
             .groupBy('msgs.phone');
 
         // Consulta principal
-        const ret = app.db({ tbl1: tabelaDomain })
-            .leftJoin({ last_msgs: subquery }, 'tbl1.phone', 'last_msgs.phone')
-            .leftJoin({ msgs: tabelaMsgsDomain }, function () {
-                this.on('tbl1.phone', '=', 'msgs.phone')
-                    .andOn('last_msgs.last_delivered_at', '=', 'msgs.delivered_at');
-            })
-            .select('msgs.id as idMessage', 'msgs.schedule', 'last_msgs.quant',
-                'msgs.situacao', 'msgs.message', 'tbl1.id AS id_profile', 'tbl1.name', 'tbl1.phone',
-                'tbl1.short', 'tbl1.verify', 'tbl1.image')
-            .where('tbl1.status', STATUS_ACTIVE)
-            .groupBy('tbl1.id')
-            .orderBy('last_msgs.last_delivered_at', 'desc')
-            .orderBy('tbl1.name', 'asc')
-            .limit(pageSize)
-            .offset(((req.query.page || 1) - 1) * pageSize);
+        let ret = undefined
+        if (isContacts) {
+            ret = app.db({ tbl1: tabelaProfilesDomain })
+                .leftJoin({ last_msgs: subquery }, 'tbl1.id', 'last_msgs.id_profile')
+                .leftJoin({ msgs: tabelaMsgsDomain }, function () {
+                    this.on('tbl1.id', '=', 'msgs.id_profile')
+                        .andOn('last_msgs.last_delivered_at', '=', 'msgs.delivered_at');
+                })
+                .select('msgs.id as idMessage', 'msgs.schedule', 'last_msgs.quant',
+                    'msgs.situacao', 'msgs.message', 'tbl1.id AS id_profile', 'tbl1.name', 'tbl1.phone',
+                    'tbl1.short', 'tbl1.verify', 'tbl1.image')
+                .where('tbl1.status', STATUS_ACTIVE)
+                .groupBy('tbl1.id')
+                .orderBy('last_msgs.last_delivered_at', 'desc')
+                .orderBy('tbl1.name', 'asc')
+        } else if (isGroups) {
+            ret = app.db({ tbl1: tabelaGroupsDomain })
+                .leftJoin({ last_msgs: subquery }, 'tbl1.id', 'last_msgs.id_group')
+                .leftJoin({ msgs: tabelaMsgsDomain }, function () {
+                    this.on('tbl1.id', '=', 'msgs.id_group')
+                        .andOn('last_msgs.last_delivered_at', '=', 'msgs.delivered_at');
+                })
+                .select('msgs.id as idMessage', 'msgs.schedule', 'last_msgs.quant',
+                    'msgs.situacao', 'msgs.message', 'tbl1.id AS id_profile', 'tbl1.group_name as name', 'tbl1.contact_ids')
+                .where('tbl1.status', STATUS_ACTIVE)
+                .groupBy('tbl1.id')
+                .orderBy('last_msgs.last_delivered_at', 'desc')
+                .orderBy('tbl1.group_name', 'asc')
+        }
 
+        ret.limit(pageSize)
+            .offset(((req.query.page || 1) - 1) * pageSize);
         if (filter) {
             ret.where(function () {
                 this.where('tbl1.name', 'like', `%${filter}%`)
@@ -90,19 +111,47 @@ module.exports = app => {
             });
         }
 
-        ret.then(body => {
-            body.forEach(element => {
-
-                if (element.name) {
-                    element.composedName = `${element.name} +55${element.phone}`;
-                } else {
-                    element.composedName = `+55${element.phone}`;
+        ret.then(async body => {
+            for (const element of body) {
+                if (isGroups) {
+                    const contactIds = JSON.parse(element.contact_ids)
+                    delete element.contact_ids
+                    element.components = ''
+                    const limit = 10
+                    const max = contactIds.length > limit ? limit : contactIds.length
+                    let quant = 0
+                    for (const profile of contactIds) {
+                        await app.db(tabelaProfilesDomain).select('name', 'phone').where({ id: profile }).first().then(contact => {
+                            const name = contact.name.split(' ')
+                            element.components += `${name[0]}${name[name.length - 1] != name[0] ? ' ' + name[name.length - 1] : ''}` || contact.phone
+                        })
+                        quant++
+                        // Se quant for menor que max -1 ou se for menor que max e houver mais de (limit) contatos, acrescentar vírgula
+                        if (quant < max - 1 || (quant < max && contactIds.length > limit)) element.components += ', '
+                        // Se não, se quant for igual a max -1 e houver menos de 10 contatos, acrescentar 'e'
+                        else if (quant == max - 1 && contactIds.length <= limit) element.components += ' e '
+                        // Se não, se quant atingir max e houver mais de 10 contatos, parar a iteração e acrescentar ` e mais ${contactIds.length - limit} contatos` no final
+                        else if (quant == max && contactIds.length > limit) {
+                            element.components += ` e mais ${contactIds.length - limit} contatos  `
+                            break;
+                        }
+                    }
+                    // Remover a última vírgula ou o 'e' se houver menos de 10 contatos e remover o espaço em branco
+                    element.components = element.components.trim()
+                    element.composedName = `${element.name} - ${contactIds.length} contatos`;
+                    // Colocar primeira em maiúscula
+                    element.composedName = element.composedName.charAt(0).toUpperCase() + element.composedName.slice(1)
                 }
-
+                if (isContacts)
+                    if (element.name) {
+                        element.composedName = `${element.name} +55${element.phone}`;
+                    } else {
+                        element.composedName = `+55${element.phone}`;
+                    }
                 if (element.schedule) {
                     element.schedule = moment(element.schedule).format('DD/MM/YYYY HH:mm')
                 }
-            });
+            }
             const quantidade = body.length
             return res.json({ data: body, count: quantidade })
         })

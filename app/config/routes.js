@@ -660,11 +660,11 @@ module.exports = app => {
     /**
      * Rota para whats-msgs
      */
-    app.route('/whats-msgs/:id_profile')
+    app.route('/whats-msgs')
         .all(app.config.passport.authenticate())
         .post(app.api.whats_msgs.save)
         .get(app.api.whats_msgs.get)
-    app.route('/whats-msgs/:id_profile/:id')
+    app.route('/whats-msgs/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.whats_msgs.save)
         .get(app.api.whats_msgs.getById)
@@ -672,9 +672,30 @@ module.exports = app => {
     app.route('/whats-msgs/f-a/:func')
         .all(app.config.passport.authenticate())
         .post(app.api.whats_msgs.getByFunction)
+
+    /**
+     * Rota para whats-apis
+     */
     app.route('/whats-apis/f-a/:func')
         .all(app.config.passport.authenticate())
         .post(app.api.whats_apis.getByFunction)
+
+    /**
+     * Rota para whats_groups
+     */
+    app.route('/whats-groups')
+        .all(app.config.passport.authenticate())
+        .post(app.api.whats_groups.save)
+        .get(app.api.whats_groups.get)
+    app.route('/whats-groups/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.whats_groups.save)
+        .get(app.api.whats_groups.getById)
+        .delete(app.api.whats_groups.remove)
+    app.route('/whats-groups/f-a/:func')
+        .all(app.config.passport.authenticate())
+        .post(app.api.whats_groups.getByFunction)
+        .get(app.api.whats_groups.getByFunction)
 
     /**
      * Rota para impressão
