@@ -39,7 +39,6 @@ module.exports = app => {
 
         body.situacao = body.situacao || 1
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        console.log('body', body);
 
         try {
             if (!(body.id_profile || body.id_group)) throw 'Destinatário ou grupo não informado'
@@ -242,8 +241,6 @@ module.exports = app => {
 
     // Método responsável por enviar uma mensagem de WhatsApp e atualizar a situação da mensagem para SITUACAO_ENVIADA (enviada)
     const sendMessage = async (message, uParams, tabelaDomain) => {
-        console.log('sendMessage', message);
-
         try {
             if (!uParams || uParams.chat_account_tkn === null) return;
             const config = {
@@ -254,27 +251,25 @@ module.exports = app => {
             const tabelaProfilesDomain = `${dbPrefix}_${uParams.schema_name}.whats_profiles` // Certifique-se de que dbPrefix está definido
             let novoBodyMessage = ``
             if (message.identified) {
+                
                 const nome = uParams.name.split(' ')
                 uParams.name = nome[0]
                 if (nome.length > 1) uParams.name += ` ${nome[nome.length - 1]}`
                 novoBodyMessage = `*${uParams.name}:*\n`
             }
             try {
-                console.log('typeof message.id_profile', typeof message.id_profile);
-
                 if (typeof message.id_profile === 'object') {
                     for (const id of message.id_profile) {
-                        novoBodyMessage = await substituirAtributosEspeciais(uParams, { ...message, id_profile: id }) // Certifique-se de que substituirAtributosEspeciais está definido
+                        novoBodyMessage += await substituirAtributosEspeciais(uParams, { ...message, id_profile: id }) // Certifique-se de que substituirAtributosEspeciais está definido
                         novoBodyMessage = await convertHtmlToWhatsappFormat((novoBodyMessage)) // Certifique-se de que convertHtmlToWhatsappFormat está definido
                         // Primeiro caractere em maiúsculo
                         novoBodyMessage = novoBodyMessage.charAt(0).toUpperCase() + novoBodyMessage.slice(1)
                         const phoneProf = await app.db({ u: tabelaProfilesDomain }).select('phone').where({ 'id': id }).first()
                         const messageBody = { message: novoBodyMessage, phone: phoneProf.phone }
-                        console.log('messageBody', messageBody);
                         await axios.post(`${speedchat.host}/send-text`, messageBody, config) // Certifique-se de que speedchat.host está definido
                     }
                 } else {
-                    novoBodyMessage = await substituirAtributosEspeciais(uParams, message) // Certifique-se de que substituirAtributosEspeciais está definido
+                    novoBodyMessage += await substituirAtributosEspeciais(uParams, message) // Certifique-se de que substituirAtributosEspeciais está definido
                     novoBodyMessage = await convertHtmlToWhatsappFormat((novoBodyMessage)) // Certifique-se de que convertHtmlToWhatsappFormat está definido          
                     // Primeiro caractere em maiúsculo
                     novoBodyMessage = novoBodyMessage.charAt(0).toUpperCase() + novoBodyMessage.slice(1)

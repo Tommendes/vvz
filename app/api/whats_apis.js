@@ -69,7 +69,7 @@ module.exports = app => {
         // Subconsulta para obter a última mensagem entregue para cada telefone
         const subquery = app.db({ msgs: tabelaMsgsDomain })
             .select('msgs.id_profile', 'msgs.id_group', app.db.raw('COUNT(msgs.id) as quant'), app.db.raw('MAX(msgs.delivered_at) as last_delivered_at'))
-            .groupBy('msgs.phone');
+            .groupBy(app.db.raw('COALESCE(msgs.id_profile, msgs.id_group)'));
 
         // Consulta principal
         let ret = undefined
@@ -106,8 +106,9 @@ module.exports = app => {
             .offset(((req.query.page || 1) - 1) * pageSize);
         if (filter) {
             ret.where(function () {
-                this.where('tbl1.name', 'like', `%${filter}%`)
-                    .orWhere('tbl1.phone', 'like', `%${filter}%`);
+                if (isContacts) this.where('tbl1.name', 'like', `%${filter}%`)
+                if (isGroups) this.where('tbl1.group_name', 'like', `%${filter}%`)
+                this.orWhere('tbl1.phone', 'like', `%${filter}%`);
             });
         }
 
@@ -120,11 +121,14 @@ module.exports = app => {
                     const limit = 10
                     const max = contactIds.length > limit ? limit : contactIds.length
                     let quant = 0
-                    for (const profile of contactIds) {
-                        await app.db(tabelaProfilesDomain).select('name', 'phone').where({ id: profile }).first().then(contact => {
+                    for (const profile of contactIds) {                        
+                        const contact = await app.db(tabelaProfilesDomain).select('name', 'phone').where({ id: profile }).first()
+                        if (contact && contact.name) {
                             const name = contact.name.split(' ')
-                            element.components += `${name[0]}${name[name.length - 1] != name[0] ? ' ' + name[name.length - 1] : ''}` || contact.phone
-                        })
+                            element.components += `${name[0]}${name[name.length - 1] != name[0] ? ' ' + name[name.length - 1] : ''}` 
+                        } else {
+                            element.components += contact.phone
+                        }
                         quant++
                         // Se quant for menor que max -1 ou se for menor que max e houver mais de (limit) contatos, acrescentar vírgula
                         if (quant < max - 1 || (quant < max && contactIds.length > limit)) element.components += ', '
@@ -144,9 +148,9 @@ module.exports = app => {
                 }
                 if (isContacts)
                     if (element.name) {
-                        element.composedName = `${element.name} +55${element.phone}`;
+                        element.composedName = `${element.name} +${element.phone}`;
                     } else {
-                        element.composedName = `+55${element.phone}`;
+                        element.composedName = `+${element.phone}`;
                     }
                 if (element.schedule) {
                     element.schedule = moment(element.schedule).format('DD/MM/YYYY HH:mm')
@@ -352,23 +356,8 @@ module.exports = app => {
                 return '55' + phone;
             }
         }
-
-        // Retorna o número original se não for do Brasil ou não precisar de ajuste
         return phone;
     }
-    // // Teste
-    // const numeros = [
-    //     '5511987654321', // Número celular com nono dígito
-    //     '558294156145', // Número celular sem nono dígito
-    //     '558281499024', // Número celular sem nono dígito
-    //     '551187654321',  // Número celular sem nono dígito
-    //     '551134567890',  // Número fixo
-    //     '1234567890',    // Número de outro país
-    // ];
-
-    // numeros.forEach(numero => {
-    //     console.log(addNinthDigit(numero));
-    // });
 
     return { getByFunction }
 }

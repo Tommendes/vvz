@@ -33,15 +33,14 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         try {
             existsOrError(body.group_name, 'Nome do grupo não informado')
-            const unique = await app.db(tabelaDomain).where({ group_name: body.group_name }).first()
-            if (unique && unique.id !== body.id) throw 'Nome do grupo já cadastrado'
+            const unique = await app.db(tabelaDomain).where({ group_name: body.group_name }).first()            
+            if (unique && unique.id != body.id) throw 'Nome do grupo já cadastrado'
             existsOrError(body.contact_ids, 'Contatos do grupo não informados')
         } catch (error) {
             console.log('error', error);
             
             return res.status(400).send(error)
         }
-        console.log('body', body);
         
         if (body.id) {
             // Variáveis da edição de um registro
