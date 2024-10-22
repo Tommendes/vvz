@@ -4,7 +4,7 @@ const axios = require('axios');
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const { SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA } = app.api.whats_msgs
+    // const { SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA } = app.api.whats_msgs
     const { convertWhatsappFormattoHtml } = app.api.facilities
     const urlSpeedChat = `https://www.speedtest.dev.br/api/whatsapp/`
     const urlPlugChat = `https://www.plugchat.com.br/api/whatsapp/`
