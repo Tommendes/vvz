@@ -87,7 +87,8 @@ module.exports = app => {
                 .orderBy('last_msgs.last_delivered_at', 'desc')
                 .orderBy('tbl1.name', 'asc')
         } else if (isGroups) {
-            ret.leftJoin({ last_msgs: subquery }, 'tbl1.id', 'last_msgs.id_group')
+            ret = app.db({ tbl1: tabelaGroupsDomain })
+                .leftJoin({ last_msgs: subquery }, 'tbl1.id', 'last_msgs.id_group')
                 .leftJoin({ msgs: tabelaMsgsDomain }, function () {
                     this.on('tbl1.id', '=', 'msgs.id_group')
                         .andOn('last_msgs.last_delivered_at', '=', 'msgs.delivered_at');
