@@ -69,6 +69,7 @@ module.exports = app => {
         // Subconsulta para obter a última mensagem entregue para cada telefone
         const subquery = app.db({ msgs: tabelaMsgsDomain })
             .select('msgs.id_profile', 'msgs.id_group', app.db.raw('COUNT(msgs.id) as quant'), app.db.raw('MAX(msgs.delivered_at) as last_delivered_at'))
+            .where('msgs.situacao', 'delivered')
             .groupBy(app.db.raw('COALESCE(msgs.id_profile, msgs.id_group)'));
 
         // Consulta principal
