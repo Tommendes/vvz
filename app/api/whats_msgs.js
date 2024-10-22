@@ -66,6 +66,7 @@ module.exports = app => {
         }
 
         // body.message terminar com <p><br></p> remova
+        body.id_user = user.id
         body.message = body.message.replaceAll('<p><br></p><p><br></p>', '')
         if (body.message.endsWith('<p><br></p>')) body.message = body.message.slice(0, -11)
         if (body.id) {
@@ -251,7 +252,7 @@ module.exports = app => {
                 },
             };
 
-            const tabelaProfilesDomain = `${dbPrefix}_${uParams.schema_name}.whats_profiles`; // Certifique-se de que dbPrefix está definido
+            const tabelaProfilesDomain = `${dbPrefix}_${uParams.schema_name}.whats_profiles`;
 
             const processMessage = async (msg, idProfile) => {
                 let bodyMessage = await substituirAtributosEspeciais(uParams, { ...msg, id_profile: idProfile }); // Certifique-se de que substituirAtributosEspeciais está definido
@@ -273,7 +274,7 @@ module.exports = app => {
                             if (message.situacao === SITUACAO_ENVIADA) body.situacao = SITUACAO_ENVIADA;
 
                             // Atualizar a situação da mensagem para 2 (enviada)
-                            await app.db(tabelaDomain).update(body).where({ id: message.id }); // Certifique-se de que app.db está definido
+                            await app.db(tabelaDomain).update(body).where({ id: message.id });
                         })
                         .catch(error => {
                             app.api.logger.logError({ log: { line: `Error in file: ${__filename}. Error: ${error}`, sConsole: true } }); // Certifique-se de que app.api.logger.logError está definido
@@ -297,7 +298,11 @@ module.exports = app => {
     // Método com schedule para envio de mensagens. O método deverá ficar ativo e verificar a cada minutos se há mensagens a serem enviadas. A verificação deve ocorrer a partir do campo schedule + situação. Se a situação for SITUACAO_ATIVA e a data e hora de envio for menor ou igual a data e hora atual, a mensagem deve ser enviada.
     const sendScheduledMessages = async () => {
         const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
-        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id')
+        const uParams = await app.db({ sc: tabelaSchemas }).where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id')
+        // app.db({ sc: tabelaSchemas }).where({ 'sc.status': STATUS_ACTIVE }).whereNotNull('chat_account_tkn').groupBy('sc.id')
+        //     .then((uParams) => {
+        //         console.log('uParams', uParams);
+        //     })
 
         if (!uParams) return;
 
@@ -324,11 +329,15 @@ module.exports = app => {
                 .groupBy('tbl1.id');
             for (const message of messages) {
 
+                const tabelaUser = `${dbPrefix}_api.users`;
+                const user = await app.db(tabelaUser).where({ id: message.id_user }).first();
+                const schemaComplete = { ...schema, ...user };
+
                 if (message.id_group) {
-                    idProfiles = await app.db(`${dbPrefix}_${schema.schema_name}.whats_groups`).select('contact_ids').where({ id: message.id_group }).first()
+                    idProfiles = await app.db(`${dbPrefix}_${schemaComplete.schema_name}.whats_groups`).select('contact_ids').where({ id: message.id_group }).first()
                     message.id_profile = JSON.parse(idProfiles.contact_ids)
                 }
-                await sendMessage(message, schema, tabelaDomain);
+                await sendMessage(message, schemaComplete, tabelaDomain);
 
                 if (message.recurrence_id) {
                     // Corrigir a lógica de cálculo da próxima execução
@@ -391,9 +400,9 @@ module.exports = app => {
 
     // Função para substituir os placeholders no body.message
     const substituirAtributosEspeciais = async (remetente, messageBody) => {
-        // Obter os dados da empresa e dos usuários        
-        const tabelaEmpresaDomain = `${dbPrefix}_${remetente.schema_name}.empresa` // Certifique-se de que dbPrefix está definido
-        let empresa = await app.db(tabelaEmpresaDomain).where({ id: remetente.id_empresa }).first(); // Certifique-se de que app.db está definido
+        const tabelaEmpresaDomain = `${dbPrefix}_${remetente.schema_name}.empresa`
+        let empresa = await app.db(tabelaEmpresaDomain)
+            .where({ id: remetente.id_empresa }).first();
         let destinatario = {}
         // Verificar se a mensagem possui uma tag {nomeDestin} e se possuir, validar se existe messageBody.id_profile
         if (messageBody.message.includes('{nomeDestin}')) {
@@ -472,8 +481,8 @@ module.exports = app => {
     };
 
     const obterDadosDestinatario = async (remetente, destinatarioId) => {
-        const tabelaProfilesDomain = `${dbPrefix}_${remetente.schema_name}.whats_profiles` // Certifique-se de que dbPrefix está definido
-        const destinatario = await app.db({ u: tabelaProfilesDomain }).select('name').where({ 'id': destinatarioId }).first(); // Certifique-se de que app.db está definido
+        const tabelaProfilesDomain = `${dbPrefix}_${remetente.schema_name}.whats_profiles`
+        const destinatario = await app.db({ u: tabelaProfilesDomain }).select('name').where({ 'id': destinatarioId }).first();
         return destinatario;
     }
 
@@ -481,6 +490,7 @@ module.exports = app => {
     schedule.scheduleJob('* * * * *', () => {
         sendScheduledMessages();
     });
+    sendScheduledMessages();
 
     // return { save, get, getById, remove, getByFunction }
     return { save, get, getById, remove, getByFunction, SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA }

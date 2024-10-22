@@ -151,7 +151,7 @@ function insertSchemaControl(callback) {
     `;
 
     const values = [
-        evento, createdAt, 0, schemaName, '1.0', schemaDescription, schemaAuthor, schemaAuthorEmail, 0
+        evento, createdAt, 10, schemaName, '1.0.0', schemaDescription, schemaAuthor, schemaAuthorEmail, 0
     ];
 
     connection.query(removeQuery, values, (err, results) => {
