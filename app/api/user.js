@@ -871,7 +871,7 @@ module.exports = app => {
             sql.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
             })
-        if (uParams.multiCliente == '0') {
+        if (uParams.multiCliente <= 1) {
             // Não troca cliente nem domínio
             sql.where({ 'us.schema_id': uParams.schema_id })
         }

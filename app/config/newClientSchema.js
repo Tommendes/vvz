@@ -5,13 +5,13 @@ const newSchemaClientName = 'Nome do Cliente'; // Defina o nome do cliente aqui
 
 // Configurações de conexão com o banco de dados
 const connection = mysql.createConnection({
-    host: '192.168.0.241',
+    host: '85.31.231.103',
     port: 3306,
-    database: orignSchema,
     collation: 'utf8mb4_general_ci',
-    charset: 'utf8mb4',
-    user: 'root',
-    password: ''
+    database: 'vivazul_api',
+    user: 'vivazul_ger3nci1d0r',
+    password: 's3nh@ 1t1lizad@ pa4a gerenciar',
+    charset: 'utf8mb4'
 });
 
 // Função para obter os nomes das tabelas no schema wwmgca_cliente_ativos

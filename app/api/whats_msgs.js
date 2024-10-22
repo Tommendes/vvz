@@ -240,67 +240,57 @@ module.exports = app => {
     const axios = require('axios'); // Certifique-se de que está instalado
 
     // Método responsável por enviar uma mensagem de WhatsApp e atualizar a situação da mensagem para SITUACAO_ENVIADA (enviada)
+
     const sendMessage = async (message, uParams, tabelaDomain) => {
         try {
-            if (!uParams || uParams.chat_account_tkn === null) return;
+            if (!uParams || !uParams.chat_account_tkn) return;
+
             const config = {
                 headers: {
                     'Authorization': uParams.chat_account_tkn // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
                 },
             };
-            const tabelaProfilesDomain = `${dbPrefix}_${uParams.schema_name}.whats_profiles` // Certifique-se de que dbPrefix está definido
-            let novoBodyMessage = ``
-            if (message.identified) {
-                
-                const nome = uParams.name.split(' ')
-                uParams.name = nome[0]
-                if (nome.length > 1) uParams.name += ` ${nome[nome.length - 1]}`
-                novoBodyMessage = `*${uParams.name}:*\n`
-            }
-            try {
-                if (typeof message.id_profile === 'object') {
-                    for (const id of message.id_profile) {
-                        novoBodyMessage += await substituirAtributosEspeciais(uParams, { ...message, id_profile: id }) // Certifique-se de que substituirAtributosEspeciais está definido
-                        novoBodyMessage = await convertHtmlToWhatsappFormat((novoBodyMessage)) // Certifique-se de que convertHtmlToWhatsappFormat está definido
-                        // Primeiro caractere em maiúsculo
-                        novoBodyMessage = novoBodyMessage.charAt(0).toUpperCase() + novoBodyMessage.slice(1)
-                        const phoneProf = await app.db({ u: tabelaProfilesDomain }).select('phone').where({ 'id': id }).first()
-                        const messageBody = { message: novoBodyMessage, phone: phoneProf.phone }
-                        await axios.post(`${speedchat.host}/send-text`, messageBody, config) // Certifique-se de que speedchat.host está definido
-                    }
-                } else {
-                    novoBodyMessage += await substituirAtributosEspeciais(uParams, message) // Certifique-se de que substituirAtributosEspeciais está definido
-                    novoBodyMessage = await convertHtmlToWhatsappFormat((novoBodyMessage)) // Certifique-se de que convertHtmlToWhatsappFormat está definido          
-                    // Primeiro caractere em maiúsculo
-                    novoBodyMessage = novoBodyMessage.charAt(0).toUpperCase() + novoBodyMessage.slice(1)
-                    await axios.post(`${speedchat.host}/send-text`, { message: novoBodyMessage, phone: message.phone }, config) // Certifique-se de que speedchat.host está definido
-                }
-                let body = { delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') }
-                if (message.situacao === SITUACAO_ENVIADA) body.situacao = SITUACAO_ENVIADA
-                // Atualizar a situação da mensagem para 2 (enviada)
-                await app.db(tabelaDomain) // Certifique-se de que app.db está definido
-                    .update(body)
-                    .where({ id: message.id });
-            } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }); // Certifique-se de que app.api.logger.logError está definido
-            }
-            axios.post(`${speedchat.host}/send-text`, { message: novoBodyMessage, phone: message.phone }, config) // Certifique-se de que speedchat.host está definido
-                .then(async _ => {
-                    let body = { delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') }
 
-                    if (message.situacao === SITUACAO_ENVIADA) body.situacao = SITUACAO_ENVIADA
-                    // Atualizar a situação da mensagem para 2 (enviada)
-                    await app.db(tabelaDomain) // Certifique-se de que app.db está definido
-                        .update(body)
-                        .where({ id: message.id });
-                        
-                        console.log('Mensagem enviada com sucesso: ' + JSON.stringify(message));
-                })
-                .catch(error => {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }); // Certifique-se de que app.api.logger.logError está definido
-                });
+            const tabelaProfilesDomain = `${dbPrefix}_${uParams.schema_name}.whats_profiles`; // Certifique-se de que dbPrefix está definido
+
+            const processMessage = async (msg, idProfile) => {
+                let bodyMessage = await substituirAtributosEspeciais(uParams, { ...msg, id_profile: idProfile }); // Certifique-se de que substituirAtributosEspeciais está definido
+                bodyMessage = await convertHtmlToWhatsappFormat(bodyMessage); // Certifique-se de que convertHtmlToWhatsappFormat está definido
+                bodyMessage = bodyMessage.charAt(0).toUpperCase() + bodyMessage.slice(1); // Primeiro caractere em maiúsculo
+                if (msg.identified) {
+                    const nome = uParams.name.split(' ');
+                    uParams.name = nome[0];
+                    if (nome.length > 1) uParams.name += ` ${nome[nome.length - 1]}`;
+                    bodyMessage = `*${uParams.name}:*\n` + bodyMessage;
+                }
+
+                const phoneProf = await app.db(tabelaProfilesDomain).select('phone').where({ id: idProfile }).first();
+                const messageBody = { message: bodyMessage, phone: phoneProf.phone };
+                setTimeout(async () => {
+                    await axios.post(`${speedchat.host}/send-text`, messageBody, config)
+                        .then(async () => {
+                            const body = { delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') };
+                            if (message.situacao === SITUACAO_ENVIADA) body.situacao = SITUACAO_ENVIADA;
+
+                            // Atualizar a situação da mensagem para 2 (enviada)
+                            await app.db(tabelaDomain).update(body).where({ id: message.id }); // Certifique-se de que app.db está definido
+                        })
+                        .catch(error => {
+                            app.api.logger.logError({ log: { line: `Error in file: ${__filename}. Error: ${error}`, sConsole: true } }); // Certifique-se de que app.api.logger.logError está definido
+                        });
+                }, 500);
+            };
+
+            if (Array.isArray(message.id_profile)) {
+                for (const id of message.id_profile) {
+                    const messageBody = { ...message };
+                    await processMessage(messageBody, id);
+                }
+            } else {
+                await processMessage(message, message.id_profile);
+            }
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }); // Certifique-se de que app.api.logger.logError está definido
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename}. Error: ${error}`, sConsole: true } }); // Certifique-se de que app.api.logger.logError está definido
         }
     };
 
@@ -332,9 +322,8 @@ module.exports = app => {
                         });
                 })
                 .groupBy('tbl1.id');
-
             for (const message of messages) {
-                
+
                 if (message.id_group) {
                     idProfiles = await app.db(`${dbPrefix}_${schema.schema_name}.whats_groups`).select('contact_ids').where({ id: message.id_group }).first()
                     message.id_profile = JSON.parse(idProfiles.contact_ids)
@@ -413,7 +402,6 @@ module.exports = app => {
                 // Capturar o primeiro e último nome do destinatário.nome
                 const name = destinatario.name.split(' ')
                 destinatario.name = name[0]
-                // if (name.length > 1) destinatario.name += ` ${name[name.length - 1]}`
                 messageBody.message = messageBody.message.replace(/{nomeDestin}/g, destinatario.name);
             } else messageBody.message = messageBody.message.replace(/ {nomeDestin}/g, '').replace(/{nomeDestin}/g, '');
         }
