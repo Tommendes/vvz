@@ -72,10 +72,9 @@ module.exports = app => {
             .groupBy(app.db.raw('COALESCE(msgs.id_profile, msgs.id_group)'));
 
         // Consulta principal
-        let ret = undefined
+        let ret = app.db({ tbl1: tabelaProfilesDomain })
         if (isContacts) {
-            ret = app.db({ tbl1: tabelaProfilesDomain })
-                .leftJoin({ last_msgs: subquery }, 'tbl1.id', 'last_msgs.id_profile')
+            ret.leftJoin({ last_msgs: subquery }, 'tbl1.id', 'last_msgs.id_profile')
                 .leftJoin({ msgs: tabelaMsgsDomain }, function () {
                     this.on('tbl1.id', '=', 'msgs.id_profile')
                         .andOn('last_msgs.last_delivered_at', '=', 'msgs.delivered_at');
@@ -88,8 +87,7 @@ module.exports = app => {
                 .orderBy('last_msgs.last_delivered_at', 'desc')
                 .orderBy('tbl1.name', 'asc')
         } else if (isGroups) {
-            ret = app.db({ tbl1: tabelaGroupsDomain })
-                .leftJoin({ last_msgs: subquery }, 'tbl1.id', 'last_msgs.id_group')
+            ret.leftJoin({ last_msgs: subquery }, 'tbl1.id', 'last_msgs.id_group')
                 .leftJoin({ msgs: tabelaMsgsDomain }, function () {
                     this.on('tbl1.id', '=', 'msgs.id_group')
                         .andOn('last_msgs.last_delivered_at', '=', 'msgs.delivered_at');
@@ -121,11 +119,11 @@ module.exports = app => {
                     const limit = 10
                     const max = contactIds.length > limit ? limit : contactIds.length
                     let quant = 0
-                    for (const profile of contactIds) {                        
+                    for (const profile of contactIds) {
                         const contact = await app.db(tabelaProfilesDomain).select('name', 'phone').where({ id: profile }).first()
                         if (contact && contact.name) {
                             const name = contact.name.split(' ')
-                            element.components += `${name[0]}${name[name.length - 1] != name[0] ? ' ' + name[name.length - 1] : ''}` 
+                            element.components += `${name[0]}${name[name.length - 1] != name[0] ? ' ' + name[name.length - 1] : ''}`
                         } else {
                             element.components += contact.phone
                         }
@@ -299,6 +297,48 @@ module.exports = app => {
         }
     }
 
+    const phoneExists = async (req, res) => {
+        let user = req.user
+        const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+
+        const phone = req.query.phone
+        try {
+            existsOrError(phone, 'Telefone não informado')
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(400).send(error)
+        }
+        const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`
+        const found = await app.db(tabelaDomain).select('name', 'phone').where({ phone }).first()
+        if (found) {
+            // Chamar https://www.plugchat.com.br/api/whatsapp/phone-exists/[phone] para saber se o número é válido
+            const url = `${urlPlugChat}phone-exists/${phone}`
+            const config = {
+                headers: {
+                    'Authorization': uParams.chat_account_tkn
+                },
+            };
+            axios.get(url, config)
+                .then(response => {
+                    return res.status(200).send(found)
+                })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                    return res.status(500).send(error)
+                })
+        } else {
+            return res.status(200).send('Telefone não encontrado no banco de dados local')
+        }
+    }
+
     const getByFunction = async (req, res) => {
         const func = req.params.func
         switch (func) {
@@ -322,6 +362,9 @@ module.exports = app => {
                 break;
             case 'upl':
                 updateProfileImageInLocal(req, res);
+                break;
+            case 'phx':
+                phoneExists(req, res);
                 break;
             default:
                 res.status(404).send('Função inexistente')
