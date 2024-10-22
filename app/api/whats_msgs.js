@@ -293,6 +293,8 @@ module.exports = app => {
                     await app.db(tabelaDomain) // Certifique-se de que app.db está definido
                         .update(body)
                         .where({ id: message.id });
+                        console.log('Mensagem enviada com sucesso: ' + JSON.stringify(message));
+                        
                 })
                 .catch(error => {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }); // Certifique-se de que app.api.logger.logError está definido
