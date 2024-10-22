@@ -30,8 +30,8 @@ module.exports = app => {
         body.id_group = req.query.id_group || null
         try {
             // Alçada do usuário
-            if (body.id) isMatchOrError(uParams && uParams.financeiro >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
-            else isMatchOrError(uParams && uParams.financeiro >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
+            if (body.id) isMatchOrError(uParams && uParams.whats_msgs >= 3, `${noAccessMsg} "Edição de ${tabelaAlias}"`)
+            else isMatchOrError(uParams && uParams.whats_msgs >= 2, `${noAccessMsg} "Inclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -136,7 +136,7 @@ module.exports = app => {
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && (uParams.financeiro >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && (uParams.whats_msgs >= 1), `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -189,7 +189,7 @@ module.exports = app => {
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.financeiro >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.whats_msgs >= 1, `${noAccessMsg} "Exibição de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -215,7 +215,7 @@ module.exports = app => {
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            isMatchOrError(uParams && uParams.financeiro >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
+            isMatchOrError(uParams && uParams.whats_msgs >= 1, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
