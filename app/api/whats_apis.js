@@ -4,7 +4,7 @@ const axios = require('axios');
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    // const { SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA } = app.api.whats_msgs
+    const { SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA } = require('./whats_msgs')(app)
     const { convertWhatsappFormattoHtml } = app.api.facilities
     const urlSpeedChat = `https://www.speedtest.dev.br/api/whatsapp/`
     const urlPlugChat = `https://www.plugchat.com.br/api/whatsapp/`
@@ -70,7 +70,7 @@ module.exports = app => {
         // Subconsulta para obter a última mensagem entregue para cada telefone
         const subquery = app.db({ msgs: tabelaMsgsDomain })
             .select('msgs.id_profile', 'msgs.id_group', app.db.raw('COUNT(msgs.id) as quant'), app.db.raw('MAX(msgs.delivered_at) as last_delivered_at'))
-            .where('msgs.situacao', SITUACAO_ATIVA)
+            .where('msgs.status', STATUS_ACTIVE)
             .groupBy(app.db.raw('COALESCE(msgs.id_profile, msgs.id_group)'));
 
         // Consulta principal
