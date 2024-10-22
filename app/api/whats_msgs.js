@@ -482,5 +482,5 @@ module.exports = app => {
         sendScheduledMessages();
     });
 
-    return { save, get, getById, remove, getByFunction }
+    return { save, get, getById, remove, getByFunction, SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA }
 }
