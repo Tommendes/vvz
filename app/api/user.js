@@ -37,8 +37,6 @@ module.exports = app => {
     const signup = async (req, res) => {
         const body = { ...req.body }
         let registered = false;
-
-        // console.log('body', body);
         try {
             existsOrError(body.name, 'Nome não informado')
             existsOrError(body.email, 'E-mail não informado')
@@ -139,6 +137,7 @@ module.exports = app => {
             delete body.id
             delete body.confirmPassword
             delete body.password
+            delete body.fantasia
             await app.db(tabela)
                 .insert(body)
                 .then(async (ret) => {
@@ -199,6 +198,10 @@ module.exports = app => {
                         })
 
                     app.api.logger.logInfo({ log: { line: `Novo de perfil de usuário! Usuário: ${body.name}`, sConsole: true } })
+                    /*
+                    Executar a criação do schema de BD do cliente
+                    */
+                    const newSchema = await setNewClientSchema(bodyToMessage)
                     return res.json({
                         data: body,
                         msg: [
@@ -215,6 +218,29 @@ module.exports = app => {
         }
     }
 
+    const setNewClientSchema = async (newUser) => {
+        app.api.logger.logInfo({ log: { line: `Iniciada a criação de novo SCHEMA para o cliente ${newUser.name}`, sConsole: true } })
+        let schemaName = createHashSchemaName()
+        // Se já existir então deve ser alterado
+        const schemaExists = await app.db.raw(`SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${schemaName}'`)
+        const createnewSchema = await app.db.raw(`CREATE DATABASE IF NOT EXISTS \`${schemaName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci`);
+        console.log('createnewSchema', createnewSchema);
+        
+        if (createnewSchema) {
+            app.api.logger.logInfo({ log: { line: `Novo SCHEMA vivazul_${schemaName} criado com sucesso para o cliente ${newUser.name}`, sConsole: true } })
+            return createnewSchema
+        }
+    }
+    
+    function createHashSchemaName() {
+        // O schemaName deve ser curto, único e com no máximo 16 caracteres seguindo o padrão de nomenclatura. Acrescente ao final do schemaName um hash de 8 caracteres
+        const hash = crypto.randomBytes(4).toString('hex');
+
+        // Concatenar para formar o schemaName
+        let schemaName = `vivazul_${cleanName}${hash}`;
+        return schemaName;
+
+    }
     /**
      * Gera e envia um token e uma URL (apenas no email registrado) para criação de uma nova senha
      * @param {*} req 
@@ -465,6 +491,11 @@ module.exports = app => {
             })
     }
 
+    /**
+     * Envo de mensagem por WhatsApp
+     * @param {*} messageBody 
+     * @returns 
+     */
     const sendMessage = async (messageBody) => {
         const schemaRoot = await app.db({ sc: 'schemas_control' }).where({ 'sc.schema_name': 'root' }).first();
         try {
