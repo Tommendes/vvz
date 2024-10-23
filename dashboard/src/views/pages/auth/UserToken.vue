@@ -23,6 +23,7 @@ const logoUrl = computed(() => {
 
 onMounted(async () => {
     idUser.value = route.query.q;
+    if (route.query.tkn) token.value = route.query.tkn.substring(0, 8);
     await getTokenTime();
 });
 

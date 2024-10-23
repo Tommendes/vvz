@@ -82,9 +82,15 @@ module.exports = app => {
 
     const noAccessMsg = 'Ops!!! Parece que seu perfil não dá acesso a essa operação'
 
+    function isValidCelPhone(value) {
+        celular = value.replace(/([^\d])+/gim, "");
+        return celular.match(/^([14689][0-9]|2[12478]|3([1-5]|[7-8])|5([13-5])|7[193-7])9[0-9]{8}$/)
+    }
+
     return {
         cpfOrError, cnpjOrError, lengthOrError, existsOrError, booleanOrError, valueOrError, integerOrError,
         valueMinorOrError, valueMajorOrError,
-        notExistsOrError, equalsOrError, diffOrError, isMatchOrError, emailOrError, isValidEmail, noAccessMsg
+        notExistsOrError, equalsOrError, diffOrError, isMatchOrError, emailOrError, isValidEmail, 
+        noAccessMsg, isValidCelPhone
     }
 }

@@ -45,7 +45,7 @@ module.exports = app => {
         .get(app.api.user.unlock)
         .post(app.api.user.unlock)
     // Rotas utilizadas para envio do token por SMS e email
-    app.route('/user-sms-unlock').patch(app.api.user.smsToken)
+    app.route('/user-whats-unlock').patch(app.api.user.whatsToken)
     app.route('/user-mail-unlock').patch(app.api.user.mailyToken)
 
     app.route('/users')

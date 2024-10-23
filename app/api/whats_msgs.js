@@ -269,12 +269,12 @@ module.exports = app => {
                 const messageBody = { message: bodyMessage, phone: phoneProf.phone };
                 setTimeout(async () => {
                     await axios.post(`${speedchat.host}/send-text`, messageBody, config)
-                        .then(async () => {
-                            const body = { delivered_at: moment().format('YYYY-MM-DD HH:mm:ss') };
+                        .then(async (res) => {
+                            const body = { delivered_at: moment().format('YYYY-MM-DD HH:mm:ss'), zaapId: res.data.zaapId, messageId: res.data.messageId };
                             if (message.situacao === SITUACAO_ENVIADA) body.situacao = SITUACAO_ENVIADA;
 
                             // Atualizar a situação da mensagem para 2 (enviada)
-                            await app.db(tabelaDomain).update(body).where({ id: message.id });
+                            if (tabelaDomain) await app.db(tabelaDomain).update(body).where({ id: message.id });
                         })
                         .catch(error => {
                             app.api.logger.logError({ log: { line: `Error in file: ${__filename}. Error: ${error}`, sConsole: true } }); // Certifique-se de que app.api.logger.logError está definido
@@ -493,5 +493,5 @@ module.exports = app => {
     sendScheduledMessages();
 
     // return { save, get, getById, remove, getByFunction }
-    return { save, get, getById, remove, getByFunction, SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA }
+    return { save, get, getById, remove, getByFunction, sendMessage, SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA }
 }

@@ -1,7 +1,7 @@
 
 const randomstring = require("randomstring")
 const { emailAdmin, appName } = require("../config/params")
-const { baseFrontendUrl, dbPrefix, jasperServerU, jasperServerK } = require("../.env")
+const { baseFrontendUrl, dbPrefix, speedchat, jasperServerU, jasperServerK } = require("../.env")
 const { STATUS_INACTIVE, STATUS_WAITING, STATUS_PASS_EXPIRED, STATUS_SUSPENDED, STATUS_SUSPENDED_BY_TKN, STATUS_ACTIVE,
     STATUS_DELETE, MINIMUM_KEYS_BEFORE_CHANGE, TOKEN_VALIDE_MINUTES } = require("../config/userStatus")
 const axios = require('axios')
@@ -14,7 +14,7 @@ const incorrectKeyPassMsgs = require('../config/ia-models/incorrectKeyPassMsgs.j
 const noUserFoundMessages = require('../config/ia-models/noUserFoundMessages.js')
 
 module.exports = app => {
-    const { existsOrError, notExistsOrError, equalsOrError, isValidEmail, isEmailOrError, noAccessMsg, isCelPhoneOrError, cpfOrError, isValue, isBooleanOrError, booleanOrError } = app.api.validation
+    const { existsOrError, notExistsOrError, equalsOrError, isValidEmail, emailOrError, noAccessMsg, isValidCelPhone, cpfOrError, isValue, isBooleanOrError, booleanOrError } = app.api.validation
     const { titleCase, encryptPassword, comparePassword } = app.api.facilities
     const { transporter } = app.api.mailer
     const tabela = `users`
@@ -37,32 +37,29 @@ module.exports = app => {
     const signup = async (req, res) => {
         const body = { ...req.body }
         let registered = false;
+
+        // console.log('body', body);
         try {
-            existsOrError(body.cpf, 'CPF não informado')
-            body.cpf = body.cpf.replace(/([^\d])+/gim, "")
-            cpfOrError(body.cpf, 'CPF inválido')
+            existsOrError(body.name, 'Nome não informado')
+            existsOrError(body.email, 'E-mail não informado')
+            emailOrError(body.email, 'E-mail informado está num formato inválido')
+            existsOrError(body.password, 'Senha não informada')
+            existsOrError(body.confirmPassword, 'Confirmação de Senha não informada')
+            equalsOrError(body.password, body.confirmPassword, 'Senhas não conferem')
+            existsOrError(body.telefone, 'Número de WhatsApp não informado')
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(400).send({ msg: error })
         }
-
-        /**
-         * Se o e-mail for informado vazio exclui do body
-        */
-        if (!(!!body.email)) delete body.email
-        else body.email = body.email.trim().toLowerCase()
-        /**
-         * Se o e-mail for informado vazio exclui do body
-        */
-        if (!(!!body.celular)) delete body.celular
-        else body.telefone = body.telefone.replace(/([^\d])+/gim, "")
+        body.telefone = body.telefone.replace(/([^\d])+/gim, "")
+        body.email = body.email.trim().toLowerCase()
 
         /**
          * Tenta localizar o usuário a partir do cpf informado
         */
         const userFromDB = await app.db(tabela)
-            .select('id', 'email', 'name', 'cpf', 'status')
-            .where({ cpf: body.cpf }).first()
+            .select('id', 'email', 'name', 'telefone', 'status')
+            .where({ email: body.email }).first()
         const isStatusActive = (userFromDB && userFromDB.status == STATUS_ACTIVE) || false
 
         /**
@@ -72,7 +69,7 @@ module.exports = app => {
          */
         if (userFromDB && userFromDB.id) {
             registered = true
-            let msg = `O CPF informado já se encontra registrado. `
+            let msg = `O e-mail informado já se encontra registrado. `
             if (isStatusActive)
                 msg += `Por favor prossiga para o login ou se esqueceu sua senha então poderá recuperá-la.`
             else
@@ -86,12 +83,10 @@ module.exports = app => {
         }
 
         /**
-         * Se for informado um e-mail, faz a validação e 
-         * bloqueia a duplicidade de e-mails
+         * Se for informado um e-mail bloqueia a duplicidade de e-mails
          */
         if (body.email) {
             try {
-                isEmailOrError(body.email, 'E-mail informado está num formato inválido')
                 const userEmail = await app.db(tabela).where({ email: body.email }).first()
                 if (userEmail && !isStatusActive) notExistsOrError(userEmail.email, 'E-mail já registrado')
             } catch (error) {
@@ -103,157 +98,120 @@ module.exports = app => {
         /**
          * #2 - Se não tem perfil e já informou os dados necessários para a criação do perfil:
         */
-        if (body.isNewUser && body.celular && body.cpf) {
-            delete body.isNewUser
-            try {
-                existsOrError(body.password, 'Senha não informada')
-                existsOrError(body.confirmPassword, 'Confirmação de Senha inválida')
-            } catch (error) {
-                return res.status(400).send({ msg: error })
-            }
-
+        if (body.name && body.email && body.password && body.telefone) {
             /**
-             * Se body.id NÃO for informado então não é servidor. Nesse caso body.email torna-se obrigatório
+             * Bloqueia a duplicidade de celulares
              */
-            if (!(!!(body.id || body.email))) {
+            if (body.telefone)
                 try {
-                    existsOrError(body.email, 'E-mail obrigatório não informado')
+                    isValidCelPhone(body.telefone, 'Número de WhatsApp informado é inválido')
+                    const userCelPhone = await app.db(tabela).select('telefone').where({ telefone: body.telefone }).first()
+                    if (userCelPhone) notExistsOrError(userCelPhone.telefone, 'Número de WhatsApp já registrado')
                 } catch (error) {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                     return res.status(400).send({ msg: error })
                 }
-            } else {
-                /**
-                 * Bloqueia a duplicidade de celulares
-                 */
-                if (body.celular)
-                    try {
-                        isCelPhoneOrError(body.celular, 'Número de celular informado é inválido')
-                        const userCelPhone = await app.db(tabela).select('telefone').where({ telefone: body.celular }).first()
-                        if (userCelPhone) notExistsOrError(userCelPhone.telefone, 'Celular já registrado')
-                    } catch (error) {
-                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                        return res.status(400).send({ msg: error })
-                    }
 
-                try {
-                    // existsOrError(body.schema_id, 'Empresa não informada')
-                    existsOrError(body.name, 'Nome não informado')
-                    existsOrError(body.password, 'Senha não informada')
-                    existsOrError(body.confirmPassword, 'Confirmação de Senha inválida')
-                    equalsOrError(body.password, body.confirmPassword, 'Senhas não conferem')
-                } catch (error) {
-                    return res.status(400).send({ msg: error })
-                }
-
-
-                // Dados necessários agrupados
-                // Criação de um novo registro
-                const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
-
-                // Variáveis da criação de um novo registro
-                body.evento = nextEventID.count + 1
-                const now = Math.floor(Date.now() / 1000)
-                body.password_reset_token = randomstring.generate(8).toUpperCase() + '_' + Number(now + TOKEN_VALIDE_MINUTES * 60)
-                body.status = STATUS_WAITING
-                body.created_at = new Date()
-                body.telefone = body.celular
-                body.schema_id = body.schema_id
-
-                try {
-                    if (typeof isValidPassword(body.password) === 'string') throw isValidPassword(body.password)
-                } catch (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                    return res.status(400).send({
-                        isInvalidPassword: true,
-                        msg: error
-                    })
-                }
-
-                const password = encryptPassword(body.password)
-
-                delete body.id
-                delete body.nome
-                delete body.celular
-                delete body.clientName
-                delete body.confirmPassword
-                delete body.password
-                delete body.old_id;
-                app.db(tabela)
-                    .insert(body)
-                    .then(async (ret) => {
-                        mailyToken(body)
-                        body.id = ret[0]
-                        req.body = body
-                        smsToken(req)
-                        // registrar o evento na tabela de eventos
-                        const { createEventIns } = app.api.sisEvents
-                        createEventIns({
-                            "notTo": ['created_at', 'password', 'password_reset_token', 'evento'],
-                            "next": body,
-                            "request": req,
-                            "evento": {
-                                "evento": `Novo perfil de usuário`,
-                                "tabela_bd": "user",
-                            }
-                        })
-
-                        // Criação do registro da senha
-                        const userKey = {}
-                        const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
-                        userKey.evento = nextEventID.count + 1
-                        userKey.password = password
-                        userKey.status = STATUS_ACTIVE
-                        app.db(tabelaKeys)
-                            .insert({
-                                created_at: new Date(),
-                                evento: userKey.evento,
-                                status: userKey.status,
-                                password: userKey.password,
-                                id_users: body.id
-                            })
-                            .then(() => {
-                                const { createEventIns } = app.api.sisEvents
-                                createEventIns({
-                                    "notTo": ['created_at', 'password', 'evento'],
-                                    "next": userKey,
-                                    "request": req,
-                                    "evento": {
-                                        "evento": `Registro de senha de usuário`,
-                                        "tabela_bd": "users_keys",
-                                    }
-                                })
-                            })
-                            .catch(error => {
-                                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                                return res.status(500).send({ msg: error })
-                            })
-
-                        app.api.logger.logInfo({ log: { line: `Novo de perfil de usuário! Usuário: ${body.name}`, sConsole: true } })
-                        return res.json({
-                            data: body,
-                            msg: [
-                                `Olá ${body.name.split(' ')[0]}!`,
-                                `Estamos confirmando sua inscrição✔`,
-                                `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token que enviamos em seu email`
-                            ]
-                        })
-                    })
-                    .catch(error => {
-                        app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-                        return res.status(500).send({ msg: error })
-                    })
+            try {
+                if (typeof isValidPassword(body.password) === 'string') throw isValidPassword(body.password)
+            } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                return res.status(400).send({
+                    isInvalidPassword: true,
+                    msg: error
+                })
             }
-        }
-        /**
-         * #2 - Se não tem perfil e não informou os dados necessários para a criação do perfil:
-        */
-        else {
-            /**
-             * #3 - Se não tem perfil e não é localizado nos schemas dos clientes todos os dados tornam-se obrigatórios exceto o id
-            */
-            const bodyReturn = { isNewUser: true, msg: await showNewUserMessage() || "Não encontramos as informações que você forneceu. Por favor, complete os campos com os dados necessários para criar seu perfil de usuário" }
-            return res.json(bodyReturn)
+
+            // Dados necessários agrupados
+            // Criação de um novo registro
+            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
+
+            // Variáveis da criação de um novo registro
+            body.evento = nextEventID.count + 1
+            const now = Math.floor(Date.now() / 1000)
+            body.password_reset_token = randomstring.generate(8).toUpperCase() + '_' + Number(now + TOKEN_VALIDE_MINUTES * 60)
+            body.status = STATUS_WAITING
+            body.created_at = new Date()
+
+            const password = encryptPassword(body.password)
+            const bodyToMessage = { ...body }
+
+            delete body.id
+            delete body.confirmPassword
+            delete body.password
+            await app.db(tabela)
+                .insert(body)
+                .then(async (ret) => {
+                    body.id = ret[0]
+                    req.body = body
+                    bodyToMessage.id = body.id
+                    mailyToken(bodyToMessage)
+                    const welcomeUserMessages = {
+                        phone: `55${bodyToMessage.telefone}`,
+                        message: [
+                            `Olá ${bodyToMessage.name.split(' ')[0]}! Estamos confirmando sua inscrição✔`,
+                            `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token a seguir: ${bodyToMessage.password_reset_token.split('_')[0]}\n`,
+                            `Ou, se preferir, pode apenas acessar este link para liberar seu acesso: ${baseFrontendUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
+                        ]
+                    }
+                    sendMessage(welcomeUserMessages)
+                    // registrar o evento na tabela de eventos
+                    const { createEventIns } = app.api.sisEvents
+                    createEventIns({
+                        "notTo": ['created_at', 'password', 'password_reset_token', 'evento'],
+                        "next": body,
+                        "request": req,
+                        "evento": {
+                            "evento": `Novo perfil de usuário`,
+                            "tabela_bd": "user",
+                        }
+                    })
+
+                    // Criação do registro da senha
+                    const userKey = {}
+                    const nextEventID = await app.db(`${dbPrefix}_api.sis_events`).select(app.db.raw('max(id) as count')).first()
+                    userKey.evento = nextEventID.count + 1
+                    userKey.password = password
+                    userKey.status = STATUS_ACTIVE
+                    app.db(tabelaKeys)
+                        .insert({
+                            created_at: new Date(),
+                            evento: userKey.evento,
+                            status: userKey.status,
+                            password: userKey.password,
+                            id_users: body.id
+                        })
+                        .then(() => {
+                            const { createEventIns } = app.api.sisEvents
+                            createEventIns({
+                                "notTo": ['created_at', 'password', 'evento'],
+                                "next": userKey,
+                                "request": req,
+                                "evento": {
+                                    "evento": `Registro de senha de usuário`,
+                                    "tabela_bd": "users_keys",
+                                }
+                            })
+                        })
+                        .catch(error => {
+                            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                            return res.status(500).send({ msg: error })
+                        })
+
+                    app.api.logger.logInfo({ log: { line: `Novo de perfil de usuário! Usuário: ${body.name}`, sConsole: true } })
+                    return res.json({
+                        data: body,
+                        msg: [
+                            `Olá ${body.name.split(' ')[0]}!`,
+                            `Estamos confirmando sua inscrição✔`,
+                            `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token que enviamos em seu email`
+                        ]
+                    })
+                })
+                .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+                    return res.status(500).send({ msg: error })
+                })
         }
     }
 
@@ -266,14 +224,13 @@ module.exports = app => {
     const requestPasswordReset = async (req, res) => {
         let user = { ...req.body }
         try {
-            existsOrError(user.cpf, 'CPF/e-mail não informado')
+            existsOrError(user.email, 'E-mail não informado')
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(200).send(error)
         }
         const thisUser = await app.db(tabela)
-            .where({ cpf: user.cpf.replace(/([^\d])+/gim, "") })
-            .orWhere({ email: user.cpf })
+            .where({ email: user.email })
             .first()
         try {
             existsOrError(thisUser, await showRandomMessage())
@@ -289,9 +246,10 @@ module.exports = app => {
         if (validate > (now - 60)) {
             // Se o token estiver dentro da validade menos um minuto então não gera outro
             mailyPasswordReset(thisUser)
+            whatsPasswordReset(thisUser)
             return res.status(200).send({
                 id: thisUser.id,
-                msg: `Verifique seu email${thisUser.email ? (' (' + thisUser.email + ')') : ''} para concluir a operação!`,
+                msg: `Te enviamos uma senha temporária. Verifique seu email${thisUser.email ? (' (' + thisUser.email + ')') : ''} e ou WhatsApp${thisUser.telefone ? (' (55' + thisUser.telefone + ')') : ''} para concluir a operação!`,
                 token: thisUser.password_reset_token
             })
         } else {
@@ -320,7 +278,7 @@ module.exports = app => {
                 .where({ cpf: thisUser.cpf })
                 .then(_ => {
                     req.body = thisUser
-                    // smsToken(req)
+                    sendMessage()
                     mailyPasswordReset(thisUser)
                     return res.status(200).send({
                         id: thisUser.id,
@@ -448,6 +406,8 @@ module.exports = app => {
         if (!(req.query.tkn || (req.body && req.body.token)))
             return res.status(400).send(await showRandomMessage() || 'Token ausente, inválido ou não corresponde a nenhuma conta em nosso sistema')
         const token = req.query.tkn || req.body.token
+        console.log('token', token, req.params);
+
         const userFromDB = await app.db(tabela)
             .select('id', 'status', 'email', 'password_reset_token', 'name')
             .where(function () {
@@ -495,6 +455,7 @@ module.exports = app => {
             .then(_ => {
                 if (userFromDB.email)
                     mailyUnlocked(userFromDB)
+                whatsUnlocked(userFromDB)
                 app.api.logger.logInfo({ log: { line: `Usuário autorizado a usar o sistema! Usuário: ${userFromDB.name}`, sConsole: true } })
                 return res.status(200).send({ msg: 'Usuário autorizado a usar o sistema! Obrigado por sua confirmação' })
             })
@@ -504,81 +465,66 @@ module.exports = app => {
             })
     }
 
+    const sendMessage = async (messageBody) => {
+        const schemaRoot = await app.db({ sc: 'schemas_control' }).where({ 'sc.schema_name': 'root' }).first();
+        try {
+            if (!schemaRoot) throw `Falha no banco de dados. Esquema root não localizado`
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return error
+        }
+        try {
+            existsOrError(messageBody.message, 'Mensagem não informada')
+            existsOrError(messageBody.phone, 'Número de WhatsApp não informado')
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
+            return error
+        }
+        const config = {
+            headers: {
+                'Authorization': schemaRoot.chat_account_tkn // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
+            },
+        };
+        if (typeof messageBody.message === 'string') messageBody.message = [messageBody.message]
+        for (let index = 0; index < messageBody.message.length; index++) {
+            const element = messageBody.message[index];
+
+            const body = {
+                "phone": messageBody.phone,
+                "message": element
+            }
+            await axios.post(`${speedchat.host}/send-text`, body, config)
+                .then(async (res) => { return res.data })
+                .catch(error => { return error })
+        };
+    }
+
     /**
-     * Função utilizada para envio/reenvio do token por SMS
+     * Função utilizada para envio/reenvio do token por WhatsApp
      * @param {*} req 
      * @param {*} res 
-     * @returns 
      */
-    const smsToken = async (req, res) => {
-        const body = { ...req.body }
-        const now = Math.floor(Date.now() / 1000)
-
-        const userFromDB = await app.db('users')
-            .where(function () {
-                if (body.id) this.where({ id: body.id })
-                else this.orWhere({ email: body.email })
-                    .orWhere({ cpf: body.email })
-            }).first()
-        if (!(userFromDB))
-            return res.status(400).send(await showRandomMessage() || 'Os dados informados não correspondem a nenhuma conta em nosso sistema')
-        const expired = !userFromDB.password_reset_token || userFromDB.password_reset_token.split('_')[1] < now
-
-        if (!expired) body.password_reset_token = userFromDB.password_reset_token
-        else {
-            body.password_reset_token = randomstring.generate(8).toUpperCase() + '_' + Number(now + TOKEN_VALIDE_MINUTES * 60)
-            if (![STATUS_WAITING, STATUS_PASS_EXPIRED].includes(userFromDB.status)) body.status = STATUS_SUSPENDED_BY_TKN
-            // Registra o token no BD
-            await app.db(tabela).update({
-                password_reset_token: body.password_reset_token,
-                status: body.status
-            })
-                .where(function () {
-                    if (body.id) this.where({ id: body.id })
-                    else this.orWhere({ email: body.email })
-                        .orWhere({ cpf: body.email })
-                })
-        }
-        token = body.password_reset_token.split('_')[0]
+    const whatsToken = async (req, res) => {
         try {
-            const url = "https://sms.comtele.com.br/api/v2/send"
-            moment().locale('pt-br')
-            const data = {
-                "Sender": "vivazul.com.br",
-                "Receivers": userFromDB.telefone,
-                "Content": `Para liberar seu acesso ao vivazul.com.br, utilize o código: ${token}${userFromDB.email ? ' ou o link que também foi enviado para o email de registro' : ''}`
+            const userFromDB = await app.db(tabela).where({ id: req.body.id }).first()
+            existsOrError(userFromDB, await showRandomMessage())
+            const text = `Olá ${userFromDB.name}!\n
+                Estamos confirmando sua inscrição✔
+                Para liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n
+                ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\n
+                Atenciosamente,\nTime ${appName}`;
+            const bodyMessage = {
+                phone: `55${userFromDB.telefone}`,
+                message: text
             }
-            const config = {
-                headers: {
-                    'content-type': 'application/json',
-                    'auth-key': '7bc83b13-030f-4700-b56a-7352590d5a8c'
-                },
-            }
-            const response = await axios.post(url, data, config)
-            // const responseData = response.data;
-            if (expired) {
-                const bodyRes = userFromDB
-                bodyRes.password_reset_token = body.password_reset_token
-                const { createEventUpd } = app.api.sisEvents
-                const evento = await createEventUpd({
-                    "notTo": ['created_at'],
-                    "last": userFromDB,
-                    "next": bodyRes,
-                    "request": req,
-                    "evento": {
-                        "classevento": "smsToken",
-                        "evento": `Geração e envio de token SMS`,
-                        "tabela_bd": "user",
-                    }
-                })
-                bodyRes.evento = evento
-                app.db('users').update(bodyRes).where({ id: bodyRes.id }).then()
-            }
-            if (req.method === 'PATCH') res.send({ msg: `SMS enviado com sucesso para o celular ${userFromDB.telefone}` })
-            else return token
+            console.log('bodyMessage', bodyMessage);
+
+            sendMessage(bodyMessage)
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsUnlocked enviada com sucesso para 55${userFromDB.telefone}`, sConsole: true } }))
+                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
-            return res.status(500).send({ msg: error })
+            res.status(400).send(error)
         }
     }
 
@@ -597,37 +543,24 @@ module.exports = app => {
                         .orWhere({ cpf: body.email })
                 }).first()
             existsOrError(userFromDB, await showRandomMessage())
-            const now = Math.floor(Date.now() / 1000)
-            const password_reset_token = randomstring.generate(8).toUpperCase() + '_' + Number(now + TOKEN_VALIDE_MINUTES * 60)
-            if (![STATUS_WAITING, STATUS_PASS_EXPIRED].includes(userFromDB.status)) body.status = STATUS_SUSPENDED_BY_TKN
-            // Registra o token no BD
-            await app.db(tabela).update({
-                password_reset_token: password_reset_token,
-                status: body.status
-            }).where(function () {
-                if (body.id) this.where({ id: body.id })
-                else this.orWhere({ email: body.email })
-                    .orWhere({ cpf: body.email })
-            })
 
             if (userFromDB.email) {
-                let expirationTimOk = userFromDB.password_reset_token ? Number(userFromDB.password_reset_token.split('_')[1]) > now : false
                 await transporter.sendMail({
                     from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                     to: `${userFromDB.email}`, // list of receivers
                     subject: `Bem-vindo ao ${appName}`, // Subject line
                     text: `Olá ${userFromDB.name}!\n
                 Estamos confirmando sua inscrição✔
-                Para liberar seu acesso, por favor acesse o link abaixo${expirationTimOk ? ` ou utilize o código ${password_reset_token.split('_')[0]} na tela de login` : ''}.\n
-                ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${password_reset_token}\n
+                Para liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n
+                ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\n
                 Atenciosamente,\nTime ${appName}`,
                     html: `<p><b>Olá ${userFromDB.name}!</b></p>
                 <p>Estamos confirmando sua inscrição✔</p>
                 <p>Para liberar seu acesso utilize uma das seguinte opções:</p>
                 <ul>
-                <li>Clique <a href="${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${password_reset_token}">aqui</a></li>
-                <li>Acesse o link ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${password_reset_token}</li>
-                ${expirationTimOk ? `<li>Ou utilize o código <strong><code>${password_reset_token.split('_')[0]}</code></strong> na tela de login</li>` : ''}
+                <li>Clique <a href="${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}">aqui</a></li>
+                <li>Acesse o link ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}</li>
+                <li>Ou utilize o código <strong><code>${userFromDB.password_reset_token.split('_')[0]}</code></strong> na tela de login</li>
                 </ul>
                 <p>Atenciosamente,</p>
                 <p><b>Time ${appName}</b></p>`,
@@ -674,7 +607,7 @@ module.exports = app => {
                 text: `Olá ${user.name}!\n
                 Para atualizar/criar sua senha, por favor acesse o link abaixo.\n
                 Lembre-se de que esse link tem validade de ${TOKEN_VALIDE_MINUTES} minutos.\n
-                ${baseFrontendUrl}/password-reset/${user.id}?tkn=${user.password_reset_token}\n
+                ${urlTo}\n
                 Atenciosamente,\nTime ${appName}`,
                 html: `<p><b>Olá ${user.name}!</b></p>
                 <p>Para atualizar/criar sua senha, por favor acesse o link abaixo.</p>
@@ -685,6 +618,32 @@ module.exports = app => {
                 <p><b>Time ${appName}</b></p>`,
             }
             await transporter.sendMail(bodyEmail).then(() => app.api.logger.logInfo({ log: { line: `Email password-reset enviado com sucesso para ${user.email}`, sConsole: true } }))
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
+     * Função utilizada para envio de mensagem de atualização de senha
+     * @param {*} req 
+     * @param {*} res 
+     */
+    const whatsPasswordReset = async (req, res) => {
+        try {
+            const user = await app.db(tabela)
+                .where({ email: req.email }).first()
+            existsOrError(user, await showRandomMessage())
+            const urlTo = `${baseFrontendUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
+            const text = [
+                `Olá ${user.name}!`,
+                `Para atualizar/criar sua senha, por favor acesse o link abaixo`,
+                `Lembre-se de que esse link tem validade de ${TOKEN_VALIDE_MINUTES} minutos`,
+                `${urlTo}`,
+                `Time ${appName}`
+            ];
+            sendMessage({ phone: `55${user.telefone}`, message: text })
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsUnlocked enviada com sucesso para 55${user.telefone}`, sConsole: true } }))
+                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
@@ -718,6 +677,30 @@ module.exports = app => {
                 <p><b>Time ${appName}</b></p>`,
             })
                 .then(() => app.api.logger.logInfo({ log: { line: `Email mailyUnlocked enviado com sucesso para ${user.email}`, sConsole: true } }))
+                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
+     * Função utilizada para enviar email de confirmação de novo usuário
+     * @param {*} req 
+     * @param {*} res 
+     */
+    const whatsUnlocked = async (req, res) => {
+        try {
+            const user = await app.db(tabela)
+                .where({ email: req.email }).first()
+            existsOrError(user, await showRandomMessage())
+            const text = [
+                `Olá ${user.name}!\nEstamos felizes que conseguiu liberar seu acesso`,
+                `A partir de agora poderá acessar e utilizar o sistema.\nCaso seja necessário, por favor, solicite ao seu administrador para liberar acesso aos dados`,
+                `Te desejamos sucesso`,
+                `Time ${appName}`
+            ];
+            sendMessage({ phone: `55${user.telefone}`, message: text })
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsUnlocked enviada com sucesso para 55${user.telefone}`, sConsole: true } }))
                 .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
@@ -811,7 +794,7 @@ module.exports = app => {
 
             user.evento = evento
             user.updated_at = new Date()
-            
+
             const rowsUpdated = await app.db(tabela)
                 .update(user)
                 .where({ id: user.id })
@@ -841,7 +824,7 @@ module.exports = app => {
             const rowsInserted = await app.db(tabela)
                 .insert(user)
                 .then((user) => {
-                    const data = {id: user[0] }
+                    const data = { id: user[0] }
                     return res.json(data)
                 })
                 .catch(error => {
@@ -1310,7 +1293,7 @@ module.exports = app => {
 
     return {
         signup, requestPasswordReset, passwordReset, TOKEN_VALIDE_MINUTES, showRandomMessage, showRandomKeyPassMessage,
-        showUnconcludedRegistrationMessage, save, get, getById, getByCpf, getByToken, smsToken, mailyToken, remove, getByFunction,
+        showUnconcludedRegistrationMessage, save, get, getById, getByCpf, getByToken, mailyToken, whatsToken, remove, getByFunction,
         unlock, showWelcomeUserMessage
     }
 }
