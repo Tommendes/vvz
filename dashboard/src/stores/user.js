@@ -11,7 +11,7 @@ export const useUserStore = defineStore('users', {
         },
         profile: {},
         timeLogged: null,
-        timeToLogOut: 1800,
+        timeToLogOut: 1800, // 30 minutos
         inactivityTimer: null,
         isTokenValid: false,
         validation: {},

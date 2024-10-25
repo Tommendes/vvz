@@ -61,7 +61,7 @@ module.exports = app => {
             return res.status(200).send({
                 id: user.id,
                 'status': STATUS_WAITING,
-                'msg': await showUnconcludedRegistrationMessage() || "Confira o token recebido por SMS para ativar seu perfil de usuário"
+                'msg': await showUnconcludedRegistrationMessage() || "Confira o token recebido por e-mail/WhatsApp para ativar seu perfil de usuário"
             })
         }
 
@@ -82,7 +82,7 @@ module.exports = app => {
             return res.status(200).send({
                 'status': STATUS_SUSPENDED_BY_TKN,
                 'id': user.id,
-                'msg': `Foi solicitado um token de senha. Por favor, verifique seu email ou SMS no celular. 
+                'msg': `Foi solicitado um token de senha. Por favor, verifique seu email ou WhatsApp no celular. 
                 Para sua segurança sugerimos que altere sua senha de tempos em tempos e nunca a forneça a ninguém. 
                 A nova senha não pode ser igual às últimas ${MINIMUM_KEYS_BEFORE_CHANGE} senhas utilizadas`
             })
@@ -223,7 +223,7 @@ module.exports = app => {
                 'u.agente_at', 'u.time_to_pas_expires', 'u.chat_operator_access_token', 
                 'sc.schema_name', 'sc.schema_description', 'sc.pipeline_ftp', 'sc.chat_account_id', 'sc.chat_status')
             .join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id')
-            .orWhere({ 'u.id': req.body.id })
+            .where({ 'u.id': req.body.id })
             .first()
             
         if (!user) return res.status(400).send('Usuário não encontrado')
@@ -239,6 +239,10 @@ module.exports = app => {
         const userData = req.body || null
         try {
             if (userData) {
+                const isUserValid = await app.db(tabela).where({ 'id': userData.id }).first()
+                // console.log('userData', userData, isUserValid)
+                
+                if (!isUserValid) return res.send(false)
                 const token = jwt.decode(userData.token, authSecret)
                 if (new Date(token.exp * 1000) > new Date() && userData.ipSignin == userData.ip) {
                     return res.send(true)

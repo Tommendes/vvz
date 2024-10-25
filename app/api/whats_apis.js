@@ -22,7 +22,7 @@ module.exports = app => {
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
+            existsOrError(uParams && uParams.whats_msgs, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -54,10 +54,14 @@ module.exports = app => {
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
+            existsOrError(uParams && uParams.whats_msgs, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
+        }
+
+        if (!(uParams.chat_account_tkn || uParams.chat_account_id)) {
+            return res.json({ chat_account_tkn: uParams.chat_account_tkn, chat_account_id: uParams.chat_account_id, message: 'Token de conta não informado' })
         }
 
         const filter = req.query.filter || undefined
@@ -182,10 +186,14 @@ module.exports = app => {
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
+            existsOrError(uParams && uParams.whats_msgs, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
+        }
+
+        if (!(uParams.chat_account_tkn || uParams.chat_account_id)) {
+            return res.json({ chat_account_tkn: uParams.chat_account_tkn, chat_account_id: uParams.chat_account_id, message: 'Token de conta não informado' })
         }
 
         const urlQueryes = req.query
@@ -208,6 +216,59 @@ module.exports = app => {
             })
     }
 
+    // Função responsável por verificar se o token de conta está setado
+    const getChatToken = async (req, res) => {
+        let user = req.user
+        const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            existsOrError(uParams, `${noAccessMsg} "Envio de mensagens de WhatsApp"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+        try {
+            if (!(uParams.chat_account_tkn || uParams.chat_account_id)) return res.json({ chat_account_tkn: uParams.chat_account_tkn, chat_account_id: uParams.chat_account_id, message: 'Token de conta não informado' })
+            else return res.json({ schemaId: uParams.schema_id, chat_account_tkn: uParams.chat_account_tkn, chat_account_id: uParams.chat_account_id, message: 'Token de conta informado' })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+    }
+    
+    // Setar o schemas_control[chat_account_tkn, chat_account_id] com os valores informados no schema.id do usuário
+    const setChatAccount = async (req, res) => {
+        let user = req.user
+        const tabelaSchemas = `${dbPrefix}_api.schemas_control`;
+        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).where({ 'u.id': user.id }).first();
+        try {
+            // Alçada do usuário
+            existsOrError(uParams, `${noAccessMsg} "Envio de mensagens de WhatsApp"`)
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(401).send(error)
+        }
+        const body = { ...req.body }
+        delete body.message
+        const schemaId = uParams.schema_id
+        const schema = await app.db({ sc: tabelaSchemas }).where({ 'sc.id': schemaId }).first();
+        try {
+            existsOrError(schema, 'Esquema não encontrado')
+            existsOrError(body.chat_account_tkn, 'Token de conta não informado')
+            existsOrError(body.chat_account_id, 'ID de conta não informado')
+        } catch (error) {
+            return res.status(400).send(error)
+        }
+        try {
+            await app.db(tabelaSchemas).update(body).where({ 'id': schemaId })
+            return res.status(200).send('Token de conta atualizado com sucesso')
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+            return res.status(500).send(error)
+        }
+    }
+
     // Este função será responsável por inicializar os contatos no banco de dados local baixando do plugchat os contatos e depois as imagens de perfil
     const initializeContactsInLocal = async (req, res) => {
         let user = req.user
@@ -215,12 +276,15 @@ module.exports = app => {
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: tabelaSchemas }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
-            existsOrError(uParams && uParams.chat_account_tkn, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
+            existsOrError(uParams && uParams.whats_msgs, `${noAccessMsg} "Exibição de contatos de WhatsApp"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
 
+        if (!(uParams.chat_account_tkn || uParams.chat_account_id)) {
+            return res.json({ chat_account_tkn: uParams.chat_account_tkn, chat_account_id: uParams.chat_account_id, message: 'Token de conta não informado' })
+        }
 
         await app.db(`${dbPrefix}_${uParams.schema_name}.${tabelaProfiles}`).where({ status: STATUS_ACTIVE }).update({ status: STATUS_INACTIVE })
 
@@ -359,6 +423,12 @@ module.exports = app => {
                 break;
             case 'scl':
                 setContactsInLocal(req, res)
+                break;
+            case 'gct':
+                getChatToken(req, res)
+                break;
+            case 'sct':
+                setChatAccount(req, res)
                 break;
             case 'icl':
                 initializeContactsInLocal(req, res)

@@ -39,6 +39,7 @@ module.exports = app => {
         let registered = false;
         try {
             existsOrError(body.name, 'Nome não informado')
+            existsOrError(body.fantasia, 'Nome Fantasia não informado')            
             existsOrError(body.email, 'E-mail não informado')
             emailOrError(body.email, 'E-mail informado está num formato inválido')
             existsOrError(body.password, 'Senha não informada')
@@ -49,6 +50,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return res.status(400).send({ msg: error })
         }
+        body.initial_schema_description = body.fantasia
         body.telefone = body.telefone.replace(/([^\d])+/gim, "")
         body.email = body.email.trim().toLowerCase()
 
@@ -103,8 +105,8 @@ module.exports = app => {
             if (body.telefone)
                 try {
                     isValidCelPhone(body.telefone, 'Número de WhatsApp informado é inválido')
-                    const userCelPhone = await app.db(tabela).select('telefone').where({ telefone: body.telefone }).first()
-                    if (userCelPhone) notExistsOrError(userCelPhone.telefone, 'Número de WhatsApp já registrado')
+                    // const userCelPhone = await app.db(tabela).select('telefone').where({ telefone: body.telefone }).first()
+                    // if (userCelPhone) notExistsOrError(userCelPhone.telefone, 'Número de WhatsApp já registrado')
                 } catch (error) {
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                     return res.status(400).send({ msg: error })
@@ -144,11 +146,11 @@ module.exports = app => {
                     body.id = ret[0]
                     req.body = body
                     bodyToMessage.id = body.id
-                    mailyToken(bodyToMessage)
+                    await mailyToken(bodyToMessage)
                     const welcomeUserMessages = {
                         phone: `55${bodyToMessage.telefone}`,
                         message: [
-                            `Olá ${bodyToMessage.name.split(' ')[0]}! Estamos confirmando sua inscrição✔`,
+                            `Olá ${bodyToMessage.name.split(' ')[0]}! Estamos confirmando sua inscrição ✔`,
                             `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token a seguir: ${bodyToMessage.password_reset_token.split('_')[0]}\n`,
                             `Ou, se preferir, pode apenas acessar este link para liberar seu acesso: ${baseFrontendUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
                         ]
@@ -198,15 +200,12 @@ module.exports = app => {
                         })
 
                     app.api.logger.logInfo({ log: { line: `Novo de perfil de usuário! Usuário: ${body.name}`, sConsole: true } })
-                    /*
-                    Executar a criação do schema de BD do cliente
-                    */
-                    const newSchema = await setNewClientSchema(bodyToMessage)
+
                     return res.json({
                         data: body,
                         msg: [
                             `Olá ${body.name.split(' ')[0]}!`,
-                            `Estamos confirmando sua inscrição✔`,
+                            `Estamos confirmando sua inscrição ✔`,
                             `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token que enviamos em seu email`
                         ]
                     })
@@ -216,30 +215,6 @@ module.exports = app => {
                     return res.status(500).send({ msg: error })
                 })
         }
-    }
-
-    const setNewClientSchema = async (newUser) => {
-        app.api.logger.logInfo({ log: { line: `Iniciada a criação de novo SCHEMA para o cliente ${newUser.name}`, sConsole: true } })
-        let schemaName = createHashSchemaName()
-        // Se já existir então deve ser alterado
-        const schemaExists = await app.db.raw(`SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${schemaName}'`)
-        const createnewSchema = await app.db.raw(`CREATE DATABASE IF NOT EXISTS \`${schemaName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci`);
-        console.log('createnewSchema', createnewSchema);
-        
-        if (createnewSchema) {
-            app.api.logger.logInfo({ log: { line: `Novo SCHEMA vivazul_${schemaName} criado com sucesso para o cliente ${newUser.name}`, sConsole: true } })
-            return createnewSchema
-        }
-    }
-    
-    function createHashSchemaName() {
-        // O schemaName deve ser curto, único e com no máximo 16 caracteres seguindo o padrão de nomenclatura. Acrescente ao final do schemaName um hash de 8 caracteres
-        const hash = crypto.randomBytes(4).toString('hex');
-
-        // Concatenar para formar o schemaName
-        let schemaName = `vivazul_${cleanName}${hash}`;
-        return schemaName;
-
     }
     /**
      * Gera e envia um token e uma URL (apenas no email registrado) para criação de uma nova senha
@@ -423,7 +398,7 @@ module.exports = app => {
     }
 
     /**
-     * Função para o desbloqueio de usuário por link de email/SMS ou token SMS
+     * Função para o desbloqueio de usuário por link de email/WhatsApp
      * @param {*} req 
      * @param {*} res 
      * @returns 
@@ -432,8 +407,6 @@ module.exports = app => {
         if (!(req.query.tkn || (req.body && req.body.token)))
             return res.status(400).send(await showRandomMessage() || 'Token ausente, inválido ou não corresponde a nenhuma conta em nosso sistema')
         const token = req.query.tkn || req.body.token
-        console.log('token', token, req.params);
-
         const userFromDB = await app.db(tabela)
             .select('id', 'status', 'email', 'password_reset_token', 'name')
             .where(function () {
@@ -539,20 +512,26 @@ module.exports = app => {
         try {
             const userFromDB = await app.db(tabela).where({ id: req.body.id }).first()
             existsOrError(userFromDB, await showRandomMessage())
-            const text = `Olá ${userFromDB.name}!\n
-                Estamos confirmando sua inscrição✔
-                Para liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n
-                ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\n
-                Atenciosamente,\nTime ${appName}`;
+            const now = Math.floor(Date.now() / 1000)
+            if (!(userFromDB.password_reset_token && userFromDB.password_reset_token.split('_')[1] > now)) {
+                userFromDB.password_reset_token = randomstring.generate(8).toUpperCase() + '_' + Number(Math.floor(Date.now() / 1000) + TOKEN_VALIDE_MINUTES * 60)
+                await app.db(tabela)
+                    .update({ password_reset_token: userFromDB.password_reset_token })
+                    .where({ id: userFromDB.id })
+            }
+
+            const text = `Olá ${userFromDB.name}!\nEstamos confirmando sua inscrição ✔\nPara liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\nAtenciosamente,\nTime ${appName}`;
             const bodyMessage = {
                 phone: `55${userFromDB.telefone}`,
                 message: text
             }
-            console.log('bodyMessage', bodyMessage);
-
-            sendMessage(bodyMessage)
-                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsUnlocked enviada com sucesso para 55${userFromDB.telefone}`, sConsole: true } }))
-                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+            sendMessage(bodyMessage).then(_ => {
+                if (req.method === 'PATCH') {
+                    res.send(`Token enviado com sucesso para 55${userFromDB.telefone}`)
+                    app.api.logger.logInfo({ log: { line: `Mensagem whatsUnlocked enviada com sucesso para 55${userFromDB.telefone}`, sConsole: true } })
+                }
+                else return userFromDB.password_reset_token
+            })
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
@@ -574,6 +553,15 @@ module.exports = app => {
                         .orWhere({ cpf: body.email })
                 }).first()
             existsOrError(userFromDB, await showRandomMessage())
+            // Se houver password_reset_token, verifique se ainda é válido
+            // Não não for válido ou não existir então crie um novo
+            const now = Math.floor(Date.now() / 1000)
+            if (!(userFromDB.password_reset_token && userFromDB.password_reset_token.split('_')[1] > now)) {
+                userFromDB.password_reset_token = randomstring.generate(8).toUpperCase() + '_' + Number(Math.floor(Date.now() / 1000) + TOKEN_VALIDE_MINUTES * 60)
+                await app.db(tabela)
+                    .update({ password_reset_token: userFromDB.password_reset_token })
+                    .where({ id: userFromDB.id })
+            }
 
             if (userFromDB.email) {
                 await transporter.sendMail({
@@ -581,12 +569,12 @@ module.exports = app => {
                     to: `${userFromDB.email}`, // list of receivers
                     subject: `Bem-vindo ao ${appName}`, // Subject line
                     text: `Olá ${userFromDB.name}!\n
-                Estamos confirmando sua inscrição✔
+                Estamos confirmando sua inscrição ✔
                 Para liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n
                 ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\n
                 Atenciosamente,\nTime ${appName}`,
                     html: `<p><b>Olá ${userFromDB.name}!</b></p>
-                <p>Estamos confirmando sua inscrição✔</p>
+                <p>Estamos confirmando sua inscrição ✔</p>
                 <p>Para liberar seu acesso utilize uma das seguinte opções:</p>
                 <ul>
                 <li>Clique <a href="${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}">aqui</a></li>
@@ -1208,7 +1196,7 @@ module.exports = app => {
 
     const getTokenTime = async (req, res) => {
         const userFromDB = await app.db(tabela)
-            .select('name', 'status', 'password_reset_token')
+            .select('name', 'email', 'initial_schema_description', 'status', 'password_reset_token')
             .where({ id: req.query.q }).first()
         let tokenCreationTime = 0
         if (userFromDB && userFromDB.password_reset_token) {
@@ -1229,7 +1217,13 @@ module.exports = app => {
             }
             else {
                 const totalTimeRelase = tokenCreationTime - now
-                return res.send({ name: userFromDB.name, isTokenValid: true, gtt: totalTimeRelase })
+                return res.send({
+                    initial_schema_description: userFromDB.initial_schema_description,
+                    name: userFromDB.name,
+                    email: userFromDB.email,
+                    isTokenValid: true,
+                    gtt: totalTimeRelase
+                })
             }
         } else if (userFromDB && userFromDB.status == STATUS_ACTIVE) {
             return res.status(400).send({

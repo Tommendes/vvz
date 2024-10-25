@@ -19,13 +19,14 @@ module.exports = app => {
         const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         res.json({ ip: ipAddress });
     });
-
+    
     /**
      * Schemas Control
-     */
-    app.route('/s-c/sncs')
-        .all(app.config.passport.authenticate())
-        .post(app.api.db_schemas_control.creatClientSchema)
+    */
+    app.post('/s-n-c-s', app.api.schemas_control.setNewClient)
+    // app.route('/s-c/sncs')
+        // .all(app.config.passport.authenticate())
+        // .post(app.api.db_schemas_control.creatClientSchema)
 
     /**
      * Rota de validação genérica de documentos
@@ -44,7 +45,7 @@ module.exports = app => {
     app.route('/user-unlock/:id')
         .get(app.api.user.unlock)
         .post(app.api.user.unlock)
-    // Rotas utilizadas para envio do token por SMS e email
+    // Rotas utilizadas para envio do token por e-mail/WhatsApp e email
     app.route('/user-whats-unlock').patch(app.api.user.whatsToken)
     app.route('/user-mail-unlock').patch(app.api.user.mailyToken)
 

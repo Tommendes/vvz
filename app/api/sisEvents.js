@@ -190,7 +190,8 @@ module.exports = app => {
     const createEventIns = async (req, res) => {
         const evento = req.evento
         const next = req.next
-        const request = req.request
+        const request = req.request || req
+        request.user = request.user || request.body
         const notTo = req.notTo
         let eventoDescr = ''
         let fields = ''
@@ -202,7 +203,7 @@ module.exports = app => {
             // remove a virgula e espaço inseridos ao final da string
             eventoDescr += fields.substring(0, fields.length - 2)
 
-            evento.id_user = !(request && request.user && request.user.id) ? next.id : request.user.id
+            evento.id_user = request.user.id || next.id || 1
             evento.evento = `${evento.evento}: ${eventoDescr}`
             evento.classevento = "Insert"
             evento.id_registro = next.id
@@ -218,7 +219,7 @@ module.exports = app => {
                 else dba = await app.db(tabelaSisEvents).insert(evento)
                 return dba[0]
             } catch (error) {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${request.user.name}. Error: ${error}`, sConsole: true } });
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${request.user.name || request.user.email}. Error: ${error}`, sConsole: true } });
                 res.status(500).send(error)
             }
         }

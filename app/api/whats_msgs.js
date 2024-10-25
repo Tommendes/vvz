@@ -486,11 +486,11 @@ module.exports = app => {
         return destinatario;
     }
 
-    // Agendar a verificação e envio de mensagens a cada minuto
-    schedule.scheduleJob('* * * * *', () => {
-        sendScheduledMessages();
-    });
-    sendScheduledMessages();
+    // // Agendar a verificação e envio de mensagens a cada minuto
+    // schedule.scheduleJob('* * * * *', () => {
+    //     sendScheduledMessages();
+    // });
+    // sendScheduledMessages();
 
     // return { save, get, getById, remove, getByFunction }
     return { save, get, getById, remove, getByFunction, sendMessage, SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA }
