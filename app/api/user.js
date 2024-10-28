@@ -1,7 +1,7 @@
 
 const randomstring = require("randomstring")
 const { emailAdmin, appName } = require("../config/params")
-const { baseFrontendUrl, dbPrefix, speedchat, jasperServerU, jasperServerK } = require("../.env")
+const { baseVivazulUrl, dbPrefix, speedchat, jasperServerU, jasperServerK } = require("../.env")
 const { STATUS_INACTIVE, STATUS_WAITING, STATUS_PASS_EXPIRED, STATUS_SUSPENDED, STATUS_SUSPENDED_BY_TKN, STATUS_ACTIVE,
     STATUS_DELETE, MINIMUM_KEYS_BEFORE_CHANGE, TOKEN_VALIDE_MINUTES } = require("../config/userStatus")
 const axios = require('axios')
@@ -152,7 +152,7 @@ module.exports = app => {
                         message: [
                             `Olá ${bodyToMessage.name.split(' ')[0]}! Estamos confirmando sua inscrição ✔`,
                             `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token a seguir: ${bodyToMessage.password_reset_token.split('_')[0]}\n`,
-                            `Ou, se preferir, pode apenas acessar este link para liberar seu acesso: ${baseFrontendUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
+                            `Ou, se preferir, pode apenas acessar este link para liberar seu acesso: ${baseVivazulUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
                         ]
                     }
                     sendMessage(welcomeUserMessages)
@@ -520,7 +520,7 @@ module.exports = app => {
                     .where({ id: userFromDB.id })
             }
 
-            const text = `Olá ${userFromDB.name}!\nEstamos confirmando sua inscrição ✔\nPara liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\nAtenciosamente,\nTime ${appName}`;
+            const text = `Olá ${userFromDB.name}!\nEstamos confirmando sua inscrição ✔\nPara liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\nAtenciosamente,\nTime ${appName}`;
             const bodyMessage = {
                 phone: `55${userFromDB.telefone}`,
                 message: text
@@ -571,14 +571,14 @@ module.exports = app => {
                     text: `Olá ${userFromDB.name}!\n
                 Estamos confirmando sua inscrição ✔
                 Para liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n
-                ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\n
+                ${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\n
                 Atenciosamente,\nTime ${appName}`,
                     html: `<p><b>Olá ${userFromDB.name}!</b></p>
                 <p>Estamos confirmando sua inscrição ✔</p>
                 <p>Para liberar seu acesso utilize uma das seguinte opções:</p>
                 <ul>
-                <li>Clique <a href="${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}">aqui</a></li>
-                <li>Acesse o link ${baseFrontendUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}</li>
+                <li>Clique <a href="${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}">aqui</a></li>
+                <li>Acesse o link ${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}</li>
                 <li>Ou utilize o código <strong><code>${userFromDB.password_reset_token.split('_')[0]}</code></strong> na tela de login</li>
                 </ul>
                 <p>Atenciosamente,</p>
@@ -618,7 +618,7 @@ module.exports = app => {
             const user = await app.db(tabela)
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
-            const urlTo = `${baseFrontendUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
+            const urlTo = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
             const bodyEmail = {
                 from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                 to: `${user.email}`, // list of receivers
@@ -652,7 +652,7 @@ module.exports = app => {
             const user = await app.db(tabela)
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
-            const urlTo = `${baseFrontendUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
+            const urlTo = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
             const text = [
                 `Olá ${user.name}!`,
                 `Para atualizar/criar sua senha, por favor acesse o link abaixo`,

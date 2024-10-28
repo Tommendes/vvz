@@ -3,7 +3,7 @@ const randomstring = require("randomstring")
 
 const crypto = require("crypto");
 const { emailAdmin, appName } = require("../config/params.js")
-const { baseFrontendUrl, dbPrefix, speedchat, jasperServerU, jasperServerK } = require("../.env")
+const { dbPrefix, speedchat, jasperServerU, jasperServerK } = require("../.env")
 
 module.exports = app => {
     const { existsOrError, notExistsOrError, equalsOrError, emailOrError, isBooleanOrError } = app.api.validation
