@@ -1,7 +1,7 @@
 
 const randomstring = require("randomstring")
 const { emailAdmin, appName } = require("../config/params")
-const { baseVivazulUrl, dbPrefix, speedchat, jasperServerU, jasperServerK } = require("../.env")
+const { baseVivazulUrl, baseBotUrl, dbPrefix, speedchat, jasperServerU, jasperServerK } = require("../.env")
 const { STATUS_INACTIVE, STATUS_WAITING, STATUS_PASS_EXPIRED, STATUS_SUSPENDED, STATUS_SUSPENDED_BY_TKN, STATUS_ACTIVE,
     STATUS_DELETE, MINIMUM_KEYS_BEFORE_CHANGE, TOKEN_VALIDE_MINUTES } = require("../config/userStatus")
 const axios = require('axios')
@@ -39,7 +39,7 @@ module.exports = app => {
         let registered = false;
         try {
             existsOrError(body.name, 'Nome não informado')
-            existsOrError(body.fantasia, 'Nome Fantasia não informado')            
+            existsOrError(body.fantasia, 'Nome Fantasia não informado')
             existsOrError(body.email, 'E-mail não informado')
             emailOrError(body.email, 'E-mail informado está num formato inválido')
             existsOrError(body.password, 'Senha não informada')
@@ -147,12 +147,14 @@ module.exports = app => {
                     req.body = body
                     bodyToMessage.id = body.id
                     await mailyToken(bodyToMessage)
+                    let newUserDestin = `${baseVivazulUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
+                    if (bodyToMessage.whats_groups >= 4 && bodyToMessage.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
                     const welcomeUserMessages = {
                         phone: `55${bodyToMessage.telefone}`,
                         message: [
                             `Olá ${bodyToMessage.name.split(' ')[0]}! Estamos confirmando sua inscrição ✔`,
                             `Para liberar seu acesso, informe dentro dos próximos ${TOKEN_VALIDE_MINUTES} minutos o token a seguir: ${bodyToMessage.password_reset_token.split('_')[0]}\n`,
-                            `Ou, se preferir, pode apenas acessar este link para liberar seu acesso: ${baseVivazulUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
+                            `Ou, se preferir, pode apenas acessar este link para liberar seu acesso: ${newUserDestin}`
                         ]
                     }
                     sendMessage(welcomeUserMessages)
@@ -520,7 +522,10 @@ module.exports = app => {
                     .where({ id: userFromDB.id })
             }
 
-            const text = `Olá ${userFromDB.name}!\nEstamos confirmando sua inscrição ✔\nPara liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\nAtenciosamente,\nTime ${appName}`;
+            let newUserDestin = `${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
+            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
+
+            const text = `Olá ${userFromDB.name}!\nEstamos confirmando sua inscrição ✔\nPara liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n${newUserDestin}\nAtenciosamente,\nTime ${appName}`;
             const bodyMessage = {
                 phone: `55${userFromDB.telefone}`,
                 message: text
@@ -564,6 +569,8 @@ module.exports = app => {
             }
 
             if (userFromDB.email) {
+                let newUserDestin = `${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
+                if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
                 await transporter.sendMail({
                     from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                     to: `${userFromDB.email}`, // list of receivers
@@ -571,14 +578,14 @@ module.exports = app => {
                     text: `Olá ${userFromDB.name}!\n
                 Estamos confirmando sua inscrição ✔
                 Para liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n
-                ${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}\n
+                ${newUserDestin}\n
                 Atenciosamente,\nTime ${appName}`,
                     html: `<p><b>Olá ${userFromDB.name}!</b></p>
                 <p>Estamos confirmando sua inscrição ✔</p>
                 <p>Para liberar seu acesso utilize uma das seguinte opções:</p>
                 <ul>
-                <li>Clique <a href="${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}">aqui</a></li>
-                <li>Acesse o link ${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}</li>
+                <li>Clique <a href="${newUserDestin}">aqui</a></li>
+                <li>Acesse o link ${newUserDestin}</li>
                 <li>Ou utilize o código <strong><code>${userFromDB.password_reset_token.split('_')[0]}</code></strong> na tela de login</li>
                 </ul>
                 <p>Atenciosamente,</p>
@@ -618,7 +625,8 @@ module.exports = app => {
             const user = await app.db(tabela)
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
-            const urlTo = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
+            let newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
+            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
             const bodyEmail = {
                 from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                 to: `${user.email}`, // list of receivers
@@ -626,13 +634,13 @@ module.exports = app => {
                 text: `Olá ${user.name}!\n
                 Para atualizar/criar sua senha, por favor acesse o link abaixo.\n
                 Lembre-se de que esse link tem validade de ${TOKEN_VALIDE_MINUTES} minutos.\n
-                ${urlTo}\n
+                ${newUserDestin}\n
                 Atenciosamente,\nTime ${appName}`,
                 html: `<p><b>Olá ${user.name}!</b></p>
                 <p>Para atualizar/criar sua senha, por favor acesse o link abaixo.</p>
                 <p>Lembre-se de que esse link tem validade de ${TOKEN_VALIDE_MINUTES} minutos.</p>
                 ${user.password_reset_token ? `<p>Você necessitará informar o token a seguir para liberar sua nova senha: <strong>${user.password_reset_token.split('_')[0]}</strong></p>` : ''}
-                <a href="${urlTo}">${urlTo}</a>
+                <a href="${newUserDestin}">${newUserDestin}</a>
                 <p>Atenciosamente,</p>
                 <p><b>Time ${appName}</b></p>`,
             }
@@ -652,12 +660,13 @@ module.exports = app => {
             const user = await app.db(tabela)
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
-            const urlTo = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`;
+            let newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
+            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
             const text = [
                 `Olá ${user.name}!`,
                 `Para atualizar/criar sua senha, por favor acesse o link abaixo`,
                 `Lembre-se de que esse link tem validade de ${TOKEN_VALIDE_MINUTES} minutos`,
-                `${urlTo}`,
+                `${newUserDestin}`,
                 `Time ${appName}`
             ];
             sendMessage({ phone: `55${user.telefone}`, message: text })
