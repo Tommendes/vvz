@@ -182,6 +182,9 @@ module.exports = app => {
                     }
                 }
 
+                console.log('body', body);
+                
+
                 await trx(tabelaDomain)
                     .update(body)
                     .where({ id: body.id })
