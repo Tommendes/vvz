@@ -65,6 +65,7 @@ const loadData = async () => {
     const url = `${urlBase.value}/${id}`;
     itemData.value = { ...props.itemData };
     if (itemData.value.data_vencimento) itemData.value.data_vencimento = masks.value.data_vencimento.masked(moment(itemData.value.data_vencimento).format('DD/MM/YYYY'));
+    if (itemData.value.data_pagto) itemData.value.data_pagto = masks.value.data_pagto.masked(moment(itemData.value.data_pagto).format('DD/MM/YYYY'));
 };
 
 const saveData = async () => {
@@ -299,7 +300,7 @@ watchEffect(() => {
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">
-                <label for="data_pagto">Situação do Vencimento<span class="text-base" style="color: red">*</span></label>
+                <label for="situacao">Situação do Vencimento<span class="text-base" style="color: red">*</span></label>
                 <Dropdown
                     placeholder="Situação"
                     id="situacao"
