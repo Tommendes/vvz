@@ -56,7 +56,7 @@ module.exports = app => {
             console.log('body.data_pagto', body.data_pagto, 'body.situacao', Number(body.situacao));
             
             if (Number(body.situacao) == SITUACAO_ABERTO) {
-                body.data_pagto = null
+                body.data_pagto = '(null)'
                 console.log('Number(body.situacao)', Number(body.situacao));
             }
             else if ([SITUACAO_CONCILIADO, SITUACAO_PAGO].includes(Number(body.situacao))) {
