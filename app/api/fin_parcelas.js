@@ -54,7 +54,7 @@ module.exports = app => {
             body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
             if (body.data_pagto && !moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
                 body.data_pagto = null
-                throw 'Data de pagamento inválida'
+                throw 'Data de pagamento inválida' 
             }
             console.log('body.data_pagto', body.data_pagto);
             
