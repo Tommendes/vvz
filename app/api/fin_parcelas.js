@@ -55,7 +55,10 @@ module.exports = app => {
 
             console.log('body.data_pagto', body.data_pagto, 'body.situacao', Number(body.situacao));
             
-            if (Number(body.situacao) == SITUACAO_ABERTO) body.data_pagto = null
+            if (Number(body.situacao) == SITUACAO_ABERTO) {
+                body.data_pagto = null
+                console.log('Number(body.situacao)', Number(body.situacao));
+            }
             else if ([SITUACAO_CONCILIADO, SITUACAO_PAGO].includes(Number(body.situacao))) {
                 existsOrError(body.data_pagto, 'Data de pagamento não informada')
                 if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
