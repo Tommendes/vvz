@@ -55,7 +55,7 @@ module.exports = app => {
 
             console.log('body.data_pagto', body.data_pagto, 'body.situacao', Number(body.situacao));
             
-            if (Number(body.situacao) == SITUACAO_ABERTO) delete body.data_pagto
+            if (Number(body.situacao) == SITUACAO_ABERTO) body.data_pagto = null
             else if ([SITUACAO_CONCILIADO, SITUACAO_PAGO].includes(Number(body.situacao))) {
                 existsOrError(body.data_pagto, 'Data de pagamento não informada')
                 if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
@@ -66,9 +66,7 @@ module.exports = app => {
                 if (centroCusto == '2') existsOrError(body.documento, 'Documento de pagamento ou conciliação não informado')
             } else if ([SITUACAO_CANCELADO].includes(Number(body.situacao))) {
                 existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado')
-            } else {
-                body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
-            }
+            } 
             const unique = await app.db(tabelaDomain).where({ id_fin_lancamentos: body.id_fin_lancamentos, data_vencimento: body.data_vencimento, id_fin_contas: body.id_fin_contas || '', duplicata: body.duplicata, status: STATUS_ACTIVE }).first()
             if (unique && unique.id != body.id) throw 'Parcela já registrada para esta conta'
         } catch (error) {
