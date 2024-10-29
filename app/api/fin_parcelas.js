@@ -56,22 +56,24 @@ module.exports = app => {
             console.log('body.data_pagto', body.data_pagto, 'body.situacao', Number(body.situacao));
 
             switch (Number(body.situacao)) {
-                case SITUACAO_ABERTO: body.data_pagto = null; break;
                 case SITUACAO_PAGO:
                 case SITUACAO_CONCILIADO:
-                    existsOrError(body.data_pagto, 'Data de pagamento não informada')
+                    existsOrError(body.data_pagto, 'Data de pagamento não informada');
                     if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
-                        body.data_pagto = null
-                        throw 'Data de pagamento inválida'
+                        body.data_pagto = '(null)';
+                        throw 'Data de pagamento inválida';
                     }
-                    existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`)
-                    if (centroCusto == '2') existsOrError(body.documento, 'Documento de pagamento ou conciliação não informado')
+                    existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`);
+                    if (centroCusto == '2') existsOrError(body.documento, 'Documento de pagamento ou conciliação não informado');
                     break;
                 case SITUACAO_CANCELADO:
                     existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado');
                     break;
                 default:
-                    body.data_pagto = null; break;
+                    body.data_pagto = '(null)';
+                    console.log('Number(body.situacao)', Number(body.situacao), body.data_pagto);
+                    
+                    break;
             }
 
 
