@@ -56,6 +56,8 @@ module.exports = app => {
                 body.data_pagto = null
                 throw 'Data de pagamento inválida'
             }
+            console.log('body.data_pagto', body.data_pagto);
+            
             body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
             if (['2', '3'].includes(String(body.situacao))) {
                 existsOrError(body.data_pagto, 'Data de pagamento não informada')
