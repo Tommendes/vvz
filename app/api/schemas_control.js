@@ -224,7 +224,7 @@ module.exports = app => {
                 // Setar o schema_id de api.user do newUser.email com o schema.id
                 await app.db(tabelaUser).where({ email: newUser.email }).update({ schema_id: schema[0] })
                 app.api.logger.logInfo({ log: { line: `Registro inserido na tabela ${tabelaSchemas} com sucesso`, sConsole: true } })
-                return `Seu banco de dados foi criado com sucesso nome ${schemaName}`;
+                return `Tudo pronto para você ${newUser.fantasia}, 🫡!`;
             }
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${newUser.email}. Error: ${error}`, sConsole: true } })
