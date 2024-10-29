@@ -60,7 +60,7 @@ module.exports = app => {
                 case SITUACAO_CONCILIADO:
                     existsOrError(body.data_pagto, 'Data de pagamento não informada');
                     if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
-                        body.data_pagto = '(null)';
+                        body.data_pagto = null;
                         throw 'Data de pagamento inválida';
                     }
                     existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`);
@@ -70,7 +70,7 @@ module.exports = app => {
                     existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado');
                     break;
                 default:
-                    body.data_pagto = '(null)';
+                    body.data_pagto = null;
                     console.log('Number(body.situacao)', Number(body.situacao), body.data_pagto);
                     
                     break;
@@ -180,10 +180,7 @@ module.exports = app => {
 
                         const newPaymentPlan = await trx(tabelaDomain).insert(novasParcelas)
                     }
-                }
-
-                console.log('body', body);
-                
+                }              
 
                 await trx(tabelaDomain)
                     .update(body)
