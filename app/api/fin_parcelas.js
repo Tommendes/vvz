@@ -52,8 +52,8 @@ module.exports = app => {
             // Verificar se a data de vencimanto é válida e converte para en
             if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimanto inválida'
             body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
-            
-            console.log('body.data_pagto', body.data_pagto);
+
+            console.log('body.data_pagto', body.data_pagto, 'body.situacao', body.situacao);
             
             if (body.situacao == SITUACAO_ABERTO) body.data_pagto = null
             else if ([SITUACAO_CONCILIADO, SITUACAO_PAGO].includes(body.situacao)) {
