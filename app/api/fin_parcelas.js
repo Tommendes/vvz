@@ -54,20 +54,17 @@ module.exports = app => {
             body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
             if (body.situacao == SITUACAO_ABERTO) body.data_pagto = null
             else if ([SITUACAO_CONCILIADO, SITUACAO_PAGO].includes(body.situacao)) {
-                if ((body.data_pagto || moment(body.data_pagto, 'DD/MM/YYYY', true).isValid())) {
+                existsOrError(body.data_pagto, 'Data de pagamento não informada')
+                if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
                     body.data_pagto = null
                     throw 'Data de pagamento inválida'
                 }
-            } else {
-                body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
-            }            
-
-            if (['2', '3'].includes(String(body.situacao))) {
-                existsOrError(body.data_pagto, 'Data de pagamento não informada')
                 existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`)
                 if (centroCusto == '2') existsOrError(body.documento, 'Documento de pagamento ou conciliação não informado')
-            } else if (['99'].includes(String(body.situacao))) {
+            } else if ([SITUACAO_CANCELADO].includes(String(body.situacao))) {
                 existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado')
+            } else {
+                body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
             }
             const unique = await app.db(tabelaDomain).where({ id_fin_lancamentos: body.id_fin_lancamentos, data_vencimento: body.data_vencimento, id_fin_contas: body.id_fin_contas || '', duplicata: body.duplicata, status: STATUS_ACTIVE }).first()
             if (unique && unique.id != body.id) throw 'Parcela já registrada para esta conta'
