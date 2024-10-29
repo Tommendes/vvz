@@ -52,9 +52,11 @@ module.exports = app => {
             // Verificar se a data de vencimanto é válida e converte para en
             if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimanto inválida'
             body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
-            if (body.data_pagto && !moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) throw 'Data de pagamento inválida'
+            if (body.data_pagto && !moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
+                body.data_pagto = null
+                throw 'Data de pagamento inválida'
+            }
             body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
-            if (!moment(body.data_pagto, 'DYYYY-MM-DD', true).isValid()) body.data_pagto = null
             if (['2', '3'].includes(String(body.situacao))) {
                 existsOrError(body.data_pagto, 'Data de pagamento não informada')
                 existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`)
@@ -101,7 +103,7 @@ module.exports = app => {
                 if (bodyMultiplicate && bodyMultiplicate.parcelas > 1) {
                     const valorVencimento = parseFloat(body.valor_vencimento.replace(',', '.'));
                     const parcelas = parseInt(bodyMultiplicate.parcelas);
-                    
+
 
                     // Calcular valor da primeira parcela
                     const dividirParcelas = bodyMultiplicate.dividirParcelas || false;
