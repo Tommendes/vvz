@@ -53,8 +53,6 @@ module.exports = app => {
             if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimanto inválida'
             body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
 
-            console.log('body.data_pagto', body.data_pagto, 'body.situacao', Number(body.situacao));
-
             switch (Number(body.situacao)) {
                 case SITUACAO_PAGO:
                 case SITUACAO_CONCILIADO:
@@ -70,30 +68,9 @@ module.exports = app => {
                     existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado');
                     break;
                 default:
-                    body.data_pagto = null;
-                    console.log('Number(body.situacao)', Number(body.situacao), body.data_pagto);
-                    
+                    body.data_pagto = null;                
                     break;
             }
-
-
-            // if (Number(body.situacao) == SITUACAO_ABERTO) {
-            //     body.data_pagto = '(null)'
-            //     console.log('Number(body.situacao)', Number(body.situacao));
-            // }
-
-            // if ([SITUACAO_CONCILIADO, SITUACAO_PAGO].includes(Number(body.situacao))) {
-            //     existsOrError(body.data_pagto, 'Data de pagamento não informada')
-            //     if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
-            //         body.data_pagto = null
-            //         throw 'Data de pagamento inválida'
-            //     }
-            //     existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`)
-            //     if (centroCusto == '2') existsOrError(body.documento, 'Documento de pagamento ou conciliação não informado')
-            // }
-            // if ([SITUACAO_CANCELADO].includes(Number(body.situacao))) {
-            //     existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado')
-            // }
             const unique = await app.db(tabelaDomain).where({ id_fin_lancamentos: body.id_fin_lancamentos, data_vencimento: body.data_vencimento, id_fin_contas: body.id_fin_contas || '', duplicata: body.duplicata, status: STATUS_ACTIVE }).first()
             if (unique && unique.id != body.id) throw 'Parcela já registrada para esta conta'
         } catch (error) {
