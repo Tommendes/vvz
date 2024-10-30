@@ -20,6 +20,9 @@ module.exports = app => {
         let password = req.body.password || undefined
         const ip = req.body.ip
 
+        console.log('signin', email, password, ip);
+        
+
         try {
             existsOrError(email, 'E-mail, nome ou CPF precisam ser informados')
         } catch (error) {
