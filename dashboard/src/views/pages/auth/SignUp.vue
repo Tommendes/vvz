@@ -8,12 +8,12 @@ import { appName, isValidEmail } from '@/global';
 
 const router = useRouter();
 const itemData = ref({
-    fantasia: 'Vivazul Smart Apps',
-    name: 'Tom Mendes',
-    email: 'tommendespereira@gmail.com',
-    password: '141108@Le',
-    confirmPassword: '141108@Le',
-    telefone: '81982807245',
+    fantasia: '',
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    telefone: '',
     admin: 0,
     gestor: 1,
     multiCliente: 0,
