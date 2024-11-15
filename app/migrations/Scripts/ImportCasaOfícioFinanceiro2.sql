@@ -1,4 +1,4 @@
-ALTER TABLE vivazul_bceaa5.fin_lancamentos ADD COLUMN IF NOT EXISTS old_id INT(11) NULL;
+-- ALTER TABLE vivazul_bceaa5.fin_lancamentos ADD COLUMN IF NOT EXISTS old_id INT(11) NULL;
 ALTER TABLE mygsoft.fin_lancamentos CHANGE cod cod INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Código da conta de vencimento', CHANGE cod_cadas cod_cadas INT(10) UNSIGNED DEFAULT 0 NOT NULL COMMENT 'Codigo relacional com a tabela de cadastros'; 
 ALTER TABLE mygsoft.fin_lancamentos CHARSET=utf8mb4, COLLATE=utf8mb4_general_ci;
 UPDATE mygsoft.fin_lancamentos SET data_lancamento = '2015-12-22 10:59:50' WHERE cod = '26638'; 
@@ -6,7 +6,7 @@ UPDATE mygsoft.fin_lancamentos SET data_lancamento = '2016-01-11 02:34:14' WHERE
 ALTER TABLE mygsoft.cadas DROP COLUMN IF EXISTS new_id_cadas;
 ALTER TABLE mygsoft.cadas ADD COLUMN IF NOT EXISTS new_id_cadas INT(10) UNSIGNED NULL;
 
-/*Importar as empresas*/
+/*Importar as empresas
 ALTER TABLE vivazul_bceaa5.empresa ADD COLUMN IF NOT EXISTS  old_id INT(11) NULL;
 SET FOREIGN_KEY_CHECKS = 0;
 DELETE FROM vivazul_bceaa5.empresa WHERE id > 1;
@@ -20,8 +20,8 @@ de.email,de.emailAt,de.emailComercial,de.emailFinanceiro,NULL,NULL,NULL,cod
  FROM mygsoft.sis_demp de WHERE cod > 1 GROUP BY cnpj_empresa ORDER BY cnpj_empresa);
 UPDATE vivazul_bceaa5.empresa SET old_id = id WHERE id = 1;
 SET FOREIGN_KEY_CHECKS = 1;
-
-/*Importar cadastros do PGI*/
+*/
+/*Importar cadastros do PGI
 INSERT INTO vivazul_bceaa5.local_params (id, evento, created_at, updated_at, STATUS, grupo, parametro, label) VALUES (120, '1', NOW(), NULL, '10', 'id_atuacao', 'PJ/PF EM GERAL', 'PJ/PF EM GERAL');
 ALTER TABLE vivazul_bceaa5.cadastros DROP COLUMN IF EXISTS pgi_id;
 ALTER TABLE vivazul_bceaa5.cadastros ADD COLUMN IF NOT EXISTS  pgi_id INT(10) NULL;
@@ -33,7 +33,7 @@ ALTER TABLE vivazul_bceaa5.cadastros
   DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, old_id, pgi_id);
 ALTER TABLE vivazul_bceaa5.cadastros AUTO_INCREMENT=0;
-SET FOREIGN_KEY_CHECKS = 0;
+*/
 -- Verificar ids dos mygsoft.cadas que são referenciados em mygsoft.fin_lancamentos mas não tem registro em vivazul_bceaa5.cadastros
 /*
 SELECT c.cod FROM mygsoft.cadas c 
@@ -43,6 +43,7 @@ WHERE cv.id IS NULL
 GROUP BY c.cod;
 */
 -- Inserir cadastros inexistentes: 818 registros em aprox 7minutos
+SET FOREIGN_KEY_CHECKS = 0;
 INSERT INTO vivazul_bceaa5.cadastros (id,evento,created_at,updated_at,STATUS,prospecto,id_params_tipo,id_params_atuacao,
 cpf_cnpj,rg_ie,nome,
 id_params_sexo,aniversario,id_params_p_nascto,cim,doc_esp,mala,telefone,email,observacao,id_params_tipo_end,cep,logradouro,nr,complnr,bairro,cidade,uf,geo_ltd,geo_lng,observacao_endereco,old_id,pgi_id) 
@@ -54,9 +55,18 @@ c.sexo,NULL nascimento,4,NULL cim,NULL doc_esp,NULL mala,c.telefone1,c.email,NUL
 FROM mygsoft.cadas c
 JOIN mygsoft.fin_lancamentos fl ON fl.cod_cadas = c.cod
 LEFT JOIN vivazul_bceaa5.cadastros cv ON cv.cpf_cnpj = c.cpf_cnpj
-WHERE cv.id IS NULL
+WHERE cv.id IS NULL AND c.cod > (SELECT MAX(pgi_id) FROM vivazul_bceaa5.cadastros cv)
 GROUP BY c.cod
 );
+
+/* Utilizado para testar os registros faltantes
+select c.`cpf_cnpj`, cod_cadas from fin_lancamentos fl
+join cadas c on fl.`cod_cadas` = c.cod
+left join `vivazul_bceaa5`.cadastros cn on cn.`cpf_cnpj` = c.`cpf_cnpj`
+where cod_cadas > (SELECT MAX(pgi_id) FROM vivazul_bceaa5.cadastros cv) and cn.id is null
+group by cod_cadas order by cod_cadas;
+*/
+/* Obsoleto depois da primeira importação
 -- Editar cadastros existentes para pgi_id: 20/09 = 12937 registros identificados em vivazul_bceaa5.cadastros 51 minutos
 UPDATE vivazul_bceaa5.cadastros cv
 JOIN (
@@ -67,11 +77,8 @@ JOIN (
 JOIN mygsoft.cadas c ON c.cpf_cnpj = cv.cpf_cnpj
 SET cv.pgi_id = c.cod
 WHERE cv.pgi_id = 0 OR cv.pgi_id IS NULL;
--- Para os fin_lancamentos com id_cadas = 0 por casua de inconsistências nos cadastros do PGI, setar o cpf_cnpj para então fazer uma busca nos id_cadastros do vivazul e relacionar
-UPDATE vivazul_bceaa5.fin_lancamentos flv JOIN mygsoft.fin_lancamentos fl ON fl.cod = flv.old_id JOIN mygsoft.cadas c ON c.cod = fl.cod_cadas SET flv.cpf_cnpj = c.cpf_cnpj WHERE flv.id_cadastros = '0';
--- Para os fin_lancamentos com id_cadas = 0 com cpf_cnpj relacionado por conta da query acima, localizar e setar o id_cadastros baseado em vivazul.cadastros
-UPDATE vivazul_bceaa5.fin_lancamentos flv JOIN vivazul_bceaa5.cadastros c ON c.cpf_cnpj = flv.cpf_cnpj SET flv.id_cadastros = c.id WHERE flv.id_cadastros = '0';
--- SELECT * FROM vivazul_bceaa5.fin_lancamentos WHERE id_cadastros = '0';
+*/
+
 -- Localizar duplicidades de pgi_id em vivazul_bceaa5.cadastros
 /* 
 select id, pgi_id, count(pgi_id) from vivazul_bceaa5.cadastros cv
@@ -119,11 +126,11 @@ SET FOREIGN_KEY_CHECKS = 1;
 DELETE FROM mygsoft.fin_lancamentos WHERE !(situacao >= 1 AND (valor_bruto < 0 OR valor_bruto > 0));
 
 -- Totais
-SELECT 'receita',COUNT(cod) FROM mygsoft.fin_lancamentos WHERE situacao >= 1 AND valor_bruto > 0 -- 33087
+SELECT 'receita',COUNT(cod) FROM mygsoft.fin_lancamentos WHERE situacao >= 1 AND valor_bruto > 0 -- 33687
 UNION ALL
-SELECT 'despesa',COUNT(cod) FROM mygsoft.fin_lancamentos WHERE situacao >= 1 AND valor_bruto < 0 -- 30120
+SELECT 'despesa',COUNT(cod) FROM mygsoft.fin_lancamentos WHERE situacao >= 1 AND valor_bruto < 0 -- 30238
 UNION ALL
-SELECT 'total',COUNT(cod) FROM mygsoft.fin_lancamentos; -- 63207
+SELECT 'total',COUNT(cod) FROM mygsoft.fin_lancamentos; -- 63915
 
 -- Importar lançamentos 4:37 minutos
 SET FOREIGN_KEY_CHECKS = 0;
@@ -143,12 +150,20 @@ UPDATE vivazul_bceaa5.fin_lancamentos SET valor_liquido = valor_liquido * (-1) W
 UPDATE vivazul_bceaa5.fin_lancamentos SET id_empresa = 3 WHERE id_empresa = 4;
 SET FOREIGN_KEY_CHECKS = 1;
 
+SET FOREIGN_KEY_CHECKS = 0;
+-- Para os fin_lancamentos com id_cadas = 0 por casua de inconsistências nos cadastros do PGI, setar o cpf_cnpj para então fazer uma busca nos id_cadastros do vivazul e relacionar
+UPDATE vivazul_bceaa5.fin_lancamentos flv JOIN mygsoft.fin_lancamentos fl ON fl.cod = flv.old_id JOIN mygsoft.cadas c ON c.cod = fl.cod_cadas SET flv.cpf_cnpj = c.cpf_cnpj WHERE flv.id_cadastros = '0'; -- 1783
+-- Para os fin_lancamentos com id_cadas = 0 com cpf_cnpj relacionado por conta da query acima, localizar e setar o id_cadastros baseado em vivazul.cadastros
+UPDATE vivazul_bceaa5.fin_lancamentos flv JOIN vivazul_bceaa5.cadastros c ON c.cpf_cnpj = flv.cpf_cnpj SET flv.id_cadastros = c.id WHERE flv.id_cadastros = '0'; -- 1783
+-- SELECT * FROM vivazul_bceaa5.fin_lancamentos WHERE id_cadastros = '0';
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- Totais
-SELECT 'receita',COUNT(id) FROM vivazul_bceaa5.fin_lancamentos WHERE centro = 1 -- 33087
+SELECT 'receita',COUNT(id) FROM vivazul_bceaa5.fin_lancamentos WHERE centro = 1 -- 33677
 UNION ALL
-SELECT 'despesa',COUNT(id) FROM vivazul_bceaa5.fin_lancamentos WHERE centro = 2 -- 30120
+SELECT 'despesa',COUNT(id) FROM vivazul_bceaa5.fin_lancamentos WHERE centro = 2 -- 30238
 UNION ALL
-SELECT 'total',COUNT(id) FROM vivazul_bceaa5.fin_lancamentos; -- 63207
+SELECT 'total',COUNT(id) FROM vivazul_bceaa5.fin_lancamentos; -- 63915
 
 /*Inserir retenções*/
 SET FOREIGN_KEY_CHECKS = 0;
@@ -167,8 +182,6 @@ JOIN vivazul_bceaa5.fin_lancamentos fl ON fl.old_id = fr.cod_fin_lancamentos
 -- ATENÇÂO >>> Na importação, para cada registro em fin_lancamentos receberá um em fin_parcelas
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE vivazul_bceaa5.fin_parcelas;
-
--- SELECT * FROM mygsoft.fin_lancamentos WHERE cod = '66002' LIMIT 0, 1000;
 
 INSERT INTO vivazul_bceaa5.fin_parcelas (id,evento,created_at,updated_at,STATUS,situacao,id_fin_lancamentos,data_vencimento,data_pagto,valor_vencimento,duplicata,parcela,recorrencia,descricao,documento,id_fin_contas,motivo_cancelamento)
 (

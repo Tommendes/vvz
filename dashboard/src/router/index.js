@@ -232,8 +232,13 @@ const routes = [
         component: () => import('@/views/pages/auth/UserRequestPassReset.vue')
     },
     {
-        path: '/u-token',
-        name: 'u-token',
+        path: '/user-unlock',
+        name: 'user-unlock',
+        component: () => import('@/views/pages/auth/UserToken.vue')
+    },
+    {
+        path: '/user-unlock/:id',
+        name: 'user-unlock',
         component: () => import('@/views/pages/auth/UserToken.vue')
     }
 ];
@@ -243,7 +248,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    const nameUnblockedRoutes = ['/welcome', '/signin', '/signup', '/u-token', '/not-found', '/request-password-reset', '/password-reset'];
+    const nameUnblockedRoutes = ['/welcome', '/signin', '/signup', '/user-unlock', '/not-found', '/request-password-reset', '/password-reset'];
     const json = localStorage.getItem(userKey);
     const user = JSON.parse(json);
     const paths = [];

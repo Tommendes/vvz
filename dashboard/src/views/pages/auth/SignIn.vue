@@ -39,9 +39,9 @@ const signin = async () => {
             email.value = store.userStore.email;
         } else if (store.userStore && store.userStore.msg) {
             defaultError(store.userStore.msg);
-            if ([STATUS_WAITING, STATUS_SUSPENDED_BY_TKN].includes(store.userStore.status)) return router.push({ path: '/u-token', query: { q: store.userStore.id } });
+            if ([STATUS_WAITING, STATUS_SUSPENDED_BY_TKN].includes(store.userStore.status)) return router.push({ path: '/user-unlock', query: { q: store.userStore.id } });
             // if ([STATUS_WAITING, STATUS_SUSPENDED_BY_TKN].includes(store.userStore.status))
-            //     return router.push({ path: '/u-token', query: { q: store.userStore.id } })
+            //     return router.push({ path: '/user-unlock', query: { q: store.userStore.id } })
         }
     }
 };
@@ -77,7 +77,7 @@ const signin = async () => {
                         </div>
 
                         <div class="flex align-items-center justify-content-between mb-2">
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signup')"> Acessar </Button>
+                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signup')"> Começar a usar </Button>
                             <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
                             <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/request-password-reset')"> Recuperar a senha </Button>
                         </div>
