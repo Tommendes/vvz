@@ -488,7 +488,7 @@ module.exports = app => {
         }
         const config = {
             headers: {
-                'Authorization': schemaRoot.chat_account_tkn // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
+                'Authorization': `Bearer ${schemaRoot.chat_account_tkn}` // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
             },
         };
         if (typeof messageBody.message === 'string') messageBody.message = [messageBody.message]

@@ -248,7 +248,7 @@ module.exports = app => {
 
             const config = {
                 headers: {
-                    'Authorization': uParams.chat_account_tkn // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
+                    'Authorization':  `Bearer ${uParams.chat_account_tkn}` // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
                 },
             };
 

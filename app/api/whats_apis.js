@@ -33,7 +33,7 @@ module.exports = app => {
 
         const config = {
             headers: {
-                'Authorization': uParams.chat_account_tkn
+                'Authorization':  `Bearer ${uParams.chat_account_tkn}`
             },
         };
         axios.get(url, config)
@@ -172,7 +172,7 @@ module.exports = app => {
     const getProfileImage = async (phone, uParams) => {
         const config = {
             headers: {
-                'Authorization': uParams.chat_account_tkn
+                'Authorization':  `Bearer ${uParams.chat_account_tkn}`
             },
         };
         const url = `${urlPlugChat}profile-picture?phone=${phone}`
@@ -203,7 +203,7 @@ module.exports = app => {
 
         const config = {
             headers: {
-                'Authorization': uParams.chat_account_tkn
+                'Authorization':  `Bearer ${uParams.chat_account_tkn}`
             },
         };
         axios.get(url, config)
@@ -293,7 +293,7 @@ module.exports = app => {
         const url = `${urlPlugChat}contacts?page=1&pageSize=99999`
         const config = {
             headers: {
-                'Authorization': uParams.chat_account_tkn
+                'Authorization':  `Bearer ${uParams.chat_account_tkn}`
             },
         };
         axios.get(url, config)
@@ -390,7 +390,7 @@ module.exports = app => {
             const url = `${urlPlugChat}phone-exists/${phone}`
             const config = {
                 headers: {
-                    'Authorization': uParams.chat_account_tkn
+                    'Authorization':  `Bearer ${uParams.chat_account_tkn}`
                 },
             };
             axios.get(url, config)
