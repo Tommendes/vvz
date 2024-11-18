@@ -226,6 +226,8 @@ module.exports = app => {
      */
     const requestPasswordReset = async (req, res) => {
         let user = { ...req.body }
+        console.log('requestPasswordReset', user);
+        
         try {
             existsOrError(user.email, 'E-mail não informado')
         } catch (error) {
