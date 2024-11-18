@@ -542,7 +542,7 @@ module.exports = app => {
             sendMessage(bodyMessage).then(_ => {
                 if (req.method === 'PATCH') {
                     res.send(`Token enviado com sucesso para 55${userFromDB.telefone}`)
-                    app.api.logger.logInfo({ log: { line: `Mensagem whatsUnlocked enviada com sucesso para 55${userFromDB.telefone}`, sConsole: true } })
+                    app.api.logger.logInfo({ log: { line: `Mensagem whatsToken enviada com sucesso para 55${userFromDB.telefone}`, sConsole: true } })
                 }
                 else return userFromDB.password_reset_token
             })
@@ -679,7 +679,7 @@ module.exports = app => {
                 `Time ${appName}`
             ];
             sendMessage({ phone: `55${user.telefone}`, message: text })
-                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsUnlocked enviada com sucesso para 55${user.telefone}`, sConsole: true } }))
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para 55${user.telefone}`, sConsole: true } }))
                 .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
