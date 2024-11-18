@@ -1,25 +1,20 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { appName } from '@/global';
-import { defaultSuccess, defaultError, defaultWarn } from '@/toast';
-import { useRouter } from 'vue-router';
 import axios from '@/axios-interceptor';
 import { baseApiUrl } from '@/env';
+import { defaultError, defaultSuccess, defaultWarn } from '@/toast';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 const router = useRouter();
 
-const cpf = ref('');
+const email = ref('');
 const click = ref(false);
-const urlRequest = ref(`${baseApiUrl}/request-password-reset/`);
-
-const logoUrl = computed(() => {
-    return `/assets/images/logo-app.png`;
-});
+const urlRequestEmail = ref(`${baseApiUrl}/request-password-reset/`);
 
 const passRequest = async () => {
-    if (cpf.value) {
+    if (email.value) {
         await axios
-            .post(urlRequest.value, { cpf: cpf.value })
-            .then((body) => {
+            .post(urlRequestEmail.value, { email: email.value })
+            .then(async (body) => {
                 if (body.data.id) {
                     router.push({ path: 'password-reset', query: { q: body.data.id } });
                     defaultSuccess(body.data.msg);
@@ -32,34 +27,36 @@ const passRequest = async () => {
 };
 </script>
 
-<!-- eslint-disable vue/multi-word-component-names -->
 <template>
     <div class="align-items-center justify-content-center">
-        <div class="flex flex-column max-w-25rem md:max-w-30rem">
-            <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
+        <Message v-for="item in wait" :key="item" severity="info">{{ item }}</Message>
+        <div class="flex flex-column">
+            <div
+                style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
                 <div class="w-full surface-card py-5 px-5" style="border-radius: 53px">
                     <div class="text-center mb-2">
-                        <img :src="logoUrl" :alt="`${appName} logo`" class="mb-2 w-4rem flex-shrink-0" />
-                        <div class="text-900 text-3xl font-medium mb-3">
-                            Bem vindo ao {{ appName }}<small><sup>&copy;</sup></small>
-                        </div>
-                        <span class="text-600 font-medium">Para trocar/recuperar sua senha, digite abaixo seu e-mail ou CPF</span>
+                        <img src="/icon.png" alt="Vivazul logo" class="mb-4 w-20 shrink-0 mx-auto"
+                            style="width: 10rem" />
+                        <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Bem vindo ao
+                            Vivazul!</div>
+                        <span class="text-muted-color font-medium">Preencha abaixo para recuperar sua senha</span>
                     </div>
 
-                    <form @submit.prevent="passRequest" class="">
-                        <div class="flex flex-column mb-2">
-                            <label for="cpf1" class="block text-900 text-xl font-medium mb-2">E-mail ou CPF</label>
-                            <InputText id="cpf1" type="text" placeholder="Seu e-mail ou CPF" class="w-full" style="padding: 1rem" v-model="cpf" />
-                            <small id="username-help">Informe seu e-mail ou CPF para receber o token.</small>
-                        </div>
+                    <div>
+                        <label for="email"
+                            class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Email</label>
+                        <InputText id="email" type="text" placeholder="Seu e-mail" class="w-full md:w-[30rem] mb-2"
+                            v-model="email" />
 
-                        <div class="flex align-items-center justify-content-between mb-2">
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signup')"> Começar a usar </Button>
-                            <!-- <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/')"> Início </Button> -->
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
+                        <div class="flex items-center justify-between mt-2 mb-2 gap-8">
+                            <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
+                                @click="router.push({ name: 'signup' })">É novo por aqui 😀?</span>
+                            <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
+                                @click="router.push({ name: 'signin' })">Acessar</span>
                         </div>
-                        <Button rounded label="Recuperar" icon="fa-solid fa-arrow-right-to-bracket" :loading="click" :disabled="!cpf" type="submit" class="w-full p-3 text-xl"></Button>
-                    </form>
+                        <Button label="Recuperar" icon="fa-solid fa-arrow-right-to-bracket" :loading="click"
+                            :disabled="!email" @click="passRequest" class="w-full p-3 text-xl"></Button>
+                    </div>
                 </div>
             </div>
         </div>

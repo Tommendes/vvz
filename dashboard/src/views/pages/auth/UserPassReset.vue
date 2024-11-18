@@ -1,10 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { appName } from '@/global';
-import { useRoute, useRouter } from 'vue-router';
-import { baseApiUrl } from '@/env';
 import axios from '@/axios-interceptor';
-import { defaultSuccess, defaultError } from '@/toast';
+import { baseApiUrl } from '@/env';
+import { defaultError, defaultSuccess } from '@/toast';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
@@ -21,10 +20,6 @@ const urlUnlock = ref(`${baseApiUrl}/password-reset/`);
 const user = ref({});
 const saudation = ref('');
 
-const logoUrl = computed(() => {
-    return `/assets/images/logo-app.png`;
-});
-
 onMounted(async () => {
     idUser.value = route.query.q;
     if (route.query.tkn) token.value = route.query.tkn.substring(0, 8);
@@ -39,14 +34,14 @@ const passReset = async () => {
         if (idUser.value) {
             axios
                 .put(urlTo, {
-                    token: token.value.toUpperCase(),
+                    token: token.value.toUpperCase().substring(0, 8),
                     password: password.value,
                     confirmPassword: confirmPassword.value
                 })
                 .then((body) => {
                     const user = body.data;
                     if (!user.isValidPassword) defaultError(user.msg);
-                    router.push({ path: '/signin' });
+                    router.push({ name: 'signin' });
                     defaultSuccess(user.msg);
                 })
                 .catch((error) => {
@@ -108,67 +103,63 @@ const getNewToken = async () => {
 
 <template>
     <div class="align-items-center justify-content-center">
-        <div class="flex flex-column max-w-25rem md:max-w-30rem">
-            <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
-                <div class="w-full text-center surface-card py-5 px-5" style="border-radius: 53px">
+        <Message v-for="item in wait" :key="item" severity="info">{{ item }}</Message>
+        <div class="flex flex-column">
+            <div
+                style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
+                <div class="w-full surface-card py-5 px-5" style="border-radius: 53px">
                     <div class="text-center mb-2">
-                        <img :src="logoUrl" :alt="`${appName} logo`" class="mb-2 w-4rem flex-shrink-0" />
-                        <div class="text-900 text-3xl font-medium mb-3">
-                            <span v-html="saudation + `Bem vindo ao ${appName}<small><sup>&copy;</sup></small>`"></span>
+                        <img src="/icon.png" alt="Vivazul logo" class="mb-4 w-20 shrink-0 mx-auto"
+                            style="width: 10rem" />
+                        <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Bem vindo ao
+                            Vivazul!</div>
+                        <span class="text-muted-color font-medium">Preencha abaixo para recuperar sua senha</span>
+                        <div class="text-center">
+                            <span v-if="tokenTimeLeft > 0" style="color: chocolate; text-decoration: underline">
+                                {{ tokenTimeMessage }}
+                            </span>
                         </div>
                     </div>
-                    <div v-if="tokenTimeLeft > 0" class="text-center mb-2">
-                        <span style="color: chocolate; text-decoration: underline">
-                            {{ tokenTimeMessage }}
-                        </span>
+
+                    <div v-if="tokenTimeLeft > 0">
+                        <label for="token" class="block text-surface-900 dark:text-surface-0 text-xl font-medium">Seu
+                            token</label>
+                        <Card class="flex flex-wrap justify-content-center card-container blue-container gap-1 mb-4">
+                            <template #content>
+                                <InputOtp v-model="token" :length="8" style="gap: 1; text-transform: uppercase" />
+                            </template>
+                        </Card>
+
+                        <label for="password"
+                            class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Nova
+                            senha</label>
+                        <Password id="password" v-model="password" placeholder="Sua senha" :toggleMask="true"
+                            :inputClass="'w-full'" class="w-full mb-4" fluid :feedback="true"></Password>
+
+                        <label for="confirmPassword"
+                            class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Confirme a
+                            senha</label>
+                        <Password id="confirmPassword" v-model="confirmPassword" placeholder="Confirme sua senha"
+                            :toggleMask="true" :inputClass="'w-full'" class="w-full mb-4" fluid :feedback="true"></Password>
                     </div>
 
-                    <form @submit.prevent="passReset" class="max-w-35rem">
-                        <div class="formgrid grid" v-if="tokenTimeLeft > 0">
-                            <div class="field col-12">
-                                <label for="token" class="block text-900 mb-2">Seu token</label>
-                                <div v-focustrap class="flex flex-wrap justify-content-center card-container blue-container gap-1">
-                                    <div class="card flex justify-content-center">
-                                        <InputOtp v-model="token" :length="8">
-                                            <template #default="{ attrs, events }">
-                                                <input type="text" v-bind="attrs" v-on="events" class="custom-otp-input" pattern="[0-9a-zA-Z]{1}" style="max-width: 30px; text-transform: uppercase" />
-                                            </template>
-                                        </InputOtp>
-                                    </div>
-                                </div>
+                    <div class="text-center mb-2">
+                        <span style="color: chocolate; text-decoration: underline" v-html="tokenTimeLeftMessage" />
+                    </div>
 
-                                <div class="formgrid grid">
-                                    <div class="field col-12 md:col-6 mt-4">
-                                        <label for="password">Nova senha</label>
-                                        <InputText id="password" type="password" autocomplete="off" class="p-2 w-full" style="padding: 1rem" v-model="password" />
-                                    </div>
-                                    <div class="field col-12 md:col-6 mt-4">
-                                        <label for="confirmPassword">Confirme a senha</label>
-                                        <InputText id="confirmPassword" type="password" autocomplete="off" class="p-2 w-full" style="padding: 1rem" v-model="confirmPassword" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="flex items-center justify-between mt-2 mb-8 gap-8">
+                        <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
+                            @click="router.push({ name: 'signup' })">É novo por aqui 😀?</span>
+                        <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
+                            @click="router.push({ name: 'signin' })">Acessar</span>
+                    </div>
 
-                        <div class="text-center mb-2">
-                            <span style="color: chocolate; text-decoration: underline" v-html="tokenTimeLeftMessage" />
-                        </div>
-
-                        <div class="flex align-items-center justify-content-between mb-2" v-if="!route.params.client">
-                            <Button link style="color: var(--primary-color)" class="font-medium no-underline ml-2 text-center cursor-pointer" @click="router.push('/signin')"> Acessar </Button>
-                        </div>
-
-                        <Button
-                            v-if="tokenTimeLeft > 0"
-                            rounded
-                            label="Registrar"
-                            icon="fa-solid fa-arrow-right-to-bracket"
-                            :disabled="!(token && token.length == 8 && password && password.length > 5 && confirmPassword && confirmPassword.length > 5)"
-                            type="submit"
-                            class="w-full p-3 text-xl mt-3 mb-3 gap-5"
-                        ></Button>
-                        <Button v-else rounded label="Solicite outro token por e-mail" icon="fa-solid fa-arrow-right-to-bracket" @click="getNewToken" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
-                    </form>
+                    <Button v-if="tokenTimeLeft > 0" label="Registrar a nova senha"
+                        icon="fa-solid fa-arrow-right-to-bracket"
+                        :disabled="!(token && token.length == 8 && password && password.length > 5 && confirmPassword && confirmPassword.length > 5)"
+                        @click="passReset" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
+                    <Button v-else label="Solicite outro token por e-mail" icon="fa-solid fa-arrow-right-to-bracket"
+                        @click="getNewToken" class="w-full p-3 text-xl mt-3 mb-3 gap-5"></Button>
                 </div>
             </div>
         </div>
@@ -176,13 +167,6 @@ const getNewToken = async () => {
 </template>
 
 <style scoped>
-.token-input {
-    text-align: center;
-    font-size: 0.8rem;
-    max-width: 35px;
-    text-transform: uppercase;
-}
-
 .custom-otp-input {
     width: 40px;
     font-size: 36px;
@@ -191,11 +175,11 @@ const getNewToken = async () => {
     text-align: center;
     transition: all 0.2s;
     background: transparent;
-    border-bottom: 2px solid var(--surface-500);
+    border-bottom: 2px solid var(--p-inputtext-border-color);
 }
 
 .custom-otp-input:focus {
     outline: 0 none;
-    border-bottom-color: var(--primary-color);
+    border-bottom-color: var(--p-primary-color);
 }
 </style>

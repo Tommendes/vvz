@@ -1,4 +1,4 @@
-const { dbPrefix, speedchat } = require("../.env")
+const { dbPrefix, apiWats } = require("../.env")
 const schedule = require('node-schedule');
 const moment = require('moment')
 const axios = require('axios')
@@ -37,8 +37,7 @@ module.exports = app => {
             if (unique && unique.id != body.id) throw 'Nome do grupo já cadastrado'
             existsOrError(body.contact_ids, 'Contatos do grupo não informados')
         } catch (error) {
-            console.log('error', error);
-            
+            console.log('error', error);            
             return res.status(400).send(error)
         }
         

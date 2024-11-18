@@ -19,10 +19,6 @@ module.exports = app => {
         const email = req.body.email || req.body.cpf || undefined
         let password = req.body.password || undefined
         const ip = req.body.ip
-
-        console.log('signin', email, password, ip);
-        
-
         try {
             existsOrError(email, 'E-mail, nome ou CPF precisam ser informados')
         } catch (error) {
@@ -242,9 +238,7 @@ module.exports = app => {
         const userData = req.body || null
         try {
             if (userData) {
-                const isUserValid = await app.db(tabela).where({ 'id': userData.id }).first()
-                // console.log('userData', userData, isUserValid)
-                
+                const isUserValid = await app.db(tabela).where({ 'id': userData.id }).first()                
                 if (!isUserValid) return res.send(false)
                 const token = jwt.decode(userData.token, authSecret)
                 if (new Date(token.exp * 1000) > new Date() && userData.ipSignin == userData.ip) {

@@ -292,9 +292,7 @@ module.exports = app => {
         if (first) {
             ret.first()
         }
-        ret.orderBy('nome', 'asc')
-        // console.log(ret.toString());
-        
+        ret.orderBy('nome', 'asc')        
         ret.then(body => {
             const count = body.length
             return res.json({ data: body, count })

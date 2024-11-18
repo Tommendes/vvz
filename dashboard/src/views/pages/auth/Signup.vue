@@ -4,16 +4,15 @@ import { baseApiUrl } from '@/env';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { appName, isValidEmail } from '@/global';
 
 const router = useRouter();
 const itemData = ref({
-    fantasia: '',
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    telefone: '',
+    fantasia: 'Vivazul Smart Apps',
+    name: 'Tom Mendes',
+    email: 'tommendespereira@gmail.com',
+    password: '141108@Le',
+    confirmPassword: '141108@Le',
+    telefone: '81982807245',
     admin: 0,
     gestor: 1,
     multiCliente: 0,
@@ -56,15 +55,14 @@ const signup = async () => {
             .post(url.value, itemData.value)
             .then((body) => {
                 const user = body.data;
-
                 if (user.data.id) {
                     defaultSuccess(user.msg, true);
-                    if (user.registered) router.push({ name: `signin` })
-                    else router.push({ path: `/user-unlock/${user.data.id}?` });
+                    router.push({ path: `/user-unlock/${user.data.id}?` });
                 }
             })
             .catch((error) => {
                 console.log(error);
+
                 defaultWarn(error.response.data.msg, true);
             });
     } else {
@@ -73,7 +71,6 @@ const signup = async () => {
 };
 </script>
 
-<!-- eslint-disable vue/multi-word-component-names -->
 <template>
     <div class="align-items-center justify-content-center">
         <div class="flex flex-column">
@@ -81,52 +78,53 @@ const signup = async () => {
                 style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
                 <div class="w-full surface-card py-5 px-5" style="border-radius: 53px">
                     <div class="text-center mb-2">
-                        <img src="/icon.png" :alt="`${appName} logo`" class="mb-2 w-4rem flex-shrink-0" />
-                        <div class="text-900 text-3xl font-medium mb-2">
-                            Bem vindo ao {{ appName }}<small><sup>&copy;</sup></small>
-                        </div>
-                        <p class="text-600 font-medium">Informe a seguir os dados solicitados</p>
+                        <img src="/icon.png" alt="Vivazul logo" class="mb-4 w-20 shrink-0 mx-auto"
+                            style="width: 10rem" />
+                        <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Bem vindo ao
+                            Vivazul!</div>
+                        <span class="text-muted-color font-medium">Para iniciar, informe os dados abaixo</span>
                     </div>
 
                     <label for="name"
                         class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Nome</label>
-                    <InputText id="name" type="text" placeholder="Seu nome" class="w-full mb-4"
+                    <InputText id="name" type="text" placeholder="Seu nome" class="w-full md:w-[30rem] mb-4"
                         v-model="itemData.name" />
 
                     <label for="fantasia"
-                        class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Sua
-                        marca</label>
+                        class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Sua marca</label>
                     <InputText id="fantasia" v-keyfilter="{ pattern: /^[a-zA-Z0-9 ]{1,20}$/, validateOnly: true }"
-                        placeholder="Sua marca até 20 caracteres" class="w-full mb-4" v-model="itemData.fantasia" />
+                        placeholder="Sua marca até 20 caracteres" class="w-full md:w-[30rem] mb-4"
+                        v-model="itemData.fantasia" />
 
                     <label for="email"
                         class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Email</label>
-                    <InputText id="email" type="text" placeholder="Seu e-mail" class="w-full mb-4 lowercase"
-                        v-model="itemData.email" />
+                    <InputText id="email" type="text" placeholder="Seu e-mail"
+                        class="w-full md:w-[30rem] mb-4 lowercase" v-model="itemData.email" />
 
                     <label for="password"
                         class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Senha</label>
                     <Password id="password" v-model="itemData.password" placeholder="Sua senha" :toggleMask="true"
-                        :inputClass="'w-full'" class="w-full mb-4" :feedback="true"></Password>
+                        :inputClass="'w-full'" class="w-full mb-4" fluid :feedback="true"></Password>
 
                     <label for="confirmPassword"
                         class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Confirme</label>
                     <Password id="confirmPassword" v-model="itemData.confirmPassword" placeholder="Confirme sua senha"
-                        :toggleMask="true" :inputClass="'w-full'" class="w-full mb-4" :feedback="true"></Password>
+                        :toggleMask="true" :inputClass="'w-full'" class="w-full mb-4" fluid :feedback="true"></Password>
 
-                    <label for="confirmPassword"
+                    <label for="telefone"
                         class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">WhatsApp</label>
                     <InputText id="telefone" v-maska data-maska="['(##) ####-####', '(##) #####-####']"
-                        placeholder="Seu número de WhatsApp" class="w-full mb-4" v-model="itemData.telefone" />
+                        placeholder="Seu número de WhatsApp" class="w-full md:w-[30rem] mb-4"
+                        v-model="itemData.telefone" />
 
                     <div class="flex items-center justify-between mt-2 mb-8 gap-8">
                         <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
-                            @click="router.push({ name: 'signin' })">Já é usuário. Clique aqui para acessar</span>
+                            @click="router.push({ name: 'signin' })">Acessar</span>
                         <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
                             @click="router.push({ name: 'request-password-reset' })">Esqueceu sua senha?</span>
                     </div>
                     <Button label="Começar a usar o sistema 😉" class="w-full"
-                        :disabled="!(itemData.name && itemData.email && itemData.password && itemData.confirmPassword && validatePhone() && isValidEmail(itemData.email))"
+                        :disabled="!(itemData.name && itemData.email && itemData.password && itemData.confirmPassword && validatePhone())"
                         @click="signup"></Button>
                 </div>
             </div>
@@ -134,4 +132,14 @@ const signup = async () => {
     </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.pi-eye {
+    transform: scale(1.6);
+    margin-right: 1rem;
+}
+
+.pi-eye-slash {
+    transform: scale(1.6);
+    margin-right: 1rem;
+}
+</style>

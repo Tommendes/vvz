@@ -1,4 +1,4 @@
-const { dbPrefix, speedchat } = require("../.env")
+const { dbPrefix, apiWats } = require("../.env")
 const schedule = require('node-schedule');
 const axios = require('axios');
 const moment = require('moment')

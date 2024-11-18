@@ -1,7 +1,7 @@
 
 const randomstring = require("randomstring")
 const { emailAdmin, appName } = require("../config/params")
-const { baseVivazulUrl, baseBotUrl, dbPrefix, speedchat, jasperServerU, jasperServerK } = require("../.env")
+const { baseVivazulUrl, dbPrefix, apiWats, jasperServerU, jasperServerK } = require("../.env")
 const { STATUS_INACTIVE, STATUS_WAITING, STATUS_PASS_EXPIRED, STATUS_SUSPENDED, STATUS_SUSPENDED_BY_TKN, STATUS_ACTIVE,
     STATUS_DELETE, MINIMUM_KEYS_BEFORE_CHANGE, TOKEN_VALIDE_MINUTES } = require("../config/userStatus")
 const axios = require('axios')
@@ -148,7 +148,7 @@ module.exports = app => {
                     bodyToMessage.id = body.id
                     await mailyToken(bodyToMessage)
                     let newUserDestin = `${baseVivazulUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
-                    if (bodyToMessage.whats_groups >= 4 && bodyToMessage.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
+                    if (bodyToMessage.whats_groups >= 4 && bodyToMessage.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/user-unlock/${bodyToMessage.id}?tkn=${bodyToMessage.password_reset_token}`
                     const welcomeUserMessages = {
                         phone: `55${bodyToMessage.telefone}`,
                         message: [
@@ -491,17 +491,24 @@ module.exports = app => {
                 'Authorization': `Bearer ${schemaRoot.chat_account_tkn}` // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
             },
         };
+                
         if (typeof messageBody.message === 'string') messageBody.message = [messageBody.message]
         for (let index = 0; index < messageBody.message.length; index++) {
             const element = messageBody.message[index];
 
             const body = {
-                "phone": messageBody.phone,
-                "message": element
+                "number": messageBody.phone,
+                "body": element,
+                "externalKey": "{{SecretKey}}"
             }
-            await axios.post(`${speedchat.host}/send-text`, body, config)
-                .then(async (res) => { return res.data })
-                .catch(error => { return error })
+            await axios.post(apiWats.host, body, config)
+                .then(async (res) => { 
+                    return res.data
+                 })
+                .catch(error => { 
+                    console.log('sendMessage error', error);
+                    return error
+                 })
         };
     }
 
@@ -523,7 +530,7 @@ module.exports = app => {
             }
 
             let newUserDestin = `${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
-            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
+            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
 
             const text = `Olá ${userFromDB.name}!\nEstamos confirmando sua inscrição ✔\nPara liberar seu acesso, por favor acesse o link abaixo ou utilize o código ${userFromDB.password_reset_token.split('_')[0]} na tela de login.\n${newUserDestin}\nAtenciosamente,\nTime ${appName}`;
             const bodyMessage = {
@@ -570,7 +577,7 @@ module.exports = app => {
 
             if (userFromDB.email) {
                 let newUserDestin = `${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
-                if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
+                if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/user-unlock/${userFromDB.id}?tkn=${userFromDB.password_reset_token}`
                 await transporter.sendMail({
                     from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                     to: `${userFromDB.email}`, // list of receivers
@@ -626,7 +633,7 @@ module.exports = app => {
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
             let newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
-            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
+            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
             const bodyEmail = {
                 from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                 to: `${user.email}`, // list of receivers
@@ -661,7 +668,7 @@ module.exports = app => {
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
             let newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
-            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseBotUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
+            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
             const text = [
                 `Olá ${user.name}!`,
                 `Para atualizar/criar sua senha, por favor acesse o link abaixo`,
@@ -695,12 +702,14 @@ module.exports = app => {
                 text: `Olá ${user.name}!\n
                 Estamos felizes que conseguiu liberar seu acesso.\n
                 A partir de agora poderá acessar e utilizar o sistema.\n
-                Caso seja necessário, por favor, solicite ao seu administrador para liberar acesso aos dados.\n
+                Sempre que precisar, solicite suporte pelo nosso canal exclusivo em: 81 98718-6424.\n
+                Nosso horário de atendimento é de segunda a sexta-feira, das 8h às 12h e das 13h30 às 17h30\n
                 Atenciosamente,\nTime ${appName}`,
                 html: `<p><b>Olá ${user.name}!</b></p>
                 <p>Estamos felizes que conseguiu liberar seu acesso.</p>
                 <p>A partir de agora poderá acessar e utilizar o sistema.</p>
-                <p>Caso seja necessário, por favor, solicite ao seu administrador para liberar acesso aos dados.</p>
+                <p>Sempre que precisar, solicite suporte pelo nosso canal exclusivo em: <a href="https://wa.me/5581987186424" target="_blank">81 98718-6424</a>.</p>
+                <p>Nosso horário de atendimento é de segunda a sexta-feira, das 8h às 12h e das 13h30 às 17h30</p>
                 <p>Atenciosamente,</p>
                 <p><b>Time ${appName}</b></p>`,
             })
@@ -723,7 +732,7 @@ module.exports = app => {
             existsOrError(user, await showRandomMessage())
             const text = [
                 `Olá ${user.name}!\nEstamos felizes que conseguiu liberar seu acesso`,
-                `A partir de agora poderá acessar e utilizar o sistema.\nCaso seja necessário, por favor, solicite ao seu administrador para liberar acesso aos dados`,
+                `A partir de agora poderá acessar e utilizar o sistema.\nSempre que precisar, solicite suporte pelo nosso canal exclusivo em: 81 98718-6424.\nNosso horário de atendimento é de segunda a sexta-feira, das 8h às 12h e das 13h30 às 17h30\n`,
                 `Te desejamos sucesso`,
                 `Time ${appName}`
             ];

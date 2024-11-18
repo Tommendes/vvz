@@ -304,9 +304,7 @@ module.exports = app => {
 
         ret.groupBy('tbl1.id').orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-
-        // console.log(ret.toString());
-
+            
         ret.then(async (body) => {
             const length = body.length
             for (const element of body) {

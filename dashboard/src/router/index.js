@@ -207,19 +207,14 @@ const routes = [
         component: () => import('@/views/pages/Home.vue')
     },
     {
-        path: '/not-found',
-        name: 'notfound',
-        component: () => import('@/views/pages/NotFound.vue')
-    },
-    {
         path: '/signin',
         name: 'signin',
-        component: () => import('@/views/pages/auth/SignIn.vue')
+        component: () => import('@/views/pages/auth/Signin.vue')
     },
     {
         path: '/signup',
         name: 'signup',
-        component: () => import('@/views/pages/auth/SignUp.vue')
+        component: () => import('@/views/pages/auth/Signup.vue')
     },
     {
         path: '/password-reset',
@@ -230,11 +225,6 @@ const routes = [
         path: '/request-password-reset',
         name: 'request-password-reset',
         component: () => import('@/views/pages/auth/UserRequestPassReset.vue')
-    },
-    {
-        path: '/user-unlock',
-        name: 'user-unlock',
-        component: () => import('@/views/pages/auth/UserToken.vue')
     },
     {
         path: '/user-unlock/:id',
@@ -248,7 +238,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    const nameUnblockedRoutes = ['/welcome', '/signin', '/signup', '/user-unlock', '/not-found', '/request-password-reset', '/password-reset'];
+    const nameUnblockedRoutes = ['welcome', 'signin', 'signup', 'user-unlock', 'request-password-reset', 'password-reset'];
     const json = localStorage.getItem(userKey);
     const user = JSON.parse(json);
     const paths = [];
@@ -259,15 +249,16 @@ router.beforeEach((to, from, next) => {
             });
         paths.push(element.path);
     });
-    const matchSize = to.matched.length - 1;
-    if (matchSize < 0 || !paths.includes(to.matched[matchSize].path)) next({ path: '/not-found' });
+    const matchSize = to.matched.length - 1;    
+    if (matchSize < 0 || !paths.includes(to.matched[matchSize].path)) next({ path: '/' });
     else if (user && user.id && (to.path == '/signin' || !to.path.startsWith(`/${user.schema_description}`))) {
         next({ path: `/${user.schema_description}` });
     } else {
-        if (!nameUnblockedRoutes.includes(to.path) && !(user && user.id)) {
+        if (!nameUnblockedRoutes.includes(to.name) && !(user && user.id)) {
             next({ path: '/welcome' });
         } else next();
     }
 });
+
 
 export default router;
