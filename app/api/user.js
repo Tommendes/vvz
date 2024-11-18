@@ -280,11 +280,11 @@ module.exports = app => {
                     updated_at: new Date(),
                     password_reset_token: password_reset_token,
                 })
-                .where({ cpf: thisUser.cpf })
+                .where({ email: thisUser.email })
                 .then(_ => {
                     req.body = thisUser
-                    sendMessage()
                     mailyPasswordReset(thisUser)
+                    whatsPasswordReset(thisUser)
                     return res.status(200).send({
                         id: thisUser.id,
                         msg: `Verifique seu email${thisUser.email ? (' (' + thisUser.email + ')') : ''} para concluir a operação!`,
@@ -564,7 +564,7 @@ module.exports = app => {
                 .where(function () {
                     if (body.id) this.where({ id: body.id })
                     else this.orWhere({ email: body.email })
-                        .orWhere({ cpf: body.email })
+                        .orWhere({ email: body.email })
                 }).first()
             existsOrError(userFromDB, await showRandomMessage())
             // Se houver password_reset_token, verifique se ainda é válido
