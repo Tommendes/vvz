@@ -195,7 +195,7 @@ const changePassword = async () => {
     const urlRequestRequestPassReset = `${baseApiUrl}/request-password-reset/`;
 
     try {
-        const response = await axios.post(urlRequestRequestPassReset, { cpf: itemData.value.cpf });
+        const response = await axios.post(urlRequestRequestPassReset, { email: itemData.value.email });
         if (response.data.id) {
             redirectToPasswordReset(response.data.id);
             defaultSuccess(response.data.msg);

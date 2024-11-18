@@ -64,7 +64,7 @@ const items = ref([
         icon: 'fa-solid fa-arrow-up-right-from-square',
         command: async () => {
             await axios
-                .post(urlRequestRequestPassReset.value, { cpf: uProf.value.cpf })
+                .post(urlRequestRequestPassReset.value, { email: uProf.value.email })
                 .then((body) => {
                     if (body.data.id) {
                         router.push({ path: `/${uProf.value.schema_description}/password-reset`, query: { q: body.data.id } });
