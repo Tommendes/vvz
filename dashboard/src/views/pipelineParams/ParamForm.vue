@@ -89,7 +89,9 @@ const saveData = async () => {
                 defaultSuccess('Registro salvo com sucesso');
                 itemData.value = body;
                 // if (mode.value == 'new') router.push({ path: `/${uProf.value.schema_description}/pipeline-params/${itemData.value.id}` });
-                mode.value = 'view';
+                // mode.value = 'view';
+                emit('changed');
+                emit('cancel');
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
