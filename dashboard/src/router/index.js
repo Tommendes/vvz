@@ -252,7 +252,8 @@ router.beforeEach((to, from, next) => {
     const matchSize = to.matched.length - 1;    
     if (matchSize < 0 || !paths.includes(to.matched[matchSize].path)) next({ path: '/' });
     else if (user && user.id && (to.path == '/signin' || !to.path.startsWith(`/${user.schema_description}`))) {
-        next({ path: `/${user.schema_description}` });
+        if (['request-password-reset', 'password-reset'].includes(to.name)) next();
+        else next({ path: `/${user.schema_description}` });
     } else {
         if (!nameUnblockedRoutes.includes(to.name) && !(user && user.id)) {
             next({ path: '/welcome' });
