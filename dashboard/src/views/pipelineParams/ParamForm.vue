@@ -206,8 +206,8 @@ const getUnidadesDescricao = async () => {
     });
 };
 const dropdownObrigValor = ref([
-    { value: 0, label: 'Não' },
     { value: 1, label: 'Sim' },
+    { value: 0, label: 'Não' }
 ]);
 // const dropdownGeraPasta = ref([
 //     { value: 0, label: 'Não' },
