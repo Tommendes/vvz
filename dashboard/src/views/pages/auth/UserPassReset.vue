@@ -87,12 +87,26 @@ const getTokenTime = async () => {
 
 const getNewToken = async () => {
     const urlTo = `${baseApiUrl}/user-mail-unlock`;
-    await axios
+    const urlTo2 = `${baseApiUrl}/user-whats-unlock`;
+
+    axios
         .patch(urlTo, { id: idUser.value })
         .then(async (body) => {
             tokenTimeLeftMessage.value = '';
-            await getTokenTime();
-            defaultSuccess(body.data.msg);
+            defaultSuccess(body.data);
+            // window.location.reload();
+            getTokenTime();
+        })
+        .catch((error) => {
+            defaultError(error.response.data.msg);
+            return;
+        });
+    axios
+        .patch(urlTo2, { id: idUser.value })
+        .then(async (body) => {
+            tokenTimeLeftMessage.value = '';
+            defaultSuccess(body.data);
+            getTokenTime();
         })
         .catch((error) => {
             defaultError(error.response.data.msg);
