@@ -635,7 +635,7 @@ module.exports = app => {
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
             let newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
-            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
+            if (user.whats_groups >= 4 && user.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
             const bodyEmail = {
                 from: `"${appName}" <contato@vivazul.com.br>`, // sender address
                 to: `${user.email}`, // list of receivers
@@ -670,7 +670,7 @@ module.exports = app => {
                 .where({ email: req.email }).first()
             existsOrError(user, await showRandomMessage())
             let newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
-            if (userFromDB.whats_groups >= 4 && userFromDB.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
+            if (user.whats_groups >= 4 && user.whats_msgs >= 4) newUserDestin = `${baseVivazulUrl}/password-reset?q=${user.id}&tkn=${user.password_reset_token}`
             const text = [
                 `Olá ${user.name}!`,
                 `Para atualizar/criar sua senha, por favor acesse o link abaixo`,
