@@ -942,7 +942,7 @@ module.exports = app => {
         app.db({ us: tabela })
             .join({ sc: 'schemas_control' }, 'sc.id', 'us.schema_id')
             .select("us.status", "us.name", "us.cpf", "us.email", "us.telefone", "us.id", "us.admin", "us.gestor", "us.multiCliente", "us.cadastros",
-                "us.pipeline", "us.pipeline_params", "us.pv", "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.prospeccoes", "us.chat_operator_access_token",
+                "us.pipeline", "us.pipeline_params", "us.pv", "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.prospeccoes",
                 "us.at", "us.protocolo", "us.uploads", "us.agente_v", "us.agente_arq", "us.agente_at", "us.time_to_pas_expires", "sc.schema_description", "us.schema_id", "us.id_empresa")
             .where(app.db.raw(`us.id = ${req.params.id}`))
             .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))

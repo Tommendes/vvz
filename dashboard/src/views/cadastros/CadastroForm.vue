@@ -238,7 +238,6 @@ const buscarCNPJ = async () => {
                     delete response.data.billing;
                     dadosPublicos.value = response.data;
                     try {
-                        // await axios.post(`${baseApiUrl}/cad-dados-publicos/${itemData.value.id}`, { dados: formatarDadosParaHTML(response.data) });
                         emit('dadosPublicos', dadosPublicos.value);
                         searched.value = true;
                         atualizarDados();
@@ -250,6 +249,141 @@ const buscarCNPJ = async () => {
                     // CNPJ pesquisado não foi encontrado.
                     defaultWarn(response.data);
                 }
+            } catch (error) {
+                console.error('Erro ao buscar informações do CNPJ', error);
+                defaultWarn('Erro ao buscar informações do CNPJ');
+            }
+        },
+        reject: () => {
+            return;
+        }
+    });
+};
+const buscarCPF = async () => {
+    if (!validateCPF()) return;
+    const cpf = itemData.value.cpf_cnpj.replace(/[^0-9]/g, '');
+    if (cpf.length != 11) return;
+
+    confirm.require({
+        group: 'templating',
+        header: 'Dados públicos',
+        message: 'Gostaria de baixar os dados públicos do CPF?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            try {
+                // Consultar API externa
+                const url = `https://bigboost.bigdatacorp.com.br/peoplev2`;
+                const bodyQuery = {
+                    "q": `doc{${cpf}}`,
+                    "AccessToken": uProf.value.big_data_tkn
+                }
+                const basic_data = await axios.post(url, { "Datasets": "basic_data", ...bodyQuery });
+                const occupation_data = await axios.post(url, { "Datasets": "occupation_data", ...bodyQuery });
+                const emails_extended = await axios.post(url, { "Datasets": "emails_extended", ...bodyQuery });
+                const addresses_extended = await axios.post(url, { "Datasets": "addresses_extended", ...bodyQuery });
+                if (basic_data.data.Result) {
+                    const result = basic_data.data.Result[0].BasicData
+                    dadosPublicos.value = {
+                        pais: result.TaxIdCountry == "BRAZIL" ? "Brasil" : result.TaxIdCountry,
+                        servicoSocial: result.AlternativeIdNumbers.SocialSecurityNumber,
+                        nome: result.Name,
+                        sexo: result.Gender,
+                        nascimento: result.BirthDate,
+                        nacionalidade: result.BirthCountry,
+                        mae: result.MotherName,
+                        pai: result.FatherName,
+                        origemDosDados: result.TaxIdOrigin,
+                        situacaoCadastralEm: result.TaxIdStatus
+                    }
+                }
+                if (occupation_data.data.Result) {
+                    const result = occupation_data.data.Result[0].ProfessionData.Professions[0]
+                    dadosPublicos.value.dadosProfissionais = {
+                        origem: result.Source,
+                        setor: result.Sector,
+                        pais: result.Country,
+                        cnpjProfissao: result.CompanyIdNumber,
+                        razaoProfissao: result.CompanyName,
+                        // SELF-EMPLOYED, EMPLOYEE, ENTREPRENEUR | BUSINESS OWNER
+                        nivel: result.Level == "SELF-EMPLOYED" ? "Autônomo" : result.Level == "ENTREPRENEUR | BUSINESS OWNER" ? "Empresário" : result.Level,
+                        situacao: result.Status == "ACTIVE" ? "Ativo" : result.Status,
+                        inicio: moment(result.StartDate).format('DD/MM/YYYY'),
+                        situacaoCadastralEm: moment(result.LastUpdateDate).format('DD/MM/YYYY')
+                    }
+                }
+                if (emails_extended.data.Result) {
+                    const result = emails_extended.data.Result[0].ExtendedEmails.Emails
+                    if (result) {
+                        const emails = []
+                        result.forEach((item) => {
+                            if (item.EmailAssociationClassification.ContactAssociationIndex == "1")
+                                emails.push({
+                                    email: item.EmailAddress,
+                                    // CORPORATE, PERSONAL, OTHER
+                                    tipo: item.Type == "CORPORATE" ? "Corporativo" : item.Type == "PERSONAL" ? "Pessoal" : "Outro",
+                                    ultimaRelacao: moment(item.UserNameLastPassageDate).format('DD/MM/YYYY')
+                                })
+                        });
+                        // Ordenar emails por UserNameLastPassageDate do maior para o menor
+                        emails.sort((a, b) => b.ultimaRelacao - a.ultimaRelacao);
+
+                        if (emails.length) {
+                            dadosPublicos.value.emails = formatarDadosParaHTML(emails);
+                            // Pegar o primeiro email após a ordenação para dadosPublicos.value.email
+                            dadosPublicos.value.email = emails[0].email;
+                        }
+                    }
+                }
+                if (addresses_extended.data.Result) {
+                    const result = addresses_extended.data.Result[0].ExtendedAddresses.Addresses
+                    if (result) {
+                        const addresses = []
+                        result.forEach((item) => {
+                            addresses.push({
+                                cep: item.ZipCode,
+                                uf: item.State,
+                                municipio: item.City,
+                                logradouro: `${item.Typology} ${item.Title} ${item.AddressMain}`,
+                                numero: item.Number,
+                                bairro: item.Neighborhood,
+                                complemento: item.Complement,
+                                principal: item.Priority == "1" ? true : false,
+                                situacaoEm: moment(item.LastUpdateDate).format('DD/MM/YYYY')
+                            })
+                        });
+                        console.log(addresses);
+                        // Ordenar emails por classificacaoAssociativa.ContactAssociationIndex do menor para o maior
+                        addresses.sort((a, b) => a.situacaoEm - b.situacaoEm);
+                        // Pegar o primeiro email após a ordenação
+                        if (addresses.length) {
+                            // itemData.value.id_params_tipo_end deverá receber o valor do primeiro item em dropdownTipoEndereco
+                            dadosPublicos.value.endereco = addresses[0];
+                            itemData.value.id_params_tipo_end = dropdownTipoEndereco.value[0].value;
+                            itemData.value.cep = addresses[0].cep;
+                            itemData.value.uf = addresses[0].uf;
+                            itemData.value.cidade = addresses[0].municipio;
+                            itemData.value.logradouro = addresses[0].logradouro;
+                            itemData.value.nr = addresses[0].numero;
+                            itemData.value.complnr = addresses[0].complemento;
+                            itemData.value.bairro = addresses[0].bairro;
+                        }
+                    }
+                }
+                try {
+                    emit('dadosPublicos', dadosPublicos.value);
+                    searched.value = true;
+                    atualizarDados();
+                } catch (error) {
+                    console.error('Erro ao salvar dados públicos', error);
+                    defaultWarn('Erro ao salvar dados públicos');
+                }
+                // } else {
+                //     // CNPJ pesquisado não foi encontrado.
+                //     defaultWarn(response.data);
+                // }
             } catch (error) {
                 console.error('Erro ao buscar informações do CNPJ', error);
                 defaultWarn('Erro ao buscar informações do CNPJ');
@@ -274,14 +408,23 @@ const atualizarDados = async () => {
         accept: async () => {
             animationDocNr.value = 'animation-color animation-fill-forwards';
             if (dadosPublicos.value.nome) itemData.value.nome = dadosPublicos.value.nome;
-            if (dadosPublicos.value.abertura) itemData.value.aniversario = dadosPublicos.value.abertura;
+            if (dadosPublicos.value.sexo) {
+                const sexo = dropdownSexo.value.find((item) => item.label.substring(0, 1).toLowerCase() == dadosPublicos.value.sexo.toLowerCase());
+                if (sexo) itemData.value.id_params_sexo = sexo.value;
+            }
+            if (dadosPublicos.value.abertura || dadosPublicos.value.nascimento) itemData.value.aniversario = dadosPublicos.value.abertura || moment(dadosPublicos.value.nascimento).format('DD/MM/YYYY');
             if (dadosPublicos.value.cep) itemData.value.cep = dadosPublicos.value.cep;
             if (dadosPublicos.value.uf) itemData.value.uf = dadosPublicos.value.uf;
             if (dadosPublicos.value.municipio) itemData.value.cidade = dadosPublicos.value.municipio;
             if (dadosPublicos.value.logradouro) itemData.value.logradouro = dadosPublicos.value.logradouro;
             if (dadosPublicos.value.numero) itemData.value.nr = dadosPublicos.value.numero;
             if (dadosPublicos.value.bairro) itemData.value.bairro = dadosPublicos.value.bairro;
-            if (dadosPublicos.value.email) itemData.value.email = dadosPublicos.value.email;
+            if (dadosPublicos.value.email) {
+                itemData.value.email = dadosPublicos.value.email;
+                delete dadosPublicos.value.email;
+            }
+
+            if (dadosPublicos.value.servicoSocial) itemData.value.doc_esp = `NIS ${dadosPublicos.value.servicoSocial}`;
             defaultSuccess('Dados atualizados com sucesso');
             setTimeout(() => {
                 animationDocNr.value = '';
@@ -292,26 +435,47 @@ const atualizarDados = async () => {
         }
     });
 };
+
 function formatarDadosParaHTML(dados) {
     let htmlString = '<p>';
 
-    for (const key in dados) {
-        if (Object.prototype.hasOwnProperty.call(dados, key)) {
-            const value = dados[key];
+    function formatarObjeto(obj) {
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                const value = obj[key];
 
-            if (Array.isArray(value)) {
-                htmlString += `<strong>${capitalizeFirst(key.replaceAll('_', ' '))}:</strong>`;
-                htmlString += '<ul>';
-                value.forEach((item) => {
-                    htmlString += `<li>${item.text}</li>`;
-                });
-                htmlString += '</ul>';
-            } else {
-                htmlString += `<strong>${capitalizeFirst(key.replaceAll('_', ' '))}:</strong> ${value}<br />`;
+                if (Array.isArray(value)) {
+                    htmlString += `<strong>${capitalizeFirst(key.replaceAll('_', ' '))}:</strong>`;
+                    htmlString += '<ul>';
+                    value.forEach((item) => {
+                        htmlString += '<li>';
+                        formatarObjeto(item);
+                        htmlString += '</li>';
+                    });
+                    htmlString += '</ul>';
+                } else if (typeof value === 'object' && value !== null) {
+                    if (Number.isInteger(key) || Number(key) >= 0) {
+                        htmlString += '<ul>';
+                        formatarObjeto(value);
+                        htmlString += '</ul>';
+                    } else {
+                        htmlString += `<strong>${capitalizeFirst(key.replaceAll('_', ' '))}:</strong>`;
+                        htmlString += '<ul>';
+                        formatarObjeto(value);
+                        htmlString += '</ul>';
+                    }
+                    // htmlString += `<strong>${capitalizeFirst(key.replaceAll('_', ' '))}:</strong>`;
+                    // htmlString += '<ul>';
+                    // formatarObjeto(value);
+                    // htmlString += '</ul>';
+                } else {
+                    htmlString += `<strong>${capitalizeFirst(key.replaceAll('_', ' '))}:</strong> ${value}<br />`;
+                }
             }
         }
     }
 
+    formatarObjeto(dados);
     htmlString += '</p>';
     return htmlString;
 }
@@ -403,9 +567,9 @@ const sendAzulChatMessage = () => {
             },
             modal: true
         },
-        onClose: () => {},
-        onCancel: () => {},
-        onSended: () => {}
+        onClose: () => { },
+        onCancel: () => { },
+        onSended: () => { }
     });
 };
 
@@ -507,135 +671,113 @@ watch(route, (value) => {
             <div class="col-12">
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo">Tipo de Registro<small id="text-error" class="p-error"> *</small></label>
+                        <label for="id_params_tipo">Tipo de Registro<small id="text-error" class="p-error">
+                                *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown v-else id="id_params_tipo" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo" placeholder="Selecione..."> </Dropdown>
+                        <Dropdown v-else id="id_params_tipo" optionLabel="label" optionValue="value"
+                            :disabled="mode == 'view'" v-model="itemData.id_params_tipo" :options="dropdownTipo"
+                            placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="cpf_cnpj">CPF/CNPJ<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                            <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska data-maska="['##.###.###/####-##','###.###.###-##']" />
-                            <Button
-                                v-if="labels.pfpj == 'pj'"
-                                :disabled="mode == 'view'"
+                            <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'"
+                                v-model="itemData.cpf_cnpj" id="cpf_cnpj" type="text" @input="validateCPF()" v-maska
+                                data-maska="['##.###.###/####-##','###.###.###-##']" />
+                            <Button v-if="labels.pfpj == 'pj'" :disabled="mode == 'view'"
                                 :icon="`fa-solid fa-arrows-rotate${!(mode == 'view' || searched) ? ' fa-spin' : ''}`"
-                                v-tooltip.top="'Clique para buscar os dados públicos'"
-                                class="bg-blue-500"
-                                @click="buscarCNPJ()"
-                            />
+                                v-tooltip.top="'Clique para buscar os dados públicos'" class="bg-blue-500"
+                                @click="buscarCNPJ()" />
+                            <Button v-else="labels.pfpj == 'pf' && uProf.big_data_tkn" :disabled="mode == 'view'"
+                                :icon="`fa-solid fa-arrows-rotate${!(mode == 'view' || searched) ? ' fa-spin' : ''}`"
+                                v-tooltip.top="'Clique para buscar os dados públicos'" class="bg-blue-500"
+                                @click="buscarCPF()" />
                         </div>
-                        <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj">{{ errorMessages.cpf_cnpj }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.cpf_cnpj">{{ errorMessages.cpf_cnpj
+                            }}</small>
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="nome">{{ labels.nome }}<small id="text-error" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome" type="text" :class="`${animationDocNr}`" class="uppercase" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome" id="nome"
+                            type="text" :class="`${animationDocNr}`" class="uppercase" />
                     </div>
                     <div class="field col-12 md:col-2">
                         <label for="rg_ie">{{ labels.rg_ie }}</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie" id="rg_ie" type="text" class="uppercase" />
+                        <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.rg_ie"
+                            id="rg_ie" type="text" class="uppercase" />
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pf'">
-                        <label for="id_params_sexo">Sexo<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <label for="id_params_sexo">Sexo<small id="text-error" v-if="!itemData.prospecto"
+                                class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown
-                            v-else
-                            id="id_params_sexo"
-                            :required="!itemData.prospecto"
-                            optionLabel="label"
-                            optionValue="value"
-                            :disabled="mode == 'view'"
-                            v-model="itemData.id_params_sexo"
-                            :options="dropdownSexo"
-                            placeholder="Selecione..."
-                        ></Dropdown>
+                        <Dropdown v-else id="id_params_sexo" :required="!itemData.prospecto" optionLabel="label"
+                            optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_sexo"
+                            :options="dropdownSexo" placeholder="Selecione..."></Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="aniversario">{{ labels.aniversario }}<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <label for="aniversario">{{ labels.aniversario }}<small id="text-error"
+                                v-if="!itemData.prospecto" class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText
-                            v-else
-                            autocomplete="no"
-                            :required="!itemData.prospecto"
-                            :disabled="mode == 'view'"
-                            v-maska
-                            data-maska="##/##/####"
-                            v-model="itemData.aniversario"
-                            id="aniversario"
-                            type="text"
-                            :class="`${animationDocNr}`"
-                            class="uppercase"
-                        />
+                        <InputText v-else autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'"
+                            v-maska data-maska="##/##/####" v-model="itemData.aniversario" id="aniversario" type="text"
+                            :class="`${animationDocNr}`" class="uppercase" />
                     </div>
                     <div class="field col-12 md:col-3">
-                        <label for="id_params_p_nascto">País de Origem<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <label for="id_params_p_nascto">País de Origem<small id="text-error" v-if="!itemData.prospecto"
+                                class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown
-                            v-else
-                            id="id_params_p_nascto"
-                            :required="!itemData.prospecto"
-                            optionLabel="label"
-                            optionValue="value"
-                            :disabled="mode == 'view'"
-                            v-model="itemData.id_params_p_nascto"
-                            :options="dropdownPaisNascim"
-                            placeholder="Selecione..."
-                        >
+                        <Dropdown v-else id="id_params_p_nascto" :required="!itemData.prospecto" optionLabel="label"
+                            optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_p_nascto"
+                            :options="dropdownPaisNascim" placeholder="Selecione...">
                         </Dropdown>
                     </div>
                     <div class="field col-12 md:col-5">
-                        <label for="id_params_atuacao">Área de Atuação<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <label for="id_params_atuacao">Área de Atuação<small id="text-error" v-if="!itemData.prospecto"
+                                class="p-error"> *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <Dropdown
-                            v-else
-                            id="id_params_atuacao"
-                            :required="!itemData.prospecto"
-                            optionLabel="label"
-                            optionValue="value"
-                            :disabled="mode == 'view'"
-                            v-model="itemData.id_params_atuacao"
-                            :options="dropdownAtuacao"
-                            placeholder="Selecione..."
-                        >
+                        <Dropdown v-else id="id_params_atuacao" :required="!itemData.prospecto" optionLabel="label"
+                            optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_atuacao"
+                            :options="dropdownAtuacao" placeholder="Selecione...">
                         </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="telefone">Telefone<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <label for="telefone">Telefone<small id="text-error" v-if="!itemData.prospecto" class="p-error">
+                                *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
                         <InputGroup v-else>
-                            <InputText
-                                autocomplete="no"
-                                :required="!itemData.prospecto"
-                                :disabled="mode == 'view'"
-                                v-maska
-                                data-maska="['(##) ####-####', '(##) #####-####']"
-                                v-model="itemData.telefone"
-                                id="telefone"
-                                type="text"
-                                @input="validateTelefone()"
-                                class="uppercase"
-                            />
-                            <Button :disabled="!validateTelefone()" @click="sendAzulChatMessage" icon="fa-brands fa-whatsapp" />
+                            <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'"
+                                v-maska data-maska="['(##) ####-####', '(##) #####-####']" v-model="itemData.telefone"
+                                id="telefone" type="text" @input="validateTelefone()" class="uppercase" />
+                            <Button :disabled="!validateTelefone()" @click="sendAzulChatMessage"
+                                icon="fa-brands fa-whatsapp" />
                         </InputGroup>
-                        <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone }}</small>
+                        <small id="text-error" class="p-error" v-if="errorMessages.telefone">{{ errorMessages.telefone
+                            }}</small>
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="email">E-mail<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <label for="email">E-mail<small id="text-error" v-if="!itemData.prospecto" class="p-error">
+                                *</small></label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else :required="!itemData.prospecto" class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text" @input="validateEmail()" />
-                        <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email }}</small>
+                        <InputText v-else :required="!itemData.prospecto" class="uppercase" autocomplete="no"
+                            :disabled="mode == 'view'" v-model="itemData.email" id="email" type="text"
+                            @input="validateEmail()" />
+                        <small id="text-error" class="p-error" v-if="errorMessages.email">{{ errorMessages.email
+                            }}</small>
                     </div>
                     <div class="field col-12 md:col-2" v-if="labels.pfpj == 'pj'">
                         <label for="cim">CIM</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'" v-model="itemData.cim" id="cim" type="text" />
+                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'"
+                            v-model="itemData.cim" id="cim" type="text" />
                     </div>
                     <div class="field col-12 md:col-5">
                         <label for="doc_esp">Outro Documento(Especifique)</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'" v-model="itemData.doc_esp" id="doc_esp" type="text" />
+                        <InputText v-else autocomplete="no" class="uppercase" :disabled="mode == 'view'"
+                            v-model="itemData.doc_esp" id="doc_esp" type="text" />
                     </div>
                     <div class="field col-12 md:col-1">
                         <label for="prospecto">Prospecto</label>
@@ -646,71 +788,89 @@ watch(route, (value) => {
                     <div class="field col-12 md:col-12">
                         <label for="observacao">Observação</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.observacao" id="observacao" :editorStyle="{ height: '80px' }" aria-describedby="editor-error" />
+                        <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.observacao"
+                            id="observacao" :editorStyle="{ height: '80px' }" aria-describedby="editor-error" />
                         <!-- <p v-else v-html="itemData.observacao"
                             class="p-inputtext p-component p-filled p-disabled uppercase"></p> -->
                     </div>
 
                     <hr />
                     <div class="field col-12 md:col-2">
-                        <label for="id_params_tipo_end">Tipo de Endereço<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <Dropdown id="id_params_tipo_end" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.id_params_tipo_end" :options="dropdownTipoEndereco" placeholder="Selecione..."> </Dropdown>
+                        <label for="id_params_tipo_end">Tipo de Endereço<small id="text-error"
+                                v-if="!itemData.prospecto" class="p-error"> *</small></label>
+                        <Dropdown id="id_params_tipo_end" optionLabel="label" optionValue="value"
+                            :disabled="mode == 'view'" v-model="itemData.id_params_tipo_end"
+                            :options="dropdownTipoEndereco" placeholder="Selecione..."> </Dropdown>
                     </div>
                     <div class="field col-12 md:col-2">
-                        <label for="cep">CEP<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText
-                            autocomplete="no"
-                            :required="!itemData.prospecto"
-                            :disabled="mode == 'view'"
-                            v-maska
-                            data-maska="##.###-###"
-                            v-model="itemData.cep"
-                            id="cep"
-                            type="text"
-                            @input="validateCep()"
-                            @blur="buscarCEP"
-                            :class="`${animationDocNr} uppercase`"
-                        />
+                        <label for="cep">CEP<small id="text-error" v-if="!itemData.prospecto" class="p-error">
+                                *</small></label>
+                        <InputText autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-maska
+                            data-maska="##.###-###" v-model="itemData.cep" id="cep" type="text" @input="validateCep()"
+                            @blur="buscarCEP" :class="`${animationDocNr} uppercase`" />
                         <small id="text-error" class="p-error" v-if="errorMessages.cep">{{ errorMessages.cep }}</small>
                     </div>
                     <div class="field col-12 md:col-7">
-                        <label for="logradouro">Logradouro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text" :class="`${animationDocNr}`" />
+                        <label for="logradouro">Logradouro<small id="text-error" v-if="!itemData.prospecto"
+                                class="p-error"> *</small></label>
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto"
+                            :disabled="mode == 'view'" v-model="itemData.logradouro" id="logradouro" type="text"
+                            :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-1">
-                        <label for="nr">Número<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text" :class="`${animationDocNr}`" />
+                        <label for="nr">Número<small id="text-error" v-if="!itemData.prospecto" class="p-error">
+                                *</small></label>
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto"
+                            :disabled="mode == 'view'" v-model="itemData.nr" id="nr" type="text"
+                            :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <label for="complnr">Complemento</label>
-                        <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.complnr" id="complnr" type="text" />
+                        <InputText class="uppercase" autocomplete="no" :disabled="mode == 'view'"
+                            v-model="itemData.complnr" id="complnr" type="text" />
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="bairro">Bairro<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text" :class="`${animationDocNr}`" />
+                        <label for="bairro">Bairro<small id="text-error" v-if="!itemData.prospecto" class="p-error">
+                                *</small></label>
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto"
+                            :disabled="mode == 'view'" v-model="itemData.bairro" id="bairro" type="text"
+                            :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="cidade">Cidade<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto" :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text" :class="`${animationDocNr}`" />
+                        <label for="cidade">Cidade<small id="text-error" v-if="!itemData.prospecto" class="p-error">
+                                *</small></label>
+                        <InputText class="uppercase" autocomplete="no" :required="!itemData.prospecto"
+                            :disabled="mode == 'view'" v-model="itemData.cidade" id="cidade" type="text"
+                            :class="`${animationDocNr}`" />
                     </div>
                     <div class="field col-12 md:col-1">
-                        <label for="uf">UF<small id="text-error" v-if="!itemData.prospecto" class="p-error"> *</small></label>
-                        <Dropdown id="uf" optionLabel="label" optionValue="value" :disabled="mode == 'view'" v-model="itemData.uf" :options="dropdownUfs" placeholder="Selecione..." :class="`${animationDocNr}`"></Dropdown>
+                        <label for="uf">UF<small id="text-error" v-if="!itemData.prospecto" class="p-error">
+                                *</small></label>
+                        <Dropdown id="uf" optionLabel="label" optionValue="value" :disabled="mode == 'view'"
+                            v-model="itemData.uf" :options="dropdownUfs" placeholder="Selecione..."
+                            :class="`${animationDocNr}`"></Dropdown>
                     </div>
-                    <div class="field col-12 md:col-12" v-if="(itemData.observacao_endereco && itemData.observacao_endereco.length) || mode != 'view'">
+                    <div class="field col-12 md:col-12"
+                        v-if="(itemData.observacao_endereco && itemData.observacao_endereco.length) || mode != 'view'">
                         <label for="observacao_endereco">Observação do Endereço</label>
                         <Skeleton v-if="loading.form" height="3rem"></Skeleton>
-                        <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no" v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text" class="uppercase" />
-                        <p v-else v-html="itemData.observacao_endereco" class="p-inputtext p-component p-filled p-disabled uppercase"></p>
+                        <InputText v-else-if="!loading.form && mode != 'view'" autocomplete="no"
+                            v-model="itemData.observacao_endereco" maxlength="255" id="observacao_endereco" type="text"
+                            class="uppercase" />
+                        <p v-else v-html="itemData.observacao_endereco"
+                            class="p-inputtext p-component p-filled p-disabled uppercase"></p>
                     </div>
                     <div class="field col-12 md:col-12" v-if="itemData.id">
                         <ContatosGrid :itemDataRoot="itemData" />
                     </div>
                 </div>
                 <div class="card flex justify-content-center flex-wrap gap-3">
-                    <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                    <Button type="button" v-if="mode == 'view'" label="Editar"
+                        icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                    <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
+                        severity="success" text raised />
+                    <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
+                        severity="danger" text raised @click="reload" />
                 </div>
 
                 <Eventos ref="fSEventos" :tabelaBd="'cadastros'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
@@ -723,7 +883,10 @@ watch(route, (value) => {
                             </div>
                         </template>
                         <p class="mb-3" v-if="itemData.old_id">
-                            <span>Para acessar o registro no lynkos.com.br acesse <a :href="`https://lynkos.com.br/cadastros/${itemData.old_id}`" target="_blank">aqui</a>. Edições e inclusões não são mais permitidas no LynkOs</span>
+                            <span>Para acessar o registro no lynkos.com.br acesse <a
+                                    :href="`https://lynkos.com.br/cadastros/${itemData.old_id}`"
+                                    target="_blank">aqui</a>. Edições e inclusões
+                                não são mais permitidas no LynkOs</span>
                             <span style="font-size: 20px">&#128521;</span>
                         </p>
                         <p class="m-0">

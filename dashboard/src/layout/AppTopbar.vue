@@ -242,10 +242,6 @@ const showMessage = (body) => {
     });
 };
 
-const goToChat = () => {
-    window.open(`#/${uProf.value.schema_description}/azul-bot`, '_blank');
-};
-
 onBeforeMount(() => {
     getUserMessages();
 });
@@ -267,7 +263,6 @@ onBeforeMount(() => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <Button type="button" v-if="uProf.chat_account_id && uProf.chat_status && uProf.chat_operator_access_token" label="Bot" icon="fa-brands fa-whatsapp" severity="info" rounded size="large" aria-haspopup="true" @click="goToChat" />
             <Button
                 v-if="newMessages > 0"
                 type="button"

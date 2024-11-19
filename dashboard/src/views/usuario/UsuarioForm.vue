@@ -104,7 +104,7 @@ const loadData = async () => {
             agente_at: '0',
             status: '10',
             agente_v: '0',
-            chat_operator_access_token: null
+            big_data_tkn: null
         };
     }
 };
@@ -422,11 +422,6 @@ onMounted(async () => {
                                 <label for="schema_description">Domínio de dados do usuário</label>
                                 <Skeleton v-if="loading" height="2rem"></Skeleton>
                                 <p v-else class="p-inputtext p-component p-filled" style="line-height: inherit">{{ itemData.schema_description }}</p>
-                            </div> -->
-                            <!-- <div class="col-12 md:col-4">
-                                <label for="multiCliente">Token do usuário para o Azul Bot</label>
-                                <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.chat_operator_access_token" id="chat_operator_access_token" type="text" placeholder="Selecione..." />
                             </div> -->
                             <div class="col-12 md:col-12" v-if="dropdownEmpresas.length > 1">
                                 <label id="secaopermissaofinanceiro">Relacionado às consultas ao Financeiro e Fiscal</label>

@@ -219,8 +219,8 @@ module.exports = app => {
             .select('u.id', 'u.id_empresa', 'u.tkn_api', 'u.name', 'u.cpf', 'u.email', 'u.telefone', 'u.password_reset_token','u.admin', 'u.gestor',
                 'u.multiCliente', 'u.empresas', 'u.cadastros', 'u.pipeline', 'u.pipeline_params', 'u.pv', 'u.comercial', 'u.fiscal', 
                 'u.financeiro', 'u.comissoes', 'u.prospeccoes', 'u.at', 'u.protocolo', 'u.uploads', 'u.agente_v', 'u.agente_arq', 
-                'u.agente_at', 'u.time_to_pas_expires', 'u.chat_operator_access_token', 
-                'sc.schema_name', 'sc.schema_description', 'sc.pipeline_ftp', 'sc.chat_account_id', 'sc.chat_status')
+                'u.agente_at', 'u.time_to_pas_expires', 
+                'sc.schema_name', 'sc.schema_description', 'sc.pipeline_ftp', 'sc.chat_account_id', 'sc.chat_status', 'sc.big_data_tkn', 'sc.big_data_limit')
             .join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id')
             .where({ 'u.id': req.body.id })
             .first()

@@ -67,6 +67,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
         delete body.ibge;
+        delete body.enderecos;
         // body.nascimento = moment(body.nascimento).format("DD/MM/YYYY")
         const { changeUpperCase, removeAccentsObj } = app.api.facilities
         body = (JSON.parse(JSON.stringify(body), removeAccentsObj));
