@@ -350,7 +350,7 @@ const buscarCPF = async () => {
                                 numero: item.Number,
                                 bairro: item.Neighborhood,
                                 complemento: item.Complement,
-                                principal: item.Priority == "1" ? true : false,
+                                principal: item.Priority == "1" ? 'Sim' : 'Não',
                                 situacaoEm: moment(item.LastUpdateDate).format('DD/MM/YYYY')
                             })
                         });
