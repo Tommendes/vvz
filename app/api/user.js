@@ -227,7 +227,7 @@ module.exports = app => {
     const requestPasswordReset = async (req, res) => {
         let user = { ...req.body }
         console.log('requestPasswordReset', user);
-        
+
         try {
             existsOrError(user.email, 'E-mail não informado')
         } catch (error) {
@@ -493,7 +493,7 @@ module.exports = app => {
                 'Authorization': `Bearer ${schemaRoot.chat_account_tkn}` // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
             },
         };
-                
+
         if (typeof messageBody.message === 'string') messageBody.message = [messageBody.message]
         for (let index = 0; index < messageBody.message.length; index++) {
             const element = messageBody.message[index];
@@ -504,13 +504,13 @@ module.exports = app => {
                 "externalKey": "{{SecretKey}}"
             }
             await axios.post(apiWats.host, body, config)
-                .then(async (res) => { 
+                .then(async (res) => {
                     return res.data
-                 })
-                .catch(error => { 
+                })
+                .catch(error => {
                     console.log('sendMessage error', error);
                     return error
-                 })
+                })
         };
     }
 
@@ -888,15 +888,12 @@ module.exports = app => {
         const page = req.query.page || 1
         const key = req.query.key ? req.query.key : undefined
         const sql = app.db({ us: tabela }).select(app.db.raw('count(*) as count'))
+            .where({ 'us.schema_id': uParams.schema_id })
         // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
         if (key)
             sql.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
             })
-        if (uParams.multiCliente <= 1) {
-            // Não troca cliente nem domínio
-            sql.where({ 'us.schema_id': uParams.schema_id })
-        }
         if (uParams.gestor < 1) {
             // Se não for gestor vÊ apenas seus registros
             sql.where({ 'us.id': req.user.id })
@@ -910,15 +907,12 @@ module.exports = app => {
                 "us.admin", "us.gestor", "us.multiCliente", "us.cadastros", "us.pipeline", "us.pv",
                 "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.agente_v",
                 "us.agente_arq", "us.agente_at", "us.time_to_pas_expires")
+            .where({ 'us.schema_id': uParams.schema_id })
         // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
         if (key)
             ret.where(function () {
                 this.where('us.name', 'like', `%${key}%`)
             })
-        if (uParams.multiCliente == '0') {
-            // Não troca cliente nem domínio
-            ret.where({ 'us.schema_id': uParams.schema_id })
-        }
         if (uParams.gestor < 1) {
             // Se não for gestor vÊ apenas seus registros
             ret.where({ 'us.id': req.user.id })
