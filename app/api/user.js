@@ -240,7 +240,7 @@ module.exports = app => {
         try {
             existsOrError(thisUser, await showRandomMessage())
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}. E-mail: ${user.cpf}`, sConsole: true } })
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}. E-mail: ${user.email}`, sConsole: true } })
             return res.status(200).send(error)
         }
 
@@ -763,7 +763,7 @@ module.exports = app => {
     const save = async (req, res) => {
         let user = { ...req.body }
 
-        user.cpf = user.cpf.replace(/([^\d])+/gim, "")
+        if (user.cpf) user.cpf = user.cpf.replace(/([^\d])+/gim, "")
 
         if (req.params.id) user.id = req.params.id
 
@@ -778,9 +778,9 @@ module.exports = app => {
             existsOrError(user.email, 'E-mail não informado')
             const emailUnique = await app.db(tabela).where({ email: user.email }).first()
             if (emailUnique && emailUnique.id != user.id) throw 'E-mail já cadastrado'
-            existsOrError(user.cpf, 'CPF não informado')
-            const cpfUnique = await app.db(tabela).where({ cpf: user.cpf }).first()
-            if (cpfUnique && cpfUnique.id != user.id) throw 'CPF já cadastrado'
+            // existsOrError(user.cpf, 'CPF não informado')
+            // const cpfUnique = await app.db(tabela).where({ cpf: user.cpf }).first()
+            // if (cpfUnique && cpfUnique.id != user.id) throw 'CPF já cadastrado'
             // existsOrError(user.email, 'E-mail não informado')
             existsOrError(user.telefone, 'Telefone não informado')
             const telefoneUnique = await app.db(tabela).where({ telefone: user.telefone }).first()
