@@ -211,12 +211,13 @@ const redirectToPasswordReset = (passwordResetId) => {
 };
 // Validar CPF
 const validateCPF = () => {
-    errorMessages.value.cpf = null;
-    if (cpf.isValid(itemData.value.cpf) || cnpj.isValid(itemData.value.cpf)) return true;
-    else {
-        errorMessages.value.cpf = 'CPF/CNPJ informado é inválido';
-        return false;
-    }
+    return true
+    // errorMessages.value.cpf = null;
+    // if (cpf.isValid(itemData.value.cpf) || cnpj.isValid(itemData.value.cpf)) return true;
+    // else {
+    //     errorMessages.value.cpf = 'CPF/CNPJ informado é inválido';
+    //     return false;
+    // }
 };
 // validar nome obrigatório
 const validateNome = () => {
@@ -300,7 +301,7 @@ onMounted(async () => {
                             <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.name" id="name" type="text" />
                             <small id="text-error" class="p-error" v-if="errorMessages.name">{{ errorMessages.name }}</small>
                         </div>
-                        <div class="col-12 md:col-3">
+                        <!-- <div class="col-12 md:col-3">
                             <label for="cpf">CPF/CNPJ</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputText
@@ -316,7 +317,7 @@ onMounted(async () => {
                             />
                             <p v-else class="p-inputtext p-component p-filled p-variant-filled" style="line-height: inherit">{{ itemData.cpf }}</p>
                             <small id="text-error" class="p-error" v-if="errorMessages.cpf">{{ errorMessages.cpf }}</small>
-                        </div>
+                        </div> -->
                         <div v-if="!itemData.id && mode == 'new'" class="col-12 md:col-3">
                             <label for="email">E-mail</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
