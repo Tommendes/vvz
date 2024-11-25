@@ -60,7 +60,7 @@ module.exports = app => {
                     if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
                         body.data_pagto = null;
                         throw 'Data de pagamento inválida';
-                    }
+                    } else body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
                     existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`);
                     if (centroCusto == '2') existsOrError(body.documento, 'Documento de pagamento ou conciliação não informado');
                     break;
