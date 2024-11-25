@@ -74,6 +74,8 @@ const saveData = async () => {
 
     const method = id ? 'put' : 'post';
     const data = { ...itemData.value, centro: props.itemDataRoot.centro };
+    data.data_pagto = data.data_pagto ? moment(data.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD') : null;
+    data.data_vencimento = data.data_vencimento ? moment(data.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD') : null;
     try {
         const res = await axios[method](url, data).then((res) => {
             emit('reloadItems');
