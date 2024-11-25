@@ -275,7 +275,7 @@ module.exports = app => {
 
         let totalRecords = ret.clone()
             .countDistinct('tbl1.id as count')
-            .sumDistinct('tbl1.valor_vencimento as sum')
+            .sum('tbl1.valor_vencimento as sum')
             .select(app.db.raw(`(select fl.valor_bruto - coalesce(sum(r.valor_retencao), 0) from ${tabelaRetencoesDomain} r where r.id_fin_lancamentos = fl.id) AS valor_liquido_conta`))
             .first()
             .join({ fl: tabelaDomain }, 'fl.id', '=', 'tbl1.id_fin_lancamentos')
@@ -283,6 +283,8 @@ module.exports = app => {
             .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'fl.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
+            console.log(totalRecords.toString());
+            
         // Verificar a permissão de multiCliente do usuário
         if (!uParams.multiCliente || uParams.multiCliente < 1) totalRecords.where({ 'fl.id_empresa': uParams.id_empresa })
 
