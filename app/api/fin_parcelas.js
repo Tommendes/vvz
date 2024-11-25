@@ -50,7 +50,7 @@ module.exports = app => {
             existsOrError(body.parcela, 'Parcela não informada')
             existsOrError(body.situacao, 'Situação da parcela não informada')
             // Verificar se a data de vencimanto é válida e converte para en
-            if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimanto inválida'
+            if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimento inválida'
             body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
 
             switch (Number(body.situacao)) {
