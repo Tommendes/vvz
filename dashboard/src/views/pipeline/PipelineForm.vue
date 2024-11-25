@@ -972,6 +972,7 @@ watch(route, (value) => {
                         <p>hostAccessible: {{ hostAccessible }}</p>
                         <p>editCadastro {{ editCadastro }}</p>
                         <p>listFolder: {{ typeof listFolder == 'object' ? listFolder : '' }}</p>
+                        <p>uProf: {{ uProf }}</p>
                     </Fieldset>
                 </div>
                 <div class="col-12 md:col-3" v-if="!['new', 'expandedFormMode'].includes(mode)">
@@ -983,8 +984,8 @@ watch(route, (value) => {
                             </div>
                         </template>
 
-                        <div v-if="(['new', 'clone'].includes(mode) || itemDataLastStatus.status_params < 80) && !itemData.id_filho">
-                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" />
+                        <div class="mb-3" v-if="(['new', 'clone'].includes(mode) || (itemDataLastStatus.status_params < 80 && !itemData.id_filho) || (itemData.id_filho && uProf.gestor >= 1))">
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" :severity="itemData.id_filho ? 'danger': ''" />
                             <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
                             <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
