@@ -254,7 +254,6 @@ module.exports = app => {
                         // Pesquisar por field com nome diferente do campo na tabela e valor literal - operador vindo do frontend
                         if (queryField == 'valor_bruto_conta') queryField = 'fl.valor_bruto'
                         if (queryField == 'emp_fantasia') queryField = 'e.fantasia'
-                        else if (queryField == 'destinatario_agrupado') queryField = 'c.nome'
                         else if (queryField == 'valor_vencimento_parcela') queryField = 'tbl1.valor_vencimento'
                         else if (queryField == 'valor_liquido_conta') queryField = `(SELECT fl.valor_bruto - COALESCE(SUM(r.valor_retencao), 0) FROM ${tabelaRetencoesDomain} r WHERE r.id_fin_lancamentos = fl.id)`
                         query += `${queryField} ${operator} AND `
@@ -268,6 +267,7 @@ module.exports = app => {
                     }
                 } else if (key.split(':')[0] == 'sort') {
                     sortField = key.split(':')[1].split('=')[0]
+                    if (sortField == 'destinatario_agrupado') sortField = 'c.nome'
                     sortOrder = queryes[key]
                 }
             }
