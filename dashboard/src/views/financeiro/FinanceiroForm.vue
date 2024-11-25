@@ -43,7 +43,7 @@ const confirm = useConfirm();
 import moment from 'moment';
 
 // Objetos do formulário
-const eventosFieldSet = ref();
+const fSEventos = ref();
 const retencoesGrid = ref();
 const notasGrid = ref();
 const parcelasGrid = ref();
@@ -137,12 +137,13 @@ const saveData = async () => {
         ...itemData.value
     };
 
-    axios[method](url, preparedBody)
+    await axios[method](url, preparedBody)
         .then(async (res) => {
             editCadastro.value = false;
             const body = res.data;
             if (body && body.id) {
                 defaultSuccess('Registro salvo com sucesso');
+                if (fSEventos.value) fSEventos.value.getEventos();
                 itemData.value.id = body.id;
                 emit('changed');
                 if (route.name != 'cadastro' && ['new', 'clone'].includes(mode.value)) {
@@ -183,7 +184,7 @@ const loadRetencoes = async (parcelas) => {
     setTimeout(() => {
         animationVlrLiq.value = ANIMATION_CLASS;
     }, 150);
-    if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
+    if (fSEventos.value) fSEventos.value.getEventos();
     if (parcelasGrid.value && parcelasGrid.value.$el) parcelasGrid.value.loadParcelas();
     //     });
 };
@@ -192,13 +193,13 @@ const loadRetencoes = async (parcelas) => {
 const itemDataParcelas = ref([]);
 const loadParcelas = async (parcelas) => {
     itemDataParcelas.value = parcelas;
-    if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
+    if (fSEventos.value) fSEventos.value.getEventos();
 };
 // Dados das notas fiscais
 const itemDataNotas = ref([]);
 const loadNotas = async (notas) => {
     itemDataNotas.value = notas;
-    if (eventosFieldSet.value) eventosFieldSet.value.getEventos();
+    if (fSEventos.value) fSEventos.value.getEventos();
 };
 /**
  * Autocomplete de cadastros
@@ -462,7 +463,7 @@ watch(route, (value) => {
                         <div class="col-12 lg:col12">
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <Textarea disabled v-else-if="['view'].includes(mode)" v-model="itemData.descricao" rows="5" class="p-inputtext p-component p-filled"></Textarea>
+                            <span v-else-if="['view'].includes(mode)" v-html="itemData.descricao" class="mt-5 p-component p-filled p-variant-filled"></span>
                             <EditorComponent v-else v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                             <!-- <p v-else v-html="itemData.descricao || ''" class="p-inputtext p-component p-filled"></p> -->
                         </div>
@@ -545,7 +546,7 @@ watch(route, (value) => {
                 </div>
                 <div class="col-12" v-if="itemData.id">
                     <ParcelasGrid v-if="itemData.id" @reloadItems="loadParcelas" :totalLiquido="itemData.valor_liquido" :uProf="uProf" :mode="mode" :itemDataRoot="itemData" ref="parcelasGrid" />
-                    <Eventos :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" ref="eventosFieldSet" />
+                    <Eventos ref="fSEventos" :tabelaBd="'fin_lancamentos'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
