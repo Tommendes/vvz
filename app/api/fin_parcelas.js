@@ -73,13 +73,9 @@ module.exports = app => {
             }
             const unique = await app.db(tabelaDomain).where({
                 id_fin_lancamentos: body.id_fin_lancamentos,
-                data_vencimento: body.data_vencimento,
-                data_pagto: body.data_pagto,
                 valor_vencimento: body.valor_vencimento,
                 duplicata: body.duplicata,
                 parcela: body.parcela,
-                recorrencia: body.recorrencia,
-                descricao: body.descricao,
                 id_fin_contas: body.id_fin_contas || '',
                 documento: body.documento,
                 status: STATUS_ACTIVE
