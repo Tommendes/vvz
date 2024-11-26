@@ -68,10 +68,22 @@ module.exports = app => {
                     existsOrError(body.motivo_cancelamento, 'Motivo do cancelamento não informado');
                     break;
                 default:
-                    body.data_pagto = null;                
+                    body.data_pagto = null;
                     break;
             }
-            const unique = await app.db(tabelaDomain).where({ id_fin_lancamentos: body.id_fin_lancamentos, data_vencimento: body.data_vencimento, id_fin_contas: body.id_fin_contas || '', duplicata: body.duplicata, status: STATUS_ACTIVE }).first()
+            const unique = await app.db(tabelaDomain).where({
+                id_fin_lancamentos: body.id_fin_lancamentos,
+                data_vencimento: body.data_vencimento,
+                data_pagto: body.data_pagto,
+                valor_vencimento: body.valor_vencimento,
+                duplicata: body.duplicata,
+                parcela: body.parcela,
+                recorrencia: body.recorrencia,
+                descricao: body.descricao,
+                id_fin_contas: body.id_fin_contas || '',
+                documento: body.documento,
+                status: STATUS_ACTIVE
+            }).first()
             if (unique && unique.id != body.id) throw 'Parcela já registrada para esta conta'
         } catch (error) {
             console.log(error);
@@ -157,7 +169,7 @@ module.exports = app => {
 
                         const newPaymentPlan = await trx(tabelaDomain).insert(novasParcelas)
                     }
-                }              
+                }
 
                 await trx(tabelaDomain)
                     .update(body)
