@@ -300,6 +300,7 @@ module.exports = app => {
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'fl.id_cadastros')
             .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'fl.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
+            .where({ 'fl.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
 
         // Verificar a permissão de multiCliente do usuário
