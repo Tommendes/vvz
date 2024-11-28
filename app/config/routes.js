@@ -1,11 +1,13 @@
 const gestor = require('./gestor')
 const { env, logs } = require('../.env')
+const moment = require('moment');
 
 module.exports = app => {
     // TODO: Exibir todas as rotas acessadas e imprimir no console
     if ((env && env === 'development') || (logs && logs === true)) {
         app.use((req, res, next) => {
-            console.log(`Rota acessada: ${req.method}${req.url}`)
+            const timestamp = moment().utcOffset('-03:00').format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");   
+            console.log(`Rota acessada[${timestamp}]: ${req.method}${req.url}`)
             next()
         })
     }
