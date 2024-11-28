@@ -1,6 +1,6 @@
 const { dbPrefix, tempFiles, baseFilesUrl } = require("../.env")
 const sharp = require('sharp');
-const ftp = require("ftp");
+const ftp = require("basic-ftp");
 const path = require("path");
 module.exports = app => {
     const { existsOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
@@ -8,7 +8,7 @@ module.exports = app => {
     const tabelaAlias = 'Uploads'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
-    const clienteFTP = new ftp();
+    const clienteFTP = new ftp.Client();
     const { removeAccents } = app.api.facilities
     const save = async (req, res) => {
         let user = req.user
