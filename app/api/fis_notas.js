@@ -1,6 +1,6 @@
 // TODO: Criar a API de notas fiscais contendo os métodos de CRUD. Fazer validações de campos obrigatórios e tipos de dados. Em save, verificar se body.id existe e fazer update, caso contrário, fazer insert. Antes de excluir, verificar em fin_lancamentos se existe lançamento para a nota fiscal e não permitir caso exista.
-const ftp = require('basic-ftp');
 const path = require('path');
+const ftp = require('basic-ftp');
 const { Client } = require("basic-ftp")
 const { dbPrefix } = require("../.env")
 const moment = require('moment')
