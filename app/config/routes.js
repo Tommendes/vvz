@@ -540,7 +540,7 @@ module.exports = app => {
     /**
      * Rota de empresa
     */
-    app.route('/empresas')
+    app.route('/empresas/')
         .all(app.config.passport.authenticate())
         .post(app.api.empresa.save)
         .get(app.api.empresa.get)
