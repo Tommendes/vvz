@@ -23,16 +23,16 @@ const validateToken = async () => {
     }
 };
 
-const getIp = async () => {
+const getIP = async () => {
     if (userData) {
-        const userIp = await axios.get(`${baseApiAuthUrl}/getIp`);
+        const userIp = await axios.get(`${baseApiAuthUrl}/getIP`);
         userData.ip = userIp.data;
     }
 };
 
 onBeforeMount(async () => {
     await validateToken();
-    await getIp();
+    await getIP();
 });
 
 // Função para resetar o timer de inatividade

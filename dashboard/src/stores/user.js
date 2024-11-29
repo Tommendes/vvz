@@ -32,7 +32,7 @@ export const useUserStore = defineStore('users', {
     actions: {
         async registerUser(email, password) {
             const url = `${baseApiAuthUrl}/signin`;
-            const urlIp = `${baseApiAuthUrl}/getIp`;
+            const urlIp = `${baseApiAuthUrl}/getIP`;
             let ip = await axios.get(urlIp);
             ip = ip.data.ip.split(',')[0];
             interceptor.interceptors.request.use((config) => {
