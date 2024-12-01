@@ -242,6 +242,7 @@ module.exports = app => {
             .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
+            .groupBy('tbl1.id')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.telefone, tbl1.email, tbl1.aniversario`))

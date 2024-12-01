@@ -216,6 +216,7 @@ module.exports = app => {
             .join({ ce: tabelaCadEnderecosDomain }, 'ce.id', '=', 'tbl1.id_cad_end')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
+            .groupBy('tbl1.id')
         if (uParams.agente_v >= 1 && !(uParams.gestor + uParams.admin + uParams.prospeccoes >= 1)) totalRecords.where({ 'tbl1.id_agente': uParams.id })
         totalRecords = await totalRecords
 

@@ -220,6 +220,7 @@ module.exports = app => {
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_fornecedor')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
+            .groupBy('tbl1.id')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.*,c.nome fornecedor,c.cpf_cnpj`))

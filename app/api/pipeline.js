@@ -462,6 +462,7 @@ module.exports = app => {
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
+            .groupBy('tbl1.id')
         totalRecords = await totalRecords.whereRaw(query ? query : '1=1')
 
         // DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
