@@ -184,8 +184,8 @@ module.exports = app => {
         if (idComposicao && typeof idComposicao == 'number') ret.where({ 'tbl1.id_com_prop_compos': idComposicao })
 
         ret.whereIn('tbl1.status', [STATUS_ACTIVE, STATUS_ITEM_INACTIVE])
-            .orderBy(app.db.raw('cast(tbl3.compos_nr as int)'), 'asc')
-            .orderBy(app.db.raw('cast(tbl1.item as int)'), 'desc')
+            .orderBy(app.db.raw('cast(tbl3.compos_nr as UNSIGNED)'), 'asc')
+            .orderBy(app.db.raw('cast(tbl1.item as UNSIGNED)'), 'desc')
         ret.then(body => {
             const count = body.length
             return res.json({ data: body, count: count })

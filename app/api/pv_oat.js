@@ -130,7 +130,7 @@ module.exports = app => {
                 // Caso seja um autoPvFromPipeline ou um registro sem endereço, desabilitar a verificação de chave estrangeira pois o endereço pode ser o básico do cadastro
                 if (autoPvFromPipeline || body.id_cadastro_endereco == 0) await trx.raw('SET FOREIGN_KEY_CHECKS=0')
 
-                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(nr_oat AS INT)) + 1 AS nr_oat'))
+                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(nr_oat as UNSIGNED)) + 1 AS nr_oat'))
                     .where({ id_pv: body.id_pv, status: STATUS_ACTIVE }).first()
                 body.nr_oat = nextDocumentNr.nr_oat || '1'
                 body.nr_oat = body.nr_oat.toString().padStart(6, '0')

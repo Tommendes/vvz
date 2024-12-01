@@ -96,7 +96,7 @@ module.exports = app => {
         } else {
             // Criação de um novo registro
             app.db.transaction(async (trx) => {
-                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr AS INT)) + 1 AS pv_nr'))
+                let nextDocumentNr = await app.db(tabelaDomain, trx).select(app.db.raw('MAX(CAST(pv_nr as UNSIGNED)) + 1 AS pv_nr'))
                     .where('status', '!=', STATUS_DELETE).first()
                 nextDocumentNr.pv_nr = nextDocumentNr.pv_nr || '1'
                 body.pv_nr = nextDocumentNr.pv_nr
@@ -243,8 +243,8 @@ module.exports = app => {
                     }
                     if (element == 'sort') {
                         sortField = key.split(':')[1].split('=')[0]
-                        if (sortField == 'pipeline') sortField = 'pp.descricao ' + queryes[key] + ', cast(documento as int)'
-                        // if (sortField == 'documento') sortField = 'cast(documento as int)'
+                        if (sortField == 'pipeline') sortField = 'pp.descricao ' + queryes[key] + ', cast(documento as UNSIGNED)'
+                        // if (sortField == 'documento') sortField = 'cast(documento as UNSIGNED)'
                         sortOrder = queryes[key]
                     }
 
