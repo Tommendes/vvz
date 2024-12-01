@@ -175,7 +175,7 @@ module.exports = app => {
         let query = undefined
         let page = 0
         let rows = 10
-        let sortField = app.db.raw('cast(tbl1.pv_nr as int)')
+        let sortField = app.db.raw('cast(tbl1.pv_nr as UNSIGNED)')
         let sortOrder = 'desc'
         if (req.query) {
             queryes = req.query
