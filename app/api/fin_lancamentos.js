@@ -284,6 +284,7 @@ module.exports = app => {
             .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'fl.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
+            .groupBy('tbl1.id')
             
         // Verificar a permissão de multiCliente do usuário
         if (!uParams.multiCliente || uParams.multiCliente < 1) totalRecords.where({ 'fl.id_empresa': uParams.id_empresa })
