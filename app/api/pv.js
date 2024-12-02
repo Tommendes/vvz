@@ -280,7 +280,9 @@ module.exports = app => {
             .orderBy('tbl1.created_at', 'desc') // além da ordenação selecionada ordenar por data
             .limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
-            return res.json({ data: body, totalRecords: totalRecords.count })
+            const length = body.length || 0
+            const total = totalRecords && totalRecords.count ? totalRecords.count : length
+            return res.json({ data: body, totalRecords: total })
         }).catch(error => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         })

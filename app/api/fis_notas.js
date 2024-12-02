@@ -283,8 +283,9 @@ module.exports = app => {
             .limit(rows).offset((page + 1) * rows - rows)
 
         ret.then(body => {
-            const length = body.length
-            return res.json({ data: body, totalRecords: totalRecords.count || length })
+            const length = body.length || 0
+            const total = totalRecords && totalRecords.count ? totalRecords.count : length
+            return res.json({ data: body, totalRecords: total })
         })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })

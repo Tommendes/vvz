@@ -330,7 +330,6 @@ module.exports = app => {
                 }
             }
 
-            // return res.json({ data: body, totalRecords: totalRecords.count, sumRecords: totalRecords.sum || 0 })
             const total = totalRecords && totalRecords.count ? totalRecords.count : 0
             const sum = totalRecords && totalRecords.sum ? totalRecords.sum : 0
             return res.json({ data: body, totalRecords: total, sumRecords: sum })

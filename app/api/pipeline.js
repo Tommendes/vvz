@@ -490,7 +490,6 @@ module.exports = app => {
                 .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
                 .limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
-            const length = body.length
             // se sortField == 'status_created_at' então ordene pelo valor em if body[X].status_created_at considerando o valor em sortOrder (ASC ou DESC) e considerando que status_created_at é uma data no format 'dd/mm/yyyy'
             if (sortField == 'status_created_at')
                 body.sort((a, b) => {
@@ -509,7 +508,10 @@ module.exports = app => {
                 element.valor_representacao = parseFloat(element.valor_representacao).toFixed(2).replace('.', ',')
                 element.perc_represent = parseFloat(element.perc_represent).toFixed(2).replace('.', ',')
             });
-            return res.json({ data: body, totalRecords: totalRecords.count || length, sumRecords: totalRecords.sum || 0 })
+            const length = body.length || 0
+            const total = totalRecords && totalRecords.count ? totalRecords.count : length
+            const sum = totalRecords && totalRecords.sum ? totalRecords.sum : 0
+            return res.json({ data: body, totalRecords: total, sumRecords: sum })
         }).catch(error => {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         })
