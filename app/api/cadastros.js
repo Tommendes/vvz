@@ -154,6 +154,11 @@ module.exports = app => {
         let sortField = app.db.raw('tbl1.nome, tbl1.cpf_cnpj')
         let sortOrder = 'asc'
         let sortByAnivFundacao = undefined
+        const ret = app.db({ tbl1: tabelaDomain })
+            .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
+            .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
+            .where({ 'tbl1.status': STATUS_ACTIVE })
+            .groupBy('tbl1.id')
         if (req.query) {
             queryes = req.query
             query = ''
@@ -236,21 +241,13 @@ module.exports = app => {
             filterCnpj = (filter.replace(/([^\d])+/gim, "").length <= 14) ? filter.replace(/([^\d])+/gim, "") : undefined
         }
 
-        const totalRecords = await app.db({ tbl1: tabelaDomain })
-            .countDistinct('tbl1.id as count').first()
-            .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
-            .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
-            .where({ 'tbl1.status': STATUS_ACTIVE })
-            .whereRaw(query ? query : '1=1')
-            .groupBy('tbl1.id')            
+        ret.whereRaw(query ? query : '1=1')
 
-        const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.telefone, tbl1.email, tbl1.aniversario`))
-            .join({ lp: tabelaLocalParamsDomain }, 'lp.id', '=', 'tbl1.id_params_atuacao')
-            .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
-            .where({ 'tbl1.status': STATUS_ACTIVE })
-            .whereRaw(query ? query : '1=1')
+        let totalRecords = ret.clone()
+            .countDistinct('tbl1.id as count').first()
             .groupBy('tbl1.id')
+
+        ret.select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.telefone, tbl1.email, tbl1.aniversario`))
             .orderBy(sortField, sortOrder)
         if (sortByAnivFundacao) ret.orderBy(sortByAnivFundacao, sortOrder)
         ret.limit(rows).offset((page + 1) * rows - rows)
