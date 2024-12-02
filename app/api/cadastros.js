@@ -255,7 +255,7 @@ module.exports = app => {
         if (sortByAnivFundacao) ret.orderBy(sortByAnivFundacao, sortOrder)
         ret.limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
-            return res.json({ data: body, totalRecords: totalRecords.count })
+            return res.json({ data: body, totalRecords: totalRecords.count || 0 })
         })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
