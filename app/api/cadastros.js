@@ -242,7 +242,7 @@ module.exports = app => {
             .join({ lpTp: tabelaLocalParamsDomain }, 'lpTp.id', '=', 'tbl1.id_params_tipo')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
-            .groupBy('tbl1.id')
+            .groupBy('tbl1.id')            
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.telefone, tbl1.email, tbl1.aniversario`))
@@ -255,7 +255,8 @@ module.exports = app => {
         if (sortByAnivFundacao) ret.orderBy(sortByAnivFundacao, sortOrder)
         ret.limit(rows).offset((page + 1) * rows - rows)
         ret.then(body => {
-            return res.json({ data: body, totalRecords: totalRecords.count || 0 })
+            const total = totalRecords && totalRecords.count ? totalRecords.count : 0
+            return res.json({ data: body, totalRecords: total })
         })
             .catch(error => {
                 app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
