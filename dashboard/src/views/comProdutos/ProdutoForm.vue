@@ -148,7 +148,7 @@ const reloadDataProdTabelas = async () => {
     errorMessages.value.tabelas = {};
     itemDataProdTabelas.value = {};
     gridDataProdTabelas.value = [];
-    setTimeout(() => {}, 150);
+    setTimeout(() => { }, 150);
     await loadDataProdTabelas();
 };
 const menu = ref();
@@ -180,9 +180,7 @@ const removeImage = () => {
                 .then(() => {
                     itemData.value.delete_imagem = false;
                     defaultSuccess('Imagem removida com sucesso');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2500);
+                    itemData.value.url_logo = null;
                 })
                 .catch((error) => {
                     defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
@@ -230,10 +228,8 @@ const showUploadForm = () => {
             modal: true
         },
         onClose: () => {
-            setTimeout(() => {
-                defaultSuccess('Por favor aguarde! Atualizando imagem...');
-                window.location.reload();
-            }, 3000);
+            defaultSuccess('Por favor aguarde! Atualizando imagem...');
+            loadData();
         }
     });
 };
@@ -480,13 +476,10 @@ watch(selectedFornecedor, (value) => {
 </script>
 
 <template>
-    <Breadcrumb
-        v-if="mode != 'new'"
-        :items="[
-            { label: 'Todos os produtos', to: `/${uProf.schema_description}/produtos` },
-            { label: itemData.nome_comum + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
-        ]"
-    />
+    <Breadcrumb v-if="mode != 'new'" :items="[
+        { label: 'Todos os produtos', to: `/${uProf.schema_description}/produtos` },
+        { label: itemData.nome_comum + (uProf.admin >= 2 ? `: (${itemData.id})` : ''), to: route.fullPath }
+    ]" />
     <div class="card">
         <form @submit.prevent="saveData">
             <div class="grid">
@@ -494,7 +487,10 @@ watch(selectedFornecedor, (value) => {
                     <div class="p-fluid grid">
                         <div class="col-3 mx-auto text-center" :class="itemData.url_logo ? ' image-on' : ''">
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Image v-else :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultProduto.png'}`" width="200" alt="Logomarca" :preview="preview" id="url_logo" @contextmenu="onImageRightClick" />
+                            <Image v-else
+                                :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultProduto.png'}`"
+                                width="200" alt="Logomarca" :preview="preview" id="url_logo"
+                                @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
                         <div class="col-9">
@@ -502,62 +498,63 @@ watch(selectedFornecedor, (value) => {
                                 <div class="col-12 md:col-3">
                                     <label for="nome_comum">Nome curto</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nome_comum" id="nome_comum" type="text" maxlength="25" />
+                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                        v-model="itemData.nome_comum" id="nome_comum" type="text" maxlength="25" />
                                 </div>
                                 <div class="col-12 md:col-9">
                                     <label for="id_fornecedor">Fornecedor</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
                                     <AutoComplete
                                         v-else-if="route.name != 'cadastro' && (editFornecedor || mode == 'new')"
-                                        v-model="selectedFornecedor"
-                                        :dropdown="false"
-                                        optionLabel="name"
-                                        :suggestions="filteredFornecedores"
-                                        @complete="searchFornecedores"
-                                        forceSelection
-                                        @keydown.enter.prevent
-                                    />
+                                        v-model="selectedFornecedor" :dropdown="false" optionLabel="name"
+                                        :suggestions="filteredFornecedores" @complete="searchFornecedores"
+                                        forceSelection @keydown.enter.prevent />
                                     <div class="p-inputgroup flex-1" v-else>
                                         <InputText disabled v-model="nomeFornecedor" />
-                                        <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil" severity="primary" @click="confirmEditFornecedor()" :disabled="mode == 'view'" />
+                                        <Button v-if="route.name != 'cadastro'" icon="fa-solid fa-pencil"
+                                            severity="primary" @click="confirmEditFornecedor()"
+                                            :disabled="mode == 'view'" />
                                     </div>
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="produto">Produto/Serviço</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="produto" :disabled="mode == 'view'" placeholder="Selecione o período" optionLabel="label" optionValue="value" v-model="itemData.produto" :options="dropdownProduto" />
+                                    <Dropdown v-else id="produto" :disabled="mode == 'view'"
+                                        placeholder="Selecione o período" optionLabel="label" optionValue="value"
+                                        v-model="itemData.produto" :options="dropdownProduto" />
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="id_params_unidade">Unidade</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <Dropdown
-                                        v-else-if="itemData.produto == 1"
-                                        id="id_params_unidade"
-                                        :disabled="mode == 'view'"
-                                        placeholder="Selecione a unidade"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        v-model="itemData.id_params_unidade"
-                                        :options="dropdownUnidades"
-                                    />
-                                    <p v-else v-html="'Mão de Obra'" class="p-inputtext p-component p-filled disabled"></p>
+                                    <Dropdown v-else-if="itemData.produto == 1" id="id_params_unidade"
+                                        :disabled="mode == 'view'" placeholder="Selecione a unidade" optionLabel="label"
+                                        optionValue="value" v-model="itemData.id_params_unidade"
+                                        :options="dropdownUnidades" />
+                                    <p v-else v-html="'Mão de Obra'" class="p-inputtext p-component p-filled disabled">
+                                    </p>
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="ncm">NCM</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.ncm" id="ncm" type="text" />
-                                    <p v-else v-html="itemData.ncm || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
+                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no"
+                                        :disabled="mode == 'view'" v-model="itemData.ncm" id="ncm" type="text" />
+                                    <p v-else v-html="itemData.ncm || '&nbsp;'"
+                                        class="p-inputtext p-component p-filled disabled"></p>
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="cean">cEAN</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no" :disabled="mode == 'view'" v-model="itemData.cean" id="cean" type="text" />
-                                    <p v-else v-html="itemData.cean || '&nbsp;'" class="p-inputtext p-component p-filled disabled"></p>
+                                    <InputText v-else-if="itemData.produto == 1" autocomplete="no"
+                                        :disabled="mode == 'view'" v-model="itemData.cean" id="cean" type="text" />
+                                    <p v-else v-html="itemData.cean || '&nbsp;'"
+                                        class="p-inputtext p-component p-filled disabled"></p>
                                 </div>
                                 <div class="col-12 md:col-12">
                                     <label for="descricao">Descrição</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <EditorComponent v-else :readonly="['view'].includes(mode)" v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                                    <EditorComponent v-else :readonly="['view'].includes(mode)"
+                                        v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
+                                        aria-describedby="editor-error" />
                                 </div>
                             </div>
                         </div>
@@ -565,9 +562,12 @@ watch(selectedFornecedor, (value) => {
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar"
+                            icon="fa-regular fa-pen-to-square fa-shake" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
+                            severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
+                            severity="danger" text raised @click="reload" />
                     </div>
                 </div>
                 <div class="col-12">
@@ -582,65 +582,73 @@ watch(selectedFornecedor, (value) => {
                                                 <div class="col-4">
                                                     <label for="valor_compra">Valor de Compra</label>
                                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                        class="p-inputgroup flex-1" style="font-size: 1rem">
                                                         <span class="p-inputgroup-addon">R$</span>
-                                                        <InputText
-                                                            autocomplete="no"
+                                                        <InputText autocomplete="no"
                                                             :disabled="['view', 'expandedFormMode'].includes(modeTabelas)"
-                                                            v-model="itemDataProdTabelas.valor_compra"
-                                                            id="valor_compra"
-                                                            type="text"
-                                                            v-maska
-                                                            data-maska="0,99"
-                                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                                        />
+                                                            v-model="itemDataProdTabelas.valor_compra" id="valor_compra"
+                                                            type="text" v-maska data-maska="0,99"
+                                                            data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                                     </div>
                                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                                         <span class="p-inputgroup-addon">R$</span>
-                                                        <span disabled v-html="itemDataProdTabelas.valor_compra" class="p-inputtext p-component" />
+                                                        <span disabled v-html="itemDataProdTabelas.valor_compra"
+                                                            class="p-inputtext p-component" />
                                                     </div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label for="valor_venda">Valor de Venda</label>
                                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                        class="p-inputgroup flex-1" style="font-size: 1rem">
                                                         <span class="p-inputgroup-addon">R$</span>
-                                                        <InputText
-                                                            autocomplete="no"
+                                                        <InputText autocomplete="no"
                                                             :disabled="['view', 'expandedFormMode'].includes(modeTabelas)"
-                                                            v-model="itemDataProdTabelas.valor_venda"
-                                                            id="valor_venda"
-                                                            type="text"
-                                                            v-maska
-                                                            data-maska="0,99"
-                                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                                        />
+                                                            v-model="itemDataProdTabelas.valor_venda" id="valor_venda"
+                                                            type="text" v-maska data-maska="0,99"
+                                                            data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                                     </div>
                                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                                         <span class="p-inputgroup-addon">R$</span>
-                                                        <span disabled v-html="itemDataProdTabelas.valor_venda" class="p-inputtext p-component" />
+                                                        <span disabled v-html="itemDataProdTabelas.valor_venda"
+                                                            class="p-inputtext p-component" />
                                                     </div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label for="ini_validade">Validade inicial</label>
                                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)" class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                        <InputText autocomplete="no" v-model="itemDataProdTabelas.ini_validade" id="ini_validade" type="text" v-maska data-maska="##/##/####" />
+                                                    <div v-else-if="!['view', 'expandedFormMode'].includes(modeTabelas)"
+                                                        class="p-inputgroup flex-1" style="font-size: 1rem">
+                                                        <InputText autocomplete="no"
+                                                            v-model="itemDataProdTabelas.ini_validade" id="ini_validade"
+                                                            type="text" v-maska data-maska="##/##/####" />
                                                     </div>
                                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
-                                                        <span disabled v-html="itemDataProdTabelas.ini_validade || '&nbsp;'" id="ini_validade" class="p-inputtext p-component" />
+                                                        <span disabled
+                                                            v-html="itemDataProdTabelas.ini_validade || '&nbsp;'"
+                                                            id="ini_validade" class="p-inputtext p-component" />
                                                     </div>
-                                                    <small id="text-error" class="p-error" v-if="errorMessages.tabelas && errorMessages.tabelas.ini_validade">{{ errorMessages.tabelas.ini_validade }}</small>
+                                                    <small id="text-error" class="p-error"
+                                                        v-if="errorMessages.tabelas && errorMessages.tabelas.ini_validade">{{
+                                                        errorMessages.tabelas.ini_validade }}</small>
                                                 </div>
-                                                <div class="col-12" v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
+                                                <div class="col-12"
+                                                    v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
                                                     <div class="flex justify-content-center flex-wrap gap-3">
-                                                        <Button type="button" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised @click="saveDataProdTabelas" />
-                                                        <Button type="button" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reloadDataProdTabelas" />
+                                                        <Button type="button" label="Salvar"
+                                                            icon="fa-solid fa-floppy-disk" severity="success" text
+                                                            raised @click="saveDataProdTabelas" />
+                                                        <Button type="button" label="Cancelar" icon="fa-solid fa-ban"
+                                                            severity="danger" text raised
+                                                            @click="reloadDataProdTabelas" />
                                                     </div>
                                                 </div>
                                                 <div class="col-12" v-else>
                                                     <div class="flex justify-content-center flex-wrap gap-3">
-                                                        <Button class="w-full" type="button" label="Nova Tabela" severity="success" text raised @click="newDataProdTabelas" />
+                                                        <Button class="w-full" type="button" label="Nova Tabela"
+                                                            severity="success" text raised
+                                                            @click="newDataProdTabelas" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -649,9 +657,16 @@ watch(selectedFornecedor, (value) => {
                                             <h4>Últimos ajustes</h4>
                                             <ol>
                                                 <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">
-                                                    Início de validade: {{ item.ini_validade }} - Valor de compra: R$ {{ item.valor_compra }} - Valor de venda: R$ {{ item.valor_venda }}
-                                                    <i class="fa-solid fa-pencil fa-shake" style="font-size: 1rem; color: slateblue" @click="editItem(item)" v-tooltip.top="'Clique para alterar'"></i>
-                                                    <i class="fa-solid fa-trash ml-2" style="color: #fa0000; font-size: 1rem" @click="deleteItem(item)" v-tooltip.top="'Clique para excluir'"></i>
+                                                    Início de validade: {{ item.ini_validade }} - Valor de compra: R$ {{
+                                                    item.valor_compra }} - Valor de venda: R$ {{ item.valor_venda }}
+                                                    <i class="fa-solid fa-pencil fa-shake"
+                                                        style="font-size: 1rem; color: slateblue"
+                                                        @click="editItem(item)"
+                                                        v-tooltip.top="'Clique para alterar'"></i>
+                                                    <i class="fa-solid fa-trash ml-2"
+                                                        style="color: #fa0000; font-size: 1rem"
+                                                        @click="deleteItem(item)"
+                                                        v-tooltip.top="'Clique para excluir'"></i>
                                                 </li>
                                             </ol>
                                         </div>
