@@ -85,7 +85,7 @@ module.exports = app => {
             .where({ 'sc.schema_description': user.schema_description })
             .whereRaw(query ? query : '1=1')
             .first()
-            .groupBy('tbl1.id')
+            // .groupBy('tbl1.id')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select({ id: 'tbl1.id' }, { evento: 'tbl1.evento' }, { created_at: 'tbl1.created_at' }, { classevento: 'tbl1.classevento' }, { tabela_bd: 'tbl1.tabela_bd' }, { id_registro: 'tbl1.id_registro' }, { user: 'us.name' },)

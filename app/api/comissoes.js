@@ -290,7 +290,7 @@ module.exports = app => {
                 if (idPipeline) this.where({ 'tbl1.id_pipeline': idPipeline })
                 if (idAgente) this.where({ 'tbl1.id_comis_agentes': idAgente })
             })
-            .groupBy('tbl1.id')
+            // .groupBy('tbl1.id')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .join({ tbl3: tabelaPipelineDomain }, 'tbl1.id_pipeline', 'tbl3.id')

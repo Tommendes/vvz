@@ -245,7 +245,7 @@ module.exports = app => {
 
         let totalRecords = ret.clone()
             .countDistinct('tbl1.id as count').first()
-            .groupBy('tbl1.id')
+            // .groupBy('tbl1.id')
 
         ret.select(app.db.raw(`lp.label as atuacao, lpTp.label as tipo_cadas, tbl1.id, tbl1.cpf_cnpj, tbl1.nome, tbl1.telefone, tbl1.email, tbl1.aniversario`))
             .orderBy(sortField, sortOrder)

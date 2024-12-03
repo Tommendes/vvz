@@ -212,7 +212,7 @@ module.exports = app => {
             .leftJoin({ pv: tabelaPvDomain }, 'pv.id', '=', 'tbl1.id_pv')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
-            .groupBy('tbl1.id')
+            // .groupBy('tbl1.id')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id,pp.descricao,p.documento,p.versao,pv.pv_nr,c.nome,c.cpf_cnpj,tbl1.pessoa_contato,tbl1.telefone_contato,tbl1.email_contato`))

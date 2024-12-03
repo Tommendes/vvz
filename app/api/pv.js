@@ -266,7 +266,7 @@ module.exports = app => {
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .whereNot({ 'tbl1.status': STATUS_DELETE })
             .whereRaw(query ? query : '1=1')
-            .groupBy('tbl1.id')
+            // .groupBy('tbl1.id')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select(app.db.raw(`tbl1.id, tbl1.observacao, tbl1.status, pp.descricao AS tipo_doc, p.documento, c.nome, c.cpf_cnpj, tbl1.pv_nr, tbl1.tipo,

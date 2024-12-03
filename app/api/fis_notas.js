@@ -271,7 +271,7 @@ module.exports = app => {
             .join({ tbl3: tabelaDomainEmpresa }, 'tbl3.id', 'tbl1.id_empresa')
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
-            .groupBy('tbl1.id')
+            // .groupBy('tbl1.id')
 
         ret.select(app.db.raw(`tbl1.*`), 'tbl2.nome as fornecedor', 'tbl2.cpf_cnpj as cpf_cnpj_fornecedor', 'tbl3.razaosocial as empresa', 'tbl3.cpf_cnpj_empresa')
             .join({ tbl2: tabelaDomainCadastros }, 'tbl2.id', 'tbl1.id_fornecedor')
