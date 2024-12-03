@@ -2,6 +2,8 @@ const { dbPrefix, tempFiles, baseFilesUrl } = require("../.env")
 const { Client } = require('basic-ftp');
 const path = require('path');
 const sharp = require('sharp');
+const multer = require('multer');
+const fs = require('fs');
 module.exports = app => {
     const { existsOrError, isMatchOrError, noAccessMsg } = require('./validation.js')(app)
     const tabela = 'uploads'
@@ -9,8 +11,32 @@ module.exports = app => {
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
     // const clienteFTP = new ftp.Client();
-    const { removeAccents } = app.api.facilities    
+    const { removeAccents } = app.api.facilities
 
+    const connectToFTP = async (ftpParamsArray) => {
+        let allErrors = [];
+        for (let i = 0; i < ftpParamsArray.length; i++) {
+            const ftpParam = ftpParamsArray[i];
+            const client = new Client();
+            try {
+                const dataConnect = {
+                    host: ftpParam.host,
+                    port: ftpParam.port,
+                    user: ftpParam.user,
+                    password: ftpParam.pass,
+                    secure: ftpParam.ssl
+                };
+                await client.access(dataConnect);
+                return { success: true, client }; // Retorna o cliente se a conexão for bem-sucedida
+            } catch (error) {
+                allErrors.push(`Conexão FTP falhou para a opção ${i + 1}: ${error.message}`);
+                client.close(); // Fecha a conexão falhada
+            }
+        }
+        // Se todas as conexões falharem, registre os erros do array allErrors e retorne falso
+        console.error(allErrors.join('; '));
+        return { success: false }; // Retorna falso se todas as conexões falharem
+    };
 
     const save = async (req, res) => {
         let user = req.user
@@ -114,48 +140,6 @@ module.exports = app => {
                     return res.status(500).send(error)
                 })
         }
-    }
-
-    const saveNewFile = async (req, res) => {
-        const tabelaDomain = `${dbPrefix}_api.${tabela}`
-
-        let body = { ...req.body }
-
-        // Criação de um novo registro
-        app.db.transaction(async (trx) => {
-            // Variáveis da criação de um registro
-            const newRecord = {
-                status: STATUS_ACTIVE,
-                created_at: new Date(),
-                ...body, // Incluindo outros dados do corpo da solicitação
-            };
-
-            // Iniciar a transação e inserir na tabela principal
-            const nextEventID = await app.db(`${dbPrefix}_api.sis_events`, trx).select(app.db.raw('count(*) as count')).first()
-            const [recordId] = await trx(tabelaDomain).insert({ ...newRecord, evento: nextEventID.count + 1 });
-
-            // Registrar o evento na tabela de eventos
-            const eventPayload = {
-                notTo: ['created_at', 'evento'],
-                next: newRecord,
-                request: req,
-                evento: {
-                    evento: 'Novo registro',
-                    tabela_bd: tabela,
-                },
-                trx: trx
-            };
-            const { createEventIns } = app.api.sisEvents
-            await createEventIns(eventPayload);
-            const newRecordWithID = { ...newRecord, id: recordId }
-            return newRecordWithID;
-        }).catch((error) => {
-            // Se ocorrer um erro, faça rollback da transação
-            app.api.logger.logError({
-                log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true },
-            });
-            return res.status(500).send(error);
-        });
     }
 
     const get = async (req, res) => {
@@ -271,46 +255,42 @@ module.exports = app => {
 
     const removeFileFromServer = async (req, res) => {
         try {
-            let user = req.user
-            const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-            const tabelaFtp = `${dbPrefix}_api.ftp_control`
-            const ftpParam = await app.db({ ftp: tabelaFtp })
-                .select('host', 'port', 'user', 'pass', 'ssl')                
-            clienteFTP.connect({
-                host: ftpParam.host,
-                port: ftpParam.port,
-                user: ftpParam.user,
-                password: ftpParam.pass,
-            });
-            const tabelaDomain = `${dbPrefix}_api.${tabela}`
-            clienteFTP.on("ready", async () => {
-                const filesToDelete = await app.db(tabelaDomain).where({ status: STATUS_DELETE })
-                filesToDelete.forEach(async (file) => {
-                    // Excluir o arquivo no servidor FTP
-                    const fileToDelete = path.join(file.url_path, file.uid + '_' + file.filename)
-                    clienteFTP.delete(fileToDelete, async (error) => {
-                        if (error) {
-                            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Erro ao excluir arquivo no servidor FTP: ${error}`, sConsole: true } });
-                        } else {
-                            app.api.logger.logInfo({ log: { line: `Arquivo ${fileToDelete} excluído com sucesso!`, sConsole: true } })
-                        }
-                        // Excluir o registro da tabela de uploads no banco de dados após excluir o arquivo no servidor FTP alterando o status para 999
-                        await app.db(tabelaDomain)
-                            .update({ status: 999, updated_at: new Date() })
-                            .where({ id: file.id })
-                    });
+            const ftpParam = await app.db(`${dbPrefix}_api.ftp_control`)
+                .select('host', 'port', 'user', 'pass', 'ssl')
+                .where({ status: STATUS_ACTIVE })
+            let connectionResult = await connectToFTP(ftpParam);
+            if (!connectionResult.success) {
+                return res.status(500).send('Não foi possível conectar ao servidor FTP');
+            }
+            const client = connectionResult.client;
+            const tabelaDomain = `${dbPrefix}_api.${tabela}`;
+            const filesToDelete = await app.db(tabelaDomain).where({ status: STATUS_DELETE });
 
-                    // Fechar a conexão após as operações
-                    clienteFTP.end();
-                });
-            });
+            for (const file of filesToDelete) {
+                const fileToDelete = path.join(`/${file.url_path}`, `${file.uid}_${file.filename}`);
+                try {
+                    await client.remove(fileToDelete);
+                    app.api.logger.logInfo({ log: { line: `Arquivo ${fileToDelete} excluído com sucesso`, sConsole: true } });
+                } catch (error) {
+                    app.api.logger.logError({ log: { line: `Erro ao excluir arquivo no servidor FTP: ${error.message}`, sConsole: true } });
+                }
+                try {
+                    await app.db(tabelaDomain)
+                        .update({ status: 999, updated_at: new Date() })
+                        .where({ id: file.id });
+                } catch (error) {
+                    app.api.logger.logError({ log: { line: `Erro a referência do arquivo no banco de dados: ${error.message}`, sConsole: true } });
+                }
+            }
 
-            return true;
+            if (req.method == 'PUT') return true
+            else return res.status(204).send();
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-            return res.send(error);
+            app.api.logger.logError({ log: { line: `Erro na função removeFileFromServer: ${error.message}`, sConsole: true } });
+            return res.status(500).send(error.message);
         }
-    }
+    };
+
 
     const getByFunction = async (req, res) => {
         const func = req.params.func
@@ -329,61 +309,17 @@ module.exports = app => {
 
     // Função para hospedar arquivos
     const hostFile = async (req, res) => {
-        const multer = require('multer');
-        const fs = require('fs');
-        const path = require('path');
-        const { promisify } = require('util');
-        const rename = promisify(fs.rename);
-        let tknQueryId = undefined
-        let tknQueryTime = undefined
-        let timeExpired = false
-        if (req.query.tkn && req.query.tkn.split('_').length > 1) {
-            tknQueryId = { id: req.query.tkn.split('_')[0] }
-            tknQueryTime = req.query.tkn.split('_')[1]
-            const now = Math.floor(Date.now() / 1000)
-            timeExpired = tknQueryTime < now
-        }
-        if (!(req.user || (tknQueryId && tknQueryTime))) {
-            return res.status(401).send('Usuário não autenticado')
-        }
-        let user = req.user || tknQueryId
-        // return res.send(user);
-        const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-        try {
-            if (timeExpired) throw 'Token expirado'
-            isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Upload de arquivos"`)
-        } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            return res.status(401).send(error)
-        }
-
-
-        const tabelaFtp = `${dbPrefix}_api.ftp_control`
-        const ftpParam = await app.db({ ftp: tabelaFtp })
+        const schema_description = req.query.sd;
+        const ftpParam = await app.db(`${dbPrefix}_api.ftp_control`)
             .select('host', 'port', 'user', 'pass', 'ssl')
-            .where({ schema_id: uParams.schema_id }).first()
-        req.ftpParam = ftpParam
-        const tabelaSchema = `${dbPrefix}_api.schemas_control`
-        const schemaParam = await app.db({ sc: tabelaSchema }).where({ id: uParams.schema_id, status: STATUS_ACTIVE }).first()
-        req.schemaParam = schemaParam
-
-        // ftpParam contém os dados de conexão com o servidor FTP. 
-        // Primeiro verifique se a conexão com o servidor FTP está funcionando
-        // Depois verifique se a pasta do cliente existe no servidor FTP. O nome da pasta é o schema_description
-        // O arquivo recebido deverá ser enviado para o servidor FTP utilizando o multer     
-
+            .where({ status: STATUS_ACTIVE })
+        let connectionResult = await connectToFTP(ftpParam);
+        if (!connectionResult.success) {
+            return res.status(500).send('Não foi possível conectar ao servidor FTP');
+        }
+        const client = connectionResult.client;
         try {
-            // Verificar se a conexão com o servidor FTP está funcionando
-            clienteFTP.connect({
-                host: ftpParam.host,
-                port: ftpParam.port,
-                user: ftpParam.user,
-                password: ftpParam.pass,
-            });
-            req.clienteFTP = clienteFTP
-
-            // Configurando o multer para lidar com o upload de arquivos
-            const destinationPath = path.join(__dirname, tempFiles, schemaParam.schema_description);
+            const destinationPath = path.join(__dirname, tempFiles, schema_description);
             const storage = multer.diskStorage({
                 destination: function (req, file, cb) {
                     if (!fs.existsSync(destinationPath)) {
@@ -392,92 +328,68 @@ module.exports = app => {
                     cb(null, destinationPath);
                 },
                 filename: function (req, file, cb) {
-                    cb(null, removeAccents(file.originalname.replaceAll(/ /g, '_')));
+                    cb(null, file.originalname.replace(/ /g, '_'));
                 }
             });
 
             const upload = multer({ storage: storage }).array('arquivos');
             upload(req, res, async (error) => {
-                const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
-                // Verifica se tem alçada para upload
-                let files = req.files;
-                req.user = uParams;
-                const schemaParam = req.schemaParam
-                try {
-                    isMatchOrError(uParams && uParams.uploads >= 2, `${noAccessMsg} "Upload de arquivos"`)
-                } catch (error) {
-                    // Se Não tiver permissão, faça rollback da transação
-                    app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-                    // Deletar os arquivos enviados
-                    files.forEach(file => {
-                        const filePath = path.join(__dirname, tempFiles, schemaParam.schema_description, file.originalname);
-                        fs.unlinkSync(filePath);
-                    });
-                    return res.status(401).send(error)
-                }
                 if (error) {
-                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
+                    console.error(`Error in file: ${__filename} (${__function}). Error: ${error}`);
                     return res.status(500).send({ message: 'Erro ao enviar arquivos', error });
                 }
-                files.forEach(async (file) => {
+
+                const files = req.files;
+
+                for (const file of files) {
                     file.uid = Math.floor(Date.now());
                     file.url_destination = `${baseFilesUrl}`;
-                    file.url_path = schemaParam.schema_description;
+                    file.url_path = schema_description;
                     file.extension = file.originalname.split('.').pop();
-                    const inputPath = path.join(file.destination, removeAccents(file.originalname.replaceAll(/ /g, '_')));
 
-                    clienteFTP.on("ready", () => {
-                        // Agora que o cliente está pronto, podemos realizar operações FTP
-                        // Garante a pasta do cliente no servidor FTP. O nome da pasta é o schema_description
-                        criarDiretorioRecursivo(schemaParam.schema_description, async () => {
-                            const ftpPath = path.join(schemaParam.schema_description, file.uid + '_' + file.filename);
-                            // Enviar o arquivo após a criação do diretório
-                            clienteFTP.put(inputPath, ftpPath, (error) => {
-                                if (error) {
-                                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). Error: Erro ao enviar arquivo: ${error}`, sConsole: true } })
-                                    return res.status(500).send('Erro ao enviar arquivo:' + error)
-                                }
-                                // setTimeout(() => {
-                                //     if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);                                    
-                                // }, 3000);
-                            });
-                        });
-                        // Fechar a conexão após as operações     
-                        clienteFTP.end();
-                    })
-                });
-                req.body = files
-                files = await registerFileInDb(req)
-                setTimeout(() => {
-                    return res.status(200).send({ message: 'Arquivo(s) enviado(s) com sucesso', files: files });
-                }, 2000);
+                    const inputPath = path.join(file.destination, file.originalname.replace(/ /g, '_'));
+                    const ftpPath = path.join(`/${schema_description}`, `${file.uid}_${file.filename}`);
+                    try {
+                        await client.ensureDir(schema_description); // Cria o diretório FTP
+                    } catch (ftpError) {
+                        app.api.logger.logError({ log: { line: `Erro ao criar diretório FTP: ${ftpError.message}`, sConsole: true } });
+                    }
+                    try {
+                        await client.uploadFrom(inputPath, ftpPath); // Envia o arquivo para o servidor FTP
+                    } catch (ftpError) {
+                        app.api.logger.logError({ log: { line: `Erro ao enviar arquivo ao servidor FTP: ${ftpError.message}`, sConsole: true } });
+                    }
+                    try {
+                        fs.unlinkSync(inputPath); // Remove o arquivo local após o upload
+                    } catch (ftpError) {
+                        app.api.logger.logError({ log: { line: `Erro ao excluir arquivo temporário: ${ftpError.message}`, sConsole: true } });
+                    }
+                }
+
+                client.close();
+
+                req.body = files;
+                const registeredFiles = await registerFileInDb(req);
+                return res.status(200).send({ message: 'Arquivo(s) enviado(s) com sucesso', files: registeredFiles });
             });
         } catch (error) {
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
-            if (error.code == 'EHOSTUNREACH') return res.status(500).send(`Servidor de arquivos temporariamente indisponível. Tente novamente ou tente mais tarde`);
-            else return res.status(500).send(error)
+            app.api.logger.logError({ log: { line: `Erro na função hostFile: ${error.message}`, sConsole: true } });
+            return res.status(500).send(error.message);
         }
-    }
+    };
 
-    function criarDiretorioRecursivo(caminho, callback) {
+    async function criarDiretorioRecursivo(client, caminho) {
         const partes = caminho.split("/");
-        criarProximoDiretorio(0);
-        function criarProximoDiretorio(indice) {
-            if (indice >= partes.length) {
-                // Todos os diretórios criados
-                callback();
-                return;
-            }
-            const diretorioAtual = partes.slice(0, indice + 1).join("/");
-            clienteFTP.mkdir(diretorioAtual, true, (erro) => {
-                if (erro && erro.code !== 550) {
-                    // Código 550 significa que o diretório já existe, outros códigos indicam erros
+        for (let i = 1; i <= partes.length; i++) {
+            const diretorioAtual = partes.slice(0, i).join("/");
+            try {
+                await client.ensureDir(diretorioAtual);
+            } catch (erro) {
+                if (erro.code !== 550) { // Código 550 significa "diretório já existe"
                     console.error("Erro ao criar diretório:", diretorioAtual, erro);
-                    callback(erro);
-                    return;
+                    throw new Error(`Erro ao criar diretório: ${diretorioAtual}`);
                 }
-                criarProximoDiretorio(indice + 1);
-            });
+            }
         }
     }
 
@@ -626,31 +538,6 @@ module.exports = app => {
         })
             .toFile(outputPath);
     };
-
-    const connectToFTP = async (ftpParamsArray, uParams) => {
-        let allErrors = [];
-        for (let i = 0; i < ftpParamsArray.length; i++) {
-            const ftpParam = ftpParamsArray[i];
-            const client = new Client();
-            try {
-                const dataConnect = {
-                    host: ftpParam.host,
-                    port: ftpParam.port,
-                    user: ftpParam.user,
-                    password: ftpParam.pass,
-                    secure: ftpParam.ssl
-                }
-                await client.access(dataConnect);
-                return { success: true, client }; // Retorna o cliente se a conexão for bem-sucedida
-            } catch (error) {
-                allErrors.push(`Conexão FTP falhou para a opção ${i + 1}: ${error.message}`);
-                client.close(); // Fecha a conexão falhada
-            }
-        }
-        // Se todas as conexões falharem, registre os erros do array allErrors e retorne falso
-        app.api.logger.logError({ log: { line: allErrors.join('; '), sConsole: false } })
-        return { success: false }; // Retorna falso se todas as conexões falharem
-    }
 
     return { save, get, getById, remove, getByFunction, removeFileFromServer }
 }

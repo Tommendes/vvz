@@ -136,6 +136,8 @@ export const useUserStore = defineStore('users', {
             // const untokenized = await decodeToken(token || this.user.token || userData.token, th.data);
             const profile = await axios.post(`${baseApiUrl}/gprof`, { id: this.user.id || userData.id });
             this.user = profile.data;
+            this.user.exp = userData.exp;
+            this.user.schema_description = userData.schema_description;
             return this.user;
         },
         logout() {

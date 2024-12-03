@@ -73,7 +73,10 @@ module.exports = app => {
                     await app.db(tabelaUploadsDomain)
                         .update(uploadBodyRemove)
                         .where({ id: body.id_uploads_imagem })
+                    const method = req.method
+                    req.method = 'DELETE'
                     removeFileFromServer(req)
+                    req.method = method
                 }
             }
             // Importante só fazer esta alteração depois de excluir a imagem

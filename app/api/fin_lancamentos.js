@@ -285,11 +285,15 @@ module.exports = app => {
             .where({ 'tbl1.status': STATUS_ACTIVE })
             .whereRaw(query ? query : '1=1')
             .groupBy('tbl1.id')
-            
+
         // Verificar a permissão de multiCliente do usuário
         if (!uParams.multiCliente || uParams.multiCliente < 1) totalRecords.where({ 'fl.id_empresa': uParams.id_empresa })
 
-        totalRecords = await totalRecords
+        try {
+            totalRecords = await totalRecords
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error Query totalRecords = await totalRecords: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+        }
 
         ret.select(app.db.raw(`fl.id, tbl1.id AS id_parcela, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta`))
             .select(app.db.raw(`(select fl.valor_bruto - coalesce(sum(r.valor_retencao), 0) from ${tabelaRetencoesDomain} r where r.id_fin_lancamentos = fl.id) AS valor_liquido_conta`))
@@ -308,7 +312,7 @@ module.exports = app => {
 
         ret.groupBy('tbl1.id').orderBy(sortField, sortOrder)
             .limit(rows).offset((page + 1) * rows - rows)
-            
+
         ret.then(async (body) => {
             const length = body.length
             for (const element of body) {
@@ -335,7 +339,7 @@ module.exports = app => {
             return res.json({ data: body, totalRecords: total, sumRecords: sum })
         })
             .catch(error => {
-                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
+                app.api.logger.logError({ log: { line: `Error Query totalRecords = await totalRecords: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             })
     }
 

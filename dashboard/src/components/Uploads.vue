@@ -142,7 +142,7 @@ onMounted(() => {
 
 <template>
     <div class="card">
-        <FileUpload name="arquivos" :url="`${urlBase}/f/hfl?tkn=${uProf.id}_${uProf.exp}`" @upload="onTemplatedUpload($event)" :multiple="props.multiple" :accept="props.accept" :maxFileSize="props.maxFileSize" @select="onSelectedFiles">
+        <FileUpload name="arquivos" :url="`${urlBase}/f/hfl?tkn=${uProf.id}_${uProf.exp}&sd=${uProf.schema_description}`" @upload="onTemplatedUpload($event)" :multiple="props.multiple" :accept="props.accept" :maxFileSize="props.maxFileSize" @select="onSelectedFiles">
             <template #header="{ chooseCallback, uploadCallback, clearCallback, files }">
                 <div class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2">
                     <div class="flex gap-2">
@@ -207,6 +207,7 @@ onMounted(() => {
         <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
             <p>itemData: {{ itemData }}</p>
             <p>filesData: {{ filesData }}</p>
+            <p>uProf: {{ uProf }}</p>
         </div>
     </div>
 </template>
