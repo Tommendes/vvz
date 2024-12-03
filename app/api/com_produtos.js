@@ -44,7 +44,7 @@ module.exports = app => {
             }
         const delete_imagem = body.delete_imagem
         const url_logo = body.url_logo
-          delete body.endereco; delete body.url_logo; delete body.delete_imagem;
+        delete body.endereco; delete body.url_logo; delete body.delete_imagem;
         if (body.id) {
             const { createEventUpd } = app.api.sisEvents
             // Variáveis da edição de um registro
@@ -75,12 +75,12 @@ module.exports = app => {
                         .where({ id: body.id_uploads_imagem })
                     const method = req.method
                     req.method = 'DELETE'
-                    removeFileFromServer(req)
+                    const fileRemoved = removeFileFromServer(req)
                     req.method = method
+                    // Importante só fazer esta alteração depois de excluir a imagem
+                    if (fileRemoved) body.id_uploads_imagem = null
                 }
             }
-            // Importante só fazer esta alteração depois de excluir a imagem
-            body.id_uploads_imagem = null
 
             evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento',],

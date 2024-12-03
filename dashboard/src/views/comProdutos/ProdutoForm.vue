@@ -112,12 +112,13 @@ const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
+    const obj = { ...itemData.value };
     // Se o tipo for serviço, limpa os campos ncm e cean
-    if (itemData.value.produto == 0) {
-        itemData.value.ncm = null;
-        itemData.value.cean = null;
+    if (obj.produto == 0) {
+        obj.ncm = null;
+        obj.cean = null;
     }
-    axios[method](url, itemData.value)
+    axios[method](url, obj)
         .then(async (res) => {
             const body = res.data;
             if (body && body.id) {
@@ -181,6 +182,7 @@ const removeImage = () => {
                     itemData.value.delete_imagem = false;
                     defaultSuccess('Imagem removida com sucesso');
                     itemData.value.url_logo = null;
+                    itemData.value.id_uploads_imagem = null;
                 })
                 .catch((error) => {
                     defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
@@ -228,13 +230,17 @@ const showUploadForm = () => {
             modal: true
         },
         onClose: () => {
-            defaultSuccess('Por favor aguarde! Atualizando imagem...');
             loadData();
         }
     });
 };
 // Menu de contexto da imagem
 const onImageRightClick = (event) => {
+    event.preventDefault(); // Prevent the default context menu from showing
+    if (mode.value != 'view') {
+        defaultWarn('Para enviar ou excluir uma imagem, primeiro salve todas as edições pendentes');
+        return;
+    }
     if (itemData.value.id_uploads_imagem) items.value.push(itemRemoverImagem.value);
     const countItems = itemData.value.id_uploads_imagem ? 2 : 1;
     while (items.value.length > countItems) items.value.pop();
@@ -631,7 +637,7 @@ watch(selectedFornecedor, (value) => {
                                                     </div>
                                                     <small id="text-error" class="p-error"
                                                         v-if="errorMessages.tabelas && errorMessages.tabelas.ini_validade">{{
-                                                        errorMessages.tabelas.ini_validade }}</small>
+                                                            errorMessages.tabelas.ini_validade }}</small>
                                                 </div>
                                                 <div class="col-12"
                                                     v-if="itemDataProdTabelas.id || modeTabelas == 'new'">
@@ -658,7 +664,7 @@ watch(selectedFornecedor, (value) => {
                                             <ol>
                                                 <li v-for="(item, index) in gridDataProdTabelas" :key="item.id">
                                                     Início de validade: {{ item.ini_validade }} - Valor de compra: R$ {{
-                                                    item.valor_compra }} - Valor de venda: R$ {{ item.valor_venda }}
+                                                        item.valor_compra }} - Valor de venda: R$ {{ item.valor_venda }}
                                                     <i class="fa-solid fa-pencil fa-shake"
                                                         style="font-size: 1rem; color: slateblue"
                                                         @click="editItem(item)"
