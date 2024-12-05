@@ -268,6 +268,7 @@ module.exports = app => {
                 } else if (key.split(':')[0] == 'sort') {
                     sortField = key.split(':')[1].split('=')[0]
                     if (sortField == 'destinatario_agrupado') sortField = 'c.nome'
+                    if (sortField == 'descricao_agrupada') sortField = 'tbl1.descricao'
                     sortOrder = queryes[key]
                 }
             }
