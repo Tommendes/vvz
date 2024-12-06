@@ -21,6 +21,8 @@ module.exports = app => {
         } catch (error) {
             return res.status(400, error)
         }     
+        
+        app.api.logger.logInfo({ log: { line: body, sConsole: true } })
         res.status(200).send(body)
     }
 
