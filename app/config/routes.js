@@ -6,11 +6,16 @@ module.exports = app => {
     // TODO: Exibir todas as rotas acessadas e imprimir no console
     if ((env && env === 'development') || (logs && logs === true)) {
         app.use((req, res, next) => {
-            const timestamp = moment().utcOffset('-03:00').format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");   
+            const timestamp = moment().utcOffset('-03:00').format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
             console.log(`Rota acessada[${timestamp}]: ${req.method}${req.url}`)
             next()
         })
-    }
+    }    
+
+    /**
+     * Rotas do BotControl
+    */
+    app.post('/bot-control', app.api.botControl.getRequest)
 
     app.post('/signup', app.api.user.signup)
     app.post('/signin', app.api.auth.signin)
@@ -21,14 +26,14 @@ module.exports = app => {
         const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         res.json({ ip: ipAddress });
     });
-    
+
     /**
      * Schemas Control
     */
     app.post('/s-n-c-s', app.api.schemas_control.setNewClient)
     // app.route('/s-c/sncs')
-        // .all(app.config.passport.authenticate())
-        // .post(app.api.db_schemas_control.creatClientSchema)
+    // .all(app.config.passport.authenticate())
+    // .post(app.api.db_schemas_control.creatClientSchema)
 
     /**
      * Rota de validação genérica de documentos
@@ -706,6 +711,4 @@ module.exports = app => {
     app.route('/printing/:func')
         .all(app.config.passport.authenticate())
         .post(app.api.printing.getByFunction)
-
-
 }
