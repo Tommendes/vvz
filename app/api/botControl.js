@@ -22,7 +22,7 @@ module.exports = app => {
             return res.status(400, error)
         }     
         
-        app.api.logger.logInfo({ log: { line: body, sConsole: true } })
+        app.api.logger.logInfo({ log: { line: JSON.stringify(body), sConsole: true } })
         res.status(200).send(body)
     }
 
