@@ -49,7 +49,7 @@ const userLogin = async () => {
                     <label for="password"
                         class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Senha</label>
                     <Password id="password" v-model="password" placeholder="Sua senha" :toggleMask="true"
-                        :inputClass="'w-full'" class="w-full mb-8" :feedback="true"></Password>
+                        :inputClass="'w-full'" class="w-full mb-8" :feedback="false"></Password>
 
                     <div class="flex justify-content-between flex-wrap">
                         <span class="flex align-items-center justify-content-center cursor-pointer text-primary" @click="router.push({ name: 'signup' })">Novo por aqui 😀?</span>
