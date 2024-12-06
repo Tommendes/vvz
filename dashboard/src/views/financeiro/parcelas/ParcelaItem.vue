@@ -33,6 +33,7 @@ const props = defineProps(['itemData', 'mode', 'uProf', 'itemDataRoot']);
 // Emits do template
 const emit = defineEmits(['reloadItems', 'cancel']);
 const mode = ref('view');
+const isSubmitting = ref(false);
 const itemData = ref([]);
 // Até 12 parcelas
 const dropdownParcelas = ref([
@@ -66,6 +67,21 @@ const loadData = async () => {
     itemData.value = { ...props.itemData };
     if (itemData.value.data_vencimento) itemData.value.data_vencimento = masks.value.data_vencimento.masked(moment(itemData.value.data_vencimento).format('DD/MM/YYYY'));
     if (itemData.value.data_pagto) itemData.value.data_pagto = masks.value.data_vencimento.masked(moment(itemData.value.data_pagto).format('DD/MM/YYYY'));
+};
+
+// Salvar dados do formulário
+const handleSubmit = async () => {
+    if (isSubmitting.value) return;
+    isSubmitting.value = true;
+    try {
+        await saveData();
+    } catch (error) {
+        console.error('Erro ao salvar dados:', error);
+    } finally {
+        setTimeout(() => {
+            isSubmitting.value = false;
+        }, Math.random() * 1000);
+    }
 };
 
 const saveData = async () => {
@@ -208,219 +224,132 @@ watchEffect(() => {
                 <div class="text-center text-lg" v-html="slotProps.message.message1" />
                 <div class="text-center text-lg" v-html="slotProps.message.message2" />
                 <InputGroup>
-                    <InputText
-                        autocomplete="no"
-                        v-model="bodyMultiplicate.parcelas"
-                        id="parcelas"
-                        type="number"
-                        v-maska
-                        data-maska="##"
-                        placeholder="Parcelas"
-                        min="1"
-                        max="60"
-                        @keydown.enter.prevent
+                    <InputText autocomplete="no" v-model="bodyMultiplicate.parcelas" id="parcelas" type="number" v-maska
+                        data-maska="##" placeholder="Parcelas" min="1" max="60" @keydown.enter.prevent
                         class="mb-2 text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2"
-                        style="padding: 0rem 1rem"
-                    />
-                    <SelectButton
-                        v-model="valueMultiplicate"
-                        :options="optionsMultiplicate"
+                        style="padding: 0rem 1rem" />
+                    <SelectButton v-model="valueMultiplicate" :options="optionsMultiplicate"
                         :disabled="bodyMultiplicate.parcelas == 1"
-                        class="mb-2 text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary"
-                    />
+                        class="mb-2 text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary" />
                 </InputGroup>
                 <div class="text-center mb-3 text-xl" v-if="bodyMultiplicate.parcelas > 1 && dividirParcelas">
-                    O valor da parcela 1 será atualizado para {{ formatCurrency(bodyMultiplicate.valor_vencimento_um) }}<br />e {{ bodyMultiplicate.parcelas > 2 ? `as seguintes` : 'a próxima' }} para
-                    {{ formatCurrency(bodyMultiplicate.valor_vencimento_demais) }}.<br />Se estiver de acordo, clique em confirmar, abaixo
+                    O valor da parcela 1 será atualizado para {{ formatCurrency(bodyMultiplicate.valor_vencimento_um)
+                    }}<br />e {{ bodyMultiplicate.parcelas > 2 ? `as seguintes` : 'a próxima' }} para
+                    {{ formatCurrency(bodyMultiplicate.valor_vencimento_demais) }}.<br />Se estiver de acordo, clique em
+                    confirmar, abaixo
                 </div>
                 <div class="text-center mb-3 text-xl" v-else-if="bodyMultiplicate.parcelas > 1 && !dividirParcelas">
-                    Todas as parcelas serão criadas com o valor de {{ formatCurrency(bodyMultiplicate.valor_vencimento_demais) }} <br />
+                    Todas as parcelas serão criadas com o valor de {{
+                        formatCurrency(bodyMultiplicate.valor_vencimento_demais) }} <br />
                     Se estiver de acordo, clique em confirmar, abaixo
                 </div>
             </div>
         </template>
     </ConfirmPopup>
-    <form @submit.prevent="saveData">
+    <form @submit.prevent="handleSubmit">
         <div class="formgrid grid">
             <div class="field col-12 md:col-2">
-                <label for="data_vencimento">Data de Vencimento <span class="text-base" style="color: red">*</span></label>
+                <label for="data_vencimento">Data de Vencimento <span class="text-base"
+                        style="color: red">*</span></label>
                 <InputGroup>
-                    <InputText
-                        autocomplete="no"
-                        required
+                    <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska data-maska="##/##/####"
+                        v-model="itemData.data_vencimento" id="data_vencimento" placeholder="Vencimento"
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-10" />
+                    <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
+                        @click="itemData.data_vencimento = moment().format('DD/MM/YYYY')" text raised
                         :disabled="mode == 'view'"
-                        v-maska
-                        data-maska="##/##/####"
-                        v-model="itemData.data_vencimento"
-                        id="data_vencimento"
-                        placeholder="Vencimento"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-10"
-                    />
-                    <Button
-                        v-tooltip.top="'Data de hoje'"
-                        icon="fa-solid fa-calendar-day"
-                        @click="itemData.data_vencimento = moment().format('DD/MM/YYYY')"
-                        text
-                        raised
-                        :disabled="mode == 'view'"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2"
-                    />
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2" />
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">
-                <label for="valor_vencimento">Valor do Vencimento <span class="text-base" style="color: red">*</span></label>
+                <label for="valor_vencimento">Valor do Vencimento <span class="text-base"
+                        style="color: red">*</span></label>
                 <InputGroup>
-                    <InputText
-                        autocomplete="no"
-                        :disabled="['view'].includes(mode)"
-                        v-model="itemData.valor_vencimento"
-                        id="valor_vencimento"
-                        type="text"
-                        v-maska
-                        data-maska="0,99"
+                    <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.valor_vencimento"
+                        id="valor_vencimento" type="text" v-maska data-maska="0,99"
                         data-maska-tokens="0:\d:multiple|9:\d:optional"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
-                    />
-                    <Button
-                        v-tooltip.top="'Copiar valor BRUTO do registro'"
-                        @click="itemData.valor_vencimento = props.itemDataRoot.valor_bruto"
-                        text
-                        raised
-                        :disabled="mode == 'view'"
-                        icon="fa-solid fa-dollar-sign"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary"
-                    />
-                    <Button
-                        v-tooltip.top="'Copiar valor LÍQUIDO do registro'"
-                        @click="itemData.valor_vencimento = props.itemDataRoot.valor_liquido"
-                        text
-                        raised
-                        :disabled="mode == 'view'"
-                        icon="fa-solid fa-filter-circle-dollar"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary"
-                    />
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
+                    <Button v-tooltip.top="'Copiar valor BRUTO do registro'"
+                        @click="itemData.valor_vencimento = props.itemDataRoot.valor_bruto" text raised
+                        :disabled="mode == 'view'" icon="fa-solid fa-dollar-sign"
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary" />
+                    <Button v-tooltip.top="'Copiar valor LÍQUIDO do registro'"
+                        @click="itemData.valor_vencimento = props.itemDataRoot.valor_liquido" text raised
+                        :disabled="mode == 'view'" icon="fa-solid fa-filter-circle-dollar"
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary" />
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">
                 <label for="situacao">Situação do Vencimento<span class="text-base" style="color: red">*</span></label>
-                <Dropdown
-                    placeholder="Situação"
-                    id="situacao"
-                    optionLabel="label"
-                    optionValue="value"
-                    v-model="itemData.situacao"
-                    :options="dropdownSituacao"
-                    :disabled="['view'].includes(mode)"
-                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
-                />
+                <Dropdown placeholder="Situação" id="situacao" optionLabel="label" optionValue="value"
+                    v-model="itemData.situacao" :options="dropdownSituacao" :disabled="['view'].includes(mode)"
+                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
             </div>
             <div class="field col-12 md:col-4">
                 <div class="formgrid grid">
                     <div class="field col-12 md:col-4">
                         <label for="parcela">Parcela <span class="text-base" style="color: red">*</span></label>
-                        <Dropdown
-                            placeholder="Parcela"
-                            id="parcela"
-                            optionLabel="label"
-                            optionValue="value"
-                            v-model="itemData.parcela"
-                            :options="dropdownParcelas"
-                            :disabled="['view'].includes(mode)"
-                            class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
-                        />
+                        <Dropdown placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value"
+                            v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)"
+                            class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
                     </div>
                     <div class="field col-12 md:col-8">
                         <label for="duplicata">Documento de Cobrança</label>
-                        <InputText
-                            autocomplete="no"
-                            :disabled="['view'].includes(mode)"
-                            v-model="itemData.duplicata"
-                            id="duplicata"
-                            type="text"
-                            placeholder="Duplicata, sequencial, etc."
-                            class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
-                        />
+                        <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.duplicata"
+                            id="duplicata" type="text" placeholder="Duplicata, sequencial, etc."
+                            class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
                     </div>
                 </div>
             </div>
             <div class="field col-12 md:col-2">
-                <label for="data_pagto">Data do Pagamento <span v-if="!(itemData.situacao == '1')" class="text-base" style="color: red">*</span></label>
+                <label for="data_pagto">Data do Pagamento <span v-if="!(itemData.situacao == '1')" class="text-base"
+                        style="color: red">*</span></label>
                 <InputGroup>
-                    <InputText
-                        autocomplete="no"
+                    <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####"
+                        v-model="itemData.data_pagto" id="data_pagto" placeholder="Pagamento"
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-10" />
+                    <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
+                        @click="itemData.data_pagto = moment().format('DD/MM/YYYY')" text raised
                         :disabled="mode == 'view'"
-                        v-maska
-                        data-maska="##/##/####"
-                        v-model="itemData.data_pagto"
-                        id="data_pagto"
-                        placeholder="Pagamento"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-10"
-                    />
-                    <Button
-                        v-tooltip.top="'Data de hoje'"
-                        icon="fa-solid fa-calendar-day"
-                        @click="itemData.data_pagto = moment().format('DD/MM/YYYY')"
-                        text
-                        raised
-                        :disabled="mode == 'view'"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2"
-                    />
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2" />
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">
-                <label for="id_fin_constas">Conta de Movimentação <span v-if="!(itemData.situacao == '1')" class="text-base" style="color: red">*</span></label>
-                <Dropdown
-                    filter
-                    placeholder="Conta"
-                    id="id_fin_contas"
-                    optionLabel="label"
-                    optionValue="value"
-                    v-model="itemData.id_fin_contas"
-                    :options="dropdownContas"
-                    :disabled="['view'].includes(mode)"
-                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
-                />
+                <label for="id_fin_constas">Conta de Movimentação <span v-if="!(itemData.situacao == '1')"
+                        class="text-base" style="color: red">*</span></label>
+                <Dropdown filter placeholder="Conta" id="id_fin_contas" optionLabel="label" optionValue="value"
+                    v-model="itemData.id_fin_contas" :options="dropdownContas" :disabled="['view'].includes(mode)"
+                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
             </div>
             <div class="field col-12 md:col-2">
-                <label for="documento">Meio de Quitação <span v-if="!(itemData.situacao == '1') && props.itemDataRoot.centro == '2'" class="text-base" style="color: red">*</span></label>
-                <InputText
-                    autocomplete="no"
-                    :disabled="['view'].includes(mode)"
-                    v-model="itemData.documento"
-                    id="documento"
-                    type="text"
-                    placeholder="Pix, TED, Boleto, etc..."
-                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
-                />
+                <label for="documento">Meio de Quitação <span
+                        v-if="!(itemData.situacao == '1') && props.itemDataRoot.centro == '2'" class="text-base"
+                        style="color: red">*</span></label>
+                <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.documento"
+                    id="documento" type="text" placeholder="Pix, TED, Boleto, etc..."
+                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
             </div>
             <div class="field col-12 md:col-8">
                 <label for="descricao">Descrição (curta) do vencimento</label>
                 <InputGroup>
-                    <InputText
-                        autocomplete="no"
-                        :disabled="['view'].includes(mode)"
-                        v-model="itemData.descricao"
-                        id="descricao"
-                        type="text"
-                        maxlength="255"
-                        placeholder="Descrição"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
-                    />
-                    <Button type="submit" :disabled="!(props.uProf.financeiro >= 2)" v-if="['edit', 'new'].includes(mode) || mode == 'new'" v-tooltip.top="'Salvar parcela'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                    <Button type="button" :disabled="!(props.uProf.financeiro >= 3)" v-if="mode == 'view'" v-tooltip.top="'Editar parcela'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
-                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel()" />
-                    <Button type="button" :disabled="!(props.uProf.financeiro >= 4)" v-if="['view'].includes(mode)" v-tooltip.top="'Excluir parcela'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
-                    <Button
-                        type="button"
-                        :disabled="!(props.uProf.financeiro >= 2)"
+                    <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.descricao"
+                        id="descricao" type="text" maxlength="255" placeholder="Descrição"
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
+                    <Button type="submit" :disabled="isSubmitting || !(props.uProf.financeiro >= 2)"
+                        v-if="['edit', 'new'].includes(mode) || mode == 'new'" v-tooltip.top="'Salvar parcela'"
+                        icon="fa-solid fa-floppy-disk" severity="success" text raised />
+                    <Button type="button" :disabled="!(props.uProf.financeiro >= 3)" v-if="mode == 'view'"
+                        v-tooltip.top="'Editar parcela'" icon="fa-regular fa-pen-to-square" text raised
+                        @click="mode = 'edit'" />
+                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'"
+                        icon="fa-solid fa-ban" severity="danger" text raised @click="cancel()" />
+                    <Button type="button" :disabled="!(props.uProf.financeiro >= 4)" v-if="['view'].includes(mode)"
+                        v-tooltip.top="'Excluir parcela'" icon="fa-solid fa-trash" severity="danger" text raised
+                        @click="deleteItem" />
+                    <Button type="button" :disabled="!(props.uProf.financeiro >= 2)"
                         v-if="itemData.situacao == SITUACAO_ABERTO && itemData.parcela == 'U' && ['view'].includes(mode)"
                         v-tooltip.top="props.itemDataRoot.centro == 1 ? 'Parcelar recebimento' : 'Parcelar pagamento'"
-                        icon="fa-solid fa-ellipsis-vertical"
-                        severity="success"
-                        text
-                        raised
-                        @click="multiplicateItem"
-                    />
+                        icon="fa-solid fa-ellipsis-vertical" severity="success" text raised @click="multiplicateItem" />
                 </InputGroup>
             </div>
         </div>

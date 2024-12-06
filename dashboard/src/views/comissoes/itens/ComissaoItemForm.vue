@@ -66,6 +66,7 @@ const dropdownParcelas = ref([
     { value: '12', label: `12` }
 ]);
 const mode = ref('new');
+const isSubmitting = ref(false);
 
 // Carrega os dados do form
 const loadData = async () => {
@@ -84,14 +85,22 @@ const loadData = async () => {
     loading.value = false;
 };
 
-// Validar formulário
-const formIsValid = () => {
-    return true;
+// Salvar dados do formulário
+const handleSubmit = async () => { 
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
+  try {
+    await saveData();
+  } catch (error) {
+    console.error('Erro ao salvar dados:', error);
+  } finally {
+    setTimeout(() => {
+        isSubmitting.value = false;
+    }, Math.random() * 1000);
+  }
 };
 
-// Salvar dados do formulário
 const saveData = async () => {
-    if (!formIsValid()) return;
     const method = itemData.value.id ? 'put' : 'post';
     const id = itemData.value.id ? `/${itemData.value.id}` : '';
     const url = `${urlBase.value}${id}`;
@@ -119,6 +128,8 @@ const saveData = async () => {
             }
         })
         .catch((error) => {
+            console.log('Erro ao salvar registro:', error);
+
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             if (error.response && error.response.status == 401) router.push('/');
         });
@@ -463,22 +474,14 @@ watchEffect(() => {
             <div class="flex flex-column align-items-center w-full gap-3 border-bottom-1 surface-border p-3 mb-3 pb-0">
                 <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>
                 <div class="text-center text-xl" v-html="slotProps.message.message" />
-                <InputText
-                    :class="`mb-${bodyMultiplicate.parcelas > 1 ? '0' : '3'}`"
-                    autocomplete="no"
-                    v-model="bodyMultiplicate.parcelas"
-                    id="parcelas"
-                    type="number"
-                    v-maska
-                    data-maska="##"
-                    placeholder="Parcelas"
-                    min="1"
-                    max="10"
-                    @keydown.enter.prevent
-                />
+                <InputText :class="`mb-${bodyMultiplicate.parcelas > 1 ? '0' : '3'}`" autocomplete="no"
+                    v-model="bodyMultiplicate.parcelas" id="parcelas" type="number" v-maska data-maska="##"
+                    placeholder="Parcelas" min="1" max="10" @keydown.enter.prevent />
                 <div class="text-center mb-3 text-xl" v-if="bodyMultiplicate.parcelas > 1">
-                    O valor da parcela 1 será atualizado para {{ formatCurrency(bodyMultiplicate.valor_base_um) }}<br />e {{ bodyMultiplicate.parcelas > 2 ? `as seguintes` : 'a próxima' }} para
-                    {{ formatCurrency(bodyMultiplicate.valor_base_demais) }}.<br />Se estiver de acordo, clique em confirmar, abaixo
+                    O valor da parcela 1 será atualizado para {{ formatCurrency(bodyMultiplicate.valor_base_um)
+                    }}<br />e {{ bodyMultiplicate.parcelas > 2 ? `as seguintes` : 'a próxima' }} para
+                    {{ formatCurrency(bodyMultiplicate.valor_base_demais) }}.<br />Se estiver de acordo, clique em
+                    confirmar, abaixo
                 </div>
             </div>
         </template>
@@ -486,7 +489,8 @@ watchEffect(() => {
     <ConfirmDialog :group="`comisLiquidateConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
-                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                <div
+                    class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
                     <i class="fa-solid fa-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
@@ -502,7 +506,8 @@ watchEffect(() => {
     <ConfirmDialog :group="`setFiscalDoneConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
-                <div class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
+                <div
+                    class="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
                     <i class="fa-solid fa-question text-5xl"></i>
                 </div>
                 <span class="font-bold text-2xl block mb-2 mt-4">{{ message.header }}</span>
@@ -518,37 +523,33 @@ watchEffect(() => {
     <Dialog v-model:visible="showTimeLine" modal header="Timeline do registro" :style="{ width: '25rem' }">
         <Timeline :value="itemDataStatus">
             <template #marker="slotProps">
-                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                <span
+                    class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
+                    :style="{ backgroundColor: slotProps.item.color }">
                     <i :class="slotProps.item.icon"></i>
                 </span>
             </template>
             <template #opposite="slotProps">
                 <small class="p-text-secondary">{{ slotProps.item.date }}</small>
             </template>
-            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ uProf.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
+            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ uProf.admin >= 2
+                ? `(${slotProps.item.statusCode})` : '' }} </template>
         </Timeline>
         <div class="flex justify-content-center gap-2 mt-3">
             <Button type="button" label="Fechar" severity="" @click="showTimeLine = false"></Button>
         </div>
     </Dialog>
-    <form @submit.prevent="saveData">
+    <!-- Preciso evitar o possível duplo clique -->
+    <form @submit.prevent="handleSubmit">
         <div class="flex overflow-x-auto gap-1 mb-2">
             <div class="flex-grow-1 flex align-items-center justify-content-center">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-regular fa-user"></i></div>
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
+                            class="fa-regular fa-user"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Dropdown
-                        v-else
-                        filter
-                        placeholder="Selecione o agente"
-                        :showClear="!!itemData.id_comis_agentes"
-                        id="unidade_tipos"
-                        optionLabel="label"
-                        optionValue="value"
-                        v-model="itemData.id_comis_agentes"
-                        :options="dropdownAgentes"
-                        :disabled="['view'].includes(mode)"
-                    >
+                    <Dropdown v-else filter placeholder="Selecione o agente" :showClear="!!itemData.id_comis_agentes"
+                        id="unidade_tipos" optionLabel="label" optionValue="value" v-model="itemData.id_comis_agentes"
+                        :options="dropdownAgentes" :disabled="['view'].includes(mode)">
                         <template #option="slotProps">
                             <div class="p-dropdown-item">{{ slotProps.option.label }}</div>
                         </template>
@@ -559,38 +560,20 @@ watchEffect(() => {
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">R$</div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <InputText
-                        v-else
-                        autocomplete="no"
-                        :disabled="mode == 'view'"
-                        v-model="itemData.valor_base"
-                        id="valor_base"
-                        type="text"
-                        v-maska
-                        data-maska="0,99"
-                        data-maska-tokens="0:\d:multiple|9:\d:optional"
-                        placeholder="Valor base"
-                        @keydown.enter.prevent
-                    />
+                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.valor_base"
+                        id="valor_base" type="text" v-maska data-maska="0,99"
+                        data-maska-tokens="0:\d:multiple|9:\d:optional" placeholder="Valor base"
+                        @keydown.enter.prevent />
                 </div>
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root">%</div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <InputText
-                        v-else
-                        autocomplete="no"
-                        :disabled="mode == 'view'"
-                        v-model="itemData.percentual"
-                        id="percentual"
-                        type="text"
-                        v-maska
-                        data-maska="0,99"
-                        data-maska-tokens="0:\d:multiple|9:\d:optional"
-                        placeholder="Percentual"
-                        @keydown.enter.prevent
-                    />
+                    <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.percentual"
+                        id="percentual" type="text" v-maska data-maska="0,99"
+                        data-maska-tokens="0:\d:multiple|9:\d:optional" placeholder="Percentual"
+                        @keydown.enter.prevent />
                 </div>
             </div>
             <div class="flex-none flex">
@@ -602,102 +585,52 @@ watchEffect(() => {
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i class="fa-solid fa-list-ol"></i></div>
+                    <div class="p-inputgroup-addon" data-pc-name="inputgroupaddon" data-pc-section="root"><i
+                            class="fa-solid fa-list-ol"></i></div>
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Dropdown v-else placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value" v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
+                    <Dropdown v-else placeholder="Parcela" id="parcela" optionLabel="label" optionValue="value"
+                        v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
-                    <Button
-                        type="submit"
-                        :disabled="!(uProf.comissoes >= 2)"
+                    <Button type="submit" :disabled="isSubmitting || !(uProf.comissoes >= 2)"
                         v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)"
-                        v-tooltip.top="'Salvar comissão'"
-                        icon="fa-solid fa-floppy-disk"
-                        severity="success"
-                        text
-                        raised
-                    />
-                    <Button
-                        type="button"
-                        :disabled="!(uProf.comissoes >= 3)"
+                        v-tooltip.top="'Salvar comissão'" icon="fa-solid fa-floppy-disk" severity="success" text
+                        raised @click="handleSubmit"/>
+                    <Button type="button" :disabled="!(uProf.comissoes >= 3)"
                         v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && mode == 'view'"
-                        v-tooltip.top="'Editar comissão'"
-                        icon="fa-regular fa-pen-to-square"
-                        text
-                        raised
-                        @click="mode = 'edit'"
-                    />
-                    <Button
-                        type="button"
-                        :disabled="!(uProf.financeiro >= 3 || uProf.comissoes >= 3)"
+                        v-tooltip.top="'Editar comissão'" icon="fa-regular fa-pen-to-square" text raised
+                        @click="mode = 'edit'" />
+                    <Button type="button" :disabled="!(uProf.financeiro >= 3 || uProf.comissoes >= 3)"
                         v-if="![STATUS_LIQUIDADO, STATUS_ENCERRADO].includes(itemDataLastStatus.status_comis) && ['view'].includes(mode)"
-                        v-tooltip.top="'Liquidar comissão'"
-                        icon="fa-regular fa-calendar-check"
-                        severity="success"
-                        text
-                        raised
-                        @click="programateItem"
-                    />
-                    <Button
-                        :disabled="!(uProf.financeiro >= 3 || uProf.comissoes >= 3)"
-                        type="button"
+                        v-tooltip.top="'Liquidar comissão'" icon="fa-regular fa-calendar-check" severity="success" text
+                        raised @click="programateItem" />
+                    <Button :disabled="!(uProf.financeiro >= 3 || uProf.comissoes >= 3)" type="button"
                         v-else-if="itemDataLastStatus.status_comis == STATUS_LIQUIDADO && ['view'].includes(mode)"
-                        v-tooltip.top="'Cancelar liquidação'"
-                        icon="fa-regular fa-calendar-xmark"
-                        severity="warning"
-                        text
-                        raised
-                        @click="unprogramateItem"
-                    />
+                        v-tooltip.top="'Cancelar liquidação'" icon="fa-regular fa-calendar-xmark" severity="warning"
+                        text raised @click="unprogramateItem" />
                     <!-- <Button type="button" v-if="itemDataLastStatus.status_comis < 30 && ['view'].includes(mode)" v-tooltip.top="'Liquidar comissão'" icon="fa-solid fa-bolt" severity="success" text raised @click="liquidateItem" /> -->
-                    <Button
-                        type="button"
-                        :disabled="!(uProf.comissoes >= 2)"
+                    <Button type="button" :disabled="!(uProf.comissoes >= 2)"
                         v-if="itemDataLastStatus.status_comis == STATUS_ABERTO && itemDataUnmuted.parcela == 'U' && ['view'].includes(mode)"
                         v-tooltip.top="[0, 1].includes(props.itemDataRoot.agente_representante) ? 'Parcelar recebimento' : 'Parcelar pagamento'"
-                        icon="fa-solid fa-ellipsis-vertical"
-                        severity="success"
-                        text
-                        raised
-                        @click="multiplicateItem"
-                    />
-                    <Button
-                        type="button"
-                        :disabled="!(uProf.fiscal >= 3)"
+                        icon="fa-solid fa-ellipsis-vertical" severity="success" text raised @click="multiplicateItem" />
+                    <Button type="button" :disabled="!(uProf.fiscal >= 3)"
                         v-if="!itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
-                        v-tooltip.top="'Confirmar faturamento'"
-                        icon="fa-solid fa-cash-register"
-                        style="color: #45590d"
-                        text
-                        raised
-                        @click="setFiscalDone"
-                    />
-                    <Button
-                        type="button"
-                        :disabled="!(uProf.fiscal >= 3)"
+                        v-tooltip.top="'Confirmar faturamento'" icon="fa-solid fa-cash-register" style="color: #45590d"
+                        text raised @click="setFiscalDone" />
+                    <Button type="button" :disabled="!(uProf.fiscal >= 3)"
                         v-if="itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
-                        v-tooltip.top="'Remover faturamento'"
-                        icon="fa-solid fa-cash-register"
-                        severity="warning"
-                        text
-                        raised
-                        @click="setFiscalUnDone"
-                    />
-                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
-                    <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline da comissão'" icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
-                    <Button
-                        type="button"
-                        :disabled="!(uProf.comissoes >= 4)"
+                        v-tooltip.top="'Remover faturamento'" icon="fa-solid fa-cash-register" severity="warning" text
+                        raised @click="setFiscalUnDone" />
+                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'"
+                        icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
+                    <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline da comissão'"
+                        icon="fa-solid fa-timeline" severity="info" text raised @click="showTimeLine = !showTimeLine" />
+                    <Button type="button" :disabled="!(uProf.comissoes >= 4)"
                         v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && ['view'].includes(mode)"
-                        v-tooltip.top="'Excluir comissão'"
-                        icon="fa-solid fa-trash"
-                        severity="danger"
-                        text
-                        raised
-                        @click="deleteItem"
-                    />
+                        v-tooltip.top="'Excluir comissão'" icon="fa-solid fa-trash" severity="danger" text raised
+                        @click="deleteItem" />
                 </div>
             </div>
         </div>

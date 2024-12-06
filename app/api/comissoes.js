@@ -40,7 +40,6 @@ module.exports = app => {
         let pipeline = {}
         let last = {}
         if (body.id) last = await app.db(tabelaDomain).where({ id: body.id }).first()
-        const valorAnterior = last.valor || 0 // Valor anterior do registro
         if (body.valor_base) body.valor_base = body.valor_base.replace(",", ".");
         if (body.percentual) body.percentual = body.percentual.replace(",", ".");
         if (body.valor) body.valor = body.valor.replace(",", ".");
@@ -182,13 +181,20 @@ module.exports = app => {
                 return res.status(500).send(error);
             });
         } else {
-            // const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, parcela: body.parcela, status: STATUS_ACTIVE }).first()
-            // try {
-            //     notExistsOrError(unique, `Comissão já registrada para este agente`)
-            // } catch (error) {
-            //     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
-            //     return res.status(400).send(error)
-            // }
+            /*
+            Não pode haver mais de um registro ativo (status = STATUS_ACTIVE) de comissão para o mesmo agente, pipeline, valor, percentual e parcela
+            SELECT COUNT(id), id, `status`, id_pipeline, `id_comis_agentes`, `valor_base`, percentual, parcela FROM `comissoes`
+                WHERE STATUS = 10
+                GROUP BY `status`, id_pipeline, `id_comis_agentes`, `valor_base`, percentual, parcela
+                HAVING COUNT(id) > 1;
+            */
+            const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, parcela: body.parcela, status: STATUS_ACTIVE }).first()
+            try {
+                notExistsOrError(unique, `Comissão já registrada para este agente`)
+            } catch (error) {
+                app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
+                return res.status(400).send(error)
+            }
 
             app.db.transaction(async (trx) => {
                 // Criação de um novo registro
@@ -290,7 +296,7 @@ module.exports = app => {
                 if (idPipeline) this.where({ 'tbl1.id_pipeline': idPipeline })
                 if (idAgente) this.where({ 'tbl1.id_comis_agentes': idAgente })
             })
-            // .groupBy('tbl1.id')
+        // .groupBy('tbl1.id')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .join({ tbl3: tabelaPipelineDomain }, 'tbl1.id_pipeline', 'tbl3.id')
@@ -501,7 +507,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
         }
-        
+
         const agGroup = req.query.agGroup || undefined
         try {
             if (agGroup && [0, 1, 2, 3].indexOf(agGroup) == -1) throw 'Grupo de agentes inválido'
