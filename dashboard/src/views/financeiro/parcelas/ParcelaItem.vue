@@ -54,8 +54,10 @@ const dropdownParcelas = ref([
 // Situação da parcela 1: Aberto; 2: Pago; 3: Conciliado; 99: Cancelado
 const dropdownSituacao = ref([
     { value: '1', label: `Aberto`, verbose: 'em Aberto' },
+    { value: '65', label: `Protestado`, verbose: 'Protestado' },
     { value: '2', label: `Pago`, verbose: 'a Pagar' },
     { value: '3', label: `Conciliado`, verbose: 'Conciliada' },
+    { value: '64', label: `Doação/Permuta`, verbose: 'Doado/Permutado' },
     { value: '99', label: `Cancelado`, verbose: 'Cancelada' }
 ]);
 // Url base do form action

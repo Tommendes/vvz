@@ -38,6 +38,7 @@ const setMenuByUser = async () => {
         const itemMenu = { label: 'Pós-vendas', items: [] };
         if (uProf.value.pv >= 1) itemMenu.items.push({ label: 'Registros', icon: 'fa-solid fa-briefcase', to: `/${uProf.value.schema_description}/pos-vendas` });
         if (uProf.value.at >= 1) itemMenu.items.push({ label: 'Técnicos', icon: 'fa-solid fa-cog', to: `/${uProf.value.schema_description}/tecnicos-pv` });
+        if (uProf.value.admin >= 2) itemMenu.items.push({ label: 'Parâmetros', icon: 'fa-solid fa-wrench', to: `/${uProf.value.schema_description}/tecnicos-pv` });
         model.value.push(itemMenu);
     }
     if ((uProf.value.financeiro >= 1 && uProf.value.comissoes >= 1) || uProf.value.comissoes >= 1 || uProf.value.agente_v >= 1) {

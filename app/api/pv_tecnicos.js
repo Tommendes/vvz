@@ -2,7 +2,7 @@ const { dbPrefix } = require("../.env")
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const tabela = 'pv_tecnicos'
-    const tabelaAlias = 'Tecnicos de Pós-vendas'
+    const tabelaAlias = 'Técnicos de Pós-vendas'
     const STATUS_ACTIVE = 10
     const STATUS_DELETE = 99
 
