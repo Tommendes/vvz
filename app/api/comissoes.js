@@ -188,7 +188,7 @@ module.exports = app => {
                 GROUP BY `status`, id_pipeline, `id_comis_agentes`, `valor_base`, percentual, parcela
                 HAVING COUNT(id) > 1;
             */
-            const unique = await app.db(tabelaDomain).where({ id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, parcela: body.parcela, status: STATUS_ACTIVE }).first()
+            const unique = await app.db(tabelaDomain).where({ status: STATUS_ACTIVE, id_pipeline: body.id_pipeline, id_comis_agentes: body.id_comis_agentes, valor_base: body.valor_base, percentual: body.percentual, parcela: body.parcela }).first()
             try {
                 notExistsOrError(unique, `Comissão já registrada para este agente`)
             } catch (error) {
