@@ -281,6 +281,39 @@ const confirmEditCadastro = () => {
         }
     });
 };
+// Questiona se deseja mesmo editar o cadastros
+const confirmRemove = () => {
+    confirm.require({
+        group: 'templating',
+        header: 'Corfirmar a exclusão',
+        message: 'Confirma a exclusão deste registro?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            remove();
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
+// Remover registro
+const remove = async () => {
+    const url = `${urlBase.value}/${itemData.value.id}`;
+    await axios
+        .delete(url)
+        .then((res) => {
+            defaultSuccess('Registro excluído com sucesso');
+            emit('changed');
+            toGrid();
+        })
+        .catch((error) => {
+            console.error('Erro ao excluir registro:', error);
+            defaultWarn(error.response.data || error.response || 'Erro ao excluir registro');
+        });
+};
 // Obter Cadastro
 const getCadastro = async () => {
     const url = `${baseApiUrl}/cadastros/f-a/glf?fld=id_params_tipo&vl=5&literal=1&slct=id,nome,cpf_cnpj`;
@@ -537,7 +570,7 @@ watch(route, (value) => {
                                 severity="danger"
                                 text
                                 raised
-                                @click="defaultWarn('Excluir registro')"
+                                @click="confirmRemove"
                             />
                         </div>
                     </Fieldset>

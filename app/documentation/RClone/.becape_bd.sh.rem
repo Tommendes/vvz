@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Criar usuário no MySQL com perisão simlpes de SELECT, SHOW VIEW, LOCK TABLES, RELOAD
+# DROP USER 'vivazul_bck'@'localhost';
+# CREATE USER 'vivazul_bck'@'localhost' IDENTIFIED BY 's3nh@ 1t1lizad@ pa4a becape45';
+# GRANT SELECT, SHOW VIEW, LOCK TABLES, RELOAD ON *.* TO 'vivazul_bck'@'localhost';
+# FLUSH PRIVILEGES;
+
+# Criar arquivo .my.cnf no diretório home do usuário com as credenciais do MySQL
+# [client]
+# user=seu_usuario
+# password="
+# CREATE USER 'vivazul_bck'@'localhost' IDENTIFIED BY 's3nh@ 1t1lizad@ pa4a becape45"
+
+# Variáveis
+SEU_USUARIO="vivazul_bck"
+DIR_BACKUP="/root/rclone_becapes_bd"
+PASTA_RCLONE="Vivazul/Becapes"
+REMOTO="gDrive"
+DIA_SEMANA=$(date +"%a")  # Nome abreviado do dia da semana (Seg, Ter, Qua, etc.)
+
+# Certifique-se de criar o diretório de backup local
+mkdir -p "$DIR_BACKUP"
+
+# Obter a lista de schemas (ignorando os sistemas)
+DATABASES=$(mysql -e "SHOW DATABASES;" | grep -Ev "(Database|information_schema|performance_schema|sys)")
+
+# Loop pelos schemas e criar backup para cada um
+for DB in $DATABASES; do
+  # Criar pasta específica para o schema
+  PASTA_SCHEMA="$DIR_BACKUP/$DB"
+  mkdir -p "$PASTA_SCHEMA"
+
+  # Caminho do arquivo de backup
+  ARQUIVO_BACKUP="$PASTA_SCHEMA/$DIA_SEMANA.sql"
+
+  # Fazer o dump do schema
+  mysqldump -u "$SEU_USUARIO" "$DB" > "$ARQUIVO_BACKUP"
+
+  # Compactar o arquivo
+  gzip -f "$ARQUIVO_BACKUP"
+
+  # Enviar para o destino usando rclone
+  rclone move "$ARQUIVO_BACKUP.gz" "$REMOTO:$PASTA_RCLONE/$DB/"
+
+  # Opcional: Limpeza do diretório local (remover backup depois de enviado)
+  rm -f "$ARQUIVO_BACKUP.gz"
+done
+
+# Limpeza de arquivos antigos no diretório local (opcional)
+find "$DIR_BACKUP" -type f -name "*.gz" -mtime +7 -exec rm -f {} \;

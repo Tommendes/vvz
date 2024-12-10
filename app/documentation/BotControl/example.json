@@ -1,0 +1,97 @@
+{
+    "data": {
+        "product": {
+            "has_co_production": true,
+            "name": "AzulBot",
+            "id": 4820314,
+            "ucode": "ab28876e-c472-4308-a4f0-dbd37234c7d7"
+        },
+        "commissions": [
+            {
+                "currency_value": "BRL",
+                "source": "MARKETPLACE",
+                "value": 18.71
+            },
+            {
+                "currency_value": "BRL",
+                "source": "PRODUCER",
+                "value": 45.07
+            }
+        ],
+        "purchase": {
+            "original_offer_price": {
+                "currency_value": "BRL",
+                "value": 199
+            },
+            "recurrence_number": 1,
+            "subscription_anticipation_purchase": false,
+            "checkout_country": {
+                "iso": "BR",
+                "name": "Brasil"
+            },
+            "order_bump": {
+                "is_order_bump": false
+            },
+            "approved_date": 1733852894000,
+            "offer": {
+                "code": "1luu7f3b"
+            },
+            "order_date": 1733852894000,
+            "date_next_charge": 1736510400000,
+            "price": {
+                "currency_value": "BRL",
+                "value": 199
+            },
+            "payment": {
+                "installments_number": 1,
+                "type": "WALLET"
+            },
+            "full_price": {
+                "currency_value": "BRL",
+                "value": 199
+            },
+            "invoice_by": "HOTMART",
+            "transaction": "HP2233445957",
+            "status": "APPROVED"
+        },
+        "affiliates": [
+            {
+                "affiliate_code": "L97012230P",
+                "name": "João Paulo Mendes Araujo"
+            }
+        ],
+        "producer": {
+            "name": "Arquitettar Cursos Online"
+        },
+        "subscription": {
+            "subscriber": {
+                "code": "D9B3KSRG"
+            },
+            "plan": {
+                "name": "Master",
+                "id": 940040
+            },
+            "status": "ACTIVE"
+        },
+        "buyer": {
+            "address": {
+                "zipcode": "59151-180",
+                "country": "Brasil",
+                "number": "410",
+                "address": "Avenida Madre Tereza de Calcutá",
+                "city": "Parnamirim",
+                "state": "RN",
+                "neighborhood": "Nova Parnamirim",
+                "complement": "Prox. Kazuki",
+                "country_iso": "BR"
+            },
+            "document": "53463307391",
+            "name": "Kayne Melo",
+            "email": "kaynemelo@gmail.com"
+        }
+    },
+    "id": "937b06f4-5a3d-45fd-ad1d-4acbc2e25d45",
+    "creation_date": 1733852898431,
+    "event": "PURCHASE_APPROVED",
+    "version": "2.0.0"
+}
