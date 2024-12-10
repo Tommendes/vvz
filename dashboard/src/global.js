@@ -297,6 +297,12 @@ export const andamentoRegistroPipeline = {
     STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
 };
 
+export const situacaoFinLancamentos = {
+    STATUS_ATIVO: 10,
+    STATUS_CANCELADO: 80,
+    STATUS_EXCLUIDO: 99 // Apenas para informação. Se o registro tem esse status então não deve mais ser exibido
+};
+
 export const colorsDashboard = [
     'blue-400',
     'blue-500',
@@ -406,5 +412,6 @@ export default {
     andamentoRegistroPv,
     andamentoRegistroPvOat,
     andamentoRegistroPipeline,
+    situacaoFinLancamentos,
     colorsDashboard
 };

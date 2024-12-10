@@ -2,7 +2,7 @@ const { dbPrefix } = require("../.env")
 const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const { SITUACAO_ABERTO, SITUACAO_PAGO, SITUACAO_CONCILIADO, SITUACAO_CANCELADO } = require('./fin_parcelas.js')(app)
+    const { SITUACAO_ABERTO, SITUACAO_PAGO, SITUACAO_CONCILIADO, SITUACAO_CANCELADO, SITUACAO_DOADO_PERMUTADO, SITUACAO_PROTESTADO } = require('./fin_parcelas')(app)
     const tabela = 'fin_lancamentos'
     const tabelaAlias = 'Registro Financeiro'
     const tabelaFtp = 'pipeline_ftp'
@@ -304,8 +304,8 @@ module.exports = app => {
             .join({ fl: tabelaDomain }, 'fl.id', '=', 'tbl1.id_fin_lancamentos')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'fl.id_cadastros')
             .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'fl.id_empresa')
-            .where({ 'tbl1.status': STATUS_ACTIVE })
-            .where({ 'fl.status': STATUS_ACTIVE })
+            .whereNot({ 'tbl1.status': STATUS_DELETE })
+            .andWhereNot({ 'fl.status': STATUS_DELETE })
             .whereRaw(query ? query : '1=1')
 
         // Verificar a permissão de multiCliente do usuário
@@ -329,6 +329,9 @@ module.exports = app => {
                     case SITUACAO_ABERTO: element.situacaoLabel = '<h4>Registro em Aberto</h4>'; break;
                     case SITUACAO_PAGO: element.situacaoLabel = '<h4>Registro Pago</h4>'; break;
                     case SITUACAO_CONCILIADO: element.situacaoLabel = '<h4>Registro Conciliado</h4>'; break;
+                    case SITUACAO_CANCELADO: element.situacaoLabel = '<h4>Registro Cancelado</h4>'; break;
+                    case SITUACAO_DOADO_PERMUTADO: element.situacaoLabel = '<h4>Registro Doado/Permutado</h4>'; break;
+                    case SITUACAO_PROTESTADO: element.situacaoLabel = '<h4>Registro em Protesto</h4>'; break;
                     case SITUACAO_CANCELADO: element.situacaoLabel = '<h4>Registro Cancelado</h4>'; break;
                     default: element.situacaoLabel = '<h4>Situação não identificada</h4>';
                         break;
@@ -375,7 +378,8 @@ module.exports = app => {
         const ret = app.db({ tbl1: tabelaDomain })
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .select(app.db.raw(`tbl1.*, c.nome, c.cpf_cnpj`))
-            .where({ 'tbl1.id': req.params.id, 'tbl1.status': STATUS_ACTIVE }).first()
+            .whereNot({ 'tbl1.status': STATUS_DELETE })
+            .where({ 'tbl1.id': req.params.id }).first()
         ret.then(body => {
             if (!body) return res.status(404).send('Registro não encontrado')
             body.valor_bruto = parseFloat(body.valor_bruto).toFixed(2).replace('.', ',')

@@ -91,6 +91,7 @@ const saveData = async () => {
     const url = `${urlBase.value}${id}`;
 
     const method = id ? 'put' : 'post';
+    if (itemData.value.situacao != SITUACAO_CANCELADO) itemData.value.motivo_cancelamento = null;
     const data = { ...itemData.value, centro: props.itemDataRoot.centro };
     // data.data_pagto = data.data_pagto ? moment(data.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD') : null;
     // data.data_vencimento = data.data_vencimento ? moment(data.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD') : null;
@@ -336,6 +337,36 @@ watchEffect(() => {
                 <InputGroup>
                     <InputText autocomplete="no" :disabled="['view'].includes(mode)" v-model="itemData.descricao"
                         id="descricao" type="text" maxlength="255" placeholder="Descrição"
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
+
+                    <Button type="submit" :disabled="isSubmitting || !(props.uProf.financeiro >= 2)"
+                        v-if="['edit', 'new'].includes(mode) || mode == 'new'" v-tooltip.top="'Salvar parcela'"
+                        icon="fa-solid fa-floppy-disk" severity="success" text raised
+                        :class="(itemData.situacao == SITUACAO_CANCELADO) ? 'hidden' : ''" />
+                    <Button type="button" :disabled="!(props.uProf.financeiro >= 3)" v-if="mode == 'view'"
+                        v-tooltip.top="'Editar parcela'" icon="fa-regular fa-pen-to-square" text raised
+                        @click="mode = 'edit'" :class="(itemData.situacao == SITUACAO_CANCELADO) ? 'hidden' : ''" />
+                    <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'"
+                        icon="fa-solid fa-ban" severity="danger" text raised @click="cancel()"
+                        :class="(itemData.situacao == SITUACAO_CANCELADO) ? 'hidden' : ''" />
+                    <Button type="button" :disabled="!(props.uProf.financeiro >= 4)" v-if="['view'].includes(mode)"
+                        v-tooltip.top="'Excluir parcela'" icon="fa-solid fa-trash" severity="danger" text raised
+                        @click="deleteItem" :class="(itemData.situacao == SITUACAO_CANCELADO) ? 'hidden' : ''" />
+                    <Button type="button" :disabled="!(props.uProf.financeiro >= 2)"
+                        v-if="itemData.situacao == SITUACAO_ABERTO && itemData.parcela == 'U' && ['view'].includes(mode)"
+                        v-tooltip.top="props.itemDataRoot.centro == 1 ? 'Parcelar recebimento' : 'Parcelar pagamento'"
+                        icon="fa-solid fa-ellipsis-vertical" severity="success" text raised @click="multiplicateItem"
+                        :class="(itemData.situacao == SITUACAO_CANCELADO) ? 'hidden' : ''" />
+
+                </InputGroup>
+            </div>
+            <div class="field col-12" v-if="itemData.situacao == SITUACAO_CANCELADO">
+                <label for="descricao">Motivo do cancelamento <span class="text-base"
+                        style="color: red">*</span></label>
+                <InputGroup>
+                    <InputText autocomplete="no" :disabled="['view'].includes(mode)"
+                        v-model="itemData.motivo_cancelamento" id="descricao" type="text" maxlength="255"
+                        placeholder="Descrição"
                         class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
                     <Button type="submit" :disabled="isSubmitting || !(props.uProf.financeiro >= 2)"
                         v-if="['edit', 'new'].includes(mode) || mode == 'new'" v-tooltip.top="'Salvar parcela'"

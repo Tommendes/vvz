@@ -11,6 +11,8 @@ module.exports = app => {
     const SITUACAO_ABERTO = 1
     const SITUACAO_PAGO = 2
     const SITUACAO_CONCILIADO = 3
+    const SITUACAO_PROTESTADO = 65;
+    const SITUACAO_DOADO_PERMUTADO = 64;
     const SITUACAO_CANCELADO = 99
     const { ceilTwoDecimals, formatCurrency } = app.api.facilities
 
@@ -278,6 +280,8 @@ module.exports = app => {
                         case SITUACAO_ABERTO: item.situacaoLabel = 'Registro em Aberto'; break;
                         case SITUACAO_PAGO: item.situacaoLabel = 'Registro Pago'; break;
                         case SITUACAO_CONCILIADO: item.situacaoLabel = 'Registro Conciliado'; break;
+                        case SITUACAO_PROTESTADO: item.situacaoLabel = 'Registro em Protesto'; break;
+                        case SITUACAO_DOADO_PERMUTADO: item.situacaoLabel = 'Registro Doado/Permutado'; break;
                         case SITUACAO_CANCELADO: item.situacaoLabel = 'Registro Cancelado'; break;
                         default: item.situacaoLabel = 'Situação do registro não identificada';
                             break;
@@ -388,6 +392,6 @@ module.exports = app => {
     }
 
     return {
-        save, get, getById, remove, getByFunction, SITUACAO_ABERTO, SITUACAO_PAGO, SITUACAO_CONCILIADO, SITUACAO_CANCELADO
+        save, get, getById, remove, getByFunction, SITUACAO_ABERTO, SITUACAO_PAGO, SITUACAO_CONCILIADO, SITUACAO_CANCELADO, SITUACAO_PROTESTADO, SITUACAO_DOADO_PERMUTADO
     }
 }

@@ -50,8 +50,10 @@ const dropdownCentros = ref([
 const dropdownSituacao = ref([
     { label: 'Todas as Situações...', value: 0 },
     { label: 'Aberto', value: STATUS_REGISTRO_ABERTO },
+    { label: 'Protestado', value: STATUS_REGISTRO_PROTESTADO },
     { label: 'Pago', value: STATUS_REGISTRO_PAGO },
     { label: 'Conciliado', value: STATUS_REGISTRO_CONCILIADO },
+    { label: 'Doado/Permutado', value: STATUS_REGISTRO_DOADO_PERMUTADO },
     { label: 'Cancelado', value: STATUS_REGISTRO_CANCELADO }
 ]); // Itens do dropdown de Situação
 const empresa = ref(null); // Empresa selecionada
@@ -63,6 +65,8 @@ const periodo = ref(null); // Período selecionado
 const STATUS_REGISTRO_ABERTO = 1;
 const STATUS_REGISTRO_PAGO = 2;
 const STATUS_REGISTRO_CONCILIADO = 3;
+const STATUS_REGISTRO_PROTESTADO = 65;
+const STATUS_REGISTRO_DOADO_PERMUTADO = 64;
 const STATUS_REGISTRO_CANCELADO = 99;
 
 import { Mask } from 'maska';
