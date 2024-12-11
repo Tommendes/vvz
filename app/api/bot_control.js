@@ -4,9 +4,7 @@ const schedule = require('node-schedule');
 const axios = require('axios');
 const moment = require('moment')
 module.exports = app => {
-    const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
-    const { SITUACAO_ATIVA, SITUACAO_ENVIADA, SITUACAO_PAUSADA, SITUACAO_CANCELADA } = require('./whats_msgs')
-    const { convertWhatsappFormattoHtml } = app.api.facilities
+    const { transporterBot } = app.api.mailer
     const tabelaEvents = 'azulbot_events'
     const tabelaBuyers = 'azulbot_buyers'
     const tabelaSubscriptions = 'azulbot_subscriptions'
@@ -253,6 +251,53 @@ module.exports = app => {
      * @param {*} req 
      * @param {*} res 
      */
+    const mailWelcome = async (req) => {
+        const bodyData = { ...req.body.data }
+        if (!bodyData.buyer) return
+        try {
+            const text = [
+                `Parabéns por sua aquisição. ${bodyData.buyer.name.split(' ')[0]}!`,
+                `Agora você faz parte do time ${bodyData.product.name}!`,
+                `Para acessar o sistema utilize o link abaixo:`,
+                `https://bot.azulbot.com.br/#/login`,
+                `Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso:`,
+                `${bodyData.tenant.password}`,
+                `Time ${bodyData.product.name}`
+            ];
+            await transporterBot.sendMail({
+                from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
+                to: `${bodyData.buyer.email}`, // list of receivers
+                subject: `Bem-vindo ao ${bodyData.product.name}`, // Subject line
+                text: `Olá ${bodyData.buyer.name.split(' ')[0]}!\n
+                        Parabéns por sua aquisição ✔
+                        Agora você faz parte do time ${bodyData.product.name}!\n
+                        Para acessar o sistema utilize o link abaixo:\n
+                        https://bot.azulbot.com.br/#/login\n
+                        Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso: ${bodyData.tenant.password}\n
+                        Atenciosamente,\nTime ${bodyData.product.name}`,
+
+
+                html: `<p><b>Olá ${bodyData.buyer.name.split(' ')[0]}!</b></p>
+            <p>Parabéns por sua aquisição ✔</p>
+            <p>Agora você faz parte do time ${bodyData.product.name}!</p>
+            <p>Para acessar o sistema utilize o link a seguir: https://bot.azulbot.com.br/#/login</p>
+            <p>Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso: ${bodyData.tenant.password}</p>
+            <p>Atenciosamente,</p>
+            <p><b>Time ${bodyData.product.name}</b></p>`,
+            }).then(_ => {
+            })
+
+            return text
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
+     * Função utilizada para envio de mensagem de boas vindas por whatsapp
+     * @param {*} req 
+     * @param {*} res 
+     */
     const whatsWelcome = async (req) => {
         const bodyData = { ...req.body.data }
         if (!bodyData.buyer) return
@@ -262,7 +307,7 @@ module.exports = app => {
                 `Agora você faz parte do time ${bodyData.product.name}!`,
                 `Para acessar o sistema utilize o link abaixo:`,
                 `https://bot.azulbot.com.br/#/login`,
-                `Criamos uma senha aleatória para você e sugiro que você deve trocá-la já no primeiro acesso:`,
+                `Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso:`,
                 `${bodyData.tenant.password}`,
                 `Time ${bodyData.product.name}`
             ];
