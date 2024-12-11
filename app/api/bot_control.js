@@ -126,10 +126,10 @@ module.exports = app => {
         const { createEventIns } = app.api.sisEvents
         const evId = await createEventIns({
             "notTo": ['created_at', 'evento'],
-            "next": { marcacao: 'vivazul' },
+            "next": { marcacao: 'setEvent' },
             "request": req,
             "evento": {
-                "evento": `Novo registro`,
+                "evento": `setEvent`,
                 "tabela_bd": tabelaEvents,
             }
         })
@@ -171,7 +171,7 @@ module.exports = app => {
             "next": { marcacao: 'subscription' },
             "request": req,
             "evento": {
-                "evento": `Novo registro`,
+                "evento": `setSubscription`,
                 "tabela_bd": tabelaSubscriptions,
             }
         })
@@ -221,7 +221,7 @@ module.exports = app => {
             "next": { marcacao: 'buyer' },
             "request": req,
             "evento": {
-                "evento": `Novo registro`,
+                "evento": `setBuyer`,
                 "tabela_bd": tabelaBuyers,
             }
         })

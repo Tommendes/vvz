@@ -85,7 +85,7 @@ module.exports = app => {
             .where({ 'sc.schema_description': user.schema_description })
             .whereRaw(query ? query : '1=1')
             .first()
-            // .groupBy('tbl1.id')
+        // .groupBy('tbl1.id')
 
         const ret = app.db({ tbl1: tabelaDomain })
             .select({ id: 'tbl1.id' }, { evento: 'tbl1.evento' }, { created_at: 'tbl1.created_at' }, { classevento: 'tbl1.classevento' }, { tabela_bd: 'tbl1.tabela_bd' }, { id_registro: 'tbl1.id_registro' }, { user: 'us.name' },)
@@ -206,7 +206,7 @@ module.exports = app => {
             // remove a virgula e espaço inseridos ao final da string
             eventoDescr += fields.substring(0, fields.length - 2)
 
-            evento.id_user = request.user.id || next.id || 1
+            evento.id_user = (typeof request.user.id == 'number' ? request.user.id : 1) || next.id || 1
             evento.evento = `${evento.evento}: ${eventoDescr}`
             evento.classevento = "Insert"
             evento.id_registro = next.id
