@@ -33,10 +33,10 @@ module.exports = app => {
                 try {
                     const tenant = await setTenant(req)
                     req.body.data.tenant = tenant
-                    // const welcome = await whatsWelcome(req)
+                    const welcome = await whatsWelcome(req)
                     const welcomeMail = await mailWelcome(req)
-                    // bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: welcome, welcomeMail: welcomeMail }
-                    bodyRes = { ...bodyRes, tenant, welcomeMail: welcomeMail }
+                    bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: welcome, welcomeMail: welcomeMail }
+                    // bodyRes = { ...bodyRes, tenant, welcomeMail: welcomeMail }
                     // app.api.logger.logInfo({ log: { line: JSON.stringify(body), sConsole: true } })
                     res.status(200).send(bodyRes)
                 } catch (error) {
@@ -251,7 +251,7 @@ module.exports = app => {
     }
 
     /**
-     * Função utilizada para envio de mensagem de boas vindas por whatsapp
+     * Função utilizada para envio de mensagem de boas vindas por email
      * @param {*} req 
      * @param {*} res 
      */
@@ -309,8 +309,8 @@ module.exports = app => {
                 `${bodyData.tenant.password}`,
                 `Time ${bodyData.product.name}`
             ];
-            sendMessage({ phone: `${bodyData.buyer.phone}`, message: text })
-                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.phone}`, sConsole: true } }))
+            sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
                 .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
             return text
         } catch (error) {
