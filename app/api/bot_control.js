@@ -4,7 +4,7 @@ const schedule = require('node-schedule');
 const axios = require('axios');
 const moment = require('moment')
 module.exports = app => {
-    const { transporterBot } = app.api.mailerBot
+    const { transporterBot } = app.api.mailer
     const tabelaEvents = 'azulbot_events'
     const tabelaBuyers = 'azulbot_buyers'
     const tabelaSubscriptions = 'azulbot_subscriptions'
