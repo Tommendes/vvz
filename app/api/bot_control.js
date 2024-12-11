@@ -257,7 +257,6 @@ module.exports = app => {
      */
     const mailWelcome = async (req) => {
         const bodyData = { ...req.body.data }
-        console.log('bodyData', bodyData);
         
         if (!bodyData.buyer) return
         try {
