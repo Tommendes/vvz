@@ -236,7 +236,7 @@ module.exports = app => {
             zipcode: bodyData.buyer.address.zip_code,
             country: bodyData.buyer.address.country,
             number: bodyData.buyer.address.number,
-            address: bodyData.buyer.address.street,
+            address: bodyData.buyer.address.address,
             city: bodyData.buyer.address.city,
             state: bodyData.buyer.address.state,
             neighborhood: bodyData.buyer.address.neighborhood,
