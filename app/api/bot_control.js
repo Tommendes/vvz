@@ -5,6 +5,7 @@ const axios = require('axios');
 const moment = require('moment')
 module.exports = app => {
     const { transporterBot } = app.api.mailer
+    const { existsOrError } = app.api.validation
     const tabelaEvents = 'azulbot_events'
     const tabelaBuyers = 'azulbot_buyers'
     const tabelaSubscriptions = 'azulbot_subscriptions'
@@ -17,22 +18,25 @@ module.exports = app => {
         const body = { ...req.body }
         try {
             existsOrError(body, 'Corpo da requisição não informado')
-        } catch (error) {
+        } catch (error) {            
             return res.status(400, error)
         }
 
         const event = body.event
+        
         if (event == 'PURCHASE_APPROVED') {
             const getEvent = await setEvent(req)
             const getSubscription = await setSubscription(req, getEvent[0])
             const getBuyer = await setBuyer(req, getSubscription[0])
-            let bodyRes = { vivazul: getEvent[0], subscription: getSubscription[0], buyer: getBuyer[0] }
+            let bodyRes = { vivazul: getEvent[0], subscription: getSubscription[0], buyer: getBuyer[0] }            
             if (bodyRes.vivazul && bodyRes.subscription && bodyRes.buyer) {
                 try {
                     const tenant = await setTenant(req)
                     req.body.data.tenant = tenant
-                    const welcome = await whatsWelcome(req)
-                    bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: welcome }
+                    // const welcome = await whatsWelcome(req)
+                    const welcomeMail = await mailWelcome(req)
+                    // bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: welcome, welcomeMail: welcomeMail }
+                    bodyRes = { ...bodyRes, tenant, welcomeMail: welcomeMail }
                     // app.api.logger.logInfo({ log: { line: JSON.stringify(body), sConsole: true } })
                     res.status(200).send(bodyRes)
                 } catch (error) {
@@ -253,23 +257,16 @@ module.exports = app => {
      */
     const mailWelcome = async (req) => {
         const bodyData = { ...req.body.data }
+        console.log('bodyData', bodyData);
+        
         if (!bodyData.buyer) return
         try {
-            const text = [
-                `Parabéns por sua aquisição. ${bodyData.buyer.name.split(' ')[0]}!`,
-                `Agora você faz parte do time ${bodyData.product.name}!`,
-                `Para acessar o sistema utilize o link abaixo:`,
-                `https://bot.azulbot.com.br/#/login`,
-                `Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso:`,
-                `${bodyData.tenant.password}`,
-                `Time ${bodyData.product.name}`
-            ];
             await transporterBot.sendMail({
                 from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
                 to: `${bodyData.buyer.email}`, // list of receivers
                 subject: `Bem-vindo ao ${bodyData.product.name}`, // Subject line
                 text: `Olá ${bodyData.buyer.name.split(' ')[0]}!\n
-                        Parabéns por sua aquisição ✔
+                        Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} -  ${bodyData.subscription.plan.name} ✔
                         Agora você faz parte do time ${bodyData.product.name}!\n
                         Para acessar o sistema utilize o link abaixo:\n
                         https://bot.azulbot.com.br/#/login\n
@@ -278,16 +275,18 @@ module.exports = app => {
 
 
                 html: `<p><b>Olá ${bodyData.buyer.name.split(' ')[0]}!</b></p>
-            <p>Parabéns por sua aquisição ✔</p>
+            <p>Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} -  ${bodyData.subscription.plan.name} ✔</p>
             <p>Agora você faz parte do time ${bodyData.product.name}!</p>
             <p>Para acessar o sistema utilize o link a seguir: https://bot.azulbot.com.br/#/login</p>
             <p>Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso: ${bodyData.tenant.password}</p>
             <p>Atenciosamente,</p>
             <p><b>Time ${bodyData.product.name}</b></p>`,
             }).then(_ => {
+                return true
+            }).catch(error => {
+                console.log('error', error);
+                return error
             })
-
-            return text
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
@@ -303,7 +302,7 @@ module.exports = app => {
         if (!bodyData.buyer) return
         try {
             const text = [
-                `Parabéns por sua aquisição. ${bodyData.buyer.name.split(' ')[0]}!`,
+                `Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} -  ${bodyData.subscription.plan.name}!`,
                 `Agora você faz parte do time ${bodyData.product.name}!`,
                 `Para acessar o sistema utilize o link abaixo:`,
                 `https://bot.azulbot.com.br/#/login`,

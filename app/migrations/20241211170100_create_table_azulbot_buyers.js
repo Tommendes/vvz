@@ -13,6 +13,7 @@ exports.up = function(knex) {
         table.string('document').notNullable().comment('CPF/CNPJ');
         table.string('name').notNullable().comment('Nome');
         table.string('email').notNullable().comment('E-mail');
+        table.string('checkout_phone').notNullable().comment('Telefone');
         table.string('zipcode').notNullable().comment('CEP');
         table.string('country').notNullable().comment('País');
         table.string('number').notNullable().comment('Número');
