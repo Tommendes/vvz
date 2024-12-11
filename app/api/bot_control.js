@@ -258,7 +258,7 @@ module.exports = app => {
         if (!bodyData.buyer) return
         try {
             const text = [
-                `Parabéns por sua aquisição ${bodyData.buyer.name}!`,
+                `Parabéns por sua aquisição. ${bodyData.buyer.name.split(' ')[0]}!`,
                 `Agora você faz parte do time ${bodyData.product.name}!`,
                 `Para acessar o sistema utilize o link abaixo:`,
                 `https://bot.azulbot.com.br/#/login`,
