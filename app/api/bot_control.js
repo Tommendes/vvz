@@ -233,7 +233,7 @@ module.exports = app => {
             document: bodyData.buyer.document,
             name: bodyData.buyer.name,
             email: bodyData.buyer.email,
-            zipcode: bodyData.buyer.address.zip_code,
+            zipcode: bodyData.buyer.address.zipcode,
             country: bodyData.buyer.address.country,
             number: bodyData.buyer.address.number,
             address: bodyData.buyer.address.address,
