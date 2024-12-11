@@ -180,7 +180,7 @@ module.exports = app => {
             evento: evId,
             created_at: created_at = moment().format('YYYY-MM-DD HH:mm:ss'),
             id_event: idEvent,
-            subscriber_code: bodyData.subscription.subscriber_code,
+            subscriber_code: bodyData.subscription.subscriber.code,
             plan_name: bodyData.subscription.plan.name,
             plan_id: bodyData.subscription.plan.id,
             plan_status: bodyData.subscription.status,
