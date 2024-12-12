@@ -120,21 +120,25 @@ module.exports = app => {
         try {
             const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
                 .then(response => {
-                    if (!response.data.id) mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${JSON.stringify(response)}`, 'contato@azulbot.com.br')
-                    return response
+                    console.log('response', response.data.tenant.id);
+
+                    if (response.data.tenant.id) return { sucess: true, ...bodyTo }
+                    else {
+                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${response.response}`, 'contato@azulbot.com.br')
+                        return { sucess: false, msgError: response, ...bodyTo }
+                    }
                 })
                 .catch(error => {
                     const errorBody = 'error.response.data.error'
                     try {
-                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${error}`, 'contato@azulbot.com.br')                        
+                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${error}`, 'contato@azulbot.com.br')
                     } catch (error) {
                         errorBody += `; ${error}`
                     }
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                     return error.response.data.error
                 })
-            if (response.data && response.data.tenant && response.data.tenant.id) return { sucess: true, ...bodyTo }
-            else return { sucess: false, msgError: response, ...bodyTo }
+            return response
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return error
@@ -377,11 +381,9 @@ module.exports = app => {
      * @returns 
      */
     const mailGeneral = async (subject, msg, to) => {
-        const bodyData = { ...req.body.data }
-        if (!bodyData.buyer) return
         try {
             await transporterBot.sendMail({
-                from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
+                from: `"Azulbot" <contato@azulbot.com.br>`, // sender address
                 to,
                 bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
                 subject, // Subject line
