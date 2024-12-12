@@ -123,6 +123,12 @@ module.exports = app => {
                     return response
                 })
                 .catch(error => {
+                    const errorBody = 'error.response.data.error'
+                    try {
+                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${error}`, 'contato@azulbot.com.br')                        
+                    } catch (error) {
+                        errorBody += `; ${error}`
+                    }
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                     return error.response.data.error
                 })
@@ -351,6 +357,35 @@ module.exports = app => {
             <p>Por outro lado, se você já é cliente, por favor, acesse o sistema com seu login e senha. E se você não lembra sua senha, clique em "Esqueci minha senha" na tela de login (${azulbotLinks.login}) e siga as instruções.</p>
             <p>Atenciosamente</p>
             <p><b>Time ${bodyData.product.name}</b></p>`,
+            }).then(_ => {
+                return true
+            }).catch(error => {
+                console.log('error', error);
+                return error
+            })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
+     * Função utilizada para envio de mensagem em geral por email
+     * @param {*} subject 
+     * @param {*} msg 
+     * @param {*} to 
+     * @returns 
+     */
+    const mailGeneral = async (subject, msg, to) => {
+        const bodyData = { ...req.body.data }
+        if (!bodyData.buyer) return
+        try {
+            await transporterBot.sendMail({
+                from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
+                to,
+                bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
+                subject, // Subject line
+                text: msg, // body plain text
+                html: msg, // body htnl text
             }).then(_ => {
                 return true
             }).catch(error => {
