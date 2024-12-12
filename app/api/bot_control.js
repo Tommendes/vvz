@@ -123,6 +123,7 @@ module.exports = app => {
                     return response
                 })
                 .catch(error => {
+                    app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
                     return error.response.data.error
                 })
             if (response.data && response.data.tenant && response.data.tenant.id) return { sucess: true, ...bodyTo }
