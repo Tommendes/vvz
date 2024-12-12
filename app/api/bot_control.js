@@ -1,5 +1,5 @@
 const randomstring = require("randomstring")
-const { dbPrefix, apiWats } = require("../.env")
+const { dbPrefix, apiWats, azulbotLinks, env } = require("../.env")
 const schedule = require('node-schedule');
 const axios = require('axios');
 const moment = require('moment')
@@ -18,7 +18,7 @@ module.exports = app => {
         const body = { ...req.body }
         try {
             existsOrError(body, 'Corpo da requisição não informado')
-        } catch (error) {            
+        } catch (error) {
             return res.status(400, error)
         }
 
@@ -26,27 +26,45 @@ module.exports = app => {
         /**
          * Registra todos os eventos recebidos
          */
-        const getEvent = await setEvent(req)        
+        const getEvent = await setEvent(req)
         if (event == 'PURCHASE_APPROVED') {
-            const getSubscription = await setSubscription(req, getEvent[0])
-            const getBuyer = await setBuyer(req, getSubscription[0])
-            let bodyRes = { vivazul: getEvent[0], subscription: getSubscription[0], buyer: getBuyer[0] }            
-            if (bodyRes.vivazul && bodyRes.subscription && bodyRes.buyer) {
-                try {
+            try {
+                const bodyData = { ...req.body.data }
+                const email = bodyData.buyer.email
+                const uniqueTenant = await app.db({ t: `${dbPrefix}_api.${tabelaBuyers}` }).where({ 't.email': email }).first()
+                if (uniqueTenant) {
+                    let msgError = `Usuário (e-mail: "${bodyData.buyer.email}") já cadastrado`
+                    req.body.data = { ...req.body.data, tenant: { msgError } }
+                    whatsFail(req)
+                    mailFail(req)
+                    return res.status(200).send(req.body.data.tenant.msgError)
+                }
+                const getSubscription = await setSubscription(req, getEvent[0])
+                const getBuyer = await setBuyer(req, getSubscription[0])
+                let bodyRes = { vivazul: getEvent[0], subscription: getSubscription[0], buyer: getBuyer[0] }
+                if (bodyRes.vivazul && bodyRes.subscription && bodyRes.buyer) {
+
                     const tenant = await setTenant(req)
                     req.body.data.tenant = tenant
-                    const welcome = await whatsWelcome(req)
-                    const welcomeMail = await mailWelcome(req)
-                    bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: welcome, welcomeMail: welcomeMail }
-                    // bodyRes = { ...bodyRes, tenant, welcomeMail: welcomeMail }
-                    // app.api.logger.logInfo({ log: { line: JSON.stringify(body), sConsole: true } })
+                    const tenantSuccess = tenant.sucess
+                    if (!tenantSuccess) {
+                        const failWhatsApp = await whatsFail(req)
+                        const failMail = await mailFail(req)
+                        bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: failWhatsApp, welcomeMail: failMail }
+                    } else {
+                        const welcome = await whatsWelcome(req)
+                        const welcomeMail = await mailWelcome(req)
+                        bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: welcome, welcomeMail: welcomeMail }
+                        // bodyRes = { ...bodyRes, tenant, welcomeMail: welcomeMail }
+                        // app.api.logger.logInfo({ log: { line: JSON.stringify(body), sConsole: true } })
+                    }
                     res.status(200).send(bodyRes)
-                } catch (error) {
-                    const erro = 'Erro ao inserir dados: ' + error
-                    res.status(200).send(erro)
+                } else {
+                    res.status(400).send('Erro ao inserir dados')
                 }
-            } else {
-                res.status(400).send('Erro ao inserir dados')
+            } catch (error) {
+                const erro = 'Erro ao inserir dados: ' + error
+                res.status(200).send(erro)
             }
         } else if (event == 'SWITCH_PLAN') {
         } else if (event == 'SUBSCRIPTION_CANCELLATION') {
@@ -92,7 +110,7 @@ module.exports = app => {
             "email": bodyData.buyer.email,
             "password": randomstring.generate(6).toUpperCase(),
             "userName": bodyData.buyer.name,
-            "identity": bodyData.buyer.document,
+            "identity": 'hotmart-' + (bodyData.buyer.document ? bodyData.buyer.document : bodyData.buyer.email),
             "profile": "admin",
             "trial": "disabled",
             "trialPeriod": 0
@@ -101,7 +119,14 @@ module.exports = app => {
         const headerAuthorization = apiWats.superHostToken
         try {
             const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
-            return bodyTo
+                .then(response => {
+                    return response
+                })
+                .catch(error => {
+                    return error.response.data.error
+                })
+            if (response.data && response.data.tenant && response.data.tenant.id) return { sucess: true, ...bodyTo }
+            else return { sucess: false, msgError: response, ...bodyTo }
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             return error
@@ -260,7 +285,7 @@ module.exports = app => {
      */
     const mailWelcome = async (req) => {
         const bodyData = { ...req.body.data }
-        
+
         if (!bodyData.buyer) return
         try {
             await transporterBot.sendMail({
@@ -295,6 +320,46 @@ module.exports = app => {
         }
     }
     /**
+     * Função utilizada para envio de mensagem de falha por email
+     * @param {*} req 
+     * @param {*} res 
+     */
+    const mailFail = async (req) => {
+        const bodyData = { ...req.body.data }
+        if (!bodyData.buyer) return
+        try {
+            await transporterBot.sendMail({
+                from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
+                to: `${bodyData.buyer.email}`, // list of receivers
+                subject: `Bem-vindo ao ${bodyData.product.name}`, // Subject line
+                text: `Puxa vida, ${bodyData.buyer.name.split(' ')[0]}! Não conseguimos registrar seu perfil no ${bodyData.product.name}\n
+                        Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: ""${bodyData.tenant.msgError}""\n
+                        Se você acredita que essa mensagem está errada, por favor, entre em contato conosco.\n
+                        Mas se for, por exemplo, um erro de digitação, por favor, tente novamente.\n
+                        Por outro lado, se você já é cliente, por favor, acesse o sistema com seu login e senha. E se você não lembra sua senha, clique em "Esqueci minha senha" na tela de login (${azulbotLinks.login}) e siga as instruções.\n
+                        Atenciosamente\nTime ${bodyData.product.name}`,
+
+
+                html: `<p><b>Puxa vida, ${bodyData.buyer.name.split(' ')[0]}!</b></p>
+            <p>Não conseguimos registrar seu perfil no ${bodyData.product.name}!</p>
+            <p>Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: <b>${bodyData.tenant.msgError}</b></p>
+            <p>Se você acredita que essa mensagem está errada, por favor, entre em contato conosco.</p>
+            <p>Mas se for, por exemplo, um erro de digitação, por favor, tente novamente.</p>
+            <p>Por outro lado, se você já é cliente, por favor, acesse o sistema com seu login e senha. E se você não lembra sua senha, clique em "Esqueci minha senha" na tela de login (${azulbotLinks.login}) e siga as instruções.</p>
+            <p>Atenciosamente</p>
+            <p><b>Time ${bodyData.product.name}</b></p>`,
+            }).then(_ => {
+                return true
+            }).catch(error => {
+                console.log('error', error);
+                return error
+            })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
      * Função utilizada para envio de mensagem de boas vindas por whatsapp
      * @param {*} req 
      * @param {*} res 
@@ -312,9 +377,50 @@ module.exports = app => {
                 `${bodyData.tenant.password}`,
                 `Time ${bodyData.product.name}`
             ];
-            // sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
-            //     .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
-            //     .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+
+            if (env == 'production') sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
+                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+            else {
+                console.log('Corpo da mensagem de boas vindas por WhatsApp');
+                for (let index = 0; index < text.length; index++) {
+                    const element = text[index];
+                    console.log(index + 1, element);
+                }
+            }
+            return text
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
+     * Função utilizada para envio de mensagem de falha por whatsapp
+     * @param {*} req 
+     * @param {*} res 
+     */
+    const whatsFail = async (req) => {
+        const bodyData = { ...req.body.data }
+        if (!bodyData.buyer) return
+        try {
+            const text = [
+                `Puxa vida, ${bodyData.buyer.name.split(' ')[0]}! Não conseguimos registrar seu perfil no ${bodyData.product.name}!`,
+                `Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: *${bodyData.tenant.msgError}*`,
+                `Se você acredita que essa mensagem está errada, por favor, entre em contato conosco.`,
+                `Mas se for, por exemplo, um erro de digitação, por favor, tente novamente.`,
+                `Por outro lado, se você já é cliente, por favor, acesse o sistema com seu login e senha. E se você não lembra sua senha, clique em "Esqueci minha senha" na tela de login (${azulbotLinks.login}) e siga as instruções.`,
+                `Atenciosamente\nTime ${bodyData.product.name}`
+            ];
+            if (env == 'production') sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
+                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+            else {
+                console.log('Corpo da mensagem de falha por WhatsApp');
+                for (let index = 0; index < text.length; index++) {
+                    const element = text[index];
+                    console.log(index + 1, element);
+                }
+            }
             return text
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
