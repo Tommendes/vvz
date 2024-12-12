@@ -304,7 +304,7 @@ module.exports = app => {
             ret.select(selectArr)
         }
 
-        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replaceAll(' ', '.+')}")`))
+        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().trim().replaceAll(' ', '.+')}")`))
             .where({ status: STATUS_ACTIVE })
 
         if (first) {

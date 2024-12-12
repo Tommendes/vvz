@@ -310,7 +310,7 @@ module.exports = app => {
             ret.select(selectArr)
         }
 
-        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replaceAll(' ', '.+')}")`))
+        ret.where(app.db.raw(`${fieldName} regexp("${value.toString().trim().replaceAll(' ', '.+')}")`))
         if (comp_ativa) ret.where({ comp_ativa: comp_ativa })
 
         if (order) {

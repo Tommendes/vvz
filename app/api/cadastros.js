@@ -173,9 +173,9 @@ module.exports = app => {
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'contains': operator = `regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -196,9 +196,9 @@ module.exports = app => {
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'contains': operator = `regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -415,7 +415,7 @@ module.exports = app => {
         }
 
         if (literal) ret.where(app.db.raw(`${fieldName} = "${value.toString()}"`))
-        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replaceAll(' ', '.+')}")`))
+        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().trim().replaceAll(' ', '.+')}")`))
 
         ret.where({ status: STATUS_ACTIVE })
 

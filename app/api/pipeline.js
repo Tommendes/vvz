@@ -381,9 +381,9 @@ module.exports = app => {
                             switch (operator) {
                                 case 'startsWith': operator = `like "${value}%"`
                                     break;
-                                case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
+                                case 'contains': operator = `regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                     break;
-                                case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
+                                case 'notContains': operator = `not regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                     break;
                                 case 'endsWith': operator = `like "%${value}"`
                                     break;
@@ -731,7 +731,7 @@ module.exports = app => {
             ret.select(app.db.raw(selectArr))
         }
         if (fieldName.includes('id') && !fieldName.includes('_')) ret.where({ 'tbl1.id': value })
-        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replaceAll(' ', '.+')}")`))
+        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().trim().replaceAll(' ', '.+')}")`))
 
         if (doc_venda) ret.where({ 'pp.doc_venda': doc_venda })
 

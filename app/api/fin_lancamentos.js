@@ -174,9 +174,9 @@ module.exports = app => {
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'contains': operator = `regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -194,9 +194,9 @@ module.exports = app => {
                         switch (operator) {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
-                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'contains': operator = `regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;
@@ -240,9 +240,9 @@ module.exports = app => {
                             case 'startsWith': operator = `like '${value}%'`
                                 break;
                             // Substituir todos espaços por .+
-                            case 'contains': operator = `regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'contains': operator = `regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
-                            case 'notContains': operator = `not regexp("${value.toString().replaceAll(' ', '.+')}")`
+                            case 'notContains': operator = `not regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                                 break;
                             case 'endsWith': operator = `like '%${value}'`
                                 break;

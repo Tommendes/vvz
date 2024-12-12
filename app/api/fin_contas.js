@@ -285,7 +285,7 @@ module.exports = app => {
         }
 
         if (literal) ret.where(app.db.raw(`${fieldName} = "${value.toString()}"`))
-        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().replaceAll(' ', '.+')}")`))
+        else ret.where(app.db.raw(`${fieldName} regexp("${value.toString().trim().replaceAll(' ', '.+')}")`))
 
         ret.where({ status: STATUS_ACTIVE })
 
