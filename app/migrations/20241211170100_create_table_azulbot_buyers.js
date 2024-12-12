@@ -10,7 +10,7 @@ exports.up = function(knex) {
         table.string('created_at').notNull()
         table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_subscription').notNull().unsigned().references('id').inTable(db.database + '.azulbot_subscriptions').onUpdate('Cascade').onDelete('Cascade').comment('ID da inscrição')
-        table.string('document').notNullable().comment('CPF/CNPJ');
+        table.string('document').comment('CPF/CNPJ');
         table.string('name').notNullable().comment('Nome');
         table.string('email').notNullable().comment('E-mail');
         table.string('checkout_phone').comment('Telefone');
