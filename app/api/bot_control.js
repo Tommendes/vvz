@@ -120,6 +120,7 @@ module.exports = app => {
         try {
             const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
                 .then(response => {
+                    if (!response.data.id) mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${JSON.stringify(response)}`, 'contato@azulbot.com.br')
                     return response
                 })
                 .catch(error => {
