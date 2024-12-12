@@ -331,7 +331,8 @@ module.exports = app => {
             await transporterBot.sendMail({
                 from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
                 to: `${bodyData.buyer.email}`, // list of receivers
-                subject: `Bem-vindo ao ${bodyData.product.name}`, // Subject line
+                bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
+                subject: `Problemas no paraíso 😬`, // Subject line
                 text: `Puxa vida, ${bodyData.buyer.name.split(' ')[0]}! Não conseguimos registrar seu perfil no ${bodyData.product.name}\n
                         Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: ""${bodyData.tenant.msgError}""\n
                         Se você acredita que essa mensagem está errada, por favor, entre em contato conosco.\n
@@ -404,7 +405,7 @@ module.exports = app => {
         if (!bodyData.buyer) return
         try {
             const text = [
-                `Puxa vida, ${bodyData.buyer.name.split(' ')[0]}! Não conseguimos registrar seu perfil no ${bodyData.product.name}!`,
+                `Problemas no paraíso, ${bodyData.buyer.name.split(' ')[0]} 😬! Não conseguimos registrar seu perfil no ${bodyData.product.name}!`,
                 `Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: *${bodyData.tenant.msgError}*`,
                 `Se você acredita que essa mensagem está errada, por favor, entre em contato conosco.`,
                 `Mas se for, por exemplo, um erro de digitação, por favor, tente novamente.`,
