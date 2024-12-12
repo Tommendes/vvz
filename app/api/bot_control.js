@@ -381,7 +381,7 @@ module.exports = app => {
             ];
 
             if (env == 'production') sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
-                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsWelcome enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
                 .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
             else {
                 console.log('Corpo da mensagem de boas vindas por WhatsApp');
@@ -414,7 +414,7 @@ module.exports = app => {
                 `Atenciosamente\nTime ${bodyData.product.name}`
             ];
             if (env == 'production') sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
-                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsFail enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
                 .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
             else {
                 console.log('Corpo da mensagem de falha por WhatsApp');
