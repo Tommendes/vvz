@@ -96,8 +96,8 @@ module.exports = app => {
             "trialPeriod": 0
         }
         try {
-            // const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
-            // console.log(response.data);
+            const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
+            console.log(response.data);
             return bodyTo
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })

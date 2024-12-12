@@ -536,13 +536,13 @@ module.exports = app => {
                 'ag.dsr',
                 'cms.valor',
                 app.db.raw(
-                    `@status_comiss := (SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY created_at DESC LIMIT 1) as status_comiss`
+                    `@status_comiss := (SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY created_at DESC LIMIT 1) as status_comiss`
                 ),
                 app.db.raw(
-                    `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY created_at DESC LIMIT 1) as created_at`
+                    `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY created_at DESC LIMIT 1) as created_at`
                 ),
                 app.db.raw(
-                    `@confirm_date := (SELECT confirm_date FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY confirm_date DESC LIMIT 1) as confirm_date`
+                    `@confirm_date := (SELECT confirm_date FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY confirm_date DESC LIMIT 1) as confirm_date`
                 )
             )
             .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
@@ -552,7 +552,7 @@ module.exports = app => {
             .orderBy('ag.ordem')
             .orderBy('status_comiss', 'desc')
             .orderBy('nome_comum')
-            .having(app.db.raw(`(status_comiss = ${STATUS_ABERTO} AND  DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas}) OR (status_comiss = ${STATUS_CONFIRMADO} AND ${filterDatasConfirm})`))
+            .having(app.db.raw(`(status_comiss = ${STATUS_ABERTO} AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas}) OR (status_comiss = ${STATUS_CONFIRMADO} AND ${filterDatasConfirm})`))
 
         if (agId) query
             .join({ p: tabelaPipelineAgentesDomain }, 'p.id', 'cms.id_pipeline')
