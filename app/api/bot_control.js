@@ -53,7 +53,7 @@ module.exports = app => {
                 msg: "Evento desconecido",
                 ...body
             }
-            res.status(200).send(erro)
+            res.status(200).send(bodyFail)
         }
     }
 
@@ -95,9 +95,10 @@ module.exports = app => {
             "trial": "disabled",
             "trialPeriod": 0
         }
+        const endpoint = `${apiWats.superHost}/tenantApiStoreTenant`
+        const headerAuthorization = apiWats.superHostToken
         try {
             const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
-            console.log(response.data);
             return bodyTo
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
@@ -309,9 +310,9 @@ module.exports = app => {
                 `${bodyData.tenant.password}`,
                 `Time ${bodyData.product.name}`
             ];
-            sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
-                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
-                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+            // sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
+            //     .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsPasswordReset enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
+            //     .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
             return text
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
