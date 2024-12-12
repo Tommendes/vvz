@@ -23,9 +23,11 @@ module.exports = app => {
         }
 
         const event = body.event
-        
+        /**
+         * Registra todos os eventos recebidos
+         */
+        const getEvent = await setEvent(req)        
         if (event == 'PURCHASE_APPROVED') {
-            const getEvent = await setEvent(req)
             const getSubscription = await setSubscription(req, getEvent[0])
             const getBuyer = await setBuyer(req, getSubscription[0])
             let bodyRes = { vivazul: getEvent[0], subscription: getSubscription[0], buyer: getBuyer[0] }            
