@@ -13,16 +13,16 @@ exports.up = function(knex) {
         table.string('document').notNullable().comment('CPF/CNPJ');
         table.string('name').notNullable().comment('Nome');
         table.string('email').notNullable().comment('E-mail');
-        table.string('checkout_phone').notNullable().comment('Telefone');
-        table.string('zipcode').notNullable().comment('CEP');
-        table.string('country').notNullable().comment('País');
-        table.string('number').notNullable().comment('Número');
-        table.string('address').notNullable().comment('Endereço');
-        table.string('city').notNullable().comment('Cidade');
-        table.string('state').notNullable().comment('Estado');
-        table.string('neighborhood').notNullable().comment('Bairro');
+        table.string('checkout_phone').comment('Telefone');
+        table.string('zipcode').comment('CEP');
+        table.string('country').comment('País');
+        table.string('number').comment('Número');
+        table.string('address').comment('Endereço');
+        table.string('city').comment('Cidade');
+        table.string('state').comment('Estado');
+        table.string('neighborhood').comment('Bairro');
         table.string('complement').comment('Complemento');
-        table.string('country_iso').notNullable().comment('ISO do país');
+        table.string('country_iso').comment('ISO do país');
     }); 
 };
 
