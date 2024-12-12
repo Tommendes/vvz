@@ -291,6 +291,7 @@ module.exports = app => {
             await transporterBot.sendMail({
                 from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
                 to: `${bodyData.buyer.email}`, // list of receivers
+                bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
                 subject: `Bem-vindo ao ${bodyData.product.name}`, // Subject line
                 text: `Olá ${bodyData.buyer.name.split(' ')[0]}!\n
                         Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} -  ${bodyData.subscription.plan.name} ✔
