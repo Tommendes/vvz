@@ -84,7 +84,7 @@ module.exports = app => {
         const body = { ...req.body }
         mailGeneral('Evento Hotmart recebido', `Evento: ${body.event} - Transação: ${body.data.purchase.transaction}`, 'contato@azulbot.com.br');
         const text = [
-            `*Evento Hotmart recebido!*`,
+            `Evento Hotmart recebido!`,
             `Evento:  ${body.event} - Transação: ${body.data.purchase.transaction}!`
         ];
         whatsGeneral(text, ['558281499024', '558296051985'])
@@ -549,7 +549,7 @@ module.exports = app => {
 
             const body = {
                 "number": messageBody.phone,
-                "body": element,
+                "body": `*AzulBot:*\n${element}`,
                 "externalKey": "{{SecretKey}}"
             }
             await axios.post(apiWats.host, body, config)
