@@ -140,7 +140,7 @@ module.exports = app => {
     // Registra o evento recebido e envia email e WhatsApp informando
     const setEvent = async (req) => {
         const body = { ...req.body }
-        mailGeneral('Evento Hotmart recebido', `Evento: ${body.event} - Transação: ${body.data.purchase.transaction}`, 'contato@azulbot.com.br');
+        mailGeneral('Evento Hotmart recebido', `Evento: ${body.event} - Transação: ${body.data.purchase.transaction}`, 'nao-responda@azulbot.com.br');
         const text = [
             `Evento Hotmart recebido!`,
             `Evento:  ${body.event} - Transação: ${body.data.purchase.transaction}!`
@@ -220,14 +220,14 @@ module.exports = app => {
                 .then(response => {
                     if (response.data.tenant.id) return { success: true, ...bodyTo }
                     else {
-                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${response.response}`, 'contato@azulbot.com.br')
+                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${response.response}`, 'nao-responda@azulbot.com.br')
                         return { success: false, msgError: response, ...bodyTo }
                     }
                 })
                 .catch(error => {
                     const errorBody = 'error.response.data.error'
                     try {
-                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${error.response.data.error}`, 'contato@azulbot.com.br')
+                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${error.response.data.error}`, 'nao-responda@azulbot.com.br')
                     } catch (error) {
                         errorBody += `; ${error}`
                     }
@@ -269,14 +269,14 @@ module.exports = app => {
         //     .then(response => {
         //         if (response.data.id) return { success: true, ...bodyTo }
         //         else {
-        //             mailGeneral('Erro ao editar tenant', `Erro ao editar tenant: ${response.response}`, 'contato@azulbot.com.br')
+        //             mailGeneral('Erro ao editar tenant', `Erro ao editar tenant: ${response.response}`, 'nao-responda@azulbot.com.br')
         //             return { success: false, msgError: response, ...bodyTo }
         //         }
         //     })
         //     .catch(error => {
         //         let errorBody = 'error.response.data.error'
         //         try {
-        //             mailGeneral('Erro ao editar tenant', `Erro ao editar tenant: ${error.response.data.error}`, 'contato@azulbot.com.br')
+        //             mailGeneral('Erro ao editar tenant', `Erro ao editar tenant: ${error.response.data.error}`, 'nao-responda@azulbot.com.br')
         //         } catch (error) {
         //             errorBody += `; ${error}`
         //         }
@@ -429,9 +429,9 @@ module.exports = app => {
         if (!bodyData.buyer) return
         try {
             await transporterBot.sendMail({
-                from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
+                from: `"${bodyData.product.name}" <nao-responda@azulbot.com.br>`, // sender address
                 to: `${bodyData.buyer.email}`, // list of receivers
-                bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
+                bcc: ['tommendespereira@gmail.com', 'mxdearaujo@gmail.com'], // cópia oculta para a Azulbot
                 subject: `Bem-vindo ao ${bodyData.product.name}`, // Subject line
                 text: `Olá ${bodyData.buyer.name.split(' ')[0]}!\n
                         Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} - ${bodyData.subscription.plan.name} ✔
@@ -471,9 +471,9 @@ module.exports = app => {
         if (!bodyData.buyer) return
         try {
             await transporterBot.sendMail({
-                from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
+                from: `"${bodyData.product.name}" <nao-responda@azulbot.com.br>`, // sender address
                 to: `${bodyData.buyer.email}`, // list of receivers
-                bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
+                bcc: ['tommendespereira@gmail.com', 'mxdearaujo@gmail.com'], // cópia oculta para a Azulbot
                 subject: `Problemas no paraíso 😬`, // Subject line
                 text: `Puxa vida, ${bodyData.buyer.name.split(' ')[0]}! Não conseguimos registrar seu perfil no ${bodyData.product.name}\n
                         Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: ""${bodyData.tenant.msgError}""\n
@@ -513,9 +513,9 @@ module.exports = app => {
         if (!bodyData.buyer) return
         try {
             await transporterBot.sendMail({
-                from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
+                from: `"${bodyData.product.name}" <nao-responda@azulbot.com.br>`, // sender address
                 to: `${bodyData.buyer.email}`, // list of receivers
-                bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
+                bcc: ['tommendespereira@gmail.com', 'mxdearaujo@gmail.com'], // cópia oculta para a Azulbot
                 subject: `Problemas no paraíso 😬`, // Subject line
                 text: `${bodyData.buyer.name.split(' ')[0]}, recebemos seu pedido de mudança de plano ""${bodyData.product.name}"" para o ${bodyData.subscription.plan.name}\n
                         A mudança passa a valer a partir de agora!\n
@@ -550,9 +550,9 @@ module.exports = app => {
         if (env != 'production') return true
         try {
             await transporterBot.sendMail({
-                from: `"Azulbot" <contato@azulbot.com.br>`, // sender address
+                from: `"Azulbot" <nao-responda@azulbot.com.br>`, // sender address
                 to,
-                bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
+                bcc: ['tommendespereira@gmail.com', 'mxdearaujo@gmail.com'], // cópia oculta para a Azulbot
                 subject, // Subject line
                 text: msg, // body plain text
                 html: msg, // body htnl text
