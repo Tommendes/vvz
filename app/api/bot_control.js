@@ -419,6 +419,8 @@ module.exports = app => {
      */
     const whatsGeneral = async (msg, to) => {
         try {
+            console.log('env', env);
+            
             if (env == 'production') sendMessage({ phone: `${to}`, message: msg })
                 .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsGeneral enviada com sucesso para ${to}`, sConsole: true } }))
                 .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
