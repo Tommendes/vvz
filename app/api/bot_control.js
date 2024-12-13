@@ -82,10 +82,10 @@ module.exports = app => {
     // Registra o evento recebido e envia email e WhatsApp informando
     const setEvent = async (req) => {
         const body = { ...req.body }
-        mailGeneral('Evento Hotmart recebido', `Evento: ${body.event}`, 'contato@azulbot.com.br');
+        mailGeneral('Evento Hotmart recebido', `Evento: ${body.event} - Transação: ${body.data.purchase.transaction}`, 'contato@azulbot.com.br');
         const text = [
             `*Evento Hotmart recebido!*`,
-            `Evento:  ${body.event}!`
+            `Evento:  ${body.event} - Transação: ${body.data.purchase.transaction}!`
         ];
         whatsGeneral(text, ['558281499024', '558296051985'])
         /*
