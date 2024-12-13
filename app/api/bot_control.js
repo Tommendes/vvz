@@ -48,12 +48,12 @@ module.exports = app => {
                 const plan_name = bodyData.subscription.plan.name
                 // Verificar se o comprador já está cadastrado em um plano qualquer
                 const uniqueBuyer = await app.db({ b: `${dbPrefix}_api.${tabelaBuyers}` })
-                    .select({ idBuyer: 'b.id', idSubscription: 's.id', plan_name: 's.plan_name' })
-                    .join({ s: `${dbPrefix}_api.${tabelaSubscriptions}` }, 'b.id_subscription', 's.id')
-                    .where({ 'b.subscriber_code': subscriber_code, 's.status': STATUS_ACTIVE, 'b.status': STATUS_ACTIVE })
-                    .orderBy('s.created_at', 'desc')
-                    .orderBy('b.created_at', 'desc')
-                    .first()
+                .select({ idBuyer: 'b.id', idSubscription: 's.id', plan_name: 's.plan_name' })
+                .join({ s: `${dbPrefix}_api.${tabelaSubscriptions}` }, 'b.id_subscription', 's.id')
+                .where({ 'b.subscriber_code': subscriber_code, 's.status': STATUS_ACTIVE, 'b.status': STATUS_ACTIVE })
+                .orderBy('s.created_at', 'desc')
+                .orderBy('b.created_at', 'desc')
+                .first()
 
                 // Verificar se o comprador já está cadastrado neste plano
                 const uniqueSubscriptionPlanBuyer = await app.db({ b: `${dbPrefix}_api.${tabelaBuyers}` })
@@ -115,6 +115,7 @@ module.exports = app => {
                     // Altera o plano do tenant
                     const updateTen = await updateTenant({ plan_name: uniqueBuyer.plan_name, subscriber_code: subscriber_code }, { plan_name: plan_name, status: STATUS_ACTIVE, maxUsers: 3, maxConnections: 1 })
                     // Envia mensagem de boas vindas por email e WhatsApp
+                    req.body.data.last_plan_name = uniqueBuyer.plan_name
                     const mailPlan = await mailPlanChange(req)
                     const whatsPlan = await whatsPlanChange(req)
                     bodyRes = { mailPlan, whatsPlan, updateTen }
@@ -517,13 +518,13 @@ module.exports = app => {
                 to: `${bodyData.buyer.email}`, // list of receivers
                 bcc: ['tommendespereira@gmail.com', 'mxdearaujo@gmail.com'], // cópia oculta para a Azulbot
                 subject: `Solicitação de mudança de plano no ${bodyData.product.name}`, // Subject line
-                text: `${bodyData.buyer.name.split(' ')[0]}, recebemos seu pedido de mudança de plano ""${bodyData.product.name}"" para o ${bodyData.subscription.plan.name}\n
+                text: `${bodyData.buyer.name.split(' ')[0]}, recebemos seu pedido de mudança de plano ""${bodyData.product.name}"" do ${bodyData.last_plan_name} para o ${bodyData.subscription.plan.name}\n
                         A mudança passa a valer a partir de agora!\n
                         Se você acredita que essa mudança foi um engano, por favor, entre em contato conosco.\n
                         Atenciosamente\nTime ${bodyData.product.name}`,
 
 
-                html: `<p><b>${bodyData.buyer.name.split(' ')[0]}, recebemos seu pedido de mudança de plano <b>${bodyData.product.name}</b> para o ${bodyData.subscription.plan.name}</b></p>
+                html: `<p><b>${bodyData.buyer.name.split(' ')[0]}, recebemos seu pedido de mudança de plano <b>${bodyData.product.name}</b> do ${bodyData.last_plan_name} para o ${bodyData.subscription.plan.name}</b></p>
             <p>A mudança passa a valer a partir de agora!</p>
             <p>Se você acredita que essa mudança foi um engano, por favor, entre em contato conosco.</p>
             <p>Atenciosamente</p>
@@ -680,7 +681,7 @@ module.exports = app => {
         if (!bodyData.buyer) return
         try {
             const text = [
-                `${bodyData.buyer.name.split(' ')[0]}, recebemos seu pedido de mudança de plano *${bodyData.product.name}* para o ${bodyData.subscription.plan.name}!`,
+                `${bodyData.buyer.name.split(' ')[0]}, recebemos seu pedido de mudança de plano *${bodyData.product.name}* do ${bodyData.last_plan_name} para o ${bodyData.subscription.plan.name}!`,
                 `A mudança passa a valer a partir de agora!`,
                 `Se você acredita que essa mudança foi um engano, por favor, entre em contato conosco.`,
                 `Atenciosamente\nTime ${bodyData.product.name}`
