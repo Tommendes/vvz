@@ -516,7 +516,7 @@ module.exports = app => {
                 from: `"${bodyData.product.name}" <nao-responda@azulbot.com.br>`, // sender address
                 to: `${bodyData.buyer.email}`, // list of receivers
                 bcc: ['tommendespereira@gmail.com', 'mxdearaujo@gmail.com'], // cópia oculta para a Azulbot
-                subject: `Problemas no paraíso 😬`, // Subject line
+                subject: `Solicitação de mudança de plano no ${bodyData.product.name}`, // Subject line
                 text: `${bodyData.buyer.name.split(' ')[0]}, recebemos seu pedido de mudança de plano ""${bodyData.product.name}"" para o ${bodyData.subscription.plan.name}\n
                         A mudança passa a valer a partir de agora!\n
                         Se você acredita que essa mudança foi um engano, por favor, entre em contato conosco.\n
