@@ -16,7 +16,7 @@ module.exports = app => {
 
     // Retorna os contatos do plugchat 
     const setRequest = async (req, res) => {
-        if (req.body.data.buyer.name) req.body.data.buyer.name =  removeAccents(titleCase(req.body.data.buyer.name))
+        if (req.body.data.buyer.name) req.body.data.buyer.name = removeAccents(titleCase(req.body.data.buyer.name))
         const body = { ...req.body }
         try {
             existsOrError(body, 'Corpo da requisição não informado')
@@ -420,10 +420,20 @@ module.exports = app => {
     const whatsGeneral = async (msg, to) => {
         try {
             console.log('env', env);
-            
-            if (env == 'production') sendMessage({ phone: `${to}`, message: msg })
-                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsGeneral enviada com sucesso para ${to}`, sConsole: true } }))
-                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+
+            if (env == 'production') {
+                if (typeof to === 'string') sendMessage({ phone: to, message: msg })
+                    .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsGeneral enviada com sucesso para ${to}`, sConsole: true } }))
+                    .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+                else if (typeof to === 'object') {
+                    for (let index = 0; index < to.length; index++) {
+                        const element = to[index];
+                        sendMessage({ phone: element, message: msg })
+                            .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsGeneral enviada com sucesso para ${element}`, sConsole: true } }))
+                            .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+                    }
+                }
+            }
             else {
                 console.log('Corpo da mensagem geral por WhatsApp');
                 for (let index = 0; index < msg.length; index++) {
