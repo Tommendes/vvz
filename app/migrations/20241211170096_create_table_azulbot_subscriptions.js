@@ -10,7 +10,6 @@ exports.up = function(knex) {
         table.string('created_at').notNull()
         table.integer('status').defaultTo(10).notNull().comment('Status do registro (INATIVO:0; ATIVO:10; EXCLUÍDO:99)')
         table.integer('id_event').notNull().unsigned().references('id').inTable(db.database + '.azulbot_events').onUpdate('Cascade').onDelete('Cascade').comment('Lançamento proprietário da inscrição')
-        table.string('subscriber_code').notNullable().comment('Código do assinante');
         table.string('plan_name').notNullable().comment('Nome do plano');
         table.string('plan_id').notNullable().comment('ID do plano');
         table.string('plan_status').notNullable().comment('Status do plano');

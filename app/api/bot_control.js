@@ -32,35 +32,67 @@ module.exports = app => {
         if (event == 'PURCHASE_APPROVED') {
             try {
                 const bodyData = { ...req.body.data }
-                const email = bodyData.buyer.email
-                const uniqueTenant = await app.db({ t: `${dbPrefix}_api.${tabelaBuyers}` }).where({ 't.email': email }).first()
-                if (uniqueTenant) {
-                    let msgError = `Usuário (e-mail: "${bodyData.buyer.email}") já cadastrado`
-                    req.body.data = { ...req.body.data, tenant: { msgError } }
-                    whatsFail(req)
-                    mailFail(req)
-                    return res.status(200).send(req.body.data.tenant.msgError)
-                }
-                const getSubscription = await setSubscription(req, getEvent[0])
-                const getBuyer = await setBuyer(req, getSubscription[0])
-                let bodyRes = { vivazul: getEvent[0], subscription: getSubscription[0], buyer: getBuyer[0] }
-                if (bodyRes.vivazul && bodyRes.subscription && bodyRes.buyer) {
+                const subscriber_code = bodyData.subscription.subscriber.code
+                const plan_name = bodyData.subscription.plan.name
+                // Verifica se o comprador já está cadastrado e em que plano
+                const uniqueSubscriptionPlanBuyer = await app.db({ s: `${dbPrefix}_api.${tabelaSubscriptions}` })
+                    .select({ idSubscriber: 's.id' }, 's.plan_name', { idBuyer: 'b.id' })
+                    .leftJoin({ b: `${dbPrefix}_api.${tabelaBuyers}` }, 'b.id_subscription', 's.id')
+                    .where({ 'b.subscriber_code': subscriber_code, 's.plan_name': plan_name })
+                    .orderBy('s.created_at', 'desc')
+                    .orderBy('b.created_at', 'desc')
+                    .first()
+                let getSubscription = undefined
+                let getBuyer = undefined
+                // Se não existir a inscrição, então registra nova inscrição, comprador e tenant
+                if (!uniqueSubscriptionPlanBuyer) {
+                    console.log('(!uniqueSubscriptionPlanBuyer)');
 
-                    const tenant = await setTenant(req)
-                    req.body.data.tenant = tenant
-                    const tenantSuccess = tenant.sucess
-                    if (!tenantSuccess) {
-                        const failWhatsApp = await whatsFail(req)
-                        const failMail = await mailFail(req)
-                        bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: failWhatsApp, welcomeMail: failMail }
+                    getSubscription = await setSubscription(req, getEvent[0])
+                    getBuyer = await setBuyer(req, getSubscription)
+                    let bodyRes = { vivazul: getEvent[0], subscription: getSubscription[0], buyer: getBuyer[0] }
+                    if (bodyRes.vivazul && bodyRes.subscription && bodyRes.buyer) {
+                        const tenant = await setTenant(req)
+                        req.body.data.tenant = tenant
+                        const tenantSuccess = tenant.success
+                        if (!tenantSuccess) {
+                            const failWhatsApp = await whatsFail(req)
+                            const failMail = await mailFail(req)
+                            bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: failWhatsApp, welcomeMail: failMail }
+                        } else {
+                            const welcome = await whatsWelcome(req)
+                            const welcomeMail = await mailWelcome(req)
+                            bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: welcome, welcomeMail: welcomeMail }
+                            // bodyRes = { ...bodyRes, tenant, welcomeMail: welcomeMail }
+                            // app.api.logger.logInfo({ log: { line: JSON.stringify(body), sConsole: true } })
+                        }
+                        res.status(200).send(bodyRes)
                     } else {
-                        const welcome = await whatsWelcome(req)
-                        const welcomeMail = await mailWelcome(req)
-                        bodyRes = { ...bodyRes, tenant, welcomeWhatsApp: welcome, welcomeMail: welcomeMail }
-                        // bodyRes = { ...bodyRes, tenant, welcomeMail: welcomeMail }
-                        // app.api.logger.logInfo({ log: { line: JSON.stringify(body), sConsole: true } })
+                        res.status(400).send('Erro ao inserir dados')
                     }
-                    res.status(200).send(bodyRes)
+                }
+                // Se existir a inscrição, o plano e o comprador, então retorna mensagem de erro e envia mensagem de falha por email e WhatsApp
+                else if (uniqueSubscriptionPlanBuyer && uniqueSubscriptionPlanBuyer.idSubscriber && uniqueSubscriptionPlanBuyer && uniqueSubscriptionPlanBuyer.idBuyer && uniqueSubscriptionPlanBuyer.plan_name == plan_name) {
+                    console.log('(uniqueSubscriptionPlanBuyer && uniqueSubscriptionPlanBuyer.idSubscriber && uniqueSubscriptionPlanBuyer && uniqueSubscriptionPlanBuyer.idBuyer && uniqueSubscriptionPlanBuyer.plan_name == plan_name)');
+
+                    getSubscription = uniqueSubscriptionPlanBuyer.idSubscriber
+                    getBuyer = uniqueSubscriptionPlanBuyer.idBuyer
+                    let msgError = `Usuário (e-mail: "${bodyData.buyer.email}") já cadastrado neste plano: ${bodyData.subscription.plan.name}`
+                    req.body.data = { ...req.body.data, tenant: { msgError } }
+                    mailFail(req)
+                    whatsFail(req)
+                    res.status(200).send(req.body.data.tenant.msgError)
+                }
+                // Se existir a inscrição e o comprador, mas o plano é diferente, então registra nova inscrição com o plan_name diferente e muda o status da inscrição anterior para inativo e altera o plano do tenant
+                else if (uniqueSubscriptionPlanBuyer && uniqueSubscriptionPlanBuyer.idSubscriber && uniqueSubscriptionPlanBuyer && uniqueSubscriptionPlanBuyer.idBuyer && uniqueSubscriptionPlanBuyer.plan_name != plan_name) {
+                    console.log('(uniqueSubscriptionPlanBuyer && uniqueSubscriptionPlanBuyer.idSubscriber && uniqueSubscriptionPlanBuyer && uniqueSubscriptionPlanBuyer.idBuyer && uniqueSubscriptionPlanBuyer.plan_name != plan_name)');
+
+                    // Muda o status da inscrição anterior para inativo
+                    await app.db(`${dbPrefix}_api.${tabelaSubscriptions}`).update({ status: STATUS_INACTIVE }).where({ id: uniqueSubscriptionPlanBuyer.idSubscriber })
+                    // Registra nova inscrição
+                    getSubscription = await setSubscription(req, getEvent[0])
+                    mailPlanChange(req)
+                    whatsPlanChange(req)
                 } else {
                     res.status(400).send('Erro ao inserir dados')
                 }
@@ -149,6 +181,10 @@ module.exports = app => {
             case "Master": plano = planoMaster; break;
             case "Premium": plano = planoPremium; break;
         }
+        // userName deve conter o primeiro e último nome do comprador se disponível
+        let userName = bodyData.buyer.name.split(' ')
+        if (userName.length > 1) userName = `${userName[0]} ${userName[userName.length - 1]}`
+        else userName = bodyData.buyer.name
         const bodyTo = {
             "status": "active",
             "name": bodyData.buyer.name,
@@ -156,7 +192,7 @@ module.exports = app => {
             "acceptTerms": true,
             "email": bodyData.buyer.email,
             "password": randomstring.generate(6).toUpperCase(),
-            "userName": bodyData.buyer.name,
+            "userName": userName,
             "identity": bodyData.subscription.subscriber.code,
             "asaasCustomerId": bodyData.purchase.transaction,
             "profile": "admin",
@@ -168,22 +204,21 @@ module.exports = app => {
         try {
             const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
                 .then(response => {
-                    console.log('response', response.data.tenant.id);
-
-                    if (response.data.tenant.id) return { sucess: true, ...bodyTo }
+                    if (response.data.tenant.id) return { success: true, ...bodyTo }
                     else {
                         mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${response.response}`, 'contato@azulbot.com.br')
-                        return { sucess: false, msgError: response, ...bodyTo }
+                        return { success: false, msgError: response, ...bodyTo }
                     }
                 })
                 .catch(error => {
                     const errorBody = 'error.response.data.error'
                     try {
-                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${error}`, 'contato@azulbot.com.br')
+                        mailGeneral('Erro ao criar tenant', `Erro ao criar tenant: ${error.response.data.error}`, 'contato@azulbot.com.br')
                     } catch (error) {
                         errorBody += `; ${error}`
                     }
                     app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+
                     return error.response.data.error
                 })
             return response
@@ -207,7 +242,6 @@ module.exports = app => {
             created_at = notNull()
             status = defaultTo(10)
             id_event = notNull()
-            subscriber_code = notNullable()
             plan_name = notNullable()
             plan_id = notNullable()
             plan_status = notNullable()
@@ -232,7 +266,6 @@ module.exports = app => {
             evento: evId,
             created_at: created_at = moment().format('YYYY-MM-DD HH:mm:ss'),
             id_event: idEvent,
-            subscriber_code: bodyData.subscription.subscriber.code,
             plan_name: bodyData.subscription.plan.name,
             plan_id: bodyData.subscription.plan.id,
             plan_status: bodyData.subscription.status,
@@ -247,12 +280,15 @@ module.exports = app => {
     }
 
     const setBuyer = async (req, idSubscription) => {
+        console.log('setBuyer');
+
         const bodyData = { ...req.body.data }
         /*            
             evento = notNull()
             created_at = notNull()
             status = defaultTo(10)
             id_subscription = notNull()
+            subscriber_code = notNullable()
             document = notNullable()
             name = notNullable()
             email = notNullable()
@@ -277,15 +313,22 @@ module.exports = app => {
                 "tabela_bd": tabelaBuyers,
             }
         })
+        // Se bodyData.buyer.address.country_iso == 'BR', então bodyData.buyer.checkout_phone deve iniciar com '55' e o valor deve ser alterado em req.body.data.buyer.checkout_phone para que o WhatsApp envie a mensagem corretamente
+        let checkout_phone = bodyData.buyer.checkout_phone
+        if (bodyData.buyer.address.country_iso == 'BR') {
+            if (!checkout_phone.startsWith('55')) checkout_phone = `55${checkout_phone}`
+            req.body.data.buyer.checkout_phone = checkout_phone
+        }
         const bodyTo = {
             status: STATUS_ACTIVE,
             evento: evId,
             created_at: created_at = moment().format('YYYY-MM-DD HH:mm:ss'),
             id_subscription: idSubscription,
+            subscriber_code: bodyData.subscription.subscriber.code,
             document: bodyData.buyer.document,
             name: bodyData.buyer.name,
             email: bodyData.buyer.email,
-            checkout_phone: bodyData.buyer.checkout_phone,
+            checkout_phone: checkout_phone,
             zipcode: bodyData.buyer.address.zipcode,
             country: bodyData.buyer.address.country,
             number: bodyData.buyer.address.number,
@@ -385,6 +428,48 @@ module.exports = app => {
         }
     }
     /**
+     * Função utilizada para envio de mensagem de troca de plano por email
+     * @param {*} req 
+     * @param {*} res 
+     */
+    const mailPlanChange = async (req) => {
+        const bodyData = { ...req.body.data }
+        if (!bodyData.buyer) return
+        try {
+            console.log('mailPlanChange');
+            //     await transporterBot.sendMail({
+            //         from: `"${bodyData.product.name}" <contato@azulbot.com.br>`, // sender address
+            //         to: `${bodyData.buyer.email}`, // list of receivers
+            //         bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
+            //         subject: `Problemas no paraíso 😬`, // Subject line
+            //         text: `Puxa vida, ${bodyData.buyer.name.split(' ')[0]}! Não conseguimos registrar seu perfil no ${bodyData.product.name}\n
+            //                 Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: ""${bodyData.tenant.msgError}""\n
+            //                 Se você acredita que essa mensagem está errada, por favor, entre em contato conosco.\n
+            //                 Mas se for, por exemplo, um erro de digitação, por favor, tente novamente.\n
+            //                 Por outro lado, se você já é cliente, por favor, acesse o sistema com seu login e senha. E se você não lembra sua senha, clique em "Esqueci minha senha" na tela de login (${azulbotLinks.login}) e siga as instruções.\n
+            //                 Atenciosamente\nTime ${bodyData.product.name}`,
+
+
+            //         html: `<p><b>Puxa vida, ${bodyData.buyer.name.split(' ')[0]}!</b></p>
+            //     <p>Não conseguimos registrar seu perfil no ${bodyData.product.name}!</p>
+            //     <p>Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: <b>${bodyData.tenant.msgError}</b></p>
+            //     <p>Se você acredita que essa mensagem está errada, por favor, entre em contato conosco.</p>
+            //     <p>Mas se for, por exemplo, um erro de digitação, por favor, tente novamente.</p>
+            //     <p>Por outro lado, se você já é cliente, por favor, acesse o sistema com seu login e senha. E se você não lembra sua senha, clique em "Esqueci minha senha" na tela de login (${azulbotLinks.login}) e siga as instruções.</p>
+            //     <p>Atenciosamente</p>
+            //     <p><b>Time ${bodyData.product.name}</b></p>`,
+            //     }).then(_ => {
+            //         return true
+            //     }).catch(error => {
+            //         console.log('error', error);
+            //         return error
+            //     })
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
      * Função utilizada para envio de mensagem em geral por email
      * @param {*} subject 
      * @param {*} msg 
@@ -420,8 +505,6 @@ module.exports = app => {
      */
     const whatsGeneral = async (msg, to) => {
         try {
-            console.log('env', env);
-
             if (env == 'production') {
                 if (typeof to === 'string') sendMessage({ phone: to, message: msg })
                     .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsGeneral enviada com sucesso para ${to}`, sConsole: true } }))
@@ -511,6 +594,41 @@ module.exports = app => {
                 }
             }
             return text
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
+     * Função utilizada para envio de mensagem de troca de plano por whatsapp
+     * @param {*} req 
+     * @param {*} res 
+     */
+    const whatsPlanChange = async (req) => {
+        const bodyData = { ...req.body.data }
+        if (!bodyData.buyer) return
+        try {
+            console.log('whatsPlanChange');
+
+            // const text = [
+            //     `Problemas no paraíso, ${bodyData.buyer.name.split(' ')[0]} 😬! Não conseguimos registrar seu perfil no ${bodyData.product.name}!`,
+            //     `Ao tentar, recebemos a seguinte mensagem do ${bodyData.product.name}: *${bodyData.tenant.msgError}*`,
+            //     `Se você acredita que essa mensagem está errada, por favor, entre em contato conosco.`,
+            //     `Mas se for, por exemplo, um erro de digitação, por favor, tente novamente.`,
+            //     `Por outro lado, se você já é cliente, por favor, acesse o sistema com seu login e senha. E se você não lembra sua senha, clique em "Esqueci minha senha" na tela de login (${azulbotLinks.login}) e siga as instruções.`,
+            //     `Atenciosamente\nTime ${bodyData.product.name}`
+            // ];
+            // if (env == 'production') sendMessage({ phone: `${bodyData.buyer.checkout_phone}`, message: text })
+            //     .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsFail enviada com sucesso para ${bodyData.buyer.checkout_phone}`, sConsole: true } }))
+            //     .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+            // else {
+            //     console.log('Corpo da mensagem de falha por WhatsApp');
+            //     for (let index = 0; index < text.length; index++) {
+            //         const element = text[index];
+            //         console.log(index + 1, element);
+            //     }
+            // }
+            // return text
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
             res.status(400).send(error)
