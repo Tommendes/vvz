@@ -287,7 +287,7 @@ module.exports = app => {
         return tenantUpgrades
     }
 
-    // Conectar no servidor Postgres e executar a query: UPDATE public."Tenants" SET "maxUsers"=10, "maxConnections"=4 WHERE "identity" = 'CZUC9L2G'
+    // Conectar no servidor Postgres e executar a query de update
     const setTenantUpgrades = async (bodyTo) => {
         const { Pool } = require('pg');
         const pool = new Pool({
