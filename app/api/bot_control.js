@@ -157,7 +157,7 @@ module.exports = app => {
             "email": bodyData.buyer.email,
             "password": randomstring.generate(6).toUpperCase(),
             "userName": bodyData.buyer.name,
-            "identity": 'hotmart-' + (bodyData.buyer.document ? bodyData.buyer.document : bodyData.buyer.email),
+            "identity": (bodyData.subscription.subscriber.code),
             "profile": "admin",
             "trial": "disabled",
             "trialPeriod": 0
