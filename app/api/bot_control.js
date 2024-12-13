@@ -157,8 +157,8 @@ module.exports = app => {
             "email": bodyData.buyer.email,
             "password": randomstring.generate(6).toUpperCase(),
             "userName": bodyData.buyer.name,
-            "identity": (bodyData.subscription.subscriber.code),
-            "asaasCustomerId": (bodyData.purchase.transaction),
+            "identity": bodyData.subscription.subscriber.code,
+            "asaasCustomerId": bodyData.purchase.transaction,
             "profile": "admin",
             "trial": "disabled",
             "trialPeriod": 0
