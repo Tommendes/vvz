@@ -6,6 +6,7 @@ const moment = require('moment')
 module.exports = app => {
     const { transporterBot } = app.api.mailer
     const { existsOrError } = app.api.validation
+    const { removeAccents, titleCase } = app.api.facilities
     const tabelaEvents = 'azulbot_events'
     const tabelaBuyers = 'azulbot_buyers'
     const tabelaSubscriptions = 'azulbot_subscriptions'
@@ -15,6 +16,7 @@ module.exports = app => {
 
     // Retorna os contatos do plugchat 
     const setRequest = async (req, res) => {
+        if (req.body.data.buyer.name) req.body.data.buyer.name =  removeAccents(titleCase(req.body.data.buyer.name))
         const body = { ...req.body }
         try {
             existsOrError(body, 'Corpo da requisição não informado')
@@ -75,6 +77,51 @@ module.exports = app => {
             }
             res.status(200).send(bodyFail)
         }
+    }
+
+    // Registra o evento recebido e envia email e WhatsApp informando
+    const setEvent = async (req) => {
+        const body = { ...req.body }
+        mailGeneral('Evento Hotmart recebido', `Evento: ${body.event}`, 'contato@azulbot.com.br');
+        const text = [
+            `*Evento Hotmart recebido!*`,
+            `Evento:  ${body.event}!`
+        ];
+        whatsGeneral(text, ['558281499024', '558296051985'])
+        /*
+            evento = notNull()
+            created_at = notNull()
+            vivazul = notNullable()
+            event_id = notNullable() 
+            creation_date = notNullable()
+            event = notNullable()
+            version = notNullable()
+            data = notNullable()
+        */
+        const tabelaEventsDomain = `${dbPrefix}_api.${tabelaEvents}`
+        const { createEventIns } = app.api.sisEvents
+        const evId = await createEventIns({
+            "notTo": ['created_at', 'evento'],
+            "next": { marcacao: 'setEvent' },
+            "request": req,
+            "evento": {
+                "evento": `setEvent`,
+                "tabela_bd": tabelaEvents,
+            }
+        })
+        const bodyTo = {
+            evento: evId,
+            created_at: created_at = moment().format('YYYY-MM-DD HH:mm:ss'),
+            gateway: 'Hotmart',
+            event_id: body.id,
+            creation_date: body.creation_date,
+            event: body.event,
+            version: body.version,
+            data: JSON.stringify(body.data)
+        }
+
+        const id = await app.db(tabelaEventsDomain).insert(bodyTo)
+        return id
     }
 
     /**
@@ -151,44 +198,6 @@ module.exports = app => {
      * @returns 
      */
     const updateTenant = async (req) => { }
-
-    const setEvent = async (req) => {
-        const body = { ...req.body }
-        /*
-            evento = notNull()
-            created_at = notNull()
-            vivazul = notNullable()
-            event_id = notNullable() 
-            creation_date = notNullable()
-            event = notNullable()
-            version = notNullable()
-            data = notNullable()
-        */
-        const tabelaEventsDomain = `${dbPrefix}_api.${tabelaEvents}`
-        const { createEventIns } = app.api.sisEvents
-        const evId = await createEventIns({
-            "notTo": ['created_at', 'evento'],
-            "next": { marcacao: 'setEvent' },
-            "request": req,
-            "evento": {
-                "evento": `setEvent`,
-                "tabela_bd": tabelaEvents,
-            }
-        })
-        const bodyTo = {
-            evento: evId,
-            created_at: created_at = moment().format('YYYY-MM-DD HH:mm:ss'),
-            gateway: 'Hotmart',
-            event_id: body.id,
-            creation_date: body.creation_date,
-            event: body.event,
-            version: body.version,
-            data: JSON.stringify(body.data)
-        }
-
-        const id = await app.db(tabelaEventsDomain).insert(bodyTo)
-        return id
-    }
 
     const setSubscription = async (req, idEvent) => {
         const bodyData = { ...req.body.data }
@@ -275,6 +284,7 @@ module.exports = app => {
             document: bodyData.buyer.document,
             name: bodyData.buyer.name,
             email: bodyData.buyer.email,
+            checkout_phone: bodyData.buyer.checkout_phone,
             zipcode: bodyData.buyer.address.zipcode,
             country: bodyData.buyer.address.country,
             number: bodyData.buyer.address.number,
@@ -306,7 +316,7 @@ module.exports = app => {
                 bcc: `contato@azulbot.com.br`, // cópia oculta para a Azulbot
                 subject: `Bem-vindo ao ${bodyData.product.name}`, // Subject line
                 text: `Olá ${bodyData.buyer.name.split(' ')[0]}!\n
-                        Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} -  ${bodyData.subscription.plan.name} ✔
+                        Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} - ${bodyData.subscription.plan.name} ✔
                         Agora você faz parte do time ${bodyData.product.name}!\n
                         Para acessar o sistema utilize o link abaixo:\n
                         https://bot.azulbot.com.br/#/login\n
@@ -315,7 +325,7 @@ module.exports = app => {
 
 
                 html: `<p><b>Olá ${bodyData.buyer.name.split(' ')[0]}!</b></p>
-            <p>Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} -  ${bodyData.subscription.plan.name} ✔</p>
+            <p>Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} - ${bodyData.subscription.plan.name} ✔</p>
             <p>Agora você faz parte do time ${bodyData.product.name}!</p>
             <p>Para acessar o sistema utilize o link a seguir: https://bot.azulbot.com.br/#/login</p>
             <p>Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso: ${bodyData.tenant.password}</p>
@@ -401,6 +411,31 @@ module.exports = app => {
         }
     }
     /**
+     * Função utilizada para envio de mensagem em geral por email
+     * @param {*} subject 
+     * @param {*} msg 
+     * @param {*} to 
+     * @returns 
+     */
+    const whatsGeneral = async (msg, to) => {
+        try {
+            if (env == 'production') sendMessage({ phone: `${to}`, message: msg })
+                .then(() => app.api.logger.logInfo({ log: { line: `Mensagem whatsGeneral enviada com sucesso para ${to}`, sConsole: true } }))
+                .catch(error => app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } }))
+            else {
+                console.log('Corpo da mensagem geral por WhatsApp');
+                for (let index = 0; index < msg.length; index++) {
+                    const element = msg[index];
+                    console.log(index + 1, element);
+                }
+            }
+            return msg
+        } catch (error) {
+            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). Error: ${error}`, sConsole: true } })
+            res.status(400).send(error)
+        }
+    }
+    /**
      * Função utilizada para envio de mensagem de boas vindas por whatsapp
      * @param {*} req 
      * @param {*} res 
@@ -410,7 +445,7 @@ module.exports = app => {
         if (!bodyData.buyer) return
         try {
             const text = [
-                `Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} -  ${bodyData.subscription.plan.name}!`,
+                `Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} - ${bodyData.subscription.plan.name}!`,
                 `Agora você faz parte do time ${bodyData.product.name}!`,
                 `Para acessar o sistema utilize o link abaixo:`,
                 `https://bot.azulbot.com.br/#/login`,

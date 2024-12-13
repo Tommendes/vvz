@@ -8,9 +8,10 @@ module.exports = app => {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
+    // Converte a primeira letra de cada palavra para maiúscula
     function titleCase(str) {
         let splitStr = str.toLowerCase().split(' ');
-        const pular = ['de', 'da', 'do', '']
+        const pular = ['de', 'da', 'do', 'das', 'dos', '']
         for (var i = 0; i < splitStr.length; i++) {
             if (!(pular.includes(splitStr[i])))
                 splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
