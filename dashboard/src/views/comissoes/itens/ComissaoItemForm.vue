@@ -86,18 +86,18 @@ const loadData = async () => {
 };
 
 // Salvar dados do formulário
-const handleSubmit = async () => { 
-  if (isSubmitting.value) return;
-  isSubmitting.value = true;
-  try {
-    await saveData();
-  } catch (error) {
-    console.error('Erro ao salvar dados:', error);
-  } finally {
-    setTimeout(() => {
-        isSubmitting.value = false;
-    }, Math.random() * 1000);
-  }
+const handleSubmit = async () => {
+    if (isSubmitting.value) return;
+    isSubmitting.value = true;
+    try {
+        await saveData();
+    } catch (error) {
+        console.error('Erro ao salvar dados:', error);
+    } finally {
+        setTimeout(() => {
+            isSubmitting.value = false;
+        }, Math.random() * 1000);
+    }
 };
 
 const saveData = async () => {
@@ -437,6 +437,9 @@ onMounted(async () => {
 // Como sugestão, pode-se armazenar os valores em duas variáveis separadas, uma para o valor base e outra para o percentual, e depois fazer o calculo e armazenar o valor da comissão em uma terceira variável
 // Por fim o valor da comissão deve ser formatado para 0,99 em itemData.value.valor.
 watchEffect(() => {
+    if (itemData.value.id_comis_agentes) {
+        itemData.value.agente_representante = dropdownAgentes.value.find((item) => item.value == itemData.value.id_comis_agentes).ar;
+    }
     if (itemData.value.valor_base && itemData.value.percentual) {
         const valorBase = parseFloat(itemData.value.valor_base.replace(',', '.'));
         const percentual = parseFloat(itemData.value.percentual.replace(',', '.'));
@@ -592,12 +595,17 @@ watchEffect(() => {
                         v-model="itemData.parcela" :options="dropdownParcelas" :disabled="['view'].includes(mode)" />
                 </div>
             </div>
+            <div class="flex-none flex" v-if="[0,1].includes(itemData.agente_representante)">
+                <Skeleton v-if="loading" height="3rem"></Skeleton>
+                <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nf" id="nf" type="text"
+                    v-maska data-maska="##########" placeholder="Nota fiscal" @keydown.enter.prevent />
+            </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">
                     <Button type="submit" :disabled="isSubmitting || !(uProf.comissoes >= 2)"
                         v-if="['edit', 'new'].includes(mode) || (mode == 'new' && canAddCommission)"
-                        v-tooltip.top="'Salvar comissão'" icon="fa-solid fa-floppy-disk" severity="success" text
-                        raised @click="handleSubmit"/>
+                        v-tooltip.top="'Salvar comissão'" icon="fa-solid fa-floppy-disk" severity="success" text raised
+                        @click="handleSubmit" />
                     <Button type="button" :disabled="!(uProf.comissoes >= 3)"
                         v-if="itemDataLastStatus.status_comis < STATUS_ENCERRADO && mode == 'view'"
                         v-tooltip.top="'Editar comissão'" icon="fa-regular fa-pen-to-square" text raised
