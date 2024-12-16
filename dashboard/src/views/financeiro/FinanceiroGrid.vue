@@ -355,6 +355,27 @@ const exportXls = () => {
     xlsx(dataToExcelExport, settings);
 };
 
+const exportPdf = async () => {
+    defaultSuccess('Por favor aguarde...');
+    let url = `${baseApiUrl}/printing/finSintetico${urlFilters.value}`;    
+    const bodyRequest = {
+        reportTitle: 'Posição Mensal de Comissionado',
+        exportType: 'pdf',
+        encoding: 'base64' // <- Adicionar à requisição para obter a impressão com o método do frontend
+    };
+    await axios
+        .post(url, bodyRequest)
+        .then((res) => {
+            const body = res.data;
+            let pdfWindow = window.open('');
+            pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
+        })
+        .catch((error) => {
+            defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
+            if (error.response && error.response.status == 401) router.push('/');
+        });
+};
+
 // Determina a qualificação baseado no tempo de existência do registro (data_emissao)
 // Se o registro tiver 120 dias ou mais, retorne 'danger'
 // Se o registro tiver 120 dias ou menos, retorne 'help'
@@ -411,6 +432,22 @@ const rowStyle = (data) => {
     if (data.centro == '2') return { color: '#d32f2f' };
     else return { color: '#00796b' };
 };
+
+const itemsExport = [
+    {
+        label: 'Excel',
+        command: () => {
+            exportXls();
+        }
+    },
+    {
+        label: 'Pdf',
+        command: () => {
+            exportPdf();
+        }
+    },
+];
+
 </script>
 
 <template>
@@ -465,7 +502,7 @@ const rowStyle = (data) => {
                             <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} de {{ totalRecords }} registros para {{ empresaLabel }}</span>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Button type="button" icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" @click="exportXls()" />
+                            <SplitButton icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"  @click="save" :model="itemsExport" />
                             <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined @click="reload()" />
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Lançamento" outlined @click="newDocument()" />
                         </div>
