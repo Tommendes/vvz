@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeMount, ref } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
+import { version } from '../../package.json';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -75,6 +76,10 @@ const setMenuByUser = async () => {
         // itemMenu.items.push({ label: 'Reviews', icon: 'fa-solid fa-sync', to: `/${uProf.value.schema_description}/suporte/reviews` });
         model.value.push(itemMenu);
     }
+    
+        const itemMenu = { label: 'Versão', items: [] };
+        itemMenu.items.push({ label: version, icon: 'fa-solid fa-cog' });
+        model.value.push(itemMenu);
 };
 
 //     // {
