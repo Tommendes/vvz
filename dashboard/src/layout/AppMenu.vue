@@ -2,6 +2,8 @@
 import { onBeforeMount, ref } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
 import { version } from '../../package.json';
+import { baseApiUrl } from '@/env';
+import axios from '@/axios-interceptor';
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
@@ -10,6 +12,7 @@ const uProf = ref({});
 onBeforeMount(async () => {
     uProf.value = await store.getProfile();
     await setMenuByUser();
+    await getApiVersion();
 });
 
 const model = ref([
@@ -18,6 +21,15 @@ const model = ref([
         items: [{ label: 'Dashboard', icon: 'fa-solid fa-home', to: `/${uProf.value.schema_description}` }]
     }
 ]);
+const apiVersion = ref('');
+const getApiVersion = async () => {
+    try {
+        apiVersion.value = await axios.get(`${baseApiUrl}/api-version`);
+        apiVersion.value = apiVersion.value.data;
+    } catch (error) {
+        console.error(error);
+    }
+};
 
 const setMenuByUser = async () => {
     if (uProf.value.cadastros >= 1 || uProf.value.prospeccoes >= 1) {
@@ -53,7 +65,7 @@ const setMenuByUser = async () => {
     }
     if (uProf.value.financeiro >= 1) {
         const itemMenu = { label: 'Financeiro', items: [] };
-        itemMenu.items.push({ label: 'Lançamentos', icon: 'fa-solid fa-cash-register', to: `/${uProf.value.schema_description}/financeiro` });
+        itemMenu.items.push({ label: 'Eventos', icon: 'fa-solid fa-cash-register', to: `/${uProf.value.schema_description}/financeiro` });
         model.value.push(itemMenu);
     }
     if (uProf.value.admin >= 2)
@@ -78,7 +90,8 @@ const setMenuByUser = async () => {
     }
     
         const itemMenu = { label: 'Versão', items: [] };
-        itemMenu.items.push({ label: version, icon: 'fa-solid fa-cog' });
+        itemMenu.items.push({ label: version, icon: 'fa-solid fa-house' });
+        itemMenu.items.push({ label: apiVersion, icon: 'fa-solid fa-gear' });
         model.value.push(itemMenu);
 };
 

@@ -96,8 +96,8 @@ const getEmpresas = async () => {
         }
         if (dropdownEmpresas.value.length <= 2) empresa.value = dropdownEmpresas.value[1].value;
         empresaLabel.value = dropdownEmpresas.value.find((item) => item.value == uProf.value.id_empresa).label;
-        // TODO: Se houver apenas uma empresa ou uProf.multiCliente < 1, remova listaNomes[0]
-        if (dropdownEmpresas.value.length <= 2 || uProf.value.multiCliente < 1) listaNomes.value.shift();
+        // TODO: Se houver apenas uma empresa ou uProf.multiCliente < 1, remova selectedColumns[0]
+        if (dropdownEmpresas.value.length <= 2 || uProf.value.multiCliente < 1) selectedColumns.value.shift();
     });
 };
 // Itens do grid
@@ -105,7 +105,7 @@ const limitDescription = 150;
 const limitNome = 80;
 
 // Lista de tipos
-const listaNomesDefault = ref([
+const columns = ref([
     { field: 'emp_fantasia', label: 'Empresa', matchMode: FilterMatchMode.EQUALS },
     { field: 'destinatario_agrupado', label: 'Credor | Devedor', matchMode: FilterMatchMode.CONTAINS, minWidth: '12rem' },
     // { field: 'data_emissao', label: 'Emissão', type: 'date', tagged: true, matchMode: FilterMatchMode.BETWEEN },
@@ -114,17 +114,18 @@ const listaNomesDefault = ref([
     { field: 'valor_bruto_conta', label: 'R$ Bruto', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
     { field: 'valor_liquido_conta', label: 'R$ Liquido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
     { field: 'valor_vencimento_parcela', label: 'R$ Parcela', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 960 ? 'hidden' : 'md:text-right' },
+    { field: 'pedido', label: 'Pedido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : 'md:text-right', activeOnGrid: false },
     { field: 'descricao_agrupada', label: 'Descrição', matchMode: FilterMatchMode.CONTAINS, minWidth: '12rem', class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : 'white-space-nowrap' }
     // { field: 'duplicata', label: 'Duplicata', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
     // { field: 'documento', label: 'Documento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
     // { field: 'pedido', label: 'Pedido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
 ]);
-const listaNomes = ref([...listaNomesDefault.value]);
+const selectedColumns = ref([...columns.value]);
 
 // Inicializa os filtros do grid
 const initFilters = () => {
     filters.value = {};
-    listaNomes.value.forEach((element) => {
+    selectedColumns.value.forEach((element) => {
         filters.value = {
             [element.field]: { value: '', matchMode: element.matchMode },
             ...filters.value
@@ -357,7 +358,7 @@ const exportXls = () => {
 
 const exportPdf = async () => {
     defaultSuccess('Por favor aguarde...');
-    let url = `${baseApiUrl}/printing/finSintetico${urlFilters.value}`;    
+    let url = `${baseApiUrl}/printing/finSintetico${urlFilters.value}`;
     const bodyRequest = {
         reportTitle: 'Posição Mensal de Comissionado',
         exportType: 'pdf',
@@ -413,12 +414,13 @@ const getSeverity = (field, type = 'date') => {
 const goField = (data) => {
     window.open(`#/${uProf.value.schema_description}/financeiro/${data.id}`, '_blank');
 };
-// // Carrega os dados do filtro do grid
 watchEffect(() => {
-    // TODO: Se for selecionada uma empresa da lista, remova listaNomes[0]
-    if (Number(empresa.value) > 0 && listaNomes.value[0].field == listaNomesDefault.value[0].field) listaNomes.value.shift();
-    else if (Number(empresa.value) == 0) listaNomes.value = [...listaNomesDefault.value];
+    if (Number(empresa.value) > 0 && selectedColumns.value[0].field == columns.value[0].field) selectedColumns.value.shift();
+    else if (Number(empresa.value) == 0) selectedColumns.value = [...columns.value];
 });
+const onToggle = (val) => {
+    selectedColumns.value = columns.value.filter(col => val.includes(col));
+};
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
     window.removeEventListener('resize', updateScreenWidth);
@@ -453,7 +455,7 @@ const itemsExport = [
 <template>
     <div class="grid">
         <div class="col-12">
-            <Breadcrumb :items="[{ label: 'Registros Financeiros', to: `/${uProf.schema_description}/financeiro` }]" />
+            <Breadcrumb :items="[{ label: 'Eventos Financeiros', to: `/${uProf.schema_description}/financeiro` }]" />
         </div>
         <div class="col-12">
             <FinanceiroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
@@ -461,50 +463,52 @@ const itemsExport = [
 
         <div class="col-12">
             <div class="card">
-                <DataTable
-                    ref="dt"
-                    :value="gridData"
-                    lazy
-                    :rowStyle="rowStyle"
-                    paginator
-                    :rows="gridData.length"
-                    dataKey="id_parcela"
-                    :rowHover="true"
-                    v-model:filters="filters"
-                    filterDisplay="row"
-                    :loading="loading"
-                    :filters="filters"
-                    responsiveLayout="scroll"
-                    :totalRecords="totalRecords"
+                <DataTable ref="dt" :value="gridData" lazy :rowStyle="rowStyle" paginator :rows="gridData.length"
+                    dataKey="id_parcela" :rowHover="true" v-model:filters="filters" filterDisplay="row"
+                    :loading="loading" :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
                     :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200, 500]"
-                    @page="onPage($event)"
-                    @sort="onSort($event)"
-                    @filter="onFilter($event)"
+                    @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`"
-                    scrollable
-                    :filter-options="customFilterOptions"
-                >
+                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
+                    :filter-options="customFilterOptions">
                     <template #header>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify" :value="qualify.label"> </Tag>
-                            <Tag class="tagRes" :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`"> </Tag>
+                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify"
+                                :key="qualify" :value="qualify.label"> </Tag>
+                            <Tag class="tagRes"
+                                :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
+                            </Tag>
                         </div>
-                        <div v-if="dropdownEmpresas.length > 2 && uProf.multiCliente >= 1" class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value" v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters()" />
-                            <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value" v-model="centro" :options="dropdownCentros" @change="mountUrlFilters()" />
-                            <Dropdown placeholder="Emitentes...?" id="id_empresa" optionLabel="label" optionValue="value" v-model="empresa" :options="dropdownEmpresas" @change="mountUrlFilters()" />
-                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} de {{ totalRecords }} registros</span>
+                        <div v-if="dropdownEmpresas.length > 2 && uProf.multiCliente >= 1"
+                            class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                            <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value"
+                                v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters()" />
+                            <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value"
+                                v-model="centro" :options="dropdownCentros" @change="mountUrlFilters()" />
+                            <Dropdown placeholder="Emitentes...?" id="id_empresa" optionLabel="label"
+                                optionValue="value" v-model="empresa" :options="dropdownEmpresas"
+                                @change="mountUrlFilters()" />
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                                gridData.length }} de {{ totalRecords }} registros</span>
                         </div>
                         <div v-else class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value" v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters()" />
-                            <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value" v-model="centro" :options="dropdownCentros" @change="mountUrlFilters()" />
-                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{ gridData.length }} de {{ totalRecords }} registros para {{ empresaLabel }}</span>
+                            <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value"
+                                v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters()" />
+                            <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value"
+                                v-model="centro" :options="dropdownCentros" @change="mountUrlFilters()" />
+                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                                gridData.length }} de {{ totalRecords }} registros para {{ empresaLabel }}</span>
                         </div>
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <SplitButton icon="fa-solid fa-cloud-arrow-down" label="Exportar dados"  @click="save" :model="itemsExport" />
-                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined @click="reload()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Lançamento" outlined @click="newDocument()" />
+                            <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
+                                @update:modelValue="onToggle" display="chip"
+                                placeholder="Selecione as colunas para exibir os dados" />
+                            <SplitButton icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" :model="itemsExport"
+                                @click="exportPdf()" />
+                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
+                                @click="reload()" />
+                            <Button type="button" icon="fa-solid fa-plus" label="Novo Lançamento" outlined
+                                @click="newDocument()" />
                         </div>
                     </template>
                     <template #empty>
@@ -513,46 +517,47 @@ const itemsExport = [
                     <template #loading>
                         <h2>Carregando dados. Por favor aguarde...</h2>
                     </template>
-                    <template v-for="nome in listaNomes" :key="nome">
-                        <Column
-                            :header="nome.label"
-                            :showFilterMenu="false"
-                            :filterField="nome.field"
-                            :filterMatchMode="'contains'"
-                            :filterMenuStyle="{ width: '14rem' }"
+                    <template v-for="nome in selectedColumns" :key="nome">
+                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
+                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }"
                             :style="`min-width: ${nome.minWidth ? nome.minWidth : '12rem'}; max-width: ${nome.minWidth ? nome.minWidth : '12rem'}`"
-                            sortable
-                            :sortField="nome.field"
-                            :class="nome.class"
-                        >
+                            sortable :sortField="nome.field" :class="nome.class">
                             <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]" :severity="getSeverity(data[nome.field], nome.type)" />
-                                <span
-                                    v-else-if="data[nome.field]"
-                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"
-                                ></span>
+                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"
+                                    :severity="getSeverity(data[nome.field], nome.type)" />
+                                <span v-else-if="data[nome.field]"
+                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
                                 <span v-else v-html="''"></span>
                             </template>
                             <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value" :options="nome.list" @change="filterCallback()" filter showClear placeholder="Pesquise" />
+                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value"
+                                    v-model="filterModel.value" :options="nome.list" @change="filterCallback()" filter
+                                    showClear placeholder="Pesquise" />
                             </template>
                             <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999" @update:modelValue="filterCallback()" />
+                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
+                                    showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
+                                    @update:modelValue="filterCallback()" />
                             </template>
                             <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Pesquise" />
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                                    class="p-column-filter" placeholder="Pesquise" />
                             </template>
                             <template #filterclear="{ filterCallback }">
-                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()" class="p-button-secondary"></Button>
+                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()"
+                                    class="p-button-secondary"></Button>
                             </template>
                             <template #filterapply="{ filterCallback }">
-                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()" class="p-button-success"></Button>
+                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()"
+                                    class="p-button-success"></Button>
                             </template>
                         </Column>
                     </template>
-                    <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+                    <Column headerStyle="width: 5rem; text-align: center"
+                        bodyStyle="text-align: center; overflow: visible">
                         <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars" @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
+                                @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
                         </template>
                     </Column>
                 </DataTable>

@@ -1,6 +1,7 @@
 const gestor = require('./gestor')
 const { env, logs } = require('../.env')
 const moment = require('moment');
+const version = require('../package.json').version
 
 module.exports = app => {
     // TODO: Exibir todas as rotas acessadas e imprimir no console
@@ -11,6 +12,11 @@ module.exports = app => {
             next()
         })
     }    
+
+    const getVersion = (req, res) => {
+        res.json(version)
+    }
+    app.get('/api-version', getVersion)
 
     /**
      * Rotas do BotControl
