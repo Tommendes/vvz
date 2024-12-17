@@ -35,15 +35,18 @@ module.exports = app => {
             return res.status(400, error)
         }
 
-        console.log('method', body.method);
-        console.log('msg', body.msg);
-        console.log('ticket', body.ticket);
+        console.log('body', body);
         
 
-        /**
-         * Registra todos os eventos recebidos
-         */
-        mailGeneral('Recepção de hooks', body.method, 'nao-responda@azulbot.com.br')
+        // console.log('method', body.method);
+        // console.log('msg', body.msg);
+        // console.log('ticket', body.ticket);
+        
+
+        // /**
+        //  * Registra todos os eventos recebidos
+        //  */
+        // mailGeneral('Recepção de hooks', body.method, 'nao-responda@azulbot.com.br')
         
     }
 
