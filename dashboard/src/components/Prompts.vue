@@ -14,7 +14,10 @@ const action = (itemData) => {
 
 <template>
     <!-- <h3 class="text-center mb-5">{{ itemData.label }}</h3> -->
-    <p class="text-xl text-center" v-html="item" v-for="item in itemData.message" :key="itemData.message" />
+    <div class="text-xl text-center" v-for="item in itemData.message" :key="itemData.message">
+        <!-- Renderizar o valor de item que poderá ser um conteúdo -->
+        {{ item }}
+    </div>
     <div class="flex justify-content-center flex-wrap gap-3">
         <Button :label="item.label" @click="action(item)" v-for="item in itemData.buttons" :key="item.id" text raised :severity="item.severity" />
     </div>

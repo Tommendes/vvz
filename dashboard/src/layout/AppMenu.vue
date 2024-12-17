@@ -89,7 +89,7 @@ const setMenuByUser = async () => {
         model.value.push(itemMenu);
     }
     
-        const itemMenu = { label: 'Versão', items: [] };
+        const itemMenu = { label: 'Versões', items: [] };
         itemMenu.items.push({ label: version, icon: 'fa-solid fa-house' });
         itemMenu.items.push({ label: apiVersion, icon: 'fa-solid fa-gear' });
         model.value.push(itemMenu);

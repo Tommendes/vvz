@@ -360,7 +360,7 @@ const exportPdf = async () => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/finSintetico${urlFilters.value}`;
     const bodyRequest = {
-        reportTitle: 'Posição Mensal de Comissionado',
+        reportTitle: 'Relatório Sintético de Lançamentos Financeiros',
         exportType: 'pdf',
         encoding: 'base64' // <- Adicionar à requisição para obter a impressão com o método do frontend
     };

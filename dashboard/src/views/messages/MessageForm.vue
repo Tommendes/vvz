@@ -197,7 +197,6 @@ onMounted(async () => {
 // Observar alterações nos dados do formulário
 var title_color;
 watchEffect(() => {
-    isItemDataChanged();
     // Adiciona um watcher para o campo 'body_variant'
     if (itemData.value.body_variant) {
         switch (itemData.value.body_variant) {
@@ -273,7 +272,7 @@ watchEffect(() => {
                         <div class="col-12 md:col-12">
                             <label for="msg">Mensagem</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="loading || mode != 'view'" v-model="itemData.msg" id="msg" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="mode == 'view'" v-model="itemData.msg" id="msg" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                         <div class="col-12 md:col-5" v-if="itemData.valid_to && !errorMessages.valid_to">
                             <label for="title_future">Título Futuro</label>
@@ -283,12 +282,12 @@ watchEffect(() => {
                         <div class="col-12 md:col-12">
                             <label for="msg_future">Mensagem Futura</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="loading || mode != 'view'" v-model="itemData.msg_future" id="msg_future" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="mode == 'view'" v-model="itemData.msg_future" id="msg_future" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
                         </div>
                         <div class="col-12">
                             <div class="card flex justify-content-center flex-wrap gap-3">
                                 <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                                <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!isItemDataChanged() || !formIsValid()" />
+                                <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised :disabled="!formIsValid()" />
                                 <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
                             </div>
                         </div>

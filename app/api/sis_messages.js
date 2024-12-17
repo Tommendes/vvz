@@ -30,8 +30,10 @@ module.exports = app => {
         try {
             existsOrError(body.title, 'Título não informado')
             existsOrError(body.msg, 'Mensagem não informada')
-            if (body.valid_from && !moment(body.valid_from, 'YYYY-MM-DD', true).isValid()) throw 'Data inicial inválida'
-            if (body.valid_to && !moment(body.valid_to, 'YYYY-MM-DD', true).isValid()) throw 'Data final inválida'
+            if (body.valid_from && !moment(body.valid_from, 'DD/MM/YYYY', true).isValid()) throw 'Data inicial inválida'
+            body.valid_from = moment(body.valid_from, 'DD/MM/YYYY', true).format('YYYY-MM-DD')
+            if (body.valid_to && !moment(body.valid_to, 'DD/MM/YYYY', true).isValid()) throw 'Data final inválida'
+            body.valid_to = body.valid_to ? moment(body.valid_to, 'DD/MM/YYYY', true).format('YYYY-MM-DD') : null            
             if (body.valid_to && body.valid_to < body.valid_from) throw 'Data final não pode ser menor que a data inicial'
             if (body.valid_to && !body.msg_future) throw 'Mensagem futura não informada'
             // Se não informado, o título futuro será o mesmo do título
@@ -124,6 +126,7 @@ module.exports = app => {
             .join({ tbl2: tabelaUsersDomain }, 'tbl2.id', 'tbl1.id_user')
             .join({ tbl3: tabelaSchemasDomain }, 'tbl3.id', 'tbl2.schema_id')
             .where({ 'tbl1.status': STATUS_ACTIVE })
+            .where({ 'tbl2.status': STATUS_ACTIVE })
             .groupBy('tbl1.id')
             .then(body => {
                 const count = body.length
