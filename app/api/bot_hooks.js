@@ -35,6 +35,9 @@ module.exports = app => {
             return res.status(400, error)
         }
 
+        console.log('body', body);
+        
+
         /**
          * Registra todos os eventos recebidos
          */
