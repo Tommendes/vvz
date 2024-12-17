@@ -35,10 +35,10 @@ module.exports = app => {
             return res.status(400, error)
         }
 
+        console.log('method', body.method);
         console.log('body', body);
         
 
-        // console.log('method', body.method);
         // console.log('msg', body.msg);
         // console.log('ticket', body.ticket);
         
