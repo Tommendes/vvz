@@ -21,7 +21,8 @@ module.exports = app => {
     /**
      * Rotas do BotControl
     */
-    app.post('/bot-control', app.api.bot_control.setRequest)
+    app.post('/bot-control', app.api.bot_hotmart.setRequest)
+    app.post('/bot-hooks', app.api.bot_hooks.setRequest)
 
     app.post('/signup', app.api.user.signup)
     app.post('/signin', app.api.auth.signin)
