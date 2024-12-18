@@ -46,7 +46,7 @@ module.exports = app => {
         // /**
         //  * Registra todos os eventos recebidos
         //  */
-        mailGeneral('Recepção de hooks: ' + body.method, JSON.stringify(body.msg), 'nao-responda@azulbot.com.br')
+        // mailGeneral('Recepção de hooks: ' + body.method, JSON.stringify(body.msg), 'nao-responda@azulbot.com.br')
         
     }
 
