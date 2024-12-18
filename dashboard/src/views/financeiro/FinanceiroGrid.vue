@@ -269,6 +269,7 @@ onMounted(async () => {
     // queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
+    selectedColumns.value = columns.value.filter(col => !['valor_bruto_conta'].includes(col));    
     // router.replace({ query: {} });
     // await mountUrlFilters();
 });
@@ -419,7 +420,7 @@ watchEffect(() => {
     else if (Number(empresa.value) == 0) selectedColumns.value = [...columns.value];
 });
 const onToggle = (val) => {
-    selectedColumns.value = columns.value.filter(col => val.includes(col));
+    selectedColumns.value = columns.value.filter(col => val.includes(col));    
 };
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
@@ -561,7 +562,7 @@ const itemsExport = [
                         </template>
                     </Column>
                 </DataTable>
-                <div v-if="uProf.admin >= 2">
+                <div v-if="uProf.admin >= 2" class="flex flex-wrap" style="max-width: 90%">
                     <p>mode: {{ mode }}</p>
                     <p>uProf: {{ uProf }}</p>
                     <p>empresa: {{ empresa }}</p>
