@@ -451,6 +451,11 @@ const itemsExport = [
     },
 ];
 
+const uProfWithoutBigDataTkn = computed(() => {
+  const { big_data_tkn, ...rest } = uProf.value;
+  return rest;
+});
+
 </script>
 
 <template>
@@ -564,7 +569,7 @@ const itemsExport = [
                 </DataTable>
                 <div v-if="uProf.admin >= 2" class="flex flex-wrap" style="max-width: 90%">
                     <p>mode: {{ mode }}</p>
-                    <p>uProf: {{ uProf }}</p>
+                    <p>uProf: {{ uProfWithoutBigDataTkn }}</p>
                     <p>empresa: {{ empresa }}</p>
                 </div>
             </div>
