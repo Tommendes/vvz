@@ -564,7 +564,8 @@ const itemsExport = [
                 </DataTable>
                 <div v-if="uProf.admin >= 2" class="flex flex-wrap" style="max-width: 90%">
                     <p>mode: {{ mode }}</p>
-                    <p>uProf: {{ uProf }}</p>
+                    <!-- Não apresentar field big_data_tkn -->
+                    <p>uProf: {{ uProf.filter((field) => field != 'big_data_tkn') }}</p>
                     <p>empresa: {{ empresa }}</p>
                 </div>
             </div>
