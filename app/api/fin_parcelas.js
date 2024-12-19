@@ -52,17 +52,19 @@ module.exports = app => {
             existsOrError(body.parcela, 'Parcela não informada')
             existsOrError(body.situacao, 'Situação da parcela não informada')
             // Verificar se a data de vencimanto é válida e converte para en
-            if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimento inválida'
-            body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
+            // if (!moment(body.data_vencimento, 'DD/MM/YYYY', true).isValid()) throw 'Data de vencimento inválida'
+            // body.data_vencimento = moment(body.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD')
+            body.data_vencimento = moment(body.data_vencimento).format('YYYY-MM-DD')
 
             switch (Number(body.situacao)) {
                 case SITUACAO_PAGO:
                 case SITUACAO_CONCILIADO:
                     existsOrError(body.data_pagto, 'Data de pagamento não informada');
-                    if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
-                        body.data_pagto = null;
-                        throw 'Data de pagamento inválida';
-                    } else body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
+                    body.data_pagto = moment(body.data_pagto).format('YYYY-MM-DD')
+                    // if (!moment(body.data_pagto, 'DD/MM/YYYY', true).isValid()) {
+                    //     body.data_pagto = null;
+                    //     throw 'Data de pagamento inválida';
+                    // } else body.data_pagto = moment(body.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD')
                     existsOrError(body.id_fin_contas, `Conta de ${centroCusto == '1' ? 'recebimento' : 'pagamento ou conciliação'} não informada`);
                     if (centroCusto == '2') existsOrError(body.documento, 'Documento de pagamento ou conciliação não informado');
                     break;

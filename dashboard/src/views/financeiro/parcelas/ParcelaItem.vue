@@ -93,6 +93,27 @@ const saveData = async () => {
     const method = id ? 'put' : 'post';
     if (itemData.value.situacao != SITUACAO_CANCELADO) itemData.value.motivo_cancelamento = null;
     const data = { ...itemData.value, centro: props.itemDataRoot.centro };
+    if (data.data_vencimento) {
+            if (moment(data.data_vencimento, 'DD/MM/YYYY', true).isValid()) {
+                data.data_vencimento = moment(data.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD');
+            } else if (moment(data.data_vencimento, true).isValid()) {
+                data.data_vencimento = moment(data.data_vencimento).format('YYYY-MM-DD');
+            } else {
+                defaultWarn('Data de vencimento inválida');
+                return;
+            }
+    }
+    if (data.data_pagto) {
+            if (moment(data.data_pagto, 'DD/MM/YYYY', true).isValid()) {
+                data.data_pagto = moment(data.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD');
+            } else if (moment(data.data_pagto, true).isValid()) {
+                data.data_pagto = moment(data.data_pagto).format('YYYY-MM-DD');
+            } else {
+                defaultWarn('Data de pagamento inválida');
+                return;
+            }
+            data.situacao = itemData.value.situacao = SITUACAO_PAGO;
+    }
     // data.data_pagto = data.data_pagto ? moment(data.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD') : null;
     // data.data_vencimento = data.data_vencimento ? moment(data.data_vencimento, 'DD/MM/YYYY').format('YYYY-MM-DD') : null;
     try {
@@ -256,16 +277,15 @@ watchEffect(() => {
                 <label for="data_vencimento">Data de Vencimento <span class="text-base"
                         style="color: red">*</span></label>
                 <InputGroup>
-                <Calendar v-model="itemData.data_vencimento" :disabled="['view'].includes(mode)" v-maska
-                    data-maska="##/##/####" showButtonBar placeholder="Vencimento"
+                <Calendar v-model="itemData.data_vencimento" :disabled="['view'].includes(mode)" dateFormat="dd/mm/yy" showIcon showButtonBar placeholder="Vencimento"
                     class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
                     <!-- <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska data-maska="##/##/####"
                         v-model="itemData.data_vencimento" id="data_vencimento" placeholder="Vencimento"
                         class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-10" /> -->
-                <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
+                <!-- <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
                     @click="itemData.data_vencimento = moment().format('DD/MM/YYYY')" text raised
                     :disabled="mode == 'view'"
-                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2" />
+                    class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2" /> -->
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">
@@ -312,16 +332,15 @@ watchEffect(() => {
                 <label for="data_pagto">Data do Pagamento <span v-if="!(itemData.situacao == '1')" class="text-base"
                         style="color: red">*</span></label>
                 <InputGroup>
-                    <Calendar v-model="itemData.data_pagto" :disabled="['view'].includes(mode)" v-maska
-                        data-maska="##/##/####" showButtonBar placeholder="Pagamento"
+                    <Calendar v-model="itemData.data_pagto" :disabled="['view'].includes(mode)" dateFormat="dd/mm/yy" showIcon showButtonBar placeholder="Pagamento"
                         class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full" />
                     <!-- <InputText autocomplete="no" :disabled="mode == 'view'" v-maska data-maska="##/##/####"
                         v-model="itemData.data_pagto" id="data_pagto" placeholder="Pagamento"
                         class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-10" /> -->
-                    <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
+                    <!-- <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
                         @click="itemData.data_pagto = moment().format('DD/MM/YYYY')" text raised
                         :disabled="mode == 'view'"
-                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2" />
+                        class="text-base text-color surface-overlay border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-2" /> -->
                 </InputGroup>
             </div>
             <div class="field col-12 md:col-2">

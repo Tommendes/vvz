@@ -42,6 +42,7 @@ const masks = ref({
 import { useConfirm } from 'primevue/useconfirm';
 const confirm = useConfirm();
 import moment from 'moment';
+import { isValid } from 'date-fns';
 
 // Objetos do formulário
 const fSEventos = ref();
@@ -138,6 +139,16 @@ const saveData = async () => {
         ...itemData.value
     };
 
+    if (preparedBody.data_emissao) {
+            if (moment(preparedBody.data_emissao, 'DD/MM/YYYY', true).isValid()) {
+                preparedBody.data_emissao = moment(preparedBody.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD');
+            } else if (moment(preparedBody.data_emissao, true).isValid()) {
+                preparedBody.data_emissao = moment(preparedBody.data_emissao).format('YYYY-MM-DD');
+            } else {
+                defaultWarn('Data de emissão inválida');
+                return;
+            }
+    }
     await axios[method](url, preparedBody)
         .then(async (res) => {
             editCadastro.value = false;
@@ -505,13 +516,13 @@ watch(route, (value) => {
                                     class="p-error">*</small></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputGroup v-else>
-                                <Calendar required v-model="itemData.data_emissao"
-                                    id="data_emissao" :disabled="mode == 'view'" />
+                                <Calendar required v-model="itemData.data_emissao" id="data_emissao"
+                                    :disabled="mode == 'view'" dateFormat="dd/mm/yy" showIcon showButtonBar />
                                 <!-- <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska
                                     data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" /> -->
-                                <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
+                                <!-- <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
                                     @click="itemData.data_emissao = moment().format('DD/MM/YYYY')" text raised
-                                    :disabled="mode == 'view'" />
+                                    :disabled="mode == 'view'" /> -->
                             </InputGroup>
                         </div>
                         <div :class="`col-12 lg:col-3`">
@@ -594,15 +605,18 @@ watch(route, (value) => {
                                 class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised
                                 @click="registroIdentico" />
                             <Button label="Cancelar Registro" v-tooltip.top="`Cancelar não exclui o registro`"
-                                v-if="!itemData.status || itemData.status < situacaoFinLancamentos.STATUS_CANCELADO" type="button"
+                                v-if="!itemData.status || itemData.status < situacaoFinLancamentos.STATUS_CANCELADO"
+                                type="button"
                                 :disabled="!(uProf.fiscal >= 3 && (itemData.status == 0 || itemData.status == 10))"
                                 class="w-full mb-3" :icon="`fa-solid fa-ban`" severity="warning" text raised
                                 @click="confirmCancel" />
                             <Button label="Reativar Registro" v-tooltip.top="`Reative o registro cancelado`"
-                                v-else-if="uProf.fiscal >= 4 && itemData.status >= situacaoFinLancamentos.STATUS_CANCELADO" type="button" class="w-full mb-3"
+                                v-else-if="uProf.fiscal >= 4 && itemData.status >= situacaoFinLancamentos.STATUS_CANCELADO"
+                                type="button" class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice ${itemData.status == 0 ? 'fa-shake' : ''}`"
                                 severity="warning" text raised @click="confirmReactivate" />
-                            <Button v-if="uProf.fiscal >= 4 && itemData.status == situacaoFinLancamentos.STATUS_ATIVO" label="Excluir Registro"
+                            <Button v-if="uProf.fiscal >= 4 && itemData.status == situacaoFinLancamentos.STATUS_ATIVO"
+                                label="Excluir Registro"
                                 v-tooltip.top="`Não pode ser desfeito! Se excluir, excluirá o documento relacionado e os registros financeiros ficarão órfãos, caso haja algum!`"
                                 type="button" :disabled="!(uProf.fiscal >= 4 && itemData.status == 10)"
                                 class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
@@ -614,6 +628,23 @@ watch(route, (value) => {
                     <NotasGrid v-if="uProf.admin >= 2 && itemData.id" :itemDataRoot="itemData" @reloadItems="loadNotas"
                         :uProf="uProf" :mode="mode" ref="notasGrid" />
                 </div>
+                <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="uProf.admin >= 2">
+                    <template #legend>
+                        <div class="flex align-items-center text-primary">
+                            <span class="fa-solid fa-circle-info mr-2"></span>
+                            <span class="font-bold text-lg">FormData</span>
+                        </div>
+                    </template>
+                    <p>route: {{ route.name }}</p>
+                    <p>breadItems: {{ breadItems }}</p>
+                    <p>mode: {{ mode }}</p>
+                    <p>itemData: {{ itemData }}</p>
+                    <p>editCadastro {{ editCadastro }}</p>
+                    <p>selectedCadastro {{ selectedCadastro }}</p>
+                    <p>itemDataRetencoes {{ itemDataRetencoes }}</p>
+                    <p>itemDataParcelas {{ itemDataParcelas }}</p>
+                    <p>itemDataNotas {{ itemDataNotas }}</p>
+                </Fieldset>
                 <div class="col-12" v-if="itemData.id">
                     <ParcelasGrid v-if="itemData.id" @reloadItems="loadParcelas" :totalLiquido="itemData.valor_liquido"
                         :uProf="uProf" :mode="mode" :itemDataRoot="itemData" ref="parcelasGrid" />
@@ -638,23 +669,6 @@ watch(route, (value) => {
             </div>
         </form>
     </div>
-    <Fieldset class="bg-green-200 mt-3" toggleable :collapsed="false" v-if="uProf.admin >= 2">
-        <template #legend>
-            <div class="flex align-items-center text-primary">
-                <span class="fa-solid fa-circle-info mr-2"></span>
-                <span class="font-bold text-lg">FormData</span>
-            </div>
-        </template>
-        <p>route: {{ route.name }}</p>
-        <p>breadItems: {{ breadItems }}</p>
-        <p>mode: {{ mode }}</p>
-        <p>itemData: {{ itemData }}</p>
-        <p>editCadastro {{ editCadastro }}</p>
-        <p>selectedCadastro {{ selectedCadastro }}</p>
-        <p>itemDataRetencoes {{ itemDataRetencoes }}</p>
-        <p>itemDataParcelas {{ itemDataParcelas }}</p>
-        <p>itemDataNotas {{ itemDataNotas }}</p>
-    </Fieldset>
 </template>
 
 <style scoped>
