@@ -269,7 +269,7 @@ onMounted(async () => {
     // queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
-    selectedColumns.value = columns.value.filter(col => !['valor_bruto_conta'].includes(col));    
+    selectedColumns.value = columns.value.filter(col => !['valor_bruto_conta'].includes(col));
     // router.replace({ query: {} });
     // await mountUrlFilters();
 });
@@ -420,7 +420,7 @@ watchEffect(() => {
     else if (Number(empresa.value) == 0) selectedColumns.value = [...columns.value];
 });
 const onToggle = (val) => {
-    selectedColumns.value = columns.value.filter(col => val.includes(col));    
+    selectedColumns.value = columns.value.filter(col => val.includes(col));
 };
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
@@ -452,8 +452,8 @@ const itemsExport = [
 ];
 
 const uProfWithoutBigDataTkn = computed(() => {
-  const { big_data_tkn, ...rest } = uProf.value;
-  return rest;
+    const { big_data_tkn, ...rest } = uProf.value;
+    return rest;
 });
 
 </script>
@@ -481,7 +481,7 @@ const uProfWithoutBigDataTkn = computed(() => {
                         <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
                             <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify"
                                 :key="qualify" :value="qualify.label"> </Tag>
-                            <Tag class="tagRes"
+                            <Tag v-if="centro >= 1" class="tagRes"
                                 :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
                             </Tag>
                         </div>
@@ -509,9 +509,9 @@ const uProfWithoutBigDataTkn = computed(() => {
                             <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
                                 @update:modelValue="onToggle" display="chip"
                                 placeholder="Selecione as colunas para exibir os dados" />
-                            <!-- <SplitButton icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" :model="itemsExport"
-                                @click="exportPdf()" /> -->
-                            <Button type="button" icon="fa-solid fa-file-pdf" label="Exportar dados"
+                            <SplitButton v-if="uProf.admin >= 1" icon="fa-solid fa-cloud-arrow-down"
+                                label="Exportar dados" :model="itemsExport" @click="exportPdf()" />
+                            <Button v-else type="button" icon="fa-solid fa-file-pdf" label="Exportar dados"
                                 @click="exportPdf()" />
                             <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
                                 @click="reload()" />
