@@ -126,7 +126,7 @@ defineExpose({ loadData }); // Expondo a função para o componente pai
 const reload = async () => {
     mode.value = 'view';
     editCadastro.value = false;
-    loadData();
+    await loadData();
 };
 // Salvar dados do formulário
 const saveData = async () => {
@@ -505,8 +505,10 @@ watch(route, (value) => {
                                     class="p-error">*</small></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <InputGroup v-else>
-                                <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska
-                                    data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" />
+                                <Calendar required v-model="itemData.data_emissao"
+                                    id="data_emissao" :disabled="mode == 'view'" />
+                                <!-- <InputText autocomplete="no" required :disabled="mode == 'view'" v-maska
+                                    data-maska="##/##/####" v-model="itemData.data_emissao" id="data_emissao" /> -->
                                 <Button v-tooltip.top="'Data de hoje'" icon="fa-solid fa-calendar-day"
                                     @click="itemData.data_emissao = moment().format('DD/MM/YYYY')" text raised
                                     :disabled="mode == 'view'" />
