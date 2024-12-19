@@ -65,7 +65,7 @@ const setMenuByUser = async () => {
     }
     if (uProf.value.financeiro >= 1) {
         const itemMenu = { label: 'Financeiro', items: [] };
-        itemMenu.items.push({ label: 'Eventos', icon: 'fa-solid fa-cash-register', to: `/${uProf.value.schema_description}/financeiro` });
+        itemMenu.items.push({ label: 'Eventos Financeiros', icon: 'fa-solid fa-cash-register', to: `/${uProf.value.schema_description}/financeiro` });
         model.value.push(itemMenu);
     }
     if (uProf.value.admin >= 2)
