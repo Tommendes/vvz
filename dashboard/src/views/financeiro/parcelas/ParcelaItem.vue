@@ -151,8 +151,9 @@ const getContas = async () => {
     // }
 };
 // Fim das operações para multiplicar parcelas
-const cancel = () => {
+const cancel = async () => {
     mode.value = 'view';
+    await loadData();
     emit('cancel');
 };
 
