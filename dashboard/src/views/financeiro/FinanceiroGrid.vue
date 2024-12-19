@@ -511,7 +511,7 @@ const uProfWithoutBigDataTkn = computed(() => {
                                 placeholder="Selecione as colunas para exibir os dados" />
                             <!-- <SplitButton icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" :model="itemsExport"
                                 @click="exportPdf()" /> -->
-                            <Button type="button" icon="fa-solid fa-file-pdf" label="Exportar dados" outlined
+                            <Button type="button" icon="fa-solid fa-file-pdf" label="Exportar dados"
                                 @click="exportPdf()" />
                             <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
                                 @click="reload()" />
