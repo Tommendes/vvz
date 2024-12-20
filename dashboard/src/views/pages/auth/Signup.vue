@@ -10,7 +10,7 @@ const itemData = ref({
     fantasia: undefined,
     name: undefined,
     email: undefined,
-    password: 
+    password: undefined,
     confirmPassword: undefined,
     telefone: undefined,
     admin: 0,
