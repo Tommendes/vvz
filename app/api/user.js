@@ -1098,6 +1098,8 @@ module.exports = app => {
             default: operComp = '='; break;
         }
         ret.where(app.db.raw(`${fieldName} ${operComp} '${value}'`))
+            .where({ schema_id: uParams.schema_id })
+            
         if (status) ret.where({ status: status })
         else ret.whereIn('status', [STATUS_SUSPENDED, STATUS_ACTIVE])
 
