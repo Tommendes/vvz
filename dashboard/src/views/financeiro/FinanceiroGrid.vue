@@ -509,10 +509,12 @@ const uProfWithoutBigDataTkn = computed(() => {
                             <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
                                 @update:modelValue="onToggle" display="chip"
                                 placeholder="Selecione as colunas para exibir os dados" />
-                            <SplitButton v-if="uProf.admin >= 1" icon="fa-solid fa-cloud-arrow-down"
+                            <SplitButton icon="fa-solid fa-cloud-arrow-down"
+                                label="Exportar dados" :model="itemsExport" @click="exportPdf()" />
+                            <!-- <SplitButton v-if="uProf.admin >= 1" icon="fa-solid fa-cloud-arrow-down"
                                 label="Exportar dados" :model="itemsExport" @click="exportPdf()" />
                             <Button v-else type="button" icon="fa-solid fa-file-pdf" label="Exportar dados"
-                                @click="exportPdf()" />
+                                @click="exportPdf()" /> -->
                             <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
                                 @click="reload()" />
                             <Button type="button" icon="fa-solid fa-plus" label="Novo Lançamento" outlined

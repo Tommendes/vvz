@@ -7,12 +7,12 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const itemData = ref({
-    fantasia: undefined,
-    name: undefined,
-    email: undefined,
-    password: undefined,
-    confirmPassword: undefined,
-    telefone: undefined,
+    fantasia: 'Vivazul Smart Apps',
+    name: 'Tom Mendes',
+    email: 'tommendespereira@gmail.com',
+    password: '141108@Le',
+    confirmPassword: '141108@Le',
+    telefone: '81982807245',
     admin: 0,
     gestor: 1,
     multiCliente: 0,
