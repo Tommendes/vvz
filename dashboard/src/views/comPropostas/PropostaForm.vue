@@ -172,8 +172,6 @@ onMounted(async () => {
     await loadOptions();
     loadData();
 });
-// Observar alterações nos dados do formulário
-watchEffect(() => {});
 </script>
 
 <template>

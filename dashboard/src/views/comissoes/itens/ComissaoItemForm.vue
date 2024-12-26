@@ -598,7 +598,7 @@ watchEffect(() => {
             <div class="flex-none flex" v-if="[0,1].includes(itemData.agente_representante)">
                 <Skeleton v-if="loading" height="3rem"></Skeleton>
                 <InputText v-else autocomplete="no" :disabled="mode == 'view'" v-model="itemData.nf" id="nf" type="text"
-                    v-maska data-maska="##########" placeholder="Nota fiscal" @keydown.enter.prevent />
+                    placeholder="Nota fiscal" @keydown.enter.prevent />
             </div>
             <div class="flex-none flex">
                 <div class="p-inputgroup" data-pc-name="inputgroup" data-pc-section="root">

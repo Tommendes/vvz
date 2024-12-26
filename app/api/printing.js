@@ -146,7 +146,8 @@ module.exports = app => {
             "usuario": usuario,
             "idEmpresa": empresa.id,
             "idProposta": idProposta,
-            "dbSchema": dbSchema
+            "dbSchema": dbSchema,
+            "net.sf.jasperreports.timezone" : "America/Recife"
         }
 
         const exportType = body.exportType || 'pdf'
