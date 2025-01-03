@@ -78,7 +78,7 @@ module.exports = app => {
         try {
             // Se não for uma conversão, verificar se o número de documento já existe                
             if (status_params_force != STATUS_CONVERTIDO && body.documento) {
-                try {                    
+                try {
                     const unique = await app.db(tabelaDomain).select('id').where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).whereRaw(`cast(documento as unsigned) = ${body.documento}`).first()
                     if (unique && unique.id != body.id) throw 'Número de documento já cadastrado para esta unidade de negócio'
                 } catch (error) {
@@ -462,7 +462,7 @@ module.exports = app => {
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', '=', 'tbl1.id_pipeline_params')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'tbl1.id_cadastros')
             .where({ 'tbl1.status': STATUS_ACTIVE })
-            // .groupBy('tbl1.id')
+        // .groupBy('tbl1.id')
         totalRecords = await totalRecords.whereRaw(query ? query : '1=1')
 
         // DATE_FORMAT(SUBSTRING_INDEX(tbl1.created_at,' ',1),'%d/%m/%Y') AS status_created_at,
@@ -489,6 +489,7 @@ module.exports = app => {
             ret.orderBy(app.db.raw(sortField), sortOrder)
                 .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
                 .limit(rows).offset((page + 1) * rows - rows)
+
         ret.then(body => {
             // se sortField == 'status_created_at' então ordene pelo valor em if body[X].status_created_at considerando o valor em sortOrder (ASC ou DESC) e considerando que status_created_at é uma data no format 'dd/mm/yyyy'
             if (sortField == 'status_created_at')
@@ -766,7 +767,7 @@ module.exports = app => {
         const biPeriodDf = req.query.periodDf
         const biPeriodDv = req.query.periodDv || 2
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_status`
 
         const firstFayOfThisMonth = moment().startOf('month').format('YYYY-MM-DD')
@@ -775,7 +776,7 @@ module.exports = app => {
         try {
             // todos
             total = app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
-                .join({ pp: tabelaParamsDomain }, function () {
+                .join({ pp: tabelaPipelineParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
@@ -793,7 +794,7 @@ module.exports = app => {
             // no período
             if (biPeriodDi && biPeriodDf) {
                 noPeriodo = app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
-                    .join({ pp: tabelaParamsDomain }, function () {
+                    .join({ pp: tabelaPipelineParamsDomain }, function () {
                         this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                     })
                     .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
@@ -813,7 +814,7 @@ module.exports = app => {
         try {
             // neste mês
             novos = app.db({ tbl1: tabelaDomain }).count('tbl1.id as count')
-                .join({ pp: tabelaParamsDomain }, function () {
+                .join({ pp: tabelaPipelineParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': `${biPeriodDv}` })
@@ -845,7 +846,7 @@ module.exports = app => {
         }
         const rows = req.query.rows || 5
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const tabelaUsers = `${dbPrefix}_api.users`
@@ -853,7 +854,7 @@ module.exports = app => {
             const biRows = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`tbl1.id,CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo,replace(pp.descricao,'_',' ') representacao,
                     lpad(tbl1.documento,${digitsOfAFolder},'0'),tbl1.created_at data_status,tbl1.valor_bruto,u.name agente`))
-                .join({ pp: tabelaParamsDomain }, function () {
+                .join({ pp: tabelaPipelineParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
                 .join({ u: tabelaUsers }, function () {
@@ -903,17 +904,24 @@ module.exports = app => {
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao, pp.descricao unidade_descricao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
-                .join({ pp: tabelaParamsDomain }, function () {
+                .join({ pp: tabelaPipelineParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
+                .whereExists(function () {
+                    this.select(app.db.raw(1))
+                        .from({ ps: tabelaPipelineStatusDomain })
+                        .whereRaw('ps.id_pipeline = tbl1.id')
+                        .where('ps.status', 10)
+                        .whereRaw(`DATE(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}" `);
+                })
+                // .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
-                .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id AND ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('pp.id')
                 .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
@@ -967,24 +975,32 @@ module.exports = app => {
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         const tabelaUsers = `${dbPrefix}_api.users`
         try {
-            const biTopSelling = await app.db({ tbl1: tabelaDomain })
+            const query = app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`u.id,u.name agente,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade `))
-                .join({ pp: tabelaParamsDomain }, function () {
+                .join({ pp: tabelaPipelineParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
                 .join({ u: tabelaUsers }, function () {
                     this.on('u.id', '=', 'tbl1.id_com_agentes')
                 })
+                .whereExists(function () {
+                    this.select(app.db.raw(1))
+                        .from({ ps: tabelaPipelineStatusDomain })
+                        .whereRaw('ps.id_pipeline = tbl1.id')
+                        .where('ps.status', 10)
+                        .whereRaw(`DATE(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}" `);
+                })
+                // .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 2 })
-                .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id AND ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PEDIDO}`)
                 .groupBy('tbl1.id_com_agentes')
                 .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
-                .limit(rows)
+
+            const biTopSelling = await query.limit(rows)
             let totalSell = 0;
             let totalSellQuantity = 0;
             // Calcular o total geral para depois calcular o percentual de cada item
@@ -1032,17 +1048,24 @@ module.exports = app => {
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biTopSelling = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`pp.id,REPLACE(pp.descricao,'_',' ') representacao, pp.descricao unidade_descricao,SUM(tbl1.valor_bruto)valor_bruto,COUNT(tbl1.id)quantidade`))
-                .join({ pp: tabelaParamsDomain }, function () {
+                .join({ pp: tabelaPipelineParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
+                .whereExists(function () {
+                    this.select(app.db.raw(1))
+                        .from({ ps: tabelaPipelineStatusDomain })
+                        .whereRaw('ps.id_pipeline = tbl1.id')
+                        .where('ps.status', 10)
+                        .whereRaw(`DATE(ps.created_at) between "${biPeriodDi}" and "${biPeriodDf}" `);
+                })
+                // .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
                 .where({ 'tbl1.status': STATUS_ACTIVE, 'pp.doc_venda': 1 })
-                .whereRaw(`DATE(tbl1.created_at) between "${biPeriodDi}" and "${biPeriodDf}"`)
-                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PROPOSTA}`)
+                .whereRaw(`(SELECT ps.status_params FROM ${tabelaPipelineStatusDomain} ps WHERE ps.id_pipeline = tbl1.id AND ps.status = 10 ORDER BY ps.created_at DESC, ps.status_params DESC LIMIT 1) = ${STATUS_PROPOSTA}`)
                 .groupBy('pp.id')
                 .orderBy(app.db.raw('SUM(tbl1.valor_bruto)'), 'desc')
                 .limit(rows)
@@ -1093,12 +1116,12 @@ module.exports = app => {
             return res.status(400).send(error)
         }
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatus}`
         try {
             const biSalesOverview = await app.db({ tbl1: tabelaDomain })
                 .select(app.db.raw(`DATE_FORMAT(tbl1.created_at, '%m/%y') AS mes,pp.descricao AS representacao,SUM(tbl1.valor_bruto) AS valor_bruto`))
-                .join({ pp: tabelaParamsDomain }, function () {
+                .join({ pp: tabelaPipelineParamsDomain }, function () {
                     this.on('pp.id', '=', 'tbl1.id_pipeline_params')
                 })
                 // .join({ ps: tabelaPipelineStatusDomain }, function () {
@@ -1135,34 +1158,34 @@ module.exports = app => {
         let body = { ...req.body }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
 
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
-        const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
+        const pipelineParam = await app.db({ pp: tabelaPipelineParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
 
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
-                
+
         ftpParamsArray.forEach(ftpParam => {
             ftpParam.path = pathDoc;
         });
         let clientFtp = undefined;
         try {
             existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
-            
+
             let connectionResult = await connectToFTP(ftpParamsArray, uParams);
-            
+
             if (!connectionResult.success) {
                 throw new Error('Não foi possível conectar ao servidor de arquivos neste momento');
             }
-            
+
             clientFtp = connectionResult.client;
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } });
             return res.status(400).send(error.message);
         }
-        
+
         try {
             await clientFtp.ensureDir(pathDoc);
             app.api.logger.logInfo({ log: { line: `Folder created: ${pathDoc}`, sConsole: true } })
@@ -1208,7 +1231,7 @@ module.exports = app => {
         let body = { ...req.body }
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
-        const tabelaParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
+        const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaParams}`
         const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
 
         try {
@@ -1217,7 +1240,7 @@ module.exports = app => {
             return res.status(200).send(error)
         }
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
-        const pipelineParam = await app.db({ pp: tabelaParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
+        const pipelineParam = await app.db({ pp: tabelaPipelineParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
 
         const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
