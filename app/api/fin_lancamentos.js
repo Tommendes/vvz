@@ -168,7 +168,8 @@ module.exports = app => {
                 if (key.split(':')[0] == 'field') {
                     let queryField = key.split(':')[1]
                     if (['destinatario_agrupado'].includes(key.split(':')[1])) {
-                        const cpfCnpj = value.replace(/([^\d])+/gim, "")
+                        let cpfCnpj = value.replace(/([^\d])+/gim, "")
+                        if (!(cpfCnpj.length >= 11 && cpfCnpj.length <= 14)) cpfCnpj = undefined
                         const nome = value
                         query += '('
                         switch (operator) {
