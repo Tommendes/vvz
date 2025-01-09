@@ -289,7 +289,7 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .post(app.api.pipeline_status.save)
         .get(app.api.pipeline_status.get)
-    app.route('/pipeline-status/:id_pipeline/:id')
+        app.route('/pipeline-status/:id_pipeline/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.pipeline_status.save)
         .get(app.api.pipeline_status.getById)

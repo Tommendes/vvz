@@ -116,6 +116,7 @@ const limitNome = 50;
 // Lista de tipos
 const dropdownStatus = ref([
     { label: 'Pendente', value: '0' },
+    { label: 'Reativado', value: '1' },
     { label: 'Convertido', value: '10' },
     { label: 'Pedido', value: '20' },
     { label: 'Assistência Técnica', value: '21' },

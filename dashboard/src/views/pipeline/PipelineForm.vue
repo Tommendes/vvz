@@ -322,7 +322,7 @@ const itemDataStatusPreload = ref([
     {
         status: '0',
         action: 'Criação',
-        label: 'Criado',
+        label: 'Criado/Reaquecido',
         icon: 'fa-solid fa-plus',
         color: '#3b82f6'
     },
@@ -391,12 +391,15 @@ const listStatusRegistro = async () => {
             itemDataLastStatus.value = res.data.data[res.data.data.length - 1];
             itemData.value.status_params = itemDataLastStatus.value.status_params;
             itemDataStatus.value = [];
+            let i = 0;
             res.data.data.forEach((element) => {
                 const status = itemDataStatusPreload.value.filter((item) => {
                     return item.status == element.status_params;
                 });
                 itemDataStatus.value.push({
                     // date recebe 2022-10-31 15:09:38 e deve converter para 31/10/2022 15:09:38
+                    i: i++,
+                    id: element.id,
                     date: moment(element.created_at).format('DD/MM/YYYY HH:mm:ss').replaceAll(':00', '').replaceAll(' 00', ''),
                     user: element.name,
                     status: status[0].label,
@@ -470,6 +473,41 @@ const optionLongParams = async (query) => {
 /**
  * Ferramentas do registro
  */
+const removeStatus = async (status) => {
+    // Não excluir se tiver apenas um status
+    if (itemDataStatus.value.length == 1) {
+        defaultWarn('Não é possível excluir o único status do registro');
+        return;
+    }
+    if (status.i == 0) {
+        defaultWarn('Não é possível excluir o primeiro status do registro');
+        return;
+    }
+    // Não excluir se for status 10 ou 20
+    if ([andamentoRegistroPipeline.STATUS_CONVERTIDO, andamentoRegistroPipeline.STATUS_PEDIDO].includes(status.statusCode)) {
+        defaultWarn('Não é possível excluir os status de pedido ou convertido');
+        return;
+    }
+    const url = `${baseApiUrl}/pipeline-status/${itemData.value.id}/${status.id}`;
+    confirm.require({
+        group: 'templating',
+        header: 'Confirmar',
+        message: 'Confirma a exclusão do status?',
+        icon: 'fa-solid fa-question fa-beat',
+        acceptIcon: 'fa-solid fa-check',
+        rejectIcon: 'fa-solid fa-xmark',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            await axios.delete(url).then(() => {
+                defaultSuccess('Status removido com sucesso');
+                reload();
+            });
+        },
+        reject: () => {
+            return false;
+        }
+    });
+};
 const statusRecord = async (status) => {
     if (route.params.id) itemData.value.id = route.params.id;
     const url = `${urlBase.value}/${itemData.value.id}?st=${status}`;
@@ -502,6 +540,12 @@ const statusRecord = async (status) => {
             reject: () => {
                 return false;
             }
+        });
+    } else if ([andamentoRegistroPipeline.STATUS_PENDENTE].includes(status)) {
+        await axios.delete(url).then(() => {
+            // Definir a mensagem baseado nos status e de acordo com itemDataStatusPreload
+            defaultSuccess(`Registro reaquecido com sucesso`);
+            reload();
         });
     } else if ([andamentoRegistroPipeline.STATUS_CONVERTIDO].includes(status))
         confirm.require({
@@ -730,68 +774,50 @@ watch(route, (value) => {
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete
                                 v-else-if="route.name != 'cadastro' && mode != 'expandedFormMode' && (editCadastro || mode == 'new')"
-                                v-model="selectedCadastro"
-                                :dropdown="false"
-                                optionLabel="name"
-                                :suggestions="filteredCadastros"
-                                @complete="searchCadastros"
-                                forceSelection
-                                @keydown.enter.prevent
-                            />
+                                v-model="selectedCadastro" :dropdown="false" optionLabel="name"
+                                :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection
+                                @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>
                                 <InputText disabled v-model="nomeCliente" />
                                 <Button
                                     v-if="(route.name != 'cadastro' && itemDataLastStatus.status_params < 80 && uProf.pipeline >= 4) || mode == 'clone'"
-                                    icon="fa-solid fa-pencil"
-                                    severity="primary"
-                                    @click="confirmEditCadastro()"
-                                    :disabled="mode == 'view'"
-                                />
+                                    icon="fa-solid fa-pencil" severity="primary" @click="confirmEditCadastro()"
+                                    :disabled="mode == 'view'" />
                             </div>
                         </div>
-                        <div :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
+                        <div
+                            :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
                             <label for="id_pipeline_params">Tipo ou Unidade de negócio</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else-if="['view', 'expandedFormMode'].includes(mode) && unidadeLabel" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`" v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
+                            <p v-else-if="['view', 'expandedFormMode'].includes(mode) && unidadeLabel"
+                                :class="`${animationDocNr}disabled p-inputtext p-component p-filled`"
+                                v-tooltip.top="'Não é possível alterar o tipo de registro depois de criado'">
                                 {{ unidadeLabel }}
                             </p>
-                            <Dropdown
-                                v-else
-                                filter
-                                placeholder="Selecione..."
-                                :showClear="!!itemData.id_pipeline_params"
-                                id="unidade_tipos"
-                                optionLabel="label"
-                                optionValue="value"
-                                v-model="itemData.id_pipeline_params"
-                                :options="dropdownUnidades"
-                                :disabled="!['new', 'clone'].includes(mode)"
-                                @change="getPipelineParam()"
-                            />
+                            <Dropdown v-else filter placeholder="Selecione..."
+                                :showClear="!!itemData.id_pipeline_params" id="unidade_tipos" optionLabel="label"
+                                optionValue="value" v-model="itemData.id_pipeline_params" :options="dropdownUnidades"
+                                :disabled="!['new', 'clone'].includes(mode)" @change="getPipelineParam()" />
                         </div>
-                        <div :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
+                        <div
+                            :class="`col-12 lg:col-${['new', 'clone'].includes(mode) && !(itemData.documento || (['new', 'clone'].includes(mode) && itemDataParam.autom_nr == 0)) ? 6 : 5}`">
                             <label for="id_com_agentes">Agente de vendas</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Dropdown
-                                v-else
-                                filter
-                                placeholder="Selecione..."
-                                :showClear="!!itemData.id_com_agentes"
-                                id="unidade_tipos"
-                                optionLabel="label"
-                                optionValue="value"
-                                v-model="itemData.id_com_agentes"
-                                :options="dropdownAgentes"
-                                :disabled="['view', 'expandedFormMode'].includes(mode)"
-                            />
+                            <Dropdown v-else filter placeholder="Selecione..." :showClear="!!itemData.id_com_agentes"
+                                id="unidade_tipos" optionLabel="label" optionValue="value"
+                                v-model="itemData.id_com_agentes" :options="dropdownAgentes"
+                                :disabled="['view', 'expandedFormMode'].includes(mode)" />
                         </div>
-                        <div class="col-12 lg:col-2" v-if="itemData.documento || (['new', 'clone', 'edit'].includes(mode) && itemDataParam.autom_nr == 0)">
+                        <div class="col-12 lg:col-2"
+                            v-if="itemData.documento || (['new', 'clone', 'edit'].includes(mode) && itemDataParam.autom_nr == 0)">
                             <label for="documento">Nº do Documento</label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <p v-else-if="itemDataParam.autom_nr || mode == 'expandedFormMode'" :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
+                            <p v-else-if="itemDataParam.autom_nr || mode == 'expandedFormMode'"
+                                :class="`${animationDocNr}disabled p-inputtext p-component p-filled`">
                                 {{ itemData.documento }}
                             </p>
-                            <InputText v-else autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)" v-model="itemData.documento" id="documento" type="text" maxlength="10" />
+                            <InputText v-else autocomplete="no" :disabled="['view', 'expandedFormMode'].includes(mode)"
+                                v-model="itemData.documento" id="documento" type="text" maxlength="10" />
                         </div>
                         <div class="col-12 lg:col-1" v-if="itemData.versao">
                             <label for="versao">Versão</label>
@@ -804,7 +830,8 @@ watch(route, (value) => {
                                 <div class="col-12" style="text-align: center">
                                     <div class="flex align-items-end flex-wrap card-container purple-container">
                                         <span class="p-inputtext p-component p-filled surface-100">
-                                            <i class="fa-solid fa-angles-down fa-shake"></i> Valores referência para comissão
+                                            <i class="fa-solid fa-angles-down fa-shake"></i> Valores referência para
+                                            comissão
                                             <i class="fa-solid fa-angles-down fa-shake" />
                                         </span>
                                     </div>
@@ -812,44 +839,38 @@ watch(route, (value) => {
                                 <div :class="`col-12 lg:col-6`">
                                     <label for="valor_bruto">Valor Bruto</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)"
+                                        class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
-                                        <InputText
-                                            autocomplete="no"
+                                        <InputText autocomplete="no"
                                             :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                            v-model="itemData.valor_bruto"
-                                            id="valor_bruto"
-                                            type="text"
-                                            v-maska
-                                            data-maska="0,99"
-                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                        />
+                                            v-model="itemData.valor_bruto" id="valor_bruto" type="text" v-maska
+                                            data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
                                     </div>
                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
-                                        <span disabled v-html="itemData.valor_bruto" id="valor_bruto" class="p-inputtext p-component" />
+                                        <span disabled v-html="itemData.valor_bruto" id="valor_bruto"
+                                            class="p-inputtext p-component" />
                                     </div>
                                 </div>
                                 <div :class="`col-12 lg:col-6`">
                                     <label for="valor_liq">Valor Líquido</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)" class="p-inputgroup flex-1" style="font-size: 1rem">
+                                    <div v-else-if="!['view', 'expandedFormMode'].includes(mode)"
+                                        class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
-                                        <InputText
-                                            autocomplete="no"
+                                        <InputText autocomplete="no"
                                             :disabled="['view', 'expandedFormMode'].includes(mode)"
-                                            v-model="itemData.valor_liq"
-                                            id="valor_liq"
-                                            type="text"
-                                            v-maska
-                                            data-maska="0,99"
-                                            data-maska-tokens="0:\d:multiple|9:\d:optional"
-                                        />
-                                        <Button :disabled="mode == 'view'" v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500" label="VB" @click="itemData.valor_liq = itemData.valor_bruto" />
+                                            v-model="itemData.valor_liq" id="valor_liq" type="text" v-maska
+                                            data-maska="0,99" data-maska-tokens="0:\d:multiple|9:\d:optional" />
+                                        <Button :disabled="mode == 'view'"
+                                            v-tooltip.top="'Clique para repetir o valor bruto aqui'" class="bg-blue-500"
+                                            label="VB" @click="itemData.valor_liq = itemData.valor_bruto" />
                                     </div>
                                     <div v-else class="p-inputgroup flex-1" style="font-size: 1rem">
                                         <span class="p-inputgroup-addon">R$</span>
-                                        <span disabled v-html="itemData.valor_liq" id="valor_liq" class="p-inputtext p-component" />
+                                        <span disabled v-html="itemData.valor_liq" id="valor_liq"
+                                            class="p-inputtext p-component" />
                                     </div>
                                 </div>
                                 <!-- <div :class="`col-12 lg:col-4`">
@@ -929,14 +950,21 @@ watch(route, (value) => {
                         <div class="col-12 lg:col12">
                             <label for="descricao">Descrição do registro</label>
                             <Skeleton v-if="loading" height="2rem"></Skeleton>
-                            <EditorComponent v-else :readonly="loading || ['view', 'expandedFormMode'].includes(mode)" v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }" aria-describedby="editor-error" />
+                            <EditorComponent v-else :readonly="loading || ['view', 'expandedFormMode'].includes(mode)"
+                                v-model="itemData.descricao" id="descricao" :editorStyle="{ height: '160px' }"
+                                aria-describedby="editor-error" />
                         </div>
                     </div>
-                    <div class="card flex justify-content-center flex-wrap gap-3" v-if="['new', 'clone'].includes(mode)">
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
+                    <div class="card flex justify-content-center flex-wrap gap-3"
+                        v-if="['new', 'clone'].includes(mode)">
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
+                            severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
+                            severity="danger" text raised
+                            @click="mode == 'edit' || route.params.id ? reload() : toGrid()" />
                     </div>
-                    <Eventos ref="fSEventos" :tabelaBd="'pipeline'" :idRegistro="Number(itemData.id)" v-if="itemData.id" />
+                    <Eventos ref="fSEventos" :tabelaBd="'pipeline'" :idRegistro="Number(itemData.id)"
+                        v-if="itemData.id" />
                     <Fieldset class="bg-green-200" toggleable :collapsed="true" v-if="mode != 'expandedFormMode'">
                         <template #legend>
                             <div class="flex align-items-center text-primary">
@@ -984,148 +1012,85 @@ watch(route, (value) => {
                             </div>
                         </template>
 
-                        <div class="mb-3" v-if="(['new', 'clone'].includes(mode) || (itemDataLastStatus.status_params < 80 && !itemData.id_filho) || (itemData.id_filho && uProf.gestor >= 1))">
-                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'" icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'" :severity="itemData.id_filho ? 'danger': ''" />
-                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'" icon="fa-solid fa-floppy-disk" severity="success" />
-                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'" icon="fa-solid fa-ban" severity="danger" @click="mode == 'edit' ? reload() : toGrid()" />
+                        <div class="mb-3"
+                            v-if="(['new', 'clone'].includes(mode) || (itemDataLastStatus.status_params < 80 && !itemData.id_filho) || (itemData.id_filho && uProf.gestor >= 1))">
+                            <Button label="Editar" outlined class="w-full" type="button" v-if="mode == 'view'"
+                                icon="fa-regular fa-pen-to-square fa-shake" @click="mode = 'edit'"
+                                :severity="itemData.id_filho ? 'danger' : ''" />
+                            <Button label="Salvar" outlined class="w-full mb-3" type="submit" v-if="mode != 'view'"
+                                icon="fa-solid fa-floppy-disk" severity="success" />
+                            <Button label="Cancelar" outlined class="w-full" type="button" v-if="mode != 'view'"
+                                icon="fa-solid fa-ban" severity="danger"
+                                @click="mode == 'edit' ? reload() : toGrid()" />
                         </div>
                         <div v-if="mode != 'edit'">
                             <hr class="w-full mb-3" v-if="!itemData.id_filho" />
-                            <Button
-                                v-if="route.name == 'pipeline-one'"
-                                label="Ir ao Cadastro"
-                                type="button"
-                                class="w-full mb-3"
-                                :icon="`fa-regular fa-address-card fa-shake`"
-                                style="color: #a97328"
-                                text
-                                raised
-                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)"
-                            />
-                            <Button label="Novo Registro para o Cliente" v-if="itemData.id && !itemData.id_pai" type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary" text raised @click="registroIdentico" />
-                            <Button
-                                :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
-                                v-if="itemData.id_filho || itemData.id_pai"
-                                type="button"
-                                class="w-full mb-3"
+                            <Button v-if="route.name == 'pipeline-one'" label="Ir ao Cadastro" type="button"
+                                class="w-full mb-3" :icon="`fa-regular fa-address-card fa-shake`" style="color: #a97328"
+                                text raised
+                                @click="router.push(`/${uProf.schema_description}/cadastro/${itemData.id_cadastros}`)" />
+                            <Button label="Novo Registro para o Cliente" v-if="itemData.id && !itemData.id_pai"
+                                type="button" class="w-full mb-3" icon="fa-solid fa-plus fa-shake" severity="primary"
+                                text raised @click="registroIdentico" />
+                            <Button label="Reaquecer Proposta"
+                                v-if="itemDataParam.doc_venda == 1 && !(itemData.id_filho || itemData.id_pai)"
+                                :disabled="![andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
+                                type="button" class="w-full mb-3" :icon="`fa-solid fa-arrow-up-wide-short`"
+                                severity="warning" text raised
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_PENDENTE)" />
+                            <Button :label="`Ir para ${itemData.id_filho ? 'Pedido' : 'Proposta'}`"
+                                v-if="itemData.id_filho || itemData.id_pai" type="button" class="w-full mb-3"
                                 :icon="`fa-solid fa-turn-${itemData.id_filho ? 'down' : 'up'} fa-shake`"
-                                severity="success"
-                                text
-                                raised
-                                @click="itemData.id_filho ? toFilho() : toPai()"
-                            />
-                            <Button
-                                label="Converter para Pedido"
-                                v-if="itemDataParam.doc_venda == 1"
+                                severity="success" text raised @click="itemData.id_filho ? toFilho() : toPai()" />
+                            <Button label="Converter para Pedido" v-if="itemDataParam.doc_venda == 1"
                                 :disabled="![andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
-                                type="button"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-cart-shopping ${
-                                    itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''
-                                }`"
-                                severity="danger"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_CONVERTIDO)"
-                            />
-                            <Button
-                                label="Exibir/Editar Proposta"
-                                v-if="itemDataParam.proposta_interna == 1"
+                                type="button" class="w-full mb-3" :icon="`fa-solid fa-cart-shopping ${itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''
+                                    }`" severity="danger" text raised
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_CONVERTIDO)" />
+                            <Button label="Exibir/Editar Proposta" v-if="itemDataParam.proposta_interna == 1"
                                 :disabled="![andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params)"
-                                type="button"
-                                class="w-full mb-3"
+                                type="button" class="w-full mb-3"
                                 :icon="`fa-solid fa-file-pen ${itemDataParam.gera_baixa == 1 && [andamentoRegistroPipeline.STATUS_PENDENTE, andamentoRegistroPipeline.STATUS_REATIVADO].includes(itemDataLastStatus.status_params) ? 'fa-shake' : ''}`"
-                                severity="success"
-                                text
-                                raised
-                                @click="toProposal()"
-                            />
-                            <Button
-                                label="Criar OAT de Montagem"
+                                severity="success" text raised @click="toProposal()" />
+                            <Button label="Criar OAT de Montagem"
                                 v-if="itemDataParam.doc_venda >= 2 && (itemDataLastStatus.status_params == 20 || itemData.status == 10) && !itemData.id_pv"
-                                :disabled="itemDataLastStatus.status_params >= 89"
-                                type="button"
-                                class="w-full mb-3"
+                                :disabled="itemDataLastStatus.status_params >= 89" type="button" class="w-full mb-3"
                                 :icon="`fa-solid fa-screwdriver-wrench ${itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params <= 20 ? 'fa-shake' : ''}`"
-                                style="color: #a97328"
-                                text
-                                raised
-                                @click="createPv()"
-                            />
-                            <Button
-                                label="Ver OAT de Montagem"
-                                v-if="itemDataParam.doc_venda >= 2 && itemData.id_pv"
-                                :disabled="itemDataLastStatus.status_params >= 89"
-                                type="button"
-                                class="w-full mb-3"
+                                style="color: #a97328" text raised @click="createPv()" />
+                            <Button label="Ver OAT de Montagem" v-if="itemDataParam.doc_venda >= 2 && itemData.id_pv"
+                                :disabled="itemDataLastStatus.status_params >= 89" type="button" class="w-full mb-3"
                                 :icon="`fa-solid fa-screwdriver-wrench ${itemDataParam.doc_venda >= 2 && itemDataLastStatus.status_params <= 20 ? 'fa-shake' : ''}`"
-                                style="color: #a97328"
-                                text
-                                raised
-                                @click="goPv()"
-                            />
-                            <Button
-                                label="Liquidar Registro"
+                                style="color: #a97328" text raised @click="goPv()" />
+                            <Button label="Liquidar Registro"
                                 v-if="itemDataLastStatus.status_params < 80 && itemDataParam.doc_venda == 0"
                                 type="button"
                                 :disabled="!(uProf.pipeline >= 3 && (itemDataLastStatus.status_params == 0 || itemData.status == 10))"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-check ${itemDataLastStatus.status_params == 0 || itemData.status == 10 ? 'fa-shake' : ''}`"
-                                severity="success"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_ENCERRADO)"
-                            />
-                            <Button
-                                label="Cancelar Registro"
+                                severity="success" text raised
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_ENCERRADO)" />
+                            <Button label="Cancelar Registro"
                                 v-tooltip.top="itemData.id_filho ? `Se cancelar, cancelará o documento relacionado e suas comissões, caso haja!` : 'Inutiliza o registro, mas não exclui!'"
-                                v-if="itemDataLastStatus.status_params < 80"
-                                type="button"
+                                v-if="itemDataLastStatus.status_params < 80" type="button"
                                 :disabled="!(uProf.pipeline >= 3 && (itemDataLastStatus.status_params == 0 || itemData.status == 10))"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-ban`"
-                                severity="warning"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_CANCELADO)"
-                            />
-                            <Button
-                                label="Reativar Registro"
+                                class="w-full mb-3" :icon="`fa-solid fa-ban`" severity="warning" text raised
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_CANCELADO)" />
+                            <Button label="Reativar Registro"
                                 v-tooltip.top="itemData.id_filho ? `Se reativar, reativará o documento relacionado e suas comissões, caso haja!` : ''"
-                                v-else-if="uProf.pipeline >= 4 && itemDataLastStatus.status_params >= 89"
-                                type="button"
+                                v-else-if="uProf.pipeline >= 4 && itemDataLastStatus.status_params >= 89" type="button"
                                 class="w-full mb-3"
                                 :icon="`fa-solid fa-file-invoice ${itemDataLastStatus.status_params == 0 ? 'fa-shake' : ''}`"
-                                severity="warning"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_REATIVADO)"
-                            />
-                            <Button
-                                v-if="uProf.pipeline >= 4 && itemData.status == 10"
-                                label="Excluir Registro"
+                                severity="warning" text raised
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_REATIVADO)" />
+                            <Button v-if="uProf.pipeline >= 4 && itemData.status == 10" label="Excluir Registro"
                                 v-tooltip.top="'Não pode ser desfeito!' + (itemData.id_filho ? ` Se excluir, excluirá o documento relacionado e suas comissões, caso haja!` : '')"
-                                type="button"
-                                :disabled="!(uProf.pipeline >= 4 && itemData.status == 10)"
-                                class="w-full mb-3"
-                                :icon="`fa-solid fa-fire`"
-                                severity="danger"
-                                text
-                                raised
-                                @click="statusRecord(andamentoRegistroPipeline.STATUS_EXCLUIDO)"
-                            />
-                            <Button
-                                v-if="itemDataParam.gera_pasta == 1"
-                                :disabled="!hostAccessible || hasFolder"
-                                label="Criar Pasta"
-                                type="button"
-                                class="w-full mt-3 mb-3"
+                                type="button" :disabled="!(uProf.pipeline >= 4 && itemData.status == 10)"
+                                class="w-full mb-3" :icon="`fa-solid fa-fire`" severity="danger" text raised
+                                @click="statusRecord(andamentoRegistroPipeline.STATUS_EXCLUIDO)" />
+                            <Button v-if="itemDataParam.gera_pasta == 1" :disabled="!hostAccessible || hasFolder"
+                                label="Criar Pasta" type="button" class="w-full mt-3 mb-3"
                                 :icon="`fa-solid fa-folder ${hostAccessible && !hasFolder ? 'fa-shake' : ''}`"
-                                severity="success"
-                                text
-                                raised
-                                @click="mkFolder()"
-                            />
+                                severity="success" text raised @click="mkFolder()" />
                         </div>
                     </Fieldset>
                     <Fieldset :toggleable="true" class="mb-3" v-if="itemData.id">
@@ -1138,14 +1103,19 @@ watch(route, (value) => {
                         <Skeleton v-if="loading" height="3rem"></Skeleton>
                         <Timeline v-else :value="itemDataStatus">
                             <template #marker="slotProps">
-                                <span class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }">
+                                <span
+                                    class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
+                                    :style="{ backgroundColor: slotProps.item.color }">
                                     <i :class="slotProps.item.icon"></i>
                                 </span>
                             </template>
                             <template #opposite="slotProps">
                                 <small class="p-text-secondary">{{ slotProps.item.date }}</small>
                             </template>
-                            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{ uProf.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} </template>
+                            <template #content="slotProps"> {{ slotProps.item.status }} por {{ slotProps.item.user }}{{
+                                uProf.admin >= 2 ? `(${slotProps.item.statusCode})` : '' }} <i v-if="uProf.gestor"
+                                    @click="removeStatus(slotProps.item)"
+                                    class="fa-solid fa-ban p-text-red"></i></template>
                         </Timeline>
                     </Fieldset>
                     <Fieldset :toggleable="true" :collapsed="true" v-if="uProf.pipeline_ftp && itemData.id">
@@ -1155,7 +1125,8 @@ watch(route, (value) => {
                                 <span class="font-bold text-lg">Conteúdo da Pasta</span>
                             </div>
                         </template>
-                        <ul class="list-decimal" v-if="listFolder && typeof listFolder == 'object' && listFolder.length">
+                        <ul class="list-decimal"
+                            v-if="listFolder && typeof listFolder == 'object' && listFolder.length">
                             <li v-for="item in listFolder" :key="item.id">{{ item.name }}</li>
                         </ul>
                         <p v-else-if="!hostAccessible">O servidor de pastas/arquivos está inacessível no momento</p>

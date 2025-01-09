@@ -94,7 +94,7 @@ const processEvent = (element) => {
             element.evento = `Edição do registro`;
             break;
         case classevento === 'remove':
-            element.evento = 'Exclusão ou cancelamento do registro';
+            element.evento = 'Mudança de situação(STATUS) do registro';
             break;
         case classevento === 'removecomisliquidat':
             element.evento = 'Cancelamento de liquidação da comissão';

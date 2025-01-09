@@ -40,7 +40,7 @@ module.exports = app => {
             return res.status(400).send(error)
         }
 
-         
+
         if (body.id) {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
@@ -132,7 +132,7 @@ module.exports = app => {
         ret.then(body => {
             const quantidade = body.length
             body.forEach(element => {
-                if (element.evento == 1) element.name = 'Vivazul'                
+                if (element.evento == 1) element.name = 'Vivazul'
             });
             return res.json({ data: body, count: quantidade })
         })
@@ -167,7 +167,7 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
-        let user = req.user
+        let user = req.user        
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         try {
             // Alçada do usuário
@@ -181,7 +181,7 @@ module.exports = app => {
         const registro = { status: STATUS_DELETE }
         try {
             // registrar o evento na tabela de eventos
-            const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()
+            const last = await app.db(tabelaDomain).where({ id: req.params.id }).first()            
             const { createEventUpd } = app.api.sisEvents
             const evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento'],
@@ -193,19 +193,15 @@ module.exports = app => {
                     "evento": `Exclusão de ${tabela}`,
                     "tabela_bd": tabela,
                 }
-            })
+            })            
             const rowsUpdated = await app.db(tabelaDomain)
-                .update({
-                    status: registro.status,
-                    updated_at: new Date(),
-                    evento: evento
-                })
                 .where({ id: req.params.id })
+                .del()
             existsOrError(rowsUpdated, 'Registro não foi encontrado')
 
             res.status(204).send()
-        } catch (error) {
-            res.status(400).send(error)
+        } catch (error) {            
+            res.status(200).send(error)
         }
     }
 

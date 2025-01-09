@@ -489,7 +489,7 @@ module.exports = app => {
             ret.orderBy(app.db.raw(sortField), sortOrder)
                 .orderBy('tbl1.id', 'desc') // além de ordenar por data, ordena por id para evitar que registros com a mesma data sejam exibidos em ordem aleatória
                 .limit(rows).offset((page + 1) * rows - rows)
-
+                
         ret.then(body => {
             // se sortField == 'status_created_at' então ordene pelo valor em if body[X].status_created_at considerando o valor em sortOrder (ASC ou DESC) e considerando que status_created_at é uma data no format 'dd/mm/yyyy'
             if (sortField == 'status_created_at')
@@ -602,6 +602,51 @@ module.exports = app => {
                 const { createEventUpd } = app.api.sisEvents
                 // Registrar o evento na tabela de eventos
                 // Dados originais do registro
+                const itemStatus = [
+                    {
+                        status: '0',
+                        action: 'Criação ou reaquecimento',
+                        label: 'Criado/Reaquecido',
+                    },
+                    {
+                        status: '1',
+                        action: 'Reativação',
+                        label: 'Reativado',
+                    },
+                    {
+                        status: '10',
+                        action: 'Conversão',
+                        label: 'Convertido para pedido',
+                    },
+                    {
+                        status: '20',
+                        action: 'Criação',
+                        label: 'Pedido criado',
+                    },
+                    {
+                        status: '21',
+                        action: 'Criação',
+                        label: 'Pedido AT criado',
+                    },
+                    {
+                        status: '80',
+                        action: 'Liquidação',
+                        label: 'Liquidado',
+                        icon: 'fa-solid fa-check',
+                        color: '#607D8B'
+                    },
+                    {
+                        status: '89',
+                        action: 'Cancelamento',
+                        label: 'Cancelado',
+                    },
+                    {
+                        status: '99',
+                        action: 'Exclusão',
+                        label: 'Excluído',
+                    }
+                ];
+                const labelByStatus = itemStatus.find((item) => item.status == registro.status);
                 const eventPayload = {
                     notTo: ['created_at', 'updated_at', 'evento',],
                     last: last,
@@ -609,20 +654,28 @@ module.exports = app => {
                     request: req,
                     evento: {
                         "classevento": "Remove",
-                        "evento": `Exclusão de registro de ${tabela}`,
+                        "evento": `${labelByStatus.action} de registro de ${tabela}`,
                         "tabela_bd": tabela
                     },
                     trx: trx,
                 };
                 const evento = await createEventUpd(eventPayload);
                 updateRecord = { ...updateRecord, evento: evento }
-                await trx(tabelaPipelineStatusDomain).insert({
-                    evento: evento || 1,
-                    status: STATUS_ACTIVE,
-                    status_params: registro.status,
-                    created_at: new Date(),
-                    id_pipeline: req.params.id,
-                });
+                if ([STATUS_REATIVADO].includes(Number(registro.status))) {
+                    // Excluir todos os status de cancelado ou reativado dos registros de status do pipeline
+                    const query = trx(tabelaPipelineStatusDomain)
+                        .where({ id_pipeline: req.params.id })
+                        .whereIn('status_params', [STATUS_CANCELADO, STATUS_REATIVADO])
+                    await query.del();
+                }
+                else
+                    await trx(tabelaPipelineStatusDomain).insert({
+                        evento: evento || 1,
+                        status: STATUS_ACTIVE,
+                        status_params: registro.status,
+                        created_at: new Date(),
+                        id_pipeline: req.params.id,
+                    });
                 // Se o registro tiver um filho, e a mudança for para cancelado, reativado ou convertido(no caso do registro filho), também muda o status do filho
                 if (last.id_filho && [STATUS_CANCELADO, STATUS_REATIVADO, /*STATUS_CONVERTIDO*/].includes(Number(registro.status))) {
                     await trx(tabelaPipelineStatusDomain).insert({
