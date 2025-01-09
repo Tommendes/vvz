@@ -11,8 +11,8 @@ const store = useUserStore();
 const uProf = ref({});
 onBeforeMount(async () => {
     uProf.value = await store.getProfile();
-    await setMenuByUser();
     await getApiVersion();
+    await setMenuByUser();
 });
 
 const model = ref([
@@ -88,11 +88,11 @@ const setMenuByUser = async () => {
         // itemMenu.items.push({ label: 'Reviews', icon: 'fa-solid fa-sync', to: `/${uProf.value.schema_description}/suporte/reviews` });
         model.value.push(itemMenu);
     }
-    
-        const itemMenu = { label: 'Versões', items: [] };
-        itemMenu.items.push({ label: version, icon: 'fa-solid fa-house' });
-        itemMenu.items.push({ label: apiVersion, icon: 'fa-solid fa-gear' });
-        model.value.push(itemMenu);
+
+    const itemMenu = { label: 'Versões', items: [] };
+    itemMenu.items.push({ label: version, icon: 'fa-solid fa-house' });
+    if (version != apiVersion.value) itemMenu.items.push({ label: apiVersion.value, icon: 'fa-solid fa-gear' });
+    model.value.push(itemMenu);
 };
 
 //     // {
