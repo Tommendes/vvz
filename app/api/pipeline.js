@@ -579,7 +579,7 @@ module.exports = app => {
         try {
             // Alçada do usuário
             if (registro.status == STATUS_DELETE) isMatchOrError(uParams && uParams.pipeline >= 4, `${noAccessMsg} "Exclusão de ${tabelaAlias}"`)
-            else if ([STATUS_CANCELADO, STATUS_REATIVADO].includes(registro.status) == STATUS_DELETE) isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Cancelamento ou reativação de ${tabelaAlias}"`)
+            else if ([STATUS_CANCELADO, STATUS_REATIVADO].includes(registro.status)) isMatchOrError(uParams && uParams.pipeline >= 3, `${noAccessMsg} "Cancelamento ou reativação de ${tabelaAlias}"`)
         } catch (error) {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
             return res.status(401).send(error)
@@ -633,7 +633,7 @@ module.exports = app => {
                         id_pipeline: last.id_filho,
                     });
                 }
-                // Se o registro tiver um pai, e a mudança for para cancelado, também muda o status do pai excluindo o status de conversão
+                // Se o registro tiver um pai, e a mudança for para excluído, também muda o status do pai excluindo o status de conversão
                 if (last.id_pai && [STATUS_EXCLUIDO].includes(Number(registro.status))) {
                     await trx(tabelaDomain)
                         .update({
