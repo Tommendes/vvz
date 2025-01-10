@@ -488,9 +488,14 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error in access file: ${__filename} (${__function}). Error: ${error}`, sConsole: true } })
             return error
         }
+        // const config = {
+        //     headers: {
+        //         'Authorization': `Bearer ${schemaRoot.chat_account_tkn}` // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
+        //     },
+        // };
         const config = {
             headers: {
-                'Authorization': `Bearer ${schemaRoot.chat_account_tkn}` // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
+                'apikey': `${apiWats.evoApiKey}` // Certifique-se de que uParams.chat_account_tkn está sendo passado corretamente
             },
         };
 
@@ -509,7 +514,7 @@ module.exports = app => {
                 "text": `*AzulBot:*\n${element}`
             }
             // await axios.post(apiWats.host, body, config)
-            await axios.post(apiWats.evo, body)
+            await axios.post(apiWats.evo, body, config)
                 .then(async (res) => {
                     return res.data
                 })
