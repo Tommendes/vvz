@@ -733,12 +733,17 @@ module.exports = app => {
         for (let index = 0; index < messageBody.message.length; index++) {
             const element = messageBody.message[index];
 
+            // const body = {
+            //     "number": messageBody.phone,
+            //     "body": `*AzulBot:*\n${element}`,
+            //     "externalKey": "{{SecretKey}}"
+            // }
+            // await axios.post(apiWats.host, body, config)
             const body = {
                 "number": messageBody.phone,
-                "body": `*AzulBot:*\n${element}`,
-                "externalKey": "{{SecretKey}}"
+                "text": `*AzulBot:*\n${element}`
             }
-            await axios.post(apiWats.host, body, config)
+            await axios.post(apiWats.evo, body)
                 .then(async (res) => {
                     return res.data
                 })

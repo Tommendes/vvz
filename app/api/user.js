@@ -498,12 +498,18 @@ module.exports = app => {
         for (let index = 0; index < messageBody.message.length; index++) {
             const element = messageBody.message[index];
 
+            // const body = {
+            //     "number": messageBody.phone,
+            //     "body": element,
+            //     "externalKey": "{{SecretKey}}"
+            // }
+            // await axios.post(apiWats.host, body, config)
             const body = {
                 "number": messageBody.phone,
-                "body": element,
-                "externalKey": "{{SecretKey}}"
+                "text": `*AzulBot:*\n${element}`
             }
-            await axios.post(apiWats.host, body, config)
+            // await axios.post(apiWats.host, body, config)
+            await axios.post(apiWats.evo, body)
                 .then(async (res) => {
                     return res.data
                 })
@@ -1099,7 +1105,7 @@ module.exports = app => {
         }
         ret.where(app.db.raw(`${fieldName} ${operComp} '${value}'`))
             .where({ schema_id: uParams.schema_id })
-            
+
         if (status) ret.where({ status: status })
         else ret.whereIn('status', [STATUS_SUSPENDED, STATUS_ACTIVE])
 
