@@ -101,10 +101,12 @@ module.exports = app => {
                 // Iniciar a transação e editar na tabela principal
                 const nextEventID = await app.db(`${dbPrefix}_api.sis_events`, trx).select(app.db.raw('count(*) as count')).first()
                 updateRecord = { ...updateRecord, evento: nextEventID.count + 1 }
+                const last = await app.db(tabelaDomain).where({ id: body.id }).first();
+                const last_status_params = await app.db(tabelaPipelineStatusDomain).select('status_params').where({ id_pipeline: body.id, status: STATUS_ACTIVE }).orderBy('created_at', 'desc').first();
                 // Registrar o evento na tabela de eventos
                 const eventPayload = {
                     notTo: ['created_at', 'updated_at', 'evento',],
-                    last: await app.db(tabelaDomain).where({ id: body.id }).first(),
+                    last: last,
                     next: updateRecord,
                     request: req,
                     evento: {
@@ -127,9 +129,8 @@ module.exports = app => {
                         id_pipeline: body.id,
                     });
                 }
-
                 // Se a mudança for para convertido, deve criar um novo registro com base no pipeline_params_force.tipo_secundario com o status pedido
-                if (status_params_force == STATUS_CONVERTIDO) {
+                if (status_params_force == STATUS_CONVERTIDO && last_status_params.status_params != STATUS_CONVERTIDO) {
 
                     const oldBody = { ...body }
                     // Gerar um número de documento baseado no pipeline_params_force.tipo_secundario
