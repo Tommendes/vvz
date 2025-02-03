@@ -198,6 +198,12 @@ const routes = [
                 path: '/:client/uploads',
                 name: 'uploads',
                 component: () => import('@/components/Uploads.vue')
+            },
+            // iFrame CWT
+            {
+                path: '/:client/cwt',
+                name: 'uploads',
+                component: () => import('@/views/crm/Cwt.vue')
             }
         ]
     },

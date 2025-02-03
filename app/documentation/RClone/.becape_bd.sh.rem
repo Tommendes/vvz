@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Criar usuário no MySQL com perisão simlpes de SELECT, SHOW VIEW, LOCK TABLES, RELOAD
-# DROP USER 'vivazul_bck'@'localhost';
-# CREATE USER 'vivazul_bck'@'localhost' IDENTIFIED BY 's3nh@ 1t1lizad@ pa4a becape45';
-# GRANT SELECT, SHOW VIEW, LOCK TABLES, RELOAD ON *.* TO 'vivazul_bck'@'localhost';
+# DROP USER 'mgcash_bck'@'localhost';
+# CREATE USER 'mgcash_bck'@'localhost' IDENTIFIED BY 's3nh@ 1t1lizad@ pa4a becape45';
+# GRANT SELECT, SHOW VIEW, LOCK TABLES, RELOAD ON *.* TO 'mgcash_bck'@'localhost';
 # FLUSH PRIVILEGES;
 
 # Criar arquivo .my.cnf no diretório home do usuário com as credenciais do MySQL

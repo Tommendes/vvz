@@ -103,7 +103,7 @@ const saveData = async () => {
                 return;
             }
     }
-    if (data.data_pagto) {
+    if (data.data_pagto && data.situacao != SITUACAO_CANCELADO) {
             if (moment(data.data_pagto, 'DD/MM/YYYY', true).isValid()) {
                 data.data_pagto = moment(data.data_pagto, 'DD/MM/YYYY').format('YYYY-MM-DD');
             } else if (moment(data.data_pagto, true).isValid()) {

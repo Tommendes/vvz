@@ -7,6 +7,7 @@ import EditorComponent from '@/components/EditorComponent.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import Eventos from '@/components/Eventos.vue';
 import RetencoesGrid from './retencoes/RetencoesGrid.vue';
+import EncargosGrid from './encargos/EncargosGrid.vue';
 import NotasGrid from './notas/NotasFiscaisGrid.vue';
 import ParcelasGrid from './parcelas/ParcelasGrid.vue';
 import { situacaoFinLancamentos } from '@/global';
@@ -47,6 +48,7 @@ import { isValid } from 'date-fns';
 // Objetos do formulário
 const fSEventos = ref();
 const retencoesGrid = ref();
+const encargosGrid = ref();
 const notasGrid = ref();
 const parcelasGrid = ref();
 
@@ -185,11 +187,22 @@ const saveData = async () => {
 };
 // Dados das retenções
 const itemDataRetencoes = ref([]);
+// Dados dos encargos
+const itemDataEncargos = ref([]);
 // Carragamento de dados do form
-const loadRetencoes = async (parcelas) => {
+const loadRetencoes = (parcelas) => {
     itemDataRetencoes.value = parcelas;
+    recalcRetencoesEncargos();
+};
+// Carragamento de dados do form
+const loadEncargos = (parcelas) => {
+    itemDataEncargos.value = parcelas;
+    recalcRetencoesEncargos();
+};
+// Recalcula os valores de retenções e encargos e atualiza o valor líquido
+const recalcRetencoesEncargos = async () => {
     const valorBruto = parseFloat(itemData.value.valor_bruto.replace(',', '.'));
-    itemData.value.valor_liquido = parseFloat(valorBruto - (itemDataRetencoes.value.total || 0))
+    itemData.value.valor_liquido = parseFloat(valorBruto - (itemDataRetencoes.value.total || 0) + (itemDataEncargos.value.total || 0))
         .toFixed(2)
         .replace('.', ',');
     animationVlrLiq.value = '';
@@ -198,8 +211,7 @@ const loadRetencoes = async (parcelas) => {
     }, 150);
     if (fSEventos.value) fSEventos.value.getEventos();
     if (parcelasGrid.value && parcelasGrid.value.$el) parcelasGrid.value.loadParcelas();
-    //     });
-};
+}
 
 // Dados dados das parcelas
 const itemDataParcelas = ref([]);
@@ -625,6 +637,8 @@ watch(route, (value) => {
                     </Fieldset>
                     <RetencoesGrid v-if="itemData.id" :itemDataRoot="itemData" @reloadItems="loadRetencoes"
                         :uProf="uProf" :mode="mode" ref="retencoesGrid" />
+                    <EncargosGrid v-if="itemData.id" :itemDataRoot="itemData" @reloadItems="loadEncargos"
+                        :uProf="uProf" :mode="mode" ref="encargosGrid" />
                     <NotasGrid v-if="uProf.admin >= 2 && itemData.id" :itemDataRoot="itemData" @reloadItems="loadNotas"
                         :uProf="uProf" :mode="mode" ref="notasGrid" />
                 </div>

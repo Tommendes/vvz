@@ -7,14 +7,14 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 
 // Props do template
-const props = defineProps(['itemData', 'mode', 'uProf', 'itemDataRoot', 'retencaoTotal']);
+const props = defineProps(['itemData', 'mode', 'uProf', 'itemDataRoot', 'encargoTotal']);
 // Emits do template
 const emit = defineEmits(['reloadItems', 'cancel']);
 const mode = ref('view');
 const itemData = ref([]);
 const itemDataUnmuted = ref([]);
 // Url base do form action
-const urlBase = ref(`${baseApiUrl}/fin-retencoes/${route.params.id}`);
+const urlBase = ref(`${baseApiUrl}/fin-encargos/${route.params.id}`);
 
 const loadData = async () => {
     const id = props.itemData.id;
@@ -24,15 +24,17 @@ const loadData = async () => {
 };
 
 const getFormIsValid = async () => {
-    // Verificar se o valor em itemData.valor_retencao é menor ou igual a props.itemDataRoot.valir_liquido
-    let valorLiquido = Math.ceil((props.itemDataRoot.valor_bruto.replace(',', '.') - props.retencaoTotal) * 100) / 100;
-    let valorRetencao = itemData.value.valor_retencao.replace(',', '.') - (itemDataUnmuted.value && itemDataUnmuted.value.valor_retencao ? itemDataUnmuted.value.valor_retencao.replace(',', '.') : 0);
-    const res = valorLiquido >= valorRetencao;
-    if (!res) {
-        defaultWarn('Valor de retenção é maior que o líquido');
-        return;
-    }
-    return res;
+    // Verificar se o valor em itemData.valor_encargo é menor ou igual a props.itemDataRoot.valir_liquido
+    // let valorLiquido = Math.ceil((props.itemDataRoot.valor_bruto.replace(',', '.') - props.encargoTotal) * 100) / 100;
+    // let valorEncargo = itemData.value.valor_encargo.replace(',', '.') - (itemDataUnmuted.value && itemDataUnmuted.value.valor_encargo ? itemDataUnmuted.value.valor_encargo.replace(',', '.') : 0);
+    // console.log('valorEncargo', valorEncargo, 'valorLiquido', valorLiquido, props.itemDataRoot.valor_bruto, props.encargoTotal);
+    // const res = valorEncargo >= valorLiquido;
+    // if (!res) {
+    //     defaultWarn('Valor do encargo é maior que o líquido');
+    //     return;
+    // }
+    // return res;
+    return true;
 };
 
 const saveData = async () => {
@@ -46,7 +48,7 @@ const saveData = async () => {
             const res = await axios[method](url, data).then((res) => {
                 emit('reloadItems');
                 mode.value = 'view';
-                defaultSuccess('Retenção salva com sucesso!');
+                defaultSuccess('Encargo salvo com sucesso!');
             });
         } catch (error) {
             console.log('error', error);
@@ -61,7 +63,7 @@ const deleteItem = async () => {
     try {
         await axios.delete(url).then((res) => {
             emit('reloadItems');
-            defaultSuccess('Retenção excluída com sucesso!');
+            defaultSuccess('Encargo excluído com sucesso!');
         });
     } catch (error) {
         console.log('error', error);
@@ -87,8 +89,8 @@ onMounted(() => {
             <InputText
                 autocomplete="no"
                 :disabled="mode == 'view'"
-                id="valor_retencao"
-                v-model="itemData.valor_retencao"
+                id="valor_encargo"
+                v-model="itemData.valor_encargo"
                 type="text"
                 placeholder="Valor"
                 v-maska
@@ -97,10 +99,10 @@ onMounted(() => {
                 @keydown.enter.prevent
                 class="uppercase"
             />
-            <Button type="submit" :disabled="!(props.uProf.financeiro >= 2)" v-if="['edit', 'new'].includes(mode) || mode == 'new'" v-tooltip.top="'Salvar retenção'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-            <Button type="button" :disabled="!(props.uProf.financeiro >= 3)" v-if="mode == 'view'" v-tooltip.top="'Editar retenção'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
+            <Button type="submit" :disabled="!(props.uProf.financeiro >= 2)" v-if="['edit', 'new'].includes(mode) || mode == 'new'" v-tooltip.top="'Salvar encargo'" icon="fa-solid fa-floppy-disk" severity="success" text raised />
+            <Button type="button" :disabled="!(props.uProf.financeiro >= 3)" v-if="mode == 'view'" v-tooltip.top="'Editar encargo'" icon="fa-regular fa-pen-to-square" text raised @click="mode = 'edit'" />
             <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'" icon="fa-solid fa-ban" severity="danger" text raised @click="cancel()" />
-            <Button type="button" :disabled="!(props.uProf.financeiro >= 4)" v-if="['view'].includes(mode)" v-tooltip.top="'Excluir retenção'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
+            <Button type="button" :disabled="!(props.uProf.financeiro >= 4)" v-if="['view'].includes(mode)" v-tooltip.top="'Excluir encargo'" icon="fa-solid fa-trash" severity="danger" text raised @click="deleteItem" />
         </InputGroup>
         <Fieldset class="bg-green-200 mb-1" toggleable :collapsed="true" v-if="props.uProf.admin >= 2">
             <template #legend>
@@ -112,7 +114,7 @@ onMounted(() => {
             <p>mode: {{ mode }}</p>
             <p>itemData: {{ itemData }}</p>
             <p>itemDataRoot: {{ props.itemDataRoot }}</p>
-            <p>retencaoTotal: {{ props.retencaoTotal }}</p>
+            <p>encargoTotal: {{ props.encargoTotal }}</p>
             <p>uProf: {{ props.uProf }}</p>
         </Fieldset>
     </form>

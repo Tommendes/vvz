@@ -432,8 +432,11 @@ const newDocument = () => {
 };
 
 const rowStyle = (data) => {
-    if (data.centro == '2') return { color: '#d32f2f' };
-    else return { color: '#00796b' };
+    const style = { color: '#d32f2f' }
+    if (data.centro == '2') style.color = '#d32f2f';
+    else style.color = '#00796b'; // return { color: '#00796b' };
+    if (data.situacao == STATUS_REGISTRO_CANCELADO) style.textDecoration = 'line-through';
+    return style;
 };
 
 const itemsExport = [

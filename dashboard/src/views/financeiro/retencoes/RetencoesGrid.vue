@@ -74,10 +74,10 @@ watch(props, (value) => {
                 <h4 class="flex justify-content-end">Retenção total sobre o valor bruto: {{ formatCurrency(itemDataRetencoes.total) }}</h4>
             </div>
         </Fieldset>
-        <div v-if="uProf.admin >= 2">
+        <!-- <div v-if="uProf.admin >= 2">
             <p>props.mode: {{ props.mode }}</p>
             <p>props.itemDataRoot: {{ props.itemDataRoot }}</p>
-        </div>
+        </div> -->
     </div>
 </template>
 

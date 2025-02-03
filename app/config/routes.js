@@ -640,6 +640,19 @@ module.exports = app => {
         .delete(app.api.fin_retencoes.remove)
 
     /**
+    * Rota de fin_encargos
+    */
+    app.route('/fin-encargos/:id_fin_lancamentos')
+        .all(app.config.passport.authenticate())
+        .post(app.api.fin_encargos.save)
+        .get(app.api.fin_encargos.get)
+    app.route('/fin-encargos/:id_fin_lancamentos/:id')
+        .all(app.config.passport.authenticate())
+        .put(app.api.fin_encargos.save)
+        .get(app.api.fin_encargos.getById)
+        .delete(app.api.fin_encargos.remove)
+
+    /**
     * Rota de fin_parcelas
     */
     app.route('/fin-parcelas/:id_fin_lancamentos')
