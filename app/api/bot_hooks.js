@@ -1,5 +1,5 @@
 const randomstring = require("randomstring")
-const { dbPrefix, apiWats, azulbotLinks, env, zproEnv } = require("../.env")
+const { dbPrefix, apiWats, azulbotLinks, env, azulbotEnv } = require("../.env")
 const schedule = require('node-schedule');
 const axios = require('axios');
 const moment = require('moment')

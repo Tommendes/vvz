@@ -1,5 +1,5 @@
 const randomstring = require("randomstring")
-const { dbPrefix, apiWats, azulbotLinks, env, zproEnv } = require("../.env")
+const { dbPrefix, apiWats, azulbotLinks, env, azulbotEnv } = require("../.env")
 const schedule = require('node-schedule');
 const axios = require('axios');
 const moment = require('moment')
@@ -214,7 +214,7 @@ module.exports = app => {
             "trial": "disabled",
             "trialPeriod": 0
         }
-        const endpoint = `${apiWats.superHost}/tenantApiStoreTenant`
+        const endpoint = `${apiWats.superHostCW}/tenantApiStoreTenant`
         const headerAuthorization = apiWats.superHostToken
         try {
             const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
@@ -263,7 +263,7 @@ module.exports = app => {
             "maxConnections": plano.maxConnections,
             "identity": oldPlan.subscriber_code
         }
-        const endpoint = `${apiWats.superHost}/tenantApiUpdateTenant`
+        const endpoint = `${apiWats.superHostCW}/tenantApiUpdateTenant`
         const headerAuthorization = apiWats.superHostToken
         const tenantUpgrades = await setTenantUpgrades(bodyTo)
         // const response = await axios.post(endpoint, bodyTo, { headers: { Authorization: headerAuthorization } })
@@ -292,11 +292,11 @@ module.exports = app => {
     const setTenantUpgrades = async (bodyTo) => {
         const { Pool } = require('pg');
         const pool = new Pool({
-            user: zproEnv.POSTGRES_USER,
-            host: zproEnv.POSTGRES_HOST,
-            database: zproEnv.POSTGRES_DB,
-            password: zproEnv.POSTGRES_PASSWORD,
-            port: zproEnv.POSTGRES_PORT,
+            user: azulbotEnv.POSTGRES_USER,
+            host: azulbotEnv.POSTGRES_HOST,
+            database: azulbotEnv.POSTGRES_DB,
+            password: azulbotEnv.POSTGRES_PASSWORD,
+            port: azulbotEnv.POSTGRES_PORT,
         });
 
         const query = `UPDATE public."Tenants" SET "maxUsers"=$1, "maxConnections"=$2, "status" = $3 WHERE "identity" = $4`;
@@ -737,13 +737,6 @@ module.exports = app => {
         if (typeof messageBody.message === 'string') messageBody.message = [messageBody.message]
         for (let index = 0; index < messageBody.message.length; index++) {
             const element = messageBody.message[index];
-
-            // const body = {
-            //     "number": messageBody.phone,
-            //     "body": `*AzulBot:*\n${element}`,
-            //     "externalKey": "{{SecretKey}}"
-            // }
-            // await axios.post(apiWats.host, body, config)
             const body = {
                 "number": messageBody.phone,
                 "text": `*AzulBot:*\n${element}`

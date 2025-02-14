@@ -266,9 +266,9 @@ module.exports = app => {
                 }
 
                 const phoneProf = await app.db(tabelaProfilesDomain).select('phone').where({ id: idProfile }).first();
-                const messageBody = { message: bodyMessage, phone: phoneProf.phone };
+                const messageBody = { text: bodyMessage, number: phoneProf.phone };
                 setTimeout(async () => {
-                    await axios.post(`${apiWats.host}`, messageBody, config)
+                    await axios.post(`${apiWats.evo}`, messageBody, config)
                         .then(async (res) => {
                             const body = { delivered_at: moment().format('YYYY-MM-DD HH:mm:ss'), zaapId: res.data.zaapId, messageId: res.data.messageId };
                             if (message.situacao === SITUACAO_ENVIADA) body.situacao = SITUACAO_ENVIADA;
