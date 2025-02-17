@@ -100,7 +100,7 @@ async function restartApp() {
     return new Promise((resolve, reject) => {
         // Use o módulo child_process para executar o comando pm2 restart
         const { exec } = require('child_process');
-        exec('pm2 restart vivazul-api-vvz', (error, stdout, stderr) => {
+        exec('pm2 restart vivazul-api2', (error, stdout, stderr) => {
             if (error) {
                 reject(new Error(`[${new Date().toISOString()}] Erro ao reiniciar a aplicação: ${stderr || error.message}`));
             } else {
