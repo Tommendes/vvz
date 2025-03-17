@@ -35,6 +35,7 @@ const router = useRouter();
 const route = useRoute();
 
 const urlBase = ref(`${baseApiUrl}/fin-lancamentos`);
+const props = defineProps(['idCadastro']);
 const dt = ref();
 const totalRecords = ref(0); // O total de registros (deve ser atualizado com o total real)
 const rowsPerPageOptions = ref([5, 10, 20, 50, 200, 500, 1000]); // Opções de registros por página
@@ -120,7 +121,25 @@ const columns = ref([
     // { field: 'documento', label: 'Documento', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
     // { field: 'pedido', label: 'Pedido', matchMode: FilterMatchMode.CONTAINS, class: isMobile.value || screenWidth.value < 1000 ? 'hidden' : '' },
 ]);
-const selectedColumns = ref([...columns.value]);
+
+const setUserColumns = () => {
+    const columns = localStorage.getItem('__finColumns');
+    if (columns) selectedColumns.value = JSON.parse(columns);
+    // else selectedColumns.value = selectedColumns.value.filter(col => !['valor_bruto_conta'].includes(col));
+    else {
+        localStorage.setItem('__finColumns', JSON.stringify(columns));
+        selectedColumns.value = columns;
+    }
+};
+
+// let finColumns = JSON.parse(localStorage.getItem('__finColumns'));
+// const selectedColumns = ref(finColumns);
+// if (finColumns) {
+//     selectedColumns.value = finColumns;
+// } else {
+//     localStorage.setItem('__finColumns', JSON.stringify(columns.value));
+//     selectedColumns.value = columns.value;
+// }
 
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -252,6 +271,7 @@ const mountUrlFilters = async () => {
     if (empresa.value > 0) url += `field:id_empresa=${FilterMatchMode.EQUALS}:${empresa.value}&`;
     if (centro.value > 0) url += `field:centro=${FilterMatchMode.EQUALS}:${centro.value}&`;
     if (situacao.value > 0) url += `field:situacao=${FilterMatchMode.EQUALS}:${situacao.value}&`;
+    if (props.idCadastro) url += `field:fl.id_cadastros=equals:${props.idCadastro}&`;
     if (lazyParams.value.originalEvent && (lazyParams.value.originalEvent.page || lazyParams.value.originalEvent.rows))
         Object.keys(lazyParams.value.originalEvent).forEach((key) => {
             url += `params:${key}=${lazyParams.value.originalEvent[key]}&`;
@@ -269,7 +289,7 @@ onMounted(async () => {
     // queryUrl.value = route.query;
     // Limpa os filtros do grid
     clearFilter();
-    selectedColumns.value = columns.value.filter(col => !['valor_bruto_conta'].includes(col));
+    selectedColumns.value = selectedColumns.value.filter(col => !['valor_bruto_conta'].includes(col));
     // router.replace({ query: {} });
     // await mountUrlFilters();
 });
@@ -417,10 +437,11 @@ const goField = (data) => {
 };
 watchEffect(() => {
     if (Number(empresa.value) > 0 && selectedColumns.value[0].field == columns.value[0].field) selectedColumns.value.shift();
-    else if (Number(empresa.value) == 0) selectedColumns.value = [...columns.value];
+    else if (Number(empresa.value) == 0 && selectedColumns.value[0] != columns.value[0]) selectedColumns.value = [columns.value[0], ...selectedColumns.value];
 });
 const onToggle = (val) => {
     selectedColumns.value = columns.value.filter(col => val.includes(col));
+    localStorage.setItem('__finColumns', JSON.stringify(selectedColumns.value))
 };
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
@@ -462,124 +483,115 @@ const uProfWithoutBigDataTkn = computed(() => {
 </script>
 
 <template>
-    <div class="grid">
-        <div class="col-12">
-            <Breadcrumb :items="[{ label: 'Eventos Financeiros', to: `/${uProf.schema_description}/financeiro` }]" />
-        </div>
-        <div class="col-12">
-            <FinanceiroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'" />
-        </div>
-
-        <div class="col-12">
-            <div class="card">
-                <DataTable ref="dt" :value="gridData" lazy :rowStyle="rowStyle" paginator :rows="gridData.length"
-                    dataKey="id_parcela" :rowHover="true" v-model:filters="filters" filterDisplay="row"
-                    :loading="loading" :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
-                    :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200, 500]"
-                    @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
-                    paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                    :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
-                    :filter-options="customFilterOptions">
-                    <template #header>
-                        <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify"
-                                :key="qualify" :value="qualify.label"> </Tag>
-                            <Tag v-if="centro >= 1" class="tagRes"
-                                :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
-                            </Tag>
-                        </div>
-                        <div v-if="dropdownEmpresas.length > 2 && uProf.multiCliente >= 1"
-                            class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value"
-                                v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters()" />
-                            <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value"
-                                v-model="centro" :options="dropdownCentros" @change="mountUrlFilters()" />
-                            <Dropdown placeholder="Emitentes...?" id="id_empresa" optionLabel="label"
-                                optionValue="value" v-model="empresa" :options="dropdownEmpresas"
-                                @change="mountUrlFilters()" />
-                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
-                                gridData.length }} de {{ totalRecords }} registros</span>
-                        </div>
-                        <div v-else class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value"
-                                v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters()" />
-                            <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value"
-                                v-model="centro" :options="dropdownCentros" @change="mountUrlFilters()" />
-                            <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
-                                gridData.length }} de {{ totalRecords }} registros para {{ empresaLabel }}</span>
-                        </div>
-                        <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                            <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
-                                @update:modelValue="onToggle" display="chip"
-                                placeholder="Selecione as colunas para exibir os dados" />
-                            <SplitButton icon="fa-solid fa-cloud-arrow-down"
-                                label="Exportar dados" :model="itemsExport" @click="exportPdf()" />
-                            <!-- <SplitButton v-if="uProf.admin >= 1" icon="fa-solid fa-cloud-arrow-down"
+    <Breadcrumb v-if="mode != 'new' && !props.idCadastro"
+        :items="[{ label: 'Eventos Financeiros', to: `/${uProf.schema_description}/financeiro` }]" />
+    <div class="card">
+        <FinanceiroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'"
+            :idCadastro="props.idCadastro" />
+        <DataTable ref="dt" :value="gridData" lazy :rowStyle="rowStyle" paginator :rows="gridData.length"
+            dataKey="id_parcela" :rowHover="true" v-model:filters="filters" filterDisplay="row" :loading="loading"
+            :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
+            :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200, 500]"
+            @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
+            paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            :currentPageReportTemplate="`{first} a {last} de ${totalRecords} registros`" scrollable
+            :filter-options="customFilterOptions">
+            <template #header>
+                <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                    <Tag class="tagQualify" :severity="qualify.qualify" v-for="qualify in daysToQualify" :key="qualify"
+                        :value="qualify.label"> </Tag>
+                    <Tag v-if="centro >= 1" class="tagRes"
+                        :value="`Total geral${totalRecords && totalRecords > 0 ? ` - ${totalRecords} registro(s)` : ''}: ${formatCurrency(sumRecords)}`">
+                    </Tag>
+                </div>
+                <div v-if="dropdownEmpresas.length > 2 && uProf.multiCliente >= 1"
+                    class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                    <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value"
+                        v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters()" />
+                    <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value"
+                        v-model="centro" :options="dropdownCentros" @change="mountUrlFilters()" />
+                    <Dropdown placeholder="Emitentes...?" id="id_empresa" optionLabel="label" optionValue="value"
+                        v-model="empresa" :options="dropdownEmpresas" @change="mountUrlFilters()" />
+                    <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                        gridData.length }} de {{ totalRecords }} registros</span>
+                </div>
+                <div v-else class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                    <Dropdown placeholder="Situação...?" id="situacao" optionLabel="label" optionValue="value"
+                        v-model="situacao" :options="dropdownSituacao" @change="mountUrlFilters()" />
+                    <Dropdown placeholder="Centros...?" id="centro" optionLabel="label" optionValue="value"
+                        v-model="centro" :options="dropdownCentros" @change="mountUrlFilters()" />
+                    <span class="p-button p-button-outlined" severity="info">Exibindo os primeiros {{
+                        gridData.length }} de {{ totalRecords }} registros para {{ empresaLabel }}</span>
+                </div>
+                <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                    <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
+                        @update:modelValue="onToggle" display="chip"
+                        placeholder="Selecione as colunas para exibir os dados" />
+                    <SplitButton icon="fa-solid fa-cloud-arrow-down" label="Exportar dados" :model="itemsExport"
+                        @click="exportPdf()" />
+                    <!-- <SplitButton v-if="uProf.admin >= 1" icon="fa-solid fa-cloud-arrow-down"
                                 label="Exportar dados" :model="itemsExport" @click="exportPdf()" />
                             <Button v-else type="button" icon="fa-solid fa-file-pdf" label="Exportar dados"
                                 @click="exportPdf()" /> -->
-                            <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
-                                @click="reload()" />
-                            <Button type="button" icon="fa-solid fa-plus" label="Novo Lançamento" outlined
-                                @click="newDocument()" />
-                        </div>
-                    </template>
-                    <template #empty>
-                        <h2>Sem dados a apresentar para o filtro/período selecionado</h2>
-                    </template>
-                    <template #loading>
-                        <h2>Carregando dados. Por favor aguarde...</h2>
-                    </template>
-                    <template v-for="nome in selectedColumns" :key="nome">
-                        <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
-                            :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }"
-                            :style="`min-width: ${nome.minWidth ? nome.minWidth : '12rem'}; max-width: ${nome.minWidth ? nome.minWidth : '12rem'}`"
-                            sortable :sortField="nome.field" :class="nome.class">
-                            <template #body="{ data }">
-                                <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"
-                                    :severity="getSeverity(data[nome.field], nome.type)" />
-                                <span v-else-if="data[nome.field]"
-                                    v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
-                                <span v-else v-html="''"></span>
-                            </template>
-                            <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
-                                <Dropdown :id="nome.field" optionLabel="label" optionValue="value"
-                                    v-model="filterModel.value" :options="nome.list" @change="filterCallback()" filter
-                                    showClear placeholder="Pesquise" />
-                            </template>
-                            <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
-                                <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range"
-                                    showButtonBar :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
-                                    @update:modelValue="filterCallback()" />
-                            </template>
-                            <template v-else #filter="{ filterModel, filterCallback }">
-                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
-                                    class="p-column-filter" placeholder="Pesquise" />
-                            </template>
-                            <template #filterclear="{ filterCallback }">
-                                <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()"
-                                    class="p-button-secondary"></Button>
-                            </template>
-                            <template #filterapply="{ filterCallback }">
-                                <Button type="button" icon="fa-solid fa-check" @click="filterCallback()"
-                                    class="p-button-success"></Button>
-                            </template>
-                        </Column>
-                    </template>
-                    <Column headerStyle="width: 5rem; text-align: center"
-                        bodyStyle="text-align: center; overflow: visible">
-                        <template #body="{ data }">
-                            <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
-                                @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
-                        </template>
-                    </Column>
-                </DataTable>
-                <div v-if="uProf.admin >= 2" class="flex flex-wrap" style="max-width: 90%">
-                    <p>mode: {{ mode }}</p>
-                    <p>uProf: {{ uProfWithoutBigDataTkn }}</p>
-                    <p>empresa: {{ empresa }}</p>
+                    <Button type="button" icon="fa-solid fa-refresh" label="Todos os Registros" outlined
+                        @click="reload()" />
+                    <Button type="button" icon="fa-solid fa-plus" label="Novo Lançamento" outlined
+                        @click="newDocument()" />
                 </div>
-            </div>
+            </template>
+            <template #empty>
+                <h2>Sem dados a apresentar para o filtro/período selecionado</h2>
+            </template>
+            <template #loading>
+                <h2>Carregando dados. Por favor aguarde...</h2>
+            </template>
+            <template v-for="nome in selectedColumns" :key="nome">
+                <Column :header="nome.label" :showFilterMenu="false" :filterField="nome.field"
+                    :filterMatchMode="'contains'" :filterMenuStyle="{ width: '14rem' }"
+                    :style="`min-width: ${nome.minWidth ? nome.minWidth : '12rem'}; max-width: ${nome.minWidth ? nome.minWidth : '12rem'}`"
+                    sortable :sortField="nome.field" :class="nome.class">
+                    <template #body="{ data }">
+                        <Tag v-if="nome.tagged == true && data[nome.field]" :value="data[nome.field]"
+                            :severity="getSeverity(data[nome.field], nome.type)" />
+                        <span v-else-if="data[nome.field]"
+                            v-html="nome.maxLength && String(data[nome.field]).trim().length >= nome.maxLength ? String(data[nome.field]).trim().substring(0, nome.maxLength) + '...' : String(data[nome.field]).trim()"></span>
+                        <span v-else v-html="''"></span>
+                    </template>
+                    <template v-if="nome.list" #filter="{ filterModel, filterCallback }">
+                        <Dropdown :id="nome.field" optionLabel="label" optionValue="value" v-model="filterModel.value"
+                            :options="nome.list" @change="filterCallback()" filter showClear placeholder="Pesquise" />
+                    </template>
+                    <template v-else-if="nome.type == 'date'" #filter="{ filterModel, filterCallback }">
+                        <Calendar v-model="filterModel.value" dateFormat="dd/mm/yy" selectionMode="range" showButtonBar
+                            :numberOfMonths="2" placeholder="dd/mm/aaaa" mask="99/99/9999"
+                            @update:modelValue="filterCallback()" />
+                    </template>
+                    <template v-else #filter="{ filterModel, filterCallback }">
+                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                            class="p-column-filter" placeholder="Pesquise" />
+                    </template>
+                    <template #filterclear="{ filterCallback }">
+                        <Button type="button" icon="fa-regular fa-circle-xmark" @click="filterCallback()"
+                            class="p-button-secondary"></Button>
+                    </template>
+                    <template #filterapply="{ filterCallback }">
+                        <Button type="button" icon="fa-solid fa-check" @click="filterCallback()"
+                            class="p-button-success"></Button>
+                    </template>
+                </Column>
+            </template>
+            <Column headerStyle="width: 5rem; text-align: center" bodyStyle="text-align: center; overflow: visible">
+                <template #body="{ data }">
+                    <Button type="button" class="p-button-outlined" rounded icon="fa-solid fa-bars"
+                        @click="goField(data)" v-tooltip.left="'Clique para mais opções'" />
+                </template>
+            </Column>
+        </DataTable>
+        <div v-if="uProf.admin >= 2" class="flex flex-wrap" style="max-width: 90%">
+            <p>mode: {{ mode }}</p>
+            <p>uProf: {{ uProfWithoutBigDataTkn }}</p>
+            <p>empresa: {{ empresa }}</p>
+            <p>selectedColumns: {{ selectedColumns }}</p>
         </div>
     </div>
 </template>

@@ -438,7 +438,7 @@ module.exports = app => {
                         Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} - ${bodyData.subscription.plan.name} ✔
                         Agora você faz parte do time ${bodyData.product.name}!\n
                         Para acessar o sistema utilize o link abaixo:\n
-                        https://bot.azulbot.com.br/#/login\n
+                        https://zbot.azulbot.com.br/#/login\n
                         Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso: ${bodyData.tenant.password}\n
                         Atenciosamente,\nTime ${bodyData.product.name}`,
 
@@ -446,7 +446,7 @@ module.exports = app => {
                 html: `<p><b>Olá ${bodyData.buyer.name.split(' ')[0]}!</b></p>
             <p>Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} - ${bodyData.subscription.plan.name} ✔</p>
             <p>Agora você faz parte do time ${bodyData.product.name}!</p>
-            <p>Para acessar o sistema utilize o link a seguir: https://bot.azulbot.com.br/#/login</p>
+            <p>Para acessar o sistema utilize o link a seguir: https://zbot.azulbot.com.br/#/login</p>
             <p>Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso: ${bodyData.tenant.password}</p>
             <p>Atenciosamente,</p>
             <p><b>Time ${bodyData.product.name}</b></p>`,
@@ -616,7 +616,7 @@ module.exports = app => {
                 `Parabéns ${bodyData.buyer.name.split(' ')[0]} por sua aquisição, o ${bodyData.product.name} - ${bodyData.subscription.plan.name}!`,
                 `Agora você faz parte do time ${bodyData.product.name}!`,
                 `Para acessar o sistema utilize o link abaixo:`,
-                `https://bot.azulbot.com.br/#/login`,
+                `https://zbot.azulbot.com.br/#/login`,
                 `Criei uma senha aleatória para você mas sugiro que troque já no primeiro acesso:`,
                 `${bodyData.tenant.password}`,
                 `Time ${bodyData.product.name}`

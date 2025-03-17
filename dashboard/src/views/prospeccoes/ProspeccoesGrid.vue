@@ -175,6 +175,9 @@ const goField = (data) => {
     idRegs.value = data.id;
     router.push({ path: `/${uProf.value.schema_description}/prospeccao/${data.id}` });
 };
+watchEffect(() => {
+    mountUrlFilters();
+});
 </script>
 
 <template>

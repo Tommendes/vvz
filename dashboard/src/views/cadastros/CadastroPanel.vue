@@ -9,6 +9,7 @@ import EnderecosGrid from './enderecos/EnderecosGrid.vue';
 import PipelinesGrid from '../pipeline/PipelinesGrid.vue';
 import PosVendasGrid from '../posVendas/PosVendasGrid.vue';
 import ProspeccoesGrid from '../prospeccoes/ProspeccoesGrid.vue';
+import FinanceiroGrid from '../financeiro/FinanceiroGrid.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 
 // Profile do usuário
@@ -136,9 +137,16 @@ onBeforeMount(() => {
                     <TabPanel :disabled="!itemData.id">
                         <template #header>
                             <i class="fa-solid fa-map-location-dot mr-2"></i>
-                            <span>Prospecções e visitas ao cliente</span>
+                            <span>Prospecções e visitas</span>
                         </template>
                         <ProspeccoesGrid v-if="itemData.id" :idCadastro="itemData.id" />
+                    </TabPanel>
+                    <TabPanel :disabled="!itemData.id">
+                        <template #header>
+                            <i class="fa-solid fa-cash-register mr-2"></i>
+                            <span>Registros financeiros</span>
+                        </template>
+                        <FinanceiroGrid v-if="itemData.id" :idCadastro="itemData.id" />
                     </TabPanel>
                 </TabView>
             </div>

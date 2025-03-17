@@ -256,7 +256,8 @@ module.exports = app => {
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaUploadsDomain = `${dbPrefix}_api.uploads`
         const ret = app.db({ tbl1: tabelaDomain })
-            .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo`))
+            // .select(app.db.raw(`tbl1.*, CONCAT(upl.url_destination, '/', upl.url_path, '/', upl.uid, '_', upl.filename) AS url_logo`))
+            .select(app.db.raw(`tbl1.*, upl.public_url AS url_logo`))
             .leftJoin({ upl: tabelaUploadsDomain }, function () {
                 this.on('tbl1.id_uploads_imagem', '=', 'upl.id')
                     .andOn('upl.status', '=', STATUS_ACTIVE)

@@ -389,14 +389,29 @@ const showUploadForm = () => {
             modal: true
         },
         onClose: () => {
-            setTimeout(() => {
-                defaultSuccess('Por favor aguarde! Atualizando imagem...');
-                window.location.reload();
-            }, 3000);
+            loadImgLogo();
         }
     });
 };
+const loadImgLogo = async () => {
+    if (itemData.value.id && itemData.value.id_uploads_logo) {
+        const urlItem = `${urlBase.value}/${itemData.value.id}`;
+        await axios.get(urlItem).then((res) => {
+            itemData.value.id_uploads_logo = res.data.id_uploads_logo;
+        });
+        const url = `${baseApiUrl}/uploads/${itemData.value.id_uploads_logo}`;
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            console.log(body);
 
+            if (body && body.id) {
+                itemData.value.url_logo = body.public_url;
+            } else {
+                itemData.value.url_logo = '/assets/images/DefaultLogomarca.png';
+            }
+        });
+    }
+};
 const onImageRightClick = (event) => {
     menu.value.show(event);
 };

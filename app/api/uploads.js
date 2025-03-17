@@ -1,4 +1,5 @@
-const { dbPrefix, tempFiles, baseFilesUrl } = require("../.env")
+const { dbPrefix, tempFiles, baseFilesUrl, minio } = require("../.env")
+const minioClient = require('../config/minioClient.js');
 const { Client } = require('basic-ftp');
 const path = require('path');
 const sharp = require('sharp');
@@ -255,35 +256,43 @@ module.exports = app => {
 
     const removeFileFromServer = async (req, res) => {
         try {
-            const ftpParam = await app.db(`${dbPrefix}_api.ftp_control`)
-                .select('host', 'port', 'user', 'pass', 'ssl')
-                .where({ status: STATUS_ACTIVE })
-            let connectionResult = await connectToFTP(ftpParam);
-            if (!connectionResult.success) {
-                return res.status(500).send('Não foi possível conectar ao servidor FTP');
-            }
-            const client = connectionResult.client;
             const tabelaDomain = `${dbPrefix}_api.${tabela}`;
             const filesToDelete = await app.db(tabelaDomain).where({ status: STATUS_DELETE });
 
             for (const file of filesToDelete) {
-                const fileToDelete = path.join(`/${file.url_path}`, `${file.uid}_${file.filename}`);
+                const objectKey = `${file.url_path}/${file.uid}_${file.filename}`; // Caminho do arquivo no bucket
+                console.log(`Excluindo arquivo ${objectKey}...`);
+                
+
                 try {
-                    await client.remove(fileToDelete);
-                    app.api.logger.logInfo({ log: { line: `Arquivo ${fileToDelete} excluído com sucesso`, sConsole: true } });
+                    // Remover o arquivo do MinIO
+                    await new Promise((resolve, reject) => {
+                        minioClient.removeObject(file.bucket || 'vivazul', objectKey, (err) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                console.log(`Arquivo ${objectKey} excluído com sucesso do bucket ${file.bucket || 'vivazul'}`);
+                                resolve();
+                            }
+                        });
+                    });
+
+                    app.api.logger.logInfo({ log: { line: `Arquivo ${objectKey} excluído com sucesso`, sConsole: true } });
                 } catch (error) {
-                    app.api.logger.logError({ log: { line: `Erro ao excluir arquivo no servidor FTP: ${error.message}`, sConsole: true } });
+                    app.api.logger.logError({ log: { line: `Erro ao excluir arquivo no MinIO: ${error.message}`, sConsole: true } });
                 }
+
                 try {
+                    // Atualizar o status do arquivo no banco de dados
                     await app.db(tabelaDomain)
                         .update({ status: 999, updated_at: new Date() })
                         .where({ id: file.id });
                 } catch (error) {
-                    app.api.logger.logError({ log: { line: `Erro a referência do arquivo no banco de dados: ${error.message}`, sConsole: true } });
+                    app.api.logger.logError({ log: { line: `Erro ao atualizar referência do arquivo no banco de dados: ${error.message}`, sConsole: true } });
                 }
             }
 
-            if (req.method == 'PUT') return true
+            if (req.method === 'PUT') return true;
             else return res.status(204).send();
         } catch (error) {
             app.api.logger.logError({ log: { line: `Erro na função removeFileFromServer: ${error.message}`, sConsole: true } });
@@ -307,18 +316,15 @@ module.exports = app => {
         }
     }
 
-    // Função para hospedar arquivos
+    // Função para hospedar arquivos no MinIO
     const hostFile = async (req, res) => {
-        const schema_description = req.query.sd;
-        const ftpParam = await app.db(`${dbPrefix}_api.ftp_control`)
-            .select('host', 'port', 'user', 'pass', 'ssl')
-            .where({ status: STATUS_ACTIVE })
-        let connectionResult = await connectToFTP(ftpParam);
-        if (!connectionResult.success) {
-            return res.status(500).send('Não foi possível conectar ao servidor FTP');
-        }
-        const client = connectionResult.client;
+        const bucketName = 'vivazul'; // Nome do bucket principal
+        const schema_description = req.query.sd; // Subpasta dentro do bucket
+
         try {
+            // Criar o bucket se ele não existir
+            await createBucket(bucketName);
+
             const destinationPath = path.join(__dirname, tempFiles, schema_description);
             const storage = multer.diskStorage({
                 destination: function (req, file, cb) {
@@ -343,30 +349,60 @@ module.exports = app => {
 
                 for (const file of files) {
                     file.uid = Math.floor(Date.now());
-                    file.url_destination = `${baseFilesUrl}`;
-                    file.url_path = schema_description;
                     file.extension = file.originalname.split('.').pop();
 
-                    const inputPath = path.join(file.destination, file.originalname.replace(/ /g, '_'));
-                    const ftpPath = path.join(`/${schema_description}`, `${file.uid}_${file.filename}`);
+                    const inputPath = path.join(file.destination, removeAccents(file.originalname.replace(/ /g, '_')));
+                    const objectKey = `${schema_description}/${file.uid}_${file.filename}`; // Caminho do arquivo no bucket
+
                     try {
-                        await client.ensureDir(schema_description); // Cria o diretório FTP
-                    } catch (ftpError) {
-                        app.api.logger.logError({ log: { line: `Erro ao criar diretório FTP: ${ftpError.message}`, sConsole: true } });
+                        // Enviar o arquivo para o MinIO
+                        await new Promise((resolve, reject) => {
+                            minioClient.fPutObject(
+                                bucketName, // Nome do bucket
+                                objectKey, // Caminho do arquivo no bucket
+                                inputPath, // Caminho do arquivo local
+                                { 'Content-Type': file.mimetype }, // Metadados
+                                (err, etag) => {
+                                    if (err) {
+                                        reject(err);
+                                    } else {
+                                        resolve(etag);
+                                    }
+                                }
+                            );
+                        });
+
+                        // Gerar URL pública (presigned URL)
+                        const presignedUrl = await new Promise((resolve, reject) => {
+                            minioClient.presignedUrl(
+                                'GET', // Método HTTP
+                                bucketName, // Nome do bucket
+                                objectKey, // Caminho do arquivo no bucket
+                                24 * 60 * 60, // Tempo de expiração em segundos (24 horas)
+                                (err, url) => {
+                                    if (err) {
+                                        reject(err);
+                                    } else {
+                                        resolve(url);
+                                    }
+                                }
+                            );
+                        });
+
+                        file.public_url = presignedUrl;
+                        const minioFileUrl = presignedUrl.split('/');
+                        file.url_destination = `${minioFileUrl[0]}//${minioFileUrl[2]}/${minioFileUrl[3]}`;
+                        file.url_path = `${minioFileUrl[4]}`;
+                    } catch (minioError) {
+                        app.api.logger.logError({ log: { line: `Erro ao enviar arquivo ao MinIO: ${minioError.message}`, sConsole: true } });
                     }
-                    try {
-                        await client.uploadFrom(inputPath, ftpPath); // Envia o arquivo para o servidor FTP
-                    } catch (ftpError) {
-                        app.api.logger.logError({ log: { line: `Erro ao enviar arquivo ao servidor FTP: ${ftpError.message}`, sConsole: true } });
-                    }
+
                     try {
                         fs.unlinkSync(inputPath); // Remove o arquivo local após o upload
-                    } catch (ftpError) {
-                        app.api.logger.logError({ log: { line: `Erro ao excluir arquivo temporário: ${ftpError.message}`, sConsole: true } });
+                    } catch (fsError) {
+                        app.api.logger.logError({ log: { line: `Erro ao excluir arquivo temporário: ${fsError.message}`, sConsole: true } });
                     }
                 }
-
-                client.close();
 
                 req.body = files;
                 const registeredFiles = await registerFileInDb(req);
@@ -378,20 +414,38 @@ module.exports = app => {
         }
     };
 
-    async function criarDiretorioRecursivo(client, caminho) {
-        const partes = caminho.split("/");
-        for (let i = 1; i <= partes.length; i++) {
-            const diretorioAtual = partes.slice(0, i).join("/");
-            try {
-                await client.ensureDir(diretorioAtual);
-            } catch (erro) {
-                if (erro.code !== 550) { // Código 550 significa "diretório já existe"
-                    console.error("Erro ao criar diretório:", diretorioAtual, erro);
-                    throw new Error(`Erro ao criar diretório: ${diretorioAtual}`);
-                }
+    // const createBucket = async (bucketName) => {
+    const createBucket = async (bucketName) => {
+        try {
+            const exists = await new Promise((resolve, reject) => {
+                minioClient.bucketExists(bucketName, (err, exists) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(exists);
+                    }
+                });
+            });
+
+            if (!exists) {
+                await new Promise((resolve, reject) => {
+                    minioClient.makeBucket(bucketName, 'us-east-1', (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            console.log(`Bucket '${bucketName}' criado com sucesso`);
+                            resolve();
+                        }
+                    });
+                });
+            } else {
+                console.log(`Bucket '${bucketName}' já existe`);
             }
+        } catch (error) {
+            console.error(`Erro ao criar/verificar bucket '${bucketName}': ${error.message}`);
+            throw error;
         }
-    }
+    };
 
     const registerFileInDb = async (req) => {
         const tabelaDomain = `${dbPrefix}_api.${tabela}`

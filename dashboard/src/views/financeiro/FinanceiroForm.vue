@@ -74,7 +74,8 @@ const dropdownEmpresas = ref([]); // Itens do dropdown de Empresas
 // Props do template
 const props = defineProps({
     mode: { type: String, default: 'view' },
-    idRegistro: { type: Number, default: 0 }
+    idRegistro: { type: Number, default: 0 },
+    idCadastro: { type: Number, default: 0 }
 });
 // Emit do template
 const emit = defineEmits(['changed', 'cancel']);

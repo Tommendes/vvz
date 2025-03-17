@@ -63,6 +63,42 @@ const loadData = async () => {
     }
     loading.value = false;
 };
+const loadImgLogo = async () => {
+    if (itemData.value.id && itemData.value.id_uploads_logo) {
+        const urlItem = `${urlBase.value}/${itemData.value.id}`;
+        await axios.get(urlItem).then((res) => {
+            itemData.value.id_uploads_logo = res.data.id_uploads_logo;
+        });
+        const url = `${baseApiUrl}/uploads/${itemData.value.id_uploads_logo}`;
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            console.log(body);
+
+            if (body && body.id) {
+                itemData.value.url_logo = body.public_url;
+            } else {
+                itemData.value.url_logo = '/assets/images/DefaultLogomarca.png';
+            }
+        });
+    }
+};
+const loadImgFooter = async () => {
+    if (itemData.value.id && itemData.value.id_uploads_rodape) {        
+        const urlItem = `${urlBase.value}/${itemData.value.id}`;
+        await axios.get(urlItem).then((res) => {
+            itemData.value.id_uploads_rodape = res.data.id_uploads_rodape;
+        });
+        const url = `${baseApiUrl}/uploads/${itemData.value.id_uploads_rodape}`;
+        await axios.get(url).then((res) => {
+            const body = res.data;
+            if (body && body.id) {
+                itemData.value.url_rodape = body.public_url;
+            } else {
+                itemData.value.url_rodape = '/assets/images/DefaultRodape.png';
+            }
+        });
+    }
+};
 // Salvar dados do formulário
 const saveData = async () => {
     if (!formIsValid()) {
@@ -123,10 +159,11 @@ const showUploadForm = () => {
             modal: true
         },
         onClose: () => {
-            setTimeout(() => {
-                defaultSuccess('Por favor aguarde! Atualizando imagem...');
-                window.location.reload();
-            }, 3000);
+            // setTimeout(() => {
+                // defaultSuccess('Por favor aguarde! Atualizando imagem...');
+                // window.location.reload();
+                loadImgLogo();
+            // }, 2000);
         }
     });
 };
@@ -151,13 +188,11 @@ const showUploadFooterForm = () => {
             modal: true
         },
         onClose: () => {
-            setTimeout(
-                () => {
-                    defaultSuccess('Por favor aguarde! Recarregando dados...');
-                    window.location.reload();
-                },
-                Math.random() * 1000 + 250
-            );
+            // setTimeout(() => {
+                // defaultSuccess('Por favor aguarde! Atualizando imagem...');
+                // window.location.reload();
+                loadImgFooter();
+            // }, 2000);
         }
     });
 };
@@ -289,15 +324,10 @@ watch(itemData.value, () => {
                     <div class="p-fluid grid">
                         <div class="col-4">
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
-                            <Image
-                                v-else
+                            <Image v-else
                                 :src="`${itemData.url_logo ? itemData.url_logo : '/assets/images/DefaultLogomarca.png'}`"
-                                :width="Math.floor(windowWidth * 0.2)"
-                                alt="Logomarca"
-                                :preview="preview"
-                                id="url_logo"
-                                @contextmenu="onImageRightClick"
-                            />
+                                :width="Math.floor(windowWidth * 0.2)" alt="Logomarca" :preview="preview" id="url_logo"
+                                @contextmenu="onImageRightClick" />
                             <ContextMenu ref="menu" :model="items" />
                         </div>
                         <div class="col-8">
@@ -305,62 +335,67 @@ watch(itemData.value, () => {
                                 <div class="col-12 md:col-6">
                                     <label for="descricao">Nome (P.Ex.: Vivazul_Proposta)</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <InputText
-                                        v-else
-                                        autocomplete="no"
-                                        :disabled="mode == 'view'"
-                                        v-model="itemData.descricao"
-                                        id="descricao"
-                                        type="text"
-                                        maxlength="50"
+                                    <InputText v-else autocomplete="no" :disabled="mode == 'view'"
+                                        v-model="itemData.descricao" id="descricao" type="text" maxlength="50"
                                         @input="updateTextWithUnderscores"
-                                        placeholder="Representada_Tipo_Documento..."
-                                    />
+                                        placeholder="Representada_Tipo_Documento..." />
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="status">Aceita novos registros?</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="status" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.status" :options="dropdownNovosItens" />
+                                    <Dropdown v-else id="status" :disabled="mode == 'view'" optionLabel="label"
+                                        optionValue="value" v-model="itemData.status" :options="dropdownNovosItens" />
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="bi_index">Resultados no Dashboard?</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="bi_index" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.bi_index" :options="dropDownSN" />
+                                    <Dropdown v-else id="bi_index" :disabled="mode == 'view'" optionLabel="label"
+                                        optionValue="value" v-model="itemData.bi_index" :options="dropDownSN" />
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="doc_venda">É documento de venda?</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="doc_venda" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.doc_venda" :options="dropdownDocVenda" />
+                                    <Dropdown v-else id="doc_venda" :disabled="mode == 'view'" optionLabel="label"
+                                        optionValue="value" v-model="itemData.doc_venda" :options="dropdownDocVenda" />
                                 </div>
                                 <div class="col-12 md:col-3" v-if="itemData.doc_venda == 1">
                                     <label for="gera_baixa">Converte em pedido?</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <Dropdown v-else id="gera_baixa" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.gera_baixa" :options="dropDownSN" />
+                                    <Dropdown v-else id="gera_baixa" :disabled="mode == 'view'" optionLabel="label"
+                                        optionValue="value" v-model="itemData.gera_baixa" :options="dropDownSN" />
                                 </div>
                                 <div class="col-12 md:col-6" v-if="itemData.doc_venda == 1 && itemData.gera_baixa == 1">
                                     <label for="tipo_secundario">Convertido em?</label>
                                     <Skeleton v-if="loading" height="2rem"></Skeleton>
-                                    <Dropdown v-else id="tipo_secundario" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.tipo_secundario" :options="dropdownTipoSec" />
+                                    <Dropdown v-else id="tipo_secundario" :disabled="mode == 'view'" optionLabel="label"
+                                        optionValue="value" v-model="itemData.tipo_secundario"
+                                        :options="dropdownTipoSec" />
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="autom_nr">Numeracao automatica?</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="autom_nr" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.autom_nr" :options="dropDownSN" />
+                                    <Dropdown v-else id="autom_nr" :disabled="mode == 'view'" optionLabel="label"
+                                        optionValue="value" v-model="itemData.autom_nr" :options="dropDownSN" />
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="obrig_valor">Valor é obrigatorio?</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="obrig_valor" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.obrig_valor" :options="dropdownObrigValor" />
+                                    <Dropdown v-else id="obrig_valor" :disabled="mode == 'view'" optionLabel="label"
+                                        optionValue="value" v-model="itemData.obrig_valor"
+                                        :options="dropdownObrigValor" />
                                 </div>
                                 <div class="col-12 md:col-3">
                                     <label for="reg_agente">Obrigatório vendedor?</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="reg_agente" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.reg_agente" :options="dropDownSN" />
+                                    <Dropdown v-else id="reg_agente" :disabled="mode == 'view'" optionLabel="label"
+                                        optionValue="value" v-model="itemData.reg_agente" :options="dropDownSN" />
                                 </div>
                                 <div class="col-12 md:col-3" v-if="itemData.doc_venda == 1">
                                     <label for="proposta_interna">Propostas com o Vivazul?</label>
                                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                                    <Dropdown v-else id="proposta_interna" :disabled="mode == 'view'" optionLabel="label" optionValue="value" v-model="itemData.proposta_interna" :options="dropDownSN" />
+                                    <Dropdown v-else id="proposta_interna" :disabled="mode == 'view'"
+                                        optionLabel="label" optionValue="value" v-model="itemData.proposta_interna"
+                                        :options="dropDownSN" />
                                 </div>
                                 <!-- <div class="col-12 md:col-2">
                                     <label for="gera_pasta">Gera pasta</label>
@@ -373,22 +408,20 @@ watch(itemData.value, () => {
                 </div>
                 <div class="col-12">
                     <Skeleton v-if="loading" height="3rem"></Skeleton>
-                    <Image
-                        v-else
+                    <Image v-else
                         :src="`${itemData.url_rodape ? itemData.url_rodape : '/assets/images/DefaultRodape.png'}`"
-                        alt="Rodapé"
-                        :preview="preview"
-                        id="url_rodape"
-                        @contextmenu="onImageFooterRightClick"
-                        :width="Math.floor(windowWidth * 0.65)"
-                    />
+                        alt="Rodapé" :preview="preview" id="url_rodape" @contextmenu="onImageFooterRightClick"
+                        :width="Math.floor(windowWidth * 0.65)" />
                     <ContextMenu ref="menuFooter" :model="itemsFooter" />
                 </div>
                 <div class="col-12">
                     <div class="card flex justify-content-center flex-wrap gap-3">
-                        <Button type="button" v-if="mode == 'view'" label="Editar" icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
-                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk" severity="success" text raised />
-                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban" severity="danger" text raised @click="reload" />
+                        <Button type="button" v-if="mode == 'view'" label="Editar"
+                            icon="fa-regular fa-pen-to-square fa-beat" text raised @click="mode = 'edit'" />
+                        <Button type="submit" v-if="mode != 'view'" label="Salvar" icon="fa-solid fa-floppy-disk"
+                            severity="success" text raised />
+                        <Button type="button" v-if="mode != 'view'" label="Cancelar" icon="fa-solid fa-ban"
+                            severity="danger" text raised @click="reload" />
                     </div>
                 </div>
                 <div class="card bg-green-200 mt-3" v-if="uProf.admin >= 2">
