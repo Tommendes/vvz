@@ -123,23 +123,18 @@ const columns = ref([
 ]);
 
 const setUserColumns = () => {
-    const columns = localStorage.getItem('__finColumns');
-    if (columns) selectedColumns.value = JSON.parse(columns);
-    // else selectedColumns.value = selectedColumns.value.filter(col => !['valor_bruto_conta'].includes(col));
-    else {
-        localStorage.setItem('__finColumns', JSON.stringify(columns));
-        selectedColumns.value = columns;
-    }
+    // const savedColumns = localStorage.getItem('__finColumns');
+    // if (savedColumns) {
+    //     // Carregar as colunas salvas no localStorage
+    //     selectedColumns.value = JSON.parse(savedColumns);
+    // } else {
+    //     // Salvar as colunas padrão no localStorage se não houver nada salvo
+    //     localStorage.setItem('__finColumns', JSON.stringify(columns.value));
+        selectedColumns.value = columns.value;
+    // }
 };
 
-// let finColumns = JSON.parse(localStorage.getItem('__finColumns'));
-// const selectedColumns = ref(finColumns);
-// if (finColumns) {
-//     selectedColumns.value = finColumns;
-// } else {
-//     localStorage.setItem('__finColumns', JSON.stringify(columns.value));
-//     selectedColumns.value = columns.value;
-// }
+const selectedColumns = ref([]);
 
 // Inicializa os filtros do grid
 const initFilters = () => {
@@ -282,16 +277,23 @@ const mountUrlFilters = async () => {
     await loadLazyData();
 };
 
-onMounted(async () => {
+// onMounted(async () => {
+//     window.addEventListener('resize', updateScreenWidth);
+//     updateScreenWidth(); // Atualize a propriedade inicialmente
+
+//     // queryUrl.value = route.query;
+//     // Limpa os filtros do grid
+//     clearFilter();
+//     selectedColumns.value = selectedColumns.value.filter(col => !['valor_bruto_conta'].includes(col));
+//     // router.replace({ query: {} });
+//     // await mountUrlFilters();
+// });
+
+onMounted(() => {
+    setUserColumns(); // Carregar as colunas salvas no localStorage
     window.addEventListener('resize', updateScreenWidth);
     updateScreenWidth(); // Atualize a propriedade inicialmente
-
-    // queryUrl.value = route.query;
-    // Limpa os filtros do grid
     clearFilter();
-    selectedColumns.value = selectedColumns.value.filter(col => !['valor_bruto_conta'].includes(col));
-    // router.replace({ query: {} });
-    // await mountUrlFilters();
 });
 
 import xlsx from 'json-as-xlsx';
@@ -436,12 +438,21 @@ const goField = (data) => {
     window.open(`#/${uProf.value.schema_description}/financeiro/${data.id}`, '_blank');
 };
 watchEffect(() => {
-    if (Number(empresa.value) > 0 && selectedColumns.value[0].field == columns.value[0].field) selectedColumns.value.shift();
-    else if (Number(empresa.value) == 0 && selectedColumns.value[0] != columns.value[0]) selectedColumns.value = [columns.value[0], ...selectedColumns.value];
+    if (Number(empresa.value) > 0) {
+        // Remover a coluna da empresa se ela estiver presente
+        selectedColumns.value = selectedColumns.value.filter((col) => col.field !== columns.value[0].field);
+    } else if (Number(empresa.value) == 0) {
+        // Adicionar a coluna da empresa se ela não estiver presente
+        if (!selectedColumns.value.some((col) => col.field === columns.value[0].field)) {
+            selectedColumns.value = [columns.value[0], ...selectedColumns.value];
+        }
+    }
 });
-const onToggle = (val) => {
-    selectedColumns.value = columns.value.filter(col => val.includes(col));
-    localStorage.setItem('__finColumns', JSON.stringify(selectedColumns.value))
+const onToggle = (selected) => {
+    // Atualizar as colunas selecionadas com base na seleção do usuário
+    selectedColumns.value = columns.value.filter((col) => selected.includes(col));
+    // Salvar as colunas selecionadas no localStorage
+    // localStorage.setItem('__finColumns', JSON.stringify(selectedColumns.value));
 };
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
@@ -524,6 +535,9 @@ const uProfWithoutBigDataTkn = computed(() => {
                         gridData.length }} de {{ totalRecords }} registros para {{ empresaLabel }}</span>
                 </div>
                 <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
+                    <!-- <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
+                        @update:modelValue="onToggle" display="chip"
+                        placeholder="Selecione as colunas para exibir os dados" /> -->
                     <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
                         @update:modelValue="onToggle" display="chip"
                         placeholder="Selecione as colunas para exibir os dados" />

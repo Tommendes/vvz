@@ -14,31 +14,6 @@ module.exports = app => {
     // const clienteFTP = new ftp.Client();
     const { removeAccents } = app.api.facilities
 
-    const connectToFTP = async (ftpParamsArray) => {
-        let allErrors = [];
-        for (let i = 0; i < ftpParamsArray.length; i++) {
-            const ftpParam = ftpParamsArray[i];
-            const client = new Client();
-            try {
-                const dataConnect = {
-                    host: ftpParam.host,
-                    port: ftpParam.port,
-                    user: ftpParam.user,
-                    password: ftpParam.pass,
-                    secure: ftpParam.ssl
-                };
-                await client.access(dataConnect);
-                return { success: true, client }; // Retorna o cliente se a conexão for bem-sucedida
-            } catch (error) {
-                allErrors.push(`Conexão FTP falhou para a opção ${i + 1}: ${error.message}`);
-                client.close(); // Fecha a conexão falhada
-            }
-        }
-        // Se todas as conexões falharem, registre os erros do array allErrors e retorne falso
-        console.error(allErrors.join('; '));
-        return { success: false }; // Retorna falso se todas as conexões falharem
-    };
-
     const save = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();

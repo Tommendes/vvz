@@ -58,6 +58,7 @@ const animationLblCadas = ref('');
 const animationVlrLiq = ref('');
 // Campos de formulário
 const itemData = ref({});
+// const itemData = ref({ "valor_bruto": "01212341", "valor_liquido": 0, "id_empresa": 2, "centro": 2, "id_cadastros": 7495, "data_emissao": "2025-03-18T03:00:00.000Z" });
 // Tipo de centro
 const credorDevedor = ref('Destinatário');
 // Modo do formulário
@@ -143,14 +144,14 @@ const saveData = async () => {
     };
 
     if (preparedBody.data_emissao) {
-            if (moment(preparedBody.data_emissao, 'DD/MM/YYYY', true).isValid()) {
-                preparedBody.data_emissao = moment(preparedBody.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD');
-            } else if (moment(preparedBody.data_emissao, true).isValid()) {
-                preparedBody.data_emissao = moment(preparedBody.data_emissao).format('YYYY-MM-DD');
-            } else {
-                defaultWarn('Data de emissão inválida');
-                return;
-            }
+        if (moment(preparedBody.data_emissao, 'DD/MM/YYYY', true).isValid()) {
+            preparedBody.data_emissao = moment(preparedBody.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD');
+        } else if (moment(preparedBody.data_emissao, true).isValid()) {
+            preparedBody.data_emissao = moment(preparedBody.data_emissao).format('YYYY-MM-DD');
+        } else {
+            defaultWarn('Data de emissão inválida');
+            return;
+        }
     }
     await axios[method](url, preparedBody)
         .then(async (res) => {
@@ -161,20 +162,20 @@ const saveData = async () => {
                 if (fSEventos.value) fSEventos.value.getEventos();
                 itemData.value.id = body.id;
                 emit('changed');
-                if (route.name != 'cadastro' && ['new', 'clone'].includes(mode.value)) {
+                // if (route.name != 'cadastro' && ['new', 'clone'].includes(mode.value)) {
+                if (['new', 'clone'].includes(mode.value)) {
+                    goToField(itemData.value.id)
+                    toGrid()
+                } else if (id != body.id) {
                     router.push({
-                        path: `/${uProf.value.schema_description}/financeiro/${itemData.value.id}`
-                    });
-                } else if (route.name != 'cadastro' && id != itemData.value.id) {
-                    router.push({
-                        path: `/${uProf.value.schema_description}/financeiro/${itemData.value.id}`
+                        path: `/${uProf.value.schema_description}/financeiro/${body.id}`
                     });
                     const animation = animationLblCadas.value;
                     animationLblCadas.value = '';
-                    await loadData();
                     animationLblCadas.value = animation;
+                    await loadData();
                 }
-                reload();
+                // reload();
             } else {
                 defaultWarn('Erro ao salvar registro');
             }
@@ -185,6 +186,10 @@ const saveData = async () => {
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             // if (error.response && error.response.status == 401) router.push('/');
         });
+};
+
+const goToField = (id) => {
+    window.open(`#/${uProf.value.schema_description}/financeiro/${id}`, '_blank');
 };
 // Dados das retenções
 const itemDataRetencoes = ref([]);
@@ -638,8 +643,8 @@ watch(route, (value) => {
                     </Fieldset>
                     <RetencoesGrid v-if="itemData.id" :itemDataRoot="itemData" @reloadItems="loadRetencoes"
                         :uProf="uProf" :mode="mode" ref="retencoesGrid" />
-                    <EncargosGrid v-if="itemData.id" :itemDataRoot="itemData" @reloadItems="loadEncargos"
-                        :uProf="uProf" :mode="mode" ref="encargosGrid" />
+                    <EncargosGrid v-if="itemData.id" :itemDataRoot="itemData" @reloadItems="loadEncargos" :uProf="uProf"
+                        :mode="mode" ref="encargosGrid" />
                     <NotasGrid v-if="uProf.admin >= 2 && itemData.id" :itemDataRoot="itemData" @reloadItems="loadNotas"
                         :uProf="uProf" :mode="mode" ref="notasGrid" />
                 </div>
