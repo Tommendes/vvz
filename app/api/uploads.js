@@ -327,7 +327,7 @@ module.exports = app => {
                     file.extension = file.originalname.split('.').pop();
 
                     const inputPath = path.join(file.destination, removeAccents(file.originalname.replace(/ /g, '_')));
-                    const objectKey = `${folder ? folder : ''}/${file.uid}_${file.filename}`; // Caminho do arquivo no bucket
+                    const objectKey = `${folder ? folder + '/' : ''}${file.uid}_${file.filename}`; // Caminho do arquivo no bucket
 
                     try {
                         // Enviar o arquivo para o MinIO
@@ -366,7 +366,7 @@ module.exports = app => {
 
                         file.public_url = presignedUrl;
                         const minioFileUrl = presignedUrl.split('/');
-                        file.url_destination = `${minioFileUrl[0]}//${minioFileUrl[2]}/${minioFileUrl[3]}`;
+                        file.url_destination = `${minioFileUrl[0]}/${minioFileUrl[2]}/${minioFileUrl[3]}`;
                         file.url_path = `${minioFileUrl[4]}`;
                     } catch (minioError) {
                         app.api.logger.logError({ log: { line: `Erro ao enviar arquivo ao MinIO: ${minioError.message}`, sConsole: true } });
