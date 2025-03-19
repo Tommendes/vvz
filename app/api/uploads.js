@@ -327,7 +327,7 @@ module.exports = app => {
                     file.extension = file.originalname.split('.').pop();
 
                     const inputPath = path.join(file.destination, removeAccents(file.originalname.replace(/ /g, '_')));
-                    const objectKey = `${folder ? '/' + folder : ''}/${file.uid}_${file.filename}`; // Caminho do arquivo no bucket
+                    const objectKey = `${folder ? folder : ''}/${file.uid}_${file.filename}`; // Caminho do arquivo no bucket
 
                     try {
                         // Enviar o arquivo para o MinIO
