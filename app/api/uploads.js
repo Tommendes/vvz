@@ -294,13 +294,13 @@ module.exports = app => {
     // Função para hospedar arquivos no MinIO
     const hostFile = async (req, res) => {
         const bucketName = req.query.sd ? req.query.sd.replace(/_/g, '-') : 'vivazul'; // Nome do bucket
-        const folder = req.query.folder || undefined; // Subpasta no bucket do cliente
+        const folder = req.query.folder || 'files'; // Subpasta no bucket do cliente
 
         try {
             // Criar o bucket se ele não existir
             await createBucket(bucketName);
 
-            let destinationPath = path.join(__dirname, tempFiles, folder || '');
+            let destinationPath = path.join(__dirname, tempFiles, folder);
             const storage = multer.diskStorage({
                 destination: function (req, file, cb) {
                     if (!fs.existsSync(destinationPath)) {
@@ -327,7 +327,7 @@ module.exports = app => {
                     file.extension = file.originalname.split('.').pop();
 
                     const inputPath = path.join(file.destination, removeAccents(file.originalname.replace(/ /g, '_')));
-                    const objectKey = `${folder ? folder + '/' : ''}${file.uid}_${file.filename}`; // Caminho do arquivo no bucket
+                    const objectKey = `${folder}/${file.uid}_${file.filename}`; // Caminho do arquivo no bucket
 
                     try {
                         // Enviar o arquivo para o MinIO
