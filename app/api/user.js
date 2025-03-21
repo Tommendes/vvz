@@ -500,21 +500,18 @@ module.exports = app => {
         };
 
         if (typeof messageBody.message === 'string') messageBody.message = [messageBody.message]
-        for (let index = 0; index < messageBody.message.length; index++) {
-            const element = messageBody.message[index];
+        for (const element of messageBody.message) {
             const body = {
                 "number": messageBody.phone,
                 "text": `*Vivazul:*\n${element}`
+            };
+            try {
+                const response = await axios.post(apiWats.evo, body, config);
+                console.log('Mensagem enviada com sucesso:', response.data);
+            } catch (error) {
+                console.log('Erro ao enviar mensagem:', error);
             }
-            await axios.post(apiWats.evo, body, config)
-                .then(async (res) => {
-                    return res.data
-                })
-                .catch(error => {
-                    console.log('sendMessage error', error);
-                    return error
-                })
-        };
+        }
     }
 
     /**
