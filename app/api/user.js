@@ -504,7 +504,7 @@ module.exports = app => {
             const element = messageBody.message[index];
             const body = {
                 "number": messageBody.phone,
-                "text": `*AzulBot:*\n${element}`
+                "text": `*Vivazul:*\n${element}`
             }
             await axios.post(apiWats.evo, body, config)
                 .then(async (res) => {
