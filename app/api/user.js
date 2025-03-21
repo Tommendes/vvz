@@ -942,11 +942,11 @@ module.exports = app => {
                 "us.pipeline", "us.pipeline_params", "us.pv", "us.comercial", "us.fiscal", "us.financeiro", "us.comissoes", "us.prospeccoes",
                 "us.at", "us.protocolo", "us.uploads", "us.agente_v", "us.agente_arq", "us.agente_at", "us.time_to_pas_expires", "sc.schema_description", "us.schema_id", "us.id_empresa")
             .where(app.db.raw(`us.id = ${req.params.id}`))
-            .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
+            // .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
             .first()
             .then(users => {
-                // users.j_user = jasperServerU
-                // users.j_paswd = jasperServerK
+                users.j_user = jasperServerU
+                users.j_paswd = jasperServerK
                 delete users.password
                 // Antes de enviar os dados, converta todos os valores int para string
                 for (const key in users) {

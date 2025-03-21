@@ -5,7 +5,7 @@ const newSchemaClientName = 'Nome do Cliente'; // Defina o nome do cliente aqui
 
 // Configurações de conexão com o banco de dados
 const connection = mysql.createConnection({
-    host: '85.31.231.103',
+    host: '217.196.61.201',
     port: 3306,
     collation: 'utf8mb4_general_ci',
     database: 'vivazul_api',
