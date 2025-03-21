@@ -945,8 +945,8 @@ module.exports = app => {
             .where(app.db.raw(`us.status = ${STATUS_ACTIVE}`))
             .first()
             .then(users => {
-                users.j_user = jasperServerU
-                users.j_paswd = jasperServerK
+                // users.j_user = jasperServerU
+                // users.j_paswd = jasperServerK
                 delete users.password
                 // Antes de enviar os dados, converta todos os valores int para string
                 for (const key in users) {
