@@ -364,7 +364,7 @@ module.exports = app => {
                             );
                         });
 
-                        file.public_url = presignedUrl;
+                        file.public_url = presignedUrl.split('?')[0];
                         const minioFileUrl = presignedUrl.split('/');
                         file.url_destination = `${minioFileUrl[0]}/${minioFileUrl[2]}/${minioFileUrl[3]}`;
                         file.url_path = `${minioFileUrl[4]}`;
