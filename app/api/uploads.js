@@ -353,7 +353,7 @@ module.exports = app => {
                                 'GET', // Método HTTP
                                 bucketName, // Nome do bucket
                                 objectKey, // Caminho do arquivo no bucket
-                                24 * 60 * 60 * 30 * 12 * 25, // Tempo de expiração em segundos (25 anos)
+                                24 * 60 * 60 * 7, // Tempo de expiração em segundos (7 anos)
                                 (err, url) => {
                                     if (err) {
                                         reject(err);
