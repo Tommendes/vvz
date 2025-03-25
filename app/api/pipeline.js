@@ -1334,7 +1334,7 @@ module.exports = app => {
                 default:
                     break;
             }
-            app.api.logger.logError({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${pathDoc}. Error: ${errorMsg}`, sConsole: true } })
+            app.api.logger.logInfo({ log: { line: `Error in file: ${__filename} (${__function}:${__line}). User: ${uParams.name}. Path: ${pathDoc}. Error: ${errorMsg}`, sConsole: true } })
             return res.status(200).send(errorMsg)
         } finally {
             clientFtp.close();
