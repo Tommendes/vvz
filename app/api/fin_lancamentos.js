@@ -49,9 +49,7 @@ module.exports = app => {
             existsOrError(body.data_emissao, 'Data de emissão não informada')
             if (body.data_emissao) {
                 // Verificar se a data de emissão é válida e converte para en
-                if (moment(body.data_emissao, 'DD/MM/YYYY', true).isValid())
-                    body.data_emissao = moment(body.data_emissao).format('YYYY-MM-DD')
-                else throw 'Data de emissão inválida'
+                if (!moment(body.data_emissao, 'YYYY-MM-DD', true).isValid()) throw 'Data de emissão inválida'
             }
             existsOrError(body.valor_bruto, 'Valor bruto não informado')
 
