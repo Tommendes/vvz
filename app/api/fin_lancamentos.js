@@ -47,10 +47,8 @@ module.exports = app => {
             if (body.centro === 1) credorDevedor = 'Credor'
             existsOrError(body.id_cadastros, `${credorDevedor} não informado`)
             existsOrError(body.data_emissao, 'Data de emissão não informada')
-            if (body.data_emissao) {
-                // Verificar se a data de emissão é válida e converte para en
-                if (!moment(body.data_emissao, 'YYYY-MM-DD', true).isValid()) throw 'Data de emissão inválida'
-            }
+            // Verificar se a data de emissão é válida em en
+            if (!moment(body.data_emissao, 'YYYY-MM-DD', true).isValid()) throw 'Data de emissão inválida'
             existsOrError(body.valor_bruto, 'Valor bruto não informado')
 
             const unique = await app.db(tabelaDomain).where({ id_empresa: body.id_empresa, centro: body.centro, id_cadastros: body.id_cadastros, data_emissao: body.data_emissao, valor_bruto: body.valor_bruto, pedido: body.pedido || '', status: STATUS_ACTIVE }).first()
