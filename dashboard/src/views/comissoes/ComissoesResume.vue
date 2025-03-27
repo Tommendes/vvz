@@ -176,7 +176,7 @@ const printOnly = async (idAgente, tpAgenteRep, type = 'diarioComissionado') => 
         mes: dataCorte.value.parametros.mes,
         dataInicio: dataCorte.value.parametros.dataInicio,
         dataFim: dataCorte.value.parametros.dataFim,
-        reportTitle: 'Diário Auxiliar de Comissionado',
+        reportTitle: (type == 'diarioComissionado' ? 'Diário Auxiliar' : 'Relatório Analítico') + ' de Comissionado',
         tpAgenteRep: tpAgenteRep,
         idAgente: idAgente,
         exportType: 'pdf',
@@ -206,37 +206,30 @@ onMounted(async () => {
 
 <template>
     <div class="card">
-        <DataTable
-            v-model:filters="filters"
-            :value="gridData"
-            dataKey="id"
-            filterDisplay="row"
-            :loading="loading"
-            :globalFilterFields="['ordem', 'nome_comum']"
-            rowGroupMode="subheader"
-            groupRowsBy="agente_representante.tipo"
-            rowGroupHeader:class="p-row-even bg-primary"
-            scrollable
-            scrollHeight="400px"
-            removableSort
-        >
+        <DataTable v-model:filters="filters" :value="gridData" dataKey="id" filterDisplay="row" :loading="loading"
+            :globalFilterFields="['ordem', 'nome_comum']" rowGroupMode="subheader"
+            groupRowsBy="agente_representante.tipo" rowGroupHeader:class="p-row-even bg-primary" scrollable
+            scrollHeight="400px" removableSort>
             <template #header>
                 <!-- <div class="flex align-content-center flex-wrap"> -->
                 <div class="flex justify-content-between">
                     <div class="flex justify-content-start flex align-content-center flex-wrap">
                         <div class="flex align-items-center justify-content-center" v-if="dataCorte.parametros">
-                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }} e {{ dataCorte.parametros.dataFim }}</p>
+                            <p class="text-2xl text-orange-500">Liquidações entre: {{ dataCorte.parametros.dataInicio }}
+                                e {{ dataCorte.parametros.dataFim }}</p>
                         </div>
                     </div>
                     <div class="flex justify-content-end">
-                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon iconDisplay="input" @update:modelValue="adjustDates" />
+                        <Calendar v-model="monthPicker" view="month" dateFormat="mm/yy" class="mr-2" showIcon
+                            iconDisplay="input" @update:modelValue="adjustDates" />
                         <IconField iconPosition="left">
                             <InputIcon>
                                 <i class="fa-solid fa-magnifying-glass" />
                             </InputIcon>
                             <InputText v-model="filters['global'].value" placeholder="Pesquise..." />
                         </IconField>
-                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined @click="initFilters()" />
+                        <Button type="button" icon="fa-solid fa-filter" label="Limpar" class="ml-2" outlined
+                            @click="initFilters()" />
                     </div>
                     <!-- </div> -->
                 </div>
@@ -268,8 +261,12 @@ onMounted(async () => {
             </Column>
             <Column field="id" header="Ações" class="text-right">
                 <template #body="slotProps">
-                    <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'" class="mr-2" rounded outlined aria-label="Bookmark" @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo)" />
-                    <Button icon="fa-solid fa-file-invoice-dollar" severity="info" v-tooltip:top="'Clique para imprimir este o Analítico'" rounded outlined aria-label="Bookmark" @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo, 'analiticoComissionado')" />
+                    <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'"
+                        class="mr-2" rounded outlined aria-label="Bookmark"
+                        @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo)" />
+                    <Button icon="fa-solid fa-file-invoice-dollar" severity="info"
+                        v-tooltip:top="'Clique para imprimir este o Analítico'" rounded outlined aria-label="Bookmark"
+                        @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo, 'analiticoComissionado')" />
                 </template>
             </Column>
             <template #groupheader="slotProps">
@@ -279,9 +276,15 @@ onMounted(async () => {
             </template>
             <template #groupfooter="slotProps">
                 <div class="flex justify-content-end font-bold w-full">
-                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{ calculateCustomerTotal(slotProps.data.agente_representante.label) }} {{ slotProps.data.agente_representante.label }}</div>
-                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalPendente) }}</div>
-                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{ formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado) }}</div>
+                    <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{
+                        calculateCustomerTotal(slotProps.data.agente_representante.label) }} {{
+                            slotProps.data.agente_representante.label }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
+                        formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalPendente)
+                        }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
+                        formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado)
+                        }}</div>
                 </div>
             </template>
         </DataTable>

@@ -483,7 +483,7 @@ module.exports = app => {
                     "request": req,
                     "evento": {
                         "classevento": `printing-commisioning-daily`,
-                        "evento": `Impressão de Diário de Comissionamento de Agente`,
+                        "evento": `Impressão de Relatório Analítico de Comissionamento de Agente`,
                         "tabela_bd": "comissoes",
                     }
                 })
