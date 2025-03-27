@@ -343,6 +343,7 @@ module.exports = app => {
             "tpAgenteRep": tpAgenteRep,
             "idAgente": idAgente,
             "reportTitle": reportTitle,
+            "schema_description": uParams.schema_description,
             "hiperlinks": uParams.comissoes ? true : false
         }
 
@@ -460,6 +461,7 @@ module.exports = app => {
             "tpAgenteRep": tpAgenteRep,
             "idAgente": idAgente,
             "reportTitle": reportTitle,
+            "schema_description": uParams.schema_description,
             "hiperlinks": uParams.comissoes ? true : false
         }
 
