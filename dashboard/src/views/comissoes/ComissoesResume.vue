@@ -167,6 +167,14 @@ const calculateCustomerTotalValue = (name) => {
     return { totalPendente, totalLiquidado };
 };
 
+const downloadPDF = async (pdf, fileName) => {
+    const linkSource = `data:application/pdf;base64,${pdf}`;
+    const downloadLink = document.createElement("a");
+    downloadLink.href = linkSource;
+    downloadLink.download = fileName;
+    downloadLink.click();
+}
+
 const printOnly = async (idAgente, tpAgenteRep, type = 'diarioComissionado') => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/${type}`;
@@ -184,12 +192,17 @@ const printOnly = async (idAgente, tpAgenteRep, type = 'diarioComissionado') => 
     };
     await axios
         .post(url, bodyRequest)
-        .then((res) => {
+        .then(async  (res) => {
             const body = res.data;
+            await downloadPDF(
+                body,
+                bodyRequest.reportTitle.replaceAll(" ", "_").replace("_-_", "_")
+            );
             let pdfWindow = window.open('');
             pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
         .catch((error) => {
+            // console.log(error);            
             defaultWarn(error.response.data || error.response || 'Erro ao carregar dados!');
             if (error.response && error.response.status == 401) router.push('/');
         });
@@ -281,10 +294,10 @@ onMounted(async () => {
                             slotProps.data.agente_representante.label }}</div>
                     <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
                         formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalPendente)
-                        }}</div>
+                    }}</div>
                     <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
                         formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado)
-                        }}</div>
+                    }}</div>
                 </div>
             </template>
         </DataTable>
