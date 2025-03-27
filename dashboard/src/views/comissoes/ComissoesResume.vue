@@ -167,9 +167,9 @@ const calculateCustomerTotalValue = (name) => {
     return { totalPendente, totalLiquidado };
 };
 
-const printOnly = async (idAgente, tpAgenteRep) => {
+const printOnly = async (idAgente, tpAgenteRep, type = 'diarioComissionado') => {
     defaultSuccess('Por favor aguarde...');
-    let url = `${baseApiUrl}/printing/diarioComissionado`;
+    let url = `${baseApiUrl}/printing/${type}`;
     const bodyRequest = {
         periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFim} e pendências até: ${dataCorte.value.parametros.dataFim}`,
         ano: dataCorte.value.parametros.ano,
@@ -268,7 +268,8 @@ onMounted(async () => {
             </Column>
             <Column field="id" header="Ações" class="text-right">
                 <template #body="slotProps">
-                    <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'" rounded outlined aria-label="Bookmark" @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo)" />
+                    <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'" class="mr-2" rounded outlined aria-label="Bookmark" @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo)" />
+                    <Button icon="fa-solid fa-file-invoice-dollar" severity="info" v-tooltip:top="'Clique para imprimir este o Analítico'" rounded outlined aria-label="Bookmark" @click="printOnly(slotProps.data.id, slotProps.data.agente_representante.tipo, 'analiticoComissionado')" />
                 </template>
             </Column>
             <template #groupheader="slotProps">
