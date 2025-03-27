@@ -343,6 +343,7 @@ module.exports = app => {
             "tpAgenteRep": tpAgenteRep,
             "idAgente": idAgente,
             "reportTitle": reportTitle,
+            "hiperlinks": uParams.comissoes ? true : false
         }
 
         const exportType = body.exportType || 'pdf'
