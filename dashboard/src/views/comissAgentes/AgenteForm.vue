@@ -154,7 +154,12 @@ const dropdownTiposAR = ref([
 ]);
 // Validar formulário
 const formIsValid = () => {
-    return itemData.value.ordem && ['0', '1', '2', '3'].includes(itemData.value.agente_representante) && [0, 1].includes(itemData.value.dsr); // && (itemData.value.id_cadastros || itemData.value.apelido);
+    const hasIdCadastros = itemData.value.id_cadastros && itemData.value.id_cadastros.length > 0;
+    const hasOrdem = itemData.value.ordem && itemData.value.ordem.length > 0;
+    const hasAgenteRepresentante = itemData.value.agente_representante && itemData.value.agente_representante.length > 0;
+    const hasDsr = itemData.value.dsr && itemData.value.dsr.length > 0;
+    return hasIdCadastros && hasOrdem && hasAgenteRepresentante && hasDsr; // && itemData.value.id_cadastros && itemData.value.apelido;
+    // itemData.value.ordem && ['0', '1', '2', '3'].includes(itemData.value.agente_representante) && [0, 1].includes(itemData.value.dsr); // && (itemData.value.id_cadastros || itemData.value.apelido);
 };
 
 /**
@@ -279,7 +284,7 @@ watch(selectedCadastro, (value) => {
                 <div class="col-12">
                     <div class="p-fluid grid">
                         <div class="col-12 md:col-7">
-                            <label for="id_cadastros">Registro no cadastro</label>
+                            <label for="id_cadastros">Registro no cadastro<small id="text-error" class="p-error"> *</small></label>
                             <Skeleton v-if="loading" height="3rem"></Skeleton>
                             <AutoComplete v-else-if="editCadastro || mode == 'new'" v-model="selectedCadastro" optionLabel="name" :dropdown="false" :suggestions="filteredCadastros" @complete="searchCadastros" forceSelection @keydown.enter.prevent />
                             <div class="p-inputgroup flex-1" v-else>

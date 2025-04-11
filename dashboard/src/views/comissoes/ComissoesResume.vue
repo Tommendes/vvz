@@ -10,6 +10,14 @@ import { onBeforeMount } from 'vue';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
+// Profile do usuário
+import { useUserStore } from '@/stores/user';
+const store = useUserStore();
+const uProf = ref({});
+onBeforeMount(async () => {
+    uProf.value = await store.getProfile();
+});
+
 const emit = defineEmits(['dataCorte']);
 const monthPicker = ref(moment().toDate());
 const dataCorte = ref({});
@@ -154,17 +162,19 @@ const calculateCustomerTotal = (name) => {
 const calculateCustomerTotalValue = (name) => {
     let totalPendente = 0;
     let totalLiquidado = 0;
+    let totalHistorico = 0;
 
     if (gridData.value) {
         for (let customer of gridData.value) {
             if (customer.agente_representante.label === name) {
                 totalPendente += customer.total_pendente;
                 totalLiquidado += customer.total_liquidado;
+                totalHistorico += customer.total_historico;
             }
         }
     }
 
-    return { totalPendente, totalLiquidado };
+    return { totalPendente, totalLiquidado, totalHistorico };
 };
 
 const downloadPDF = async (pdf, fileName) => {
@@ -254,7 +264,7 @@ onMounted(async () => {
             <Column field="agente_representante.tipo" header="Tipo" class="text-center"></Column>
             <Column field="nome_comum" header="Nome">
                 <template #body="{ data }">
-                    {{ data.nome_comum }}
+                    {{ data.nome_comum }}{{ uProf.admin >= 1 ? ` (${data.id})` : '' }}
                 </template>
             </Column>
             <Column field="ordem" header="Nº Ordem" class="text-center">
@@ -272,6 +282,11 @@ onMounted(async () => {
                     {{ formatCurrency(slotProps.data.total_liquidado) }}
                 </template>
             </Column>
+            <Column field="total_historico" header="Acumulado" class="text-right">
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.data.total_historico) }}
+                </template>
+            </Column>
             <Column field="id" header="Ações" class="text-right">
                 <template #body="slotProps">
                     <Button icon="fa-solid fa-print" severity="info" v-tooltip:top="'Clique para imprimir este Diário'"
@@ -287,7 +302,7 @@ onMounted(async () => {
                     <span>{{ slotProps.data.agente_representante.label }}</span>
                 </div>
             </template>
-            <template #groupfooter="slotProps">
+            <template #groupfooter="slotProps" v-if="!filters['global'].value">
                 <div class="flex justify-content-end font-bold w-full">
                     <div class="flex align-items-start justify-content-start font-bold border-round m-2">{{
                         calculateCustomerTotal(slotProps.data.agente_representante.label) }} {{
@@ -297,6 +312,9 @@ onMounted(async () => {
                     }}</div>
                     <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
                         formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalLiquidado)
+                    }}</div>
+                    <div class="flex align-items-end justify-content-end font-bold border-round m-2">{{
+                        formatCurrency(calculateCustomerTotalValue(slotProps.data.agente_representante.label).totalHistorico)
                     }}</div>
                 </div>
             </template>

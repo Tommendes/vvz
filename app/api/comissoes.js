@@ -519,18 +519,19 @@ module.exports = app => {
         const tabelaComissaoAgentesDomain = `${dbPrefix}_${uParams.schema_name}.comis_agentes`
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
-        const tabelaPipelineAgentesDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
+        const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
-        const tabelaClienteDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
+        // const tabelaClienteDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         let filterDatas = `1=1`
         let filterDatasConfirm = `1=1`
         if (dataInicio && dataFim) {
-            filterDatas = `DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
+            // filterDatas = `DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
+            filterDatas = `DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
             filterDatasConfirm = `DATE(confirm_date) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
         }
         let query = app.db({ cms: tabelaDomain })
             .select('ag.id', 'ag.agente_representante',
-                app.db.raw('COALESCE(CONCAT(ca.nome, " ", ca.cpf_cnpj), ag.apelido) as nome_comum'),
+                app.db.raw('COALESCE(CONCAT(cl.nome, " ", cl.cpf_cnpj), ag.apelido) as nome_comum'),
                 'ag.ordem',
                 'cms.valor_base',
                 'ag.dsr',
@@ -546,7 +547,10 @@ module.exports = app => {
                 )
             )
             .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
-            .leftJoin({ ca: tabelaCadastrosDomain }, 'ca.id', 'ag.id_cadastros')
+            .leftJoin({ cl: tabelaCadastrosDomain }, 'cl.id', 'ag.id_cadastros')
+            .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
+            .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
+            // .join({ cl: tabelaClienteDomain }, 'cl.id', 'p.id_cadastros')
             .where({ 'cms.status': STATUS_ACTIVE })
             .orderBy('ag.agente_representante')
             .orderBy('ag.ordem')
@@ -555,13 +559,15 @@ module.exports = app => {
             .having(app.db.raw(`(status_comiss = ${STATUS_ABERTO} AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas}) OR (status_comiss = ${STATUS_CONFIRMADO} AND ${filterDatasConfirm})`))
 
         if (agId) query
-            .join({ p: tabelaPipelineAgentesDomain }, 'p.id', 'cms.id_pipeline')
-            .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
-            .join({ cl: tabelaClienteDomain }, 'cl.id', 'p.id_cadastros')
+            // .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
+            // .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
+            // .join({ cl: tabelaClienteDomain }, 'cl.id', 'p.id_cadastros')
             .select('cms.id', 'cl.nome as cliente', 'cl.cpf_cnpj', 'pp.descricao as unidade', 'p.documento as documento', 'cms.valor_base', 'cms.percentual', 'cms.valor', 'cms.parcela')
             .where('ag.id', agId)
 
         if (agGroup) query.where('ag.agente_representante', agGroup)
+
+        // console.log(query.toString());
 
         // Caso não seja um agente específico, agrupe por agente_representante
         if (agId)
@@ -573,6 +579,10 @@ module.exports = app => {
                 let data = []
                 rows.forEach(element => {
                     const index = data.findIndex(item => item.id === element.id)
+                    // Avaliar se a data de criação é maior ou igual a dataInicio e menor ou igual a dataFim
+                    // Format created_at to 2025-03-26 13:14:06.265 e dataInicio e dataFim para 26-03-2025                    
+                    // console.log(`${element.created_at >= moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD') && element.created_at <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')} created_at: ${element.created_at} >= ${moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD')} <= ${moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')}`);
+                    const tl = [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) && element.created_at >= moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD') && element.created_at <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')
                     if (index === -1) {
                         data.push({
                             id: element.id,
@@ -580,8 +590,9 @@ module.exports = app => {
                             nome_comum: element.nome_comum,
                             ordem: element.ordem,
                             valor_base: element.valor_base,
-                            total_liquidado: [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) ? element.valor : 0,
                             total_pendente: element.status_comiss === STATUS_ABERTO ? element.valor : 0,
+                            total_liquidado: tl ? element.valor : 0,
+                            total_historico: [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) ? element.valor : 0,
                             dsr: element.dsr,
                             status_comiss: element.status_comiss,
                             quant: 1
@@ -589,9 +600,10 @@ module.exports = app => {
                     } else {
                         // Ao somar os valores, arredonde para 2 casas decimais
                         data[index].valor_base += element.valor_base
-                        data[index].total_liquidado += [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) ? element.valor : 0,
-                            data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0,
-                            data[index].quant++
+                        data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0                        
+                        data[index].total_liquidado += tl ? element.valor : 0
+                        data[index].total_historico += [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) ? element.valor : 0
+                        data[index].quant++
                     }
                 });
                 return res.json(data)
