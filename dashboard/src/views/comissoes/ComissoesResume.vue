@@ -188,13 +188,14 @@ const downloadPDF = async (pdf, fileName) => {
 const printOnly = async (idAgente, tpAgenteRep, type = 'diarioComissionado') => {
     defaultSuccess('Por favor aguarde...');
     let url = `${baseApiUrl}/printing/${type}`;
+    const periodo = type == 'diarioComissionado' ? `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFim} e pendências até: ${dataCorte.value.parametros.dataFim}` : `Relatório Cumulativo de Comissionamento até: ${dataCorte.value.parametros.dataFim}`;
     const bodyRequest = {
-        periodo: `Liquidações entre: ${dataCorte.value.parametros.dataInicio} e ${dataCorte.value.parametros.dataFim} e pendências até: ${dataCorte.value.parametros.dataFim}`,
+        periodo: periodo,
         ano: dataCorte.value.parametros.ano,
         mes: dataCorte.value.parametros.mes,
         dataInicio: dataCorte.value.parametros.dataInicio,
         dataFim: dataCorte.value.parametros.dataFim,
-        reportTitle: (type == 'diarioComissionado' ? 'Diário Auxiliar' : 'Relatório Analítico') + ' de Comissionado',
+        reportTitle: (type == 'diarioComissionado' ? 'Resumo Analítico' : 'Relatório Cumulativo') + ' de Comissionamento',
         tpAgenteRep: tpAgenteRep,
         idAgente: idAgente,
         exportType: 'pdf',
