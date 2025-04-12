@@ -283,7 +283,7 @@ onMounted(async () => {
                     {{ formatCurrency(slotProps.data.total_liquidado) }}
                 </template>
             </Column>
-            <Column field="total_historico" header="Acumulado" class="text-right">
+            <Column field="total_historico" header="Acumulado" class="text-right" v-if="uProf.comissoes >= 4 || uProf.gestor >= 1">
                 <template #body="slotProps">
                     {{ formatCurrency(slotProps.data.total_historico) }}
                 </template>
