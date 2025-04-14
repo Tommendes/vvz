@@ -570,7 +570,7 @@ module.exports = app => {
             .leftJoin({ cl: tabelaCadastrosDomain }, 'cl.id', 'ag.id_cadastros')
             .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
-            // .join({ cl: tabelaClienteDomain }, 'cl.id', 'p.id_cadastros')
+            .join({ ca: tabelaCadastrosDomain }, 'ca.id', 'p.id_cadastros')
             .where({ 'cms.status': STATUS_ACTIVE })
             .orderBy('ag.agente_representante')
             .orderBy('ag.ordem')
@@ -582,7 +582,7 @@ module.exports = app => {
             // .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
             // .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
             // .join({ cl: tabelaClienteDomain }, 'cl.id', 'p.id_cadastros')
-            .select('cms.id', 'cl.nome as cliente', 'cl.cpf_cnpj', 'pp.descricao as unidade', 'p.documento as documento', 'cms.valor_base', 'cms.percentual', 'cms.valor', 'cms.parcela')
+            .select('cms.id', 'ca.nome as cliente', 'ca.cpf_cnpj', 'pp.descricao as unidade', 'p.documento as documento', 'cms.valor_base', 'cms.percentual', 'cms.valor', 'cms.parcela')
             .where('ag.id', agId)
 
         if (agGroup) query.where('ag.agente_representante', agGroup)
