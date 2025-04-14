@@ -565,8 +565,8 @@ module.exports = app => {
             filterDatasConfirm = `DATE(confirm_date) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
         }
         let query = app.db({ cms: tabelaDomain })
-        query.select(app.db.raw(select.toString().replace('select ', '')))
-        query.join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
+            .select(app.db.raw(select.toString().replace('select ', '')))
+            .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
             .leftJoin({ cl: tabelaCadastrosDomain }, 'cl.id', 'ag.id_cadastros')
             .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
