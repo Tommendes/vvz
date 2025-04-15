@@ -521,6 +521,7 @@ module.exports = app => {
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
         const tabelaCadastrosDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         const tabelaPipelineDomain = `${dbPrefix}_${uParams.schema_name}.pipeline`
+        const tabelaPipelineStatusDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_status`
         const tabelaPipelineParamsDomain = `${dbPrefix}_${uParams.schema_name}.pipeline_params`
         // const tabelaClienteDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         let filterDatas = `1=1`
@@ -552,10 +553,11 @@ module.exports = app => {
             .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
             .leftJoin({ cl: tabelaCadastrosDomain }, 'cl.id', 'ag.id_cadastros')
             .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
+            .join({ ps: tabelaPipelineStatusDomain }, 'p.id', 'ps.id_pipeline')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
             .join({ ca: tabelaCadastrosDomain }, 'ca.id', 'p.id_cadastros')
-            .where({ 'cms.status': STATUS_ACTIVE })
-            .whereIn( 'p.status', [STATUS_PEDIDO, STATUS_PEDIDO_INTERNO] )
+            .where({ 'cms.status': STATUS_ACTIVE, 'ps.status': STATUS_ACTIVE })
+            .whereIn( 'ps.status_params', [STATUS_PEDIDO, STATUS_PEDIDO_INTERNO] )
             .orderBy('ag.agente_representante')
             .orderBy('ag.ordem')
             .orderBy('status_comiss', 'desc')
