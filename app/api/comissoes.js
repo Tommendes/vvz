@@ -565,9 +565,6 @@ module.exports = app => {
             .orderBy('nome_comum')
             .having(app.db.raw(`pipeline_status IN(20,21) AND (status_comiss = ${STATUS_ABERTO} AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas}) OR (status_comiss = ${STATUS_CONFIRMADO} AND ${filterDatasConfirm})`))
 
-        console.log(query.toString());
-
-
         if (agId) query
             // .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
             // .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
