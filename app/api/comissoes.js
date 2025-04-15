@@ -3,6 +3,7 @@ const moment = require('moment')
 module.exports = app => {
     const { existsOrError, notExistsOrError, cpfOrError, cnpjOrError, lengthOrError, emailOrError, isMatchOrError, noAccessMsg } = app.api.validation
     const { STATUS_ABERTO, STATUS_LIQUIDADO, STATUS_ENCERRADO, STATUS_FATURADO, STATUS_CONFIRMADO } = require('./comis_status.js')(app)
+    const { STATUS_PEDIDO, STATUS_PEDIDO_INTERNO } = require('./pipeline_status.js')(app)
     // const { STATUS_COMISSIONADO } = require('./pipeline_status.js')(app)
     const tabela = 'comissoes'
     const tabelaStatusComiss = 'comis_status'
@@ -554,6 +555,7 @@ module.exports = app => {
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
             .join({ ca: tabelaCadastrosDomain }, 'ca.id', 'p.id_cadastros')
             .where({ 'cms.status': STATUS_ACTIVE })
+            .whereIn( 'p.status', [STATUS_PEDIDO, STATUS_PEDIDO_INTERNO] )
             .orderBy('ag.agente_representante')
             .orderBy('ag.ordem')
             .orderBy('status_comiss', 'desc')
