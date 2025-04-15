@@ -548,24 +548,25 @@ module.exports = app => {
                 ),
                 app.db.raw(
                     `@confirm_date := (SELECT confirm_date FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY confirm_date DESC LIMIT 1) as confirm_date`
+                ),
+                app.db.raw(
+                    `@pipeline_status := CAST((SELECT status_params FROM ${tabelaPipelineStatusDomain} WHERE id_pipeline = p.id AND pipeline_status.status = 10 ORDER BY created_at DESC, status_params DESC LIMIT 1) AS UNSIGNED) AS pipeline_status`
                 )
             )
             .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
             .leftJoin({ cl: tabelaCadastrosDomain }, 'cl.id', 'ag.id_cadastros')
             .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
-            .join({ ps: tabelaPipelineStatusDomain }, 'p.id', 'ps.id_pipeline')
             .join({ pp: tabelaPipelineParamsDomain }, 'pp.id', 'p.id_pipeline_params')
             .join({ ca: tabelaCadastrosDomain }, 'ca.id', 'p.id_cadastros')
-            .where({ 'cms.status': STATUS_ACTIVE, 'ps.status': STATUS_ACTIVE })
-            .whereIn( 'ps.status_params', [STATUS_PEDIDO, STATUS_PEDIDO_INTERNO] )
+            .where({ 'cms.status': STATUS_ACTIVE })
             .orderBy('ag.agente_representante')
             .orderBy('ag.ordem')
             .orderBy('status_comiss', 'desc')
             .orderBy('nome_comum')
             .having(app.db.raw(`(status_comiss = ${STATUS_ABERTO} AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas}) OR (status_comiss = ${STATUS_CONFIRMADO} AND ${filterDatasConfirm})`))
 
-            console.log(query.toString());
-            
+        console.log(query.toString());
+
 
         if (agId) query
             // .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
