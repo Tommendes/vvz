@@ -524,48 +524,30 @@ module.exports = app => {
         // const tabelaClienteDomain = `${dbPrefix}_${uParams.schema_name}.cadastros`
         let filterDatas = `1=1`
         let filterDatasConfirm = `1=1`
-        let select = app.db.select('ag.id', 'ag.agente_representante',
-            app.db.raw('COALESCE(CONCAT(cl.nome, " ", cl.cpf_cnpj), ag.apelido) as nome_comum'),
-            'ag.ordem',
-            'cms.valor_base',
-            'ag.dsr',
-            'cms.valor',
-            app.db.raw(
-                `@status_comiss := (SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY created_at DESC LIMIT 1) as status_comiss`
-            ),
-            app.db.raw(
-                `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY created_at DESC LIMIT 1) as created_at`
-            ),
-            app.db.raw(
-                `@confirm_date := (SELECT confirm_date FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY confirm_date DESC LIMIT 1) as confirm_date`
-            )
-        )
         if (dataInicio && dataFim) {
-            if (uParams.comissoes >= 4 || uParams.gestor >= 1) {
+            if (!agId && (uParams.comissoes >= 4 || uParams.gestor >= 1))
                 filterDatas = `DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
-                select = app.db.select('ag.id', 'ag.agente_representante',
-                    app.db.raw('COALESCE(CONCAT(cl.nome, " ", cl.cpf_cnpj), ag.apelido) as nome_comum'),
-                    'ag.ordem',
-                    'cms.valor_base',
-                    'ag.dsr',
-                    'cms.valor',
-                    app.db.raw(
-                        `@status_comiss := (SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY created_at DESC LIMIT 1) as status_comiss`
-                    ),
-                    app.db.raw(
-                        `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY created_at DESC LIMIT 1) as created_at`
-                    ),
-                    app.db.raw(
-                        `@confirm_date := (SELECT confirm_date FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}' ORDER BY confirm_date DESC LIMIT 1) as confirm_date`
-                    )
-                )
-            }
             else
                 filterDatas = `DATE(created_at) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
             filterDatasConfirm = `DATE(confirm_date) between '${moment(dataInicio, 'DD-MM-YYYY').format('YYYY-MM-DD')}' and '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}'`
         }
         let query = app.db({ cms: tabelaDomain })
-            .select(app.db.raw(select.toString().replace('select ', '')))
+            .select('ag.id', 'ag.agente_representante',
+                app.db.raw('COALESCE(CONCAT(cl.nome, " ", cl.cpf_cnpj), ag.apelido) as nome_comum'),
+                'ag.ordem',
+                'cms.valor_base',
+                'ag.dsr',
+                'cms.valor',
+                app.db.raw(
+                    `@status_comiss := (SELECT status_comis FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY created_at DESC LIMIT 1) as status_comiss`
+                ),
+                app.db.raw(
+                    `@created_at := (SELECT created_at FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY created_at DESC LIMIT 1) as created_at`
+                ),
+                app.db.raw(
+                    `@confirm_date := (SELECT confirm_date FROM ${tabelaComissaoStatusDomain} cs WHERE id_comissoes = cms.id AND status_comis not in(${STATUS_FATURADO}, ${STATUS_ENCERRADO}) ORDER BY confirm_date DESC LIMIT 1) as confirm_date`
+                )
+            )
             .join({ ag: tabelaComissaoAgentesDomain }, 'ag.id', 'cms.id_comis_agentes')
             .leftJoin({ cl: tabelaCadastrosDomain }, 'cl.id', 'ag.id_cadastros')
             .join({ p: tabelaPipelineDomain }, 'p.id', 'cms.id_pipeline')
@@ -602,6 +584,7 @@ module.exports = app => {
                     // Avaliar se a data de criação é maior ou igual a dataInicio e menor ou igual a dataFim
                     // Format created_at to 2025-03-26 13:14:06.265 e dataInicio e dataFim para 26-03-2025                    
                     // console.log(`${element.created_at >= moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD') && element.created_at <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')} created_at: ${element.created_at} >= ${moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD')} <= ${moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')}`);
+                    const tp = [STATUS_ABERTO].includes(element.status_comiss) && element.created_at <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')
                     const tl = [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) && element.created_at >= moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD') && element.created_at <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')
                     if (index === -1) {
                         data.push({
@@ -610,7 +593,7 @@ module.exports = app => {
                             nome_comum: element.nome_comum,
                             ordem: element.ordem,
                             valor_base: element.valor_base,
-                            total_pendente: element.status_comiss === STATUS_ABERTO ? element.valor : 0,
+                            total_pendente: tp ? element.valor : 0,
                             total_liquidado: tl ? element.valor : 0,
                             total_historico: [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) ? element.valor : 0,
                             dsr: element.dsr,
@@ -620,7 +603,7 @@ module.exports = app => {
                     } else {
                         // Ao somar os valores, arredonde para 2 casas decimais
                         data[index].valor_base += element.valor_base
-                        data[index].total_pendente += element.status_comiss === STATUS_ABERTO ? element.valor : 0
+                        data[index].total_pendente += tp ? element.valor : 0
                         data[index].total_liquidado += tl ? element.valor : 0
                         data[index].total_historico += [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) ? element.valor : 0
                         data[index].quant++
