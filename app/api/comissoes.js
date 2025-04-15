@@ -563,7 +563,7 @@ module.exports = app => {
             .orderBy('ag.ordem')
             .orderBy('status_comiss', 'desc')
             .orderBy('nome_comum')
-            .having(app.db.raw(`(status_comiss = ${STATUS_ABERTO} AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas}) OR (status_comiss = ${STATUS_CONFIRMADO} AND ${filterDatasConfirm})`))
+            .having(app.db.raw(`pipeline_status IN(20,21) AND (status_comiss = ${STATUS_ABERTO} AND DATE(created_at) <= '${moment(dataFim, 'DD-MM-YYYY').format('YYYY-MM-DD')}') OR (status_comiss = ${STATUS_LIQUIDADO} AND ${filterDatas}) OR (status_comiss = ${STATUS_CONFIRMADO} AND ${filterDatasConfirm})`))
 
         console.log(query.toString());
 
