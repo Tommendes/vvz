@@ -205,10 +205,10 @@ const printOnly = async (idAgente, tpAgenteRep, type = 'diarioComissionado') => 
         .post(url, bodyRequest)
         .then(async  (res) => {
             const body = res.data;
-            await downloadPDF(
-                body,
-                bodyRequest.reportTitle.replaceAll(" ", "_").replace("_-_", "_")
-            );
+            // await downloadPDF(
+            //     body,
+            //     bodyRequest.reportTitle.replaceAll(" ", "_").replace("_-_", "_")
+            // );
             let pdfWindow = window.open('');
             pdfWindow.document.write(`<iframe width='100%' height='100%' src='data:application/pdf;base64, ${encodeURI(body)} '></iframe>`);
         })
