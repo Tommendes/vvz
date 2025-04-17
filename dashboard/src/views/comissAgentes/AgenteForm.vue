@@ -143,8 +143,8 @@ const deleteItem = () => {
 };
 //DropDowns
 const dropdownSN = ref([
-    { value: 0, label: 'Não' },
-    { value: 1, label: 'Sim' }
+    { value: '0', label: 'Não' },
+    { value: '1', label: 'Sim' }
 ]);
 const dropdownTiposAR = ref([
     { value: '0', label: 'Representação' },
@@ -153,11 +153,15 @@ const dropdownTiposAR = ref([
     { value: '3', label: 'Terceiro' }
 ]);
 // Validar formulário
+const hasIdCadastros = ref(false);
+const hasOrdem = ref(false);
+const hasAgenteRepresentante = ref(false);
+const hasDsr = ref(false);
 const formIsValid = () => {
-    const hasIdCadastros = itemData.value.id_cadastros && itemData.value.id_cadastros.length > 0;
-    const hasOrdem = itemData.value.ordem && itemData.value.ordem.length > 0;
-    const hasAgenteRepresentante = itemData.value.agente_representante && itemData.value.agente_representante.length > 0;
-    const hasDsr = itemData.value.dsr && itemData.value.dsr.length > 0;
+    hasIdCadastros.value = itemData.value.id_cadastros && itemData.value.id_cadastros > 0;
+    hasOrdem.value = itemData.value.ordem && itemData.value.ordem.length > 0;
+    hasAgenteRepresentante.value = itemData.value.agente_representante && itemData.value.agente_representante.length > 0;
+    hasDsr.value = itemData.value.dsr && itemData.value.dsr.length > 0;
     return hasIdCadastros && hasOrdem && hasAgenteRepresentante && hasDsr; // && itemData.value.id_cadastros && itemData.value.apelido;
     // itemData.value.ordem && ['0', '1', '2', '3'].includes(itemData.value.agente_representante) && [0, 1].includes(itemData.value.dsr); // && (itemData.value.id_cadastros || itemData.value.apelido);
 };
@@ -335,6 +339,10 @@ watch(selectedCadastro, (value) => {
                 <p>Mode: {{ mode }}</p>
                 <p>itemData: {{ itemData }}</p>
                 <p>itemDataRoot: {{ itemDataRoot }}</p>
+                <p>hasIdCadastros: {{ hasIdCadastros }}</p>
+                <p>hasOrdem: {{ hasOrdem }}</p>
+                <p>hasAgenteRepresentante: {{ hasAgenteRepresentante }}</p>
+                <p>hasDsr: {{ hasDsr }}</p>
             </div>
         </div>
     </div>
