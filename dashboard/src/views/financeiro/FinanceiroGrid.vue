@@ -356,7 +356,8 @@ let dataToExcelExport = [
             { label: 'Descricao', value: (row) => `${removeHtmlTags(row.descricao_conta)} -- ${removeHtmlTags(row.descricao_parcela)}` },
             { label: 'Valor Bruto', value: (row) => Number(row.valor_bruto || 0.0), format: 'R$ #,##0.00' },
             { label: 'Valor Liquido', value: (row) => Number(row.valor_liquido || 0.0), format: 'R$ #,##0.00' },
-            { label: 'Valor Parcela', value: (row) => Number(row.valor_vencimento || 0.0), format: 'R$ #,##0.00' }
+            { label: 'Parcela Líquida', value: (row) => Number(row.valor_vencimento || 0.0), format: 'R$ #,##0.00' },
+            { label: 'Parcela Bruta', value: (row) => Number(row.valor_parc_bruta), format: 'R$ #,##0.00' },
         ],
         content: []
     }

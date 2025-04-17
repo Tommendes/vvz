@@ -302,6 +302,7 @@ module.exports = app => {
             .select(app.db.raw(`tbl1.parcela, tbl1.valor_vencimento AS valor_vencimento_parcela, tbl1.duplicata, tbl1.documento`))
             .select(app.db.raw(`fl.pedido, tbl1.descricao AS descricao_parcela, fl.descricao AS descricao_conta, fl.id_empresa, e.razaosocial AS empresa, e.fantasia AS emp_fantasia`))
             .select(app.db.raw(`e.cpf_cnpj_empresa, c.nome AS destinatario, c.cpf_cnpj cpf_cnpj_destinatario`))
+            .select(app.db.raw(`(SELECT COUNT(id) FROM ${tabelaParcelasDomain} AS fp WHERE fp.id_fin_lancamentos = fl.id AND NOT fp.status = 99)parcelas_registro`))
             .join({ fl: tabelaDomain }, 'fl.id', '=', 'tbl1.id_fin_lancamentos')
             .join({ c: tabelaCadastrosDomain }, 'c.id', '=', 'fl.id_cadastros')
             .join({ e: tabelaEmpresaDomain }, 'e.id', '=', 'fl.id_empresa')
@@ -313,7 +314,7 @@ module.exports = app => {
         if (!uParams.multiCliente || uParams.multiCliente < 1) ret.where({ 'fl.id_empresa': uParams.id_empresa })
 
         ret.groupBy('tbl1.id').orderBy(sortField, sortOrder)
-            .limit(rows).offset((page + 1) * rows - rows)
+            .limit(rows).offset((page + 1) * rows - rows)            
 
         ret.then(async (body) => {
             const length = body.length
@@ -326,6 +327,7 @@ module.exports = app => {
                 element.valor_bruto_conta = parseFloat(element.valor_bruto_conta).toFixed(2).replace('.', ',')
                 element.valor_liquido_conta = parseFloat(element.valor_liquido_conta).toFixed(2).replace('.', ',')
                 element.valor_vencimento_parcela = parseFloat(element.valor_vencimento_parcela).toFixed(2).replace('.', ',')
+                element.valor_parc_bruta = Number(parseFloat(element.valor_bruto / element.parcelas_registro).toFixed(2))
                 switch (element.situacao) {
                     case SITUACAO_ABERTO: element.situacaoLabel = '<h4>Registro em Aberto</h4>'; break;
                     case SITUACAO_PAGO: element.situacaoLabel = '<h4>Registro Pago</h4>'; break;
