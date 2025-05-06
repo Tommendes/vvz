@@ -130,7 +130,7 @@ const setUserColumns = () => {
     // } else {
     //     // Salvar as colunas padrão no localStorage se não houver nada salvo
     //     localStorage.setItem('__finColumns', JSON.stringify(columns.value));
-        selectedColumns.value = columns.value;
+    selectedColumns.value = columns.value;
     // }
 };
 
@@ -195,6 +195,7 @@ const loadLazyData = async () => {
             rowsPerPageOptions.value = [...new Set(rowsPerPageOptions.value)];
             gridData.value.forEach((element) => {
                 element.data_emissao = element.data_emissao ? moment(element.data_emissao).format('DD/MM/YYYY') : '';
+                element.data_vencimento_or = element.data_vencimento;
                 element.data_vencimento = `Parcela: ${element.parcela} ` + (element.data_vencimento ? moment(element.data_vencimento).format('DD/MM/YYYY') : '');
                 element.data_pagto = element.data_pagto ? moment(element.data_pagto).format('DD/MM/YYYY') : '';
                 element.centroLabel = String(element.centro) == '1' ? 'Receita' : 'Despesa';
@@ -276,18 +277,6 @@ const mountUrlFilters = async () => {
 
     await loadLazyData();
 };
-
-// onMounted(async () => {
-//     window.addEventListener('resize', updateScreenWidth);
-//     updateScreenWidth(); // Atualize a propriedade inicialmente
-
-//     // queryUrl.value = route.query;
-//     // Limpa os filtros do grid
-//     clearFilter();
-//     selectedColumns.value = selectedColumns.value.filter(col => !['valor_bruto_conta'].includes(col));
-//     // router.replace({ query: {} });
-//     // await mountUrlFilters();
-// });
 
 onMounted(() => {
     setUserColumns(); // Carregar as colunas salvas no localStorage
@@ -452,8 +441,6 @@ watchEffect(() => {
 const onToggle = (selected) => {
     // Atualizar as colunas selecionadas com base na seleção do usuário
     selectedColumns.value = columns.value.filter((col) => selected.includes(col));
-    // Salvar as colunas selecionadas no localStorage
-    // localStorage.setItem('__finColumns', JSON.stringify(selectedColumns.value));
 };
 onBeforeUnmount(() => {
     // Remova o ouvinte ao destruir o componente para evitar vazamento de memória
@@ -470,6 +457,10 @@ const rowStyle = (data) => {
     else style.color = '#00796b'; // return { color: '#00796b' };
     if (data.situacao == STATUS_REGISTRO_CANCELADO) style.textDecoration = 'line-through';
     return style;
+};
+
+const rowClass = (data) => {
+    return [{ 'bg-red-100 text-primary-contrast': data.data_vencimento_or < moment().format('YYYY-MM-DD') && data.situacao == STATUS_REGISTRO_ABERTO }];
 };
 
 const itemsExport = [
@@ -500,9 +491,9 @@ const uProfWithoutBigDataTkn = computed(() => {
     <div class="card">
         <FinanceiroForm :mode="mode" @changed="loadLazyData()" @cancel="mode = 'grid'" v-if="mode == 'new'"
             :idCadastro="props.idCadastro" />
-        <DataTable ref="dt" :value="gridData" lazy :rowStyle="rowStyle" paginator :rows="gridData.length"
-            dataKey="id_parcela" :rowHover="true" v-model:filters="filters" filterDisplay="row" :loading="loading"
-            :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
+        <DataTable ref="dt" :value="gridData" lazy :rowStyle="rowStyle" :rowClass="rowClass" paginator
+            :rows="gridData.length" dataKey="id_parcela" :rowHover="true" v-model:filters="filters" filterDisplay="row"
+            :loading="loading" :filters="filters" responsiveLayout="scroll" :totalRecords="totalRecords"
             :rowsPerPageOptions="rowsPerPageOptions.length > 1 ? rowsPerPageOptions : [5, 10, 20, 50, 200, 500]"
             @page="onPage($event)" @sort="onSort($event)" @filter="onFilter($event)"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
@@ -536,9 +527,6 @@ const uProfWithoutBigDataTkn = computed(() => {
                         gridData.length }} de {{ totalRecords }} registros para {{ empresaLabel }}</span>
                 </div>
                 <div class="flex justify-content-end gap-3 mb-3 p-tag-esp">
-                    <!-- <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
-                        @update:modelValue="onToggle" display="chip"
-                        placeholder="Selecione as colunas para exibir os dados" /> -->
                     <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="label"
                         @update:modelValue="onToggle" display="chip"
                         placeholder="Selecione as colunas para exibir os dados" />
