@@ -67,7 +67,7 @@ module.exports = app => {
                     next: updateRecord,
                     request: req,
                     evento: {
-                        "evento": `Alteração de cadastro de ${tabela}`,
+                        "evento": `Alteração de regsitro de ${tabela}`,
                         "tabela_bd": tabela,
                     },
                     trx: trx

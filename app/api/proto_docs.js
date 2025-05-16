@@ -64,7 +64,7 @@ module.exports = app => {
                 "next": body,
                 "request": req,
                 "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
+                    "evento": `Alteração de regsitro de ${tabela}`,
                     "tabela_bd": tabela,
                 }
             })

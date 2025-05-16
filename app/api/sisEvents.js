@@ -171,7 +171,7 @@ module.exports = app => {
             evento.evento = force ? `${evento.evento}` : `${evento.evento} ${eventoDescr}: ${fields.substring(0, fields.length - 2)}`
             evento.id_user = !(request && request.user && request.user.id) ? last.id : request.user.id
             evento.classevento = evento.classevento || "Update"
-            evento.id_registro = last.id
+            evento.id_registro = evento.id_registro || last.id
             evento.ip = request.headers['x-ip-address'] || request.ip
             evento.geo_lt = request.headers['x-geo-lt']
             evento.geo_ln = request.headers['x-geo-ln']

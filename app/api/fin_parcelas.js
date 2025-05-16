@@ -98,14 +98,17 @@ module.exports = app => {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
             const { createEventUpd } = app.api.sisEvents
+            console.log(body);
+            
             const evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento',],
                 "last": await app.db(tabelaDomain).where({ id: body.id }).first(),
                 "next": body,
                 "request": req,
                 "evento": {
-                    "evento": `Alteração de cadastro de ${tabela}`,
-                    "tabela_bd": tabela,
+                    "evento": `Alteração de regsitro de ${tabela}`,
+                    "tabela_bd": tabelaFinanceiro,
+                    "id_registro": body.id_fin_lancamentos,
                 }
             })
 
