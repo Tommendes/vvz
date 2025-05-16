@@ -589,8 +589,8 @@ module.exports = app => {
                     // Avaliar se a data de criação é maior ou igual a dataInicio e menor ou igual a dataFim
                     // Format created_at to 2025-03-26 13:14:06.265 e dataInicio e dataFim para 26-03-2025                    
                     // console.log(`${element.created_at >= moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD') && element.created_at <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')} created_at: ${element.created_at} >= ${moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD')} <= ${moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')}`);
-                    const tp = [STATUS_ABERTO].includes(element.status_comiss) && element.created_at <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')
-                    const tl = [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) && element.created_at >= moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD') && element.created_at <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')
+                    const tp = [STATUS_ABERTO].includes(element.status_comiss) && moment(element.created_at).format('YYYY-MM-DD') <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')
+                    const tl = [STATUS_LIQUIDADO, STATUS_CONFIRMADO].includes(element.status_comiss) && moment(element.created_at).format('YYYY-MM-DD') >= moment(dataInicio, 'DD/MM/YYYY').format('YYYY-MM-DD') && moment(element.created_at).format('YYYY-MM-DD') <= moment(dataFim, 'DD/MM/YYYY').format('YYYY-MM-DD')
                     if (index === -1) {
                         data.push({
                             id: element.id,
