@@ -418,7 +418,7 @@ module.exports = app => {
         }
     }
 
-    const liquidateInGroup = async (req, res) => {
+    const doInGroup = async (req, res) => {
         let user = req.user
         const uParams = await app.db({ u: `${dbPrefix}_api.users` }).join({ sc: 'schemas_control' }, 'sc.id', 'u.schema_id').where({ 'u.id': user.id }).first();
         let data = { ...req.body }
@@ -433,6 +433,23 @@ module.exports = app => {
 
         const tabelaDomain = `${dbPrefix}_${uParams.schema_name}.${tabela}`
         const tabelaComissaoStatusDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaStatusComiss}`
+
+        // console.log('data', data);
+        // console.log('data[0]', data[0]);        
+        // const type = data[0].type
+        // console.log('type', type);
+
+        let statusTo = STATUS_LIQUIDADO
+        switch (data[0].type) {
+            case 'bill':
+                statusTo = STATUS_FATURADO;
+                break;
+            default: statusTo = STATUS_LIQUIDADO;
+        }
+
+        delete data[0]
+        // console.log('statusTo', statusTo);
+        // return true
 
         const { createEventUpd } = app.api.sisEvents
         Object.values(data).forEach(async (element) => {
@@ -477,7 +494,7 @@ module.exports = app => {
                         evento: evento || 1,
                         created_at: new Date(),
                         id_comissoes: element.id,
-                        status_comis: STATUS_LIQUIDADO,
+                        status_comis: statusTo,
                     });
                 }).catch((error) => {
                     // Se ocorrer um erro, faça rollback da transação
@@ -635,5 +652,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, remove, liquidateInGroup, getByFunction }
+    return { save, get, getById, remove, doInGroup, getByFunction }
 }

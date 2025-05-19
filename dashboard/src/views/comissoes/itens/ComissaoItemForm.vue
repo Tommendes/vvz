@@ -240,13 +240,13 @@ const unprogramateItem = () => {
         }
     });
 };
-const setFiscalDone = () => {
+const setBillDone = () => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,
         status_comis: STATUS_FATURADO
     };
     confirm.require({
-        group: `setFiscalDoneConfirm-${itemData.value.id}`,
+        group: `setBillDoneConfirm-${itemData.value.id}`,
         header: 'Confirmar faturamento',
         message: 'Confirma que este registro foi FATURADO?',
         message2: '<strong>Esta operação ainda poderá ser desfeita cancelando a informação</strong>',
@@ -265,14 +265,14 @@ const setFiscalDone = () => {
         }
     });
 };
-const setFiscalUnDone = () => {
+const setBillUnDone = () => {
     const bodyStatus = {
         id_comissoes: itemData.value.id,
         status_comis: STATUS_FATURADO,
         remove_status: true
     };
     confirm.require({
-        group: `setFiscalDoneConfirm-${itemData.value.id}`,
+        group: `setBillDoneConfirm-${itemData.value.id}`,
         header: 'Excluir faturamento',
         message: 'Confirma que este registro foi NÃO FOI FATURADO ou o faturamento foi CANCELADO?',
         message2: '<strong>Você ainda poderá confirmar o faturamento posteriormente</strong>',
@@ -506,7 +506,7 @@ watchEffect(() => {
             </div>
         </template>
     </ConfirmDialog>
-    <ConfirmDialog :group="`setFiscalDoneConfirm-${itemData.id}`">
+    <ConfirmDialog :group="`setBillDoneConfirm-${itemData.id}`">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div class="flex flex-column align-items-center p-5 surface-overlay border-round">
                 <div
@@ -626,11 +626,11 @@ watchEffect(() => {
                     <Button type="button" :disabled="!(uProf.fiscal >= 3)"
                         v-if="!itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
                         v-tooltip.top="'Confirmar faturamento'" icon="fa-solid fa-cash-register" style="color: #45590d"
-                        text raised @click="setFiscalDone" />
+                        text raised @click="setBillDone" />
                     <Button type="button" :disabled="!(uProf.fiscal >= 3)"
                         v-if="itemDataLastStatus.faturado && props.itemDataRoot.agente_representante == '0' && ['view'].includes(mode)"
                         v-tooltip.top="'Remover faturamento'" icon="fa-solid fa-cash-register" severity="warning" text
-                        raised @click="setFiscalUnDone" />
+                        raised @click="setBillUnDone" />
                     <Button type="button" v-if="['new', 'edit'].includes(mode)" v-tooltip.top="'Cancelar edição'"
                         icon="fa-solid fa-ban" severity="danger" text raised @click="cancel" />
                     <Button type="button" v-if="itemData.id" v-tooltip.top="'Mostrar o timeline da comissão'"

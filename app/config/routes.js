@@ -11,7 +11,7 @@ module.exports = app => {
             console.log(`Rota acessada[${timestamp}]: ${req.method}${req.url}`)
             next()
         })
-    }    
+    }
 
     const getVersion = (req, res) => {
         res.json(version)
@@ -289,7 +289,7 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .post(app.api.pipeline_status.save)
         .get(app.api.pipeline_status.get)
-        app.route('/pipeline-status/:id_pipeline/:id')
+    app.route('/pipeline-status/:id_pipeline/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.pipeline_status.save)
         .get(app.api.pipeline_status.getById)
@@ -445,7 +445,7 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .post(app.api.comissoes.save)
         .get(app.api.comissoes.get)
-        .patch(app.api.comissoes.liquidateInGroup)
+        .patch(app.api.comissoes.doInGroup)
     app.route('/comissoes/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.comissoes.save)
