@@ -189,7 +189,7 @@ const billGroup = () => {
     const url = `${urlBase.value}`;
     let obj = [{ type: 'bill' }];
     gridData.value.forEach((element) => {
-        if (element.last_status_comiss < 40) {
+        if (element.last_status_comiss < 40 && element.agente_representante == 0) {
             const newItem = { id: element.id, last_status_comiss: element.last_status_comiss };
             obj.push(newItem);
         }
