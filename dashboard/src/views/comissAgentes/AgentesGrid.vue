@@ -33,6 +33,7 @@ const urlBase = ref(`${baseApiUrl}/comis-agentes`);
 // Itens do grid
 const listaNomes = ref([
     { field: 'agente_representante', label: 'Tipo Agente', tagged: true },
+    { field: 'cpf_cnpj', label: 'Documento' },
     { field: 'apelido', label: 'Nome/Nome curto' },
     { field: 'ordem', label: 'Ordem' },
     { field: 'dsr', label: 'DSR', tagged: true }
@@ -156,7 +157,7 @@ const getSeverity = (value) => {
             :loading="loading"
             :filters="filters"
             responsiveLayout="scroll"
-            :globalFilterFields="['name', 'apelido', 'ordem']"
+            :globalFilterFields="['name', 'apelido', 'ordem', 'cpf_cnpj']"
         >
             <template #header>
                 <div class="flex justify-content-end gap-3">
