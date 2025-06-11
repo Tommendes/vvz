@@ -98,7 +98,6 @@ module.exports = app => {
             // Variáveis da edição de um registro
             // registrar o evento na tabela de eventos
             const { createEventUpd } = app.api.sisEvents
-            console.log(body);
             
             const evento = await createEventUpd({
                 "notTo": ['created_at', 'updated_at', 'evento',],

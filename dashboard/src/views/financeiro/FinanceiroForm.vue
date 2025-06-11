@@ -133,6 +133,19 @@ const reload = async () => {
     editCadastro.value = false;
     await loadData();
 };
+const regularizaarDataEmissao = (preparedBody) => {
+    if (preparedBody.data_emissao) {
+        if (moment(preparedBody.data_emissao, 'DD/MM/YYYY', true).isValid()) {
+            preparedBody.data_emissao = moment(preparedBody.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD');
+        } else if (moment(preparedBody.data_emissao, true).isValid()) {
+            preparedBody.data_emissao = moment(preparedBody.data_emissao).format('YYYY-MM-DD');
+        } else {
+            defaultWarn('Data de emissão inválida');
+            return false;
+        }
+    }
+    return true;
+};
 // Salvar dados do formulário
 const saveData = async () => {
     const method = itemData.value.id ? 'put' : 'post';
@@ -143,16 +156,18 @@ const saveData = async () => {
         ...itemData.value
     };
 
-    if (preparedBody.data_emissao) {
-        if (moment(preparedBody.data_emissao, 'DD/MM/YYYY', true).isValid()) {
-            preparedBody.data_emissao = moment(preparedBody.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD');
-        } else if (moment(preparedBody.data_emissao, true).isValid()) {
-            preparedBody.data_emissao = moment(preparedBody.data_emissao).format('YYYY-MM-DD');
-        } else {
-            defaultWarn('Data de emissão inválida');
-            return;
-        }
-    }
+    regularizaarDataEmissao(preparedBody);
+
+    // if (preparedBody.data_emissao) {
+    //     if (moment(preparedBody.data_emissao, 'DD/MM/YYYY', true).isValid()) {
+    //         preparedBody.data_emissao = moment(preparedBody.data_emissao, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    //     } else if (moment(preparedBody.data_emissao, true).isValid()) {
+    //         preparedBody.data_emissao = moment(preparedBody.data_emissao).format('YYYY-MM-DD');
+    //     } else {
+    //         defaultWarn('Data de emissão inválida');
+    //         return;
+    //     }
+    // }
     await axios[method](url, preparedBody)
         .then(async (res) => {
             editCadastro.value = false;
@@ -331,8 +346,14 @@ const confirmCancel = () => {
 // Cancelar registro
 const cancel = async () => {
     const url = `${urlBase.value}/${itemData.value.id}`;
+    
+    let preparedBody = {
+        ...itemData.value
+    };
+
+    regularizaarDataEmissao(preparedBody);
     await axios
-        .put(url, { ...itemData.value, status: situacaoFinLancamentos.STATUS_CANCELADO })
+        .put(url, { ...preparedBody, status: situacaoFinLancamentos.STATUS_CANCELADO })
         .then((res) => {
             defaultSuccess('Registro cancelado com sucesso');
             emit('changed');
@@ -363,8 +384,13 @@ const confirmReactivate = () => {
 // Reativar registro
 const reactivate = async () => {
     const url = `${urlBase.value}/${itemData.value.id}`;
+    let preparedBody = {
+        ...itemData.value
+    };
+
+    regularizaarDataEmissao(preparedBody);
     await axios
-        .put(url, { ...itemData.value, status: situacaoFinLancamentos.STATUS_ATIVO })
+        .put(url, { ...preparedBody, status: situacaoFinLancamentos.STATUS_ATIVO })
         .then((res) => {
             defaultSuccess('Registro reativado com sucesso');
             emit('changed');
