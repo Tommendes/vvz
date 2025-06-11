@@ -11,7 +11,8 @@ module.exports = app => {
     const STATUS_REGISTRO_ABERTO = 1
     const STATUS_REGISTRO_PAGO = 2
     const STATUS_REGISTRO_CONCILIADO = 3
-    const STATUS_REGISTRO_CANCELADO = 99
+    const STATUS_REGISTRO_CANCELADO = 80
+    const STATUS_REGISTRO_EXCLUIDO = 99
     const digitsOfAFolder = 6
 
     const save = async (req, res) => {
@@ -297,7 +298,7 @@ module.exports = app => {
             app.api.logger.logError({ log: { line: `Error Query totalRecords = await totalRecords: ${__filename} (${__function}). User: ${uParams.name}. Error: ${error}`, sConsole: true } })
         }
 
-        ret.select(app.db.raw(`fl.id, tbl1.id AS id_parcela, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.valor_bruto AS valor_bruto_conta`))
+        ret.select(app.db.raw(`fl.id, tbl1.id AS id_parcela, fl.centro, fl.data_emissao, tbl1.data_vencimento, tbl1.data_pagto, tbl1.situacao, fl.status AS situacao_l, fl.valor_bruto AS valor_bruto_conta`))
             .select(app.db.raw(`(select fl.valor_bruto - coalesce(sum(r.valor_retencao), 0) from ${tabelaRetencoesDomain} r where r.id_fin_lancamentos = fl.id) AS valor_liquido_conta`))
             .select(app.db.raw(`tbl1.parcela, tbl1.valor_vencimento AS valor_vencimento_parcela, tbl1.duplicata, tbl1.documento`))
             .select(app.db.raw(`fl.pedido, tbl1.descricao AS descricao_parcela, fl.descricao AS descricao_conta, fl.id_empresa, e.razaosocial AS empresa, e.fantasia AS emp_fantasia`))
@@ -328,6 +329,7 @@ module.exports = app => {
                 element.valor_liquido_conta = parseFloat(element.valor_liquido_conta).toFixed(2).replace('.', ',')
                 element.valor_vencimento_parcela = parseFloat(element.valor_vencimento_parcela).toFixed(2).replace('.', ',')
                 element.valor_parc_bruta = Number(parseFloat(element.valor_bruto / element.parcelas_registro).toFixed(2))
+                if (element.situacao_l == STATUS_REGISTRO_CANCELADO) element.situacao = SITUACAO_CANCELADO
                 switch (element.situacao) {
                     case SITUACAO_ABERTO: element.situacaoLabel = '<h4>Registro em Aberto</h4>'; break;
                     case SITUACAO_PAGO: element.situacaoLabel = '<h4>Registro Pago</h4>'; break;
