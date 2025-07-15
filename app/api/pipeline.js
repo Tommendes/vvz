@@ -236,7 +236,7 @@ module.exports = app => {
                         .where({ id_pipeline_params: body.id_pipeline_params, status: STATUS_ACTIVE }).first()
                     if (nextDocumentNr.documento == null) body.documento = 1
                     else body.documento = nextDocumentNr.documento + 1
-                    body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
+                    if (body.documento) body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                 }
 
                 // Variáveis da criação de um registro
@@ -549,7 +549,7 @@ module.exports = app => {
                     const filho = await app.db(tabelaDomain).select({ 'id_filho': 'id' }).where({ id: body.id_pai, status: STATUS_ACTIVE }).first()
                     if (!filho) body.id_pai = null
                 }
-                body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
+                if (body.documento) body.documento = body.documento.toString().padStart(digitsOfAFolder, '0')
                 let pv = await app.db(tabelaPvDomain).select({ 'id_pv': 'id' }).where({ id_pipeline: body.id, tipo: TIPO_PV_MONTAGEM, status: STATUS_ACTIVE }).first()
                 if (pv) {
                     pv = pv.id_pv;
