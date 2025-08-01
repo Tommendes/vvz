@@ -1216,14 +1216,22 @@ module.exports = app => {
         const tabelaFtpDomain = `${dbPrefix}_${uParams.schema_name}.${tabelaFtp}`
 
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
+        try {
+            existsOrError(pipeline, 'Pipeline não encontrado. Por favor recarregue a página...')
+            existsOrError(pipeline.documento, 'Documento não informado. Por favor recarregue a página...')
+        } catch (error) {
+            return res.status(200).send(error)
+        }
         const pipelineParam = await app.db({ pp: tabelaPipelineParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
 
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
-        const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
+        if (pipelineParam && pipelineParam.descricao && pipeline && pipeline.documento) {
+            const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
 
-        ftpParamsArray.forEach(ftpParam => {
-            ftpParam.path = pathDoc;
-        });
+            ftpParamsArray.forEach(ftpParam => {
+                ftpParam.path = pathDoc;
+            });
+        }
         let clientFtp = undefined;
         try {
             existsOrError(ftpParamsArray, 'Dados de conexão com o servidor de arquivos não informados');
@@ -1294,6 +1302,11 @@ module.exports = app => {
             return res.status(200).send(error)
         }
         const pipeline = await app.db({ pp: tabelaDomain }).where({ id: body.id_pipeline }).first()
+        try {
+            existsOrError(pipeline.documento, 'Documento não informado. Por favor recarregue a página...')
+        } catch (error) {
+            return res.status(200).send(error)
+        }
         const pipelineParam = await app.db({ pp: tabelaPipelineParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
 
