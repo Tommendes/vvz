@@ -1224,7 +1224,7 @@ module.exports = app => {
         }
         const pipelineParam = await app.db({ pp: tabelaPipelineParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
 
-        const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl')
+        const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl').where({status: STATUS_ACTIVE})
         if (pipelineParam && pipelineParam.descricao && pipeline && pipeline.documento) {
             const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
 
