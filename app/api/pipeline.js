@@ -1225,13 +1225,10 @@ module.exports = app => {
         const pipelineParam = await app.db({ pp: tabelaPipelineParamsDomain }).where({ id: pipeline.id_pipeline_params }).first()
 
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl').where({status: STATUS_ACTIVE})
-        console.log(`ftpParamsArray`, ftpParamsArray);
         
         let pathDoc = undefined;
         if (pipelineParam && pipelineParam.descricao && pipeline && pipeline.documento) {
             pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
-            console.log(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'), digitsOfAFolder);      
-
             ftpParamsArray.forEach(ftpParam => {
                 ftpParam.path = pathDoc;
             });
