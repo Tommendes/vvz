@@ -1229,8 +1229,8 @@ module.exports = app => {
         
         let pathDoc = undefined;
         if (pipelineParam && pipelineParam.descricao && pipeline && pipeline.documento) {
-            const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
-            console.log(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'), digitsOfAFolder);        
+            pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
+            console.log(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'), digitsOfAFolder);      
 
             ftpParamsArray.forEach(ftpParam => {
                 ftpParam.path = pathDoc;
