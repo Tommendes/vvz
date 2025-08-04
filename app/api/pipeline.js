@@ -1227,10 +1227,10 @@ module.exports = app => {
         const ftpParamsArray = await app.db({ ftp: tabelaFtpDomain }).select('host', 'port', 'user', 'pass', 'ssl').where({status: STATUS_ACTIVE})
         console.log(`ftpParamsArray`, ftpParamsArray);
         
+        let pathDoc = undefined;
         if (pipelineParam && pipelineParam.descricao && pipeline && pipeline.documento) {
             const pathDoc = path.join(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'))
-            console.log(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'), digitsOfAFolder);
-            
+            console.log(pipelineParam.descricao, pipeline.documento.padStart(digitsOfAFolder, '0'), digitsOfAFolder);        
 
             ftpParamsArray.forEach(ftpParam => {
                 ftpParam.path = pathDoc;
@@ -1253,6 +1253,7 @@ module.exports = app => {
         }
 
         try {
+            if (!pathDoc) throw 'Caminho da pasta não informado. Por favor recarregue a página...'
             await clientFtp.ensureDir(pathDoc);
             app.api.logger.logInfo({ log: { line: `Folder created: ${pathDoc}`, sConsole: true } })
             // Registrar o evento na tabela de eventos
