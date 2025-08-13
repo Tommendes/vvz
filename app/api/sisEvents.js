@@ -25,51 +25,78 @@ module.exports = app => {
         let rows = 10
         let sortField = app.db.raw('tbl1.created_at')
         let sortOrder = 'desc'
+        
         if (req.query) {
             queryes = req.query
             query = ''
+            
             for (const key in queryes) {
-                let operator = queryes[key].split(':')[0]
-                let value = queryes[key].split(':')[1]
-                if (key.split(':')[0] == 'field') {
-                    if (['cpf_cnpj'].includes(key.split(':')[1])) value = value.replace(/([^\d])+/gim, "")
+                // Processa apenas campos que começam com 'field:'
+                if (key.startsWith('field:')) {
+                    let operator = queryes[key].split(':')[0]
+                    let value = queryes[key].split(':')[1]
+                    
+                    // Remove caracteres especiais para campos específicos
+                    if (['cpf_cnpj'].includes(key.split(':')[1])) {
+                        value = value.replace(/([^\d])+/gim, "")
+                    }
 
                     switch (operator) {
-                        case 'startsWith': operator = `like '${value}%'`
+                        case 'startsWith': 
+                            operator = `like '${value}%'`
                             break;
-                        case 'contains': operator = `regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
+                        case 'contains': 
+                            operator = `regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                             break;
-                        case 'notContains': operator = `not regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
+                        case 'notContains': 
+                            operator = `not regexp("${value.toString().trim().replaceAll(' ', '.+')}")`
                             break;
-                        case 'endsWith': operator = `like '%${value}'`
+                        case 'endsWith': 
+                            operator = `like '%${value}'`
                             break;
-                        case 'notEquals': operator = `!= '${value}'`
+                        case 'notEquals': 
+                            operator = `!= '${value}'`
                             break;
-                        default: operator = `= '${value}'`
+                        default: 
+                            operator = `= '${value}'`
                             break;
                     }
+                    
                     let queryField = key.split(':')[1]
                     if (queryField == 'evento') queryField = 'tbl1.evento'
                     else if (queryField == 'user') queryField = 'us.name'
+                    else if (queryField == 'tabela_bd') queryField = 'tbl1.tabela_bd'
+                    else if (queryField == 'id_registro') queryField = 'tbl1.id_registro'
+                    else if (queryField == 'classevento') queryField = 'tbl1.classevento'
+                    else queryField = `tbl1.${queryField}`
+                    
                     query += `${queryField} ${operator} AND `
-                } else if (key.split(':')[0] == 'params') {
+                } 
+                // Processa parâmetros de paginação e ordenação
+                else if (key.startsWith('params:')) {
                     switch (key.split(':')[1]) {
-                        case 'page': page = Number(queryes[key]);
+                        case 'page': 
+                            page = Number(queryes[key]);
                             break;
-                        case 'rows': rows = Number(queryes[key]);
+                        case 'rows': 
+                            rows = Number(queryes[key]);
                             break;
                     }
-                } else if (key.split(':')[0] == 'sort') {
+                } 
+                // Processa ordenação
+                else if (key.startsWith('sort:')) {
                     sortField = key.split(':')[1].split('=')[0]
                     sortOrder = queryes[key]
-                } else if (typeof key === 'string' && key !== null) {
-                    const objectQueryes = Object.keys(queryes)
-                    objectQueryes.forEach(element => {
-                        query += `${element} = '${queryes[element]}' AND `
-                    });
                 }
+                // Ignora outros parâmetros que não devem ser incluídos na query SQL
             }
-            query = query.slice(0, -5).trim()
+            
+            // Remove o último " AND " da query
+            if (query.length > 0) {
+                query = query.slice(0, -5).trim()
+            }
+            
+            console.log('query:', query);
         }
         let filterCnpj = undefined
         let filter = req.query.filter
