@@ -88,6 +88,26 @@ module.exports = app => {
                     sortField = key.split(':')[1].split('=')[0]
                     sortOrder = queryes[key]
                 }
+                // Processa campos diretos (formato: campo=valor)
+                else if (['evento', 'user', 'tabela_bd', 'id_registro', 'classevento', 'created_at'].includes(key)) {
+                    let value = queryes[key]
+                    let operator = `= '${value}'`
+                    
+                    // Remove caracteres especiais para campos específicos
+                    if (['cpf_cnpj'].includes(key)) {
+                        value = value.replace(/([^\d])+/gim, "")
+                    }
+                    
+                    let queryField = key
+                    if (queryField == 'evento') queryField = 'tbl1.evento'
+                    else if (queryField == 'user') queryField = 'us.name'
+                    else if (queryField == 'tabela_bd') queryField = 'tbl1.tabela_bd'
+                    else if (queryField == 'id_registro') queryField = 'tbl1.id_registro'
+                    else if (queryField == 'classevento') queryField = 'tbl1.classevento'
+                    else queryField = `tbl1.${queryField}`
+                    
+                    query += `${queryField} ${operator} AND `
+                }
                 // Ignora outros parâmetros que não devem ser incluídos na query SQL
             }
             
