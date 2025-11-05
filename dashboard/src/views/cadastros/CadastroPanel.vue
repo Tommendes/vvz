@@ -1,6 +1,6 @@
 <script setup>
 import { onBeforeMount, ref } from 'vue';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
 import CadastroForm from './CadastroForm.vue';

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onBeforeMount, provide } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { defaultSuccess } from '@/toast';
 import EnderecoForm from './EnderecoForm.vue';

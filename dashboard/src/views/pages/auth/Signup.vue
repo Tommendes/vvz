@@ -1,6 +1,6 @@
 <script setup>
 import axios from '@/axios-interceptor';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';

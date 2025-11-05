@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
 import PipelineForm from './PipelineForm.vue';

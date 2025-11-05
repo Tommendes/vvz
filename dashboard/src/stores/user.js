@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
-import { baseApiAuthUrl, baseApiUrl } from '@/env';
 import { userKey, glKey } from '@/global';
 import interceptor from '@/axios-interceptor';
 import axios from 'axios';
+const baseApiAuthUrl = import.meta.env.VITE_BASE_API_AUTH_URL;
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 
 export const useUserStore = defineStore('users', {
     state: () => ({

@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import ComissaoItemForm from './ComissaoItemForm.vue';
 import { defaultWarn, defaultSuccess } from '@/toast';

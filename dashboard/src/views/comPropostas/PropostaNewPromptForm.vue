@@ -1,6 +1,6 @@
 <script setup>
 import { inject, ref } from 'vue';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 // Url base do form action
 const urlBase = ref(`${baseApiUrl}/com-propostas`);

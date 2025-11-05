@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, watchEffect } from 'vue';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import { isValidEmail } from '@/global';

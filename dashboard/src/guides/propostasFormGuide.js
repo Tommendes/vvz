@@ -1,4 +1,5 @@
-import { supportEmail, supportMsgs } from '@/env';
+const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL;
+const supportMsgs = import.meta.env.VITE_SUPPORT_MSGS;
 
 export const guide1 = `
     <p><strong>Guia do Usuário: Formulário de Proposta</strong></p>

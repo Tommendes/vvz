@@ -1,6 +1,6 @@
 <script setup>
 import { onBeforeMount, onMounted, ref, watch } from 'vue';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import ParcelaItem from './ParcelaItem.vue';

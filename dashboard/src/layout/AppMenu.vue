@@ -2,7 +2,7 @@
 import { onBeforeMount, ref } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
 import { version } from '../../package.json';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 
 // Profile do usuário

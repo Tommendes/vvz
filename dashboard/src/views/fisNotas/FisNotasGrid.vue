@@ -1,7 +1,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { defaultWarn } from '@/toast';
 import FisNotasForm from './FisNotasForm.vue';

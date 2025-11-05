@@ -7,7 +7,7 @@ const primevue = usePrimeVue();
 
 import { defaultSuccess, defaultWarn } from '@/toast';
 import axios from '@/axios-interceptor';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 
 // Profile do usuário
 import { useUserStore } from '@/stores/user';

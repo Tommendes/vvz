@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import OatForm from './OatForm.vue';
 import { removeHtmlTags, formatValor } from '@/global';

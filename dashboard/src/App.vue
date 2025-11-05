@@ -1,11 +1,10 @@
 <script setup>
 import { useUserStore } from '@/stores/user';
 import { userKey, glKey } from '@/global';
-import { baseApiAuthUrl } from '@/env';
 import { onBeforeMount, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-
+const baseApiAuthUrl = import.meta.env.VITE_BASE_API_AUTH_URL;
 const router = useRouter();
 const store = useUserStore();
 const json = localStorage.getItem(userKey);

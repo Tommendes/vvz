@@ -41,7 +41,7 @@ onBeforeMount(async () => {
 const jsonLayer = localStorage.getItem('__layoutCfg');
 const userLayer = JSON.parse(jsonLayer);
 
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 const urlRequestRequestPassReset = ref(`${baseApiUrl}/request-password-reset/`);
 const itemsMessages = ref([]);
 const items = ref([

@@ -3,7 +3,7 @@ import moment from 'moment';
 import { onMounted, reactive, ref } from 'vue';
 import { formatCurrency } from '@/global';
 import axios from '@/axios-interceptor';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import { colorsDashboard } from '@/global';
 import html2canvas from 'html2canvas';
 

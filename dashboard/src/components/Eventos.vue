@@ -18,11 +18,10 @@
 
 <script setup>
 import { ref } from 'vue';
-import { baseApiUrl } from '@/env';
 import { useRoute } from 'vue-router';
 import axios from '@/axios-interceptor';
 import moment from 'moment';
-
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 // Profile do usuário
 import { useUserStore } from '@/stores/user';
 import { onBeforeMount } from 'vue';

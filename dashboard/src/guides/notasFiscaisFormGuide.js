@@ -1,4 +1,5 @@
-import { supportEmail, supportMsgs } from '@/env';
+const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL;
+const supportMsgs = import.meta.env.VITE_SUPPORT_MSGS;
 import { ref } from 'vue';
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);

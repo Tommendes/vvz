@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeMount } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { formatCurrency } from '@/global';
 import { defaultSuccess, defaultWarn } from '@/toast';

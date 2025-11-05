@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import UsuarioForm from './UsuarioForm.vue';

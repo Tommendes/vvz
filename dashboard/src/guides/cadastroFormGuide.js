@@ -1,4 +1,5 @@
-import { supportEmail, supportMsgs } from '@/env';
+const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL;
+const supportMsgs = import.meta.env.VITE_SUPPORT_MSGS;
 
 export const guide = `
     <p>Esta página representa o formulário de Cadastro de Clientes e Fornecedores, onde você pode criar, visualizar e

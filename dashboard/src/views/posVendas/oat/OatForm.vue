@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, inject } from 'vue';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { defaultSuccess, defaultWarn } from '@/toast';
 import EditorComponent from '@/components/EditorComponent.vue';

@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, provide, ref, watchEffect } from 'vue';
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import { defaultError } from '@/toast';
 import Breadcrumb from '@/components/Breadcrumb.vue';

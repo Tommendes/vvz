@@ -1,7 +1,8 @@
 import { userKey } from '@/global';
 const json = localStorage.getItem(userKey);
 const userData = JSON.parse(json);
-import { supportEmail, supportMsgs } from '@/env';
+const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL;
+const supportMsgs = import.meta.env.VITE_SUPPORT_MSGS;
 
 export const guide = `
     <p>Nesta página você pode criar e editar registros de pós-vendas. Ela fornece acesso a várias funcionalidades para gerenciar esses registros. O formulário é composto por diferentes campos e recursos para auxiliar na entrada de dados, validação e interação com a API.</p>

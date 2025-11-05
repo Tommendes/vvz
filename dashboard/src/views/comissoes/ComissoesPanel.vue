@@ -1,5 +1,5 @@
 <script setup>
-import { baseApiUrl } from '@/env';
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL;
 import axios from '@/axios-interceptor';
 import ComissoesResume from './ComissoesResume.vue';
 import { defaultSuccess, defaultWarn } from '@/toast';
